@@ -42,7 +42,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private final NumpyArrayTable myProvider;
 
 
-  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Python async table"));
+  private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
 
 
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
@@ -51,7 +51,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
         final PyDebugValue value = myProvider.getDebugValue();
         final PyDebugValue slicedValue =
-          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
+          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
                            value.getParent(), value.getFrameAccessor());
 
         ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {

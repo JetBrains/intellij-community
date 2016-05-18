@@ -17,12 +17,30 @@
       <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
+    </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
       <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
       <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
+  </extensions>
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
   </extensions>
 
 </idea-plugin>

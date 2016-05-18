@@ -198,18 +198,18 @@ class VariableView(override val variableName: String, private val variable: Vari
       override fun consumeRanges(ranges: IntArray?) {
         if (ranges == null) {
           val groupList = XValueChildrenList()
-          LazyVariablesGroup.addGroups(value, LazyVariablesGroup.GROUP_FACTORY, groupList, 0, value.length, XCompositeNode.MAX_CHILDREN_TO_SHOW, this@VariableView)
+          addGroups(value, ::lazyVariablesGroup, groupList, 0, value.length, XCompositeNode.MAX_CHILDREN_TO_SHOW, this@VariableView)
           node.addChildren(groupList, isLastChildren)
         }
         else {
-          LazyVariablesGroup.addRanges(value, ranges, node, this@VariableView, isLastChildren)
+          addRanges(value, ranges, node, this@VariableView, isLastChildren)
         }
       }
 
       override fun consumeVariables(variables: List<Variable>) {
         node.addChildren(createVariablesList(variables, this@VariableView, null), isLastChildren)
       }
-    }, null)
+    })
   }
 
   private fun computeNamedProperties(value: ObjectValue, node: XCompositeNode, isLastChildren: Boolean) = processVariables(this, value.properties, node) { memberFilter, variables ->
@@ -254,7 +254,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     val groupList = XValueChildrenList()
     if (count > 0) {
-      LazyVariablesGroup.addGroups(variables, GROUP_FACTORY, groupList, 0, count, bucketSize, this)
+      addGroups(variables, ::createArrayRangeGroup, groupList, 0, count, bucketSize, this)
     }
 
     var notGroupedVariablesOffset: Int
@@ -268,7 +268,7 @@ class VariableView(override val variableName: String, private val variable: Vari
       }
 
       if (notGroupedVariablesOffset > 0) {
-        LazyVariablesGroup.addGroups(variables, GROUP_FACTORY, groupList, count, notGroupedVariablesOffset, bucketSize, this)
+        addGroups(variables, ::createArrayRangeGroup, groupList, count, notGroupedVariablesOffset, bucketSize, this)
       }
     }
     else {

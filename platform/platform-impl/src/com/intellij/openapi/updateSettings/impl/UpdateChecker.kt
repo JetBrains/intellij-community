@@ -37,15 +37,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
@@ -56,7 +53,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.apache.http.client.utils.URIBuilder
 import org.jdom.JDOMException
-import org.jetbrains.annotations.Contract
 import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
@@ -75,7 +71,6 @@ object UpdateChecker {
   @JvmField
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
-  private val INSTALLATION_UID = "installation.uid"
   private val DISABLED_UPDATE = "disabled_update.txt"
   private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
@@ -133,9 +128,7 @@ object UpdateChecker {
     val result = checkPlatformUpdate(updateSettings)
 
     if (manualCheck && result.state == UpdateStrategy.State.LOADED) {
-      val settings = UpdateSettings.getInstance()
-      settings.saveLastCheckedInfo()
-      settings.setKnownChannelIds(result.allChannelsIds)
+      UpdateSettings.getInstance().saveLastCheckedInfo()
     }
     else if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
       val e = result.error
@@ -149,24 +142,16 @@ object UpdateChecker {
 
     indicator?.text = IdeBundle.message("updates.checking.plugins")
 
+    val buildNumber: BuildNumber? = result.newBuild?.apiVersion
+    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
+
     val updatedPlugins: Collection<PluginDownloader>?
-    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?
-
-    if (newChannelReady(result.channelToPropose)) {
-      updatedPlugins = null
-      incompatiblePlugins = null
+    try {
+      updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
     }
-    else {
-      val buildNumber: BuildNumber? = result.newBuildInSelectedChannel?.apiVersion
-
-      incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
-      try {
-        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
-      }
-      catch (e: IOException) {
-        showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
-        return
-      }
+    catch (e: IOException) {
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
+      return
     }
 
     // show result
@@ -215,10 +200,7 @@ object UpdateChecker {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
-    val appInfo = ApplicationInfo.getInstance()
-    val majorVersion = Integer.parseInt(appInfo.majorVersion)
-    val customization = UpdateStrategyCustomization.getInstance()
-    val strategy = UpdateStrategy(majorVersion, appInfo.build, updateInfo, settings, customization)
+    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings)
     return strategy.checkForUpdates()
   }
 
@@ -362,11 +344,6 @@ object UpdateChecker {
     }
   }
 
-  @Contract("null -> false")
-  private fun newChannelReady(channelToPropose: UpdateChannel?): Boolean {
-    return channelToPropose?.getLatestBuild() != null
-  }
-
   private fun showUpdateResult(project: Project?,
                                checkForUpdateResult: CheckForUpdateResult,
                                updateSettings: UpdateSettings,
@@ -374,14 +351,14 @@ object UpdateChecker {
                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
                                enableLink: Boolean,
                                alwaysShowResults: Boolean) {
-    val channelToPropose = checkForUpdateResult.channelToPropose
     val updatedChannel = checkForUpdateResult.updatedChannel
-    val latestBuild = checkForUpdateResult.newBuildInSelectedChannel
+    val newBuild = checkForUpdateResult.newBuild
 
-    if (updatedChannel != null && latestBuild != null) {
+    if (updatedChannel != null && newBuild != null) {
       val runnable = {
+        val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
         val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, latestBuild, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       if (alwaysShowResults) {
@@ -390,28 +367,6 @@ object UpdateChecker {
       else {
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
         showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL)
-      }
-    }
-    else if (newChannelReady(channelToPropose)) {
-      val runnable = {
-        val dialog = NewChannelDialog(channelToPropose!!)
-        dialog.show()
-        // once we informed that new product is available (when new channel was detected), remember the fact
-        if (dialog.exitCode == DialogWrapper.CANCEL_EXIT_CODE &&
-            checkForUpdateResult.state == UpdateStrategy.State.LOADED &&
-            !updateSettings.knownChannelsIds.contains(channelToPropose.id)) {
-          val newIds = ArrayList(updateSettings.knownChannelsIds)
-          newIds.add(channelToPropose.id)
-          updateSettings.setKnownChannelIds(newIds)
-        }
-      }
-
-      if (alwaysShowResults) {
-        runnable.invoke()
-      }
-      else {
-        val message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, runnable, NotificationUniqueType.NEW_CHANNEL)
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
@@ -465,53 +420,13 @@ object UpdateChecker {
     }
   }
 
+  /**
+   * @Deprecated, left for compatibility. Use PermanentInstallationID.get() directly 
+   */
   @JvmStatic
   fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
-    if (SystemInfo.isWindows) {
-      val uid = getInstallationUIDOnWindows(propertiesComponent)
-      if (uid != null) {
-        return uid
-      }
-    }
-
-    var uid = propertiesComponent.getValue(INSTALLATION_UID)
-    if (uid == null) {
-      uid = generateUUID()
-      propertiesComponent.setValue(INSTALLATION_UID, uid)
-    }
-    return uid
+    return PermanentInstallationID.get();
   }
-
-  private fun getInstallationUIDOnWindows(propertiesComponent: PropertiesComponent): String? {
-    val appdata = System.getenv("APPDATA")
-    if (appdata != null) {
-      val jetBrainsDir = File(appdata, "JetBrains")
-      if (jetBrainsDir.isDirectory || jetBrainsDir.mkdirs()) {
-        val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
-        try {
-          if (permanentIdFile.exists()) {
-            val bytes = permanentIdFile.readBytes()
-            val offset = if (CharsetToolkit.hasUTF8Bom(bytes)) CharsetToolkit.UTF8_BOM.size else 0
-            return String(bytes, offset, bytes.size - offset, Charsets.UTF_8)
-          }
-
-          val uuid = propertiesComponent.getValue(INSTALLATION_UID) ?: generateUUID()
-          permanentIdFile.writeText(uuid, Charsets.UTF_8)
-          return uuid
-        }
-        catch (e: IOException) {
-          LOG.debug(e)
-        }
-      }
-    }
-
-    return null
-  }
-
-  private fun generateUUID(): String =
-      try { UUID.randomUUID().toString() }
-      catch (ignored: Exception) { "" }
-      catch (ignored: InternalError) { "" }
 
   @JvmStatic
   @Throws(IOException::class)

@@ -140,7 +140,7 @@ public class EnvironmentUtil {
     return flattenEnvironment(getEnvironmentMap());
   }
 
-  public static String[] flattenEnvironment(Map<String, String> environment) {
+  public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
     for (Map.Entry<String, String> entry : environment.entrySet()) {
@@ -148,6 +148,8 @@ public class EnvironmentUtil {
     }
     return array;
   }
+
+  private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
 
   private static Map<String, String> getShellEnv() throws Exception {
     String shell = System.getenv("SHELL");
@@ -165,18 +167,19 @@ public class EnvironmentUtil {
 
     File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
-      String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
-        LOG.info("shell process output: " + StringUtil.trimEnd(gobbler.getText(), '\n'));
-        throw new Exception("rv:" + rv + " text:" + lines.length());
+        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
       return parseEnv(lines);
     }
@@ -186,7 +189,7 @@ public class EnvironmentUtil {
   }
 
   private static Map<String, String> parseEnv(String text) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
@@ -299,11 +302,15 @@ public class EnvironmentUtil {
   }
 
   private static class StreamGobbler extends BaseOutputReader {
+    private static final Options OPTIONS = new Options() {
+      @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
+      @Override public boolean splitToLines() { return false; }
+    };
 
     private final StringBuffer myBuffer;
 
     public StreamGobbler(@NotNull InputStream stream) {
-      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");
     }

@@ -217,7 +217,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
           collectInstanceProperties(descriptors);
           collectStaticAttributesDescriptors(context, descriptors);
           for (String builtInAttributeName : FxmlConstants.FX_BUILT_IN_ATTRIBUTES) {
-            descriptors.add(new JavaFxBuiltInAttributeDescriptor(builtInAttributeName, psiClass));
+            descriptors.add(JavaFxBuiltInAttributeDescriptor.create(builtInAttributeName, psiClass));
           }
           return descriptors.isEmpty() ? XmlAttributeDescriptor.EMPTY : descriptors.toArray(XmlAttributeDescriptor.EMPTY);
         }
@@ -244,7 +244,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     final PsiClass psiClass = getPsiClass();
     if (psiClass == null) return null;
     if (FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName)) {
-      return new JavaFxBuiltInAttributeDescriptor(attributeName, psiClass);
+      return JavaFxBuiltInAttributeDescriptor.create(attributeName, psiClass);
     }
     final PsiMethod propertySetter = JavaFxPsiUtil.findStaticPropertySetter(attributeName, context);
     if (propertySetter != null) {
@@ -320,20 +320,23 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     }
     PsiClass aClass = getPsiClass();
     final XmlAttribute constAttr = context.getAttribute(FxmlConstants.FX_CONSTANT);
+    final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
     if (constAttr != null && aClass != null) {
       final PsiField constField = aClass.findFieldByName(constAttr.getValue(), true);
       if (constField != null) {
-        aClass = PsiUtil.resolveClassInType(constField.getType());
+        final PsiType constType = constField.getType();
+        aClass = PsiUtil.resolveClassInClassTypeOnly(
+          constType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)constType).getBoxedType(context) : constType);
       }
     } else {
-      final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
       if (factoryAttr != null) {
         aClass = JavaFxPsiUtil.getFactoryProducedClass(aClass, factoryAttr.getValue());
       }
     }
     JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
       host.addMessage(context.getNavigationElement(), errorMessage, errorType));
-    if (aClass != null && aClass.isValid()) {
+    boolean needInstantiate = constAttr == null && factoryAttr == null;
+    if (needInstantiate && aClass != null && aClass.isValid()) {
       JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
         host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));
     }

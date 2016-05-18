@@ -44,7 +44,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
   private final List<UsageNode> myUsageNodes = new SmartList<UsageNode>();
   @NotNull private final UsageViewTreeModelBuilder myUsageTreeModel;
-  private volatile int myRecursiveUsageCount = 0;
+  private volatile int myRecursiveUsageCount;
 
   public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);

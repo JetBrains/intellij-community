@@ -20,9 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -73,6 +71,7 @@ public class IndexingStamp {
   private IndexingStamp() {}
 
   public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
+    SharedIndicesData.beforeSomeIndexVersionInvalidation();
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
       FileUtil.deleteWithRenaming(file);
@@ -142,7 +141,7 @@ public class IndexingStamp {
     }
   }
 
-  private static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
+  public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     Long version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version.longValue();
 
@@ -150,10 +149,6 @@ public class IndexingStamp {
     ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
 
     return stamp;
-  }
-
-  public static boolean isFileIndexedStateCurrent(VirtualFile file, ID<?, ?> indexName) {
-    return file instanceof NewVirtualFile && isFileIndexedStateCurrent(((NewVirtualFile)file).getId(), indexName);
   }
 
   public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
@@ -205,6 +200,7 @@ public class IndexingStamp {
             ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
             if (id != null) {
               long stamp = getIndexCreationStamp(id);
+              if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
               if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
@@ -293,14 +289,13 @@ public class IndexingStamp {
     }
 
     private void set(ID<?, ?> id, long tmst) {
-      try {
-        if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+      if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
 
-        myIndexStamps.put(id, tmst);
+      if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
+        return;
       }
-      finally {
-        myIsDirty = true;
-      }
+      long previous = myIndexStamps.put(id, tmst);
+      if (previous != tmst) myIsDirty = true;
     }
 
     public boolean isDirty() {

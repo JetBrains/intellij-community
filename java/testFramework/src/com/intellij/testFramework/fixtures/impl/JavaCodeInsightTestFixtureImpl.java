@@ -23,10 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -92,7 +92,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   @Override
   public void tearDown() throws Exception {
     try {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      EdtTestUtil.runInEdtAndWait(new Runnable() {
         @Override
         public void run() {
           ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches

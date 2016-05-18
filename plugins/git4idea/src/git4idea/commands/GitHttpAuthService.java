@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Provides the authentication mechanism for Git HTTP connections.
@@ -30,7 +31,7 @@ import java.util.Collection;
 public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttpAuthenticator> {
 
   protected GitHttpAuthService() {
-    super("git-askpass-", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
+    super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
   }
 
   @Override
@@ -57,14 +58,14 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
   public class InternalRequestHandlerDelegate implements GitAskPassXmlRpcHandler {
     @NotNull
     @Override
-    public String askUsername(int handler, @NotNull String url) {
-      return getHandler(handler).askUsername(url);
+    public String askUsername(String token, @NotNull String url) {
+      return getHandler(UUID.fromString(token)).askUsername(url);
     }
 
     @NotNull
     @Override
-    public String askPassword(int handler, @NotNull String url) {
-      return getHandler(handler).askPassword(url);
+    public String askPassword(String token, @NotNull String url) {
+      return getHandler(UUID.fromString(token)).askPassword(url);
     }
   }
 

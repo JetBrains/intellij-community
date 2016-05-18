@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -36,7 +35,6 @@ public class VcsRootsRegistryImpl implements VcsRootsRegistry, Disposable {
 
   public VcsRootsRegistryImpl(@NotNull final Project project) {
     myEnumerator = createEnumerator(project);
-    Disposer.register(project, this);
   }
 
   @NotNull

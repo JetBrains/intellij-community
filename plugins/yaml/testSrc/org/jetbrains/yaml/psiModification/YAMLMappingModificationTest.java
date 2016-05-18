@@ -17,13 +17,7 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    
-  }
-  
-  // TODO make 
+  // TODO make
 
   public void testCreateKeyInEmptyFile() {
     doMappingTest("key", "value");
@@ -94,7 +88,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     final YAMLMapping mapping = PsiTreeUtil.getParentOfType(elementAtCaret, YAMLMapping.class, false);
     
     if (mapping == null) {
-      YAMLUtil.createI18nRecord((YAMLFile)myFixture.getFile(), new String[]{key}, content);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        YAMLUtil.createI18nRecord((YAMLFile)myFixture.getFile(), new String[]{key}, content);
+      });
     }
     else {
       assertNotNull(mapping);

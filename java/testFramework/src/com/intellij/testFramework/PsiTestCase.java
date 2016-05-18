@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -115,7 +117,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
   protected PsiElement configureByFileWithMarker(String filePath, String marker) throws Exception{
     final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(filePath);
 
-    String fileText = VfsUtil.loadText(vFile);
+    String fileText = VfsUtilCore.loadText(vFile);
     fileText = StringUtil.convertLineSeparators(fileText);
 
     int offset = fileText.indexOf(marker);
@@ -225,15 +227,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myFile;
   }
 
-  public com.intellij.openapi.editor.Document getDocument(PsiFile file) {
+  public Document getDocument(PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  public com.intellij.openapi.editor.Document getDocument(VirtualFile file) {
+  public Document getDocument(VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
 
-  public void commitDocument(com.intellij.openapi.editor.Document document) {
+  public void commitDocument(Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 }

@@ -54,7 +54,7 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
 
     result.add(Separator.getInstance());
@@ -154,10 +154,6 @@ public class TextDiffViewerUtil {
   public static abstract class ComboBoxSettingAction<T> extends ComboBoxAction implements DumbAware {
     private DefaultActionGroup myChildren;
 
-    public ComboBoxSettingAction() {
-      setEnabledInModalContext(true);
-    }
-
     @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
@@ -202,7 +198,6 @@ public class TextDiffViewerUtil {
 
       public MyAction(@NotNull T setting) {
         super(getText(setting));
-        setEnabledInModalContext(true);
         mySetting = setting;
       }
 
@@ -293,7 +288,6 @@ public class TextDiffViewerUtil {
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
       super("Synchronize Scrolling", AllIcons.Actions.SynchronizeScrolling);
       mySettings = settings;
-      setEnabledInModalContext(true);
     }
 
     @Override
@@ -313,7 +307,6 @@ public class TextDiffViewerUtil {
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
       super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
       mySettings = settings;
-      setEnabledInModalContext(true);
     }
 
     @Override
@@ -345,7 +338,6 @@ public class TextDiffViewerUtil {
       super("Disable editing", null, AllIcons.Nodes.Padlock);
       myContext = context;
       mySettings = getTextSettings(context);
-      setEnabledInModalContext(true);
     }
 
     protected void applyDefaults() {

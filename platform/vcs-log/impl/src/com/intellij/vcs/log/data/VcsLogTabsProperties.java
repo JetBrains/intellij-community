@@ -44,15 +44,11 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
   @Override
   public void loadState(State state) {
     myState = state;
-    if (myState.TAB_STATES.get(MAIN_LOG_ID) == null) {
-      myState.TAB_STATES.put(MAIN_LOG_ID, myDeprecatedProperties.getState());
-    }
+    myState.TAB_STATES.putIfAbsent(MAIN_LOG_ID, myDeprecatedProperties.getState());
   }
 
   public VcsLogUiProperties createProperties(@NotNull final String id) {
-    if (myState.TAB_STATES.get(id) == null) {
-      myState.TAB_STATES.put(id, new VcsLogUiPropertiesImpl.State());
-    }
+    myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
     return new VcsLogUiPropertiesImpl() {
       @NotNull
       @Override

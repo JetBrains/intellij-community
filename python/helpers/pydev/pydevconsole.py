@@ -21,7 +21,7 @@ import traceback
 from _pydev_bundle import fix_getpass
 fix_getpass.fix_getpass()
 
-from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 
 from _pydev_bundle.pydev_imports import Exec, _queue
 
@@ -457,7 +457,11 @@ def console_exec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        if not need_more:
+            pydevd_save_locals.save_locals(frame)
+        return need_more
+
 
     interpreter = ConsoleWriter()
 
@@ -481,7 +485,8 @@ def console_exec(thread_id, frame_id, expression):
         raise
     except:
         interpreter.showtraceback()
-
+    else:
+        pydevd_save_locals.save_locals(frame)
     return False
 
 #=======================================================================================================================

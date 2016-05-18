@@ -45,9 +45,7 @@ def _on_forked_process():
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked()
 
-def _on_set_trace_for_new_thread():
-    from _pydevd_bundle.pydevd_comm import get_global_debugger
-    global_debugger = get_global_debugger()
+def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
         global_debugger.SetTrace(global_debugger.trace_dispatch)
 
@@ -64,9 +62,37 @@ def is_python(path):
 
     return False
 
+
+def remove_quotes_from_args(args):
+    new_args = []
+    for x in args:
+        if len(x) > 1 and x.startswith('"') and x.endswith('"'):
+            x = x[1:-1]
+        new_args.append(x)
+    return new_args
+
+
+def quote_args(args):
+    if sys.platform == "win32":
+        quoted_args = []
+        for x in args:
+            if x.startswith('"') and x.endswith('"'):
+                quoted_args.append(x)
+            else:
+                if ' ' in x:
+                    x = x.replace('"', '\\"')
+                    quoted_args.append('"%s"' % x)
+                else:
+                    quoted_args.append(x)
+        return quoted_args
+    else:
+        return args
+
+
 def patch_args(args):
     try:
         log_debug("Patching args: %s"% str(args))
+        args = remove_quotes_from_args(args)
 
         import sys
         new_args = []
@@ -86,7 +112,7 @@ def patch_args(args):
                 if port is not None:
                     new_args.extend(args)
                     new_args[indC + 1] = _get_python_c_args(host, port, indC, args)
-                    return new_args
+                    return quote_args(new_args)
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
                 # Assumes the first non `-<flag>` argument is what we need to check.
@@ -137,12 +163,8 @@ def patch_args(args):
         if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
-        for x in original:  # @UndefinedVariable
-            if sys.platform == "win32" and not x.endswith('"'):
-                arg = '"%s"' % x
-            else:
-                arg = x
-            new_args.append(arg)
+        for x in original:
+            new_args.append(x)
             if x == '--file':
                 break
 
@@ -150,22 +172,10 @@ def patch_args(args):
             new_args.append(args[i])
             i += 1
 
-        return new_args
+        return quote_args(new_args)
     except:
         traceback.print_exc()
         return args
-
-
-def args_to_str(args):
-    quoted_args = []
-    for x in args:
-        if x.startswith('"') and x.endswith('"'):
-            quoted_args.append(x)
-        else:
-            x = x.replace('"', '\\"')
-            quoted_args.append('"%s"' % x)
-
-    return ' '.join(quoted_args)
 
 
 def str_to_args_windows(args):
@@ -257,7 +267,7 @@ def patch_arg_str_win(arg_str):
     # Fix https://youtrack.jetbrains.com/issue/PY-9767 (args may be empty)
     if not args or not is_python(args[0]):
         return arg_str
-    arg_str = args_to_str(patch_args(args))
+    arg_str = ' '.join(patch_args(args))
     log_debug("New args: %s" % arg_str)
     return arg_str
 
@@ -534,11 +544,15 @@ class _NewThreadStartupWithTrace:
         self.original_func = original_func
         self.args = args
         self.kwargs = kwargs
+        self.global_debugger = self.get_debugger()
+
+    def get_debugger(self):
+        from _pydevd_bundle.pydevd_comm import get_global_debugger
+        return get_global_debugger()
 
     def __call__(self):
-        _on_set_trace_for_new_thread()
-        from _pydevd_bundle.pydevd_comm import get_global_debugger
-        global_debugger = get_global_debugger()
+        _on_set_trace_for_new_thread(self.global_debugger)
+        global_debugger = self.global_debugger
 
         if global_debugger is not None and global_debugger.thread_analyser is not None:
             # we can detect start_new_thread only here
@@ -567,7 +581,10 @@ _UseNewThreadStartup = _NewThreadStartupWithTrace
 def _get_threading_modules_to_patch():
     threading_modules_to_patch = []
 
-    from _pydev_imps._pydev_saved_modules import thread as _thread
+    try:
+        import thread as _thread
+    except:
+        import _thread
     threading_modules_to_patch.append(_thread)
 
     return threading_modules_to_patch

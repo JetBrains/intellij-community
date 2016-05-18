@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 
 /**
@@ -28,24 +29,23 @@ import com.intellij.ui.JBColor;
 public class DarculaInstaller {
 
   public static void uninstall() {
-    JBColor.setDark(false);
-    IconLoader.setUseDarkIcons(false);
-    if (DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-      if (scheme != null) {
-        EditorColorsManager.getInstance().setGlobalScheme(scheme);
-      }
-    }
-    update();
+    performImpl(false);
   }
 
   public static void install() {
-    JBColor.setDark(true);
-    IconLoader.setUseDarkIcons(true);
-    if (!DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(DarculaLaf.NAME);
+    performImpl(true);
+  }
+
+  private static void performImpl(boolean b) {
+    JBColor.setDark(b);
+    IconLoader.setUseDarkIcons(b);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme current = colorsManager.getGlobalScheme();
+    if (b != ColorUtil.isDark(current.getDefaultBackground())) {
+      String targetScheme = b ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
       if (scheme != null) {
-        EditorColorsManager.getInstance().setGlobalScheme(scheme);
+        colorsManager.setGlobalScheme(scheme);
       }
     }
     update();

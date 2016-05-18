@@ -145,136 +145,135 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Override
   public synchronized void documentChanged(DocumentEvent e) {
-    final Document document = e.getDocument();
-
-    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
-      mySegments.removeAll();
-      return;
-    }
-
-    if(mySegments.getSegmentCount() == 0) {
-      setText(document.getCharsSequence());
-      return;
-    }
-
-    CharSequence text = document.getCharsSequence();
-    int oldStartOffset = e.getOffset();
-
-    final int segmentIndex;
     try {
-      segmentIndex = mySegments.findSegmentIndex(oldStartOffset) - 2;
-    }
-    catch (IndexOutOfBoundsException ex) {
-      throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
-    }
-    final int oldStartIndex = Math.max(0, segmentIndex);
-    int startIndex = oldStartIndex;
+      final Document document = e.getDocument();
 
-    int data;
-    do {
-      data = mySegments.getSegmentData(startIndex);
-      if (isInitialState(data)|| startIndex == 0) break;
-      startIndex--;
-    }
-    while (true);
-
-    int startOffset = mySegments.getSegmentStart(startIndex);
-    int newEndOffset = e.getOffset() + e.getNewLength();
-
-    myLexer.start(text, startOffset, text.length(), myInitialState);
-
-    int lastTokenStart = -1;
-    int lastLexerState = -1;
-    IElementType lastTokenType = null;
-
-    while (myLexer.getTokenType() != null) {
-      if (startIndex >= oldStartIndex) break;
-
-      int tokenStart = myLexer.getTokenStart();
-      int lexerState = myLexer.getState();
-
-      if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
-        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
+      if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+        mySegments.removeAll();
+        return;
       }
 
-      int tokenEnd = myLexer.getTokenEnd();
-      data = packData(myLexer.getTokenType(), lexerState);
-      if (mySegments.getSegmentStart(startIndex) != tokenStart ||
-          mySegments.getSegmentEnd(startIndex) != tokenEnd ||
-          mySegments.getSegmentData(startIndex) != data) {
-        break;
-      }
-      startIndex++;
-      lastTokenType = myLexer.getTokenType();
-      myLexer.advance();
-      lastTokenStart = tokenStart;
-      lastLexerState = lexerState;
-    }
-
-    startOffset = mySegments.getSegmentStart(startIndex);
-    int repaintEnd = -1;
-    int insertSegmentCount = 0;
-    int oldEndIndex = -1;
-    lastTokenType = null;
-    SegmentArrayWithData insertSegments = new SegmentArrayWithData();
-
-    while(myLexer.getTokenType() != null) {
-      int tokenStart = myLexer.getTokenStart();
-      int lexerState = myLexer.getState();
-
-      if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
-        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
+      if(mySegments.getSegmentCount() == 0) {
+        setText(document.getCharsSequence());
+        return;
       }
 
-      lastTokenStart = tokenStart;
-      lastLexerState = lexerState;
-      lastTokenType = myLexer.getTokenType();
+      CharSequence text = document.getCharsSequence();
+      int oldStartOffset = e.getOffset();
 
-      int tokenEnd = myLexer.getTokenEnd();
-      data = packData(myLexer.getTokenType(), lexerState);
-      if(tokenStart >= newEndOffset && lexerState == myInitialState) {
-        int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
-        int index = mySegments.findSegmentIndex(shiftedTokenStart);
-        if (mySegments.getSegmentStart(index) == shiftedTokenStart && mySegments.getSegmentData(index) == data) {
-          repaintEnd = tokenStart;
-          oldEndIndex = index;
+      final int segmentIndex = mySegments.findSegmentIndex(oldStartOffset) - 2;
+      final int oldStartIndex = Math.max(0, segmentIndex);
+      int startIndex = oldStartIndex;
+
+      int data;
+      do {
+        data = mySegments.getSegmentData(startIndex);
+        if (isInitialState(data)|| startIndex == 0) break;
+        startIndex--;
+      }
+      while (true);
+
+      int startOffset = mySegments.getSegmentStart(startIndex);
+      int newEndOffset = e.getOffset() + e.getNewLength();
+
+      myLexer.start(text, startOffset, text.length(), myInitialState);
+
+      int lastTokenStart = -1;
+      int lastLexerState = -1;
+      IElementType lastTokenType = null;
+
+      while (myLexer.getTokenType() != null) {
+        if (startIndex >= oldStartIndex) break;
+
+        int tokenStart = myLexer.getTokenStart();
+        int lexerState = myLexer.getState();
+
+        if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
+          throw new IllegalStateException("Lexer is not progressing after calling advance()");
+        }
+
+        int tokenEnd = myLexer.getTokenEnd();
+        data = packData(myLexer.getTokenType(), lexerState);
+        if (mySegments.getSegmentStart(startIndex) != tokenStart ||
+            mySegments.getSegmentEnd(startIndex) != tokenEnd ||
+            mySegments.getSegmentData(startIndex) != data) {
           break;
         }
+        startIndex++;
+        lastTokenType = myLexer.getTokenType();
+        myLexer.advance();
+        lastTokenStart = tokenStart;
+        lastLexerState = lexerState;
       }
-      insertSegments.setElementAt(insertSegmentCount, tokenStart, tokenEnd, data);
-      insertSegmentCount++;
-      myLexer.advance();
-    }
 
-    final int shift = e.getNewLength() - e.getOldLength();
-    if (repaintEnd > 0) {
-      while (insertSegmentCount > 0 && oldEndIndex > startIndex) {
-        if (!segmentsEqual(mySegments, oldEndIndex - 1, insertSegments, insertSegmentCount - 1, shift)) {
-          break;
+      startOffset = mySegments.getSegmentStart(startIndex);
+      int repaintEnd = -1;
+      int insertSegmentCount = 0;
+      int oldEndIndex = -1;
+      lastTokenType = null;
+      SegmentArrayWithData insertSegments = new SegmentArrayWithData();
+
+      while(myLexer.getTokenType() != null) {
+        int tokenStart = myLexer.getTokenStart();
+        int lexerState = myLexer.getState();
+
+        if (tokenStart == lastTokenStart && lexerState == lastLexerState && myLexer.getTokenType() == lastTokenType) {
+          throw new IllegalStateException("Lexer is not progressing after calling advance()");
         }
-        insertSegmentCount--;
-        oldEndIndex--;
-        repaintEnd = insertSegments.getSegmentStart(insertSegmentCount);
-        insertSegments.remove(insertSegmentCount, insertSegmentCount + 1);
+
+        lastTokenStart = tokenStart;
+        lastLexerState = lexerState;
+        lastTokenType = myLexer.getTokenType();
+
+        int tokenEnd = myLexer.getTokenEnd();
+        data = packData(myLexer.getTokenType(), lexerState);
+        if(tokenStart >= newEndOffset && lexerState == myInitialState) {
+          int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
+          int index = mySegments.findSegmentIndex(shiftedTokenStart);
+          if (mySegments.getSegmentStart(index) == shiftedTokenStart && mySegments.getSegmentData(index) == data) {
+            repaintEnd = tokenStart;
+            oldEndIndex = index;
+            break;
+          }
+        }
+        insertSegments.setElementAt(insertSegmentCount, tokenStart, tokenEnd, data);
+        insertSegmentCount++;
+        myLexer.advance();
       }
-    }
 
-    if(repaintEnd == -1) {
-      repaintEnd = text.length();
-    }
+      final int shift = e.getNewLength() - e.getOldLength();
+      if (repaintEnd > 0) {
+        while (insertSegmentCount > 0 && oldEndIndex > startIndex) {
+          if (!segmentsEqual(mySegments, oldEndIndex - 1, insertSegments, insertSegmentCount - 1, shift)) {
+            break;
+          }
+          insertSegmentCount--;
+          oldEndIndex--;
+          repaintEnd = insertSegments.getSegmentStart(insertSegmentCount);
+          insertSegments.remove(insertSegmentCount, insertSegmentCount + 1);
+        }
+      }
 
-    if (oldEndIndex < 0){
-      oldEndIndex = mySegments.getSegmentCount();
-    }
-    mySegments.shiftSegments(oldEndIndex, shift);
-    mySegments.replace(startIndex, oldEndIndex, insertSegments);
+      if(repaintEnd == -1) {
+        repaintEnd = text.length();
+      }
 
-    if (insertSegmentCount == 0 ||
-        oldEndIndex == startIndex + 1 && insertSegmentCount == 1 && data == mySegments.getSegmentData(startIndex)) {
-      return;
-    }
+      if (oldEndIndex < 0){
+        oldEndIndex = mySegments.getSegmentCount();
+      }
+      mySegments.shiftSegments(oldEndIndex, shift);
+      mySegments.replace(startIndex, oldEndIndex, insertSegments);
 
-    myEditor.repaint(startOffset, repaintEnd);
+      if (insertSegmentCount == 0 ||
+          oldEndIndex == startIndex + 1 && insertSegmentCount == 1 && data == mySegments.getSegmentData(startIndex)) {
+        return;
+      }
+
+      myEditor.repaint(startOffset, repaintEnd);
+    }
+    catch (RuntimeException ex) {
+      throw new IllegalStateException("Error updating " + this + " after " + e, ex);
+    }
   }
 
   @Override

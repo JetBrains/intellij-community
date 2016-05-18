@@ -34,9 +34,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -156,7 +154,8 @@ public class GroovyMarkerTypes {
       final GrField field = (GrField)parent;
 
 
-      final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>(new THashSet<PsiMethod>());
+      Set<PsiMethod> result = new THashSet<>();
+      Processor<PsiMethod> collectProcessor = Processors.cancelableCollectProcessor(result);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
@@ -173,7 +172,7 @@ public class GroovyMarkerTypes {
         return;
       }
 
-      PsiMethod[] overridings = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
+      PsiMethod[] overridings = result.toArray(PsiMethod.EMPTY_ARRAY);
       if (overridings.length == 0) return;
       String title = DaemonBundle.message("navigation.title.overrider.method", field.getName(), overridings.length);
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);

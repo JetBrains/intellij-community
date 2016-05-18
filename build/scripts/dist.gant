@@ -198,6 +198,12 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
 
   List pathsDist = new File("${paths.sandbox}/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"] : [paths.distAll, paths.distWin]
   buildWinZip("$paths.artifacts/${archiveName}.win.zip", pathsDist, winAppRoot)
+  //win oracle jdk
+  if (new File("${paths.sandbox}/jdk.oracle.win/jre").exists()) {
+    buildWinZip("$paths.artifacts/${archiveName}-oracle-win.zip",
+                [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.oracle.win"])
+  }
+
 
   buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
@@ -235,9 +241,9 @@ private layoutWin(Map args, String home, Paths paths) {
 
   List resourcePaths = ["$home/${appInfoModulePath}/src", "$home/platform/icons/src"]
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/${name}.exe", appInfoFile(),
-                   productProperties.exe_launcher_properties, productProperties.systemSelector(), resourcePaths)
+                   productProperties.exe_launcher_properties, args.system_selector, resourcePaths)
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/${name}64.exe", appInfoFile(),
-                   productProperties.exe64_launcher_properties, productProperties.systemSelector(), resourcePaths)
+                   productProperties.exe64_launcher_properties, args.system_selector, resourcePaths)
 
   productProperties.customWinLayout(target)
 }

@@ -166,7 +166,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
           final boolean overSelection = ((DnDAware)target).isOverSelection(targetPoint);
           if (overSelection) {
             final MouseListener[] listeners = target.getListeners(MouseListener.class);
-            final MouseEvent mouseEvent = convertEvent(me, target);
+            final MouseEvent mouseEvent = MouseEventAdapter.convert(me, target);
             switch (me.getID()) {
               case MouseEvent.MOUSE_PRESSED:
                 boolean consumed = false;
@@ -280,7 +280,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
-      final MouseEvent event = convertEvent(e, eventRootPane);
+      if (UIUtil.getWindow(this) != UIUtil.getWindow(e.getComponent())) return false;
+
+      final MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
 
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
         return false;
@@ -392,11 +394,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     else {
       myListener2Cursor.put(requestor, cursor);
     }
-  }
-
-  private static MouseEvent convertEvent(final MouseEvent e, final Component target) {
-    final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
-    return MouseEventAdapter.convert(e, target, point.x, point.y);
   }
 
   private static void fireMouseEvent(final MouseListener listener, final MouseEvent event) {

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -30,7 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
@@ -157,33 +158,24 @@ class AddModuleDependencyFix extends OrderEntryFix {
         }
       }
     };
-    final Pair<Module, Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
-    if (circularModules == null) {
-      doit.run();
-    }
-    else {
-      showCircularWarningAndContinue(project, circularModules, module, doit);
+    Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
+    if (circularModules == null || showCircularWarning(project, circularModules, module)) {
+      WriteAction.run(doit::run);
     }
   }
 
-
-  private static void showCircularWarningAndContinue(final Project project, final Pair<Module, Module> circularModules,
-                                                     final Module classModule,
-                                                     final Runnable doit) {
+  private static boolean showCircularWarning(Project project, Couple<Module> circularModules, Module classModule) {
     final String message = QuickFixBundle.message("orderEntry.fix.circular.dependency.warning", classModule.getName(),
                                                   circularModules.getFirst().getName(), circularModules.getSecond().getName());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isOpen()) return;
-        int ret = Messages.showOkCancelDialog(project, message,
-                                              QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning"),
-                                              Messages.getWarningIcon());
-        if (ret == Messages.OK) {
-          ApplicationManager.getApplication().runWriteAction(doit);
-        }
-      }
-    });
+
+    return Messages.showOkCancelDialog(project, message,
+                                          QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning"),
+                                          Messages.getWarningIcon()) == Messages.OK;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

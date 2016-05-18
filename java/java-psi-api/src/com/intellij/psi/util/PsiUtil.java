@@ -453,6 +453,7 @@ public final class PsiUtil extends PsiUtilCore {
     return type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
+  @NotNull
   public static PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType) type;

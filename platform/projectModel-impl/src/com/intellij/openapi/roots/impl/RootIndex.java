@@ -265,7 +265,7 @@ public class RootIndex {
                   roots.putValue(sourceRoot, node);
                 }
               }
-              boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
+              boolean shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }

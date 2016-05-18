@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -236,7 +237,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton(),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 0, 0), 0, 0));
+                                     JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -316,5 +317,11 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       csp.run();
     }
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "unused";
   }
 }

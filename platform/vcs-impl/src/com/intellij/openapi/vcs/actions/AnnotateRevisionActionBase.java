@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +41,11 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     return null;
   }
 
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    Editor editor = getEditor(e);
+    return editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
+  }
+
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
@@ -77,7 +81,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
 
     final Editor editor = getEditor(e);
     final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
-    final int oldLine = editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
+    final int oldLine = getAnnotatedLine(e);
 
     final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
     assert annotationProvider != null;

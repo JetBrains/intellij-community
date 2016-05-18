@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -49,14 +52,17 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -73,9 +79,8 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
-  private static final String WELCOME_TITLE = "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   private final BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
 
@@ -100,7 +105,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     glassPane.setVisible(false);
     //setUndecorated(true);
     setContentPane(myScreen.getWelcomePanel());
-    setTitle(WELCOME_TITLE);
+    setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
     setSize(JBUI.size(width, 460));
@@ -122,7 +127,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
+    if (NotificationsManagerImpl.newEnabled()) {
+      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
+    }
+    else {
+      myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
+    }
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -138,6 +148,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   public void dispose() {
     saveLocation(getBounds());
     super.dispose();
+    if (myBalloonLayout instanceof WelcomeBalloonLayoutImpl) {
+      ((WelcomeBalloonLayoutImpl)myBalloonLayout).dispose();
+    }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
@@ -176,8 +189,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     return new JBColor(Gray.xEC, new Color(72, 75, 78));
   }
 
+  @Override
+  public AccessibleContext getCurrentAccessibleContext() {
+    return accessibleContext;
+  }
+
+  protected String getWelcomeFrameTitle() {
+    return "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
+  }
+
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    public ParameterizedRunnable<List<NotificationType>> myEventListener;
+    public Computable<Point> myEventLocation;
 
     public FlatWelcomeScreen() {
       super(new BorderLayout());
@@ -266,6 +290,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
+      if (NotificationsManagerImpl.newEnabled()) {
+        toolbar.add(createEventsLink());
+      }
       toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
 
@@ -273,6 +300,46 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
+      return panel;
+    }
+
+    private JComponent createEventsLink() {
+      final Ref<ActionLink> actionLinkRef = new Ref<>();
+      final JComponent panel = createActionLink("Events", AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ((WelcomeBalloonLayoutImpl)myBalloonLayout).showPopup();
+        }
+      });
+      panel.setVisible(false);
+      myEventListener = new ParameterizedRunnable<List<NotificationType>>() {
+        @Override
+        public void run(List<NotificationType> types) {
+          NotificationType type = null;
+          for (NotificationType t : types) {
+            if (NotificationType.ERROR == t) {
+              type = NotificationType.ERROR;
+              break;
+            }
+            if (NotificationType.WARNING == t) {
+              type = NotificationType.WARNING;
+            }
+            else if (type == null && NotificationType.INFORMATION == t) {
+              type = NotificationType.INFORMATION;
+            }
+          }
+
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
+          panel.setVisible(true);
+        }
+      };
+      myEventLocation = new Computable<Point>() {
+        @Override
+        public Point compute() {
+          Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
+          return new Point(location.x, location.y + 5);
+        }
+      };
       return panel;
     }
 
@@ -289,16 +356,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
-      ref.set(new ActionLink(text, icon, action));
-      ref.get().setPaintUnderline(false);
-      ref.get().setNormalColor(getLinkNormalColor());
+      JComponent panel = createActionLink(text, icon, ref, action);
+      installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
+      return panel;
+    }
+
+    private JComponent createActionLink(String text, Icon icon, Ref<ActionLink> ref, AnAction action) {
+      ActionLink link = new ActionLink(text, icon, action);
+      ref.set(link);
+      link.setPaintUnderline(false);
+      link.setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
-      panel.add(ref.get());
-      AccessibleContextUtil.setName(panel, ref.get());
-      AccessibleContextUtil.setDescription(panel, ref.get());
-      panel.add(createArrow(ref.get()), BorderLayout.EAST);
-      installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
+      panel.add(link);
+      AccessibleContextUtil.setName(panel, link);
+      AccessibleContextUtil.setDescription(panel, link);
+      panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
 
@@ -390,7 +463,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         @Override
         public void run() {
           mySlidingPanel.getRootPane().setDefaultButton(null);
-          setTitle(WELCOME_TITLE);
+          setTitle(getWelcomeFrameTitle());
         }
       });
     }
@@ -417,10 +490,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
-      String appVersion = "Version " + app.getFullVersion();
+      String appVersion = "Version ";
 
-      if (app.isEAP() && app.getBuild().getBuildNumber() < Integer.MAX_VALUE) {
-        appVersion += " (" + app.getBuild().asString() + ")";
+      appVersion += app.getFullVersion();
+
+      if (app.isEAP() && !app.getBuild().isSnapshot()) {
+        appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
       }
 
       JLabel version = new JLabel(appVersion);

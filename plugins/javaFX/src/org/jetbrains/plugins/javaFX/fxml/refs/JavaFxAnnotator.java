@@ -58,7 +58,8 @@ public class JavaFxAnnotator implements Annotator {
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
       final PsiReference[] references = element.getReferences();
-      if (!JavaFxPsiUtil.isExpressionBinding(((XmlAttributeValue)element).getValue())) {
+      final String value = ((XmlAttributeValue)element).getValue();
+      if (!JavaFxPsiUtil.isExpressionBinding(value) && !JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
         for (PsiReference reference : references) {
           final PsiElement resolve = reference.resolve();
           if (resolve instanceof PsiMember) {

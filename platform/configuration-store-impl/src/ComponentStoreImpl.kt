@@ -34,7 +34,6 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.ui.AppUIUtil
@@ -46,6 +45,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
+import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -123,10 +123,10 @@ abstract class ComponentStoreImpl : IComponentStore {
       val names = ArrayUtilRt.toStringArray(components.keys)
       Arrays.sort(names)
       val timeLogPrefix = "Saving"
-      var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+      val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components[name]!!, name)
+        commitComponent(externalizationSession, components.get(name)!!, name)
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -268,7 +268,12 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("use.loaded.state.as.existing", false))) {
+        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+        // use.loaded.state.as.existing used in upsource
+        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
+          name != "ProjectModuleManager" &&
+          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
           (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
         }
         else {

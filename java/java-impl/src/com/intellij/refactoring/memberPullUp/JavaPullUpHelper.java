@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove = null;
+  private Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 
@@ -227,7 +227,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);
     }
-    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
@@ -235,7 +235,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;
-      } else {
+      }
+      else {
+        if (info.isToAbstract() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          PsiUtil.setModifierProperty(methodCopy, PsiModifier.DEFAULT, false);
+        }
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,9 +117,9 @@ public class DelayedDocumentWatcher {
     @Override
     public void documentChanged(DocumentEvent event) {
       if (myDocumentSavingInProgress) {
-        /** When {@link FileDocumentManager#saveAllDocuments} is called,
-         *  {@link com.intellij.openapi.editor.impl.TrailingSpacesStripper} can change a document.
-         *  These needless 'documentChanged' events should be filtered out.
+        /* When {@link FileDocumentManager#saveAllDocuments} is called,
+           {@link com.intellij.openapi.editor.impl.TrailingSpacesStripper} can change a document.
+           These needless 'documentChanged' events should be filtered out.
          */
         return;
       }

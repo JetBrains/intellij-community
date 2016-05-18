@@ -615,6 +615,7 @@ public class HtmlUtil {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;
+      if ("Dart".equals(language.getID())) return true;
       language = language.getBaseLanguage();
     }
 

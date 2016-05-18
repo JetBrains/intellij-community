@@ -35,6 +35,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
@@ -139,9 +140,13 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
 
     NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, (ValueDescriptor) node.getParent().getDescriptor());
 
+    PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
+    if (childrenPsiExpression == null) {
+      return null;
+    }
     return DebuggerTreeNodeExpression.substituteThis(
       childrenRenderer.getChildValueExpression(node, context),
-      (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
+      (PsiExpression)childrenPsiExpression.copy(),
       expressionValue);
   }
 

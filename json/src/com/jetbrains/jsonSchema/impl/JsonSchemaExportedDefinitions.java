@@ -15,14 +15,15 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
 
@@ -30,31 +31,104 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
  * @author Irina.Chernushina on 3/28/2016.
  */
 public class JsonSchemaExportedDefinitions {
+  private final Object myLock;
+  private boolean myInitialized;
+  private boolean myDirty;
+  private final BidirectionalMap<String, VirtualFile> myId2Key;
+  private final MultiMap<VirtualFile, VirtualFile> myCrossDependencies;
   private final Map<String, Map<String, JsonSchemaObject>> myMap;
-  private final Project myProject;
+  @NotNull private final Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> mySchemasIterator;
 
-  public static JsonSchemaExportedDefinitions getInstance(final Project project) {
-    return ServiceManager.getService(project, JsonSchemaExportedDefinitions.class);
+  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> schemasIterator) {
+    mySchemasIterator = schemasIterator;
+    myLock = new Object();
+    myMap = new HashMap<>();
+    myId2Key = new BidirectionalMap<>();
+    myCrossDependencies = new MultiMap<>();
   }
 
-  public JsonSchemaExportedDefinitions(@NotNull final Project project) {
-    myProject = project;
-    myMap = Collections.synchronizedMap(new HashMap<>());
-  }
-
-  public void register(@NotNull final String url, @NotNull final Map<String, JsonSchemaObject> map) {
-    myMap.put(url, map);
-    if (myMap.size() > 10000) {
-      LOG.info("Too many schema definitions registered. Something could go wrong.");
+  public void register(@NotNull VirtualFile key, @NotNull final String url, @NotNull final Map<String, JsonSchemaObject> map) {
+    synchronized (myLock) {
+      myMap.put(url, map);
+      myId2Key.put(url, key);
+      if (myMap.size() > 10000) {
+        LOG.info("Too many schema definitions registered. Something could go wrong.");
+      }
     }
   }
 
-  public JsonSchemaObject findDefinition(@NotNull final String url, @NotNull final String relativePart, @NotNull final JsonSchemaObject rootObject) {
-    ServiceManager.getService(myProject, JsonSchemaService.class).ensureExportedDefinitionsInitialized();
-    final Map<String, JsonSchemaObject> map = myMap.get(url);
-    if (map != null) {
-      return JsonSchemaReader.findDefinition(myProject, relativePart, rootObject, map, false);
+  public JsonSchemaObject findDefinition(@NotNull VirtualFile requestingSchemaKey, @NotNull final String url,
+                                         @NotNull final String relativePart) {
+    synchronized (myLock) {
+      ensureInitialized();
+      final VirtualFile key = myId2Key.get(url);
+      if (key != null) myCrossDependencies.putValue(key, requestingSchemaKey);
+      final Map<String, JsonSchemaObject> map = myMap.get(url);
+      if (map != null) {
+        final JsonSchemaObject found = map.get(relativePart);
+        if (found != null) return found;
+      }
     }
     return null;
+  }
+
+  private void ensureInitialized() {
+    synchronized (myLock) {
+      if (myInitialized && !myDirty) return;
+      mySchemasIterator.consume(new PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>() {
+        @Override
+        public void consume(VirtualFile key, NullableLazyValue<JsonSchemaObject> value) {
+          if (!myInitialized || !myId2Key.containsValue(key)) {
+            final JsonSchemaObject object = value.getValue();
+            if (object != null) {
+              JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
+            }
+          }
+        }
+      });
+      myDirty = false;
+      myInitialized = true;
+    }
+  }
+
+  public void reset() {
+    synchronized (myLock) {
+      myInitialized = false;
+      myDirty = false;
+      myMap.clear();
+      myCrossDependencies.clear();
+      myId2Key.clear();
+    }
+  }
+
+  public Set<VirtualFile> dropKey(@NotNull VirtualFile key) {
+    final Set<VirtualFile> dirtyKeys = new HashSet<>();
+    synchronized (myLock) {
+      myDirty = true;
+      final ArrayDeque<VirtualFile> queue = new ArrayDeque<>();
+      queue.add(key);
+      while (!queue.isEmpty()) {
+        final VirtualFile current = queue.remove();
+        dirtyKeys.add(current);
+        final List<String> keys = myId2Key.getKeysByValue(current);
+        myId2Key.removeValue(current);
+        if (keys != null && !keys.isEmpty()) {
+          assert keys.size() == 1;
+          myMap.remove(keys.get(0));
+          final Collection<VirtualFile> dependencies = myCrossDependencies.remove(current);
+          if (dependencies != null) {
+            queue.addAll(dependencies);
+          }
+        }
+      }
+    }
+    return dirtyKeys;
+  }
+
+  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
+    synchronized (myLock) {
+      ensureInitialized();
+      return file.equals(myId2Key.get(id));
+    }
   }
 }

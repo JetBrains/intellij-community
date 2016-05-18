@@ -41,7 +41,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ThreadTracker;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -325,7 +324,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void invokeRatherLater(final DebuggerCommandImpl command) {
-    IJSwingUtilities.invoke(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         InvokeRatherLaterRequest request = new InvokeRatherLaterRequest(command, getDebugProcess());

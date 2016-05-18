@@ -174,7 +174,12 @@ class Test88 {
 }
 """
   }
-  
+
+  public void testInheritorConstructorRef() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
+  }
+
   public void "test constructor ref without start"() {
     myFixture.configureByText "a.java", """
 interface Foo9 {
@@ -219,7 +224,7 @@ class Test88 {
 
   public void testAllCollectors() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'collect(Collectors.toCollection())', 'collect', 'collect', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
+    myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
     selectItem(myItems.find { it.lookupString.contains('toCollection') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
@@ -240,5 +245,11 @@ class Test88 {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
+  public void testLambdaWithSuperWildcardInAmbiguousCall() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
+  }
   public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
+
+  public void testNoCollectorsInComment() { doAntiTest() }
 }

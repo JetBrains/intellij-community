@@ -1,37 +1,39 @@
 package com.jetbrains.jsonSchema;
 
 
-import com.intellij.json.JsonFileType;
+import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.Reader;
-import java.io.StringReader;
 
 public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
+  private final VirtualFile mySchemaFile;
 
-  private final String mySchemaText;
-
-  public JsonSchemaTestProvider(String text) {
-    mySchemaText = text;
+  public JsonSchemaTestProvider(VirtualFile schemaFile) {
+    mySchemaFile = schemaFile;
   }
 
   @Override
-  public boolean isAvailable(@NotNull VirtualFile file) {
-    return file.getFileType() == JsonFileType.INSTANCE;
-  }
-
-  @Nullable
-  @Override
-  public Reader getSchemaReader() {
-    return new StringReader(mySchemaText);
+  public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
+    return file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(JsonLanguage.INSTANCE);
   }
 
   @NotNull
   @Override
   public String getName() {
     return "test";
+  }
+
+  @Override
+  public VirtualFile getSchemaFile() {
+    return mySchemaFile;
+  }
+
+  @Override
+  public SchemaType getSchemaType() {
+    return SchemaType.userSchema;
   }
 }

@@ -105,7 +105,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
-    GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
+    GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx128m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
     configureWrapper();
   }
@@ -162,6 +162,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     return "build.gradle";
   }
 
+  protected void importProjectUsingSingeModulePerGradleProject() {
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importProject();
+  }
+
   @Override
   protected void importProject() {
     ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
@@ -174,6 +179,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       }
     });
     super.importProject();
+  }
+
+  protected void importProjectUsingSingeModulePerGradleProject(@NonNls @Language("Groovy") String config) throws IOException {
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importProject(config);
   }
 
   @Override
@@ -189,7 +199,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
-  protected ExternalProjectSettings getCurrentExternalProjectSettings() {
+  protected GradleProjectSettings getCurrentExternalProjectSettings() {
     return myProjectSettings;
   }
 

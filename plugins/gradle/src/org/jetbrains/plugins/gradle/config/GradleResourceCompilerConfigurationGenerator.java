@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -80,6 +79,7 @@ public class GradleResourceCompilerConfigurationGenerator {
     assert externalProjectDataCache != null;
 
     project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         myModulesConfigurationHash.remove(module.getName());
       }
@@ -130,20 +130,17 @@ public class GradleResourceCompilerConfigurationGenerator {
     final Document document = new Document(new Element("gradle-project-configuration"));
     XmlSerializer.serializeInto(projectConfig, document.getRootElement());
     final boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
-    buildManager.runCommand(new Runnable() {
-      @Override
-      public void run() {
-        if (finalConfigurationUpdateRequired) {
-          buildManager.clearState(myProject);
-        }
-        FileUtil.createIfDoesntExist(gradleConfigFile);
-        try {
-          JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
-          myModulesConfigurationHash.putAll(affectedConfigurationHash);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    buildManager.runCommand(() -> {
+      if (finalConfigurationUpdateRequired) {
+        buildManager.clearState(myProject);
+      }
+      FileUtil.createIfDoesntExist(gradleConfigFile);
+      try {
+        JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
+        myModulesConfigurationHash.putAll(affectedConfigurationHash);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -153,8 +150,7 @@ public class GradleResourceCompilerConfigurationGenerator {
     final GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
     if (gradleConfigFile.exists()) {
       try {
-        final Document document = JDOMUtil.loadDocument(gradleConfigFile);
-        XmlSerializer.deserializeInto(projectConfig, document.getRootElement());
+        XmlSerializer.deserializeInto(projectConfig, JDOMUtil.load(gradleConfigFile));
 
         // filter orphan modules
         final Set<String> actualModules = myModulesConfigurationHash.keySet();
@@ -189,13 +185,12 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
-      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
-      if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
+
+      final String gradleProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+      assert gradleProjectPath != null;
 
       if (shouldBeBuiltByExternalSystem(module)) continue;
 
-      final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-      assert gradleProjectPath != null;
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         context.addMessage(CompilerMessageCategory.ERROR,

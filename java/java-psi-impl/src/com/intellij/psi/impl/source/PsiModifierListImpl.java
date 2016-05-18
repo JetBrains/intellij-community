@@ -68,7 +68,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    final PsiModifierListStub stub = getStub();
+    Boolean augmentation = PsiAugmentProvider.checkModifierProperty(this, name);
+    if (augmentation != null) return augmentation;
+
+    PsiModifierListStub stub = getStub();
     if (stub != null) {
       return ModifierFlags.hasModifierProperty(name, stub.getModifiersMask());
     }
@@ -300,6 +303,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     }
   }
 
+  @Override
   public String toString(){
     return "PsiModifierList:" + getText();
   }

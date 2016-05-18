@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -108,23 +109,14 @@ public class RefJavaManagerImpl extends RefJavaManager {
     PsiFile file = ((RefElementImpl)element).getContainingFile();
     if (file == null) return null;
 
-    return getDeadCodeTool(file);
+    return getDeadCodeTool(file.getContainingFile());
   }
 
-  private static final UserDataCache<Ref<UnusedDeclarationInspectionBase>, PsiFile, RefManagerImpl> DEAD_CODE_TOOL = new UserDataCache<Ref<UnusedDeclarationInspectionBase>, PsiFile, RefManagerImpl>("DEAD_CODE_TOOL") {
-    @Override
-    protected Ref<UnusedDeclarationInspectionBase> compute(PsiFile file, RefManagerImpl refManager) {
-      Tools tools = ((GlobalInspectionContextBase)refManager.getContext()).getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
-      InspectionToolWrapper toolWrapper = tools == null ? null : tools.getEnabledTool(file);
-      InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
-      return Ref.create(tool instanceof UnusedDeclarationInspectionBase ? (UnusedDeclarationInspectionBase)tool : null);
-    }
-  };
-
-  @Nullable
-  private UnusedDeclarationInspectionBase getDeadCodeTool(PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    return file != null ? DEAD_CODE_TOOL.get(file, myRefManager).get() : null;
+  private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
+    Tools tools = ((GlobalInspectionContextBase)myRefManager.getContext()).getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
+    InspectionToolWrapper toolWrapper = tools == null ? null : tools.getEnabledTool(file);
+    InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
+    return tool instanceof UnusedDeclarationInspectionBase ? (UnusedDeclarationInspectionBase)tool : null;
   }
 
   @Override
@@ -374,6 +366,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
           return null;
         }
       };
+      Disposer.register(project, myEntryPointsManager);
+
       ((EntryPointsManagerBase)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }
     return myEntryPointsManager;

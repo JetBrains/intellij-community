@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  protected boolean myNullConditionalCheck = false;
-  protected boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck;
+  protected boolean myNotNullConditionalCheck;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,
@@ -731,6 +731,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @TestOnly
+  public void testTargetClass(PsiClass targetClass) {
+    if (targetClass != null) {
+      myTargetClass = targetClass;
+      myNeedChangeContext = true;
+    }
+  }
+
+  @TestOnly
   public void testPrepare(PsiType returnType, boolean makeStatic) throws PrepareFailedException{
     if (makeStatic) {
       if (!isCanBeStatic()) {
@@ -1018,7 +1026,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-        methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
+        RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
   }
@@ -1132,7 +1140,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
-    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    statement =
+      (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(addToMethodCallLocation(statement));
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     if (myOutputVariable != null) {
@@ -1220,8 +1229,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  @Override
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myExtractedMethod);
+  }
+
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
@@ -1282,12 +1295,26 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void renameInputVariables() throws IncorrectOperationException {
     //when multiple input variables should have the same name, unique names are generated
     //without reverse, the second rename would rename variable without a prefix into second one though it was already renamed
+    LocalSearchScope localSearchScope = null;
     for (int i = myVariableDatum.length - 1; i >= 0;  i--) {
       VariableData data = myVariableDatum[i];
       PsiVariable variable = data.variable;
-      if (!data.name.equals(variable.getName())) {
-        for (PsiElement element : myElements) {
-          RefactoringUtil.renameVariableReferences(variable, data.name, new LocalSearchScope(element));
+      if (!data.name.equals(variable.getName()) || variable instanceof PsiField) {
+        if (localSearchScope == null) {
+          localSearchScope = new LocalSearchScope(myElements);
+        }
+
+        for (PsiReference reference : ReferencesSearch.search(variable, localSearchScope)) {
+          reference.handleElementRename(data.name);
+
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+            final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+            if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+              referenceExpression.setQualifierExpression(null);
+            }
+          }
         }
       }
     }

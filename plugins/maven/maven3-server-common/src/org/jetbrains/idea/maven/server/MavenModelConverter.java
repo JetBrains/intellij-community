@@ -148,11 +148,11 @@ public class MavenModelConverter {
                                                      File localRepository) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
 
-    List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
+    Set<MavenArtifact> result = new LinkedHashSet<MavenArtifact>(artifacts.size());
     for (Artifact each : artifacts) {
       result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
     }
-    return result;
+    return new ArrayList<MavenArtifact>(result);
   }
 
   public static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
@@ -264,7 +264,7 @@ public class MavenModelConverter {
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) throws RemoteException {
-    return new MavenPlugin.Execution(execution.getId(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
+    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
   private static Element convertConfiguration(Object config) throws RemoteException {

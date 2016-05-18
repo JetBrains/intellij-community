@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,9 +140,6 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
-    // need this because search with PSI is perormed during hotswap
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     final DebuggerSettings settings = DebuggerSettings.getInstance();
     final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
     final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
@@ -173,7 +169,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       public void run() {
         final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
         if (shouldPerformScan) {
-          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress, false);
+          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress);
         }
         else {
           final List<DebuggerSession> toScan = new ArrayList<>();
@@ -187,7 +183,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
             modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
           }
           if (!toScan.isEmpty()) {
-            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress, !true));
+            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress));
           }
         }
 
@@ -243,6 +239,9 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
             if (!modifiedClasses.isEmpty()) {
               final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
+              if (modifiedClasses.keySet().size() == 1) {
+                progress.setSessionToRestartOnFail(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
+              }
               application.executeOnPooledThread(new Runnable() {
                 public void run() {
                   reloadModifiedClasses(modifiedClasses, progress);
@@ -256,13 +255,12 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
   }
 
   private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions,
-                                                                                                   final HotSwapProgressImpl progress,
-                                                                                                   final boolean scanWithVFS) {
+                                                                                                   final HotSwapProgressImpl progress) {
     final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> result = Ref.create(null);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         try {
-          result.set(HotSwapManager.scanForModifiedClasses(sessions, progress, scanWithVFS));
+          result.set(HotSwapManager.scanForModifiedClasses(sessions, progress));
         }
         finally {
           progress.finished();

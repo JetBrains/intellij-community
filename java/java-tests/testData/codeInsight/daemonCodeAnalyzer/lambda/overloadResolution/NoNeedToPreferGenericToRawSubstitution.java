@@ -4,7 +4,7 @@ import java.util.Set;
 abstract class Test {
 
   public void foo(List list) {
-    set<error descr="Ambiguous method call: both 'Test.set(Set<List>, List)' and 'Test.set(Set<Object>, List<?>)' match">(get(), list)</error>;
+    set<error descr="Ambiguous method call: both 'Test.set(Set<List>, List)' and 'Test.set(Set, List)' match">(get(), list)</error>;
   }
 
   abstract <Y> Set<Y> get();

@@ -16,44 +16,16 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.tree.MutableTreeNode;
 
 /**
  * @author max
  */
 public class InspectionRootNode extends InspectionTreeNode {
-  private static final Icon APP_ICON = PlatformUtils.isJetBrainsProduct()
-                                       ? AllIcons.Nodes.IdeaProject
-                                       : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-  private final Project myProject;
-
   public InspectionRootNode(Project project, @NotNull InspectionTreeUpdater updater) {
     super(project);
-    myProject = project;
     myUpdater = updater;
-  }
-
-  public String toString() {
-    return isEmpty() ? InspectionsBundle.message("inspection.empty.root.node.text") :
-           myProject.getName();
-  }
-
-  private boolean isEmpty() {
-    return getChildCount() == 0;
-  }
-
-  @Override
-  public Icon getIcon(boolean expanded) {
-    return APP_ICON;
   }
 
   public InspectionTreeUpdater getUpdater() {

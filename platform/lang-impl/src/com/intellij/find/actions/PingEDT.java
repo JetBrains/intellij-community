@@ -65,10 +65,10 @@ class PingEDT {
     }
   };
 
-  public PingEDT(@NotNull @NonNls String name,
-                 @NotNull Condition<?> shutUpCondition,
-                 int maxUnitOfWorkThresholdMs,
-                 @NotNull Runnable pingAction) {
+  PingEDT(@NotNull @NonNls String name,
+          @NotNull Condition<?> shutUpCondition,
+          int maxUnitOfWorkThresholdMs,
+          @NotNull Runnable pingAction) {
     myName = name;
     myShutUpCondition = shutUpCondition;
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;

@@ -410,9 +410,10 @@ public class MarkerType {
 
     @Override
     public String getCaption(int size) {
+      String suffix = isFinished() ? "" : " so far";
       return myClass.isInterface()
-             ? CodeInsightBundle.message("goto.implementation.chooserTitle", myClass.getName(), size)
-             : DaemonBundle.message("navigation.title.subclass", myClass.getName(), size);
+             ? CodeInsightBundle.message("goto.implementation.chooserTitle", myClass.getName(), size, suffix)
+             : DaemonBundle.message("navigation.title.subclass", myClass.getName(), size, suffix);
     }
 
     @Override

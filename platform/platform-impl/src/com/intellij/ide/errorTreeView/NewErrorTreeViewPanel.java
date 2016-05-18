@@ -64,12 +64,12 @@ import java.util.List;
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
   private volatile String myProgressText = "";
-  private volatile float myFraction = 0.0f;
+  private volatile float myFraction;
   private final boolean myCreateExitAction;
   private final ErrorViewStructure myErrorViewStructure;
   private final ErrorViewTreeBuilder myBuilder;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private volatile boolean myIsDisposed = false;
+  private volatile boolean myIsDisposed;
   private final ErrorTreeViewConfiguration myConfiguration;
 
   public interface ProcessController {
@@ -127,7 +127,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myMessagePanel = new JPanel(new BorderLayout());
 
-    myErrorViewStructure = new ErrorViewStructure(project, canHideWarnings());
+    myErrorViewStructure = createErrorViewStructure(project, canHideWarnings());
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myErrorViewStructure.createDescriptor(myErrorViewStructure.getRootElement(), null));
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -178,6 +178,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     });
 
     EditSourceOnDoubleClickHandler.install(myTree);
+  }
+
+  protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
+    return new ErrorViewStructure(project, canHideWarnings);
   }
 
   @Override

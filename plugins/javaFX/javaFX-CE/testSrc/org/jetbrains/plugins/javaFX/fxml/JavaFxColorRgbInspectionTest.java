@@ -21,6 +21,10 @@ public class JavaFxColorRgbInspectionTest extends AbstractJavaFXTestCase {
     doTestHighlighting();
   }
 
+  public void testFxReference() throws Exception {
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myFixture.checkHighlighting();

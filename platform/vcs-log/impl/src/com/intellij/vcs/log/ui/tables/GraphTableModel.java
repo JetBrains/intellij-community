@@ -9,7 +9,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.DataGetter;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -33,15 +33,15 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull protected final VcsLogUiImpl myUi;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui) {
-    myLogDataManager = dataManager;
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull VcsLogUiImpl ui) {
+    myLogData = logData;
     myUi = ui;
     myDataPack = dataPack;
   }
@@ -63,11 +63,11 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Nullable
   public CommitId getCommitIdAtRow(int row) {
-    return myLogDataManager.getCommitId(getIdAtRow(row));
+    return myLogData.getCommitId(getIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
-    final int commitIndex = myLogDataManager.getCommitIndex(hash, root);
+    final int commitIndex = myLogData.getCommitIndex(hash, root);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -78,7 +78,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
-    CommitId commitId = myLogDataManager.getHashMap().findCommitId(new Condition<CommitId>() {
+    CommitId commitId = myLogData.getHashMap().findCommitId(new Condition<CommitId>() {
       @Override
       public boolean value(CommitId commitId) {
         return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
@@ -172,12 +172,12 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsFullCommitDetails getFullDetails(int row) {
-    return getDetails(row, myLogDataManager.getCommitDetailsGetter());
+    return getDetails(row, myLogData.getCommitDetailsGetter());
   }
 
   @NotNull
   public VcsShortCommitDetails getShortDetails(int row) {
-    return getDetails(row, myLogDataManager.getMiniDetailsGetter());
+    return getDetails(row, myLogData.getMiniDetailsGetter());
   }
 
   @NotNull
@@ -217,7 +217,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public List<Integer> convertToHashesAndRoots(@NotNull List<Integer> rows) {
+  public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
     return ContainerUtil.map(rows, new NotNullFunction<Integer, Integer>() {
       @NotNull
       @Override

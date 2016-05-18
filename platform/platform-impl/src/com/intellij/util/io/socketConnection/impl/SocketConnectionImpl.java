@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util.io.socketConnection.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.socketConnection.*;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -72,7 +71,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
         host = InetAddress.getLocalHost();
       }
       catch (UnknownHostException ignored) {
-        host = NetUtils.getLoopbackAddress();
+        host = InetAddress.getLoopbackAddress();
       }
     }
 
@@ -98,7 +97,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
         Exception exception = null;
         InetAddress host = myHost;
         if (host == null) {
-          host = NetUtils.getLoopbackAddress();
+          host = InetAddress.getLoopbackAddress();
         }
 
         for (int attempt = 0; attempt < MAX_CONNECTION_ATTEMPTS; attempt++) {

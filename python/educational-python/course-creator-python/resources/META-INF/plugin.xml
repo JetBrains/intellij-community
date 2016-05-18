@@ -2,7 +2,7 @@
   <id>com.jetbrains.edu.coursecreator.python</id>
   <name>Course Creator for PyCharm Edu</name>
   <version>2.0.3</version>
-  <idea-version since-build="143.403"/>
+  <idea-version since-build="162.75"/>
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm <Edu></Edu>.
     ]]></description>
@@ -17,31 +17,19 @@
   <depends>com.jetbrains.edu.coursecreator</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
   <depends>com.jetbrains.python.edu.interactivelearning.python</depends>
-  <depends>com.jetbrains.python.edu.core</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
+    <configurationType implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
   </extensions>
 
   <extensions defaultExtensionNs="Edu">
     <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
-    <executeFile implementation="com.jetbrains.edu.coursecreator.PyCCRunTests"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
     <pyReferenceResolveProvider implementation="com.jetbrains.edu.coursecreator.PyCCReferenceResolveProvider"/>
   </extensions>
-
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
-
-  <project-components>
-    <!-- Add your project components here -->
-  </project-components>
-
-  <actions>
-    <action id="CCRunTests" class="com.jetbrains.edu.coursecreator.actions.PyCCRunTestsAction" text="Run Tests" description="Run tests"/>
-  </actions>
 
 </idea-plugin>

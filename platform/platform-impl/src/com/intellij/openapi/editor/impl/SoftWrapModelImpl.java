@@ -223,8 +223,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
       }
     }
 
-    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    return visibleArea.width > 0 && visibleArea.height > 0;
+    return !myApplianceManager.getAvailableArea().isEmpty();
   }
 
   @Override
@@ -750,7 +749,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
   @NotNull
   @Override
   public String dumpState() {
-    return String.format("appliance manager state: %s; soft wraps mapping info: %s; soft wraps: %s",
+    return String.format("\nuse soft wraps: %b, tab width: %d, additional columns: %b, " +
+                         "update in progress: %b, bulk update in progress: %b, active: %b, dirty: %b, deferred regions: %s" +
+                         "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
+                         myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress, myActive,
+                         myDirty, myDeferredFoldRegions.toString(),
                          myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());
   }
 

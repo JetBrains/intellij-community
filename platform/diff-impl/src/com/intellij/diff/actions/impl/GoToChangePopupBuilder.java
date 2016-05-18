@@ -126,12 +126,9 @@ public class GoToChangePopupBuilder {
 
       @Override
       public PopupStep onChosen(final DiffRequestProducer selectedValue, boolean finalChoice) {
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            int index = myChain.getRequests().indexOf(selectedValue);
-            myOnSelected.consume(index);
-          }
+        return doFinalStep(() -> {
+          int index = myChain.getRequests().indexOf(selectedValue);
+          myOnSelected.consume(index);
         });
       }
     }

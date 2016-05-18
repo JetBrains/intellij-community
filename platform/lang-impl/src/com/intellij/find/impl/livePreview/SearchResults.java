@@ -330,7 +330,7 @@ public class SearchResults implements DocumentListener {
       return;
     }
     myLastUpdatedStamp = stamp;
-    if (editor != getEditor() || myDisposed) {
+    if (editor != getEditor() || myDisposed || editor.isDisposed()) {
       return;
     }
     myOccurrences = occurrences;

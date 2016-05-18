@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -219,7 +220,7 @@ public class ReplaceInProjectManager {
         @Override
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
-            SwingUtilities.invokeLater(new Runnable() {
+            TransactionGuard.submitTransaction(myProject, new Runnable() {
               @Override
               public void run() {
                 replaceWithPrompt(context[0]);

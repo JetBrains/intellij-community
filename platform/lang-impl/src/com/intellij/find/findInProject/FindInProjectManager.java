@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FindInProjectManager {
   private final Project myProject;
-  private volatile boolean myIsFindInProgress = false;
+  private volatile boolean myIsFindInProgress;
 
   public static FindInProjectManager getInstance(Project project) {
     return ServiceManager.getService(project, FindInProjectManager.class);
@@ -69,9 +69,7 @@ public class FindInProjectManager {
     findModel.setOpenInNewTabVisible(true);
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     findModel.setOpenInNewTab(toOpenInNewTab);
-    if (findModel.getDirectoryName() == null) {//Don't replace or reset old (stored) directory
-      FindInProjectUtil.setDirectoryName(findModel, dataContext);
-    }
+    FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {

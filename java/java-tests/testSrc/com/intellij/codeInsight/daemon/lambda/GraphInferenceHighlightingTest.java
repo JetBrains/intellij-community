@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -418,6 +419,28 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testPartialRawSubstitutionToAvoidInferringObjectsWhenRawExpected() throws Exception {
+    final UncheckedWarningLocalInspection localInspection = new UncheckedWarningLocalInspection();
+    enableInspectionTool(localInspection);
+    doTest(true);
+  }
+
+  public void testIDEA154278() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveTypeInReturnConstraintWithUncheckedConversion() throws Exception {
+    doTest();
+  }
+
+  public void testPolyMethodCallOnLeftSideOfAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testTreatConditionalExpressionAsPolyIfNewExpressionWithDiamondsIsUsed() throws Exception {
+    doTest();
+  }
+
   public void testVariableNamesOfNestedCalls() throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
@@ -443,6 +466,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     if (!found) {
       fail(StringUtil.join(tooltips, ", "));
     }
+  }
+
+  public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() throws Exception {
+    doTest();
   }
 
   private void doTest() throws Exception {

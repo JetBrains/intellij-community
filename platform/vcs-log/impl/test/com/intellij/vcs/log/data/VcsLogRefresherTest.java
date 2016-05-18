@@ -33,6 +33,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -40,7 +41,7 @@ import java.util.concurrent.*;
 
 import static com.intellij.vcs.log.TimedCommitParser.log;
 
-public class VcsLogRefresherTest extends VcsLogPlatformTest {
+public class VcsLogRefresherTest extends VcsPlatformTest {
 
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherTest.class);
 
@@ -52,7 +53,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   };
   private TestVcsLogProvider myLogProvider;
-  private VcsLogDataManager myDataManager;
+  private VcsLogData myLogData;
   private Map<Integer, VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
 
@@ -201,14 +202,14 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataManager = new VcsLogDataManager(myProject, myLogProviders, new Consumer<Exception>() {
+    myLogData = new VcsLogData(myProject, myLogProviders, new Consumer<Exception>() {
       @Override
       public void consume(Exception e) {
         LOG.error(e);
       }
     });
-    Disposer.register(myProject, myDataManager);
-    return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(),
+    Disposer.register(myProject, myLogData);
+    return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(),
                                    myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
@@ -239,7 +240,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
           @NotNull
           @Override
           public Hash fun(Integer integer) {
-            return myDataManager.getCommitId(integer).getHash();
+            return myLogData.getCommitId(integer).getHash();
           }
         };
         return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -89,7 +90,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         @NotNull
         @Override
         public AnAction fun(final String language) {
-          return new AnAction(language) {
+          return new DumbAwareAction(language) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               runConsole(e, language);
@@ -132,18 +133,21 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull IdeScriptEngine engine) {
-    String command = getCommand(editor);
-    String profile = getProfile(file);
+    String command = getCommandText(editor);
+    String profile = getProfileText(file);
     RunContentDescriptor descriptor = getConsoleView(project, file);
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
 
     prepareEngine(project, engine, descriptor);
     try {
+      long ts = System.currentTimeMillis();
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      Object o = engine.eval(profile == null ? command : profile + "\n" + command);
-      consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
+      String script = profile == null ? command : profile + "\n" + command;
+      Object o = engine.eval(script);
+      String prefix = "["+(StringUtil.formatDuration(System.currentTimeMillis() - ts))+"]";
+      consoleView.print(prefix + "=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Throwable e) {
@@ -161,19 +165,19 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String getProfile(@NotNull VirtualFile file) {
-    VirtualFile profileChild = file.getParent().findChild(".profile." + file.getExtension());
-    String profile = null;
+  private static String getProfileText(@NotNull VirtualFile file) {
     try {
-      profile = profileChild == null ? "" : VfsUtilCore.loadText(profileChild);
+      VirtualFile folder = file.getParent();
+      VirtualFile profileChild = folder == null ? null : folder.findChild(".profile." + file.getExtension());
+      return profileChild == null ? null : StringUtil.nullize(VfsUtilCore.loadText(profileChild));
     }
     catch (IOException ignored) {
     }
-    return profile;
+    return null;
   }
 
   @NotNull
-  private static String getCommand(@NotNull Editor editor) {
+  private static String getCommandText(@NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (selectedRange.getLength() == 0) {
@@ -247,7 +251,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
       String extension = virtualFile.getExtension();
       if (extension != null && (engine == null || !engine.getFileExtensions().contains(extension))) {
-        engine = IdeScriptEngineManager.getInstance().getEngineForFileExtension(extension);
+        engine = IdeScriptEngineManager.getInstance().getEngineForFileExtension(extension, null);
       }
       if (engine == null) {
         LOG.warn("Script engine not found for: " + virtualFile.getName());

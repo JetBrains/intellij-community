@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
@@ -55,6 +56,8 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -66,9 +69,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   private final Project myProject;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
-
-  @NotNull private final ChangesBrowserNodeRenderer myNodeRenderer;
-  @NotNull private final ChangesBrowserNodeRenderer myShowFlattenNodeRenderer;
 
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
@@ -91,10 +91,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
-    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
+    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
 
-    myNodeRenderer = new ChangesBrowserNodeRenderer(project, false, true);
-    myShowFlattenNodeRenderer = new ChangesBrowserNodeRenderer(project, true, true);
+    setCellRenderer(new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true));
   }
 
   @Override
@@ -146,7 +145,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
     setModel(model);
-    setCellRenderer(isShowFlatten() ? myShowFlattenNodeRenderer : myNodeRenderer);
     ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
     expandPath(new TreePath(root.getPath()));
     state.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
@@ -168,7 +166,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
           }
         }
       }
-      
+
       if (toExpand != null) {
         expandPath(new TreePath(new Object[] {root, toExpand}));
       }
@@ -258,17 +256,18 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @NotNull
   private List<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    Set<VirtualFile> files = new HashSet<VirtualFile>();
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (isUnderTag(path, tag)) {
-          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-          files.addAll(node.getAllFilesUnder());
-        }
-      }
-    }
-    return ContainerUtil.newArrayList(files);
+    return getVirtualFiles(getSelectionPaths(), tag);
+  }
+
+  @NotNull
+  static List<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+    return paths == null
+           ? Collections.emptyList()
+           : Stream.of(paths)
+             .filter(path -> isUnderTag(path, tag))
+             .flatMap(path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getAllFilesUnder().stream())
+             .distinct()
+             .collect(Collectors.toList());
   }
 
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
@@ -649,7 +648,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return action == DnDAction.MOVE && 
+    return action == DnDAction.MOVE &&
            (getSelectedChanges().length > 0 || !getSelectedUnversionedFiles().isEmpty() || !getSelectedIgnoredFiles().isEmpty());
   }
 

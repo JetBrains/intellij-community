@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -31,6 +32,8 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -258,7 +261,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       updateRunnerComponent();
       myRunnersList.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           Executor executor = (Executor)value;
           setIcon(executor.getIcon());
           append(executor.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -318,7 +321,36 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     @Override
     @NotNull
     public JComponent createEditor() {
-      return myConfigEditor.getComponent();
+      JComponent component = myConfigEditor.getComponent();
+      if (myConfigEditor instanceof AdjustingTabSettingsEditor) {
+        JPanel panel = new JPanel(new BorderLayout());
+        UiNotifyConnector connector = new UiNotifyConnector(panel, new Activatable() {
+          private boolean myIsEmpty = true;
+          @Override
+          public void showNotify() {
+            if (myIsEmpty) {
+              panel.add(component, BorderLayout.CENTER);
+              panel.revalidate();
+              panel.repaint();
+              myIsEmpty = false;
+            }
+          }
+
+          @Override
+          public void hideNotify() {
+            if (!myIsEmpty) {
+              panel.removeAll();
+              panel.revalidate();
+              panel.repaint();
+              myIsEmpty = true;
+            }
+          }
+
+        });
+        Disposer.register(this, connector);
+        return panel;
+      }
+      return component;
     }
 
     @Override

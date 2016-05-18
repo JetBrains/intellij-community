@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,6 +59,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  @SuppressWarnings("PublicField")
+  public boolean commentsAreContent = false;
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
@@ -172,6 +175,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
+    if (commentsAreContent && PsiTreeUtil.findChildOfType(owner, PsiComment.class) != null) {
+      return false;
+    }
+
     return true;
   }
 
@@ -251,7 +258,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (!EXCLUDE_ANNOS.isEmpty()) {
+    if (!EXCLUDE_ANNOS.isEmpty() || commentsAreContent) {
       super.writeSettings(node);
     }
   }
@@ -289,6 +296,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(new SingleCheckboxOptionsPanel("Comments and javadoc count as content", this, "commentsAreContent"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -89,16 +87,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @Override
   public GrImplementsClause getImplementsClause() {
     return null;
-  }
-
-  @Override
-  public String[] getSuperClassNames() {
-    final PsiReference[] types = getExtendsList().getReferences();
-    List<String> names = new ArrayList<String>(types.length);
-    for (PsiReference type : types) {
-      names.add(type.getCanonicalText());
-    }
-    return ArrayUtil.toStringArray(names);
   }
 
   @Override
@@ -171,14 +159,14 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @Override
   @NotNull
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     return getExtendsList().getReferencedTypes();
   }
 
   @Override
   @NotNull
-  public PsiClassType[] getImplementsListTypes() {
-    return new PsiClassType[0];
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+    return PsiClassType.EMPTY_ARRAY;
   }
 
   @Override
@@ -194,14 +182,14 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @Override
   @NotNull
-  public PsiClass[] getSupers() {
-    return GrClassImplUtil.getSupers(this);
+  public PsiClass[] getSupers(boolean includeSynthetic) {
+    return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
   @Override
   @NotNull
-  public PsiClassType[] getSuperTypes() {
-    return GrClassImplUtil.getSuperTypes(this);
+  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+    return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
   @Override

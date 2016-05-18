@@ -70,7 +70,7 @@ import java.util.List;
 public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataProvider {
   private final MyTree myTree;
   private final JScrollPane myTreeScrollPane;
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
@@ -81,7 +81,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private boolean myAlwaysExpandList;
 
   @NotNull private final MyTreeCellRenderer myNodeRenderer;
-  @NotNull private final MyTreeCellRenderer myShowFlattenNodeRenderer;
 
   @NonNls private static final String ROOT = "root";
 
@@ -93,7 +92,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myNonFlatTreeState;
 
-  public ChangesTreeList(@NotNull final Project project,
+  public ChangesTreeList(@NotNull Project project,
                          @NotNull Collection<T> initiallyIncluded,
                          final boolean showCheckboxes,
                          final boolean highlightProblems,
@@ -106,8 +105,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
     myAlwaysExpandList = true;
-    myNodeRenderer = new MyTreeCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, myHighlightProblems));
-    myShowFlattenNodeRenderer = new MyTreeCellRenderer(new ChangesBrowserNodeRenderer(myProject, true, myHighlightProblems));
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
+    myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
 
     setLayout(new BorderLayout());
 
@@ -124,7 +123,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return node.getTextPresentation();
       }
     });
-
+    myTree.setCellRenderer(myNodeRenderer);
     add(myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
@@ -262,7 +261,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
     myShowFlatten = showFlatten;
     setChangesToDisplay(getChanges());
-    myTree.setCellRenderer(myShowFlatten ? myShowFlattenNodeRenderer : myNodeRenderer);
     if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
     }
@@ -353,12 +351,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           }
         }
 
-        if (changes.size() > 0) {
-          if (selectedTreeRow >= 0) {
-            myTree.setSelectionRow(selectedTreeRow);
-          }
-          TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
+        if (selectedTreeRow >= 0) {
+          myTree.setSelectionRow(selectedTreeRow);
         }
+        TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -486,9 +482,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   public void includeChange(final T change) {
-    myIncludedChanges.add(change);
-    notifyInclusionListener();
-    myTree.repaint();
+    includeChanges(Collections.singleton(change));
   }
 
   public void includeChanges(final Collection<T> changes) {
@@ -498,9 +492,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   public void excludeChange(final T change) {
-    myIncludedChanges.remove(change);
-    notifyInclusionListener();
-    myTree.repaint();
+    excludeChanges(Collections.singleton(change));
   }
 
   public void excludeChanges(final Collection<T> changes) {
@@ -509,7 +501,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myTree.repaint();
   }
 
-  private void toggleChanges(final Collection<T> changes) {
+  protected void toggleChanges(final Collection<T> changes) {
     boolean hasExcluded = false;
     for (T value : changes) {
       if (!myIncludedChanges.contains(value)) {
@@ -608,12 +600,14 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);
+      myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
         @SuppressWarnings("unchecked")
         CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
-        myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL && tree.isEnabled());
+        //noinspection unchecked
+        myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
 
         return this;
@@ -621,6 +615,11 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       else {
         return myTextRenderer;
       }
+    }
+
+    @Override
+    public String getToolTipText() {
+      return myTextRenderer.getToolTipText();
     }
   }
 
@@ -641,6 +640,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     if (hasIncluded && hasExcluded) return CheckboxTree.NodeState.PARTIAL;
     if (hasIncluded) return CheckboxTree.NodeState.FULL;
     return CheckboxTree.NodeState.CLEAR;
+  }
+
+   protected boolean isNodeEnabled(ChangesBrowserNode<T> node) {
+    return getNodeStatus(node) != CheckboxTree.NodeState.PARTIAL;
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {

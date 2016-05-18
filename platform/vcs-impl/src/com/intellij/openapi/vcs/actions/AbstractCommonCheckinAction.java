@@ -78,9 +78,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   @NotNull
   protected FilePath[] prepareRootsForCommit(@NotNull FilePath[] roots, @NotNull Project project) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication()::saveAll);
-    }
+    ApplicationManager.getApplication().saveAll();
 
     return filterDescindingFiles(roots, project);
   }

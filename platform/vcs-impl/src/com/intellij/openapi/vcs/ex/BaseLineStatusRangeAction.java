@@ -19,17 +19,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 
-import javax.swing.*;
-
-/**
-* @author irengrig
-*/
 public abstract class BaseLineStatusRangeAction extends AnAction implements DumbAware {
   protected final LineStatusTracker myLineStatusTracker;
   protected final Range myRange;
 
-  BaseLineStatusRangeAction(final String text, final Icon icon, final LineStatusTracker lineStatusTracker, final Range range) {
-    super(text, null, icon);
+  BaseLineStatusRangeAction(final LineStatusTracker lineStatusTracker, final Range range) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
   }

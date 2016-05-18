@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -582,6 +581,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PsiComment getTypeComment() {
     final PyStatementList statements = getStatementList();
+    final PsiComment inlineComment = as(PyPsiUtils.getPrevNonWhitespaceSibling(statements), PsiComment.class);
+    if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
+      return inlineComment;
+    }
+
     if (statements.getStatements().length != 0) {
       final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
       if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
@@ -622,7 +626,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    */
   @Nullable
   public Modifier getModifier() {
-    String deconame = getClassOrStaticMethodDecorator();
+    final String deconame = getClassOrStaticMethodDecorator();
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       return CLASSMETHOD;
     }
@@ -630,7 +634,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return STATICMETHOD;
     }
     // implicit staticmethod __new__
-    PyClass cls = getContainingClass();
+    final PyClass cls = getContainingClass();
     if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
     }
@@ -638,31 +642,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (getStub() != null) {
       return getWrappersFromStub();
     }
-    String func_name = getName();
-    if (func_name != null) {
-      PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
-      if (assignment != null) {
-        for (Pair<PyExpression, PyExpression> pair : assignment.getTargetsToValuesMapping()) {
-          PyExpression value = pair.getSecond();
-          if (value instanceof PyCallExpression) {
-            PyExpression target = pair.getFirst();
-            if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
-              Pair<String, PyFunction> interpreted = interpretAsModifierWrappingCall((PyCallExpression)value, this);
-              if (interpreted != null) {
-                PyFunction original = interpreted.getSecond();
-                if (original == this) {
-                  String wrapper_name = interpreted.getFirst();
-                  if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
-                    return CLASSMETHOD;
-                  }
-                  else if (PyNames.STATICMETHOD.equals(wrapper_name)) {
-                    return STATICMETHOD;
-                  }
-                }
-              }
-            }
-          }
+    final String funcName = getName();
+    if (funcName != null) {
+      PyAssignmentStatement currentAssignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
+      while (currentAssignment != null) {
+        final String modifier = currentAssignment
+          .getTargetsToValuesMapping()
+          .stream()
+          .filter(pair -> pair.getFirst() instanceof PyTargetExpression && funcName.equals(pair.getFirst().getName()))
+          .filter(pair -> pair.getSecond() instanceof PyCallExpression)
+          .map(pair -> interpretAsModifierWrappingCall((PyCallExpression)pair.getSecond(), this))
+          .filter(interpreted -> interpreted != null && interpreted.getSecond() == this)
+          .map(interpreted -> interpreted.getFirst())
+          .filter(wrapperName -> PyNames.CLASSMETHOD.equals(wrapperName) || PyNames.STATICMETHOD.equals(wrapperName))
+          .findAny()
+          .orElse(null);
+
+        if (PyNames.CLASSMETHOD.equals(modifier)) {
+          return CLASSMETHOD;
         }
+        else if (PyNames.STATICMETHOD.equals(modifier)) {
+          return STATICMETHOD;
+        }
+
+        currentAssignment = PsiTreeUtil.getNextSiblingOfType(currentAssignment, PyAssignmentStatement.class);
       }
     }
     return null;

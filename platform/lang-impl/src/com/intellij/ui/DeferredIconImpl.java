@@ -71,18 +71,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
   @Override
   public Icon scale(final float scaleFactor) {
     if (scaleFactor != myScale) {
-      DeferredIconImpl icon = new DeferredIconImpl(null, myParam, myNeedReadAction, myEvaluator, myEvalListener, myAutoUpdatable) {
-        @Override
-        void setDone(@NotNull Icon result) {
-          super.setDone(result);
-          if (result instanceof ScalableIcon) {
-            myDelegateIcon = ((ScalableIcon)result).scale(scaleFactor);
-          }
-        }
-      };
-      icon.myScale = scaleFactor;
-      icon.myOriginalDeferredIcon = myOriginalDeferredIcon == null ? this : myOriginalDeferredIcon;
-      return icon;
+      myDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(myScale = scaleFactor);
     }
     return this;
   }
@@ -155,9 +144,6 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
                 @Override
                 public void run() {
                   evaluated[0] = evaluate();
-                  if (myScale != 1f && evaluated[0] instanceof ScalableIcon) {
-                    evaluated[0] = ((ScalableIcon)evaluated[0]).scale(myScale);
-                  }
                 }
               });
               if (myAutoUpdatable) {
@@ -293,6 +279,9 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
       checkDoesntReferenceThis(result);
     }
 
+    if (myScale != 1f && result instanceof ScalableIcon) {
+      result = ((ScalableIcon)result).scale(myScale);
+    }
     return result;
   }
 

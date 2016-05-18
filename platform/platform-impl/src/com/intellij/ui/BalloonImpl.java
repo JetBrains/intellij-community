@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -44,7 +44,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
@@ -113,8 +113,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
-            hide();
+          if (!insideBalloon && !isWithinChildWindow(me)) {
+            if (myHideListener == null) {
+              hide();
+            }
+            else {
+              myHideListener.run();
+            }
           }
           return;
         }
@@ -153,8 +158,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         }
       }
 
-      if (myHideOnKey && e instanceof KeyEvent && id == KeyEvent.KEY_PRESSED) {
+      if ((myHideOnKey || myHideListener != null) && e instanceof KeyEvent && id == KeyEvent.KEY_PRESSED) {
         final KeyEvent ke = (KeyEvent)e;
+        if (myHideListener != null) {
+          if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            myHideListener.run();
+          }
+          return;
+        }
         if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
@@ -181,12 +192,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     return false;
   }
 
-  private static boolean hasModalDialog(MouseEvent e) {
-    final Component c = e.getComponent();
-    final DialogWrapper dialog = DialogWrapper.findInstance(c);
-    return dialog != null && dialog.isModal();
-  }
-
   private final long myFadeoutTime;
   private Dimension myDefaultPrefSize;
   private final ActionListener myClickHandler;
@@ -211,7 +216,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private JLabel myTitleLabel;
 
   private boolean myAnimationEnabled = true;
-  private boolean myShadow = false;
+  private boolean myShadow = UIUtil.isUnderDarcula();
   private final Layer myLayer;
   private final boolean myBlockClicks;
   private RelativePoint myPrevMousePoint = null;
@@ -266,8 +271,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myDisposed;
   private final JComponent myContent;
   private boolean myHideOnMouse;
+  private Runnable myHideListener;
   private final boolean myHideOnKey;
   private final boolean myHideOnAction;
+  private final boolean myRequestFocus;
+  private Component myOriginalFocusOwner;
   private final boolean myEnableButtons;
 
   public BalloonImpl(@NotNull JComponent content,
@@ -294,9 +302,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean shadow,
                      boolean smallVariant,
                      boolean blockClicks,
-                     Layer layer) {
+                     Layer layer,
+                     boolean requestFocus) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
+    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(3);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -315,6 +324,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
     myBlockClicks = blockClicks;
+    myRequestFocus = requestFocus;
     MnemonicHelper.init(content);
 
     if (!myDialogMode) {
@@ -415,26 +425,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTracker = tracker;
     myTracker.init(this);
 
-    JRootPane root = null;
-    JDialog dialog = IJSwingUtilities.findParentOfType(comp, JDialog.class);
-    if (dialog != null) {
-      root = dialog.getRootPane();
-    }
-    else {
-      JWindow jwindow = IJSwingUtilities.findParentOfType(comp, JWindow.class);
-      if (jwindow != null) {
-        root = jwindow.getRootPane();
-      }
-      else {
-        JFrame frame = IJSwingUtilities.findParentOfType(comp, JFrame.class);
-        if (frame != null) {
-          root = frame.getRootPane();
-        }
-        else {
-          assert false;
-        }
-      }
-    }
+    JRootPane root = ObjectUtils.notNull(UIUtil.getRootPane(comp));
 
     myVisible = true;
 
@@ -465,6 +456,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
           originalFocusOwner.set(myFocusManager.getFocusOwner());
           focusRequestor.set(myFocusManager.getFurtherRequestor());
+        }
+      });
+    }
+    if (myRequestFocus) {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the focus to "myContent"
+          myFocusManager.requestFocus(getContentToFocus(), true);
         }
       });
     }
@@ -588,6 +595,34 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
+  /**
+   * Figure out the component to focus inside the {@link myContent} field.
+   */
+  @NotNull
+  private Component getContentToFocus() {
+    Component focusComponent = myContent;
+    while (true) {
+      // Setting focus to a JScrollPane is not very useful. Better setting focus to the
+      // contained view. This is useful for Tooltip popups, for example.
+      if (focusComponent instanceof JScrollPane) {
+        JViewport viewport = ((JScrollPane)focusComponent).getViewport();
+        if (viewport == null) {
+          break;
+        }
+        Component child = viewport.getView();
+        if (child == null) {
+          break;
+        }
+        focusComponent = child;
+        continue;
+      }
+
+      // Done if we can't find anything to dive into
+      break;
+    }
+    return focusComponent;
+  }
+
   private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
     Dimension size = getContentSizeFor(position);
     Rectangle rec = new Rectangle(new Point(0, 0), size);
@@ -618,6 +653,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       ((JComponent)parent).revalidate();
       parent.repaint();
     }
+  }
+
+  public JComponent getContent() {
+    return myContent;
+  }
+
+  public Component getComponent() {
+    return myComp;
   }
 
   private void createComponent() {
@@ -879,8 +922,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     hideAndDispose(false);
   }
 
+  private boolean myTraceDispose;
+
+  public void traceDispose(boolean value) {
+    myTraceDispose = value;
+  }
+
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
+
+    if (myTraceDispose) {
+      Logger.getInstance("#com.intellij.ui.BalloonImpl").error("Dispose balloon before showing", new Throwable());
+    }
+
     myDisposed = true;
     hideComboBoxPopups();
 
@@ -888,6 +942,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @Override
       public void run() {
         myFadedOut = true;
+        if (myRequestFocus) {
+          if (myOriginalFocusOwner != null) {
+            myFocusManager.requestFocus(myOriginalFocusOwner, false);
+          }
+        }
 
         for (JBPopupListener each : myListeners) {
           each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
@@ -933,6 +992,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   public void setHideOnClickOutside(boolean hideOnMouse) {
     myHideOnMouse = hideOnMouse;
+  }
+
+  public void setHideListener(@NotNull Runnable listener) {
+    myHideListener = listener;
+    myHideOnMouse = true;
   }
 
   public void setShowPointer(final boolean show) {

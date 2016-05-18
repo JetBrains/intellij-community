@@ -83,15 +83,18 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
     }
     if (quoteHandler == null) {
-      final Language baseLanguage = file.getViewProvider().getBaseLanguage();
-      for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
-        if (entry.getKey().isInstance(baseLanguage)) {
-          return entry.getValue();
-        }
-      }
-      return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
+      return getLanguageQuoteHandler(file.getViewProvider().getBaseLanguage());
     }
     return quoteHandler;
+  }
+
+  public static QuoteHandler getLanguageQuoteHandler(Language baseLanguage) {
+    for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
+      if (entry.getKey().isInstance(baseLanguage)) {
+        return entry.getValue();
+      }
+    }
+    return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
   private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
@@ -202,7 +205,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
         long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
         type(originalEditor, charTyped);
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStampBeforeTyping);
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
 
         if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
             CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&

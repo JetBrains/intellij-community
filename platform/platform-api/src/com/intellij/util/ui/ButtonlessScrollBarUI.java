@@ -799,6 +799,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
+    if (Registry.is("mac.scroll.new.ui")) {
+      float value = (float)(1 - myMacScrollbarFadeLevel);
+      if (!myMacScrollbarHidden || alwaysPaintThumb()) {
+        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+        painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      }
+      return;
+    }
     RenderingHints oldHints = g2d.getRenderingHints();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

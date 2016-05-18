@@ -806,8 +806,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
-          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && seemsLikeLambda(baseClass) && !PsiUtil.isLanguageLevel8OrHigher(anonymousClass)) {
+          PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
+          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(baseClass))) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
@@ -840,6 +840,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
               String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
               String methodName = quick || !isImplementingLambdaMethod(baseClass) ? method.getName() : "";
+
+              if (StringUtil.isEmpty(methodName) && PsiUtil.isLanguageLevel8OrHigher(anonymousClass)) return false;
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override

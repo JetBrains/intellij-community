@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,14 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
 
   @Override
   public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement parentStub) {
-    String[] superClassNames = psi.getSuperClassNames();
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);
-    return new GrTypeDefinitionStub(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), GrStubUtils
-      .getAnnotationNames(psi),
-                                        flags);
+    return new GrTypeDefinitionStub(
+      parentStub, psi.getName(),
+      GrStubUtils.getBaseClassName(psi),
+      this, psi.getQualifiedName(),
+      GrStubUtils.getAnnotationNames(psi),
+      flags
+    );
   }
 
   @Override
@@ -56,7 +59,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getQualifiedName());
     dataStream.writeByte(stub.getFlags());
-    writeStringArray(dataStream, stub.getSuperClassNames());
+    dataStream.writeName(stub.getBaseClassName());
     writeStringArray(dataStream, stub.getAnnotations());
   }
 
@@ -73,11 +76,12 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     String name = StringRef.toString(dataStream.readName());
     String qname = StringRef.toString(dataStream.readName());
     byte flags = dataStream.readByte();
-    String[] superClasses = readStringArray(dataStream);
+    String baseClassName = StringRef.toString(dataStream.readName());
     String[] annos = readStringArray(dataStream);
-    return new GrTypeDefinitionStub(parentStub, name, superClasses, this, qname, annos, flags);
+    return new GrTypeDefinitionStub(parentStub, name, baseClassName, this, qname, annos, flags);
   }
 
+  @NotNull
   private static String[] readStringArray(StubInputStream dataStream) throws IOException {
     byte supersNumber = dataStream.readByte();
     String[] superClasses = new String[supersNumber];
@@ -90,9 +94,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   @Override
   public void indexStub(@NotNull GrTypeDefinitionStub stub, @NotNull IndexSink sink) {
     if (stub.isAnonymous()) {
-      final String[] classNames = stub.getSuperClassNames();
-      if (classNames.length != 1) return;
-      final String baseClassName = classNames[0];
+      final String baseClassName = stub.getBaseClassName();
       if (baseClassName != null) {
         final String shortName = PsiNameHelper.getShortClassName(baseClassName);
         sink.occurrence(GrAnonymousClassIndex.KEY, shortName);

@@ -4,7 +4,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,37 +48,34 @@ public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsCo
   @Override
   public void setState(@NotNull Map<String, SchemaInfo> state) {
     super.setState(state);
-    recalculateSchemaFiles(true);
+    recalculateSchemaFiles();
   }
 
   @Override
   public void addSchema(@NotNull SchemaInfo info) {
     super.addSchema(info);
-    recalculateSchemaFiles(true);
+    recalculateSchemaFiles();
   }
 
   @Override
   public void removeSchema(@NotNull SchemaInfo info) {
     super.removeSchema(info);
-    recalculateSchemaFiles(true);
+    recalculateSchemaFiles();
   }
 
   @Override
   public void loadState(JsonSchemaMappingsConfigurationBase state) {
     super.loadState(state);
-    recalculateSchemaFiles(false);
+    recalculateSchemaFiles();
   }
 
-  private void recalculateSchemaFiles(boolean refreshStaticProviders) {
+  private void recalculateSchemaFiles() {
     mySchemaFiles.clear();
     if (myProject == null || myProject.getBaseDir() == null) return;
 
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : myState.values()) {
       final VirtualFile schemaFile = info.getSchemaFile(myProject);
       if (schemaFile != null) mySchemaFiles.put(schemaFile, info);
-    }
-    if (refreshStaticProviders) {
-      ServiceManager.getService(myProject, JsonSchemaService.class).refreshExportedDefinitions();
     }
   }
 

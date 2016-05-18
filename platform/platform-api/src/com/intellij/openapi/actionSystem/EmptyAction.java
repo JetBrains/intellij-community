@@ -62,15 +62,11 @@ public final class EmptyAction extends AnAction {
   }
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
-    final AnAction emptyAction = ActionManager.getInstance().getAction(id);
-    action.copyFrom(emptyAction);
-    action.registerCustomShortcutSet(action.getShortcutSet(), component);
+    ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
   }
 
-  public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
-    for (AnAction anAction : ActionUtil.getActions(fromComponent)) {
-      anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
-    }
+  public static void registerActionShortcuts(@NotNull JComponent component, @NotNull JComponent fromComponent) {
+    ActionUtil.copyRegisteredShortcuts(component, fromComponent);
   }
 
   /**
@@ -79,9 +75,11 @@ public final class EmptyAction extends AnAction {
    * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) shouldn't be used directly,
    * because it will erase shortcuts, assigned to this action in keymap.
    */
-  public static void registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
+  @NotNull
+  public static AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
     AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
     newAction.registerCustomShortcutSet(shortcutSet, component);
+    return newAction;
   }
 
   /**

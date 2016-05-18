@@ -23,29 +23,30 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +76,14 @@ class EventLogConsole {
     @NotNull
     @Override
     protected EditorHyperlinkSupport compute() {
-      return new EditorHyperlinkSupport(myLogEditor.getValue(), myProjectModel.getProject());
+      return new EditorHyperlinkSupport(getConsoleEditor(), myProjectModel.getProject());
     }
   };
   private final LogModel myProjectModel;
+
+  private String myLastDate;
+
+  private List<RangeHighlighter> myNMoreHighlighters;
 
   EventLogConsole(LogModel model) {
     myProjectModel = model;
@@ -87,6 +92,7 @@ class EventLogConsole {
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
     final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    installNotificationsFont(editor);
     myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
       public void projectClosed(Project project) {
@@ -99,7 +105,8 @@ class EventLogConsole {
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
     final ClearLogAction clearLog = new ClearLogAction(this);
-    clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(), editor.getContentComponent());
+    clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
+                                       editor.getContentComponent());
 
     editor.setContextMenuGroupId(null); // disabling default context menu
     editor.addEditorMouseListener(new EditorPopupHandler() {
@@ -112,6 +119,36 @@ class EventLogConsole {
       }
     });
     return editor;
+  }
+
+  private void installNotificationsFont(@NotNull final EditorEx editor) {
+    final DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
+      @Override
+      public String getEditorFontName() {
+        return getConsoleFontName();
+      }
+
+      @Override
+      public String getConsoleFontName() {
+        return NotificationsUtil.getFontName();
+      }
+
+      @Override
+      public void setEditorFontName(String fontName) {
+      }
+
+      @Override
+      public void setConsoleFontName(String fontName) {
+      }
+    };
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        globalScheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
+        editor.reinitSettings();
+      }
+    }, myProjectModel);
+    editor.setColorsScheme(ConsoleViewUtil.updateConsoleColorScheme(editor.createBoundColorSchemeDelegate(globalScheme)));
   }
 
   private static DefaultActionGroup createPopupActions(ActionManager actionManager,
@@ -192,7 +229,7 @@ class EventLogConsole {
   }
 
   void doPrintNotification(final Notification notification) {
-    Editor editor = myLogEditor.getValue();
+    Editor editor = getConsoleEditor();
     if (editor.isDisposed()) {
       return;
     }
@@ -200,23 +237,36 @@ class EventLogConsole {
     Document document = editor.getDocument();
     boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset() || !editor.getContentComponent().hasFocus();
 
-    String date = DateFormatUtil.formatTimeWithSeconds(notification.getTimestamp()) + " ";
+    if (document.getTextLength() > 0) {
+      append(document, "\n");
+    }
+
+    String lastDate = DateFormatUtil.formatDate(notification.getTimestamp());
+    if (document.getTextLength() == 0 || !lastDate.equals(myLastDate)) {
+      myLastDate = lastDate;
+      append(document, lastDate + "\n");
+    }
+
+    int startDateOffset = document.getTextLength();
+
+    String date = DateFormatUtil.formatTime(notification.getTimestamp()) + "\t";
     append(document, date);
+
+    int tabs = calculateTabs(editor, startDateOffset);
 
     int startLine = document.getLineCount() - 1;
 
-    EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol(' ', date.length()));
+    EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol('\t', tabs));
 
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
-                                         ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
-                                         : type == NotificationType.INFORMATION
-                                           ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
-                                           : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
+                            ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
+                            : type == NotificationType.INFORMATION
+                              ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
+                              : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
-    String message = pair.message;
-    append(document, message);
+    append(document, pair.message);
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
@@ -245,38 +295,68 @@ class EventLogConsole {
     }
   }
 
+  private static int calculateTabs(@NotNull Editor editor, int startDateOffset) {
+    Document document = editor.getDocument();
+    int startOffset = document.getTextLength();
+    Point dateStartPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startDateOffset));
+    Point dateEndPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
+    int width = dateEndPoint.x - dateStartPoint.x;
+
+    document.insertString(startOffset, "\n");
+
+    Point startPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset + 1));
+
+    for (int count = 1; ; count++) {
+      document.insertString(startOffset + count, "\t");
+
+      Point endPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength()));
+      int tabWidth = endPoint.x - startPoint.x;
+
+      if (width <= tabWidth) {
+        document.deleteString(startOffset, document.getTextLength());
+        return count;
+      }
+    }
+  }
+
   private void highlightNotification(final Notification notification,
                                      String message, final int line1, final int line2) {
 
-    final MarkupModel markupModel = myLogEditor.getValue().getMarkupModel();
+    final MarkupModel markupModel = getConsoleEditor().getMarkupModel();
     TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
     final List<RangeHighlighter> lineColors = new ArrayList<RangeHighlighter>();
+    boolean addStripe = true;
     for (int line = line1; line < line2; line++) {
       final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
-      Color color = notification.getType() == NotificationType.ERROR
-                    ? JBColor.RED
-                    : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
-      lineHighlighter.setErrorStripeMarkColor(color);
-      lineHighlighter.setErrorStripeTooltip(message);
+      if (addStripe) {
+        Color color = notification.getType() == NotificationType.ERROR
+                      ? JBColor.RED
+                      : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
+        lineHighlighter.setErrorStripeMarkColor(color);
+        lineHighlighter.setErrorStripeTooltip(message);
+        addStripe = false;
+      }
       lineColors.add(lineHighlighter);
-
     }
 
-    final Document document = myLogEditor.getValue().getDocument();
+    final Document document = getConsoleEditor().getDocument();
 
     final Runnable removeHandler = new Runnable() {
       @Override
       public void run() {
-        TextAttributes expired = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
+        TextAttributes expired =
+          EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
         TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
         for (RangeHighlighter colorHighlighter : lineColors) {
           if (colorHighlighter.isValid()) {
             int line = document.getLineNumber(colorHighlighter.getStartOffset());
-            
+
             markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, expired);
 
             for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
-              markupModel.addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic, HighlighterTargetArea.EXACT_RANGE);
+              markupModel
+                .addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic,
+                                     HighlighterTargetArea.EXACT_RANGE);
               myHyperlinkSupport.getValue().removeHyperlink(highlighter);
             }
           }
@@ -296,25 +376,79 @@ class EventLogConsole {
     return myLogEditor.getValue();
   }
 
-  public void showNotification(@NotNull final String id) {
-    final EditorEx editor = (EditorEx)getConsoleEditor();
+  public void clearNMore() {
+    if (myNMoreHighlighters != null) {
+      MarkupModel model = getConsoleEditor().getMarkupModel();
+      for (RangeHighlighter highlighter : myNMoreHighlighters) {
+        model.removeHighlighter(highlighter);
+      }
+      myNMoreHighlighters = null;
+    }
+  }
+
+  public void showNotification(@NotNull final List<String> ids) {
+    clearNMore();
+    myNMoreHighlighters = new ArrayList<>();
+
+    EditorEx editor = (EditorEx)getConsoleEditor();
+    List<RangeHighlighterEx> highlighters = ContainerUtil.mapNotNull(ids, this::findHighlighter);
+
+    if (!highlighters.isEmpty()) {
+      editor.getCaretModel().moveToOffset(highlighters.get(0).getStartOffset());
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+
+      List<Point> ranges = new ArrayList<>();
+      Point currentRange = null;
+      DocumentEx document = editor.getDocument();
+
+      for (RangeHighlighterEx highlighter : highlighters) {
+        int startLine = document.getLineNumber(highlighter.getStartOffset());
+        int endLine = document.getLineNumber(highlighter.getEndOffset()) + 1;
+        if (currentRange != null && startLine - 1 == currentRange.y) {
+          currentRange.y = endLine;
+        }
+        else {
+          ranges.add(currentRange = new Point(startLine, endLine));
+        }
+      }
+
+      //noinspection UseJBColor
+      TextAttributes attributes =
+        new TextAttributes(null, ColorUtil.mix(editor.getBackgroundColor(), new Color(0x808080), 0.1), null, EffectType.BOXED, Font.PLAIN);
+      MarkupModelEx markupModel = editor.getMarkupModel();
+
+      for (Point range : ranges) {
+        int start = document.getLineStartOffset(range.x);
+        int end = document.getLineStartOffset(range.y);
+        myNMoreHighlighters
+          .add(markupModel.addRangeHighlighter(start, end, HighlighterLayer.CARET_ROW + 2, attributes, HighlighterTargetArea.EXACT_RANGE));
+      }
+    }
+  }
+
+  @Nullable
+  private RangeHighlighterEx findHighlighter(@NotNull final String id) {
+    EditorEx editor = (EditorEx)getConsoleEditor();
+    final Ref<RangeHighlighterEx> highlighter = new Ref<>();
+
     editor.getMarkupModel()
       .processRangeHighlightersOverlappingWith(0, editor.getDocument().getTextLength(), new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx rangeHighlighter) {
           if (id.equals(NOTIFICATION_ID.get(rangeHighlighter))) {
-            editor.getCaretModel().moveToOffset(rangeHighlighter.getStartOffset());
-            editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+            highlighter.set(rangeHighlighter);
             return false;
           }
           return true;
         }
       });
+
+    return highlighter.get();
   }
 
   @Nullable
   public RelativePoint getRangeHighlighterLocation(RangeHighlighter range) {
-    Editor editor = myLogEditor.getValue();
+    Editor editor = getConsoleEditor();
     Project project = editor.getProject();
     Window window = NotificationsManagerImpl.findWindowForBalloon(project);
     if (range != null && window != null) {

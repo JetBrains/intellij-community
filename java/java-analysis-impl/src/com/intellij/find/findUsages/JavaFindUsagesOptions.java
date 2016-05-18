@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.find.findUsages;
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -26,10 +27,16 @@ import java.util.LinkedHashSet;
  * @author peter
  */
 public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
-  public boolean isSkipImportStatements = false;
+  public boolean isSkipImportStatements;
 
   public JavaFindUsagesOptions(@NotNull Project project) {
     super(project);
+
+    isUsages = true;
+  }
+
+  public JavaFindUsagesOptions(@NotNull SearchScope searchScope) {
+    super(searchScope);
 
     isUsages = true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public class CommonShortcuts {
   private static boolean isCtrlEnter(Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && (keyStroke.getModifiers() & InputEvent.CTRL_MASK) != 0;
+      return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && BitUtil.isSet(keyStroke.getModifiers(), InputEvent.CTRL_MASK);
     }
     return false;
   }

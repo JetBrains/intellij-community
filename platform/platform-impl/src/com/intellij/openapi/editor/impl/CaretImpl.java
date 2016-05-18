@@ -987,7 +987,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;
     clone.myDesiredSelectionEndColumn = newSelectionEndColumn;
 
-    if (myEditor.getCaretModel().addCaret(clone)) {
+    if (myEditor.getCaretModel().addCaret(clone, true)) {
       if (hasNewSelection) {
         myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
           @Override

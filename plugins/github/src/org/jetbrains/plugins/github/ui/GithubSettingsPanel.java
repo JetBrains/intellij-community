@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -27,11 +26,10 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.util.*;
@@ -43,7 +41,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
 import java.io.IOException;
 
 /**
@@ -86,68 +86,42 @@ public class GithubSettingsPanel {
     mySignupTextField.setText("<html>Do not have an account at github.com? <a href=\"https://github.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    myAuthTypeLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+    myAuthTypeLabel.setBorder(JBUI.Borders.emptyLeft(10));
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
     final Project project = ProjectManager.getInstance().getDefaultProject();
 
-    myTestButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        try {
-          final GithubAuthData auth = getAuthData();
-          GithubUser user = GithubUtil
-            .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
-              @NotNull
-              @Override
-              public GithubUser convert(ProgressIndicator indicator) throws IOException {
-                return GithubUtil.checkAuthData(project, new GithubAuthDataHolder(auth), indicator);
-              }
-            });
+    myTestButton.addActionListener(e -> {
+      try {
+        final GithubAuthData auth = getAuthData();
+        GithubUser user = GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
+          GithubUtil.checkAuthData(project, new GithubAuthDataHolder(auth), indicator));
 
-          if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
-            GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful for user " + user.getLogin());
-          }
-          else {
-            GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful");
-          }
+        if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
+          GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful for user " + user.getLogin());
         }
-        catch (GithubAuthenticationException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: ", ex);
+        else {
+          GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful");
         }
-        catch (IOException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: ", ex);
-        }
+      }
+      catch (GithubAuthenticationException ex) {
+        GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: ", ex);
+      }
+      catch (IOException ex) {
+        GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: ", ex);
       }
     });
 
-    myCreateTokenButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        try {
-          myPasswordField.setText(
-            GithubUtil.computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, String, IOException>() {
-              @NotNull
-              @Override
-              public String convert(ProgressIndicator indicator) throws IOException {
-                return GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(),
-                                                              new ThrowableConvertor<GithubConnection, String, IOException>() {
-                                                                @NotNull
-                                                                @Override
-                                                                public String convert(@NotNull GithubConnection connection)
-                                                                  throws IOException {
-                                                                  return GithubApiUtil.getMasterToken(connection, "IntelliJ plugin");
-                                                                }
-                                                              }
-                );
-              }
-            })
-          );
-        }
-        catch (IOException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
-        }
+    myCreateTokenButton.addActionListener(e -> {
+      try {
+        String newToken = GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
+          GithubUtil.runTaskWithBasicAuthForHost(project, GithubAuthDataHolder.createFromSettings(), indicator, getHost(), connection ->
+            GithubApiUtil.getMasterToken(connection, "IntelliJ plugin")));
+        myPasswordField.setText(newToken);
+      }
+      catch (IOException ex) {
+        GithubNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
       }
     });
 
@@ -182,19 +156,16 @@ public class GithubSettingsPanel {
       }
     });
 
-    myAuthTypeComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          String item = e.getItem().toString();
-          if (AUTH_PASSWORD.equals(item)) {
-            ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_PASSWORD);
-          }
-          else if (AUTH_TOKEN.equals(item)) {
-            ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_TOKEN);
-          }
-          erasePassword();
+    myAuthTypeComboBox.addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        String item = e.getItem().toString();
+        if (AUTH_PASSWORD.equals(item)) {
+          ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_PASSWORD);
         }
+        else if (AUTH_TOKEN.equals(item)) {
+          ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_TOKEN);
+        }
+        erasePassword();
       }
     });
 

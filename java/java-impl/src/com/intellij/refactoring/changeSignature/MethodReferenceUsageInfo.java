@@ -47,7 +47,16 @@ class MethodReferenceUsageInfo extends UsageInfo {
   }
 
   public static boolean needToExpand(JavaChangeInfo changeInfo) {
-    return !changeInfo.isGenerateDelegate() && (changeInfo.isParameterSetOrOrderChanged() || changeInfo.isExceptionSetOrOrderChanged());
+    if (!changeInfo.isGenerateDelegate()) {
+      if (changeInfo.isParameterSetOrOrderChanged()) {
+        return true;
+      }
+      else if (changeInfo.isExceptionSetOrOrderChanged()) {
+        return JavaChangeSignatureUsageProcessor.hasNewCheckedExceptions(changeInfo);
+      }
+    }
+
+    return false;
   }
 
   @Nullable

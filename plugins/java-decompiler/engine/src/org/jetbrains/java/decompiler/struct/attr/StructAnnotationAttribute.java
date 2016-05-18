@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructAnnotationAttribute extends StructGeneralAttribute {
-
   private List<AnnotationExprent> annotations;
 
   @Override
@@ -143,7 +142,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           newType = new VarType(elementType.type, 1, elementType.value);
         }
 
-        NewExprent newExpr = new NewExprent(newType, Collections.<Exprent>emptyList(), null);
+        NewExprent newExpr = new NewExprent(newType, Collections.emptyList(), null);
         newExpr.setDirectArrayInit(true);
         newExpr.setLstArrayElements(elements);
         return newExpr;

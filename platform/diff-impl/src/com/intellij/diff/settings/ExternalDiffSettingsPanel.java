@@ -24,8 +24,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ExternalDiffSettingsPanel {
   private static final String DESCRIPTION_TEXT =
@@ -55,18 +53,8 @@ public class ExternalDiffSettingsPanel {
   public ExternalDiffSettingsPanel() {
     myDescriptionLabel.setText(DESCRIPTION_TEXT);
 
-    myDiffEnabled.getModel().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateEnabledEffect();
-      }
-    });
-    myMergeEnabled.getModel().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateEnabledEffect();
-      }
-    });
+    myDiffEnabled.getModel().addActionListener(e -> updateEnabledEffect());
+    myMergeEnabled.getModel().addActionListener(e -> updateEnabledEffect());
 
     myDiffPath.addBrowseFolderListener(DiffBundle.message("select.external.diff.program.dialog.title"), null, null,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());

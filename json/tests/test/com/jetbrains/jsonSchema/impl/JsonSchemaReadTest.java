@@ -22,7 +22,7 @@ public class JsonSchemaReadTest {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
     final JsonSchemaReader reader = new JsonSchemaReader(null);
-    final JsonSchemaObject read = reader.read(new FileReader(file), true);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
     Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
@@ -62,7 +62,7 @@ public class JsonSchemaReadTest {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     Assert.assertTrue(file.exists());
     final JsonSchemaReader reader = new JsonSchemaReader(null);
-    final JsonSchemaObject read = reader.read(new FileReader(file), true);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
   }
 
@@ -91,7 +91,7 @@ public class JsonSchemaReadTest {
       public void run() {
         final JsonSchemaReader reader = new JsonSchemaReader(null);
         try {
-          reader.read(new FileReader(file), true);
+          reader.read(new FileReader(file), null);
           done.set(true);
         }
         catch (IOException e) {

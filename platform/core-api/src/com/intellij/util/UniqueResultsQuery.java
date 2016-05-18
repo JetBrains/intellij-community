@@ -53,30 +53,31 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
   @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
+    return process(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
   }
 
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
+    return processAsync(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
   }
 
-  private boolean process(@NotNull Processor<T> consumer, @NotNull Set<M> processedElements) {
+  private boolean process(@NotNull Set<M> processedElements, @NotNull Processor<T> consumer) {
     return myOriginal.forEach(new MyProcessor(processedElements, consumer));
   }
 
   @NotNull
-  private AsyncFuture<Boolean> processAsync(@NotNull Processor<T> consumer, @NotNull Set<M> processedElements) {
+  private AsyncFuture<Boolean> processAsync(@NotNull Set<M> processedElements, @NotNull Processor<T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(processedElements, consumer));
   }
 
   @Override
   @NotNull
   public Collection<T> findAll() {
-    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
+    List<T> result = Collections.synchronizedList(new ArrayList<T>());
+    Processor<T> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,7 +190,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = JBUI.insets(4);
     gbConstraints.anchor = GridBagConstraints.EAST;
     gbConstraints.fill = GridBagConstraints.BOTH;
 
@@ -237,7 +238,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
 
     myCbFinal = new JCheckBox(CodeInsightBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
     if (myFieldMayBeFinal) {

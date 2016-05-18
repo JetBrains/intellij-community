@@ -20,7 +20,7 @@ def get_plugin_manager():
     from _pytest.core import PluginManager
     return PluginManager(load=True)
 
-# "-s" is always required: no test output provided otherwise
+# "-s" is always required: no test output provided otherwise (see PY-12621)
 args = sys.argv[1:]
 args.append("-s") if "-s" not in args else None
 

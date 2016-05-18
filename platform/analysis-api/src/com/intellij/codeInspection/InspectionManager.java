@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,42 +93,42 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             final LocalQuickFix... fixes);
+  /**
+   * use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
+   */
   @Deprecated
   @NotNull
-  /**
-   * use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix, ProblemHighlightType)} instead
-   */
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType);
 
-  @Deprecated
-  @NotNull
   /**
    * use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
    */
+  @Deprecated
+  @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
-  @Deprecated
-  @NotNull
   /**
    * use {@link #createProblemDescriptor(PsiElement, String, LocalQuickFix[], ProblemHighlightType, boolean, boolean)} instead
    */
+  @Deprecated
+  @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean isAfterEndOfLine);
 
-  @Deprecated
-  @NotNull
   /**
    * use {@link #createProblemDescriptor(PsiElement, PsiElement, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
    */
+  @Deprecated
+  @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
                                                             @NotNull String descriptionTemplate,
@@ -136,22 +136,22 @@ public abstract class InspectionManager {
                                                             LocalQuickFix... fixes);
 
 
-  @Deprecated
-  @NotNull
   /**
    * use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
    */
+  @Deprecated
+  @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             final TextRange rangeInElement,
                                                             @NotNull final String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             final LocalQuickFix... fixes);
 
-  @Deprecated
-  @NotNull
   /**
    * use {@link #createProblemDescriptor(PsiElement, String, boolean, ProblemHighlightType, boolean, LocalQuickFix...)} instead
    */
+  @Deprecated
+  @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull final String descriptionTemplate,
                                                             final boolean showTooltip,

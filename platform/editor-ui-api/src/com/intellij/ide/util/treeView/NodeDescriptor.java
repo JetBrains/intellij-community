@@ -66,6 +66,9 @@ public abstract class NodeDescriptor<E> {
   public abstract E getElement();
 
   public String toString() {
+    // NB!: this method may return null if node is not valid
+    // it contradicts the specification, but the fix breaks existing behaviour
+    // see com.intellij.ide.util.FileStructurePopup#getSpeedSearchText
     return myName;
   }
 

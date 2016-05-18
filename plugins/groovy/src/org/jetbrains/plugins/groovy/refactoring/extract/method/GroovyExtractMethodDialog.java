@@ -16,8 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
-import com.intellij.openapi.application.AcceptNestedTransactions;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -46,8 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.GrParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
-import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -65,7 +63,6 @@ import java.util.Map;
 /**
  * @author ilyas
  */
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 
@@ -79,7 +76,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private ComboBoxVisibilityPanel<String> myVisibilityPanel;
   private Splitter mySplitter;
   private JCheckBox myForceReturnCheckBox;
-  private ParameterTablePanel myParameterTablePanel;
+  private GrParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
   public GroovyExtractMethodDialog(InitialInfo info, PsiClass owner) {
@@ -250,7 +247,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     });
 
-    myParameterTablePanel = new ParameterTablePanel() {
+    myParameterTablePanel = new GrParameterTablePanel() {
       @Override
       protected void updateSignature(){
         GroovyExtractMethodDialog.this.updateSignature();

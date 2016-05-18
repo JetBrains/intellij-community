@@ -83,7 +83,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       performWriteCommandAction(result);
     } else {
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, new Runnable() {
+        TransactionGuard.getInstance().submitTransactionAndWait(new Runnable() {
           @Override
           public void run() {
             performWriteCommandAction(result);

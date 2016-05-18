@@ -100,7 +100,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
 
   private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setBackground(UIUtil.getListBackground(selected));
       if (value != null) {
         //noinspection unchecked

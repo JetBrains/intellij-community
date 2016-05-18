@@ -3,6 +3,7 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,10 +15,11 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +28,7 @@ import java.util.List;
 
 public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
 
-  public static final String ACTION_NAME = "Delete All Answer Placeholders";
+  public static final String ACTION_NAME = "Delete All " + EduNames.PLACEHOLDER + "s";
 
   public CCDeleteAllAnswerPlaceholdersAction() {
     super(ACTION_NAME);
@@ -40,7 +42,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
     if (file == null || project == null) {
       return;
     }
-    final TaskFile taskFile = CCProjectService.getInstance(project).getTaskFile(file);
+    final TaskFile taskFile = StudyUtils.getTaskFile(project, file);
     if (taskFile == null) {
       return;
     }
@@ -57,7 +59,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
       editor = ((TextEditor)fileEditor).getEditor();
     }
     List<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>(taskFile.getAnswerPlaceholders());
-    final ClearPlaceholders action = new ClearPlaceholders(taskFile, placeholders, editor, file, project);
+    final ClearPlaceholders action = new ClearPlaceholders(taskFile, placeholders, editor);
     new WriteCommandAction(project, ACTION_NAME) {
       protected void run(@NotNull final Result result) throws Throwable {
         action.redo();
@@ -72,60 +74,57 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
   }
 
   private static void updateView(@NotNull final Editor editor,
-                                 @NotNull final VirtualFile file,
-                                 @NotNull final Project project) {
+                                 @NotNull final TaskFile taskFile) {
     editor.getMarkupModel().removeAllHighlighters();
-    CCProjectService.getInstance(project).drawAnswerPlaceholders(file, editor);
+    StudyUtils.drawAllWindows(editor, taskFile);
   }
 
   @Override
   public void update(AnActionEvent e) {
-    if (!CCProjectService.setCCActionAvailable(e)) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(false);
+
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    if (!CCUtils.isCourseCreator(project)) {
       return;
     }
     DataContext context = e.getDataContext();
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
-    final Project project = e.getProject();
-    if (file == null || project == null) {
-      EduUtils.enableAction(e, false);
+    if (file == null ) {
       return;
     }
-    TaskFile taskFile = CCProjectService.getInstance(project).getTaskFile(file);
-    if (taskFile == null) {
-      EduUtils.enableAction(e, false);
+    TaskFile taskFile = StudyUtils.getTaskFile(project, file);
+    if (taskFile == null || taskFile.getAnswerPlaceholders().isEmpty()) {
       return;
     }
-    if (taskFile.getAnswerPlaceholders().isEmpty()) {
-      EduUtils.enableAction(e, false);
-    }
+    presentation.setEnabledAndVisible(true);
   }
 
 
   private static class ClearPlaceholders implements UndoableAction {
     private final List<AnswerPlaceholder> myPlaceholders;
     private final Editor myEditor;
-    private final VirtualFile myFile;
-    private final Project myProject;
     TaskFile myTaskFile;
 
-    public ClearPlaceholders(TaskFile taskFile, List<AnswerPlaceholder> placeholders, Editor editor, VirtualFile file, Project project) {
+    public ClearPlaceholders(TaskFile taskFile, List<AnswerPlaceholder> placeholders, Editor editor) {
       myTaskFile = taskFile;
       myPlaceholders = placeholders;
       myEditor = editor;
-      myFile = file;
-      myProject = project;
     }
 
     @Override
     public void undo() throws UnexpectedUndoException {
       myTaskFile.getAnswerPlaceholders().addAll(myPlaceholders);
-      updateView(myEditor, myFile, myProject);
+      updateView(myEditor, myTaskFile);
     }
 
     @Override
     public void redo() throws UnexpectedUndoException {
       myTaskFile.getAnswerPlaceholders().clear();
-      updateView(myEditor, myFile, myProject);
+      updateView(myEditor, myTaskFile);
     }
 
     @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ import java.util.*;
  * @author Sergey Simonchik
  */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
+
+  public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
+    return String.format("https://github.com/%s/%s/zipball/%s", ghUserName, ghRepoName, branch);
+  }
+
   private void createUIComponents() {
     myReloadableComboBoxPanel = new ReloadableComboBoxPanel<GithubTagInfo>() {
 
@@ -124,7 +129,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     String ghRepoName = generator.getGithubRepositoryName();
     myMasterTag = new GithubTagInfo(
       "master",
-      String.format("https://github.com/%s/%s/zipball/master", ghUserName, ghRepoName)
+      getGithubZipballUrl(ghUserName, ghRepoName, "master")
     );
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);

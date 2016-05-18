@@ -16,11 +16,16 @@
 package com.intellij.codeInspection.ui;
 
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
+import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,23 +38,34 @@ public class ExcludedInspectionTreeNodesManager {
     @Nullable
     @Override
     protected Set<Object> create(Class key) {
-      return new HashSet<>();
+      return new THashSet<Object>();
     }
   };
 
-  public boolean isExcluded(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Set<Object> excluded = myExcludedNodeObjects.get(node.getClass());
+  private final boolean myOffline;
+
+  public ExcludedInspectionTreeNodesManager(boolean offline) {
+    myOffline = offline;
+  }
+
+  public synchronized boolean isExcluded(InspectionTreeNode node) {
+    final Set<?> excluded = myExcludedNodeObjects.get(node.getClass());
     return excluded.contains(node.getUserObject());
   }
 
-  public void exclude(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public synchronized void exclude(InspectionTreeNode node) {
     myExcludedNodeObjects.get(node.getClass()).add(node.getUserObject());
   }
 
-  public void amnesty(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public synchronized void amnesty(InspectionTreeNode node) {
     myExcludedNodeObjects.get(node.getClass()).remove(node.getUserObject());
+  }
+
+  public synchronized boolean containsRefEntity(@NotNull RefEntity entity) {
+    return myExcludedNodeObjects.getOrDefault(myOffline ? OfflineRefElementNode.class : RefElementNode.class, Collections.emptySet()).contains(entity);
+  }
+
+  public synchronized boolean containsProblemDescriptor(@NotNull CommonProblemDescriptor descriptor) {
+    return myExcludedNodeObjects.getOrDefault(myOffline ? OfflineProblemDescriptorNode.class : ProblemDescriptionNode.class, Collections.emptySet()).contains(descriptor);
   }
 }

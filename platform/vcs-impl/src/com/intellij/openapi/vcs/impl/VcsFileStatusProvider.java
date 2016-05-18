@@ -16,14 +16,10 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -155,40 +151,43 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   @Override
   @Nullable
-  public Pair<VcsRevisionNumber, String> getBaseRevision(@NotNull final VirtualFile file) {
+  public BaseContent getBaseRevision(@NotNull final VirtualFile file) {
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
-    if (change != null) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision instanceof BinaryContentRevision) return null;
-      if (beforeRevision != null) {
-        String content;
-        try {
-          content = beforeRevision.getContent();
-        }
-        catch (VcsException ex) {
-          content = null;
-        }
-        if (content == null) {
-          myHaveEmptyContentRevisions = true;
-          return null;
-        }
-        return Pair.create(beforeRevision.getRevisionNumber(), content);
+    if (change == null) return null;
+    final ContentRevision beforeRevision = change.getBeforeRevision();
+    if (beforeRevision == null) return null;
+    if (beforeRevision instanceof BinaryContentRevision) return null;
+    return new BaseContentImpl(beforeRevision);
+  }
+
+  private class BaseContentImpl implements BaseContent {
+    @NotNull private final ContentRevision myContentRevision;
+
+    public BaseContentImpl(@NotNull ContentRevision contentRevision) {
+      myContentRevision = contentRevision;
+    }
+
+    @NotNull
+    @Override
+    public VcsRevisionNumber getRevisionNumber() {
+      return myContentRevision.getRevisionNumber();
+    }
+
+    @Nullable
+    @Override
+    public String loadContent() {
+      String content;
+      try {
+        content = myContentRevision.getContent();
       }
-      return null;
+      catch (VcsException ex) {
+        content = null;
+      }
+      if (content == null) {
+        myHaveEmptyContentRevisions = true;
+        return null;
+      }
+      return content;
     }
-
-    if (isDocumentModified(file)) {
-      String content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          if (!file.isValid()) return null;
-          return LoadTextUtil.loadText(file).toString();
-        }
-      });
-      if (content == null) return null;
-      return Pair.create(VcsRevisionNumber.NULL, content);
-    }
-
-    return null;
   }
 }

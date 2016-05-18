@@ -1,13 +1,21 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class MethodMayBeStaticInspectionTest extends IGInspectionTestCase {
+public class MethodMayBeStaticInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final MethodMayBeStaticInspection tool = new MethodMayBeStaticInspection();
-    tool.m_ignoreEmptyMethods = false;
-    tool.m_ignoreDefaultMethods = false;
-    doTest("com/siyeh/igtest/performance/method_may_be_static", tool);
+  public void testA() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final MethodMayBeStaticInspection inspection = new MethodMayBeStaticInspection();
+    inspection.m_ignoreEmptyMethods = false;
+    inspection.m_ignoreDefaultMethods = false;
+    return inspection;
   }
 }

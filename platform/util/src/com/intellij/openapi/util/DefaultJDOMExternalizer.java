@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -98,6 +99,9 @@ public class DefaultJDOMExternalizer {
         else if (type.equals(String.class)) {
           value = filterXMLCharacters((String)field.get(data));
         }
+        else if (type.isEnum()) {
+          value = field.get(data).toString();
+        }
         else if (type.equals(Color.class)) {
           Color color = (Color)field.get(data);
           if (color != null) {
@@ -172,9 +176,9 @@ public class DefaultJDOMExternalizer {
         Field field = data.getClass().getField(fieldName);
         Class type = field.getType();
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+        if (!BitUtil.isSet(modifiers, Modifier.PUBLIC) || BitUtil.isSet(modifiers, Modifier.STATIC)) continue;
         field.setAccessible(true); // class might be non-public
-        if ((modifiers & Modifier.FINAL) != 0) {
+        if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
           if (JDOMExternalizable.class.isInstance(value)) {
@@ -252,6 +256,14 @@ public class DefaultJDOMExternalizer {
             }
             else {
               throw new InvalidDataException();
+            }
+          }
+        }
+        else if (type.isEnum()) {
+          for (Object enumValue : type.getEnumConstants()) {
+            if (enumValue.toString().equals(value)) {
+              field.set(data, enumValue);
+              break;
             }
           }
         }

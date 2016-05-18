@@ -99,6 +99,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "getService", "getService", "class");
   }
 
+  public void testGenericityDoesNotMatterWhenNoTypeIsExpected() {
+    checkPreferredItems 0, "generic", "nonGeneric", "clone", "equals"
+  }
+
   public void testClassStaticMembersInVoidContext() throws Throwable {
     checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class");
   }
@@ -744,6 +748,29 @@ interface TxANotAnno {}
     p = LookupElementPresentation.renderElement(myFixture.lookup.items[1])
     assert p.tailText.contains('bar')
     assert p.strikeout
+  }
+
+  public void testPreferClassKeywordWhenExpectedClassType() {
+    checkPreferredItems 0, 'class'
+  }
+
+  public void testPreferBooleanKeywordsWhenExpectedBoolean() {
+    checkPreferredItems 0, 'false', 'factory'
+  }
+
+  public void testPreferExplicitlyImportedStaticMembers() {
+    myFixture.addClass("""
+class ContainerUtilRt {
+  static void newHashSet();
+  static void newHashSet2();
+}
+class ContainerUtil extends ContainerUtilRt {
+  static void newHashSet();
+  static void newHashSet3();
+}
+""")
+    checkPreferredItems 0, 'newHashSet', 'newHashSet', 'newHashSet3', 'newHashSet2'
+    assert (myFixture.lookupElements[0].psiElement as PsiMethod).containingClass.name == 'ContainerUtil'
   }
 
 }

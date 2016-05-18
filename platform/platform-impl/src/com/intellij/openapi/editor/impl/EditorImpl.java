@@ -132,6 +132,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
+  public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
   private static final Color CURSOR_FOREGROUND_LIGHT = Gray._255;
@@ -146,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLinePaintersWidth;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -1080,7 +1081,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param fontSize new font size
    * @param zoomCenter zoom point, relative to viewport
    */
-  private void setFontSize(final int fontSize, @Nullable Point zoomCenter) {
+  private void setFontSize(int fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
 
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
@@ -1091,6 +1092,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
     myScheme.setEditorFontSize(fontSize);
+    fontSize = myScheme.getEditorFontSize(); // resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
     // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
     // to scroll to the bottom of the document).
@@ -1172,16 +1174,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     document.addDocumentListener(highlighter);
     myHighlighter = highlighter;
-    myHighlighterDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-        document.removeDocumentListener(highlighter);
-      }
-    };
+    myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
     Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
     highlighter.setText(document.getImmutableCharSequence());
-    EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    if (!(highlighter instanceof EmptyEditorHighlighter)) {
+      EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    }
 
     if (myPanel != null) {
       reinitSettings();
@@ -1862,6 +1861,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myUseNewRendering) {
       myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
     }
+
+    myScrollingModel.onBulkDocumentUpdateStarted();
     
     saveCaretRelativePosition();
 
@@ -1891,7 +1892,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     repaintToScreenBottom(0);
     updateCaretCursor();
 
-    restoreCaretRelativePosition();
+    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+      restoreCaretRelativePosition();
+    }
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -1941,10 +1944,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
-      int startDocLine = myDocument.getLineNumber(e.getOffset());
-      int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
-        updateGutterSize();
+      if (startLine != endLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
 
       if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
@@ -1959,7 +1960,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength()){
+    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
+        (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
   }
@@ -2029,7 +2031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
       myPreferredSize = dim;
 
-      myGutterComponent.updateSize();
+      updateGutterSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
@@ -2150,15 +2152,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    if (isReleased) {
+      g.setColor(getDisposedBackground());
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      return;
+    }
     if (myUpdateCursor) {
       setCursorPosition();
       myUpdateCursor = false;
-    }
-
-    if (isReleased) {
-      g.setColor(new JBColor(new Color(128, 255, 128), new Color(128, 255, 128)));
-      g.fillRect(clip.x, clip.y, clip.width, clip.height);
-      return;
     }
     if (myProject != null && myProject.isDisposed()) return;
 
@@ -2192,6 +2193,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       paintComposedTextDecoration(g);
     }
+  }
+
+  Color getDisposedBackground() {
+    return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
@@ -3808,7 +3813,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getPreferredHeight() {
-    if (myUseNewRendering) return myView.getPreferredHeight();
+    if (myUseNewRendering) return isReleased ? 0 : myView.getPreferredHeight();
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return 1;
     }
@@ -4405,7 +4410,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (getMouseEventArea(e) == EditorMouseEventArea.LINE_MARKERS_AREA) {
+    EditorMouseEventArea eventArea = getMouseEventArea(e);
+    if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
+        eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
       // The general idea is that we don't want to change caret position on gutter marker area click (e.g. on setting a breakpoint)
       // but do want to allow bulk selection on gutter marker mouse drag. However, when a drag is performed, the first event is
       // a 'mouse pressed' event, that's why we remember target line on 'mouse pressed' processing and use that information on
@@ -5425,11 +5432,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void replaceInputMethodText(@NotNull InputMethodEvent e) {
+    if (isReleased) return;
     getInputMethodRequests();
     myInputMethodRequestsHandler.replaceInputMethodText(e);
   }
 
   void inputMethodCaretPositionChanged(@NotNull InputMethodEvent e) {
+    if (isReleased) return;
     getInputMethodRequests();
     myInputMethodRequestsHandler.setInputMethodCaretPosition(e);
   }
@@ -5847,7 +5856,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myExpectedCaretOffset = -1;
       }
 
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
+      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA ||
+          event.getArea() == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
@@ -6027,10 +6037,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
-      if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
-          eventArea == EditorMouseEventArea.EDITING_AREA ||
-          isInsideGutterWhitespaceArea(e))
-      {
+      boolean insideEditorRelatedAreas = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+                  eventArea == EditorMouseEventArea.EDITING_AREA ||
+                  isInsideGutterWhitespaceArea(e);
+      if (insideEditorRelatedAreas) {
         VisualPosition visualPosition = myUseNewRendering ? getTargetPosition(x, y, true) : null;
         LogicalPosition pos = myUseNewRendering ? visualToLogicalPosition(visualPosition) : getLogicalPositionForScreenPos(x, y, true);
         if (toggleCaret) {
@@ -6092,53 +6102,54 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return isNavigation;
       }
 
-      if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
-        if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-          if (caretOffset < mySavedSelectionStart) {
-            mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
+      if (insideEditorRelatedAreas) {
+        if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
+          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+            if (caretOffset < mySavedSelectionStart) {
+              mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
+            }
+            else {
+              mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
+            }
           }
           else {
-            mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
+            int startToUse = oldSelectionStart;
+            if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
+              startToUse = Math.min(oldStart, oldEnd);
+            }
+            mySelectionModel.setSelection(startToUse, caretOffset);
           }
         }
         else {
-          int startToUse = oldSelectionStart;
-          if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
-            startToUse = Math.min(oldStart, oldEnd);
+          if (!myMousePressedInsideSelection && getSelectionModel().hasSelection()) {
+            setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+            mySelectionModel.setSelection(caretOffset, caretOffset);
           }
-          mySelectionModel.setSelection(startToUse, caretOffset);
-        }
-      }
-      else {
-        if (!myMousePressedInsideSelection && getSelectionModel().hasSelection()) {
-          setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
-          mySelectionModel.setSelection(caretOffset, caretOffset);
-        }
-        else {
-          if (!e.isPopupTrigger()
-              && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
-              && (!toggleCaret || lastPressCreatedCaret))
-          {
-            switch (e.getClickCount()) {
-              case 2:
-                selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
-                break;
-
-              case 3:
-                if (HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
-                  // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
-                  // is assumed to select 'hump' while the later points to the whole word.
-                  selectWordAtCaret(false);
+          else {
+            if (!e.isPopupTrigger()
+                && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
+                && (!toggleCaret || lastPressCreatedCaret)) {
+              switch (e.getClickCount()) {
+                case 2:
+                  selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
                   break;
-                }
-                //noinspection fallthrough
-              case 4:
-                mySelectionModel.selectLineAtCaret();
-                setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-                mySavedSelectionStart = mySelectionModel.getSelectionStart();
-                mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-                mySelectionModel.setUnknownDirection(true);
-                break;
+
+                case 3:
+                  if (HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
+                    // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
+                    // is assumed to select 'hump' while the later points to the whole word.
+                    selectWordAtCaret(false);
+                    break;
+                  }
+                  //noinspection fallthrough
+                case 4:
+                  mySelectionModel.selectLineAtCaret();
+                  setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
+                  mySavedSelectionStart = mySelectionModel.getSelectionStart();
+                  mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                  mySelectionModel.setUnknownDirection(true);
+                  break;
+              }
             }
           }
         }
@@ -7097,6 +7108,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         e.consume();
       }
+    }
+  }
+
+  @TestOnly
+  public void validateState() {
+    myView.validateState();
+
+    if (myDocument.isInBulkUpdate()) return;
+    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
+    int lastSoftWrapOffset = -1;
+    for (SoftWrap wrap : softWraps) {
+      int softWrapOffset = wrap.getStart();
+      LOG.assertTrue(softWrapOffset > lastSoftWrapOffset, "Soft wraps are not ordered");
+      LOG.assertTrue(softWrapOffset < myDocument.getTextLength(), "Soft wrap is after document's end");
+      FoldRegion foldRegion = myFoldingModel.getCollapsedRegionAtOffset(softWrapOffset);
+      LOG.assertTrue(foldRegion == null || foldRegion.getStartOffset() == softWrapOffset, "Soft wrap is inside fold region");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineEndOffset(softWrapOffset, myDocument)
+                     || foldRegion != null, "Soft wrap before line break");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineStartOffset(softWrapOffset, myDocument) ||
+                     myFoldingModel.isOffsetCollapsed(softWrapOffset - 1), "Soft wrap after line break");
+      lastSoftWrapOffset = softWrapOffset;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,17 +56,17 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider {
   }
 
   @Override
-  public void startAnalyzeLeafValues(AbstractTreeStructure structure, Runnable finalRunnable) {
+  public void startAnalyzeLeafValues(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
     SliceLeafAnalyzer.startAnalyzeValues(structure, finalRunnable);
   }
 
   @Override
-  public void startAnalyzeNullness(AbstractTreeStructure structure, Runnable finalRunnable) {
+  public void startAnalyzeNullness(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
     SliceNullnessAnalyzer.startAnalyzeNullness(structure, finalRunnable);
   }
 
   @Override
-  public void registerExtraPanelActions(DefaultActionGroup actionGroup, SliceTreeBuilder sliceTreeBuilder) {
+  public void registerExtraPanelActions(@NotNull DefaultActionGroup actionGroup, @NotNull SliceTreeBuilder sliceTreeBuilder) {
     if (sliceTreeBuilder.dataFlowToThis) {
       actionGroup.add(new GroupByLeavesAction(sliceTreeBuilder));
       actionGroup.add(new CanItBeNullAction(sliceTreeBuilder));

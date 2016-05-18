@@ -76,20 +76,20 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return myBrowserPath;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * Use RecentProjectsManagerBase
    */
+  @SuppressWarnings("unused")
+  @Deprecated
   public String getLastProjectCreationLocation() {
     return null;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * Use RecentProjectsManagerBase
    */
+  @SuppressWarnings("unused")
+  @Deprecated
   public void setLastProjectCreationLocation(String lastProjectLocation) {
   }
 

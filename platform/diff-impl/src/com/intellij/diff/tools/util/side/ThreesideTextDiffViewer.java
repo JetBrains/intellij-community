@@ -32,7 +32,6 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -42,8 +41,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -54,8 +51,6 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(ThreesideTextDiffViewer.class);
-
   @Nullable private List<? extends EditorEx> myEditors;
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 
@@ -107,10 +102,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     ((EditorMarkupModel)ThreeSide.BASE.select(holders).getEditor().getMarkupModel()).setErrorStripeVisible(false);
 
-    if (Registry.is("diff.divider.repainting.disable.blitting")) {
-      for (TextEditorHolder holder : holders) {
-        holder.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-      }
+    for (TextEditorHolder holder : holders) {
+      DiffUtil.disableBlitting(holder.getEditor());
     }
 
     return holders;
@@ -142,6 +135,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     SyncScrollSupport.SyncScrollable scrollable2 = getSyncScrollable(Side.RIGHT);
     if (scrollable1 != null && scrollable2 != null) {
       mySyncScrollSupport = new ThreesideSyncScrollSupport(getEditors(), scrollable1, scrollable2);
+      myEditorSettingsAction.setSyncScrollSupport(mySyncScrollSupport);
     }
   }
 
@@ -210,12 +204,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @NotNull
   public List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
-      myEditors = ContainerUtil.map(getEditorHolders(), new Function<TextEditorHolder, EditorEx>() {
-        @Override
-        public EditorEx fun(TextEditorHolder holder) {
-          return holder.getEditor();
-        }
-      });
+      myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }
@@ -351,12 +340,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
-      if (Registry.is("diff.divider.repainting.fix")) {
-        myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider(mySide);
-      }
+      myContentPanel.repaint();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,11 +160,11 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       }
       /* Draw the Text */
       if(model.isEnabled()){
-        /*** paint the text normally */
+        /* paint the text normally */
         g2.setColor(UIUtil.isUnderDarcula() && model.isSelected() ? button.getForeground().brighter() : button.getForeground());
         BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       } else{
-        /*** paint the text disabled ***/
+        /* paint the text disabled ***/
         if(model.isSelected()){
           g2.setColor(c.getBackground());
         } else{

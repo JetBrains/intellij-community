@@ -156,7 +156,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
       @Nullable
       @Override
       public PsiType getSelectedType() {
-        return myType != null ? myType.getType(context.getPlace(), context.getPlace().getManager()) : null;
+        return myType != null ? myType.getType(context.getPlace()) : null;
       }
     };
   }

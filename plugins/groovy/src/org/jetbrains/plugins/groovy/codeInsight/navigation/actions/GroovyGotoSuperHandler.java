@@ -58,7 +58,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
 
   @NotNull
   @Override
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
     return CodeInsightBundle.message("goto.super.method.chooser.title");
   }
 

@@ -47,8 +47,7 @@ class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
 
 class <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName> {
   {
-    // default constructor call looks like class
-    new <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName>();
+    new <symbolName descr="null" type="CONSTRUCTOR_CALL">NoCtrClass</symbolName>();
   }
 
   void <symbolName descr="null" type="METHOD_DECLARATION">ff</symbolName>(int <symbolName descr="null" type="REASSIGNED_PARAMETER">param</symbolName>) {

@@ -18,7 +18,6 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -157,7 +156,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication()::saveAll);
+      ApplicationManager.getApplication().saveAll();
       SettingsDialog.super.doOKAction();
     }
   }

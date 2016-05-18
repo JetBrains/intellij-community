@@ -262,7 +262,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   private static class MyActionRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       AnAction group = (AnAction) value;
       append(ActionManager.getInstance().getId(group), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       String text = group.getTemplatePresentation().getText();

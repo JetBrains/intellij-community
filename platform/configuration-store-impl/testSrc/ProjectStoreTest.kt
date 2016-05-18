@@ -50,7 +50,7 @@ fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((Virt
 
 private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
   runInEdtAndWait {
-    var filePath: String
+    val filePath: String
     if (projectCreator == null) {
       filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
@@ -59,15 +59,9 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false)!! else projectManager.loadProject(filePath)!!
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else projectManager.loadProject(filePath)!!
     project.runInLoadComponentStateMode {
-      try {
-        projectManager.openTestProject(project)
-        task(project)
-      }
-      finally {
-        projectManager.closeProject(project, false, true, false)
-      }
+      project.use(task)
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
@@ -45,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * functionality (invoked on double Shift), so if you need to change them, please make sure
  * SearchEverywhere behaviour remains intact.
  */
-public class ModifierKeyDoubleClickHandler {
+public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter {
   private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
@@ -54,38 +57,75 @@ public class ModifierKeyDoubleClickHandler {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
   }
 
-  private static final ModifierKeyDoubleClickHandler INSTANCE = new ModifierKeyDoubleClickHandler();
-
-  private final ConcurrentMap<String, IdeEventQueue.EventDispatcher> myDispatchers =
-    ContainerUtil.newConcurrentMap();
+  private final ActionManagerEx myActionManagerEx;
+  private final ConcurrentMap<String, MyDispatcher> myDispatchers = ContainerUtil.newConcurrentMap();
   private boolean myIsRunningAction;
   
-  private ModifierKeyDoubleClickHandler() { }
+  private ModifierKeyDoubleClickHandler(ActionManagerEx actionManagerEx) {
+    myActionManagerEx = actionManagerEx;
+  }
+
+  @Override
+  public void initComponent() {
+    int modifierKeyCode = getMultiCaretActionModifier();
+    registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, modifierKeyCode, KeyEvent.VK_UP);
+    registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, modifierKeyCode, KeyEvent.VK_DOWN);
+    registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_LEFT);
+    registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_RIGHT);
+    registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_HOME);
+    registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END);
+  }
+
+  @Override
+  public void disposeComponent() {
+    for (MyDispatcher dispatcher : myDispatchers.values()) {
+      Disposer.dispose(dispatcher);
+    }
+    myDispatchers.clear();
+  }
 
   public static ModifierKeyDoubleClickHandler getInstance() {
-    return INSTANCE;
+    return ApplicationManager.getApplication().getComponent(ModifierKeyDoubleClickHandler.class);
+  }
+
+  public static int getMultiCaretActionModifier() {
+    return SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
   }
 
   /**
    * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
    * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
    * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+   * @param skipIfActionHasShortcut do not invoke action if a shortcut is already bound to it in keymap
    */
   public void registerAction(@NotNull String actionId,
                              int modifierKeyCode,
-                             int actionKeyCode) {
-    final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode);
-    IdeEventQueue.EventDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
-    IdeEventQueue.getInstance().addDispatcher(dispatcher, null);
+                             int actionKeyCode,
+                             boolean skipIfActionHasShortcut) {
+    final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut);
+    MyDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
+    IdeEventQueue.getInstance().addDispatcher(dispatcher, dispatcher);
+    myActionManagerEx.addAnActionListener(dispatcher, dispatcher);
     if (oldDispatcher != null) {
-      IdeEventQueue.getInstance().removeDispatcher(oldDispatcher);
+      Disposer.dispose(oldDispatcher);
     }
   }
 
+/**
+ * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
+ * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
+ * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+ */
+  public void registerAction(@NotNull String actionId,
+                             int modifierKeyCode,
+                             int actionKeyCode) {
+    registerAction(actionId, modifierKeyCode, actionKeyCode, true);
+  }
+
   public void unregisterAction(@NotNull String actionId) {
-    IdeEventQueue.EventDispatcher oldDispatcher = myDispatchers.remove(actionId);
+    MyDispatcher oldDispatcher = myDispatchers.remove(actionId);
     if (oldDispatcher != null) {
-      IdeEventQueue.getInstance().removeDispatcher(oldDispatcher);
+      Disposer.dispose(oldDispatcher);
     }
   }
 
@@ -93,20 +133,22 @@ public class ModifierKeyDoubleClickHandler {
     return myIsRunningAction;
   }
 
-  private class MyDispatcher implements IdeEventQueue.EventDispatcher {
+  private class MyDispatcher extends AnActionListener.Adapter implements IdeEventQueue.EventDispatcher, Disposable {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
+    private final boolean mySkipIfActionHasShortcut;
 
     private final Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
     private final Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
     private final AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
     private final AtomicLong ourLastTimePressed = new AtomicLong(0);
 
-    public MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode) {
+    public MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, boolean skipIfActionHasShortcut) {
       myActionId = actionId;
       myModifierKeyCode = modifierKeyCode;
       myActionKeyCode = actionKeyCode;
+      mySkipIfActionHasShortcut = skipIfActionHasShortcut;
     }
 
     @Override
@@ -186,7 +228,7 @@ public class ModifierKeyDoubleClickHandler {
           return;
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
           resetState();
-          if (myActionKeyCode == -1 && !isActionBound()) {
+          if (myActionKeyCode == -1 && !shouldSkipIfActionHasShortcut()) {
             run(event);
           }
           return;
@@ -205,16 +247,15 @@ public class ModifierKeyDoubleClickHandler {
     private boolean run(KeyEvent event) {
       myIsRunningAction = true;
       try {
-        ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-        AnAction action = actionManager.getAction(myActionId);
+        AnAction action = myActionManagerEx.getAction(myActionId);
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context);
         action.update(anActionEvent);
         if (!anActionEvent.getPresentation().isEnabled()) return false;
 
-        actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
-        actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         return true;
       }
       finally {
@@ -222,8 +263,17 @@ public class ModifierKeyDoubleClickHandler {
       }
     }
 
-    private boolean isActionBound() {
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId).length > 0;
+    private boolean shouldSkipIfActionHasShortcut() {
+      return mySkipIfActionHasShortcut && KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId).length > 0;
+    }
+
+    @Override
+    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      if (!myIsRunningAction) resetState();
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }

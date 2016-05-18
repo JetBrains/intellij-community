@@ -123,6 +123,9 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     AccessToken accessToken = ReadAction.start();
 
     try {
+      if (DumbService.isDumb(project)) {
+        mySuspendCounter.incrementAndGet();
+      }
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override

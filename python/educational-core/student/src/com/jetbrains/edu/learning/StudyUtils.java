@@ -130,7 +130,7 @@ public class StudyUtils {
   }
 
   public static void updateToolWindows(@NotNull final Project project) {
-    update(project);
+    updateStudyToolWindow(project);
 
     final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     createProgressToolWindowContent(project, windowManager);
@@ -302,7 +302,6 @@ public class StudyUtils {
     return null;
   }
 
-
   public static void drawAllWindows(Editor editor, TaskFile taskFile) {
     editor.getMarkupModel().removeAllHighlighters();
     final Project project = editor.getProject();
@@ -310,12 +309,12 @@ public class StudyUtils {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
       final JBColor color = taskManager.getColor(answerPlaceholder);
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, true, color);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, color);
     }
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(document, new EduAnswerPlaceholderDeleteHandler(editor));
-    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }
 
@@ -355,18 +354,28 @@ public class StudyUtils {
     }
   }
 
+
   @Nullable
-  public static Document getPatternDocument(@NotNull final Project project, @NotNull final TaskFile taskFile, String name) {
+  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
     File resourceFile = getCourseDirectory(project, course);
     if (!resourceFile.exists()) {
-      return  null;
+      return null;
     }
     String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
     VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return null;
+    }
+    return patternFile;
+  }
+
+  @Nullable
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    VirtualFile patternFile = getPatternFile(taskFile, name);
     if (patternFile == null) {
       return null;
     }
@@ -413,9 +422,10 @@ public class StudyUtils {
       return false;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
       return false;
     }
+
     if (!isRenameableOrMoveable(project, course, element)) {
       return true;
     }
@@ -475,14 +485,7 @@ public class StudyUtils {
 
   @Nullable
   public static String getTaskText(@NotNull final Project project) {
-    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    TaskFile taskFile = null;
-    for (VirtualFile file : files) {
-      taskFile = getTaskFile(project, file);
-      if (taskFile != null) {
-        break;
-      }
-    }
+    TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
       return EMPTY_TASK_TEXT;
     }
@@ -491,6 +494,18 @@ public class StudyUtils {
       return getTaskTextFromTask(task, task.getTaskDir(project));
     }
     return null;
+  }
+  @Nullable
+  public static TaskFile getSelectedTaskFile(@NotNull Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    return taskFile;
   }
   
   @Nullable
@@ -509,12 +524,12 @@ public class StudyUtils {
     return null;
   }
 
-  public static void update(Project project) {
+  public static void updateStudyToolWindow(Project project) {
     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
       String taskText = getTaskText(project);
       if (taskText != null) {
-        studyToolWindow.setTaskText(taskText);
+        studyToolWindow.setTaskText(taskText, null, project);
       }
       else {
         LOG.warn("Task text is null");
@@ -550,5 +565,48 @@ public class StudyUtils {
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
     }
     return courseDirectory;
+  }
+
+  public static boolean hasJavaFx() {
+    try {
+      Class.forName("javafx.application.Platform");
+      return true;
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
+  @Nullable
+  public static Task getTask(@NotNull Project project, @NotNull VirtualFile taskVF) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    VirtualFile lessonVF = taskVF.getParent();
+    if (lessonVF == null) {
+      return null;
+    }
+    Lesson lesson = course.getLesson(lessonVF.getName());
+    if (lesson == null) {
+      return null;
+    }
+    return lesson.getTask(taskVF.getName());
+  }
+
+  @Nullable
+  public static VirtualFile getTaskDir(@NotNull VirtualFile taskFile) {
+    VirtualFile parent = taskFile.getParent();
+    if (parent == null) {
+      return null;
+    }
+    String name = parent.getName();
+    if (name.contains(EduNames.TASK)) {
+      return parent;
+    }
+    if (EduNames.SRC.equals(name)) {
+      return parent.getParent();
+    }
+    return null;
   }
 }

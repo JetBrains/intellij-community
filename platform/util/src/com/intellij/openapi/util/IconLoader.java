@@ -20,7 +20,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.ImageUtil;
@@ -45,19 +48,19 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
-  public static boolean STRICT = false;
-  private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
-  private static float SCALE = JBUI.scale(1f);
-  private static ImageFilter IMAGE_FILTER;
-
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
-
   /**
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
   @NonNls private static final List<IconPathPatcher> ourPatchers = new ArrayList<IconPathPatcher>(2);
+  public static boolean STRICT = false;
+
+  private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
+
+  private static float SCALE = JBUI.scale(1f);
+  private static ImageFilter IMAGE_FILTER;
 
   static {
     installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
@@ -138,11 +141,11 @@ public final class IconLoader {
     }
   }
 
-  @Nullable
   /**
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String)}
    */
+  @Nullable
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;

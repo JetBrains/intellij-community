@@ -113,7 +113,12 @@
       <module fileurl="file://$PROJECT_DIR$/images/images.iml" filepath="$PROJECT_DIR$/images/images.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" filepath="$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" group="android/sdktools/instant-run" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/instant-run-client.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/instant-run-client.iml" group="android/sdktools/instant-run" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/instant-run-common.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/instant-run-common.iml" group="android/sdktools/instant-run" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-runtime/instant-run-runtime.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-runtime/instant-run-runtime.iml" group="android/sdktools/instant-run" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" group="java/compiler" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util-8/instrumentation-util-8.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util-8/instrumentation-util-8.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/python/ipnb/ipnb.iml" filepath="$PROJECT_DIR$/python/ipnb/ipnb.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" group="java" />
@@ -217,6 +222,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" filepath="$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" filepath="$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/impl/remote-servers-java-impl.iml" filepath="$PROJECT_DIR$/java/remote-servers/impl/remote-servers-java-impl.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/repository/repository.iml" filepath="$PROJECT_DIR$/android/tools-base/repository/repository.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/rest/rest.iml" filepath="$PROJECT_DIR$/python/rest/rest.iml" group="python" />
@@ -266,6 +272,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph/vcs-log-graph.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph-api/vcs-log-graph-api.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph-api/vcs-log-graph-api.iml" group="platform/vcs-log" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/vcs-log-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/vcs-log-impl.iml" group="platform/vcs-log" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/vcs-tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/vcs-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" filepath="$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/xdebugger-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/xml/impl/xml.iml" filepath="$PROJECT_DIR$/xml/impl/xml.iml" group="xml" />

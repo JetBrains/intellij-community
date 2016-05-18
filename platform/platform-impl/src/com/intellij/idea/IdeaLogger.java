@@ -24,6 +24,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
+import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.ThrowableRenderer;
+import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +57,20 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   @NonNls private static final String COMPILATION_TIMESTAMP_RESOURCE_NAME = "/.compilation-timestamp";
 
+  private static ThrowableRenderer ourThrowableRenderer = t -> {
+    String[] defaultRes = DefaultThrowableRenderer.render(t);
+    int maxStackSize = 1024;
+    int maxExtraSize = 256;
+    if (defaultRes.length > maxStackSize + maxExtraSize) {
+      String[] res = new String[maxStackSize + maxExtraSize + 1];
+      System.arraycopy(defaultRes, 0, res, 0, maxStackSize);
+      res[maxStackSize] = "\t...";
+      System.arraycopy(defaultRes, defaultRes.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
+      return res;
+    }
+    return defaultRes;
+  };
+
   static {
     InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
     if (stream != null) {
@@ -74,6 +92,10 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   IdeaLogger(org.apache.log4j.Logger logger) {
     super(logger);
+    LoggerRepository repository = myLogger.getLoggerRepository();
+    if (repository instanceof ThrowableRendererSupport) {
+      ((ThrowableRendererSupport)repository).setThrowableRenderer(ourThrowableRenderer);
+    }
   }
 
   @Override
@@ -148,6 +170,10 @@ public class IdeaLogger extends Log4jBasedLogger {
     }
   }
 
+  public static ThrowableRenderer getThrowableRenderer() {
+    return ourThrowableRenderer;
+  }
+
   public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
     ourApplicationInfoProvider = aProvider;
   }
@@ -157,7 +183,7 @@ public class IdeaLogger extends Log4jBasedLogger {
       @Override
       public String getInfo() {
         final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asStringWithAllDetails();
+        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
       }
     };
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -108,6 +109,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     mySwitchModeAction = new SwitchModeAction();
 
     new AnAction(){
+      @Override
+      public void update(AnActionEvent e) {
+        Project project = e.getProject();
+        e.getPresentation().setEnabled(project != null && LookupManager.getInstance(project).getActiveLookup() == null);
+      }
+
       @Override
       public void actionPerformed(AnActionEvent e) {
         doOKAction();
@@ -282,6 +289,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
+  }
+
+  @Override
+  public void doCancelAction() {
+    getInputEditor().saveTextInHistory();
+    super.doCancelAction();
   }
 
   @Override

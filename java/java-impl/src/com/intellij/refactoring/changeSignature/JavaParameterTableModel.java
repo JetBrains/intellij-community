@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
@@ -30,6 +31,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +106,26 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
         }
       }
     };
+  }
+
+  @Override
+  public void setValueAtWithoutUpdate(Object aValue, int rowIndex, int columnIndex) {
+    super.setValueAtWithoutUpdate(aValue, rowIndex, columnIndex);
+    //if type was changed - update default value's expected type
+    PsiType type = null;
+    if (columnIndex == 0 && aValue instanceof String) {
+      try {
+        type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText((String)aValue, myTypeContext);
+      }
+      catch (IncorrectOperationException e) {
+        type = null;
+      }
+    }
+
+    if (type != null) {
+      final ParameterTableModelItemBase<ParameterInfoImpl> item = getItem(rowIndex);
+      ((PsiExpressionCodeFragmentImpl)item.defaultValueCodeFragment).setExpectedType(type);
+    }
   }
 
   @Nullable
@@ -206,7 +228,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
             getCellState().updateRenderer(this);
             setPaintFocusBorder(false);
           }
-          append((String)value, new SimpleTextAttributes(Font.PLAIN, null));
+          append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null));
         }
       };
 

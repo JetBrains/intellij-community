@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
-    if ((flags & ICON_FLAG_VISIBILITY) > 0) {
+    if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       return new RowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
     }
     return icon;
@@ -176,7 +176,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
-    return (flags & ICON_FLAG_VISIBILITY) != 0 ? buildRowIcon(baseIcon, visibility) : baseIcon;
+    return BitUtil.isSet(flags, ICON_FLAG_VISIBILITY) ? buildRowIcon(baseIcon, visibility) : baseIcon;
   }
 
   private static class ElementIconRequest {
@@ -229,7 +229,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!element.isValid()) return null;
 
     RowIcon baseIcon;
-    final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
+    final boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
     if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
         baseIcon = createLayeredIcon(this, ((ItemPresentation)element).getIcon(false), elementFlags);
@@ -257,7 +257,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<Icon>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
-      final Icon layerIcon = provider.getLayerIcon(instance, (flags & FLAGS_LOCKED) != 0);
+      final Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
       if (layerIcon != null) {
         layersFromProviders.add(layerIcon);
       }
@@ -265,7 +265,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (flags != 0 || !layersFromProviders.isEmpty()) {
       List<Icon> iconLayers = new SmartList<Icon>();
       for(IconLayer l: ourIconLayers) {
-        if ((flags & l.flagMask) != 0) {
+        if (BitUtil.isSet(flags, l.flagMask)) {
           iconLayers.add(l.icon);
         }
       }
@@ -284,8 +284,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {
-    int flags = _flags & ~ICON_FLAG_READ_STATUS;
-    final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
+    int flags = BitUtil.clear(_flags, ICON_FLAG_READ_STATUS);
+    final boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
   }
@@ -296,6 +296,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     private final Icon icon;
 
     private IconLayer(final int flagMask, @NotNull Icon icon) {
+      BitUtil.assertOneBitMask(flagMask);
       this.flagMask = flagMask;
       this.icon = icon;
     }

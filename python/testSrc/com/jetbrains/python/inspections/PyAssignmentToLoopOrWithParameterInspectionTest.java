@@ -36,9 +36,4 @@ public class PyAssignmentToLoopOrWithParameterInspectionTest extends PyInspectio
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyAssignmentToLoopOrWithParameterInspection.class;
   }
-
-  @Override
-  protected boolean isWeakWarning() {
-    return true;
-  }
 }

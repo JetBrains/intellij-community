@@ -266,7 +266,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static class ThreadListCellRenderer extends ColoredListCellRenderer {
 
     @Override
-    protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
       ThreadState threadState = (ThreadState) value;
       setIcon(getThreadStateIcon(threadState));
       if (!selected) {

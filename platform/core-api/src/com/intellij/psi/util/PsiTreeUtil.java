@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,11 +347,65 @@ public class PsiTreeUtil {
   }
 
   @NotNull
+  public static <T extends PsiElement> List<T> getChildrenOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
+    if (element == null) return ContainerUtil.emptyList();
+
+    List<T> result = null;
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (instanceOf(child, classes)) {
+        if (result == null) result = ContainerUtil.newSmartList();
+        //noinspection unchecked
+        result.add((T)child);
+      }
+    }
+    if (result == null) {
+      return ContainerUtil.emptyList();
+    }
+    return result;
+  }
+
+  @NotNull
   public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return Collections.emptyList();
 
     List<T> result = new SmartList<T>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        result.add((T)child);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    if (stub == null) {
+      return getChildOfType(element, aClass);
+    }
+    for (StubElement childStub : stub.getChildrenStubs()) {
+      PsiElement child = childStub.getPsi();
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return Collections.emptyList();
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    if (stub == null) {
+      return getChildrenOfTypeAsList(element, aClass);
+    }
+
+    List<T> result = new SmartList<T>();
+    for (StubElement childStub : stub.getChildrenStubs()) {
+      PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
         //noinspection unchecked
         result.add((T)child);

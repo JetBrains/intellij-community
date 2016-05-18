@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +40,11 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class BalloonLayoutImpl implements BalloonLayout {
-
-  private final JLayeredPane myLayeredPane;
+  protected final JLayeredPane myLayeredPane;
   private final Insets myInsets;
 
   private final List<Balloon> myBalloons = new ArrayList<Balloon>();
@@ -56,6 +55,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private final Runnable myRelayoutRunnable = new Runnable() {
     public void run() {
       relayout();
+      fireRelayout();
     }
   };
   private final JRootPane myParent;
@@ -72,10 +72,13 @@ public class BalloonLayoutImpl implements BalloonLayout {
     public void run() {
       calculateSize();
       relayout();
+      fireRelayout();
     }
   };
 
   private LafManagerListener myLafListener;
+
+  private final List<Runnable> myListeners = new ArrayList<>();
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
@@ -96,6 +99,26 @@ public class BalloonLayoutImpl implements BalloonLayout {
         }
       }
     });
+  }
+
+  public void addListener(Runnable listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(Runnable listener) {
+    myListeners.remove(listener);
+  }
+
+  private void fireRelayout() {
+    for (Runnable listener : myListeners) {
+      listener.run();
+    }
+  }
+
+  @Nullable
+  public Component getTopBalloonComponent() {
+    BalloonImpl balloon = (BalloonImpl)ContainerUtil.getLastItem(myBalloons);
+    return balloon == null ? null : balloon.getComponent();
   }
 
   @Override
@@ -143,6 +166,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
+        clearNMore(balloon);
         remove(balloon, false);
         queueRelayout();
       }
@@ -164,7 +188,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     calculateSize();
     relayout();
+    ((BalloonImpl)balloon).traceDispose(false);
     balloon.show(myLayeredPane);
+    fireRelayout();
   }
 
   @Nullable
@@ -208,18 +234,25 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private void remove(@NotNull Balloon balloon) {
     remove(balloon, false);
     balloon.hide(true);
+    fireRelayout();
+  }
+
+  private void clearNMore(@NotNull Balloon balloon) {
+    BalloonLayoutData layoutData = myLayoutData.get(balloon);
+    if (layoutData != null && layoutData.mergeData != null) {
+      EventLog.clearNMore(layoutData.project, Collections.singleton(layoutData.groupId));
+    }
   }
 
   private void remove(@NotNull Balloon balloon, boolean hide) {
     myBalloons.remove(balloon);
     BalloonLayoutData layoutData = myLayoutData.remove(balloon);
     if (layoutData != null) {
-      layoutData.groupId = null;
-      layoutData.id = null;
       layoutData.mergeData = null;
     }
     if (hide) {
       balloon.hide();
+      fireRelayout();
     }
   }
 

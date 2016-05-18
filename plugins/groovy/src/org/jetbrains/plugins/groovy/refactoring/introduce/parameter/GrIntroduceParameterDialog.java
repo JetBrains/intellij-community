@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.openapi.application.AcceptNestedTransactions;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -45,6 +43,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -59,8 +58,8 @@ import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.GrParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
-import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromClosureProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureHelperImpl;
@@ -78,7 +77,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GrIntroduceParameterDialog extends DialogWrapper {
   private GrTypeComboBox myTypeComboBox;
   private NameSuggestionsField myNameSuggestionsField;
@@ -92,7 +90,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private final TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
   private GrMethodSignatureComponent mySignature;
-  private ParameterTablePanel myTable;
+  private GrParameterTablePanel myTable;
   private JPanel mySignaturePanel;
   private JCheckBox myForceReturnCheckBox;
   private final Project myProject;
@@ -142,7 +140,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
         final GrParameter param = parameters[index];
         final ParameterInfo pinfo = findParamByOldName(param.getName());
         if (pinfo != null) {
-          pinfo.setPassAsParameter(false);
+          pinfo.passAsParameter = false;
         }
         return true;
       }
@@ -210,7 +208,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
   private JPanel createSignaturePanel() {
     mySignature = new GrMethodSignatureComponent("", myProject);
-    myTable = new ParameterTablePanel() {
+    myTable = new GrParameterTablePanel() {
       @Override
       protected void updateSignature() {
         GrIntroduceParameterDialog.this.updateSignature();
@@ -340,7 +338,8 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false, false);
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false,
+                                   IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -409,7 +408,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
 
           final GrParameter param = myInfo.getToReplaceIn().getParameters()[index];
           final ParameterInfo pinfo = findParamByOldName(param.getName());
-          if (pinfo == null || !pinfo.passAsParameter()) return true;
+          if (pinfo == null || !pinfo.passAsParameter) return true;
 
           final String message = GroovyRefactoringBundle
             .message("you.cannot.pass.as.parameter.0.because.you.remove.1.from.base.method", pinfo.getName(), param.getName());
@@ -428,7 +427,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   @Nullable
   private ParameterInfo findParamByOldName(String name) {
     for (ParameterInfo info : myInfo.getParameterInfos()) {
-      if (name.equals(info.getOldName())) return info;
+      if (name.equals(info.getOriginalName())) return info;
     }
     return null;
   }
@@ -535,6 +534,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     return GroovyIntroduceParameterUtil.suggestNames(var, expr, stringPart, myInfo.getToReplaceIn(), myProject);
   }
 
+  @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   private int getReplaceFieldsWithGetter() {
     if (myDoNotReplaceRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE;
     if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;

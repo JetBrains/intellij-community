@@ -579,6 +579,16 @@ public class StringUtil extends StringUtilRt {
                                                      @Nullable String additionalChars,
                                                      boolean escapeSlash,
                                                      @NotNull @NonNls StringBuilder buffer) {
+    return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
+  }
+  
+  @NotNull
+  public static StringBuilder escapeStringCharacters(int length,
+                                                     @NotNull String str,
+                                                     @Nullable String additionalChars,
+                                                     boolean escapeSlash,
+                                                     boolean escapeUnicode,
+                                                     @NotNull @NonNls StringBuilder buffer) {
     char prev = 0;
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
@@ -610,7 +620,7 @@ public class StringUtil extends StringUtilRt {
           else if (additionalChars != null && additionalChars.indexOf(ch) > -1 && (escapeSlash || prev != '\\')) {
             buffer.append("\\").append(ch);
           }
-          else if (!isPrintableUnicode(ch)) {
+          else if (escapeUnicode && !isPrintableUnicode(ch)) {
             CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
@@ -1123,6 +1133,20 @@ public class StringUtil extends StringUtilRt {
       return s.substring(prefix.length());
     }
     return s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtension(@NotNull String name) {
+    int index = name.lastIndexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtensions(@NotNull String name) {
+    int index = name.indexOf('.');
+    return index < 0 ? name : name.substring(0, index);
   }
 
   @NotNull
@@ -2091,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "..." + text.subSequence(text.length() - length / 2, text.length())
+           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -2972,6 +2996,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static boolean findIgnoreCase(@Nullable String toFind, @NotNull String... where) {
+    for (String string : where) {
+      if (equalsIgnoreCase(toFind, string)) return true;
+    }
+    return false;
+  }
+
+  @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
     int d = c1 - c2;
@@ -3160,6 +3192,11 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseBoolean(string, defaultValue);
   }
 
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    return StringUtilRt.parseEnum(string, defaultValue, clazz);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {
@@ -3176,6 +3213,24 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
+  }
+
+  /**
+   * Strips class name from Object#toString if present.
+   * To be used as custom data type renderer for java.lang.Object.
+   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * expression in <em>Settings | Debugger | Data Views</em>.
+   */
+  @Contract("null->null;!null->!null")
+  @SuppressWarnings("UnusedDeclaration")
+  static String toShortString(@Nullable Object o) {
+    if (o == null) return null;
+    if (o instanceof CharSequence) return o.toString();
+    String className = o.getClass().getName();
+    String s = o.toString();
+    if (!s.startsWith(className)) return s;
+    return s.length() > className.length() && !Character.isLetter(s.charAt(className.length())) ?
+           trimStart(s, className) : s;
   }
 
   @NotNull

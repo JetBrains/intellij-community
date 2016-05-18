@@ -20,13 +20,12 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -47,7 +46,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 const val PROJECT_FILE = "\$PROJECT_FILE$"
 const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -247,16 +245,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       return PathUtilRt.getFileName(baseDir).replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName(projectFilePath)
-      val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
-      if (fileType is ProjectFileType) {
-        temp = temp.substring(0, temp.length - fileType.defaultExtension.length - 1)
-      }
-      val i = temp.lastIndexOf(File.separatorChar)
-      if (i >= 0) {
-        temp = temp.substring(i + 1, temp.length - i + 1)
-      }
-      return temp
+      return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
 
@@ -278,8 +267,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       nameFile.delete()
     }
     else {
-      val baseDir = Paths.get(basePath)
-      if (baseDir.isDirectory()) {
+      if (Paths.get(basePath).isDirectory()) {
         nameFile.write(currentProjectName.toByteArray())
       }
     }
@@ -296,7 +284,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    super.doSave(saveSessions, readonlyFiles, errors)
+    errors = super.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
@@ -310,28 +298,19 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       throw IComponentStore.SaveCancelledException()
     }
 
-    val status: ReadonlyStatusHandler.OperationStatus
-    val token = ReadAction.start()
-    try {
-      status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles))
-    }
-    finally {
-      token.finish()
-    }
-
+    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles)) }
     if (status.hasReadonlyFiles()) {
       dropUnableToSaveProjectNotification(project, status.readonlyFiles)
       throw IComponentStore.SaveCancelledException()
     }
-    val oldList = ArrayList(readonlyFiles)
+
+    val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     for (entry in oldList) {
       errors = executeSave(entry.first, readonlyFiles, errors)
     }
 
-    if (errors != null) {
-      CompoundRuntimeException.throwIfNotEmpty(errors)
-    }
+    CompoundRuntimeException.throwIfNotEmpty(errors)
 
     if (!readonlyFiles.isEmpty()) {
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))

@@ -15,6 +15,7 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -220,13 +221,15 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
     for (final ApplierCompleter<T> task : failedSubTasks) {
-      task.wrapInReadActionAndIndicator(() -> {
-        for (int i = task.lo; i < task.hi; ++i) {
-          if (!task.processor.process(task.array.get(i))) {
-            result[0] = false;
-            break;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        task.wrapInReadActionAndIndicator(() -> {
+          for (int i = task.lo; i < task.hi; ++i) {
+            if (!task.processor.process(task.array.get(i))) {
+              result[0] = false;
+              break;
+            }
           }
-        }
+        });
       });
     }
     return result[0];

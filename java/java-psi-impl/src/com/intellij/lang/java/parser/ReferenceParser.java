@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.util.BitUtil.*;
+import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.set;
 
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
@@ -40,12 +41,12 @@ public class ReferenceParser {
   public static final int INCOMPLETE_ANNO = 0x40;
 
   public static class TypeInfo {
-    public boolean isPrimitive = false;
-    public boolean isParameterized = false;
-    public boolean isArray = false;
-    public boolean isVarArg = false;
-    public boolean hasErrors = false;
-    public PsiBuilder.Marker marker = null;
+    public boolean isPrimitive;
+    public boolean isParameterized;
+    public boolean isArray;
+    public boolean isVarArg;
+    public boolean hasErrors;
+    public PsiBuilder.Marker marker;
   }
 
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
@@ -67,7 +68,7 @@ public class ReferenceParser {
     final TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
     if (typeInfo != null) {
-      assert notSet(flags, DISJUNCTIONS|CONJUNCTIONS) : "don't set both flags simultaneously";
+      assert !isSet(flags, DISJUNCTIONS) || !isSet(flags,CONJUNCTIONS) : "don't set both flags simultaneously";
       final IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
 
       if (operator != null && builder.getTokenType() == operator) {
@@ -117,7 +118,13 @@ public class ReferenceParser {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
-      emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      if (anno == null) {
+        emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+        typeInfo.hasErrors = true;
+      }
       type.done(JavaElementType.TYPE);
       typeInfo.marker = type;
       return typeInfo;

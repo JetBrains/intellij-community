@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.popup;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -23,8 +24,8 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
+  private Color   myBorder             = IdeTooltipManager.getInstance().getBorderColor(true);
   @Nullable private Insets myBorderInsets = null;
   private Color   myFill               = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
@@ -62,12 +63,13 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myHideOnAction = true;
   private boolean myDialogMode;
   private String  myTitle;
-  private Insets  myContentInsets = new Insets(2, 2, 2, 2);
-  private boolean myShadow        = false;
+  private Insets  myContentInsets = JBUI.insets(2);
+  private boolean myShadow        = UIUtil.isUnderDarcula();
   private boolean mySmallVariant  = false;
 
   private Balloon.Layer myLayer;
   private boolean myBlockClicks = false;
+  private boolean myRequestFocus = false;
 
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
@@ -141,6 +143,13 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setBlockClicksThroughBalloon(boolean block) {
     myBlockClicks = block;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
     return this;
   }
 
@@ -250,7 +259,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
       myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
       myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick, myAnimationCycle, myCalloutShift,
       myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks,
-      myLayer);
+      myLayer, myRequestFocus);
 
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);

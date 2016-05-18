@@ -32,7 +32,7 @@ import javax.swing.JPanel;
 final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   private final JComponent myPreferredFocusedComponent;
 
-  KeyboardShortcutDialog(Component parent) {
+  KeyboardShortcutDialog(Component parent, boolean allowSecondStroke) {
     super(parent, "keyboard.shortcut.dialog.title", new KeyboardShortcutPanel(new BorderLayout()));
 
     KeyboardShortcutPanel panel = (KeyboardShortcutPanel)myShortcutPanel;
@@ -42,6 +42,7 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
     inner.add(BorderLayout.CENTER, panel.mySecondStroke);
     inner.add(BorderLayout.WEST, panel.mySecondStrokeEnable);
     inner.setBorder(JBUI.Borders.empty(5, 0, 0, 0));
+    inner.setVisible(allowSecondStroke);
     panel.add(BorderLayout.NORTH, panel.myFirstStroke);
     panel.add(BorderLayout.SOUTH, inner);
     panel.setBorder(JBUI.Borders.empty(0, 10));

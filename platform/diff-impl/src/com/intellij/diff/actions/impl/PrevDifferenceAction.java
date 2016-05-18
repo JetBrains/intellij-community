@@ -16,13 +16,12 @@
 package com.intellij.diff.actions.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 
 public abstract class PrevDifferenceAction extends AnAction implements DumbAware {
   public PrevDifferenceAction() {
-    setEnabledInModalContext(true);
-    EmptyAction.setupAction(this, IdeActions.ACTION_PREVIOUS_DIFF, null);
+    ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_DIFF);
   }
 }

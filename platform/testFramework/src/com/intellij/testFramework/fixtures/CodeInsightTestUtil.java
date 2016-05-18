@@ -23,6 +23,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.navigation.GotoImplementationHandler;
+import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -39,14 +41,23 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.ComponentPopupBuilderImpl;
+import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -253,5 +264,29 @@ public class CodeInsightTestUtil {
         settings.removeTemplate(template);
       }
     });
+  }
+
+  @NotNull
+  @TestOnly
+  public static GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
+    GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
+    if (data.listUpdaterTask != null) {
+      JBList list = new JBList();
+      list.setModel(new NameFilteringListModel(list, Function.ID, Condition.FALSE, String::new));
+      JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
+      data.listUpdaterTask.init((AbstractPopup)popup, list, new Ref<>());
+
+      data.listUpdaterTask.queue();
+
+      try {
+        while (!data.listUpdaterTask.isFinished()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      }
+      finally {
+        Disposer.dispose(popup);
+      }
+    }
+    return data;
   }
 }

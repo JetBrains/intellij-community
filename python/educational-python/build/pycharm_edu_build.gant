@@ -210,6 +210,10 @@ public layoutEducational(String classesPath, Set usedJars) {
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, system_selector)
+  //win oracle jdk
+  if (new File("${paths.sandbox}/jdk.oracle.win/jre").exists()) {
+    buildWinZip("${paths.artifacts}/pycharm${buildName}-oracle-win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.oracle.win"])
+  }
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-no-jdk.tar", [paths.distAll, paths.distUnix])

@@ -30,12 +30,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.event.KeyEvent;
 
 public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private static int width;
   private static boolean shouldShowDescription = false;
   private static boolean descriptionShown = true;
+  private boolean myRequestFocus = false;
 
   public ShowErrorDescriptionAction() {
     setEnabledInModalContext(true);
@@ -44,7 +48,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return new ShowErrorDescriptionHandler(shouldShowDescription ? width : 0);
+    return new ShowErrorDescriptionHandler(shouldShowDescription ? width : 0, myRequestFocus);
   }
 
   @Override
@@ -62,6 +66,8 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   @Override
   public void beforeActionPerformedUpdate(@NotNull final AnActionEvent e) {
     super.beforeActionPerformedUpdate(e);
+    // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
+    myRequestFocus = ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent);
     changeState();
   }
 

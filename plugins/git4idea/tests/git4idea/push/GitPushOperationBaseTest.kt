@@ -51,13 +51,10 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
   }
 
-  override fun refresh() {
-    super.refresh()
-    myGitRepositoryManager.updateAllRepositories()
-  }
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
 
-  override fun getDebugLogCategories(): Collection<String> {
-    return listOf("#" + GitPushOperation::class.java.name)
+  protected fun updateRepositories() {
+    myGitRepositoryManager.updateAllRepositories()
   }
 
   protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): Trinity<GitRepository, File, File> {

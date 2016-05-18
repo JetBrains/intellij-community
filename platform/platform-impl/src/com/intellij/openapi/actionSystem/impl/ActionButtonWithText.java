@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -183,7 +184,7 @@ public class ActionButtonWithText extends ActionButton {
       if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts
         final KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
         final int modifiers = keyStroke.getModifiers();
-        if ((modifiers & InputEvent.ALT_MASK) != 0) {
+        if (BitUtil.isSet(modifiers, InputEvent.ALT_MASK)) {
           return (keyStroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED)
                  ? text.indexOf(keyStroke.getKeyChar())
                  : text.indexOf(KeyEvent.getKeyText(keyStroke.getKeyCode()));

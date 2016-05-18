@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -390,6 +391,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
     if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
     if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
+    if (PsiModifier.PROTECTED.equals(visibilityModifier) &&
+        InheritanceUtil.isInheritorOrSelf(myInnerClass, myOuterClass, true)) {
+      return false;
+    }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     if (myTargetContainer instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);

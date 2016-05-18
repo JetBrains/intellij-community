@@ -359,6 +359,10 @@ public class PsiImplUtil {
     }
   }
 
+  /**
+   * Types should be proceed by the callers themselves
+   */
+  @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
     PsiUtilCore.ensureValid(expression);
     PsiUtil.ensureValidType(type);
@@ -383,21 +387,6 @@ public class PsiImplUtil {
   }
 
   private static PsiType doNormalizeWildcardByPosition(PsiType type, @NotNull PsiExpression expression, PsiExpression topLevel) {
-    if (type instanceof PsiCapturedWildcardType) {
-      final PsiWildcardType wildcardType = ((PsiCapturedWildcardType)type).getWildcard();
-      if (expression instanceof PsiReferenceExpression && LambdaUtil.isLambdaReturnExpression(expression)) {
-        return type;
-      }
-
-      if (PsiUtil.isAccessedForWriting(topLevel)) {
-        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
-      }
-      else {
-        final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
-        return upperBound instanceof PsiWildcardType ? doNormalizeWildcardByPosition(upperBound, expression, topLevel) : upperBound;
-      }
-    }
-
 
     if (type instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
@@ -434,7 +423,10 @@ public class PsiImplUtil {
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
-    if (aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiAnonymousClass && !(aClass instanceof PsiEnumConstantInitializer &&
+                                                 member instanceof PsiMethod &&
+                                                 member.hasModifierProperty(PsiModifier.PUBLIC) &&
+                                                 ((PsiMethod)member).findSuperMethods().length > 0)) {
       //member from anonymous class can be called from outside the class
       PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class) 
                                                                            : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);

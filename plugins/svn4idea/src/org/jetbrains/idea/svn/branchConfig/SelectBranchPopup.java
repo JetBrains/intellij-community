@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,9 +288,9 @@ public class SelectBranchPopup {
       super(new BorderLayout());
       add(myUrlLabel, BorderLayout.WEST);
       add(myDateLabel, BorderLayout.EAST);
-      myUrlLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-      myDateLabel.setHorizontalAlignment(JLabel.RIGHT);
-      myDateLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+      myUrlLabel.setBorder(JBUI.Borders.empty(1));
+      myDateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      myDateLabel.setBorder(JBUI.Borders.empty(1));
       myDateLabel.setForeground(UIUtil.getInactiveTextColor());
     }
 

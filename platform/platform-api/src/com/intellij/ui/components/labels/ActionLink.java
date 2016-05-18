@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package com.intellij.ui.components.labels;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +61,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
                                                       presentation,
                                                       ActionManager.getInstance(),
                                                       0);
-        myAction.update(event);
+        ActionUtil.performDumbAwareUpdate(myAction, event, true);
         if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
           myAction.actionPerformed(event);
           if (onDone != null) {
@@ -118,5 +120,10 @@ public class ActionLink extends LinkLabel implements DataProvider {
     }
 
     return null;
+  }
+
+  @TestOnly
+  public AnAction getAction() {
+    return myAction;
   }
 }

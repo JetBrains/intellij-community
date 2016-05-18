@@ -74,7 +74,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   }
 
   @Override
-  public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -87,7 +87,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
 
       final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
       try {
-        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroups, baseForPatch);
+        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroupsToApply, baseForPatch);
         commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
         PatchWriter.writePatches(myProject, save.getFile().getPath(), textPatches, commitContext, CharsetToolkit.UTF8_CHARSET);
       }

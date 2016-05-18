@@ -35,8 +35,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @NotNull private final DataProvider myDataProvider;
   @NotNull protected final DiffContext myContext;
 
-  @NotNull private final List<JComponent> myPersistentNotifications = new ArrayList<JComponent>();
-  @NotNull private final List<JComponent> myNotifications = new ArrayList<JComponent>();
+  @NotNull private final List<JComponent> myPersistentNotifications = new ArrayList<>();
+  @NotNull private final List<JComponent> myNotifications = new ArrayList<>();
 
   @NotNull protected final JPanel myContentPanel;
   @NotNull protected final Wrapper myNotificationsPanel;

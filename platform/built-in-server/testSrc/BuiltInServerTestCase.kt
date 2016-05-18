@@ -43,16 +43,19 @@ internal abstract class BuiltInServerTestCase {
       url += ":$column"
     }
 
-    val connection = URL(url).openConnection() as HttpURLConnection
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: 200)
-    assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
-
+    val connection = testUrl(url, expectedStatus)
     check(serviceUrl, expectedStatus)
-    if (additionalCheck != null) {
-      additionalCheck(connection)
-    }
+    additionalCheck?.invoke(connection)
   }
 
   protected open fun check(serviceUrl: String, expectedStatus: HttpResponseStatus) {
   }
+}
+
+internal fun testUrl(url: String, expectedStatus: HttpResponseStatus): HttpURLConnection {
+  val connection = URL(url).openConnection() as HttpURLConnection
+  BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
+  assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
+  return connection
 }

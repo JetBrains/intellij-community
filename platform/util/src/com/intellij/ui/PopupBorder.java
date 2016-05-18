@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -74,7 +75,7 @@ public interface PopupBorder extends Border {
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myVisible ? new Insets(1, 1, 1, 1) : new Insets(0, 0, 0, 0);
+      return myVisible ? JBUI.insets(1) : JBUI.emptyInsets();
     }
 
     @Override

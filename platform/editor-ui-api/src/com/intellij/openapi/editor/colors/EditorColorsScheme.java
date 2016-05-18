@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,13 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+
+  /**
+   * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
+   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorFontSize()} or less than
+   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorFontSize()}
+   * @see com.intellij.application.options.EditorFontsConstants
+   */
   void setEditorFontSize(int fontSize);
 
   FontSize getQuickDocFontSize();
@@ -70,6 +77,13 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
+
+  /**
+   * Sets line spacing. Note, that this method checks that {@code lineSpacing} is within bounds and could change it if it is
+   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorLineSpacing()} or less than
+   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorLineSpacing()}
+   * @see com.intellij.application.options.EditorFontsConstants
+   */
   void setLineSpacing(float lineSpacing);
 
   Object clone();

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -140,12 +139,7 @@ public class GithubApiUtil {
 
         for (int i = 1; i < 100; i++) {
           final String newNote = note + "_" + i;
-          if (ContainerUtil.find(tokens, new Condition<GithubAuthorization>() {
-            @Override
-            public boolean value(GithubAuthorization authorization) {
-              return newNote.equals(authorization.getNote());
-            }
-          }) == null) {
+          if (!ContainerUtil.exists(tokens, authorization -> newNote.equals(authorization.getNote()))) {
             return getNewScopedToken(connection, scopes, newNote).getToken();
           }
         }

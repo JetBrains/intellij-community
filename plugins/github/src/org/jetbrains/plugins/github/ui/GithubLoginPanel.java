@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +65,7 @@ public class GithubLoginPanel {
     myLoginTextField.getDocument().addDocumentListener(listener);
     myPasswordField.getDocument().addDocumentListener(listener);
     mySignupTextField.setText("<html>Do not have an account at github.com? <a href=\"https://github.com\">Sign up</a>.</html>");
-    mySignupTextField.setMargin(new Insets(5, 0, 0, 0));
+    mySignupTextField.setMargin(JBUI.insetsTop(5));
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -79,26 +78,23 @@ public class GithubLoginPanel {
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
-    myAuthTypeComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          String item = e.getItem().toString();
-          if (AUTH_PASSWORD.equals(item)) {
-            myPasswordLabel.setText("Password:");
-            mySavePasswordCheckBox.setText("Save password");
-            myLoginLabel.setVisible(true);
-            myLoginTextField.setVisible(true);
-          }
-          else if (AUTH_TOKEN.equals(item)) {
-            myPasswordLabel.setText("Token:");
-            mySavePasswordCheckBox.setText("Save token");
-            myLoginLabel.setVisible(false);
-            myLoginTextField.setVisible(false);
-          }
-          if (dialog.isShowing()) {
-            dialog.pack();
-          }
+    myAuthTypeComboBox.addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        String item = e.getItem().toString();
+        if (AUTH_PASSWORD.equals(item)) {
+          myPasswordLabel.setText("Password:");
+          mySavePasswordCheckBox.setText("Save password");
+          myLoginLabel.setVisible(true);
+          myLoginTextField.setVisible(true);
+        }
+        else if (AUTH_TOKEN.equals(item)) {
+          myPasswordLabel.setText("Token:");
+          mySavePasswordCheckBox.setText("Save token");
+          myLoginLabel.setVisible(false);
+          myLoginTextField.setVisible(false);
+        }
+        if (dialog.isShowing()) {
+          dialog.pack();
         }
       }
     });
@@ -199,12 +195,7 @@ public class GithubLoginPanel {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.filter(myOrder, new Condition<Component>() {
-        @Override
-        public boolean value(Component component) {
-          return component.isVisible() && component.isEnabled();
-        }
-      });
+      return ContainerUtil.filter(myOrder, component -> component.isVisible() && component.isEnabled());
     }
   }
 }

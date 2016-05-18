@@ -64,6 +64,7 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
     return myPrintElementManager.isSelected(this);
   }
 
+  @NotNull
   public static PrintElementWithGraphElement converted(@NotNull PrintElementWithGraphElement element,
                                                        @NotNull GraphElement convertedGraphElement) {
     return new PrintElementWithGraphElement(element.getRowIndex(), element.getPositionInCurrentRow(), convertedGraphElement,

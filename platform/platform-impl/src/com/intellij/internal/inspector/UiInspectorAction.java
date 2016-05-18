@@ -48,6 +48,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -989,27 +990,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void processMouseEvent(MouseEvent me) {
-      if (me.isAltDown() && me.isControlDown()) {
-        switch (me.getID()) {
-          case MouseEvent.MOUSE_CLICKED:
-            if (me.getClickCount() == 1 && !me.isPopupTrigger()) {
-              Object source = me.getSource();
-              if (source instanceof Component) {
-                showInspector((Component)source);
-              }
-              else {
-                Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                if (owner != null) {
-                  showInspector(owner);
-                }
-              }
-              me.consume();
-            }
+      if (!me.isAltDown() || !me.isControlDown()) return;
+      if (me.getClickCount() != 1 || me.isPopupTrigger()) return;
+      me.consume();
+      if (me.getID() != MouseEvent.MOUSE_RELEASED) return;
+      Component component = me.getComponent();
 
-            break;
-          default:
-            break;
-        }
+      if (component instanceof Container) {
+        component = ((Container)component).findComponentAt(me.getPoint());
+      }
+      else if (component == null) {
+        component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      }
+      if (component != null) {
+        showInspector(component);
       }
     }
 
@@ -1056,8 +1050,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                            Integer.parseInt(s[4]), Integer.parseInt(s[4]));
     }
     else if (type == Color.class) {
-      if (s.length >= 5) return new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
-                                          Integer.parseInt(s[3]), Integer.parseInt(s[4]));
+      if (s.length >= 5) return new ColorUIResource(
+        new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]), Integer.parseInt(s[3]), Integer.parseInt(s[4])));
     }
     throw new UnsupportedOperationException(type.toString());
   }

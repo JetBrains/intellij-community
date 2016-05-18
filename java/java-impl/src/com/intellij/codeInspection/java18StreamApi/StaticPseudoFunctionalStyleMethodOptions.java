@@ -123,7 +123,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     final JBList list = new JBList(myElements);
     list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
       @Override
-      protected void customizeCellRenderer(JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
         final String classFQName = element.getHandlerClass();
         final String[] split = classFQName.split("\\.");
         final int classShortNameIndex = classFQName.length() - split[split.length - 1].length();

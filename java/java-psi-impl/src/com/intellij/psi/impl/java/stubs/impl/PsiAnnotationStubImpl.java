@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
-  public PsiAnnotationStubImpl(final StubElement parent, final String text) {
+  public PsiAnnotationStubImpl(StubElement parent, String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     CharSequence interned = CharTableImpl.getStaticInterned(text);
     myText = interned == null ? text : interned.toString();
@@ -58,11 +58,9 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   @Override
   public PsiAnnotation getPsiElement() {
     PsiAnnotation annotation = SoftReference.dereference(myParsedFromRepository);
-    if (annotation != null) {
-      return annotation;
-    }
+    if (annotation != null) return annotation;
 
-    final String text = getText();
+    String text = getText();
     try {
       PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
       annotation = facade.createAnnotationFromText(text, getPsi());
@@ -76,8 +74,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "PsiAnnotationStub[" + myText + "]";
+    return "PsiAnnotationStub[" + myText + ']';
   }
 }

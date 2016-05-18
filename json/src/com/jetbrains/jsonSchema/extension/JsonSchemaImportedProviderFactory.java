@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -15,10 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,14 +29,14 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory");
 
   @Override
-  public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
-    final List<JsonSchemaFileProvider> list = new ArrayList<JsonSchemaFileProvider>();
+  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
+    final List<JsonSchemaFileProvider> list = new ArrayList<>();
 
     if (project != null) {
       processConfiguration(project, JsonSchemaMappingsProjectConfiguration.getInstance(project), list);
     }
 
-    return list.isEmpty() ? EMPTY : list.toArray(new JsonSchemaFileProvider[list.size()]);
+    return list.isEmpty() ? Collections.emptyList() : list;
   }
 
   private static void processConfiguration(@Nullable Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
@@ -52,6 +51,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     @Nullable private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
+    private VirtualFile myVirtualFile;
     @NotNull private final List<Processor<VirtualFile>> myPatterns;
 
     public MyProvider(@Nullable final Project project,
@@ -112,6 +112,22 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
       }
     }
 
+    @Override
+    public VirtualFile getSchemaFile() {
+      if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      myVirtualFile = lfs.findFileByIoFile(myFile);
+      if (myVirtualFile == null) {
+        myVirtualFile = lfs.refreshAndFindFileByIoFile(myFile);
+      }
+      return myVirtualFile;
+    }
+
+    @Override
+    public SchemaType getSchemaType() {
+      return SchemaType.userSchema;
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -119,25 +135,13 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     }
 
     @Override
-    public boolean isAvailable(@NotNull VirtualFile file) {
+    public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
       if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() ||
           myProject != null && JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file)) return false;
       for (Processor<VirtualFile> pattern : myPatterns) {
         if (pattern.process(file)) return true;
       }
       return false;
-    }
-
-    @Nullable
-    @Override
-    public Reader getSchemaReader() {
-      try {
-        return new FileReader(myFile);
-      }
-      catch (FileNotFoundException e) {
-        LOG.info(e);
-        return null;
-      }
     }
 
     @Override

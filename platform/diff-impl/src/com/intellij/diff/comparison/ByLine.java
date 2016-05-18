@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -293,7 +292,7 @@ public class ByLine {
   private static List<LineFragment> convertIntoFragments(@NotNull List<Line> lines1,
                                                          @NotNull List<Line> lines2,
                                                          @NotNull FairDiffIterable changes) {
-    List<LineFragment> fragments = new ArrayList<LineFragment>();
+    List<LineFragment> fragments = new ArrayList<>();
     for (Range ch : changes.iterateChanges()) {
       IntPair offsets1 = getOffsets(lines1, ch.start1, ch.end1);
       IntPair offsets2 = getOffsets(lines2, ch.start2, ch.end2);
@@ -306,12 +305,7 @@ public class ByLine {
 
   @NotNull
   private static List<MergeLineFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeLineFragment>() {
-      @Override
-      public MergeLineFragment fun(MergeRange ch) {
-        return new MergeLineFragmentImpl(ch);
-      }
-    });
+    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
   }
 
   @NotNull
@@ -354,7 +348,7 @@ public class ByLine {
 
   @NotNull
   private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<Line> lines, int threshold) {
-    List<Line> bigLines = new ArrayList<Line>(lines.size());
+    List<Line> bigLines = new ArrayList<>(lines.size());
     TIntArrayList indexes = new TIntArrayList(lines.size());
 
     for (int i = 0; i < lines.size(); i++) {
@@ -372,7 +366,7 @@ public class ByLine {
                                                @NotNull List<Line> lines2,
                                                @NotNull FairDiffIterable iterable,
                                                @NotNull ProgressIndicator indicator) {
-    List<Range> changes = new ArrayList<Range>();
+    List<Range> changes = new ArrayList<>();
 
     for (Range ch : iterable.iterateChanges()) {
       Range expanded = TrimUtil.expand(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
@@ -388,7 +382,7 @@ public class ByLine {
 
   @NotNull
   private static List<Line> getLines(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
-    List<Line> lines = new ArrayList<Line>();
+    List<Line> lines = new ArrayList<>();
 
     int offset = 0;
     while (true) {
@@ -417,7 +411,7 @@ public class ByLine {
 
   @NotNull
   private static List<Line> convertToIgnoreWhitespace(@NotNull List<Line> original) {
-    List<Line> result = new ArrayList<Line>(original.size());
+    List<Line> result = new ArrayList<>(original.size());
 
     for (Line line : original) {
       result.add(Line.createIgnore(line.getOriginalText(), line.getOffset1()));

@@ -66,6 +66,10 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  public void testUFuncMixedWithNumber() {
+    doTest();
+  }
+
   public void testReturnOptional() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);

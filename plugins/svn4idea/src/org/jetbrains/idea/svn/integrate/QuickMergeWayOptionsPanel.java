@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -51,9 +52,9 @@ public class QuickMergeWayOptionsPanel {
     myShowsAllRevisionsFromLabel.setUI(new MultiLineLabelUI());
     myFindsWhereOneOfLabel.setUI(new MultiLineLabelUI());
 
-    myAllNotMergedRevisionsLabel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
-    myShowsAllRevisionsFromLabel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
-    myFindsWhereOneOfLabel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+    myAllNotMergedRevisionsLabel.setBorder(JBUI.Borders.emptyBottom(10));
+    myShowsAllRevisionsFromLabel.setBorder(JBUI.Borders.emptyBottom(10));
+    myFindsWhereOneOfLabel.setBorder(JBUI.Borders.emptyBottom(10));
   }
 
   private ActionListener setCodeAndClose(final QuickMergeContentsVariants variant) {

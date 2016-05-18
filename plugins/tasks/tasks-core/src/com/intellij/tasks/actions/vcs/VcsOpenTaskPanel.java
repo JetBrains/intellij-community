@@ -118,7 +118,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
       myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
         @Override
-        protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
           if (value != null) {
             append(value.getName());
           }
@@ -159,15 +159,15 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myTaskManager.createChangeList(localTask, myChangelistName.getText());
     }
     if (myCreateBranch.isSelected()) {
+      VcsTaskHandler.TaskInfo branchFrom = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
       Runnable createBranch = new Runnable() {
         @Override
         public void run() {
-          myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText());
+          myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText(), branchFrom);
         }
       };
-      VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
-      if (item != null) {
-        myVcsTaskHandler.switchToTask(item, createBranch);
+      if (branchFrom != null) {
+        myVcsTaskHandler.switchToTask(branchFrom, createBranch);
       }
       else {
         createBranch.run();
@@ -186,10 +186,10 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       else if (myVcsTaskHandler != null) {
         return myVcsTaskHandler.isBranchNameValid(branchName)
                ? null
-               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
+               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.", myBranchName);
       }
       else if (branchName.contains(" ")) {
-        return new ValidationInfo("Branch name should not contain spaces");
+        return new ValidationInfo("Branch name should not contain spaces", myBranchName);
       }
       else {
         return null;
@@ -197,7 +197,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     }
     if (myCreateChangelist.isSelected()) {
       if (myChangelistName.getText().trim().isEmpty()) {
-        return new ValidationInfo("Changelist name should not be empty");
+        return new ValidationInfo("Changelist name should not be empty", myChangelistName);
       }
     }
     return null;

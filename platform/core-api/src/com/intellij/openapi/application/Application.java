@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
@@ -105,7 +104,7 @@ public interface Application extends ComponentManager {
    * @param actionClass the class of the write action to return.
    * @return true if the action is running, or false if no action of the specified class is currently executing.
    */
-  boolean hasWriteAction(@Nullable Class<?> actionClass);
+  boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
    * Asserts whether the read access is allowed.
@@ -414,7 +413,7 @@ public interface Application extends ComponentManager {
    * Returns lock used for write operations, should be closed in finally block
    */
   @NotNull
-  AccessToken acquireWriteActionLock(/*@NotNull*/ Class marker);
+  AccessToken acquireWriteActionLock(@NotNull Class marker);
 
   boolean isInternal();
 

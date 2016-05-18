@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -124,7 +125,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
     @Override
     protected void customizeCellRenderer(
-      JList list,
+      @NotNull JList list,
       Object value,
       int index,
       boolean selected,
@@ -186,13 +187,13 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           String containerText = presentation.getLocationString();
 
           if (containerText != null && containerText.length() > 0) {
-            append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+            append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
           }
         }
       }
       else {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);

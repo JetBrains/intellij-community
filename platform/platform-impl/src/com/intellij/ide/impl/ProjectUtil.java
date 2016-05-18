@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -176,6 +178,12 @@ public class ProjectUtil {
       }
     }
 
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
+        return null;
+      }
+    }
+
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     try {
@@ -196,6 +204,37 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  public static boolean confirmLoadingFromRemotePath(@NotNull String path,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String msgKey,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey);
+  }
+
+  public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    final Window window = getActiveFrameOrWelcomeScreen();
+    final Icon icon = Messages.getWarningIcon();
+    String title = IdeBundle.message(titleKey);
+    final int answer = window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon);
+    return answer == Messages.YES;
+  }
+
+  public static Window getActiveFrameOrWelcomeScreen() {
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window != null)  return window;
+
+    for (Frame frame : Frame.getFrames()) {
+      if (frame instanceof IdeFrame && frame.isVisible()) {
+        return frame;
+      }
+    }
+
+    return null;
+  }
+
+  public static boolean isRemotePath(@NotNull String path) {
+    return path.contains("://") || path.contains("\\\\");
   }
 
   @Nullable

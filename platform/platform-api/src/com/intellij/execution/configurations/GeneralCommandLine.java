@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream;
+  private boolean myRedirectErrorStream = false;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
@@ -437,7 +437,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private static class MyTHashMap extends THashMap<String, String> {
     private MyTHashMap() {
-      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.<String>canonicalStrategy());
+      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
     }
 
     @Override

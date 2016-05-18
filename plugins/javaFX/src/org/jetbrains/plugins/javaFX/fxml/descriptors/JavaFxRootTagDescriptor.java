@@ -75,7 +75,7 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     return psiClass != null ? psiClass : myXmlTag;
   }
 
-  private static class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+  public static class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
     public RootTagTypeAttributeDescriptor() {
       super(FxmlConstants.TYPE, null);
     }

@@ -23,5 +23,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>

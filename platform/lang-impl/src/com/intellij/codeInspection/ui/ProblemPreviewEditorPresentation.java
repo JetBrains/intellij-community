@@ -21,6 +21,7 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -57,14 +58,15 @@ public class ProblemPreviewEditorPresentation {
   });
   private final DocumentEx myDocument;
 
-  public ProblemPreviewEditorPresentation(EditorEx editor, Project project) {
+  public ProblemPreviewEditorPresentation(EditorEx editor, Project project, CommonProblemDescriptor[] descriptors) {
     myEditor = editor;
     myProject = project;
     myDocument = editor.getDocument();
     myFoldedRegions.add(new PreviewEditorFoldingRegion(0, myDocument.getLineCount()));
+    appendFoldings(descriptors);
   }
 
-  void appendFoldings(CommonProblemDescriptor[] descriptors) {
+  private void appendFoldings(CommonProblemDescriptor[] descriptors) {
     final boolean[] isUpdated = new boolean[]{false};
     final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
@@ -82,6 +84,14 @@ public class ProblemPreviewEditorPresentation {
       updateFoldings();
     }
     UsagePreviewPanel.highlight(elements, myEditor, myProject, false, HighlighterLayer.SELECTION);
+    if (elements.size() == 1) {
+      final PsiElement element = elements.get(0).getElement();
+      LOG.assertTrue(element != null);
+      final int offset = element.getTextOffset();
+      myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
+    } else {
+      myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+    }
   }
 
   /**

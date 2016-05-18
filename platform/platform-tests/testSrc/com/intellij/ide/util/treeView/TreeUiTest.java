@@ -2679,11 +2679,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testQueryStructure() throws Exception {
-      super.testQueryStructure();
-    }
-
-    @Override
     protected int getNodeDescriptorUpdateDelay() {
       return 30;
     }
@@ -2703,21 +2698,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class VeryQuickBgLoadingSyncUpdate extends TreeUiTest {
     public VeryQuickBgLoadingSyncUpdate() {
       super(false, true);
-    }
-
-    @Override
-    public void testSelectWhileUpdating() throws Exception {
-      super.testSelectWhileUpdating();
-    }
-
-    @Override
-    protected int getNodeDescriptorUpdateDelay() {
-      return 0;
-    }
-
-    @Override
-    protected int getChildrenLoadingDelay() {
-      return 0;
     }
 
     @Override

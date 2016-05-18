@@ -40,8 +40,11 @@ public class InspectionTreeState {
   public void restoreExpansionAndSelection(InspectionTree tree, InspectionTreeNode reloadedNode) {
     restoreExpansionStatus((InspectionTreeNode)tree.getModel().getRoot(), tree);
     if (mySelectionPath != null) {
-      if (reloadedNode == null || needRestore(reloadedNode))
-      mySelectionPath.restore(tree);
+      if (reloadedNode == null || needRestore(reloadedNode)) {
+        mySelectionPath.restore(tree);
+      }
+    } else {
+      TreeUtil.selectFirstNode(tree);
     }
   }
 

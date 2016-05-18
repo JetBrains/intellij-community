@@ -40,6 +40,11 @@
             text="Show Chessboard"
             description="Show a chessboard on transparent image parts">
     </action>
+    <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
+            id="Images.SetBackgroundImageAction"
+            text="Set Background Image">
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+    </action>
     <group id="Images.EditorToolbar">
       <reference id="Images.ToggleTransparencyChessboard"/>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"

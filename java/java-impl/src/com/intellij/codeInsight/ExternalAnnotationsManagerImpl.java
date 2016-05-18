@@ -454,59 +454,66 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
-    final PsiFile containingFile = element.getContainingFile();
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-    if (!entries.isEmpty()) {
-      for (OrderEntry entry : entries) {
-        if (!(entry instanceof ModuleOrderEntry)) {
-          if (AnnotationOrderRootType.getUrls(entry).length > 0) {
+
+    //choose external place iff USE_EXTERNAL_ANNOTATIONS option is on,
+    //otherwise external annotations should be read-only
+    if (CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+      final PsiFile containingFile = element.getContainingFile();
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
+      if (!entries.isEmpty()) {
+        for (OrderEntry entry : entries) {
+          if (!(entry instanceof ModuleOrderEntry)) {
+            if (AnnotationOrderRootType.getUrls(entry).length > 0) {
+              return AnnotationPlace.EXTERNAL;
+            }
+            break;
+          }
+        }
+      }
+
+      final MyExternalPromptDialog dialog = ApplicationManager.getApplication().isUnitTestMode() ||
+                                            ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new MyExternalPromptDialog(project);
+      if (dialog != null && dialog.isToBeShown()) {
+        final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner
+                                            ? ((PsiNameIdentifierOwner)element).getNameIdentifier()
+                                            : element.getNavigationElement();
+        LOG.assertTrue(highlightElement != null);
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+        final boolean highlight =
+          editor != null && editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(containingFile);
+        try {
+          if (highlight) { //do not highlight for batch inspections
+            final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+            final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+            final TextRange textRange = highlightElement.getTextRange();
+            HighlightManager.getInstance(project).addRangeHighlight(editor,
+                                                                    textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                    attributes, true, highlighters);
+            final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
+            editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.CENTER);
+          }
+
+          dialog.show();
+          if (dialog.getExitCode() == 2) {
             return AnnotationPlace.EXTERNAL;
           }
-          break;
-        }
-      }
-    }
-    final MyExternalPromptDialog dialog = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new MyExternalPromptDialog(project);
-    if (dialog != null && dialog.isToBeShown()) {
-      final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner
-                                           ? ((PsiNameIdentifierOwner)element).getNameIdentifier()
-                                           : element.getNavigationElement();
-      LOG.assertTrue(highlightElement != null);
-      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-      final boolean highlight =
-          editor != null && editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(containingFile);
-      try {
-        if (highlight) { //do not highlight for batch inspections
-          final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-          final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-          final TextRange textRange = highlightElement.getTextRange();
-          HighlightManager.getInstance(project).addRangeHighlight(editor,
-                                                                textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                attributes, true, highlighters);
-          final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
-          editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.CENTER);
-        }
+          else if (dialog.getExitCode() == 1) {
+            return AnnotationPlace.NOWHERE;
+          }
 
-        dialog.show();
-        if (dialog.getExitCode() == 2) {
-          return AnnotationPlace.EXTERNAL;
         }
-        else if (dialog.getExitCode() == 1) {
-          return AnnotationPlace.NOWHERE;
-        }
-
-      }
-      finally {
-        if (highlight) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+        finally {
+          if (highlight) {
+            HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+          }
         }
       }
-    }
-    else if (dialog != null) {
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
+      else if (dialog != null) {
+        dialog.close(DialogWrapper.OK_EXIT_CODE);
+      }
     }
     return AnnotationPlace.IN_CODE;
   }

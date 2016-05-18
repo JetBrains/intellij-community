@@ -144,8 +144,7 @@ public class PaymentManager {
                 flush();
     }
 
-    @SuppressWarnings(
-            "unchecked")
+    @SuppressWarnings("unchecked")
     public UserCashOut performCashOut(double amount, Player player) throws AmountMoreThanBalanceException {
         Session ses = HibernateSessionFactory.
                 currentSession();

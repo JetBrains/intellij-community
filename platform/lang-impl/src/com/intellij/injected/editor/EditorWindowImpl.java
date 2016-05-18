@@ -584,21 +584,19 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
-    if (myDocumentWindow.getTextLength() == 0) return 0;
-
+    CharSequence text = myDocumentWindow.getImmutableCharSequence();
+    int tabSize = EditorUtil.getTabSize(myDelegate);
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
-
-    int x = getDocument().getLineNumber(lineStartOffset) == 0 ? getPrefixTextWidthInPixels() : 0;
-
-    // There is a possible case that target column points inside soft wrap-introduced virtual space.
-    if (col <= 0) {
-      return lineStartOffset;
-    }
-
-    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocumentWindow.getCharsSequence(), lineStartOffset, end, col,
-                                                      EditorUtil.getTabSize(myDelegate), x, new int[]{0}, null);
-    if (result >= 0) {
-      return result;
+    int currentColumn = 0;
+    for (int i = lineStartOffset; i < end; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        currentColumn = (currentColumn / tabSize + 1) * tabSize;
+      }
+      else {
+        currentColumn++;
+      }
+      if (col < currentColumn) return i;
     }
     return end;
   }
@@ -763,14 +761,23 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int calcColumnNumber(@NotNull final CharSequence text, final int start, final int offset, final int tabSize) {
-    int hostStart = myDocumentWindow.injectedToHost(start);
-    int hostOffset = myDocumentWindow.injectedToHost(offset);
-    return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
+    int column = 0;
+    for (int i = start; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        column = ((column / tabSize) + 1) * tabSize;
+      }
+      else {
+        column++;
+      }
+    }
+    return column;
   }
 
   @Override
   public int calcColumnNumber(int offset, int lineIndex) {
-    return myDelegate.calcColumnNumber(myDocumentWindow.injectedToHost(offset), myDocumentWindow.injectedToHostLine(lineIndex));
+    return calcColumnNumber(myDocumentWindow.getImmutableCharSequence(), myDocumentWindow.getLineStartOffset(lineIndex), offset,
+                            EditorUtil.getTabSize(myDelegate));
   }
 
   @NotNull

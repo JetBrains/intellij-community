@@ -24,9 +24,14 @@ public class Course {
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
-  private String myLanguage="Python";
+  private String myLanguage = "Python";
 
-  private String courseType="PyCharm";
+  //this field is used to distinguish ordinary and CheckIO projects
+  //"PyCharm" is used here for historical reasons
+  private String courseType = EduNames.PYCHARM;
+
+  //this field is used to distinguish study and course creator modes
+  private String courseMode = EduNames.STUDY;
   
   @Expose private boolean isAdaptive;
   
@@ -165,5 +170,13 @@ public class Course {
 
   public void setId(int id) {
     this.id = id;
+  }
+
+  public String getCourseMode() {
+    return courseMode;
+  }
+
+  public void setCourseMode(String courseMode) {
+    this.courseMode = courseMode;
   }
 }

@@ -15,99 +15,56 @@
  */
 package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.json.JsonFileType;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ResourceUtil;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Irina.Chernushina on 2/24/2016.
  */
-public class JsonSchemaProjectSelfProviderFactory {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory");
-  private final JsonSchemaFileProvider[] myProviders;
+public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory {
+  public static final String SCHEMA_JSON_FILE_NAME = "schema.json";
+  private final List<JsonSchemaFileProvider> myProviders;
 
-  public static JsonSchemaProjectSelfProviderFactory getInstance(final Project project) {
-    return ServiceManager.getService(project, JsonSchemaProjectSelfProviderFactory.class);
+  public JsonSchemaProjectSelfProviderFactory() {
+    myProviders = Collections.singletonList(new MyJsonSchemaFileProvider());
   }
 
-  public JsonSchemaProjectSelfProviderFactory(final Project project) {
-    myProviders = new JsonSchemaFileProvider[]{
-      new MyJsonSchemaFileProvider(project)
-    };
-  }
-
-  public JsonSchemaFileProvider[] getProviders() {
+  @Override
+  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
     return myProviders;
   }
 
   private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
-    private final Project myProject;
-
-    public MyJsonSchemaFileProvider(Project project) {
-      myProject = project;
-    }
+    public static final Pair<SchemaType, Object> KEY = Pair.create(SchemaType.schema, SchemaType.schema);
 
     @Override
-    public boolean isAvailable(@NotNull VirtualFile file) {
-      if (myProject == null || !JsonFileType.INSTANCE.equals(file.getFileType())) return false;
-      return JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file);
-    }
-
-    @Nullable
-    @Override
-    public Reader getSchemaReader() {
-      final String content = getContent();
-      return content == null ? null : new StringReader(content);
+    public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
+      if (!JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
+      return JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file);
     }
 
     @NotNull
     @Override
     public String getName() {
-      return "schema.json";
-    }
-
-    @Nullable
-    private static String getContent() {
-      ClassLoader loader = JsonSchemaSelfProviderFactory.class.getClassLoader();
-      try {
-        URL resource = loader.getResource("jsonSchema/schema.json");
-        assert resource != null;
-
-        return ResourceUtil.loadText(resource);
-      }
-      catch (IOException e) {
-        LOG.error(e.getMessage(), e);
-      }
-
-      return null;
+      return SCHEMA_JSON_FILE_NAME;
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MyJsonSchemaFileProvider provider = (MyJsonSchemaFileProvider)o;
-
-      if (myProject != null ? !myProject.equals(provider.myProject) : provider.myProject != null) return false;
-
-      return true;
+    public VirtualFile getSchemaFile() {
+      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/schema.json");
     }
 
     @Override
-    public int hashCode() {
-      return myProject != null ? myProject.hashCode() : 0;
+    public SchemaType getSchemaType() {
+      return SchemaType.schema;
     }
   }
 }

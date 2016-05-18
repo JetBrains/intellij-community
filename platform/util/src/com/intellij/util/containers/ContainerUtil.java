@@ -1108,8 +1108,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> iterate(@NotNull T[] arrays) {
-    return Arrays.asList(arrays).iterator();
+  public static <T> Iterator<T> iterate(@NotNull T[] array) {
+    return array.length == 0 ? EmptyIterator.<T>getInstance() : Arrays.asList(array).iterator();
   }
 
   @NotNull
@@ -2609,6 +2609,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {
     return new LockFreeCopyOnWriteArrayList<T>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
+    return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

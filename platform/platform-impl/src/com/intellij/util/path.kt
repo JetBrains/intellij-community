@@ -18,6 +18,7 @@ package com.intellij.util
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.io.readCharSequence
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -82,6 +83,8 @@ fun Path.readBytes() = Files.readAllBytes(this)
 
 fun Path.readText() = readBytes().toString(Charsets.UTF_8)
 
+fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
+
 fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
 
 fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
@@ -92,6 +95,8 @@ fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path 
 }
 
 fun Path.write(data: String): Path {
+  parent?.createDirectories()
+
   Files.write(this, data.toByteArray())
   return this
 }
@@ -129,7 +134,7 @@ fun Path.createFile() {
 fun Path.refreshVfs() {
   LocalFileSystem.getInstance()?.let { fs ->
     // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-    val virtualFile = fs.findFileByPath(systemIndependentPath)
+    val virtualFile = fs.refreshAndFindFileByPath(systemIndependentPath)
     if (virtualFile != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     }
@@ -138,7 +143,7 @@ fun Path.refreshVfs() {
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    Files.newDirectoryStream(this).use(task)
+    return Files.newDirectoryStream(this).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
@@ -147,7 +152,7 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
+    return Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }

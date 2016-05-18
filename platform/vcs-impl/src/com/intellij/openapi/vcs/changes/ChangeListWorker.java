@@ -459,15 +459,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return new ArrayList<VirtualFile>(result);
   }
 
+  @Nullable
   public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
+    FilePath filePath = VcsUtil.getFilePath(file);
     for (LocalChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
-        if (change.getAfterRevision() != null &&
-            Comparing.equal(change.getAfterRevision().getFile().getVirtualFile(), file)) {
-          return list.copy();
-        }
-        if (change.getBeforeRevision() != null &&
-            Comparing.equal(change.getBeforeRevision().getFile().getVirtualFile(), file)) {
+        if (change.getAfterRevision() != null && Comparing.equal(change.getAfterRevision().getFile(), filePath) ||
+            change.getBeforeRevision() != null && Comparing.equal(change.getBeforeRevision().getFile(), filePath)) {
           return list.copy();
         }
       }

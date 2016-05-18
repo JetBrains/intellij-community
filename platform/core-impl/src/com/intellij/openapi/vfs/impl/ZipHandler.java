@@ -36,7 +36,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ZipHandler extends ArchiveHandler {
-  private volatile String myCanonicalPathToZip = null;
+  private volatile String myCanonicalPathToZip;
   private volatile long myFileStamp;
   private volatile long myFileLength;
 

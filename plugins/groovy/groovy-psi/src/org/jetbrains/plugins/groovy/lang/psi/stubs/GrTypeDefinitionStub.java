@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -38,14 +39,14 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int TRAIT = 0x40;
 
   private final StringRef myName;
-  private final String[] mySuperClasses;
+  private final @Nullable String myBaseClassName;
   private final StringRef myQualifiedName;
   private final String[] myAnnotations;
   private final byte myFlags;
 
   public GrTypeDefinitionStub(StubElement parent,
                                   final String name,
-                                  final String[] supers,
+                                  @Nullable final String baseClassName,
                                   @NotNull IStubElementType elementType,
                                   final String qualifiedName,
                                   String[] annotations,
@@ -53,13 +54,14 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     super(parent, elementType);
     myAnnotations = annotations;
     myName = StringRef.fromString(name);
-    mySuperClasses = supers;
+    myBaseClassName = baseClassName;
     myQualifiedName = StringRef.fromString(qualifiedName);
     myFlags = flags;
   }
 
-  public String[] getSuperClassNames() {
-    return mySuperClasses;
+  @Nullable
+  public String getBaseClassName() {
+    return myBaseClassName;
   }
 
   @Override

@@ -4,11 +4,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -19,11 +21,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -33,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StudyRefreshTaskFileAction extends StudyToolbarAction {
+public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
@@ -73,7 +78,7 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
     StudyUtils.drawAllWindows(editor, taskFile);
-    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -89,9 +94,10 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    if (!resetDocument(project, document, taskFile, name)) {
+    if (!resetDocument(document, taskFile, name)) {
       return false;
     }
+    taskFile.getTask().setStatus(StudyStatus.Unchecked);
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateToolWindows(project);
@@ -117,10 +123,10 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
   }
 
 
-  private static boolean resetDocument(@NotNull final Project project, @NotNull final Document document,
+  private static boolean resetDocument(@NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    final Document patternDocument = StudyUtils.getPatternDocument(project, taskFile, fileName);
+    final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
     if (patternDocument == null) {
       return false;
     }
@@ -147,6 +153,9 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getProject();
     if (project != null) {
+      for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
+        listener.beforeCheck(event);
+      }
       refresh(project);
     }
   }
@@ -158,8 +167,19 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
     if (project != null) {
       StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
+      Presentation presentation = event.getPresentation();
       if (!studyState.isValid()) {
-        event.getPresentation().setEnabled(false);
+        presentation.setEnabled(false);
+        return;
+      }
+
+      Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (course == null) {
+        return;
+      }
+      if (!EduNames.STUDY.equals(course.getCourseMode())) {
+        presentation.setVisible(true);
+        presentation.setEnabled(false);
       }
     }
   }

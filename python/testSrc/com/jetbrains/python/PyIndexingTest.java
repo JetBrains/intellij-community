@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 
@@ -40,5 +42,10 @@ public class PyIndexingTest extends PyTestCase {
     assertContainsElements(modules, "ModuleNameIndex_bar");
     assertDoesntContain(modules, "__init__");
     assertDoesntContain(modules, "ModuleNameIndex_baz");
+  }
+
+  // PY-19047
+  public void testPy19047() {
+    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, new Throwable());
   }
 }

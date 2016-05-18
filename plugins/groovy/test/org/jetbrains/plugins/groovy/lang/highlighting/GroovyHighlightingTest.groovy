@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.testFramework.IdeaTestUtil
 import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
 import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
+
 /**
  * @author peter
  */
@@ -183,15 +181,6 @@ class A {
   public void testBuiltInTypeInstantiation() { doTest(); }
 
   public void testSOEInFieldDeclarations() { doTest(); }
-
-  public void testVeryLongDfaWithComplexGenerics() {
-    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
-      @Override
-      public void run() {
-        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
-      }
-    });
-  }
 
   public void testWrongAnnotation() { doTest(); }
 

@@ -70,7 +70,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    codeAnalyzer.autoImportReferenceAtCursor(editor, file); //let autoimport complete
+    letAutoImportComplete(editor, file, codeAnalyzer);
 
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
@@ -96,6 +96,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
+  }
+
+  private static void letAutoImportComplete(@NotNull Editor editor, @NotNull PsiFile file, DaemonCodeAnalyzerImpl codeAnalyzer) {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> codeAnalyzer.autoImportReferenceAtCursor(editor, file));
   }
 
   @Override

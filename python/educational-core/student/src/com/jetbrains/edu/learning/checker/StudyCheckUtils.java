@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -41,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 public class StudyCheckUtils {
-  private static final String ANSWERS_POSTFIX = "_answers";
   private static final Logger LOG = Logger.getInstance(StudyCheckUtils.class);
 
   private StudyCheckUtils() {
@@ -145,7 +145,7 @@ public class StudyCheckUtils {
     VirtualFile copy = null;
     try {
 
-      copy = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + ANSWERS_POSTFIX + "." + file.getExtension());
+      copy = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
@@ -157,7 +157,7 @@ public class StudyCheckUtils {
             continue;
           }
           final int start = answerPlaceholder.getRealStartOffset(document);
-          final int end = start + answerPlaceholder.getLength();
+          final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }

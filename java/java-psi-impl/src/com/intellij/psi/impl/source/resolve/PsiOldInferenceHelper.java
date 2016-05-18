@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.pom.java.LanguageLevel;
@@ -474,6 +473,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
     if (paramClass == null) return null;
 
+    if (arg instanceof PsiCapturedWildcardType) {
+      arg = ((PsiCapturedWildcardType)arg).getUpperBound();
+    }
+
     if (!(arg instanceof PsiClassType)) return null;
 
     JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
@@ -604,7 +607,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       PsiClassType.ClassResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
       PsiClass argClass = argResult.getElement();
       if (!paramClass.isEquivalentTo(argClass)) {
-        return inferBySubtypingConstraint(patternType, constraintType, depth, paramClass, argClass);
+        return null;
       }
 
       PsiType lowerBound = PsiType.NULL;
@@ -662,51 +665,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       return wildcardCaptured;
     }
 
-    return null;
-  }
-
-  private static final Key<Boolean> inferSubtyping = Key.create("infer.subtyping.marker");
-  private Pair<PsiType, ConstraintType> inferBySubtypingConstraint(PsiType patternType,
-                                                                          ConstraintType constraintType,
-                                                                          int depth,
-                                                                          PsiClass paramClass,
-                                                                          PsiClass argClass) {
-    if (argClass instanceof PsiTypeParameter && paramClass instanceof PsiTypeParameter && PsiUtil.isLanguageLevel8OrHigher(argClass)) {
-      final Boolean alreadyInferBySubtyping = paramClass.getCopyableUserData(inferSubtyping);
-      if (alreadyInferBySubtyping != null) return null;
-      final PsiClassType[] argExtendsListTypes = argClass.getExtendsListTypes();
-      final PsiClassType[] paramExtendsListTypes = paramClass.getExtendsListTypes();
-      if (argExtendsListTypes.length == paramExtendsListTypes.length) {
-        try {
-          paramClass.putCopyableUserData(inferSubtyping, true);
-          for (int i = 0; i < argExtendsListTypes.length; i++) {
-            PsiClassType argBoundType = argExtendsListTypes[i];
-            PsiClassType paramBoundType = paramExtendsListTypes[i];
-            final PsiClassType.ClassResolveResult argResolveResult = argBoundType.resolveGenerics();
-            final PsiClassType.ClassResolveResult paramResolveResult = paramBoundType.resolveGenerics();
-            final PsiClass paramBoundClass = paramResolveResult.getElement();
-            final PsiClass argBoundClass = argResolveResult.getElement();
-            if (argBoundClass != null && paramBoundClass != null && paramBoundClass != argBoundClass) {
-              if (argBoundClass.isInheritor(paramBoundClass, true)) {
-                final PsiSubstitutor superClassSubstitutor =
-                  TypeConversionUtil.getSuperClassSubstitutor(paramBoundClass, argBoundClass, argResolveResult.getSubstitutor());
-                argBoundType = JavaPsiFacade.getElementFactory(argClass.getProject()).createType(paramBoundClass, superClassSubstitutor);
-              } else {
-                return null;
-              }
-            }
-            final Pair<PsiType, ConstraintType> constraint =
-              getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
-            if (constraint != null) {
-              return constraint;
-            }
-          }
-        }
-        finally {
-          paramClass.putCopyableUserData(inferSubtyping, null);
-        }
-      }
-    }
     return null;
   }
 

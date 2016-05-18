@@ -412,6 +412,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       elements.add(manager.createSmartPsiElementPointer(element));
     }
 
+    cleanupElements(project, runnable, elements);
+  }
+
+  public static void cleanupElements(@NotNull final Project project,
+                                     @Nullable final Runnable runnable,
+                                     final List<SmartPsiElementPointer<PsiElement>> elements) {
     Runnable cleanupRunnable = new Runnable() {
       @Override
       public void run() {
@@ -441,7 +447,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-   public void close(boolean noSuspisiousCodeFound) {
+  public void close(boolean noSuspisiousCodeFound) {
     cleanup();
   }
 

@@ -17,7 +17,6 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.EditorFontsConstants;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -31,10 +30,7 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +51,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
       return UISettings.getShadowInstance().EDITOR_AA_TYPE;
     }
   };
-  private static final String HELP_URL = "https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor";
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -66,7 +61,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final JLabel myLigaturesInfoLinkLabel;
   private final FontComboBox mySecondaryCombo = new FontComboBox();
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
@@ -101,13 +95,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
                    SwingConstants.LEFT), "newline, sx 5");
     add(myUseSecondaryFontCheckbox, "newline, ax right");
     add(mySecondaryCombo, "sgx b");
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
-    panel.add(myEnableLigaturesCheckbox);
-    myLigaturesInfoLinkLabel = new LinkLabel<>(ApplicationBundle.message("ligatures.more.info"), null, (LinkListener<Void>)(aSource, aLinkData) -> BrowserUtil.browse(HELP_URL));
-    myLigaturesInfoLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
-    panel.add(myLigaturesInfoLinkLabel);
-    add(panel, "newline, sx 2");
+    add(myEnableLigaturesCheckbox, "newline, sx 2");
 
     myOnlyMonospacedCheckBox.setBorder(null);
     myUseSecondaryFontCheckbox.setBorder(null);
@@ -222,7 +211,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     Object source = event.getSource();
     if (source instanceof FontComboBox) {
       FontComboBox combo = (FontComboBox)source;
-      if (combo.isEnabled() && combo.getSelectedItem() != null) {
+      if (combo.isEnabled() && combo.isShowing() && combo.getSelectedItem() != null) {
         syncFontFamilies();
       }
     }
@@ -294,7 +283,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
     myEnableLigaturesCheckbox.setEnabled(!readOnly);
-    myLigaturesInfoLinkLabel.setEnabled(!readOnly);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;

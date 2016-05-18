@@ -16,6 +16,8 @@
 package git4idea.repo
 
 import com.intellij.dvcs.repo.Repository.State
+import com.intellij.openapi.util.SystemInfo
+import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
 import git4idea.test.GitExecutor.git
 import git4idea.test.GitExecutor.last
@@ -23,6 +25,8 @@ import git4idea.test.GitScenarios.commit
 import git4idea.test.GitScenarios.conflict
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.GitTestUtil.makeCommit
+import org.junit.Assume.assumeTrue
+import kotlin.test.assertNotEquals
 
 /**
  * [GitRepositoryReaderTest] reads information from the pre-created .git directory from a real project.
@@ -111,6 +115,44 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     assertEquals("Fresh repository should be on master", "master", currentBranch!!.name)
   }
 
+  // IDEA-101222
+  fun `test non-ascii current branch name`() {
+    makeCommit("file.txt")
+    val branch = "teslá"
+    git("checkout -b $branch")
+    val state = readState()
+    assertEquals(branch, state.currentBranch!!.name)
+  }
+
+  // IDEA-143791
+  fun `test branches are case-insensitive on case-insensitive systems`() {
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+
+    makeCommit("file.txt")
+    git("branch UpperCase")
+    git("checkout uppercase")
+
+    myRepo.update()
+    assertEquals("UpperCase", myRepo.currentBranchName)
+    assertEquals(myRepo.branches.findBranchByName("UpperCase"), myRepo.branches.findBranchByName("uppercase"))
+    assertEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
+  }
+
+  fun `test branches are case-sensitive on case-sensitive systems`() {
+    assumeTrue(SystemInfo.isFileSystemCaseSensitive)
+
+    makeCommit("file.txt")
+    git("branch uppercase")
+    git("branch UpperCase") // doesn't fail on case-sensitive OS: new branch is created
+    git("checkout UpperCase")
+
+    myRepo.update()
+    assertEquals("UpperCase", myRepo.currentBranchName)
+    assertEquals(3, myRepo.branches.localBranches.size)
+    assertNotEquals(myRepo.branches.findBranchByName("uppercase"), myRepo.branches.findBranchByName("UpperCase"))
+    assertNotEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
+  }
+
   private fun moveToDetachedHead(): String {
     makeCommit("file.txt")
     makeCommit("file.txt")
@@ -120,7 +162,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
 
   private fun readState(): GitBranchState {
     val gitFiles = myRepo.repositoryFiles
-    val config = GitConfig.read(myPlatformFacade, gitFiles.configFile)
+    val config = GitConfig.read(gitFiles.configFile)
     val reader = GitRepositoryReader(gitFiles)
     val remotes = config.parseRemotes()
     return reader.readState(remotes)

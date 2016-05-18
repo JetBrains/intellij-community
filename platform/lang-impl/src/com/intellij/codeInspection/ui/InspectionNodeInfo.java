@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -38,18 +39,24 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public class InspectionNodeInfo extends JPanel {
+  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
   private final JButton myButton;
   private final JBLabel myEnabledLabel;
   private final HighlightDisplayKey myKey;
   private final InspectionProfileImpl myCurrentProfile;
   private final Project myProject;
+  @NotNull private final InspectionTree myTree;
 
-  public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
+  public InspectionNodeInfo(@NotNull final InspectionTree tree,
+                            @NotNull final Project project) {
+    myTree = tree;
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    LOG.assertTrue(toolWrapper != null);
     myProject = project;
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
-    myKey = HighlightDisplayKey.find(toolWrapper.getID());
+    myKey = HighlightDisplayKey.find(toolWrapper.getShortName());
     myButton = new JButton();
 
     JPanel titlePanel = new JPanel();
@@ -87,6 +94,8 @@ public class InspectionNodeInfo extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         updateEnableButtonText(true);
+        tree.revalidate();
+        tree.repaint();
         return true;
       }
     }.installOn(myButton);
@@ -112,5 +121,7 @@ public class InspectionNodeInfo extends JPanel {
     myEnabledLabel.setText(isEnabled ? "Enabled" : "Disabled");
     myEnabledLabel.revalidate();
     myEnabledLabel.repaint();
+    myTree.revalidate();
+    myTree.repaint();
   }
 }

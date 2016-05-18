@@ -70,7 +70,7 @@ public class AddMethodsDialog extends DialogWrapper {
     myTemplatesCombo.setEnabled(false);
     myTemplatesCombo.setRenderer(new ColoredListCellRenderer<PseudoLambdaReplaceTemplate>() {
       @Override
-      protected void customizeCellRenderer(JList list,
+      protected void customizeCellRenderer(@NotNull JList list,
                                            PseudoLambdaReplaceTemplate template,
                                            int index,
                                            boolean selected,

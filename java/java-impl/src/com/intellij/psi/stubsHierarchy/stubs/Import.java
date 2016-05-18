@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.psi.stubsHierarchy.stubs;
 
-import com.intellij.psi.stubsHierarchy.impl.QualifiedName;
 import com.intellij.psi.stubsHierarchy.impl.NameEnvironment;
+import com.intellij.psi.stubsHierarchy.impl.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 
 public class Import {
   public final static long[] EMPTY_ARRAY = ArrayUtil.EMPTY_LONG_ARRAY;
 
-  public static int onDemandMask = 1 << 29;
-  public static int staticMask = 1 << 30;
+  public static final int onDemandMask = 1 << 29;
+  public static final int staticMask = 1 << 30;
 
   public static int mask = ~(onDemandMask | staticMask);
 
@@ -42,11 +43,11 @@ public class Import {
   }
 
   public static boolean isOnDemand(long importMask) {
-    return (importMask & onDemandMask) != 0;
+    return BitUtil.isSet(importMask, onDemandMask);
   }
 
   public static boolean isStatic(long importMask) {
-    return (importMask & staticMask) != 0;
+    return BitUtil.isSet(importMask, staticMask);
   }
 
   public static long mkImport(QualifiedName fullname, boolean importStatic, boolean onDemand, int alias) {

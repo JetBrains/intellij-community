@@ -35,11 +35,6 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
     createModulePom("module", ""); // should not throw an exception
   }

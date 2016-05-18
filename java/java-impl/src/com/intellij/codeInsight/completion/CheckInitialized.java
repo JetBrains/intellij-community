@@ -41,7 +41,8 @@ class CheckInitialized implements ElementFilter {
   }
 
   static boolean isInsideConstructorCall(@NotNull PsiElement position) {
-    return ExpressionUtils.isConstructorInvocation(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class));
+    return ExpressionUtils.isConstructorInvocation(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
+           !JavaKeywordCompletion.AFTER_DOT.accepts(position);
   }
 
   private static boolean isInitializedImplicitly(PsiField field) {
@@ -68,8 +69,11 @@ class CheckInitialized implements ElementFilter {
       if (next instanceof PsiAssignmentExpression && parent == ((PsiAssignmentExpression)next).getLExpression()) {
         return Collections.emptySet();
       }
-      if (parent instanceof PsiReferenceExpression && next instanceof PsiExpressionStatement) {
-        return Collections.emptySet();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        PsiStatement psiStatement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
+        if (psiStatement != null && psiStatement.getTextRange().getStartOffset() == parent.getTextRange().getStartOffset()) {
+          return Collections.emptySet();
+        }
       }
       parent = next;
     }

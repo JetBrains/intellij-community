@@ -15,23 +15,23 @@
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/base-services-groovy/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/base-services-groovy/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/native/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>

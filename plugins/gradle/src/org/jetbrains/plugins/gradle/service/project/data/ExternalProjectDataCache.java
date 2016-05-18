@@ -117,15 +117,16 @@ public class ExternalProjectDataCache {
     while (!queue.isEmpty()) {
       final ExternalProject externalProject = queue.remove();
       final String projectId = externalProject.getQName();
+      boolean isRelatedProject = projectId.equals(externalProjectId);
       final Map<String, ExternalSourceSet> result = ContainerUtil.newHashMap();
       for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalProject.getSourceSets().entrySet()) {
         final String sourceSetName = sourceSetEntry.getKey();
         final String sourceSetId = projectId + ":" + sourceSetName;
-        if (externalProjectId.equals(sourceSetId)) {
+        if (isRelatedProject || externalProjectId.equals(sourceSetId)) {
           result.put(sourceSetName, sourceSetEntry.getValue());
         }
       }
-      if(!result.isEmpty() || projectId.equals(externalProjectId)) return result;
+      if(!result.isEmpty() || isRelatedProject) return result;
 
       queue.addAll(externalProject.getChildProjects().values());
     }

@@ -98,7 +98,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   @Override
   public CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(mySegment.getNameId(myId));
+    return FileNameCache.getVFileName(getNameId());
+  }
+
+  public final int getNameId() {
+    return mySegment.getNameId(myId);
   }
 
   @Override

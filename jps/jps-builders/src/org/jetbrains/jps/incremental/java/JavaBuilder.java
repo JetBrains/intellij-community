@@ -31,10 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
-import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -352,14 +352,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
-    final List<String> options = getCompilationOptions(context, chunk, profile, compilingTool);
-    final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
-    }
     try {
-      final int chunkSdkVersion = getChunkSdkVersion(chunk);
+      final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
+      final boolean shouldForkJavac = shouldForkCompilerProcess(context, targetLanguageLevel);
+
+      // when forking external javac, compilers from SDK 1.6 and higher are supported
+      Pair<String, Integer> forkSdk = null;
+      if (shouldForkJavac) {
+        forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
+        if (forkSdk == null) {
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration."));
+          return true;
+        }
+      }
       
+      final int compilerSdkVersion = forkSdk == null? getCompilerSdkVersion(context) : forkSdk.getSecond();
+      
+      final List<String> options = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
+      }
+
       Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
       if (_platformCp == null) {
         context.processMessage(
@@ -371,38 +384,50 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return true;
       }
 
-      if (chunkSdkVersion >= 9 && !_platformCp.isEmpty()) {
-        // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
-        // because platform classes are stored in jimage binary files with unknown format.
-        // Because of this we are clearing platform classpath so that javac will resolve against its own bootclasspath
-        // and prepending additional jars from the JDK configuration to compilation classpath
-        final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
-        joined.addAll(_platformCp);
-        joined.addAll(classpath);
-        classpath = joined;
-        _platformCp = Collections.emptyList();
+      if (!_platformCp.isEmpty()) {
+        final int chunkSdkVersion = getChunkSdkVersion(chunk);
+        if (chunkSdkVersion >= 9) {
+          // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
+          // because platform classes are stored in jimage binary files with unknown format.
+          // Because of this we are clearing platform classpath so that javac will resolve against its own bootclasspath
+          // and prepending additional jars from the JDK configuration to compilation classpath
+          final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
+          joined.addAll(_platformCp);
+          joined.addAll(classpath);
+          classpath = joined;
+          _platformCp = Collections.emptyList();
+        }
+        else if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
+          final Collection<File> joined = new ArrayList<File>(classpath.size() + 1);
+          for (File file : _platformCp) {
+            // platform runtime classes will be handled by -release option
+            // include only additional jars from sdk distribution, e.g. tools.jar
+            if (!FileUtil.toSystemIndependentName(file.getAbsolutePath()).contains("/jre/")) {
+              joined.add(file);
+            }
+          }
+          joined.addAll(classpath);
+          classpath = joined;
+          _platformCp = Collections.emptyList();
+        }
       }
 
+      final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
       final boolean rc;
-      if (!shouldForkCompilerProcess(context, chunkSdkVersion, convertToNumber(getLanguageLevel(chunk.getModules().iterator().next())))) {
+      if (!shouldForkJavac) {
         rc = JavacMain.compile(
           options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
       }
       else {
-        // fork external javac, compilers from SDK 1.6+ are supported
-        // todo: If chunkSDK is older than 1.6, we have to ask the user to specify a path to javac6+ to be used for compilation.
-        // todo: Add setting in compiler configuration for this.
-        final String sdkHome = getChunkSdkHome(chunk);
-        if (sdkHome == null) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration."));
-          return true;
-        }
-
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, "Using javac "+ forkSdk.getSecond() + " to compile [" + chunk.getPresentableShortName() + "]"));
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          sdkHome, getExternalJavacHeapSize(context), vmOptions, options, _platformCp, classpath, sourcePath, files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
+          forkSdk.getFirst(), 
+          getExternalJavacHeapSize(context), 
+          vmOptions, options, _platformCp, classpath, sourcePath, 
+          files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }
       return rc;
@@ -451,32 +476,42 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, final int chunkSdkVersion, int chunkLanguageLevel) {
+  private static boolean shouldUseReleaseOption(CompileContext context, int compilerVersion, int chunkSdkVersion, int targetLanguageLevel) {
+    // -release option makes sense for javac only and is supported in java9+ and higher
+    if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetLanguageLevel > 0 && isJavac(COMPILING_TOOL.get(context))) {
+      if (chunkSdkVersion < 9) {
+        // target sdk is set explicitly and differs from compiler SDK, so for consistency we should link against it
+        return false;
+      }
+      // chunkSdkVersion >= 9, so we have no rt.jar anymore and '-release' is the only cross-compilation option available
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean shouldForkCompilerProcess(CompileContext context, int chunkLanguageLevel) {
+    if (!isJavac(COMPILING_TOOL.get(context))) {
+      return false;
+    }
     final int compilerSdkVersion = getCompilerSdkVersion(context);
-    if (compilerSdkVersion < 9 || chunkSdkVersion < 0) {
+    if (compilerSdkVersion < 9 || chunkLanguageLevel <= 0) {
       // javac up to version 9 supports all previous releases
       // or: was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    if (chunkSdkVersion >= 9 && compilerSdkVersion != chunkSdkVersion) {
-      // For these SDK versions libraries are stored in jimage files with unknown format and currently
-      // there is no way to specify full platform classpath for cross-compilation purposes.
-      // We have for fork compiler process with corresponding SDK runtime to ensure that compiler resolves platform classes 
-      // against the SDK version specified for the given chunk.
-      // todo: if chunkSdkVersion complies to "one plus three back" rule, and "-release" option is supported, return false
-      return true;
-    }
-
     // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
-    final int requestedTargetPlatformVersion = chunkLanguageLevel > 0 ? chunkLanguageLevel : Math.min(chunkLanguageLevel, chunkSdkVersion);
-    return Math.abs(compilerSdkVersion - requestedTargetPlatformVersion) > 3;
+    return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
+  }
+  
+  private static boolean isJavac(final JavaCompilingTool compilingTool) {
+    return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
   }
 
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
   private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
-    if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
+    if (ourDefaultRtJar == null || !isJavac(compilingTool)) {
       return platformCp;
     }
     boolean profileFeatureRequested = false;
@@ -551,39 +586,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return server;
   }
 
-  private static int convertToNumber(String ver) {
-    if (ver == null) {
-      return 0;
-    }
-    final int quoteBegin = ver.indexOf('\"');
-    if (quoteBegin >= 0) {
-      final int quoteEnd = ver.indexOf('\"', quoteBegin + 1);
-      if (quoteEnd > quoteBegin) {
-        ver = ver.substring(quoteBegin + 1, quoteEnd);
-      }
-    }
-    if (ver.isEmpty()) {
-      return 0;
-    }
-
-    final String prefix = "1.";
-    final int parseBegin = ver.startsWith(prefix)? prefix.length() : 0;
-
-    int parseEnd = parseBegin;
-    while (parseEnd < ver.length()) {
-      if (!Character.isDigit(ver.charAt(parseEnd))) {
-        break;
-      }
-      parseEnd++;
-    }
-    try {
-      return Integer.parseInt(ver.substring(parseBegin, parseEnd));
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return 0;
-  }
-
   private static int findFreePort() {
     try {
       final ServerSocket serverSocket = new ServerSocket(0);
@@ -622,10 +624,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context,
-                                                    ModuleChunk chunk,
-                                                    @Nullable ProcessorConfigProfile profile,
-                                                    @NotNull JavaCompilingTool compilingTool) {
+  private static List<String> getCompilationOptions(
+    final int compilerSdkVersion, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile, @NotNull JavaCompilingTool compilingTool) {
+    
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadCommonJavacOptions(context, compilingTool);
@@ -648,11 +649,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     else {
       options.addAll(cached);
     }
-    addCompilationOptions(options, context, chunk, profile);
+    addCompilationOptions(compilerSdkVersion, options, context, chunk, profile);
     return options;
   }
 
   public static void addCompilationOptions(List<String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+    addCompilationOptions(getCompilerSdkVersion(context), options, context, chunk, profile);
+  }
+  
+  public static void addCompilationOptions(final int compilerSdkVersion, List<String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     if (!isEncodingSet(options)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -670,71 +675,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    final String langLevel = getLanguageLevel(chunk.getModules().iterator().next());
-    if (!StringUtil.isEmpty(langLevel)) {
-      options.add("-source");
-      options.add(langLevel);
-    }
-
-    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().getProject()
-    );
-
-    String bytecodeTarget = null;
-    for (JpsModule module : chunk.getModules()) {
-      final String moduleTarget = compilerConfiguration.getByteCodeTargetLevel(module.getName());
-      if (moduleTarget == null) {
-        continue;
-      }
-      if (bytecodeTarget == null) {
-        bytecodeTarget = moduleTarget;
-      }
-      else {
-        if (moduleTarget.compareTo(bytecodeTarget) < 0) {
-          bytecodeTarget = moduleTarget; // use the lower possible target among modules that form the chunk
-        }
-      }
-    }
-    
-    if (bytecodeTarget == null) {
-      if (!StringUtil.isEmpty(langLevel)) {
-        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
-        bytecodeTarget = langLevel;
-      }
-      else {
-        // last resort and backward compatibility: 
-        // check if user explicitly defined bytecode target in additional compiler options
-        bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
-      }
-    }
-
-    final int compilerSdkVersion = getCompilerSdkVersion(context);
-    final int chunkSdkVersion = getChunkSdkVersion(chunk);
-    
-    if (bytecodeTarget != null) {
-      options.add("-target");
-      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) { 
-        // if compiler is newer than module JDK
-        final int userSpecifiedTargetVersion = convertToNumber(bytecodeTarget);
-        if (userSpecifiedTargetVersion > 0 && userSpecifiedTargetVersion <= compilerSdkVersion) {
-          // if user-specified bytecode version can be determined and is supported by compiler
-          if (userSpecifiedTargetVersion > chunkSdkVersion) {
-            // and user-specified bytecode target level is higher than the highest one supported by the target JDK,
-            // force compiler to use highest-available bytecode target version that is supported by the chunk JDK.
-            bytecodeTarget = "1." + chunkSdkVersion;
-          }
-        }
-        // otherwise let compiler display compilation error about incorrectly set bytecode target version
-      }
-      options.add(bytecodeTarget);
-    }
-    else {
-      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
-        // force lower bytecode target level to match the version of sdk assigned to this chunk
-        options.add("-target");
-        options.add("1." + chunkSdkVersion);
-      }
-    }
+    addCrossCompilationOptions(compilerSdkVersion, options, context, chunk);
 
     if (profile != null && profile.isEnabled()) {
       // configuring annotation processing
@@ -768,6 +709,80 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  private static void addCrossCompilationOptions(final int compilerSdkVersion, final List<String> options, final CompileContext context, final ModuleChunk chunk) {
+    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().getProject()
+    );
+
+    final String langLevel = getLanguageLevel(chunk.getModules().iterator().next());
+    final int chunkSdkVersion = getChunkSdkVersion(chunk);
+
+    final int targetLanguageLevel = JpsJavaSdkType.parseVersion(langLevel);
+    if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
+      options.add("-release");
+      options.add(String.valueOf(targetLanguageLevel));
+      return;
+    }
+    // using older -source, -target and -bootclasspath options
+    if (!StringUtil.isEmpty(langLevel)) {
+      options.add("-source");
+      options.add(langLevel);
+    }
+
+    String bytecodeTarget = null;
+    for (JpsModule module : chunk.getModules()) {
+      final String moduleTarget = compilerConfiguration.getByteCodeTargetLevel(module.getName());
+      if (moduleTarget == null) {
+        continue;
+      }
+      if (bytecodeTarget == null) {
+        bytecodeTarget = moduleTarget;
+      }
+      else {
+        if (moduleTarget.compareTo(bytecodeTarget) < 0) {
+          bytecodeTarget = moduleTarget; // use the lower possible target among modules that form the chunk
+        }
+      }
+    }
+
+    if (bytecodeTarget == null) {
+      if (!StringUtil.isEmpty(langLevel)) {
+        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+        bytecodeTarget = langLevel;
+      }
+      else {
+        // last resort and backward compatibility: 
+        // check if user explicitly defined bytecode target in additional compiler options
+        bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+      }
+    }
+
+    if (bytecodeTarget != null) {
+      options.add("-target");
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) { 
+        // if compiler is newer than module JDK
+        final int userSpecifiedTargetVersion = JpsJavaSdkType.parseVersion(bytecodeTarget);
+        if (userSpecifiedTargetVersion > 0 && userSpecifiedTargetVersion <= compilerSdkVersion) {
+          // if user-specified bytecode version can be determined and is supported by compiler
+          if (userSpecifiedTargetVersion > chunkSdkVersion) {
+            // and user-specified bytecode target level is higher than the highest one supported by the target JDK,
+            // force compiler to use highest-available bytecode target version that is supported by the chunk JDK.
+            bytecodeTarget = "1." + chunkSdkVersion;
+          }
+        }
+        // otherwise let compiler display compilation error about incorrectly set bytecode target version
+      }
+      options.add(bytecodeTarget);
+    }
+    else {
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
+        // force lower bytecode target level to match the version of sdk assigned to this chunk
+        options.add("-target");
+        options.add("1." + chunkSdkVersion);
+      }
+    }
+  }
+
   private static String getLanguageLevel(JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     return level != null ? level.getComplianceOption() : null;
@@ -787,7 +802,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (cached != null) {
       return cached;
     }
-    int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
+    int javaVersion = JpsJavaSdkType.parseVersion(SystemProperties.getJavaVersion());
     JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
     return javaVersion;
   }
@@ -797,7 +812,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : chunk.getModules()) {
       final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        final int moduleSdkVersion = convertToNumber(sdk.getVersionString());
+        final int moduleSdkVersion = JpsJavaSdkType.parseVersion(sdk.getVersionString());
         if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
           chunkSdkVersion = moduleSdkVersion;
         }
@@ -806,14 +821,36 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return chunkSdkVersion;
   }
 
-  private static String getChunkSdkHome(ModuleChunk chunk) {
+  @Nullable
+  private static Pair<String, Integer> getForkedJavacSdk(ModuleChunk chunk, int targetLanguageLevel) {
     for (JpsModule module : chunk.getModules()) {
       final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        return sdk.getHomePath();
+        final int version = JpsJavaSdkType.parseVersion(sdk.getVersionString());
+        if (version >= 6) {
+          if (version >= 9 && Math.abs(version - targetLanguageLevel) > 3) {
+            continue; // current javac compiler does not support required language level
+          }
+          return Pair.create(sdk.getHomePath(), version);
+        }
       }
     }
-    return null;
+    final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
+    if (fallbackJdkHome == null) {
+      LOG.info("Fallback JDK is not specified. (See " + GlobalOptions.FALLBACK_JDK_HOME + " option)");
+      return null;
+    }
+    final String fallbackJdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
+    if (fallbackJdkVersion == null) {
+      LOG.info("Fallback JDK version is not specified. (See " + GlobalOptions.FALLBACK_JDK_VERSION + " option)");
+      return null;
+    }
+    final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
+    if (fallbackVersion < 6) {
+      LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackJdkVersion + "'). At least version 6 is required.");
+      return null;
+    }
+    return Pair.create(fallbackJdkHome, fallbackVersion); 
   }
 
   private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
@@ -998,11 +1035,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (Utils.IS_TEST_MODE) {
         LOG.info(message);
       }
-      myContext.processMessage(new CompilerMessage(
+      final CompilerMessage compilerMsg = new CompilerMessage(
         BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
         diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
         diagnostic.getColumnNumber()
-      ));
+      );
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(compilerMsg.toString());
+      }
+      myContext.processMessage(compilerMsg);
     }
 
     public int getErrorCount() {

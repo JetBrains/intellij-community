@@ -139,7 +139,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myCustomPanels = new ArrayList<>();
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, myBreakpoint.getSourcePosition());
+      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, myBreakpoint.getSourcePosition(), true);
       JComponent conditionComponent = myConditionComboBox.getComponent();
       conditionComponent.setBorder(JBUI.Borders.emptyRight(3));
       myConditionExpressionPanel.add(conditionComponent, BorderLayout.CENTER);
@@ -261,6 +261,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       if (hideCheckbox) {
         JBLabel label = new JBLabel(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
         label.setBorder(JBUI.Borders.empty(0, 4));
+        label.setLabelFor(myConditionComboBox.getComboBox());
         myConditionEnabledPanel.add(label);
       }
       else {

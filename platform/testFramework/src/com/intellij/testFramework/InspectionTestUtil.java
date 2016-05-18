@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InspectionTestUtil {
@@ -139,13 +138,11 @@ expected:
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
 
     presentation.updateContent();  //e.g. dead code need check for reachables
-    presentation.exportResults(root, Collections.emptySet(), Collections.emptySet());
+    presentation.exportResults(root, x -> false, x -> false);
 
     File file = new File(testDir + "/expected.xml");
     try {
-      Document expectedDocument = JDOMUtil.loadDocument(file);
-
-      compareWithExpected(expectedDocument, doc, checkRange);
+      compareWithExpected(JDOMUtil.loadDocument(file), doc, checkRange);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

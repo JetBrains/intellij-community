@@ -992,7 +992,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
       else {
-        LOG.warn("unhandled external change: " + event);
+        if (ConsoleViewUtil.isReplaceActionEnabledForConsoleViewEditor(myEditor)) {
+          clearHyperlinkAndFoldings();
+          highlightHyperlinksAndFoldings(event.getDocument().createRangeMarker(0, 0));
+        }
+        else {
+          LOG.warn("unhandled external change: " + event);
+        }
       }
     }
   }

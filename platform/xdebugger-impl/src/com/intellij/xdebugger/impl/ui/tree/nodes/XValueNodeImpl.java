@@ -164,7 +164,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.clear();
     XValueMarkers<?, ?> markers = myTree.getValueMarkers();
     if (markers != null) {
-      ValueMarkup markup = markers.getMarkup(myValueContainer);
+      ValueMarkup markup = markers.getMarkup(getValueContainer());
       if (markup != null) {
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }

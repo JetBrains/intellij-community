@@ -41,6 +41,9 @@ class ConstantMatchProvider implements MatchProvider {
   }
 
   @Override
+  public void prepareSignature(Match match) {}
+
+  @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
     final PsiClass containingClass = myField.getContainingClass();
     LOG.assertTrue(containingClass != null, myField);

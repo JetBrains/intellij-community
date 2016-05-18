@@ -439,7 +439,7 @@ public class CodeFormatterFacade {
         return;
       }
       editorFactory = EditorFactory.getInstance();
-      editor = editorFactory.createEditor(document, file.getProject());
+      editor = editorFactory.createEditor(document, file.getProject(), file.getVirtualFile(), false);
     }
     try {
       final Editor editorToUse = editor;

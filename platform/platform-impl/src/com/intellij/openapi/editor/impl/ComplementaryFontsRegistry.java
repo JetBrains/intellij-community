@@ -43,7 +43,7 @@ public class ComplementaryFontsRegistry {
   private static final List<String> ourFontNames;
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
-  private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0, false);
+  private static FontKey ourSharedKeyInstance = new FontKey("", 0, Font.PLAIN, false);
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
   private static boolean ourOldUseAntialiasing;
@@ -260,7 +260,7 @@ public class ComplementaryFontsRegistry {
       if (defaultFont == null) {
         defaultFont = new FontInfo(defaultFontFamily, size, style, originalStyle, useLigatures);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
-        ourSharedKeyInstance = new FontKey("", 0, 0, false);
+        ourSharedKeyInstance = new FontKey("", 0, Font.PLAIN, false);
       }
 
       ourSharedDefaultFont = defaultFont;

@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -78,7 +77,7 @@ public class TypeMigrationLabeler {
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
 
-  private TypeMigrationUsageInfo[] myMigratedUsages = null;
+  private TypeMigrationUsageInfo[] myMigratedUsages;
 
   private TypeMigrationUsageInfo myCurrentRoot;
   private final Map<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> myRootsTree =
@@ -305,7 +304,9 @@ public class TypeMigrationLabeler {
       myRemainConversions = conversions;
     }
 
-    public void change(final TypeMigrationUsageInfo usageInfo, @NotNull  Consumer<PsiNewExpression> consumer) {
+    public void change(@NotNull final TypeMigrationUsageInfo usageInfo,
+                       @NotNull Consumer<PsiNewExpression> consumer,
+                       @NotNull TypeMigrationLabeler labeler) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -342,7 +343,7 @@ public class TypeMigrationLabeler {
         }
       }
       else {
-        TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
+        TypeMigrationReplacementUtil.migrateMemberOrVariableType(element, project, getTypeEvaluator().getType(usageInfo));
         if (usageInfo instanceof OverridenUsageInfo) {
           final String migrationName = ((OverridenUsageInfo)usageInfo).getMigrateMethodName();
           if (migrationName != null) {
@@ -865,7 +866,7 @@ public class TypeMigrationLabeler {
         }
         else if (element instanceof PsiVariable) {
           if (ref instanceof PsiReferenceExpression) {
-            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiImplUtil.normalizeWildcardTypeByPosition(migrationType, (PsiReferenceExpression)ref));
+            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiUtil.captureToplevelWildcards(migrationType, ref));
           }
         }
         else {

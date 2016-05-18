@@ -54,28 +54,29 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   }
 
   @Override
-  public void apply(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
+    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     final ApplyPatchStatus patchStatus = executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
     if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
-      removeAppliedAndSaveRemainedIfNeeded(appliers, commitContext); // remove only if partly applied or successful
+      removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
     }
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull Collection<PatchApplier> appliers, @NotNull CommitContext commitContext) {
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
+                                                    @NotNull Collection<PatchApplier> appliers,
+                                                    @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
-      List<FilePatch> textPatches =
-        ContainerUtil.<FilePatch>newArrayList(ShelveChangesManager.loadPatches(myProject, myCurrentShelveChangeList.PATH, commitContext));
+      List<FilePatch> textPatches = ContainerUtil.newArrayList(remaining);
       List<FilePatch> remainingBinaries = ContainerUtil.<FilePatch>newArrayList(myBinaryShelvedPatches);
       for (PatchApplier applier : appliers) {
-        textPatches.removeAll(applier.getPatches());
         textPatches.addAll(applier.getRemainingPatches());
         remainingBinaries.removeAll(applier.getBinaryPatches());
       }
@@ -98,6 +99,5 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);
     }
-
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -73,10 +72,8 @@ public class ClassWrapper {
       CounterContainer counter = new CounterContainer();
       DecompilerContext.setCounterContainer(counter);
 
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD, mt);
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR, MethodDescriptor.parseDescriptor(mt.getDescriptor()));
-
-      VarProcessor varProc = new VarProcessor();
+      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+      VarProcessor varProc = new VarProcessor(mt, md);
       DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varProc);
 
       RootStatement root = null;
@@ -86,10 +83,10 @@ public class ClassWrapper {
       try {
         if (mt.containsCode()) {
           if (maxSec == 0 || testMode) {
-            root = MethodProcessorRunnable.codeToJava(mt, varProc);
+            root = MethodProcessorRunnable.codeToJava(mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, varProc, DecompilerContext.getCurrentContext());
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000;
@@ -123,7 +120,6 @@ public class ClassWrapper {
         }
         else {
           boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
-          MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
           int paramCount = 0;
           if (thisVar) {
@@ -165,9 +161,7 @@ public class ClassWrapper {
 
       // if debug information present and should be used
       if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-        StructLocalVariableTableAttribute attr = (StructLocalVariableTableAttribute)mt.getAttributes().getWithKey(
-          StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
-
+        StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
         if (attr != null) {
           varProc.setDebugVarNames(attr.getMapVarNames());
         }

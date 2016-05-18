@@ -30,10 +30,8 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -44,7 +42,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -179,9 +180,7 @@ public class CodeCompletionHandlerBase {
       }
     };
     if (autopopup) {
-      try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.TEXT_EDITING)) {
-        CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-      }
+      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
       CompletionAssertions.checkEditorValid(editor);
       if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -490,7 +489,7 @@ public class CodeCompletionHandlerBase {
 
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
-      AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+      AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
         if (phase.checkExpired()) {
           Disposer.dispose(translator);
           return;
@@ -641,8 +640,7 @@ public class CodeCompletionHandlerBase {
         runnable1.run();
       }
       else {
-        ApplicationManager.getApplication().invokeLater(
-          () -> TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, runnable1));
+        TransactionGuard.getInstance().submitTransactionLater(indicator.getProject(), runnable1);
       }
     }
     else {
@@ -725,14 +723,16 @@ public class CodeCompletionHandlerBase {
 
   private static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
-  private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
-    if (!file.isValid()) {
+  private static boolean isCopyUpToDate(Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
+    if (!copyFile.getClass().equals(originalFile.getClass()) ||
+        !copyFile.isValid() ||
+        !copyFile.getName().equals(originalFile.getName())) {
       return false;
     }
     // the psi file cache might have been cleared by some external activity,
     // in which case PSI-document sync may stop working
-    PsiFile current = PsiDocumentManager.getInstance(file.getProject()).getPsiFile(document);
-    return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
+    PsiFile current = PsiDocumentManager.getInstance(copyFile.getProject()).getPsiFile(document);
+    return current != null && current.getViewProvider().getPsi(copyFile.getLanguage()) == copyFile;
   }
 
   private static PsiFile createFileCopy(PsiFile file) {
@@ -742,7 +742,7 @@ public class CodeCompletionHandlerBase {
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
       final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
-      if (cached != null && cached.first.getClass().equals(file.getClass()) && isCopyUpToDate(cached.second, cached.first)) {
+      if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
         final PsiFile copy = cached.first;
         final Document document = cached.second;
         Document originalDocument = file.getViewProvider().getDocument();
@@ -754,6 +754,10 @@ public class CodeCompletionHandlerBase {
     }
 
     final PsiFile copy = (PsiFile)file.copy();
+    if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
+      LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" + file.getLanguage() + "; file=" + file + " of " + file.getClass());
+    }
+
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;

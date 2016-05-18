@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
@@ -44,10 +46,12 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
       GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-      CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
+      List<String> result = new ArrayList<>();
+      Processor<String> processor = Processors.cancelableCollectProcessor(result);
+
       processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
 
-      return ArrayUtil.toStringArray(processor.getResults());
+      return ArrayUtil.toStringArray(result);
     }
 
     return PsiShortNamesCache.getInstance(project).getAllClassNames();
@@ -56,10 +60,12 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
+    Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-    return processor.toArray(new NavigationItem[processor.getResults().size()]);
+    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY :
+           result.toArray(new NavigationItem[result.size()]);
   }
 
   @Override
@@ -101,7 +107,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
         hasDollar = namePattern.contains("$");
       }
     }
-    final MinusculeMatcher innerMatcher = hasDollar ? new MinusculeMatcher("*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE) : null;
+    final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
     PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
       final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
 

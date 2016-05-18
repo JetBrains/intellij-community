@@ -5,6 +5,8 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
                         serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.vcs.actions.AnnotationsSettings"
+                        serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
@@ -25,14 +27,18 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener" />
 
-    <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.ApplyPatchMergeTool"/>
+    <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
     <search.topHitProvider implementation="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProvider"/>
     <projectConfigurable groupId="root" groupWeight="45" dynamic="true" key="version.control.main.configurable.name" bundle="messages.VcsBundle"
                          provider="com.intellij.openapi.vcs.configurable.VcsManagerConfigurableProvider" id="project.propVCSSupport.Mappings"/>
+    <colorAndFontPanelFactory implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
+    <colorAndFontDescriptorProvider implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
 
     <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
@@ -52,6 +58,7 @@
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
+    <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
 
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 

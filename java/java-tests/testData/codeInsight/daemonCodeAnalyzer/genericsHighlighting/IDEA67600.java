@@ -2,7 +2,7 @@ abstract class A<T, S extends T>
 {
   abstract S bar();
   void foo(A<Runnable[], ? extends Cloneable[]> a){
-    <error descr="Incompatible types. Found: 'java.lang.Cloneable[]', required: 'java.lang.Runnable[]'">Runnable[] x = a.bar();</error>
+    <error descr="Incompatible types. Found: 'capture<? extends java.lang.Cloneable[]>', required: 'java.lang.Runnable[]'">Runnable[] x = a.bar();</error>
   }
 }
 
@@ -18,7 +18,7 @@ abstract class AC<T, S>
 {
   abstract S bar();
   void foo(AC<Runnable[], ? extends Cloneable[]> a){
-    <error descr="Incompatible types. Found: 'java.lang.Cloneable[]', required: 'java.lang.Runnable[]'">Runnable[] x = a.bar();</error>
+    <error descr="Incompatible types. Found: 'capture<? extends java.lang.Cloneable[]>', required: 'java.lang.Runnable[]'">Runnable[] x = a.bar();</error>
   }
 }
 

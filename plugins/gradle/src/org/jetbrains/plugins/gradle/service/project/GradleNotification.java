@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +45,7 @@ public class GradleNotification {
                           @NotNull final String message,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
-      @Override
-      public void run() {
-        NOTIFICATION_GROUP.createNotification(title, message, type, listener).notify(myProject);
-      }
-    });
+    NOTIFICATION_GROUP.createNotification(title, message, type, listener).notify(myProject);
   }
 }
 

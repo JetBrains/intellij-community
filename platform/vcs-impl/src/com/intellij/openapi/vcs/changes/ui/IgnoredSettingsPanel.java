@@ -174,7 +174,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private static class MyCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (UIUtil.isUnderGTKLookAndFeel()) {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);

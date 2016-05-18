@@ -50,7 +50,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usages.UsageView;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,7 +165,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
       text = polyReference.getRangeInElement().substring(polyReference.getElement().getText());
       final ResolveResult[] results = polyReference.multiResolve(false);
-      final List<PsiElement> implsList = new ArrayList<PsiElement>(results.length);
+      final List<PsiElement> implsList = new ArrayList<>(results.length);
 
       for (ResolveResult result : results) {
         final PsiElement resolvedElement = result.getElement();
@@ -201,7 +200,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  protected static ImplementationSearcher createImplementationsSearcher() {
+  static ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -260,7 +259,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
-    final Ref<UsageView> usageView = new Ref<UsageView>();
+    final Ref<UsageView> usageView = new Ref<>();
     final String title = CodeInsightBundle.message("implementation.view.title", text);
     JBPopup popup = SoftReference.dereference(myPopupRef);
     if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
@@ -293,22 +292,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setMovable(true)
         .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(editor) == null)
         .setTitle(title)
-        .setCouldPin(new Processor<JBPopup>() {
-          @Override
-          public boolean process(JBPopup popup) {
-            usageView.set(component.showInUsageView());
-            popup.cancel();
-            myTaskRef = null;
-            return false;
-          }
+        .setCouldPin(popup1 -> {
+          usageView.set(component.showInUsageView());
+          popup1.cancel();
+          myTaskRef = null;
+          return false;
         })
-        .setCancelCallback(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            ImplementationsUpdaterTask task = SoftReference.dereference(myTaskRef);
-            cancelTask(task);
-            return Boolean.TRUE;
-          }
+        .setCancelCallback(() -> {
+          ImplementationsUpdaterTask task = SoftReference.dereference(myTaskRef);
+          cancelTask(task);
+          return Boolean.TRUE;
         })
         .createPopup();
 
@@ -317,7 +310,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       PopupPositionManager.positionPopupInBestPosition(popup, editor, DataManager.getInstance().getDataContext());
       component.setHint(popup, title);
 
-      myPopupRef = new WeakReference<JBPopup>(popup);
+      myPopupRef = new WeakReference<>(popup);
     }
   }
 
@@ -345,7 +338,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf());
     task.init(popup, component, usageView);
 
-    myTaskRef = new WeakReference<ImplementationsUpdaterTask>(task);
+    myTaskRef = new WeakReference<>(task);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
@@ -361,10 +354,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  protected static PsiElement[] getSelfAndImplementations(Editor editor,
-                                                          @NotNull PsiElement element,
-                                                          @NotNull ImplementationSearcher handler,
-                                                          final boolean includeSelfAlways) {
+  static PsiElement[] getSelfAndImplementations(Editor editor,
+                                                @NotNull PsiElement element,
+                                                @NotNull ImplementationSearcher handler,
+                                                final boolean includeSelfAlways) {
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
     final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
@@ -386,16 +379,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   @NotNull
   private static PsiElement[] filterElements(@NotNull final PsiElement[] targetElements) {
-    final Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
+    final Set<PsiElement> unique = new LinkedHashSet<>(Arrays.asList(targetElements));
     for (final PsiElement elt : targetElements) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          final PsiFile containingFile = elt.getContainingFile();
-          LOG.assertTrue(containingFile != null, elt);
-          PsiFile psiFile = containingFile.getOriginalFile();
-          if (psiFile.getVirtualFile() == null) unique.remove(elt);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final PsiFile containingFile = elt.getContainingFile();
+        LOG.assertTrue(containingFile != null, elt);
+        PsiFile psiFile = containingFile.getOriginalFile();
+        if (psiFile.getVirtualFile() == null) unique.remove(elt);
       });
     }
     // special case for Python (PY-237)

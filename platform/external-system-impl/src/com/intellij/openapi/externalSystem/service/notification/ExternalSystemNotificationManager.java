@@ -84,7 +84,6 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(@NotNull final Project project) {
     myProject = project;
-    Disposer.register(project, this);
     myNotifications = ContainerUtil.newConcurrentSet();
     initializedExternalSystem = ContainerUtil.newConcurrentSet();
     myMessageCounter = new MessageCounter();

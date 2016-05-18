@@ -69,7 +69,7 @@ public class DTree {
   public Collection<DTree> getChildren() {
     init();
     if (myChildrenList == null) {
-      myChildrenList = new SortedList<DTree>(COMPARATOR);
+      myChildrenList = new SortedList<>(COMPARATOR);
       myChildrenList.addAll(myChildren.values());
     }
     return myChildrenList;
@@ -114,7 +114,7 @@ public class DTree {
 
   private void init() {
     if (myChildren == null) {
-      myChildren = new HashMap<String, DTree>();
+      myChildren = new HashMap<>();
     }
   }
 

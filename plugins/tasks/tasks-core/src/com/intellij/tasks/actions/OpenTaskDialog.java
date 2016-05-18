@@ -155,6 +155,12 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
+    for (TaskDialogPanel panel : myPanels) {
+      final JComponent component = panel.getPreferredFocusedComponent();
+      if (component != null) {
+        return component;
+      }
+    }
     if (myTaskStateCombo.isVisible() && myTaskStateCombo.isEnabled()){
       return myTaskStateCombo.getComboBox();
     }

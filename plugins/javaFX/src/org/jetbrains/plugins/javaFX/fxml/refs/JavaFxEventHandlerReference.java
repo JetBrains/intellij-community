@@ -18,12 +18,16 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
@@ -57,20 +61,26 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
   public Object[] getVariants() {
     if (myController == null) return EMPTY_ARRAY;
     final List<PsiMethod> availableHandlers = new ArrayList<PsiMethod>();
-    for (PsiMethod psiMethod : myController.getMethods()) {
-       if (isHandlerMethod(psiMethod)) {
+    for (PsiMethod psiMethod : myController.getAllMethods()) {
+      if (isHandlerMethodSignature(psiMethod, myController) && JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
          availableHandlers.add(psiMethod);
        }
     }
     return availableHandlers.isEmpty() ? EMPTY_ARRAY : ArrayUtil.toObjectArray(availableHandlers);
   }
 
-  public static boolean isHandlerMethod(PsiMethod psiMethod) {
-    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-        JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
+  public static boolean isHandlerMethodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass controllerClass) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) return false;
+    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
       if (parameters.length == 1) {
-        final PsiType parameterType = parameters[0].getType();
+        PsiType parameterType = parameters[0].getType();
+        if (containingClass != null && !controllerClass.isEquivalentTo(containingClass)) {
+          final PsiSubstitutor substitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(containingClass, controllerClass, PsiSubstitutor.EMPTY);
+          parameterType = substitutor.substitute(parameterType);
+        }
         if (InheritanceUtil.isInheritor(parameterType, JavaFxCommonNames.JAVAFX_EVENT)) {
           return true;
         }
@@ -108,7 +118,17 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
           canonicalText = eventType.getCanonicalText();
         }
       }
-      return "public void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
+      final String modifiers = getModifiers(element.getProject());
+      return modifiers + " void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
+    }
+
+    @NotNull
+    private static String getModifiers(@NotNull Project project) {
+      String visibility = CodeStyleSettingsManager.getSettings(project).VISIBILITY;
+      if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
+      final boolean needAnnotation = !PsiModifier.PUBLIC.equals(visibility);
+      final String modifier = !PsiModifier.PACKAGE_LOCAL.equals(visibility) ? visibility : "";
+      return needAnnotation ? "@" + JavaFxCommonNames.JAVAFX_FXML_ANNOTATION + " " + modifier : modifier;
     }
 
     @NotNull

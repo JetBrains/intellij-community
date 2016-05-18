@@ -50,7 +50,8 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
-  private volatile boolean myCanceled = false;
+  private volatile boolean myCanceled;
+  private volatile boolean myFinished;
 
   public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
@@ -143,7 +144,17 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    onFinished();
     myPopup.setCaption(getCaption(getCurrentSize()));
     paintBusy(false);
+  }
+
+  @Override
+  protected void onFinished() {
+    myFinished = true;
+  }
+
+  public boolean isFinished() {
+    return myFinished;
   }
 }

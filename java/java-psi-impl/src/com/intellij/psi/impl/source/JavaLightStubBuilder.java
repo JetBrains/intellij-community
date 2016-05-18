@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,9 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (nodeType == JavaElementType.PARAMETER_LIST && parentType == JavaElementType.LAMBDA_EXPRESSION) {
       return true;
     }
+    if (nodeType == JavaDocElementType.DOC_COMMENT) {
+      return true;
+    }
 
     return false;
   }
@@ -115,8 +118,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       super.visitNode(element);
     }
 
-    private IElementType last = null;
-    private boolean seenNew = false;
+    private IElementType last;
+    private boolean seenNew;
 
     @Override
     public boolean visit(IElementType type) {

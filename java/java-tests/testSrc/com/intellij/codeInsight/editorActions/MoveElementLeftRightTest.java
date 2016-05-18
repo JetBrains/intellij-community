@@ -80,6 +80,52 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
                           "@SomeAnnotation(p2 = \"2\", p1=<caret>1) class C {}");
   }
 
+  public void testMoveThrowsExceptions() throws Exception {
+    doTestFromLeftToRight("class C { void m() throws RuntimeExceptio<caret>n, Exception {} }",
+                          "class C { void m() throws Exception, RuntimeExceptio<caret>n {} }");
+  }
+
+  public void testMoveThrowsExceptionsWithCaretAtEnd() throws Exception {
+    doTestFromRightToLeft("class C { void m() throws RuntimeException, Exception<caret> {} }",
+                          "class C { void m() throws Exception<caret>, RuntimeException {} }");
+  }
+
+  public void testMoveImplementsClause() throws Exception {
+    doTestFromLeftToRight("class C implements Cl<caret>oneable, java.io.Serializable {}",
+                          "class C implements java.io.Serializable, Cl<caret>oneable {}");
+  }
+
+  public void testMoveMulticatch() throws Exception {
+    doTestFromLeftToRight("class C { void m() { try {} catch (Runtime<caret>Exception | Exception e) {}",
+                          "class C { void m() { try {} catch (Exception | Runtime<caret>Exception e) {}");
+  }
+
+  public void testMoveTryResource() throws Exception {
+    doTestFromLeftToRight("class C { void m(AutoCloseable a) { try (Auto<caret>Closeable b = a; AutoCloseable c = null) {} } }",
+                          "class C { void m(AutoCloseable a) { try (AutoCloseable c = null; Auto<caret>Closeable b = a) {} } }");
+  }
+
+  public void testMovePolyadicExpressionOperand() throws Exception {
+    doTestFromLeftToRight("class C { int i = <caret>1 + 2 + 3; }",
+                          "class C { int i = 2 + <caret>1 + 3; }",
+                          "class C { int i = 2 + 3 + <caret>1; }");
+  }
+
+  public void testMoveTypeParameter() throws Exception {
+    doTestFromLeftToRight("class C {{ java.util.Map<Object<caret>, String> map; }}",
+                          "class C {{ java.util.Map<String, Object<caret>> map; }}");
+  }
+
+  public void testMoveClassTypeParameter() throws Exception {
+    doTestFromLeftToRight("class C<<caret>A, B> {}",
+                          "class C<B, <caret>A> {}");
+  }
+
+  public void testMoveModifier()  throws Exception {
+    doTestFromLeftToRight("@Suppress<caret>Warnings(\"ALL\") final class C {}",
+                          "final @Suppress<caret>Warnings(\"ALL\") class C {}");
+  }
+
   @Override
   protected void configureEditor(String contents) throws Exception {
     init(contents, TestFileType.JAVA);

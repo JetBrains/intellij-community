@@ -62,11 +62,11 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
         search();
-        onFound();
       }
       catch (Throwable e) {
         LOG.error(e);
       }
+      onFound();
     }
     else {
       myProcessIndicator = new BackgroundableProcessIndicator(this);

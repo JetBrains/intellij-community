@@ -97,12 +97,13 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   @NotNull
   @Override
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
+    String suffix = finished ? "" : " so far";
     if (TestFinderHelper.isTest(sourceElement)) {
-      return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length);
+      return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length, suffix);
     }
     else {
-      return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length);
+      return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length, suffix);
     }
   }
 

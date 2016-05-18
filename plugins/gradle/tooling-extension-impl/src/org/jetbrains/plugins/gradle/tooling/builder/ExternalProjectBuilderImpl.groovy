@@ -59,6 +59,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     ExternalProject externalProject = cache[project.path]
     if (externalProject != null) return externalProject
 
+    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     def isPreview = ExternalProjectPreview.name.equals(modelName)
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
@@ -70,7 +71,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, isPreview)
+    defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies)
     defaultExternalProject.tasks = getTasks(project)
 
     defaultExternalProject.plugins = getPlugins(project)
@@ -147,7 +148,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview) {
+  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
@@ -192,10 +193,22 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     //noinspection GrUnresolvedAccess
     def sourceSets = project.sourceSets as SourceSetContainer
 
+    // ignore inherited source sets from parent project
+    def parentProject = project.parent
+    if (parentProject && parentProject.hasProperty("sourceSets") && parentProject.sourceSets instanceof SourceSetContainer) {
+      if(sourceSets.is(parentProject.sourceSets)){
+        return result
+      }
+    }
+
     def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
 
+    def additionalIdeaGenDirs = [] as Collection<File>
+    if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
+      additionalIdeaGenDirs.addAll(generatedSourceDirs)
+    }
     sourceSets.all { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
@@ -240,6 +253,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
+        additionalIdeaGenDirs.removeAll(files)
       }
 
       if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
@@ -266,8 +280,49 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = filterReaders
         sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+
+        if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
+          def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+          if(!testDirs.isEmpty()) {
+            javaDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+            def testDirectorySet = new DefaultExternalSourceDirectorySet()
+            testDirectorySet.name = javaDirectorySet.name
+            testDirectorySet.srcDirs = testDirs
+            testDirectorySet.outputDir = javaDirectorySet.outputDir
+            testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
+            sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
+          }
+
+          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+          if(!testResourcesDirs.isEmpty()) {
+            resourcesDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+            def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
+            testResourcesDirectorySet.name = resourcesDirectorySet.name
+            testResourcesDirectorySet.srcDirs = testResourcesDirs
+            testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
+            sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
+          }
+        }
+
         if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+          if(!resolveSourceSetDependencies && ideaTestSourceDirs) {
+            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+            if(!testGeneratedDirs.isEmpty()) {
+              generatedDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+
+              def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
+              testGeneratedDirectorySet.name = generatedDirectorySet.name
+              testGeneratedDirectorySet.srcDirs = testGeneratedDirs
+              testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
+              testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
+
+              sources.put(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
+            }
+          }
         }
 
         if (ideaPluginModule && !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && !SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
@@ -278,8 +333,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
 
-      def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
-      externalSourceSet.dependencies.addAll(dependencies)
+      if(resolveSourceSetDependencies) {
+        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
+        externalSourceSet.dependencies.addAll(dependencies)
+      }
 
       externalSourceSet.sources = sources
       result[sourceSet.name] = externalSourceSet
@@ -293,16 +350,48 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         if(mainSourceDirectorySet) {
           mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
         }
+
+        if (!additionalIdeaGenDirs.isEmpty()) {
+          def mainAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaSourceDirs)
+          def mainGenSourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.SOURCE_GENERATED]
+          if (mainGenSourceDirectorySet) {
+            mainGenSourceDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
+          }
+          else {
+            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
+            generatedDirectorySet.name = "generated " + mainSourceSet.name
+            generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
+            generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
+            generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
+            mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+          }
+        }
       }
     }
 
     def testSourceSet = result[SourceSet.TEST_SOURCE_SET_NAME]
-    if(ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaSourceDirs.isEmpty()) {
+    if(ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaTestSourceDirs.isEmpty()) {
       def testGradleSourceSet = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME)
       if(testGradleSourceSet) {
         def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
         if(testSourceDirectorySet) {
           testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+
+        if (!additionalIdeaGenDirs.isEmpty()) {
+          def testAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaTestSourceDirs)
+          def testGenSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST_GENERATED]
+          if (testGenSourceDirectorySet) {
+            testGenSourceDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
+          }
+          else {
+            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
+            generatedDirectorySet.name = "generated " + testSourceSet.name
+            generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
+            generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
+            generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
+            testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
+          }
         }
       }
     }

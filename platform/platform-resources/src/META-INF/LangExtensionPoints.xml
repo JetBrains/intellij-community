@@ -284,12 +284,12 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
-    <extensionPoint name="smartPointerElementInfoFactory" interface="com.intellij.psi.impl.smartPointers.SmartPointerElementInfoFactory"/>
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"/>
+    <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.impl.source.codeStyle.LineIndentProvider"/>
 
     <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.DeclarationRangeHandler"/>
@@ -375,6 +375,11 @@
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
+    <extensionPoint name="refactoring.introduceParameterObject" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass"
+            implements="com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate"/>
+    </extensionPoint>
+
     <extensionPoint name="refactoring.pushDown" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
     </extensionPoint>
@@ -478,8 +483,6 @@
     <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
-
-    <extensionPoint name="forcedElementWeigher" interface="com.intellij.psi.util.proximity.ForcedElementWeigher"/>
 
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
@@ -749,6 +752,11 @@
     <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" 
             implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass"
+            implements="com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>

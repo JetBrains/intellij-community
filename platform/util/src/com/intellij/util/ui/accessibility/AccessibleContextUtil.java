@@ -22,6 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AccessibleContextUtil {
+  public static void setName(@NotNull JComponent component, @NotNull String name) {
+    component.getAccessibleContext().setAccessibleName(name);
+  }
+
   public static void setName(@NotNull JComponent component, @NotNull JComponent source) {
     String name = source.getAccessibleContext().getAccessibleName();
     if (name != null) {

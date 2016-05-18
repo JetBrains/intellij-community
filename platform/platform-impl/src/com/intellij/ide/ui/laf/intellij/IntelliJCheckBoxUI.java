@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -30,6 +32,39 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new IntelliJCheckBoxUI();
+  }
+
+  @Override
+  protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
+    if (!IntelliJLaf.isWindowsNativeLook()) {
+      super.drawCheckIcon(c, g, b, iconRect, selected, enabled);
+      return;
+    }
+
+
+    final Color color = enabled ? b.getForeground() : getBorderColor1(false, false);
+    g.setColor(color);
+
+    Rectangle r = new Rectangle(iconRect.x + JBUI.scale(2), iconRect.y + JBUI.scale(2), iconRect.width - JBUI.scale(4), iconRect.height - JBUI.scale(4));
+    g.drawRect(r.x, r.y, r.width, r.height);
+
+    if (selected) {
+      final int x1 = r.x + JBUI.scale(3);
+      final int y1 = r.y + r.height / 2 + JBUI.scale(1);
+      final int x2 = r.x + r.height / 2 - JBUI.scale(1);
+      final int y2 = r.y + r.height - JBUI.scale(4);
+
+      final Graphics2D iconGraphics = (Graphics2D)g.create(0, 0, c.getWidth(), c.getHeight());
+      iconGraphics.setColor(color);
+      iconGraphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+      iconGraphics.setStroke(new BasicStroke(JBUI.scale(1.5f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+
+      if (enabled) {
+        iconGraphics.drawLine(x1, y1, x2, y2);
+        iconGraphics.drawLine(x2, y2, r.x + r.width - JBUI.scale(2), r.y + JBUI.scale(4));
+      }
+      iconGraphics.dispose();
+    }
   }
 
   @Override
@@ -49,5 +84,14 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
     g.setPaint(getCheckSignColor(enabled, true));
     g.drawLine(x1, y1 - 2, x2, y2 - 2);
     g.drawLine(x2, y2 - 2, w - JBUI.scale(2) - 1, JBUI.scale(5) - 2);
+  }
+
+  @Override
+  protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
+    super.drawText(c, g, b, fm, textRect, text);
+    if (IntelliJLaf.isWindowsNativeLook() && b.hasFocus()) {
+      g.setColor(b.getForeground());
+      UIUtil.drawDottedRectangle(g, textRect.x-2, textRect.y-1, textRect.width + textRect.x + 1, textRect.height+3);
+    }
   }
 }

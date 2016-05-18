@@ -7,6 +7,9 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 
 public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
 
@@ -16,8 +19,8 @@ public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
 
   private static JsonSchemaFileProvider provider;
 
-  public JsonSchemaTestServiceImpl() {
-    super(null);
+  public JsonSchemaTestServiceImpl(@NotNull Project project) {
+    super(project);
   }
 
 
@@ -27,8 +30,8 @@ public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
     return new JsonSchemaProviderFactory[]{
       new JsonSchemaProviderFactory() {
         @Override
-        public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
-          return new JsonSchemaFileProvider[]{provider};
+        public List getProviders(@Nullable Project project) {
+          return Collections.singletonList(provider);
         }
       }
     };

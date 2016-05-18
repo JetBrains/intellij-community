@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -505,7 +505,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
 
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           setPaintFocusBorder(false);
           super.customizeCellRenderer(list, value, index, selected, hasFocus);
         }
@@ -656,6 +656,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
 
     }
 
@@ -730,6 +732,15 @@ public class Switcher extends AnAction implements DumbAware {
         case VK_BACK_SPACE: // Mac users
         case VK_Q:
           closeTabOrToolWindow();
+          break;
+        case VK_ESCAPE:
+          cancel();
+          break;
+        case VK_UP:
+        case VK_DOWN:
+          if (e.isControlDown()) {
+            go(e.getKeyCode() == VK_DOWN);
+          }
           break;
       }
     }
@@ -1194,7 +1205,7 @@ public class Switcher extends AnAction implements DumbAware {
       mySwitcherPanel = switcherPanel;
     }
 
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
         Project project = mySwitcherPanel.project;
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
@@ -1228,8 +1239,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     String getNameForRendering() {
       if (myNameForRendering == null) {
-        // calc name the same way editor tabs do this, i.e. including EPs
-        myNameForRendering = EditorTabbedContainer.calcTabTitle(myProject, first);
+        // Recently changed files would also be taken into account (not only open 'visible' files)
+        myNameForRendering = EditorTabbedContainer.calcFileName(myProject, first);
       }
       return myNameForRendering;
     }

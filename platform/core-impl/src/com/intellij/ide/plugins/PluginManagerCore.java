@@ -94,7 +94,7 @@ public class PluginManagerCore {
       if (ourBuildNumber == null) {
         ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
         if (ourBuildNumber == null) {
-          ourBuildNumber = BuildNumber.fallback();
+          ourBuildNumber = BuildNumber.currentVersion();
         }
       }
       return ourBuildNumber;
@@ -1110,24 +1110,38 @@ public class PluginManagerCore {
     }
 
     try {
-      if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
-        BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
-        if (sinceBuild.compareTo(buildNumber) > 0) {
-          LOG.warn("Can't load " + descriptor + ": since build " + sinceBuild + " does not match " + buildNumber);
-          return true;
-        }
-      }
-
-      if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
-        BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
-        if (untilBuild.compareTo(buildNumber) < 0) {
-          LOG.warn("Can't load " + descriptor + ": until build " + untilBuild + " does not match " + buildNumber);
-          return true;
-        }
-      }
+      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), 
+                            descriptor.getName(), descriptor.toString());
     }
     catch (RuntimeException e) {
       LOG.error(e);
+    }
+
+    return false;
+  }
+
+  public static boolean isIncompatible(@NotNull BuildNumber buildNumber, @Nullable String sinceBuild, @Nullable String untilBuild,
+                                       @Nullable String descriptorName,
+                                       @Nullable String descriptorDebugString) {
+
+    if (!StringUtil.isEmpty(sinceBuild)) {
+      BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild, descriptorName);
+      if (sinceBuildNumber.compareTo(buildNumber) > 0) {
+        if (descriptorDebugString != null) {
+          LOG.warn("Can't load " + descriptorDebugString + ": since build " + sinceBuildNumber + " does not match " + buildNumber);
+        }
+        return true;
+      }
+    }
+
+    if (!StringUtil.isEmpty(untilBuild)) {
+      BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, descriptorName);
+      if (untilBuildNumber.compareTo(buildNumber) < 0) {
+        if (descriptorDebugString != null) {
+          LOG.warn("Can't load " + descriptorDebugString + ": until build " + untilBuildNumber + " does not match " + buildNumber);
+        }
+        return true;
+      }
     }
 
     return false;

@@ -1,7 +1,6 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
 import io.netty.buffer.ByteBufUtf8Writer
 import io.netty.channel.Channel
@@ -11,30 +10,33 @@ import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
-import org.jetbrains.io.Responses
-import java.io.File
+import org.jetbrains.io.addKeepAliveIfNeed
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 private class StaticFileHandler : WebServerFileHandler() {
+  override val pageFileExtensions = arrayOf("html", "htm", "shtml", "stm", "shtm")
+
   private var ssiProcessor: SsiProcessor? = null
 
-  override fun process(pathInfo: PathInfo, canonicalPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, projectNameIfNotCustomHost: String?): Boolean {
+  override fun process(pathInfo: PathInfo, canonicalPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, projectNameIfNotCustomHost: String?, extraHeaders: HttpHeaders): Boolean {
     if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
-      val ioFile = pathInfo.ioFile ?: File(pathInfo.file!!.path)
-
-      val nameSequence = pathInfo.name
+      val ioFile = pathInfo.ioFile ?: Paths.get(pathInfo.file!!.path)
+      val nameSequence = ioFile.fileName.toString()
       //noinspection SpellCheckingInspection
-      if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
-        processSsi(ioFile, PathUtilRt.getParentPath(canonicalPath.toString()), project, request, channel)
+      if (nameSequence.endsWith(".shtml", true) || nameSequence.endsWith(".stm", true) || nameSequence.endsWith(".shtm", true)) {
+        processSsi(ioFile, PathUtilRt.getParentPath(canonicalPath.toString()), project, request, channel, extraHeaders)
         return true
       }
 
-      sendIoFile(channel, ioFile, request)
+      FileResponses.sendFile(request, channel, ioFile, extraHeaders)
     }
     else {
       val file = pathInfo.file!!
-      val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.path) ?: return true
+      val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name, extraHeaders) ?: return true
 
-      val keepAlive = Responses.addKeepAliveIfNeed(response, request)
+      val keepAlive = response.addKeepAliveIfNeed(request)
       if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, file.length)
       }
@@ -54,7 +56,7 @@ private class StaticFileHandler : WebServerFileHandler() {
     return true
   }
 
-  private fun processSsi(file: File, path: String, project: Project, request: FullHttpRequest, channel: Channel) {
+  private fun processSsi(file: Path, path: String, project: Project, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders) {
     if (ssiProcessor == null) {
       ssiProcessor = SsiProcessor(false)
     }
@@ -63,9 +65,9 @@ private class StaticFileHandler : WebServerFileHandler() {
     val keepAlive: Boolean
     var releaseBuffer = true
     try {
-      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parentFile), file, ByteBufUtf8Writer(buffer))
-      val response = FileResponses.prepareSend(request, channel, lastModified, file.path) ?: return
-      keepAlive = Responses.addKeepAliveIfNeed(response, request)
+      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parent), file, ByteBufUtf8Writer(buffer))
+      val response = FileResponses.prepareSend(request, channel, lastModified, file.fileName.toString(), extraHeaders) ?: return
+      keepAlive = response.addKeepAliveIfNeed(request)
       if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, buffer.readableBytes().toLong())
       }
@@ -90,14 +92,17 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-fun sendIoFile(channel: Channel, ioFile: File, request: HttpRequest) {
-  if (hasAccess(ioFile)) {
-    FileResponses.sendFile(request, channel, ioFile)
+internal fun checkAccess(file: Path, root: Path = file.root): Boolean {
+  var parent = file
+  do {
+    if (!hasAccess(parent)) {
+      return false
+    }
+    parent = parent.parent ?: break
   }
-  else {
-    Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
-  }
+  while (parent != root)
+  return true
 }
 
-// deny access to .htaccess files
-private fun hasAccess(result: File) = !result.isDirectory && result.canRead() && !(result.isHidden || result.name.startsWith(".ht"))
+// deny access to any dot prefixed file
+internal fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))

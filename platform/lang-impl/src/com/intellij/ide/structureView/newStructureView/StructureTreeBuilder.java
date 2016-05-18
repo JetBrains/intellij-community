@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,6 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
 
     @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-      /** Test comment */
       PsiElement oldChild = event.getOldChild();
       PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization

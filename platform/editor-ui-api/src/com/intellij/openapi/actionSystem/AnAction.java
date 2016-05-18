@@ -21,9 +21,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,15 +67,13 @@ import java.util.List;
 public abstract class AnAction implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
+  public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
-  @NonNls public static final String ourClientProperty = "AnAction.shortcutSet";
 
   private Presentation myTemplatePresentation;
   private ShortcutSet myShortcutSet;
   private boolean myEnabledInModalContext;
 
-
-  private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet();
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
   private boolean myIsGlobal; // action is registered in ActionManager
@@ -119,7 +118,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Action's icon
    */
   public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
-    myShortcutSet = ourEmptyShortcutSet;
+    myShortcutSet = CustomShortcutSet.EMPTY;
     myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
@@ -152,37 +151,35 @@ public abstract class AnAction implements PossiblyDumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   }
 
-  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable final JComponent component, @Nullable Disposable parentDisposable) {
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component, @Nullable Disposable parentDisposable) {
     setShortcutSet(shortcutSet);
-    if (component != null){
-      @SuppressWarnings("unchecked")
-      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
-      if (actionList == null){
-        actionList = new SmartList<AnAction>();
-        component.putClientProperty(ourClientProperty, actionList);
-      }
-      if (!actionList.contains(this)){
-        actionList.add(this);
-      }
+    registerCustomShortcutSet(component, parentDisposable);
+  }
 
-      if (parentDisposable != null) {
-        Disposer.register(parentDisposable, new Disposable() {
-          @Override
-          public void dispose() {
-            unregisterCustomShortcutSet(component);
-          }
-        });
-      }
+  public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
+    if (component == null) return;
+    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    if (actionList == null) {
+      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<AnAction>());
+    }
+    if (!actionList.contains(this)) {
+      actionList.add(this);
+    }
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          unregisterCustomShortcutSet(component);
+        }
+      });
     }
   }
 
-  public final void unregisterCustomShortcutSet(JComponent component){
-    if (component != null){
-      @SuppressWarnings("unchecked")
-      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
-      if (actionList != null){
-        actionList.remove(this);
-      }
+  public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
+    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    if (actionList != null) {
+      actionList.remove(this);
     }
   }
 
@@ -320,6 +317,10 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Override
   public boolean isDumbAware() {
     return this instanceof DumbAware;
+  }
+
+  public boolean startInTransaction() {
+    return true;
   }
 
   public interface TransparentUpdate {
