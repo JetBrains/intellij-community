@@ -25,6 +25,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,6 @@ public class AddDeprecationAnnotationIntention extends AddAnnotationIntention im
   @NotNull
   @Override
   public Pair<String, String[]> getAnnotations(@NotNull Project project) {
-    return Pair.create("java.lang.annotation.Deprecated", ArrayUtil.EMPTY_STRING_ARRAY);
+    return Pair.create(CommonClassNames.JAVA_LANG_DEPRECATED, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

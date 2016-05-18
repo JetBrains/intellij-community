@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.cache.TypeInfo;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.stubs.NamedStub;
 
 /**
- * @author max
+ * @author peter
  */
-public interface PsiMethodStub extends PsiMemberStub<PsiMethod> {
-  boolean isConstructor();
-  boolean isVarArgs();
-  boolean isAnnotationMethod();
+public interface PsiMemberStub<T extends PsiMember & PsiNamedElement> extends NamedStub<T> {
+  boolean isDeprecated();
 
-  @Nullable String getDefaultValueText();
-  @NotNull TypeInfo getReturnTypeText(boolean doResolve);
-
-  boolean hasDeprecatedAnnotation();
-
-  boolean hasDocComment();
-
-  PsiParameterStub findParameter(int idx);
 }

@@ -22,18 +22,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.PsiMemberStub;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.stubs.NamedStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ClsMemberImpl<T extends NamedStub> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
+public abstract class ClsMemberImpl<T extends PsiMemberStub> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
   private final NotNullLazyValue<PsiDocComment> myDocComment;
   private final NotNullLazyValue<PsiIdentifier> myNameIdentifier;
 
   protected ClsMemberImpl(T stub) {
     super(stub);
-    myDocComment = !isDeprecated() ? null : new AtomicNotNullLazyValue<PsiDocComment>() {
+    myDocComment = !stub.isDeprecated() ? null : new AtomicNotNullLazyValue<PsiDocComment>() {
       @NotNull
       @Override
       protected PsiDocComment compute() {
