@@ -98,8 +98,8 @@ public class RecentTestsListProvider {
       return;
     }
 
+    RunnerAndConfigurationSettings runConfiguration = myConfigurationProvider.getConfiguration(record);
     if (TestLocator.isSuite(url)) {
-      RunnerAndConfigurationSettings runConfiguration = myConfigurationProvider.getConfiguration(record);
       if (runConfiguration != null) {
         data.addSuite(url, magnitude, record.date, runConfiguration);
       }
@@ -108,7 +108,7 @@ public class RecentTestsListProvider {
       }
     }
     else {
-      data.addTest(url, magnitude, record.date);
+      data.addTest(url, magnitude, record.date, runConfiguration);
     }
   }
 

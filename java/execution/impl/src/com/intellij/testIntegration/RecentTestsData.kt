@@ -32,7 +32,7 @@ class RecentTestsData {
                runConfiguration: RunnerAndConfigurationSettings) 
   {
 
-    val suiteInfo = SuiteInfo(url, magnitude, runDate)
+    val suiteInfo = SuiteInfo(url, magnitude, runDate, runConfiguration)
 
     val suitePack = suitePacks[runConfiguration.uniqueID]
     if (suitePack != null) {
@@ -43,10 +43,15 @@ class RecentTestsData {
     suitePacks[runConfiguration.uniqueID] = SuitePackInfo(runConfiguration, suiteInfo)
   }
 
-  fun addTest(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) {
-    val testInfo = TestInfo(url, magnitude, runDate)
 
-    val suite = findSuite(url)
+  fun addTest(url: String,
+              magnitude: TestStateInfo.Magnitude,
+              runDate: Date,
+              runConfiguration: RunnerAndConfigurationSettings) {
+
+    val testInfo = TestInfo(url, magnitude, runDate, runConfiguration)
+
+    val suite = findSuite(url, runConfiguration)
     if (suite != null) {
       suite.addTest(testInfo)
       return
@@ -55,14 +60,13 @@ class RecentTestsData {
     testsWithoutSuites.add(testInfo)
   }
 
-  private fun findSuite(url: String): SuiteInfo? {
+  private fun findSuite(url: String, runConfiguration: RunnerAndConfigurationSettings): SuiteInfo? {
+    val pack: SuitePackInfo = suitePacks[runConfiguration.uniqueID] ?: return null
     val testName = VirtualFileManager.extractPath(url)
 
-    suitePacks.values.forEach {
-      it.suites.forEach {
-        if (testName.startsWith(it.suiteName)) {
-          return it
-        }
+    pack.suites.forEach {
+      if (testName.startsWith(it.suiteName)) {
+        return it
       }
     }
     
@@ -70,27 +74,15 @@ class RecentTestsData {
   }
 
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
-    distributeUnmatchedTests()
+    testsWithoutSuites.forEach {
+      val url = it.url
+      findSuite(url, it.runConfiguration)?.addTest(it)
+    }
+    
     val packsByDate = suitePacks.values.sortedByDescending { it.runDate }
     return packsByDate.fold(listOf(), { list, pack -> list + pack.entriesToShow() })
   }
-
-  private fun distributeUnmatchedTests() {
-    val noSuites = ContainerUtil.newSmartList<TestInfo>()
-
-    for (test in testsWithoutSuites) {
-      val url = test.url
-      val suite = findSuite(url)
-      if (suite != null) {
-        suite.addTest(test)
-      }
-      else {
-        noSuites.add(test)
-      }
-    }
-
-    testsWithoutSuites = noSuites
-  }
+  
 }
 
 fun SuitePackInfo.entriesToShow(): List<RecentTestsPopupEntry> {
