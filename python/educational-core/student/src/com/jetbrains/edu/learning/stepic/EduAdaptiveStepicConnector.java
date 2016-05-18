@@ -112,8 +112,6 @@ public class EduAdaptiveStepicConnector {
           else {
             LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
           }
-          VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-          ProjectView.getInstance(project).refresh();
         }
       }
       else {
@@ -230,7 +228,7 @@ public class EduAdaptiveStepicConnector {
             }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
-              window.setTaskText(unsolvedTask.getText());
+              window.setTaskText(unsolvedTask.getText(), unsolvedTask.getTaskDir(project), project);
             }
           }
           else {
@@ -256,7 +254,10 @@ public class EduAdaptiveStepicConnector {
             ApplicationManager.getApplication().invokeLater(()->new StudyNextStudyTaskAction().navigateTask(project));
           }
         }
-        ApplicationManager.getApplication().invokeLater(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+          ProjectView.getInstance(project).refresh();
+        });
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
