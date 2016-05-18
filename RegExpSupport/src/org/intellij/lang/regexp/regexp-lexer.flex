@@ -107,7 +107,7 @@ META={ESCAPE} | {DOT} |
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "B" | "A" | "z" | "Z" | "G"
 
-CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "C"
+CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
 
@@ -168,6 +168,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META}              { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
+{ESCAPE}  "R"                 { return RegExpTT.CHAR_CLASS;    }
 {ESCAPE}  {PROP}              { yypushstate(PROP); return RegExpTT.PROPERTY;      }
 
 {ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
