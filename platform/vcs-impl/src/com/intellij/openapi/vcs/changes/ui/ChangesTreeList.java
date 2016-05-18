@@ -124,23 +124,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     setCellRenderer(myNodeRenderer);
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
-    if (myShowCheckboxes) {
-      registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          includeChanges(getSelectedChangesOrAllIfNone());
-        }
-
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-      registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          excludeChanges(getSelectedChangesOrAllIfNone());
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    }
-
     registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -232,7 +215,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   public void installPopupHandler(ActionGroup group) {
     PopupHandler.installUnknownPopupHandler(this, group, ActionManager.getInstance());
   }
-  
+
   public JComponent getPreferredFocusedComponent() {
     return this;
   }
@@ -283,7 +266,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   public void setChangesToDisplay(final List<T> changes) {
     setChangesToDisplay(changes, null);
   }
-  
+
   public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     TreeState state = null;
