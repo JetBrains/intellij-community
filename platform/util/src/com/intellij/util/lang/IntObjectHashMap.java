@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.util.lang;
 
-// Nongeneral purpose memory saving map implementation for UrlClassLoader to avoid extra dependencies
+/**
+ * Specialized memory saving map implementation for UrlClassLoader to avoid extra dependencies.
+ */
 final class IntObjectHashMap {
   private int size;
   private int[] keys;
@@ -55,8 +57,8 @@ final class IntObjectHashMap {
   private static int hashIndex(int[] keys, int key) {
     int hash = (int)((key * 0x9E3779B9L) & 0x7fffffff);
     int index = hash & (keys.length - 1);
-    int candidate;
 
+    int candidate;
     while ((candidate = keys[index]) != 0) {
       if (candidate == key) return index;
       if (index == 0) index = keys.length;
@@ -70,9 +72,11 @@ final class IntObjectHashMap {
     int[] newKeys = new int[keys.length << 1];
     Object[] newValues = new Object[newKeys.length];
 
-    for (int i = keys.length; --i >= 0; ) {
+    for (int i = keys.length - 1; i >= 0; i--) {
       int key = keys[i];
-      if (key != 0) doPut(newKeys, newValues, key, values[i]);
+      if (key != 0) {
+        doPut(newKeys, newValues, key, values[i]);
+      }
     }
 
     keys = newKeys;
@@ -80,9 +84,6 @@ final class IntObjectHashMap {
   }
 
   public Object get(int key) {
-    if (key == 0) {
-      return specialZeroValue;
-    }
-    return values[hashIndex(keys, key)];
+    return key == 0 ? specialZeroValue : values[hashIndex(keys, key)];
   }
 }
