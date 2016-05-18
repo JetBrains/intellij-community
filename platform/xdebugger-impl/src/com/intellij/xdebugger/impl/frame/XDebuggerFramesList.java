@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
@@ -168,14 +169,18 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
       XStackFrame stackFrame = (XStackFrame)value;
       if (!selected) {
+        Color c = null;
         XSourcePosition position = stackFrame.getSourcePosition();
         if (position != null) {
           final VirtualFile virtualFile = position.getFile();
           if (virtualFile.isValid()) {
-            Color c = myColorsManager.getFileColor(virtualFile);
-            if (c != null) setBackground(c);
+            c = myColorsManager.getFileColor(virtualFile);
           }
         }
+        else {
+          c = myColorsManager.getScopeColor(NonProjectFilesScope.NAME);
+        }
+        if (c != null) setBackground(c);
       }
       stackFrame.customizePresentation(this);
     }

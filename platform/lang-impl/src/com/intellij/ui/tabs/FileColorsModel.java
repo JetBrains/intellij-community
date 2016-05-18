@@ -234,10 +234,25 @@ public class FileColorsModel implements Cloneable {
     }
     return null;
   }
+  
+  @Nullable 
+  public String getScopeColor(@NotNull String scopeName, Project project) {
+    FileColorConfiguration configuration = null;
+    for (FileColorConfiguration each : getConfigurations()) {
+      if (scopeName.equals(each.getScopeName())) {
+        configuration = each;
+        break;
+      }
+    }
+    if (configuration != null && configuration.isValid(project)) {
+      return configuration.getColorName();
+    }
+    return null;
+  }
 
   @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
-    for (FileColorConfiguration configuration : ContainerUtil.concat(myApplicationLevelConfigurations, myProjectLevelConfigurations)) {
+    for (FileColorConfiguration configuration : getConfigurations()) {
       NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
       if (scope != null) {
         NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
@@ -248,6 +263,11 @@ public class FileColorsModel implements Cloneable {
       }
     }
     return null;
+  }
+  
+  @NotNull
+  private List<FileColorConfiguration> getConfigurations() {
+    return ContainerUtil.concat(myApplicationLevelConfigurations, myProjectLevelConfigurations);
   }
 
   public boolean isProjectLevel(@NotNull FileColorConfiguration configuration) {
