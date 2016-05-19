@@ -172,6 +172,7 @@ public abstract class BaseDataReader {
 
   public void stop() {
     isStopped = true;
+    resumeReading();
   }
 
   public void waitFor() throws InterruptedException {
