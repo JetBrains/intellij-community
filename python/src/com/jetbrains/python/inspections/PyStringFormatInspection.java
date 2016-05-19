@@ -66,7 +66,7 @@ public class PyStringFormatInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
     private static class Inspection {
-      private static final ImmutableMap<Character, String> FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
+      private static final ImmutableMap<Character, String> PERCENT_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
         .put('d', "int or long or float")
         .put('i', "int or long or float")
         .put('o', "int or long or float")
@@ -364,7 +364,7 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
+      private void inspectPercentFormat(@NotNull final PyStringLiteralExpression formatExpression) {
         final String value = formatExpression.getStringValue();
         final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
         
@@ -374,40 +374,42 @@ public class PyStringFormatInspection extends PyInspection {
         // if use mapping keys
         final boolean mapping = chunks.size() > 0 && chunks.get(0).getMappingKey() != null;
         for (int i = 0; i < chunks.size(); ++i) {
-          PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
-
-          // Mapping key
-          String mappingKey = Integer.toString(i + 1);
-          if (mapping) {
-            if (chunk.getMappingKey() == null || chunk.isUnclosedMapping()) {
-              registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
-              break;
+          
+          PyStringFormatParser.PercentSubstitutionChunk chunk = as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+          if (chunk != null) {
+            // Mapping key
+            String mappingKey = Integer.toString(i + 1);
+            if (mapping) {
+              if (chunk.getMappingKey() == null || chunk.isUnclosedMapping()) {
+                registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
+                break;
+              }
+              mappingKey = chunk.getMappingKey();
+              myUsedMappingKeys.put(mappingKey, false);
             }
-            mappingKey = chunk.getMappingKey();
-            myUsedMappingKeys.put(mappingKey, false);
-          }
 
-          // Minimum field width
-          inspectWidth(formatExpression, chunk.getWidth());
+            // Minimum field width
+            inspectWidth(formatExpression, chunk.getWidth());
 
-          // Precision
-          inspectWidth(formatExpression, chunk.getPrecision());
+            // Precision
+            inspectWidth(formatExpression, chunk.getPrecision());
 
-          // Format specifier
-          final char conversionType = chunk.getConversionType();
-          if (conversionType == 'b') {
-            final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
-            if (languageLevel.isOlderThan(LanguageLevel.PYTHON35) || !isBytesLiteral(formatExpression, myTypeEvalContext)) {
-              registerProblem(formatExpression, "Unsupported format character 'b'");
-              return;
+            // Format specifier
+            final char conversionType = chunk.getConversionType();
+            if (conversionType == 'b') {
+              final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
+              if (languageLevel.isOlderThan(LanguageLevel.PYTHON35) || !isBytesLiteral(formatExpression, myTypeEvalContext)) {
+                registerProblem(formatExpression, "Unsupported format character 'b'");
+                return;
+              }
             }
+            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType)) {
+              myFormatSpec.put(mappingKey, PERCENT_FORMAT_CONVERSIONS.get(conversionType));
+              continue;
+            }
+            registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"), new PyAddSpecifierToFormatQuickFix());
+            return;
           }
-          if (FORMAT_CONVERSIONS.containsKey(conversionType)) {
-            myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(conversionType));
-            continue;
-          }
-          registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"), new PyAddSpecifierToFormatQuickFix());
-          return;
         }
       }
 
@@ -472,7 +474,7 @@ public class PyStringFormatInspection extends PyInspection {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this, myTypeEvalContext);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
-        inspection.inspectFormat(literalExpression);
+        inspection.inspectPercentFormat(literalExpression);
         if (inspection.isProblem()) {
           return;
         }

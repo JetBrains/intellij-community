@@ -53,7 +53,7 @@ public class PyStringFormatParserTest extends TestCase {
   public void testFormat() {
     List<FormatStringChunk> chunks = parsePercentFormat("%s");
     assertEquals(1, chunks.size());
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals(0, chunk.getStartIndex());
     assertEquals(2, chunk.getEndIndex());
     assertEquals('s', chunk.getConversionType());
@@ -68,7 +68,7 @@ public class PyStringFormatParserTest extends TestCase {
   public void testMappingKey() {
     List<FormatStringChunk> chunks = parsePercentFormat("%(language)s");
     assertEquals(1, chunks.size());
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals("language", chunk.getMappingKey());
     assertEquals('s', chunk.getConversionType());
   }
@@ -76,7 +76,7 @@ public class PyStringFormatParserTest extends TestCase {
   public void testConversionFlags() {
     List<FormatStringChunk> chunks = parsePercentFormat("%#0d");
     assertEquals(1, chunks.size());
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals("#0", chunk.getConversionFlags());
   }
 
@@ -97,21 +97,21 @@ public class PyStringFormatParserTest extends TestCase {
   public void testLengthModifier() {
     List<FormatStringChunk> chunks = parsePercentFormat("%ld");
     assertEquals(1, chunks.size());
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals('l', chunk.getLengthModifier());
   }
 
   public void testDoubleAsterisk() {
     List<FormatStringChunk> chunks = parsePercentFormat("%**d");
     assertEquals(2, chunks.size());
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals(2, chunk.getEndIndex());
     assertEquals('\0', chunk.getConversionType());
   }
 
   public void testUnclosedMapping() {
     List<FormatStringChunk> chunks = parsePercentFormat("%(name1s");
-    SubstitutionChunk chunk = (SubstitutionChunk)chunks.get(0);
+    PercentSubstitutionChunk chunk = (PercentSubstitutionChunk)chunks.get(0);
     assertEquals("name1s", chunk.getMappingKey());
     assertTrue(chunk.isUnclosedMapping());
   }
@@ -172,6 +172,70 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals(TextRange.create(0, 2), chunks.get(0).getTextRange());
     assertEquals(TextRange.create(2, 7), chunks.get(1).getTextRange());
     assertEquals(TextRange.create(7, 9), chunks.get(2).getTextRange());
+  }
+
+  public void testNewStyleSign() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:+}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertTrue(((NewStyleSubstitutionChunk)chunks.get(0)).hasSignOption());
+  }
+
+  public void testNewStyleAlternateForm() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:#}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertTrue(((NewStyleSubstitutionChunk)chunks.get(0)).useAlternateForm());
+  }
+
+  public void testNewStyleZeroPadded() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:0}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertTrue(((NewStyleSubstitutionChunk)chunks.get(0)).hasZeroPadding());
+  }
+
+  public void testNewStyleWidth() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:10}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 5), chunks.get(0).getTextRange());
+    assertEquals("10", ((NewStyleSubstitutionChunk)chunks.get(0)).getWidth());
+  }
+
+  public void testNewStyleZeroPaddingWidth() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:010}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 6), chunks.get(0).getTextRange());
+    assertTrue(((NewStyleSubstitutionChunk)chunks.get(0)).hasZeroPadding());
+    assertEquals("10", ((NewStyleSubstitutionChunk)chunks.get(0)).getWidth());
+  }
+
+  public void testNewStyleThousandSeparator() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:,}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertTrue(((NewStyleSubstitutionChunk)chunks.get(0)).hasThousandsSeparator());
+  }
+
+  public void testNewStylePrecision() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:.2}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 5), chunks.get(0).getTextRange());
+    assertEquals("2", ((NewStyleSubstitutionChunk)chunks.get(0)).getPrecision());
+  }
+
+  public void testNewStyleConversionType() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{:d}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
+  }
+
+  public void testNewStyleConversion() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{!s}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 4), chunks.get(0).getTextRange());
+    assertEquals("s", ((NewStyleSubstitutionChunk)chunks.get(0)).getConversion());
   }
 
   public void testNewStyleNestedFields() {

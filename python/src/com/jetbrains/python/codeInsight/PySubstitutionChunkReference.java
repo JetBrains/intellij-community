@@ -40,11 +40,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private final boolean myIsPercent;
 
   public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
-                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position, boolean isPercent) {
+                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
     super(element, getKeywordRange(element, chunk));
     myChunk = chunk;
     myPosition = position;
-    myIsPercent = isPercent;
+    myIsPercent = chunk instanceof PyStringFormatParser.PercentSubstitutionChunk;
   }
   
   @Nullable
