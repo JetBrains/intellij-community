@@ -52,7 +52,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -1546,26 +1545,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
 
     final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
-
-      /**
-       * There is a possible case that more than console is open and user toggles soft wraps mode at one of them. We want
-       * to update another console(s) representation as well when they are switched on after that. Hence, we remember last
-       * used soft wraps mode and perform update if we see that the current value differs from the stored.
-       */
-      private boolean myLastIsSelected;
-
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        boolean result = super.isSelected(e);
-        if (result ^ myLastIsSelected) {
-          setSelected(null, result);
-        }
-        return myLastIsSelected = result;
       }
 
       @Override
