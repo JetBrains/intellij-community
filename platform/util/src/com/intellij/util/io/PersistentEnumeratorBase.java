@@ -454,12 +454,19 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   }
 
   public Data valueOf(int idx) throws IOException {
-    lockStorage();
     try {
-      int addr = indexToAddr(idx);
 
-      if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
-      return myKeyStorage.read(addr, myDataDescriptor);
+      lockStorage();
+      try {
+        int addr = indexToAddr(idx);
+
+        if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+        return myKeyStorage.read(addr, myDataDescriptor);
+      }
+      finally {
+        unlockStorage();
+      }
+
     }
     catch (IOException io) {
       markCorrupted();
@@ -468,9 +475,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
     catch (Throwable e) {
       markCorrupted();
       throw new RuntimeException(e);
-    }
-    finally {
-      unlockStorage();
     }
   }
 
