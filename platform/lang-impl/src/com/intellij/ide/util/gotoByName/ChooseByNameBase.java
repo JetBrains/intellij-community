@@ -77,9 +77,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
@@ -1004,11 +1002,12 @@ public abstract class ChooseByNameBase {
     if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
       cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
     }
+    final String pattern = patternToLowerCase(transformPattern(text));
+    final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
     if (cellRenderer instanceof MatcherHolder) {
-      final String pattern = patternToLowerCase(transformPattern(text));
-      final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
       ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
     }
+    MatcherHolder.associateMatcher(myList, matcher);
 
     scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, elements -> {
       ApplicationManager.getApplication().assertIsDispatchThread();

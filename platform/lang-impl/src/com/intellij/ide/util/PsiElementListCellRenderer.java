@@ -36,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -50,11 +49,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer, MatcherHolder {
+public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
 
   private static final String LEFT = BorderLayout.WEST;
 
-  private Matcher myMatcher;
   private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
 
@@ -79,11 +77,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       accessibleContext = new MyAccessibleContext();
     }
     return accessibleContext;
-  }
-
-  @Override
-  public void setPatternMatcher(final Matcher matcher) {
-    myMatcher = matcher;
   }
 
   protected static Color getBackgroundColor(@Nullable Object value) {
@@ -212,7 +205,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
+    ListCellRenderer leftRenderer = new LeftRenderer(null, MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground();

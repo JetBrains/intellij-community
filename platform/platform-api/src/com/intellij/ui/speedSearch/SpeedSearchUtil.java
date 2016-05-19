@@ -21,11 +21,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,7 +108,7 @@ public final class SpeedSearchUtil {
   public static void appendColoredFragmentForMatcher(@NotNull String text,
                                                      SimpleColoredComponent component,
                                                      @NotNull final SimpleTextAttributes attributes,
-                                                     Matcher matcher,
+                                                     @Nullable Matcher matcher,
                                                      Color selectedBg,
                                                      boolean selected) {
     if (!(matcher instanceof MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {

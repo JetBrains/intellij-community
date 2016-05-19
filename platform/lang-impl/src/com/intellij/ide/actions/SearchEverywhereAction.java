@@ -111,6 +111,7 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -1062,7 +1063,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp;
-      PsiElement file;
       myLocationString = null;
       String pattern = "*" + myPopupField.getText();
       Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
@@ -1073,16 +1073,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       if (cmp == null) {
-        if (value instanceof VirtualFile
-            && myProject != null
-            && ((((VirtualFile)value).isDirectory() && (file = PsiManager.getInstance(myProject).findDirectory((VirtualFile)value)) != null)
-                || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-          myFileRenderer.setPatternMatcher(matcher);
-          cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
-        } else if (value instanceof PsiElement) {
-          myFileRenderer.setPatternMatcher(matcher);
-          cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
-        } else if (value instanceof GotoActionModel.ActionWrapper) {
+        cmp = tryFileRenderer(matcher, list, value, index, isSelected, cellHasFocus);
+      }
+
+      if (cmp == null) {
+        if (value instanceof GotoActionModel.ActionWrapper) {
           cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
         } else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -1131,6 +1126,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //schedulePopupUpdate();
       }
       return myMainPanel;
+    }
+
+    @Nullable
+    private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (value instanceof VirtualFile && myProject != null) {
+        value = ((VirtualFile)value).isDirectory() ? PsiManager.getInstance(myProject).findDirectory((VirtualFile)value) : PsiManager.getInstance(myProject).findFile((VirtualFile)value);
+      }
+
+      if (value instanceof PsiElement) {
+        MatcherHolder.associateMatcher(list, matcher);
+        try {
+          return myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+        }
+        finally {
+          MatcherHolder.associateMatcher(list, null);
+        }
+      }
+      return null;
     }
 
     @Override
