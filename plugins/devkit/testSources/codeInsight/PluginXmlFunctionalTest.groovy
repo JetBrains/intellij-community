@@ -320,6 +320,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("pluginWithStarInUntilBuild.xml");
   }
 
+  public void testPluginWithBranchNumberInUntilBuild()  {
+    myFixture.testHighlighting("pluginWithBranchNumberInUntilBuild.xml");
+  }
+
   public void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
     myFixture.enableInspections(PluginXmlDomInspection.class)
     myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
