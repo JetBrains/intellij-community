@@ -48,7 +48,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
   }
 
   protected final Reader myReader;
-  protected final Object myBufferExhausted = new Object();
 
   private final Options myOptions;
   private final char[] myInputBuffer = new char[8192];
@@ -103,9 +102,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
           read = true;
           processInput(myInputBuffer, myLineBuffer, n);
         }
-        if (!myReader.ready()) {
-          onBufferExhaustion();
-        }
       }
     }
     finally {
@@ -135,9 +131,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
         if (n > 0) {
           read = true;
           processInput(myInputBuffer, myLineBuffer, n);
-        }
-        if (!myReader.ready()) {
-          onBufferExhaustion();
         }
       }
     }
@@ -192,30 +185,8 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader.close();
   }
 
-  public void readFully() throws InterruptedException {
-    // 1) no obvious way to implement this in the blocking mode
-    // 2) output is expected to be processed right away in the blocking mode
-    
-    if (mySleepingPolicy == SleepingPolicy.BLOCKING) return;
-    
-    synchronized (myBufferExhausted) {
-      try {
-        if (myReader.ready()) {
-          resumeReading();
-          
-          //noinspection WaitNotInLoop
-          myBufferExhausted.wait();
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-  }
-
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
   protected void onBufferExhaustion() {
-    synchronized (myBufferExhausted) {
-      myBufferExhausted.notifyAll();
-    }
   }
 
   protected abstract void onTextAvailable(@NotNull String text);

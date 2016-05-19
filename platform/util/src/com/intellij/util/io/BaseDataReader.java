@@ -161,7 +161,7 @@ public abstract class BaseDataReader {
     }
   }
   
-  protected void resumeReading() {
+  private void resumeReading() {
     synchronized (mySleepMonitor) {
       mySleepMonitor.notifyAll();
     }
