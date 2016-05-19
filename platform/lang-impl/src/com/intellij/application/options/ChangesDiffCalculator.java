@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -88,14 +89,23 @@ public class ChangesDiffCalculator {
       return new TextRange(startOffset, startOffset);
     }
 
-    CharSequence originalSequence = text.subSequence(startOffset, endOffset);
+    int originalStartOffset = startOffset;
+    int originalEndOffset = endOffset;
 
     while (endOffset < text.length() &&
-           StringUtil.equals(originalSequence, text.subSequence(startOffset + 1, endOffset + 1))) {
+           rangesEqual(text, originalStartOffset, originalEndOffset, startOffset + 1, endOffset + 1)) {
       startOffset++;
       endOffset++;
     }
 
     return new TextRange(startOffset, endOffset);
+  }
+  
+  private static boolean rangesEqual(@NotNull CharSequence text, int start1, int end1, int start2, int end2) {
+    if (end1 - start1 != end2 - start2) return false;
+    for (int i = start1; i < end1; i++) {
+      if (text.charAt(i) != text.charAt(i - start1 + start2)) return false;
+    }
+    return true;
   }
 }
