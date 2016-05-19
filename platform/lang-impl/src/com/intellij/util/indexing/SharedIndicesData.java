@@ -93,13 +93,13 @@ public class SharedIndicesData {
 
     @Override
     protected void doDropMemoryCaches() {
-      myStateCache.clear();
+      if (myStateCache != null) myStateCache.clear();
       super.doDropMemoryCaches();
     }
 
     @Override
     protected void doForce() {
-      myStateCache.clear();
+      if (myStateCache != null) myStateCache.clear();
       super.doForce();
     }
 
