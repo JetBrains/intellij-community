@@ -368,15 +368,14 @@ public class IterationState {
     return getNearestValueAhead(myStartOffset, mySelectionStarts[myCurrentSelectionIndex], mySelectionEnds[myCurrentSelectionIndex]);
   }
 
-  public boolean isInSelection() {
+  private boolean isInSelection(boolean atBreak) {
     return myCurrentSelectionIndex < mySelectionStarts.length &&
-           (myReverseIteration ?
-            myStartOffset <= mySelectionEnds[myCurrentSelectionIndex] :
-            myStartOffset >= mySelectionStarts[myCurrentSelectionIndex]);
+           (myReverseIteration ? lessThan(myStartOffset, mySelectionEnds[myCurrentSelectionIndex], !atBreak)
+                               : lessThan(mySelectionStarts[myCurrentSelectionIndex], myStartOffset, !atBreak));
   }
 
-  public boolean isAtSelectionBoundary() {
-    return myEndOffset == getSelectionEnd();
+  private static boolean lessThan(int x, int y, boolean orEquals) {
+    return x < y || orEquals && x == y;
   }
 
   private void advanceSegmentHighlighters() {
@@ -469,13 +468,33 @@ public class IterationState {
   }
 
   private void reinit() {
-    boolean isInSelection = isInSelection();
-    boolean isInCaretRow = isInCaretRow(!myReverseIteration, myReverseIteration);
-    boolean isInGuardedBlock = !myUseOnlyFullLineHighlighters &&
-                               myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset) != null;
+    setAttributes(myMergedAttributes, false);
 
-    TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd() ? 
-                            null : myHighlighterIterator.getTextAttributes();
+    myLastBackgroundColor = myCurrentBackgroundColor;
+    myCurrentBackgroundColor = myMergedAttributes.getBackgroundColor();
+  }
+
+  public TextAttributes getBreakAttributes() {
+    TextAttributes attributes = new TextAttributes();
+    setAttributes(attributes, true);
+    return attributes;
+  }
+
+  private void setAttributes(TextAttributes attributes, boolean atBreak) {
+    boolean isInSelection = isInSelection(atBreak);
+    boolean isInCaretRow = isInCaretRow(!myReverseIteration, myReverseIteration);
+    boolean isInGuardedBlock = false;
+    if (!myUseOnlyFullLineHighlighters) {
+      RangeMarker guard = myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset);
+      isInGuardedBlock = guard != null && (!atBreak || myReverseIteration ? guard.getEndOffset() > myStartOffset
+                                                                          : guard.getStartOffset() < myStartOffset);
+    }
+
+    TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd() ? null
+                            : (atBreak &&
+                               myStartOffset == (myReverseIteration ? myHighlighterIterator.getEnd() : myHighlighterIterator.getStart()))
+                              ? null
+                              : myHighlighterIterator.getTextAttributes();
 
     TextAttributes selection = isInSelection ? mySelectionAttributes : null;
     TextAttributes caret = isInCaretRow ? myCaretRowAttributes : null;
@@ -503,6 +522,8 @@ public class IterationState {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
+      if (atBreak && highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE &&
+          myStartOffset == (myReverseIteration ? highlighter.getEndOffset() : highlighter.getStartOffset())) continue;
       if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
         if (selection != null) {
           cachedAttributes.add(selection);
@@ -575,10 +596,7 @@ public class IterationState {
     if (effectType == null) effectType = EffectType.BOXED;
     if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
-    myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
-
-    myLastBackgroundColor = myCurrentBackgroundColor;
-    myCurrentBackgroundColor = back;
+    attributes.setAttributes(fore, back, effect, null, effectType, fontType);
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
