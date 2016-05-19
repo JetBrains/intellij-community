@@ -28,13 +28,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
@@ -50,14 +48,13 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import java.util.stream.Stream;
 
-/**
- * @author max
- */
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static java.util.stream.Collectors.toList;
+
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
@@ -76,7 +73,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   public ChangesListView(@NotNull Project project) {
     myProject = project;
 
-    getModel().setRoot(ChangesBrowserNode.create(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
+    getModel().setRoot(create(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
 
     setShowsRootHandles(true);
     setRootVisible(false);
@@ -139,13 +136,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
-      sink.put(VcsDataKeys.CHANGES, getSelectedChanges());
+      sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
     }
     else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
-      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, getLeadSelection());
+      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, getLeadSelection().toArray(Change[]::new));
     }
     else if (key == VcsDataKeys.CHANGE_LISTS) {
-      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
+      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists().toArray(ChangeList[]::new));
     }
     else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
       sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
@@ -160,33 +157,26 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
-      final TreePath[] paths = getSelectionPaths();
-      if (paths != null) {
-        for(TreePath path: paths) {
-          ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
-          if (!(node.getUserObject() instanceof ChangeList)) {
-            sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
-            break;
-          }
-        }
+      if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
+        sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
       }
     }
     else if (key == PlatformDataKeys.COPY_PROVIDER) {
       sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles().collect(toList()));
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
-      sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
+      sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
     } else if (key == LOCALLY_DELETED_CHANGES) {
-      sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges());
+      sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().collect(toList()));
     } else if (key == MISSING_FILES_DATA_KEY) {
-      sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
+      sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles().collect(toList()));
     } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
-      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, !getSelectedMissingFiles().isEmpty());
+      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, getSelectedMissingFiles().findAny().isPresent());
     } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
-      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, !getSelectedModifiedWithoutEditing().isEmpty());
+      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
     } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
     } else if (key == HELP_ID_DATA_KEY) {
@@ -197,150 +187,139 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       if (selectionPath != null && selectionPath.getPathCount() > 1) {
         ChangesBrowserNode<?> firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
         if (firstNode instanceof ChangesBrowserChangeListNode) {
-          final List<Change> list = firstNode.getAllChangesUnder();
-          sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, list);
+          sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, firstNode.getAllChangesUnder());
         }
       }
     }
   }
 
-  private List<VirtualFile> getSelectedUnversionedFiles() {
-    return getSelectedVirtualFiles(ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+  @NotNull
+  private Stream<VirtualFile> getSelectedUnversionedFiles() {
+    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
   }
 
   @NotNull
-  private List<VirtualFile> getSelectedModifiedWithoutEditing() {
-    return getSelectedVirtualFiles(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
-  }
-
-  private List<VirtualFile> getSelectedIgnoredFiles() {
-    return getSelectedVirtualFiles(ChangesBrowserNode.IGNORED_FILES_TAG);
+  private Stream<VirtualFile> getSelectedModifiedWithoutEditing() {
+    return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
   }
 
   @NotNull
-  private List<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    return getVirtualFiles(getSelectionPaths(), tag);
+  private Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
+    return getSelectionNodesStream(tag)
+      .flatMap(ChangesBrowserNode::getFilesUnderStream)
+      .distinct();
   }
 
   @NotNull
-  static List<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
-    return paths == null
-           ? Collections.emptyList()
-           : Stream.of(paths)
-             .filter(path -> isUnderTag(path, tag))
-             .flatMap(path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getAllFilesUnder().stream())
-             .distinct()
-             .collect(Collectors.toList());
+  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream() {
+    return getSelectionNodesStream(null);
+  }
+
+  @NotNull
+  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@Nullable Object tag) {
+    return toStream(getSelectionPaths())
+      .filter(path -> isUnderTag(path, tag))
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node));
+  }
+
+  @NotNull
+  private Stream<Object> getSelectionObjectsStream() {
+    return getSelectionNodesStream().map(ChangesBrowserNode::getUserObject);
+  }
+
+  @NotNull
+  static Stream<TreePath> toStream(@Nullable TreePath[] paths) {
+    return paths == null ? Stream.empty() : Stream.of(paths);
+  }
+
+  @NotNull
+  static Stream<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+    return toStream(paths)
+      .filter(path -> isUnderTag(path, tag))
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(ChangesBrowserNode::getFilesUnderStream)
+      .distinct();
   }
 
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
-    boolean result = false;
+    boolean result = true;
 
-    if (path.getPathCount() > 1) {
-      ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
-      result = tag == null || firstNode.getUserObject() == tag;
+    if (tag != null) {
+      result = path.getPathCount() > 1 && ((ChangesBrowserNode)path.getPathComponent(1)).getUserObject() == tag;
     }
 
     return result;
   }
 
   @NotNull
-  static Change[] getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
-    Set<Change> changes = new LinkedHashSet<Change>();
+  static Stream<Change> getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
+    Stream<Change> changes = toStream(paths)
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(node -> node.getObjectsUnderStream(Change.class))
+      .map(Change.class::cast);
+    Stream<Change> hijackedChanges = getVirtualFiles(paths, MODIFIED_WITHOUT_EDITING_TAG)
+      .map(file -> toHijackedChange(project, file))
+      .filter(Objects::nonNull);
 
-    if (paths == null) {
-      return new Change[0];
-    }
-
-    for (TreePath path : paths) {
-      ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-      changes.addAll(node.getAllChangesUnder());
-    }
-
-    final List<VirtualFile> selectedModifiedWithoutEditing = getVirtualFiles(paths, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
-    if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
-      for (VirtualFile file : selectedModifiedWithoutEditing) {
-        VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
-
-        if (before != null) {
-          ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-          changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
-        }
-      }
-    }
-
-    return changes.toArray(new Change[changes.size()]);
+    return Stream.concat(changes, hijackedChanges).distinct();
   }
 
-  private List<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    Set<LocallyDeletedChange> files = new HashSet<LocallyDeletedChange>();
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (isUnderTag(path, TreeModelBuilder.LOCALLY_DELETED_NODE)) {
-          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-          files.addAll(node.getAllObjectsUnder(LocallyDeletedChange.class));
-        }
-      }
+  @Nullable
+  private static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
+    Change result = null;
+    VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
+
+    if (before != null) {
+      ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
+      result = new Change(before, afterRevision, FileStatus.HIJACKED);
     }
-    return new ArrayList<LocallyDeletedChange>(files);
+
+    return result;
   }
 
   @NotNull
-  private List<FilePath> getSelectedMissingFiles() {
-    return getSelectedLocallyDeletedChanges().stream().map(LocallyDeletedChange::getPath).collect(Collectors.toList());
+  private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
+    return getSelectionNodesStream(TreeModelBuilder.LOCALLY_DELETED_NODE)
+      .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
+      .distinct();
   }
 
+  @NotNull
+  private Stream<FilePath> getSelectedMissingFiles() {
+    return getSelectedLocallyDeletedChanges().map(LocallyDeletedChange::getPath);
+  }
+
+  @NotNull
   protected VirtualFile[] getSelectedFiles() {
-    final Change[] changes = getSelectedChanges();
-    Collection<VirtualFile> files = new HashSet<VirtualFile>();
-    for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        final VirtualFile file = afterRevision.getFile().getVirtualFile();
-        if (file != null && file.isValid()) {
-          files.add(file);
-        }
-      }
-    }
+    Stream<VirtualFile> filesFromChanges = getSelectedChanges()
+      .map(Change::getAfterRevision)
+      .filter(Objects::nonNull)
+      .map(ContentRevision::getFile)
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull)
+      .filter(VirtualFile::isValid);
 
-    files.addAll(getSelectedVirtualFiles(null));
-
-    return VfsUtilCore.toVirtualFileArray(files);
+    return Stream.concat(filesFromChanges, getSelectedVirtualFiles(null))
+      .distinct()
+      .toArray(VirtualFile[]::new);
   }
 
-  private Boolean haveSelectedChanges() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return false;
-
-    for (TreePath path : paths) {
-      ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
-      if (node instanceof ChangesBrowserChangeNode) {
-        return true;
-      } else if (node instanceof ChangesBrowserChangeListNode) {
-        final ChangesBrowserChangeListNode changeListNode = (ChangesBrowserChangeListNode)node;
-        if (changeListNode.getChildCount() > 0) {
-          return true;
-        }
-      }
-    }
-    return false;
+  // TODO: Does not correspond to getSelectedChanges() - for instance, hijacked changes are not tracked here
+  private boolean haveSelectedChanges() {
+    return getSelectionNodesStream().anyMatch(
+      node -> node instanceof ChangesBrowserChangeNode || node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0);
   }
 
-  private Change[] getLeadSelection() {
-    final Set<Change> changes = new LinkedHashSet<Change>();
-
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return new Change[0];
-
-    for (TreePath path : paths) {
-      ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
-      if (node instanceof ChangesBrowserChangeNode) {
-        changes.add(((ChangesBrowserChangeNode) node).getUserObject());
-      }
-    }
-
-    return changes.toArray(new Change[changes.size()]);
+  @NotNull
+  private Stream<Change> getLeadSelection() {
+    return getSelectionNodesStream()
+      .filter(node -> node instanceof ChangesBrowserChangeNode)
+      .map(ChangesBrowserChangeNode.class::cast)
+      .map(ChangesBrowserChangeNode::getUserObject)
+      .distinct();
   }
 
   @NotNull
@@ -349,31 +328,21 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  public Change[] getChanges() {
-    return ArrayUtil.toObjectArray(getRoot().getAllChangesUnder(), Change.class);
+  public Stream<Change> getChanges() {
+    return getRoot().getObjectsUnderStream(Change.class);
   }
 
   @NotNull
-  public Change[] getSelectedChanges() {
+  public Stream<Change> getSelectedChanges() {
     return getChanges(myProject, getSelectionPaths());
   }
 
   @NotNull
-  private ChangeList[] getSelectedChangeLists() {
-    Set<ChangeList> lists = new HashSet<ChangeList>();
-
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return new ChangeList[0];
-
-    for (TreePath path : paths) {
-      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof ChangeList) {
-        lists.add((ChangeList)userObject);
-      }
-    }
-
-    return lists.toArray(new ChangeList[lists.size()]);
+  private Stream<ChangeList> getSelectedChangeLists() {
+    return getSelectionObjectsStream()
+      .filter(userObject -> userObject instanceof ChangeList)
+      .map(ChangeList.class::cast)
+      .distinct();
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {

@@ -53,7 +53,9 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
+import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowserBase.class);
@@ -224,7 +226,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
     }
     else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), ChangesBrowserNode.UNVERSIONED_FILES_TAG));
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList()));
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
       sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
@@ -455,7 +457,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     Set<VirtualFile> result = ContainerUtil.newHashSet();
 
     result.addAll(ChangesUtil.getAfterRevisionsFiles(getSelectedChanges()));
-    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null));
+    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null).collect(toList()));
 
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -483,6 +485,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   static boolean isUnderUnversioned(@NotNull ChangesBrowserNode node) {
-    return isUnderTag(new TreePath(node.getPath()), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    return isUnderTag(new TreePath(node.getPath()), UNVERSIONED_FILES_TAG);
   }
 }

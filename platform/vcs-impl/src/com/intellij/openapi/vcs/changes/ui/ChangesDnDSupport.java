@@ -35,8 +35,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFiles;
+import static java.util.stream.Collectors.toList;
 
 public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
 
@@ -77,9 +80,9 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     DnDDragStartBean result = null;
 
     if (info.isMove()) {
-      Change[] changes = getChanges(myProject, myTree.getSelectionPaths());
-      List<VirtualFile> unversionedFiles = getVirtualFiles(myTree.getSelectionPaths(), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-      List<VirtualFile> ignoredFiles = getVirtualFiles(myTree.getSelectionPaths(), ChangesBrowserNode.IGNORED_FILES_TAG);
+      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toArray(Change[]::new);
+      List<VirtualFile> unversionedFiles = getVirtualFiles(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList());
+      List<VirtualFile> ignoredFiles = getVirtualFiles(myTree.getSelectionPaths(), IGNORED_FILES_TAG).collect(toList());
 
       if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
         result = new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));

@@ -69,9 +69,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 @State(
   name = "ChangesViewManager",
@@ -538,15 +539,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @NotNull
     @Override
     protected List<Change> getSelectedChanges() {
-      Change[] changes = myView.getSelectedChanges();
-      if (changes.length == 0) changes = myView.getChanges();
-      return Arrays.asList(changes);
+      List<Change> result = myView.getSelectedChanges().collect(toList());
+      if (result.isEmpty()) result = myView.getChanges().collect(toList());
+      return result;
     }
 
     @NotNull
     @Override
     protected List<Change> getAllChanges() {
-      return Arrays.asList(myView.getChanges());
+      return myView.getChanges().collect(toList());
     }
 
     @Override
