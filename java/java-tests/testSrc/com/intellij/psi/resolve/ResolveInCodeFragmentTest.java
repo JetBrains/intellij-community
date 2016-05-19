@@ -58,7 +58,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
 
     PsiExpression expr = (PsiExpression) fileContent[0];
     PsiElement resolve = ((PsiReferenceExpressionImpl)expr).resolve();
-    assertTrue("Must be local variable, not a field", resolve instanceof PsiLocalVariable);
+    assertInstanceOf(resolve, PsiLocalVariable.class);
   }
 
   private PsiReference configure() throws Exception {
