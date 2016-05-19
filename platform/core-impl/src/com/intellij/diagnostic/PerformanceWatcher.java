@@ -206,7 +206,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
 
     long sinceLastEdt = millis - myLastAliveEdt;
-    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000) {
+    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000 + 10) {
       edtFrozen(millis);
     }
     else if (sinceLastEdt <= SAMPLING_INTERVAL_MS) {
