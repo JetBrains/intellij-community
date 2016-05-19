@@ -531,6 +531,7 @@ public class PopupChooserBuilder {
         return super.getPreferredSize();
       }
       Dimension size = myList.getPreferredSize();
+      size.height = Math.min(size.height, myList.getPreferredScrollableViewportSize().height);
       JScrollBar bar = getVerticalScrollBar();
       if (bar != null) size.width += bar.getPreferredSize().width;
       return size;
