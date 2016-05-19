@@ -92,6 +92,16 @@ public abstract class XExecutionStack {
      * @param stackFrames stack frames to add
      * @param last <code>true</code> if all frames are added
      */
-    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, final boolean last);
+    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last);
+    
+    /**
+     * Add stack frames to the list and selects the specified one.
+     * This method should be used if you want to preselect some particular (non-top) frame when session is paused.
+     * 
+     * @param stackFrames stack frames to add
+     * @param toSelect stack frame to select in the frames list automatically.
+     * @param last <code>true</code> if all frames are added
+     */
+    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, boolean last);
   }
 }
