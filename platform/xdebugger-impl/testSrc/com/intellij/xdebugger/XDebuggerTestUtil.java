@@ -126,7 +126,7 @@ public class XDebuggerTestUtil {
 
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session)
     throws InterruptedException {
-    return collectStacks(thread == null ? getActiveThread(session) : thread);
+    return collectFrames(thread == null ? getActiveThread(session) : thread);
   }
   
   public static String getFramePresentation(XStackFrame frame) {
@@ -135,18 +135,29 @@ public class XDebuggerTestUtil {
     return builder.getBuilder().toString();
   }
 
-  public static List<XStackFrame> collectStacks(@NotNull XExecutionStack thread) throws InterruptedException {
-    return collectStacks(thread, TIMEOUT * 2);
+  public static List<XStackFrame> collectFrames(@NotNull XExecutionStack thread) throws InterruptedException {
+    return collectFrames(thread, TIMEOUT * 2);
   }
 
-  public static List<XStackFrame> collectStacks(XExecutionStack thread, long timeout) throws InterruptedException {
-    return collectStacksWithError(thread, timeout).first;
+  public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout) throws InterruptedException {
+    return collectFramesWithError(thread, timeout).first;
   }
 
-  public static Pair<List<XStackFrame>, String> collectStacksWithError(XExecutionStack thread, long timeout) throws InterruptedException {
+  public static Pair<List<XStackFrame>, String> collectFramesWithError(XExecutionStack thread, long timeout) throws InterruptedException {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
     return container.waitFor(timeout);
+  }
+
+  public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(@NotNull XDebugSession session, long timeout) throws InterruptedException {
+    return collectFramesWithSelected(getActiveThread(session), timeout);
+  }
+
+  public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout) throws InterruptedException {
+    XTestStackFrameContainer container = new XTestStackFrameContainer();
+    thread.computeStackFrames(0, container);
+    List<XStackFrame> all = container.waitFor(timeout).first;
+    return Pair.create(all, container.frameToSelect);
   }
 
   public static List<XValue> collectVariables(XStackFrame frame) throws InterruptedException {
@@ -543,7 +554,15 @@ public class XDebuggerTestUtil {
   } 
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {
+    public volatile XStackFrame frameToSelect;
+    
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
+      addChildren(stackFrames, last);
+    }
+
+    @Override
+    public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, boolean last) {
+      if (toSelect != null) frameToSelect = toSelect;
       addChildren(stackFrames, last);
     }
 
