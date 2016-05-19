@@ -34,6 +34,8 @@ public class GoToHashOrRefAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
     final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);

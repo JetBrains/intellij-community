@@ -183,10 +183,14 @@ public class BranchesPanel extends JPanel {
         }
 
         if (myGroup.getRefs().size() == 1) {
+          VcsLogUtil.triggerUsage("BranchPanelGoToRef");
+
           VcsRef ref = myGroup.getRefs().iterator().next();
           myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
         }
         else {
+          VcsLogUtil.triggerUsage("BranchPanelPopup");
+
           ReferencePopupBuilder popupBuilder = new ReferencePopupBuilder(myGroup, myUi);
           popupBuilder.getPopup().showUnderneathOf(ReferenceGroupComponent.this);
         }

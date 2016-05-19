@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -373,6 +372,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
+      VcsLogUtil.triggerUsage("RootColumnClick");
       myUi.setShowRootNames(!myUi.isShowRootNames());
       return true;
     }
@@ -622,10 +622,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
 
+      boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
+      if (isClickOnGraphElement) {
+        triggerElementClick(printElement);
+      }
+
       Selection previousSelection = getSelection();
       GraphAnswer<Integer> answer =
         getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
-      handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null, previousSelection, e);
+      handleAnswer(answer, isClickOnGraphElement, previousSelection, e);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -646,6 +651,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void mouseExited(MouseEvent e) {
       // Do nothing
+    }
+  }
+
+  private static void triggerElementClick(@NotNull PrintElement printElement) {
+    if (printElement instanceof NodePrintElement) {
+      VcsLogUtil.triggerUsage("GraphNodeClick");
+    }
+    else if (printElement instanceof EdgePrintElement) {
+      if (((EdgePrintElement)printElement).hasArrow()) {
+        VcsLogUtil.triggerUsage("GraphArrowClick");
+      }
     }
   }
 

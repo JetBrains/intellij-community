@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
@@ -34,6 +35,8 @@ public class RefreshLogAction extends RefreshAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     VcsLogManager logManager = e.getRequiredData(VcsLogDataKeys.LOG_MANAGER);
 
     // diagnostic for possible refresh problems

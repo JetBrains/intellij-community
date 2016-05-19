@@ -15,6 +15,9 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -244,5 +247,16 @@ public class VcsLogUtil {
     }
 
     return branchName;
+  }
+
+  public static void triggerUsage(@NotNull AnActionEvent e) {
+    String text = e.getPresentation().getText();
+    if (text != null) {
+      triggerUsage(text);
+    }
+  }
+
+  public static void triggerUsage(@NotNull String text) {
+    UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 }
