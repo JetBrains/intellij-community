@@ -32,9 +32,18 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ImageComponentUI extends ComponentUI {
-    private static final ImageComponentUI ui = new ImageComponentUI();
-
     private BufferedImage pattern;
+
+    private ImageComponentUI(JComponent c) {
+        c.addPropertyChangeListener(evt -> {
+            String name = evt.getPropertyName();
+            if (ImageComponent.TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP.equals(name) ||
+                ImageComponent.TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP.equals(name) ||
+                ImageComponent.TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP.equals(name)) {
+                pattern = null;
+            }
+        });
+    }
 
     @Override
     public void paint(Graphics g, JComponent c) {
@@ -136,6 +145,6 @@ public class ImageComponentUI extends ComponentUI {
 
     @SuppressWarnings({"UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
-        return ui;
+        return new ImageComponentUI(c);
     }
 }
