@@ -257,16 +257,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       changes.addAll(node.getAllChangesUnder());
     }
 
-    if (changes.isEmpty()) {
-      final List<VirtualFile> selectedModifiedWithoutEditing = getVirtualFiles(paths, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
-      if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
-        for (VirtualFile file : selectedModifiedWithoutEditing) {
-          VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
+    final List<VirtualFile> selectedModifiedWithoutEditing = getVirtualFiles(paths, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+    if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
+      for (VirtualFile file : selectedModifiedWithoutEditing) {
+        VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
 
-          if (before != null) {
-            ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-            changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
-          }
+        if (before != null) {
+          ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
+          changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
         }
       }
     }
