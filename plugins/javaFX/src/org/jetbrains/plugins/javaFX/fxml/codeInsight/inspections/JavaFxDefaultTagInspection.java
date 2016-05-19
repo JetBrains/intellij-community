@@ -62,8 +62,8 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
   private static boolean isCollectionAssignment(@NotNull PsiClass parentTagClass, @NotNull String propertyName, @NotNull XmlTag tag) {
     final XmlTag[] subTags = tag.getSubTags();
     if (subTags.length != 0) {
-      final PsiClass contentClass = JavaFxPsiUtil.getTagClassReplacement(subTags[subTags.length - 1]);
-      if (JavaFxPsiUtil.isObservableCollection(contentClass)) {
+      final PsiClass tagValueClass = JavaFxPsiUtil.getTagValueClass(subTags[subTags.length - 1]);
+      if (JavaFxPsiUtil.isObservableCollection(tagValueClass)) {
         final PsiMember property = JavaFxPsiUtil.collectWritableProperties(parentTagClass).get(propertyName);
         if (property != null) {
           final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(parentTagClass, property);

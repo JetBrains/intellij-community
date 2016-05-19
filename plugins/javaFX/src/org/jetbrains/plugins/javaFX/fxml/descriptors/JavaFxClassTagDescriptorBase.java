@@ -312,11 +312,11 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         host.addMessage(attribute.getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
-    final Pair<PsiClass, Boolean> replacement = JavaFxPsiUtil.getTagClassReplacement(context, getPsiClass());
-    final PsiClass aClass = replacement.getFirst();
+    final Pair<PsiClass, Boolean> tagValueClassInfo = JavaFxPsiUtil.getTagValueClass(context, getPsiClass());
+    final PsiClass aClass = tagValueClassInfo.getFirst();
     JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
       host.addMessage(context.getNavigationElement(), errorMessage, errorType));
-    boolean needInstantiate = !replacement.getSecond();
+    boolean needInstantiate = !tagValueClassInfo.getSecond();
     if (needInstantiate && aClass != null && aClass.isValid()) {
       JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
         host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));

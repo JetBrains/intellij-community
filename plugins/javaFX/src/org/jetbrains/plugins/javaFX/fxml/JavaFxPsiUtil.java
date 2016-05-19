@@ -1113,12 +1113,12 @@ public class JavaFxPsiUtil {
   }
 
   @NotNull
-  public static PsiClass getTagClassReplacement(@NotNull XmlTag xmlTag) {
-    return getTagClassReplacement(xmlTag, getTagClass(xmlTag)).getFirst();
+  public static PsiClass getTagValueClass(@NotNull XmlTag xmlTag) {
+    return getTagValueClass(xmlTag, getTagClass(xmlTag)).getFirst();
   }
 
   @NotNull
-  public static Pair<PsiClass, Boolean> getTagClassReplacement(@NotNull XmlTag xmlTag, @Nullable PsiClass tagClass) {
+  public static Pair<PsiClass, Boolean> getTagValueClass(@NotNull XmlTag xmlTag, @Nullable PsiClass tagClass) {
     if (tagClass != null) {
       final XmlAttribute constAttr = xmlTag.getAttribute(FxmlConstants.FX_CONSTANT);
       if (constAttr != null) {
