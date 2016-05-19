@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -36,10 +35,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @NotNull Document document, int offset) {
-    Indent.Type indent = getIndent(editor, document, offset);
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+    Indent.Type indent = getIndent(editor, offset);
     if (indent == Indent.Type.NONE) return null;
-    return super.getLineIndent(project, editor, document, offset);
+    return super.getLineIndent(project, editor, offset);
   }
 
   @Override
@@ -53,15 +52,17 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   protected abstract boolean isSuitableForLanguage(@NotNull Language language);
   
   @Nullable
-  protected Indent.Type getIndent(@NotNull Editor editor, @NotNull Document document, int offset) {
-    CharSequence docChars = document.getCharsSequence();
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    if (isWhitespace(iterator.getTokenType())) {
-      if (containsLineBreaks(iterator, docChars)) {
-        iterator.retreat();
-        if (!iterator.atEnd()) {
-          if (isEndOfCodeBlock(iterator)) return Indent.Type.NONE;
+  protected Indent.Type getIndent(@NotNull Editor editor, int offset) {
+    if (offset > 0) {
+      CharSequence docChars = editor.getDocument().getCharsSequence();
+      EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+      if (isWhitespace(iterator.getTokenType())) {
+        if (containsLineBreaks(iterator, docChars)) {
+          iterator.retreat();
+          if (!iterator.atEnd()) {
+            if (isEndOfCodeBlock(iterator)) return Indent.Type.NONE;
+          }
         }
       }
     }

@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 public class FormatterBasedLineIndentProvider implements LineIndentProvider {
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @NotNull Document document, int offset) {
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+    Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
   }

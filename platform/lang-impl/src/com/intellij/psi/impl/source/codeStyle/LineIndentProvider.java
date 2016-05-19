@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -33,13 +32,12 @@ public interface LineIndentProvider {
    *
    * @param project  The current project.
    * @param editor   The current editor.
-   * @param document The document for which the indent should be calculated.
    * @param offset   The caret offset in the editor.
    * @return The indent string (possibly consisting of tabs and/or white spaces), or null if
    * LineIndentProvider can't calculate the indent (in this case no indent adjustment will be made).
    */
   @Nullable
-  String getLineIndent(@NotNull Project project, @NotNull Editor editor, @NotNull Document document, int offset);
+  String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset);
   
   boolean isSuitableFor(@Nullable PsiFile file);
 }
