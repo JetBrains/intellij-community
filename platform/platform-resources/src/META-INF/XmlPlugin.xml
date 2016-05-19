@@ -173,6 +173,7 @@
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
+    <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.InjectedHtmlErrorFilter"/>
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerExImpl"/>

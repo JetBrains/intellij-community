@@ -31,7 +31,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -345,14 +344,8 @@ public class GrClassImplUtil {
     if (body != null) {
       if (ResolveUtil.shouldProcessClasses(classHint)) {
         for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
-          final String innerClassName = innerClass.getName();
-          if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
-            continue;
-          }
-
-          if (!processor.execute(innerClass, state)) {
-            return false;
-          }
+          if (name != null && !name.equals(innerClass.getName())) continue;
+          if (!processor.execute(innerClass, state)) return false;
         }
       }
     }
@@ -432,11 +425,11 @@ public class GrClassImplUtil {
       return Arrays.asList(grType.getCodeInnerClasses());
     }
 
-    List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, true, new Computable<List<PsiClass>>() {
+    List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, false, new Computable<List<PsiClass>>() {
       @Override
       public List<PsiClass> compute() {
         List<PsiClass> result = new ArrayList<PsiClass>();
-        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
+        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, true).values()) {
           final PsiClass inner = (PsiClass)info.getElement();
           final PsiClass containingClass = inner.getContainingClass();
           assert containingClass != null;

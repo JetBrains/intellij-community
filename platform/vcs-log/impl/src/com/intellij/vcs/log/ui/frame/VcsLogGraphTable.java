@@ -24,7 +24,9 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -426,6 +428,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       if (e != null) showToolTip(getArrowTooltipText(answer.getCommitToJump(), row), e);
+    }
+  }
+
+  @Override
+  public void setCursor(Cursor cursor) {
+    super.setCursor(cursor);
+    Component layeredPane = UIUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
+    if (layeredPane != null) {
+      layeredPane.setCursor(cursor);
     }
   }
 

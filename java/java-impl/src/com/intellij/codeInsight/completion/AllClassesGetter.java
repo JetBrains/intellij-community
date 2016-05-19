@@ -22,12 +22,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.AllClassesSearchExecutor;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -126,20 +123,17 @@ public class AllClassesGetter {
 
   };
 
-  public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = new InsertHandler<JavaPsiClassReferenceElement>() {
-    @Override
-    public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
-      final String qName = item.getQualifiedName();
-      if (qName != null) {
-        int start = context.getTailOffset() - 1;
-        while (start >= 0) {
-          final char ch = context.getDocument().getCharsSequence().charAt(start);
-          if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
-          start--;
-        }
-        context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
-        LOG.assertTrue(context.getTailOffset() >= 0);
+  public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = (context, item) -> {
+    final String qName = item.getQualifiedName();
+    if (qName != null) {
+      int start = context.getTailOffset() - 1;
+      while (start >= 0) {
+        final char ch = context.getDocument().getCharsSequence().charAt(start);
+        if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
+        start--;
       }
+      context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
+      LOG.assertTrue(context.getTailOffset() >= 0);
     }
   };
 
@@ -151,39 +145,7 @@ public class AllClassesGetter {
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
 
-    int limit = Registry.intValue("ide.completion.variant.limit");
-
-    Processor<PsiClass> processor = new Processor<PsiClass>() {
-      int count;
-      final Set<String> qNames = new THashSet<String>();
-      final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
-      final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
-
-      @Override
-      public boolean process(PsiClass psiClass) {
-        if (parameters.getInvocationCount() < 2) {
-          if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
-            return true;
-          }
-          if (!StringUtil.isCapitalized(psiClass.getName()) && !Registry.is("ide.completion.show.lower.case.classes")) {
-            return true;
-          }
-        }
-
-        assert psiClass != null;
-        if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
-          String qName = psiClass.getQualifiedName();
-          if (qName != null && qName.startsWith(packagePrefix) && qNames.add(qName)) {
-            consumer.consume(psiClass);
-            if (++count > limit) {
-              return false;
-            }
-          }
-        }
-        return true;
-      }
-    };
-    processJavaClasses(prefixMatcher, project, scope, processor);
+    processJavaClasses(prefixMatcher, project, scope, new LimitedAccessibleClassPreprocessor(parameters, filterByScope, consumer));
   }
 
   public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
@@ -198,20 +160,6 @@ public class AllClassesGetter {
     });
     LinkedHashSet<String> sorted = CompletionUtil.sortMatching(prefixMatcher, names);
     AllClassesSearchExecutor.processClassesByNames(project, scope, sorted, processor);
-  }
-
-
-  private static String getPackagePrefix(final PsiElement context, final int offset) {
-    final CharSequence fileText = context.getContainingFile().getViewProvider().getContents();
-    int i = offset - 1;
-    while (i >= 0) {
-      final char c = fileText.charAt(i);
-      if (!Character.isJavaIdentifierPart(c) && c != '.') break;
-      i--;
-    }
-    String prefix = fileText.subSequence(i + 1, offset).toString();
-    final int j = prefix.lastIndexOf('.');
-    return j > 0 ? prefix.substring(0, j) : "";
   }
 
   public static boolean isAcceptableInContext(@NotNull final PsiElement context,

@@ -79,7 +79,7 @@ public class SwitchUtils {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiExpression stringSwitchExpression = determinePossibleJdk17SwitchExpression(expression, nullSafe);
-      if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
         return true;
       }
     }
@@ -99,9 +99,9 @@ public class SwitchUtils {
     }
     else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
       return (canBeCaseLabel(operands[0], languageLevel, stringEquality) &&
-              EquivalenceChecker.expressionsAreEquivalent(switchExpression, operands[1])) ||
+              EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, operands[1])) ||
              (canBeCaseLabel(operands[1], languageLevel, stringEquality) &&
-              EquivalenceChecker.expressionsAreEquivalent(switchExpression, operands[0]));
+              EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, operands[0]));
     }
     else {
       return false;

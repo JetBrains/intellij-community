@@ -47,6 +47,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,8 +172,17 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
             ke.getKeyCode() != KeyEvent.VK_META) {
-          if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
-          hide();
+          boolean doHide = false;
+          // Close the balloon is ESC is pressed inside the balloon
+          if ((ke.getKeyCode() == KeyEvent.VK_ESCAPE) && SwingUtilities.isDescendingFrom(ke.getComponent(), myComp)) {
+            doHide = true;
+          }
+          // Close the balloon if any key is pressed outside the balloon
+          if (myHideOnKey && !SwingUtilities.isDescendingFrom(ke.getComponent(), myComp)) {
+            doHide = true;
+          }
+          if (doHide)
+            hide();
         }
       }
     }
@@ -469,6 +480,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         @Override
         public void run() {
           myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the accessible parent so that screen readers don't announce
+          // a window context change -- the tooltip is "logically" hosted
+          // inside the component (e.g. editor) it appears on top of.
+          AccessibleContextUtil.setParent(myContent, myOriginalFocusOwner);
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
@@ -1532,7 +1548,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       setLayout(null);
       myBalloon = balloon;
 
-      setFocusCycleRoot(true);
+      // When a screen reader is active, TAB/Shift-TAB should allow moving the focus
+      // outside the balloon in the event the balloon acquired the focus.
+      if (!ScreenReader.isActive()) {
+        setFocusCycleRoot(true);
+      }
       putClientProperty(Balloon.KEY, BalloonImpl.this);
 
       myContent = new JPanel(new BorderLayout(2, 2));

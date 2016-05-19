@@ -18,14 +18,13 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.stubs.NamedStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public interface PsiMethodStub extends NamedStub<PsiMethod> {
+public interface PsiMethodStub extends PsiMemberStub<PsiMethod> {
   boolean isConstructor();
   boolean isVarArgs();
   boolean isAnnotationMethod();
@@ -33,7 +32,6 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
   @Nullable String getDefaultValueText();
   @NotNull TypeInfo getReturnTypeText(boolean doResolve);
 
-  boolean isDeprecated();
   boolean hasDeprecatedAnnotation();
 
   boolean hasDocComment();

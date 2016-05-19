@@ -171,7 +171,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSubscriptType() {
-    doTest("int",
+    doTest("Union[int, List[int]]",
            "l = [1, 2, 3]; expr = l[0]");
   }
 
@@ -621,7 +621,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgumentWithSubscription() {
-    doTest("Union[int, str, unicode]",
+    doTest("Union[int, List[int], str, unicode]",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +

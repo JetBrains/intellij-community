@@ -63,7 +63,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Queue;
@@ -91,6 +90,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
+
+import com.intellij.util.containers.Queue;
 
 /**
  * User: anna
@@ -157,6 +158,22 @@ public class SingleInspectionProfilePanel extends JPanel {
       DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)profile.getProfileManager();
       return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(profile);
     }
+  }
+
+  private static InspectionConfigTreeNode findGroupNodeByPath(@NotNull String[] path, int idx, @NotNull InspectionConfigTreeNode node) {
+    if (path.length == idx) {
+      return node;
+    }
+
+    final String currentKey = path[idx];
+    for (int i = 0; i < node.getChildCount(); i++) {
+      final InspectionConfigTreeNode currentNode = (InspectionConfigTreeNode)node.getChildAt(i);
+      if (Comparing.equal(currentNode.getGroupName(), currentKey)) {
+        return findGroupNodeByPath(path, ++idx, currentNode);
+      }
+    }
+
+    return null;
   }
 
   @Nullable
@@ -546,7 +563,18 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void selectInspectionTool(String name) {
-    final InspectionConfigTreeNode node = findNodeByKey(name, myRoot);
+    selectNode(findNodeByKey(name, myRoot));
+  }
+
+  public void selectInspectionGroup(String[] path) {
+    final InspectionConfigTreeNode node = findGroupNodeByPath(path, 0, myRoot);
+    selectNode(node);
+    if (node != null) {
+      myTreeTable.getTree().expandPath(new TreePath(node.getPath()));
+    }
+  }
+
+  private void selectNode(InspectionConfigTreeNode node) {
     if (node != null) {
       TreeUtil.selectNode(myTreeTable.getTree(), node);
       final int rowForPath = myTreeTable.getTree().getRowForPath(new TreePath(node.getPath()));

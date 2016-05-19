@@ -27,6 +27,8 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -861,5 +863,100 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    */
   public void setMaxItemsForSizeCalculation(int maxItemsForSizeCalculation) {
     myMaxItemsForSizeCalculation = maxItemsForSizeCalculation;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBTable();
+    }
+    return accessibleContext;
+  }
+
+  /**
+   * Specialization of {@link AccessibleJTable} to ensure instances of
+   * {@link AccessibleJBTableCell}, as opposed to {@link AccessibleJTableCell},
+   * are created in all code paths.
+   */
+  protected class AccessibleJBTable extends AccessibleJTable {
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      if (i < 0 || i >= getAccessibleChildrenCount()) {
+        return null;
+      } else {
+        int column = getAccessibleColumnAtIndex(i);
+        int row = getAccessibleRowAtIndex(i);
+        return new AccessibleJBTableCell(JBTable.this, row, column, getAccessibleIndexAt(row, column));
+      }
+    }
+
+    @Override
+    public Accessible getAccessibleAt(Point p) {
+      int column = columnAtPoint(p);
+      int row = rowAtPoint(p);
+
+      if ((column != -1) && (row != -1)) {
+        return getAccessibleChild(getAccessibleIndexAt(row, column));
+      }
+      return null;
+    }
+
+    /**
+     * Specialization of {@link AccessibleJTableCell} to ensure the underlying cell renderer
+     * is obtained by calling the virtual method {@link JTable#getCellRenderer(int, int)}.
+     *
+     * <p>
+     * NOTE: The reason we need this class is that even though the documentation of the
+     * {@link JTable#getCellRenderer(int, int)} method mentions that
+     * </p>
+     *
+     * <pre>
+     * Throughout the table package, the internal implementations always
+     * use this method to provide renderers so that this default behavior
+     * can be safely overridden by a subclass.
+     * </pre>
+     *
+     * <p>
+     * the {@link AccessibleJTableCell#getCurrentComponent()} and
+     * {@link AccessibleJTableCell#getCurrentAccessibleContext()} methods do not
+     * respect that contract, instead using a <strong>copy</strong> of the default
+     * implementation of {@link JTable#getCellRenderer(int, int)}.
+     * </p>
+     *
+     * <p>
+     * There are a few derived classes of {@link JBTable}, e.g.
+     * {@link com.intellij.ui.dualView.TreeTableView} that depend on the ability to
+     * override {@link JTable#getCellRenderer(int, int)} method to behave correctly,
+     * so we need to ensure we go through the same code path to ensure correct
+     * accessibility behavior.
+     * </p>
+     */
+    protected class AccessibleJBTableCell extends AccessibleJTableCell {
+      private final int myRow;
+      private final int myColumn;
+
+      public AccessibleJBTableCell(JTable table, int row, int columns, int index) {
+        super(table, row, columns, index);
+        this.myRow = row;
+        this.myColumn = columns;
+      }
+
+      @Override
+      protected Component getCurrentComponent() {
+        return JBTable.this
+          .getCellRenderer(myRow, myColumn)
+          .getTableCellRendererComponent(JBTable.this, getValueAt(myRow, myColumn), false, false, myRow, myColumn);
+      }
+
+      @Override
+      protected AccessibleContext getCurrentAccessibleContext() {
+        Component c = getCurrentComponent();
+        if (c instanceof Accessible)
+          return c.getAccessibleContext();
+        // Note: don't call "super" as 1) we know for sure the cell is not accessible
+        // and 2) the super implementation is incorrect anyways
+        return null;
+      }
+    }
   }
 }

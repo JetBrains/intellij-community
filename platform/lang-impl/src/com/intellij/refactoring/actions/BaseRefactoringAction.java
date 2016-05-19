@@ -45,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
@@ -113,7 +113,6 @@ public abstract class BaseRefactoringAction extends AnAction {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-        assert editor != null;
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
         CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
@@ -258,7 +257,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     List<PsiElement> filtered = null;
     for (PsiElement element : psiElements) {
       if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
+        if (filtered == null) filtered = new ArrayList<PsiElement>(Collections.singletonList(element));
         filtered.remove(element);
       }
     }

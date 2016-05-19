@@ -19,7 +19,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -77,11 +76,7 @@ public class SuperMethodReturnFix implements IntentionAction {
             mySuperMethod.getName(),
             mySuperMethodType,
             ParameterInfoImpl.fromMethod(mySuperMethod));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.run();
-    } else {
-      processor.run();
-    }
+    processor.run();
   }
 
   @Override

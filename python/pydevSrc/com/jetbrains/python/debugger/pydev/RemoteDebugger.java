@@ -480,6 +480,12 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
+  @Override
+  public void setShowReturnValues(boolean isShowReturnValues) {
+    final ShowReturnValuesCommand command = new ShowReturnValuesCommand(this, isShowReturnValues);
+    execute(command);
+  }
+
   private DebuggerReader createReader() throws IOException {
     synchronized (mySocketObject) {
       //noinspection IOResourceOpenedButNotSafelyClosed

@@ -40,7 +40,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -57,6 +56,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots =
     new TreeMap<String, List<TreeItem<Pair<AbstractUrl, String>>>>();
+  private final List<String> myFavoritesRootsOrder = new ArrayList<>();
   private final Map<String, String> myDescriptions = new HashMap<String, String>();
   private final Project myProject;
   private final List<FavoritesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -134,7 +134,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   List<AbstractTreeNode> createRootNodes() {
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (String listName : myName2FavoritesRoots.keySet()) {
+    for (String listName : myFavoritesRootsOrder) {
       result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
     }
     ArrayList<FavoritesListProvider> providers = new ArrayList<FavoritesListProvider>(myProviders.values());
@@ -155,11 +155,12 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @NotNull
   public List<String> getAvailableFavoritesListNames() {
-    return new ArrayList<String>(myName2FavoritesRoots.keySet());
+    return new ArrayList<String>(myFavoritesRootsOrder);
   }
 
   public synchronized void createNewList(@NotNull String listName) {
     myName2FavoritesRoots.put(listName, new ArrayList<TreeItem<Pair<AbstractUrl, String>>>());
+    myFavoritesRootsOrder.add(listName);
     listAdded(listName);
   }
 
@@ -173,6 +174,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public synchronized boolean removeFavoritesList(@NotNull String name) {
     boolean result = myName2FavoritesRoots.remove(name) != null;
+    myFavoritesRootsOrder.remove(name);
     myDescriptions.remove(name);
     listRemoved(name);
     return result;
@@ -373,6 +375,12 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   private boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
     List<TreeItem<Pair<AbstractUrl, String>>> list = myName2FavoritesRoots.remove(oldName);
+    int index = myFavoritesRootsOrder.indexOf(oldName);
+    if (index != -1 && newName.length() > 0) {
+      myFavoritesRootsOrder.remove(oldName);
+      myFavoritesRootsOrder.remove(newName);
+      myFavoritesRootsOrder.add(index, newName);
+    }
     if (list != null && newName.length() > 0) {
       myName2FavoritesRoots.put(newName, list);
       String description = myDescriptions.remove(oldName);
@@ -383,6 +391,24 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       return true;
     }
     return false;
+  }
+
+  public void setOrder(String nameToOrder, String anchorName, boolean above) {
+    if (!canReorder(nameToOrder, anchorName, above)) return;
+    int index = myFavoritesRootsOrder.indexOf(anchorName);
+    int toRemove = myFavoritesRootsOrder.indexOf(nameToOrder);
+    myFavoritesRootsOrder.add(above? index : index +1, nameToOrder);
+    myFavoritesRootsOrder.remove(toRemove > index ? toRemove+1 : toRemove);
+    rootsChanged();
+  }
+
+  public boolean canReorder(String nameToOrder, String anchorName, boolean above) {
+    int index = myFavoritesRootsOrder.indexOf(anchorName);
+    int toReorder = myFavoritesRootsOrder.indexOf(nameToOrder);
+    if (index ==-1 || toReorder ==-1 || index == toReorder) return false;
+    if (toReorder == index -1 && above) return false;
+    if (toReorder == index + 1 && !above) return false;
+    return true;
   }
 
   @Override
@@ -437,6 +463,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       final String name = ((Element)list).getAttributeValue(ATTRIBUTE_NAME);
       List<TreeItem<Pair<AbstractUrl, String>>> roots = readRoots((Element)list, myProject);
       myName2FavoritesRoots.put(name, roots);
+      myFavoritesRootsOrder.add(name);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
   }
@@ -507,7 +534,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    for (final String name : myName2FavoritesRoots.keySet()) {
+    for (final String name : myFavoritesRootsOrder) {
       Element list = new Element(ELEMENT_FAVORITES_LIST);
       list.setAttribute(ATTRIBUTE_NAME, name);
       writeRoots(list, myName2FavoritesRoots.get(name));
@@ -681,7 +708,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
             new DirectoryUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiDirectory)child).getName(), module.getName());
         }
 
-        for (String listName : myName2FavoritesRoots.keySet()) {
+        for (String listName : myFavoritesRootsOrder) {
           final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
           final AbstractUrl finalChildUrl = childUrl;
           iterateTreeItems(roots, item -> {
@@ -715,7 +742,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           final String url = ((PsiDirectory)psiElement.getParent()).getVirtualFile().getUrl() + "/" + event.getNewValue();
           final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url) : new DirectoryUrl(url, module.getName());
 
-          for (String listName : myName2FavoritesRoots.keySet()) {
+          for (String listName : myFavoritesRootsOrder) {
             final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
             iterateTreeItems(roots, item -> {
               final Pair<AbstractUrl, String> root = item.getData();

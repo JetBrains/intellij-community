@@ -51,12 +51,19 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                    final PsiFile file, int offset, int parameterListStart) {
+                                  final PsiFile file, int offset, int parameterListStart) {
+    this(editor, project, file, offset, parameterListStart, false);
+  }
+
+  public ShowParameterInfoContext(final Editor editor, final Project project,
+                                  final PsiFile file, int offset, int parameterListStart,
+                                  boolean requestFocus) {
     myEditor = editor;
     myProject = project;
     myFile = file;
     myParameterListStart = parameterListStart;
     myOffset = offset;
+    myRequestFocus = requestFocus;
   }
 
   @Override
@@ -123,7 +130,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
-    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
+    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler,requestFocus);
     component.setParameterOwner(element);
     component.setRequestFocus(requestFocus);
     if (highlighted != null) {

@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +85,18 @@ public class FavoritesPanel {
             }
           }
         }
+        if (path != null && path.getPathCount() == 2) {
+          Object o = path.getLastPathComponent();
+          if (o instanceof DefaultMutableTreeNode) {
+            o = ((DefaultMutableTreeNode)o).getUserObject();
+            if (o instanceof FavoritesTreeNodeDescriptor) {
+              FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
+              if (root == o) {
+                return new DnDDragStartBean(path);
+              }
+            }
+          }
+        }
         return new DnDDragStartBean("") {
           @Override
           public boolean isEmpty() {
@@ -102,17 +113,25 @@ public class FavoritesPanel {
             event.setDropPossible(false);
             return false;
           }
-          if (obj instanceof TreePath && ((TreePath)obj).getPathCount() <= 2) {
-            event.setDropPossible(false);
-            return true;
+          int pathCount = 0;
+          if (obj instanceof TreePath) {
+            pathCount = ((TreePath)obj).getPathCount();
+            if (pathCount < 2) {
+              event.setDropPossible(false);
+              return true;
+            }
           }
           FavoritesListNode node = myViewPanel.findFavoritesListNode(event.getPoint());
-          if ((obj instanceof TreePath && myViewPanel.myTree.getPath(node).isDescendant((TreePath)obj)) ||
+          if ((obj instanceof TreePath && pathCount == 3 && myViewPanel.myTree.getPath(node).isDescendant((TreePath)obj)) ||
               (node != null && node.getProvider() != null)) {
             event.setDropPossible(false);
             return false;
           }
           highlight(node, event);
+          if (obj instanceof TreePath && pathCount == 2 && node != null && node.getProvider() == null) {
+            event.setDropPossible(true);
+            return true;
+          }
           if (node != null) {
             event.setDropPossible(true);
             return true;
@@ -146,6 +165,12 @@ public class FavoritesPanel {
               }
               mgr.addRoots(listTo, null, element);
             }
+            if (path.getPathCount() == 2) {//favorites lists manual sorting
+              Rectangle bounds = myTree.getPathBounds(myTree.getPath(node));
+              if (bounds != null) {
+                mgr.setOrder(listFrom, listTo, event.getPoint().y < bounds.y + bounds.height / 2);
+              }
+            }
           }
           else if (obj instanceof TransferableWrapper) {
             myViewPanel.dropPsiElements(mgr, node, ((TransferableWrapper)obj).getPsiElements());
@@ -164,6 +189,11 @@ public class FavoritesPanel {
   }
 
   private void highlight(FavoritesListNode node, DnDEvent event) {
+    int pathCount = 0;
+    Object object = event.getAttachedObject();
+    if (object instanceof TreePath) {
+      pathCount = ((TreePath)object).getPathCount();
+    }
     if (node != null) {
       TreePath pathToList = myTree.getPath(node);
       while (pathToList != null) {
@@ -181,7 +211,23 @@ public class FavoritesPanel {
       if (pathToList != null) {
         Rectangle bounds = myTree.getPathBounds(pathToList);
         if (bounds != null) {
-          event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+          if (pathCount == 2) {
+            FavoritesListNode pathToReorder = FavoritesTreeViewPanel.getListNodeFromPath((TreePath)object);
+            FavoritesListNode anchorPath = FavoritesTreeViewPanel.getListNodeFromPath(pathToList);
+            boolean below = event.getPoint().y >= bounds.y + bounds.height / 2;
+            if (pathToReorder == null || anchorPath == null || !FavoritesManager.getInstance(myProject).canReorder(pathToReorder.getValue(), anchorPath.getValue(), !below)) {
+              event.hideHighlighter();
+              return;
+            }
+            if (below) {
+              bounds.y+=bounds.height - 2;
+            }
+            bounds.height = 2;
+            event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+          }
+          else {
+            event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+          }
         }
       }
     }

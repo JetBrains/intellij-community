@@ -46,6 +46,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     myLanguageHosts = RegExpLanguageHosts.getInstance();
   }
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     assert myHolder == null : "unsupported concurrent annotator invocation";
     try {
@@ -57,6 +58,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
@@ -107,6 +109,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitSimpleClass(RegExpSimpleClass simpleClass) {
+    if (!myLanguageHosts.supportsSimpleClass(simpleClass)) {
+      myHolder.createErrorAnnotation(simpleClass, "Illegal/unsupported escape sequence");
+    }
+  }
+
+  @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
     final HashSet<Character> seen = new HashSet<Character>();
     for (RegExpClassElement element : regExpClass.getElements()) {
@@ -121,6 +130,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final Character value = ch.getValue();
     if (value == null) {
@@ -161,6 +171,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
     if (category == null) {
@@ -175,6 +186,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpBackref(final RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {
@@ -189,6 +201,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {
@@ -263,6 +276,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     return true;
   }
 
+  @Override
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     final RegExpQuantifier.Count count = quantifier.getCount();
     if (!(count instanceof RegExpQuantifier.SimpleCount)) {

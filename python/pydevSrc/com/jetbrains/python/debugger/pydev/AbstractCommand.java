@@ -49,6 +49,7 @@ public abstract class AbstractCommand<T> {
   public static final int GET_ARRAY = 143;
   public static final int STEP_INTO_MY_CODE = 144;
   public static final int LOG_CONCURRENCY_EVENT = 145;
+  public static final int SHOW_RETURN_VALUES = 146;
 
   public static final int ERROR = 901;
 

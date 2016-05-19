@@ -347,7 +347,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
         tree.setModel(model);
 
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         final HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
         if (structure == null) {
           return;
@@ -357,12 +356,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         myBuilders.put(typeName, builder);
         Disposer.register(this, builder);
-        Disposer.register(builder, new Disposable() {
-          @Override
-          public void dispose() {
-            myBuilders.remove(typeName);
-          }
-        });
+        Disposer.register(builder, () -> myBuilders.remove(typeName));
 
         final HierarchyNodeDescriptor descriptor = structure.getBaseDescriptor();
         builder.select(descriptor, () -> builder.expand(descriptor, null));

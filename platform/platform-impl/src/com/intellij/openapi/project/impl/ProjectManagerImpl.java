@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
@@ -33,7 +32,6 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -41,11 +39,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
@@ -323,20 +318,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
-      DumbService.getInstance(project).queueTask(new DumbModeTask() {
-        @Override
-        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          waitForFileWatcher(indicator);
-        }
-
-        @Override
-        public String toString() {
-          return "wait for file watcher";
-        }
-      })
-    );
-
     Runnable process = () -> {
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
@@ -400,25 +381,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static boolean canCancelProjectLoading() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     return !(indicator instanceof NonCancelableSection);
-  }
-
-  private static void waitForFileWatcher(@NotNull ProgressIndicator indicator) {
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!(fs instanceof LocalFileSystemImpl)) return;
-
-    final FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational() || !watcher.isSettingRoots()) return;
-
-    LOG.info("FW/roots waiting started");
-    indicator.setIndeterminate(true);
-    indicator.setText(ProjectBundle.message("project.load.waiting.watcher"));
-    if (indicator instanceof ProgressWindow) {
-      ((ProgressWindow)indicator).setCancelButtonText(CommonBundle.message("button.skip"));
-    }
-    while (watcher.isSettingRoots() && !indicator.isCanceled()) {
-      TimeoutUtil.sleep(10);
-    }
-    LOG.info("FW/roots waiting finished");
   }
 
   @Override

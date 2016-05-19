@@ -112,6 +112,19 @@ public class InspectionTree extends Tree {
   }
 
   @Nullable
+  public String[] getSelectedGroupPath() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    final TreePath commonPath = TreeUtil.findCommonPath(paths);
+    for (Object n : commonPath.getPath()) {
+      if (n instanceof InspectionGroupNode) {
+        return ((InspectionGroupNode)n).getGroupPath();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public InspectionToolWrapper getSelectedToolWrapper() {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;

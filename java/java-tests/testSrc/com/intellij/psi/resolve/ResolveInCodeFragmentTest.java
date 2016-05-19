@@ -3,6 +3,7 @@ package com.intellij.psi.resolve;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
@@ -42,6 +43,22 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     PsiExpression expr = (PsiExpression) fileContent[0];
     assertNotNull(expr.getType());
     assertEquals("boolean", expr.getType().getCanonicalText());
+  }
+
+  public void testResolveFieldVsLocalWithVisiblityChecker() throws Exception {
+    PsiReference iRef = configure();
+
+    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
+      "xxx", iRef.getElement(), null, true);
+    codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+
+    PsiElement[] fileContent = codeFragment.getChildren();
+    assertEquals(1, fileContent.length);
+    assertTrue(fileContent[0] instanceof PsiExpression);
+
+    PsiExpression expr = (PsiExpression) fileContent[0];
+    PsiElement resolve = ((PsiReferenceExpressionImpl)expr).resolve();
+    assertInstanceOf(resolve, PsiLocalVariable.class);
   }
 
   private PsiReference configure() throws Exception {

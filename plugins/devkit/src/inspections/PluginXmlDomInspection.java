@@ -20,13 +20,17 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.diagnostic.ITNReporter;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -43,11 +47,14 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 /**
  * @author mike
  */
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
+  private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
+
   public PluginXmlDomInspection() {
     super(IdeaPlugin.class);
   }
@@ -141,6 +148,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     highlightNotUsedAnymore(ideaVersion.getMin(), holder);
     highlightNotUsedAnymore(ideaVersion.getMax(), holder);
+    highlightUntilBuild(ideaVersion, holder);
+  }
+
+  private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
+    String untilBuild = ideaVersion.getUntilBuild().getStringValue();
+    if (untilBuild != null) {
+      Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
+      if (matcher.matches()) {
+        holder.createProblem(ideaVersion.getUntilBuild(), "Don't use '" + matcher.group(2) + "' in 'until-build', use '*' instead",
+                             new CorrectUntilBuildAttributeFix(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+      }
+      if (untilBuild.matches("\\d+")) {
+        int branch = Integer.parseInt(untilBuild);
+        String corrected = (branch - 1) + ".*";
+        String message = "Plain numbers in 'until-build' attribute may be misleading. '" + untilBuild + "' means the same as '" + untilBuild
+                         + ".0', so the plugin won't be compatible with " + untilBuild + ".* builds. It's better to specify '" + corrected + "' instead.";
+        holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
+      }
+    }
   }
 
   private static void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
@@ -252,6 +278,36 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static class CorrectUntilBuildAttributeFix implements LocalQuickFix {
+    private final String myCorrectValue;
+
+    public CorrectUntilBuildAttributeFix(String correctValue) {
+      myCorrectValue = correctValue;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return "Change 'until-build' to '" + myCorrectValue + "'";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Correct 'until-build' attribute";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class, false);
+      //noinspection unchecked
+      final GenericAttributeValue<String> domElement = DomManager.getDomManager(project).getDomElement(attribute);
+      LOG.assertTrue(domElement != null);
+      domElement.setStringValue(myCorrectValue);
+    }
+  }
 
   private static class SpecifyJetBrainsAsVendorQuickFix implements LocalQuickFix {
     @Nls

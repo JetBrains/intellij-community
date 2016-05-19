@@ -149,6 +149,8 @@ public class EventLog {
         afterTitle = logDoc.createRangeMarker(logDoc.getTextLength() - 2, logDoc.getTextLength());
       }
     }
+    int titleLength = logDoc.getTextLength();
+
     hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
 
     List<AnAction> actions = notification.getActions();
@@ -196,7 +198,7 @@ public class EventLog {
                                                   new ShowBalloon(notification)));
     }
 
-    return new LogEntry(logDoc.getText(), status, list);
+    return new LogEntry(logDoc.getText(), status, list, titleLength);
   }
 
   @NotNull
@@ -416,11 +418,13 @@ public class EventLog {
     public final String message;
     public final String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
+    public final int titleLength;
 
-    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links) {
+    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
       this.message = message;
       this.status = status;
       this.links = links;
+      this.titleLength = titleLength;
     }
   }
 

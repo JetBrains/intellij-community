@@ -241,7 +241,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     configureLanguageAttributeTest()
     myFixture.testHighlighting("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
-  
+
   public void testLanguageAttributeCompletion() {
     configureLanguageAttributeTest()
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"));
@@ -253,7 +253,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertLookupElement(lookupElements[1], "MyAnonymousLanguageWithNameFromBundleID", "MyLanguage")
     assertLookupElement(lookupElements[2], "MyLanguageID", "MyLanguage")
   }
-  
+
   private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)
@@ -302,6 +302,33 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPluginWithModules() throws Throwable {
     myFixture.testHighlighting("pluginWithModules.xml");
+  }
+
+  public void testPluginWith99InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith99InUntilBuild.xml");
+  }
+
+  public void testPluginWith9999InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith9999InUntilBuild.xml");
+  }
+
+  public void testPluginWith10000InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith10000InUntilBuild.xml");
+  }
+
+  public void testPluginWithStarInUntilBuild()  {
+    myFixture.testHighlighting("pluginWithStarInUntilBuild.xml");
+  }
+
+  public void testPluginWithBranchNumberInUntilBuild()  {
+    myFixture.testHighlighting("pluginWithBranchNumberInUntilBuild.xml");
+  }
+
+  public void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
+    myFixture.enableInspections(PluginXmlDomInspection.class)
+    myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
+    myFixture.launchAction(myFixture.findSingleIntention("Change 'until-build'"))
+    myFixture.checkResultByFile("pluginWithBigNumberInUntilBuild_after.xml")
   }
 
   public void testPluginWithXInclude() throws Throwable {

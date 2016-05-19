@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.Collection;
@@ -111,6 +113,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     return myPostStartupActivitiesPassed;
   }
 
+  @SuppressWarnings("SynchronizeOnThis")
   public void runStartupActivities() {
     ApplicationManager.getApplication().runReadAction(() -> {
       AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
@@ -118,14 +121,14 @@ public class StartupManagerImpl extends StartupManagerEx {
         runActivities(myPreStartupActivities);
 
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
-        synchronized (StartupManagerImpl.this) {
+        synchronized (this) {
           myPreStartupActivitiesPassed = true;
           myStartupActivitiesRunning = true;
         }
 
         runActivities(myStartupActivities);
 
-        synchronized (StartupManagerImpl.this) {
+        synchronized (this) {
           myStartupActivitiesRunning = false;
           myStartupActivitiesPassed = true;
         }
@@ -260,32 +263,38 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void checkProjectRoots() {
+    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
+    if (roots.length == 0) return;
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
     if (!watcher.isOperational()) return;
-    Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
-    if (manualWatchRoots.isEmpty()) return;
-    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
-    if (roots.length == 0) return;
 
-    List<String> nonWatched = new SmartList<String>();
-    for (VirtualFile root : roots) {
-      if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
-      String rootPath = root.getPath();
-      for (String manualWatchRoot : manualWatchRoots) {
-        if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
-          nonWatched.add(rootPath);
+    PooledThreadExecutor.INSTANCE.submit(() -> {
+      LOG.debug("FW/roots waiting started");
+      while (watcher.isSettingRoots()) TimeoutUtil.sleep(10);
+      LOG.debug("FW/roots waiting finished");
+
+      Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
+      if (!manualWatchRoots.isEmpty()) {
+        List<String> nonWatched = new SmartList<String>();
+        for (VirtualFile root : roots) {
+          if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
+          String rootPath = root.getPath();
+          for (String manualWatchRoot : manualWatchRoots) {
+            if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
+              nonWatched.add(rootPath);
+            }
+          }
+        }
+        if (!nonWatched.isEmpty()) {
+          String message = ApplicationBundle.message("watcher.non.watchable.project");
+          watcher.notifyOnFailure(message, null);
+          LOG.info("unwatched roots: " + nonWatched);
+          LOG.info("manual watches: " + manualWatchRoots);
         }
       }
-    }
-
-    if (!nonWatched.isEmpty()) {
-      String message = ApplicationBundle.message("watcher.non.watchable.project");
-      watcher.notifyOnFailure(message, null);
-      LOG.info("unwatched roots: " + nonWatched);
-      LOG.info("manual watches: " + manualWatchRoots);
-    }
+    });
   }
 
   public void startCacheUpdate() {

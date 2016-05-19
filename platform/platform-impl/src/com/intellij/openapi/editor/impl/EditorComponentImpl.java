@@ -51,6 +51,7 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
     enableInputMethods(true);
-    setFocusCycleRoot(true);
+    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
+    // in the interest of backward compatibility, we only do so when a
+    // screen reader is active.
+    setFocusCycleRoot(!ScreenReader.isActive());
     setOpaque(true);
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {

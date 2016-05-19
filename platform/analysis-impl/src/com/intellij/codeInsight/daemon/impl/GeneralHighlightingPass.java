@@ -64,18 +64,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = new Condition<PsiFile>() {
-    @Override
-    public boolean value(@NotNull PsiFile file) {
-      return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
-    }
-  };
+  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER =
+    file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   protected final boolean myUpdateAll;
   protected final ProperTextRange myPriorityRange;
 
-  protected final List<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
+  protected final List<HighlightInfo> myHighlights = new ArrayList<>();
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
@@ -120,7 +116,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return super.getDocument();
   }
 
-  private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
+  private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   @NotNull
   private HighlightVisitor[] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
@@ -140,7 +136,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @NotNull
   private HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile psiFile) {
-    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
+    final List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.length);
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
       if (visitor.suitableForFile(psiFile)) {
@@ -167,7 +163,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   // returns old value
-  public int incVisitorUsageCount(int delta) {
+  int incVisitorUsageCount(int delta) {
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     if (count == null) {
       count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
@@ -179,16 +175,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
-    final List<HighlightInfo> outsideResult = new ArrayList<HighlightInfo>(100);
-    final List<HighlightInfo> insideResult = new ArrayList<HighlightInfo>(100);
+    final List<HighlightInfo> outsideResult = new ArrayList<>(100);
+    final List<HighlightInfo> insideResult = new ArrayList<>(100);
 
     final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     final HighlightVisitor[] filteredVisitors = getHighlightVisitors(getFile());
-    final List<PsiElement> insideElements = new ArrayList<PsiElement>();
-    final List<PsiElement> outsideElements = new ArrayList<PsiElement>();
     try {
-      List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
-      List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
+      List<ProperTextRange> insideRanges = new ArrayList<>();
+      List<ProperTextRange> outsideRanges = new ArrayList<>();
+      final List<PsiElement> insideElements = new ArrayList<>();
+      final List<PsiElement> outsideElements = new ArrayList<>();
       Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
       // put file element always in outsideElements (except file fragments where they have crazy element ranges: an expression might be an immediate child of a file there)
@@ -250,7 +246,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   @NotNull
   public List<HighlightInfo> getInfos() {
-    return new ArrayList<HighlightInfo>(myHighlights);
+    return new ArrayList<>(myHighlights);
   }
 
   private boolean collectHighlights(@NotNull final List<PsiElement> elements1,
@@ -262,7 +258,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final List<HighlightInfo> insideResult,
                                     @NotNull final List<HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
-    final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
+    final Set<PsiElement> skipParentsSet = new THashSet<>();
 
     // TODO - add color scheme to holder
     final HighlightInfoHolder holder = createInfoHolder(getFile());
@@ -277,7 +273,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
     });
-    List<HighlightInfo> postInfos = new ArrayList<HighlightInfo>(holder.size());
+    List<HighlightInfo> postInfos = new ArrayList<>(holder.size());
     // there can be extra highlights generated in PostHighlightVisitor
     for (int j = 0; j < holder.size(); j++) {
       final HighlightInfo info = holder.get(j);
@@ -314,8 +310,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                           @NotNull List<HighlightInfo> outsideResult,
                           boolean forceHighlightParents,
                           @NotNull HighlightVisitor[] visitors) {
-    Stack<TextRange> nestedRange = new Stack<TextRange>();
-    Stack<List<HighlightInfo>> nestedInfos = new Stack<List<HighlightInfo>>();
+    Stack<TextRange> nestedRange = new Stack<>();
+    Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
     boolean failed = false;
     int nextLimit = chunkSize;
     for (int i = 0; i < elements.size(); i++) {
@@ -337,10 +333,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         try {
           visitor.visit(element);
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (IndexNotReadyException e) {
+        catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
         }
         catch (Exception e) {
@@ -357,7 +350,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       TextRange elementRange = ranges.get(i);
-      List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<HighlightInfo>(holder.size());
+      List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<>(holder.size());
       for (int j = 0; j < holder.size(); j++) {
         final HighlightInfo info = holder.get(j);
 
@@ -415,7 +408,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
-    EdtExecutorService.getScheduledExecutorInstance().schedule((Runnable)() -> {
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       Application application = ApplicationManager.getApplication();
       if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
         DaemonCodeAnalyzer.getInstance(project).restart();
@@ -495,7 +488,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static List<Problem> convertToProblems(@NotNull Collection<HighlightInfo> infos,
                                                  @NotNull VirtualFile file,
                                                  final boolean hasErrorElement) {
-    List<Problem> problems = new SmartList<Problem>();
+    List<Problem> problems = new SmartList<>();
     for (HighlightInfo info : infos) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
         Problem problem = new ProblemImpl(file, info, hasErrorElement);

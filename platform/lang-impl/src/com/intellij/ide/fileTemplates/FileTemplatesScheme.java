@@ -17,6 +17,8 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,6 +33,12 @@ public abstract class FileTemplatesScheme implements Scheme {
     @Override
     public String getTemplatesDir() {
       return new File(PathManager.getConfigPath(), TEMPLATES_DIR).getPath();
+    }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return ProjectManager.getInstance().getDefaultProject();
     }
   };
 
@@ -49,4 +57,7 @@ public abstract class FileTemplatesScheme implements Scheme {
 
   @NotNull
   public abstract String getTemplatesDir();
+
+  @NotNull
+  public abstract Project getProject();
 }

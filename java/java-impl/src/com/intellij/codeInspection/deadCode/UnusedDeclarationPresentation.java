@@ -508,6 +508,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     htmlView.setContentType(UIUtil.HTML_MIME);
     htmlView.setEditable(false);
     htmlView.setOpaque(false);
+    htmlView.setBackground(UIUtil.getLabelBackground());
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {

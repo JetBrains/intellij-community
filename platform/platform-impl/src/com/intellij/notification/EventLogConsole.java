@@ -45,7 +45,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +91,8 @@ class EventLogConsole {
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
     final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    editor.getSettings().setFoldingOutlineShown(true);
+    editor.getSettings().setWhitespacesShown(false);
     installNotificationsFont(editor);
     myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
@@ -129,8 +130,19 @@ class EventLogConsole {
       }
 
       @Override
+      public int getEditorFontSize() {
+        return getConsoleFontSize();
+      }
+
+      @Override
       public String getConsoleFontName() {
         return NotificationsUtil.getFontName();
+      }
+
+      @Override
+      public int getConsoleFontSize() {
+        Pair<String, Integer> data = NotificationsUtil.getFontData();
+        return data == null ? super.getConsoleFontSize() : data.second;
       }
 
       @Override
@@ -139,6 +151,14 @@ class EventLogConsole {
 
       @Override
       public void setConsoleFontName(String fontName) {
+      }
+
+      @Override
+      public void setEditorFontSize(int fontSize) {
+      }
+
+      @Override
+      public void setConsoleFontSize(int fontSize) {
       }
     };
     EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
@@ -251,6 +271,7 @@ class EventLogConsole {
 
     int tabs = calculateTabs(editor, startDateOffset);
 
+    int titleStartOffset = document.getTextLength();
     int startLine = document.getLineCount() - 1;
 
     EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol('\t', tabs));
@@ -288,7 +309,7 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1);
+      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1, titleStartOffset, pair.titleLength);
     }
   }
 
@@ -317,45 +338,35 @@ class EventLogConsole {
   }
 
   private void highlightNotification(final Notification notification,
-                                     String message, final int line1, final int line2) {
+                                     String message,
+                                     final int startLine,
+                                     final int endLine,
+                                     int titleOffset,
+                                     int titleLength) {
 
     final MarkupModel markupModel = getConsoleEditor().getMarkupModel();
     TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
-    final List<RangeHighlighter> lineColors = new ArrayList<RangeHighlighter>();
-    boolean addStripe = true;
-    for (int line = line1; line < line2; line++) {
-      final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
-      if (addStripe) {
-        Color color = notification.getType() == NotificationType.ERROR
-                      ? JBColor.RED
-                      : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
-        lineHighlighter.setErrorStripeMarkColor(color);
-        lineHighlighter.setErrorStripeTooltip(message);
-        addStripe = false;
-      }
-      lineColors.add(lineHighlighter);
-    }
-
-    final Document document = getConsoleEditor().getDocument();
+    final RangeHighlighter colorHighlighter = markupModel
+      .addRangeHighlighter(titleOffset, titleOffset + titleLength, HighlighterLayer.CARET_ROW + 1, bold, HighlighterTargetArea.EXACT_RANGE);
+    Color color = notification.getType() == NotificationType.ERROR
+                  ? JBColor.RED
+                  : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
+    colorHighlighter.setErrorStripeMarkColor(color);
+    colorHighlighter.setErrorStripeTooltip(message);
 
     final Runnable removeHandler = () -> {
-      TextAttributes expired =
-        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
-      TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-      for (RangeHighlighter colorHighlighter : lineColors) {
-        if (colorHighlighter.isValid()) {
-          int line = document.getLineNumber(colorHighlighter.getStartOffset());
-
-          markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, expired);
-
-          for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
-            markupModel
-              .addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic,
-                                   HighlighterTargetArea.EXACT_RANGE);
-            myHyperlinkSupport.getValue().removeHyperlink(highlighter);
-          }
-        }
+      if (colorHighlighter.isValid()) {
         markupModel.removeHighlighter(colorHighlighter);
+      }
+
+      TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+      for (int line = startLine; line < endLine; line++) {
+        for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
+          markupModel
+            .addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic,
+                                 HighlighterTargetArea.EXACT_RANGE);
+          myHyperlinkSupport.getValue().removeHyperlink(highlighter);
+        }
       }
     };
     if (!notification.isExpired()) {

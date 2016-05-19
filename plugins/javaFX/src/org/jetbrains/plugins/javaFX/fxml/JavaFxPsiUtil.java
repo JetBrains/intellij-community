@@ -978,7 +978,7 @@ public class JavaFxPsiUtil {
            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_MAP);
   }
 
-  private static boolean isObservableCollection(@Nullable PsiClass psiClass) {
+  public static boolean isObservableCollection(@Nullable PsiClass psiClass) {
     return psiClass != null &&
            (InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
             InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
@@ -1077,7 +1077,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getFactoryProducedClass(@Nullable PsiClass psiClass, @Nullable String factoryMethodName) {
+  private static PsiClass getFactoryProducedClass(@Nullable PsiClass psiClass, @Nullable String factoryMethodName) {
     if (psiClass == null || factoryMethodName == null) return null;
     final PsiMethod[] methods = psiClass.findMethodsByName(factoryMethodName, true);
     for (PsiMethod method : methods) {
@@ -1110,6 +1110,33 @@ public class JavaFxPsiUtil {
     if (!isMethod) return memberName;
     final String propertyName = PropertyUtil.getPropertyName(memberName);
     return propertyName != null ? propertyName : memberName;
+  }
+
+  @NotNull
+  public static PsiClass getTagValueClass(@NotNull XmlTag xmlTag) {
+    return getTagValueClass(xmlTag, getTagClass(xmlTag)).getFirst();
+  }
+
+  @NotNull
+  public static Pair<PsiClass, Boolean> getTagValueClass(@NotNull XmlTag xmlTag, @Nullable PsiClass tagClass) {
+    if (tagClass != null) {
+      final XmlAttribute constAttr = xmlTag.getAttribute(FxmlConstants.FX_CONSTANT);
+      if (constAttr != null) {
+        final PsiField constField = tagClass.findFieldByName(constAttr.getValue(), true);
+        if (constField != null) {
+          final PsiType constType = constField.getType();
+          return Pair.create(PsiUtil.resolveClassInClassTypeOnly(
+            constType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)constType).getBoxedType(xmlTag) : constType), true);
+        }
+      }
+      else {
+        final XmlAttribute factoryAttr = xmlTag.getAttribute(FxmlConstants.FX_FACTORY);
+        if (factoryAttr != null) {
+          return Pair.create(getFactoryProducedClass(tagClass, factoryAttr.getValue()), true);
+        }
+      }
+    }
+    return Pair.create(tagClass, false);
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

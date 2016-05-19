@@ -15,6 +15,7 @@
  */
 package com.intellij.psi
 
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -42,6 +43,20 @@ public @interface BrokenAnnotation {
     assert ref instanceof PsiReferenceExpression
     assert ref.resolve() == cls.innerClasses[0].fields[0]
     assert file.stub
+  }
+
+  public void "test literal annotation value"() {
+    def cls = myFixture.addClass("""
+class Foo {
+  @org.jetbrains.annotations.Contract(pure=true)
+  native int foo();
+}
+""")
+
+    def file = cls.containingFile as PsiFileImpl
+    assert ControlFlowAnalyzer.isPure(cls.methods[0])
+    assert file.stub
+    assert !file.contentsLoaded
   }
   
 }

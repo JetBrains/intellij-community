@@ -55,8 +55,6 @@ import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.ge
 public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
   private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
-  public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
-
   public SuppressActionWrapper() {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
   }
@@ -70,7 +68,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     if (wrapper == null) return AnAction.EMPTY_ARRAY;
     final Set<SuppressIntentionAction> suppressActions = view.getSuppressActions(wrapper);
 
-    if (suppressActions.isEmpty()) return new SuppressTreeAction[0];
+    if (suppressActions.isEmpty()) return AnAction.EMPTY_ARRAY;
     final AnAction[] actions = new AnAction[suppressActions.size() + 1];
 
     int i = 0;

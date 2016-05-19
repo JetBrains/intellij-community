@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
@@ -36,6 +37,7 @@ import java.awt.font.FontRenderContext;
 import java.text.Bidi;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Layout of a single line of document text. Consists of a series of BidiRuns, which, in turn, consist of TextFragments.
@@ -43,6 +45,8 @@ import java.util.List;
  * for required Chunks.
  */
 abstract class LineLayout {
+  private static final Logger LOG = Logger.getInstance(LineLayout.class);
+
   private LineLayout() {}
   
   /**
@@ -280,6 +284,8 @@ abstract class LineLayout {
     return new VisualOrderIterator(view, line, startX, startVisualColumn, startLogicalColumn, startOffset, runs);
   }
 
+  abstract Stream<Chunk> getChunksInLogicalOrder();
+
   float getWidth() {
     throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
   }
@@ -299,6 +305,11 @@ abstract class LineLayout {
 
     private SingleChunk(Chunk chunk) {
       myChunk = chunk;
+    }
+
+    @Override
+    Stream<Chunk> getChunksInLogicalOrder() {
+      return myChunk == null ? Stream.empty() : Stream.of(myChunk);
     }
 
     @Override
@@ -347,6 +358,11 @@ abstract class LineLayout {
       else {
         myBidiRunsInVisualOrder = bidiRunsInLogicalOrder;
       }
+    }
+
+    @Override
+    Stream<Chunk> getChunksInLogicalOrder() {
+      return Stream.of(myBidiRunsInLogicalOrder).flatMap((BidiRun r) -> r.chunks == null ? Stream.empty() : Stream.of(r.chunks));
     }
 
     @Override
@@ -419,6 +435,11 @@ abstract class LineLayout {
         x = fragment.getEndX();
       }
       return x;
+    }
+
+    @Override
+    Stream<Chunk> getChunksInLogicalOrder() {
+      return myDelegate.getChunksInLogicalOrder();
     }
 
     @Override
@@ -525,10 +546,12 @@ abstract class LineLayout {
         view.getTextLayoutCache().onChunkAccess(this);
       }
       if (fragments != null) return;
+      assert isReal();
       fragments = new ArrayList<>();
       int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
+      if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
       IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
@@ -557,19 +580,25 @@ abstract class LineLayout {
     
     private Chunk subChunk(EditorView view, BidiRun run, int line, int targetStartOffset, int targetEndOffset,
                            @Nullable Runnable quickEvaluationListener) {
+      assert isReal();
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       if (quickEvaluationListener != null && fragments == null) {
         quickEvaluationListener.run();
-        return new ApproximationChunk(view, line, start, end);
+        Chunk chunk = new SyntheticChunk(start, end);
+        int startColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, start);
+        int endColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, end);
+        chunk.fragments = Collections.singletonList(new ApproximationFragment(end - start, endColumn - startColumn,
+                                                                              view.getMaxCharWidth()));
+        return chunk;
       }
       if (start == startOffset && end == this.endOffset) {
         return this;
       }
       ensureLayout(view, run, line);
-      Chunk chunk = new Chunk(start, end);
+      Chunk chunk = new SyntheticChunk(start, end);
       chunk.fragments = new ArrayList<>();
       int offset = startOffset;
       for (LineFragment fragment : fragments) {
@@ -591,13 +620,10 @@ abstract class LineLayout {
       fragments = null;
     }
   }
-  
-  private static class ApproximationChunk extends Chunk {
-    private ApproximationChunk(@NotNull EditorView view, int line, int start, int end) {
-      super(start, end);
-      int startColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, start);
-      int endColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, end);
-      fragments = Collections.singletonList(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
+
+  private static class SyntheticChunk extends Chunk {
+    private SyntheticChunk(int startOffset, int endOffset) {
+      super(startOffset, endOffset);
     }
 
     @Override
@@ -605,7 +631,7 @@ abstract class LineLayout {
       return false;
     }
   }
-
+  
   private static class VisualOrderIterator implements Iterator<VisualFragment> {
     private final EditorView myView;
     private final int myLine;

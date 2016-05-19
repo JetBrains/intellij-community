@@ -65,7 +65,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -738,10 +737,7 @@ public class CreateFromUsageUtils {
         @Override
         @Nullable
         public PsiType visitType(PsiType type) {
-          if (PsiType.NULL.equals(type)) {
-            type = PsiType.getJavaLangObject(manager, resolveScope);
-          }
-          else if (PsiType.VOID.equals(type) && !allowVoidType) {
+          if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
 

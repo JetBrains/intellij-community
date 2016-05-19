@@ -206,7 +206,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
 
     long sinceLastEdt = millis - myLastAliveEdt;
-    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000) {
+    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000 + 10) {
       edtFrozen(millis);
     }
     else if (sinceLastEdt <= SAMPLING_INTERVAL_MS) {
@@ -292,12 +292,13 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private static void checkMemoryUsage(File file) {
-    final Runtime rt = Runtime.getRuntime();
-    final long allocatedMem = rt.maxMemory();
-    final long unusedMem = rt.freeMemory();
-    if (unusedMem < allocatedMem / 5) {
-      LOG.info("High memory usage (free " + unusedMem / 1024 / 1024 +
-               " of " + allocatedMem / 1024 / 1024 +
+    Runtime rt = Runtime.getRuntime();
+    long maxMemory = rt.maxMemory();
+    long usedMemory = rt.totalMemory() - rt.freeMemory();
+    long freeMemory = maxMemory - usedMemory;
+    if (freeMemory < maxMemory / 5) {
+      LOG.info("High memory usage (free " + freeMemory / 1024 / 1024 +
+               " of " + maxMemory / 1024 / 1024 +
                " MB) while dumping threads to " + file);
     }
   }

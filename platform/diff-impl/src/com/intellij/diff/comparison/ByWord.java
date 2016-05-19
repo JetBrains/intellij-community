@@ -646,7 +646,8 @@ public class ByWord {
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        MergeRange trimmed = trim(myText1, myText2, myText3, range);
+        MergeRange expanded = expandW(myText1, myText2, myText3, range);
+        MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
         if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);

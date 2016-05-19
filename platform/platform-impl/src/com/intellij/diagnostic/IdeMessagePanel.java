@@ -257,7 +257,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     }
 
     Window window = SwingUtilities.getWindowAncestor(this);
-    assert window instanceof IdeFrame;
+    assert window instanceof IdeFrame : window;
 
     IdeFrame frame = (IdeFrame)window;
     BalloonLayout layout = frame.getBalloonLayout();

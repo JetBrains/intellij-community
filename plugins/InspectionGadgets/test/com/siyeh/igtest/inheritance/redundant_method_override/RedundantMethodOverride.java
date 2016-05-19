@@ -16,6 +16,10 @@ public class RedundantMethodOverride extends S {
   public void m() {
     System.out.println();
   }
+
+  void n(int i) {
+    super.n(10);
+  }
 }
 class S {
 
@@ -30,17 +34,28 @@ class S {
   void m() {
     System.out.println();
   }
+
+  void n(int i) {
+    System.out.println(i);
+  }
 }
 class A {
   void f() {
     new X();
   }
 
+  void g() {}
+
   class X {}
 }
 class BB extends A {
   void f() {
     new X();
+  }
+
+  @Override
+  final void g() {
+    super.g();
   }
 
   class X {}
@@ -90,5 +105,17 @@ class Sub extends Sup {
   @Override
   protected void foox() { // not redundant
     overload1(0, true);
+  }
+}
+///////////////////////////////
+class Params {
+  int fooy(int param1, Object param2) {
+    return param1 + param2.hashCode();
+  }
+}
+class ComplexParameterEquivalent extends Params {
+  @Override
+  int <warning descr="Method 'fooy()' is identical to its super method">fooy</warning>(int p1, Object p2) {
+    return ((p1) + p2.hashCode());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,9 +119,15 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
           if (selfName.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
-
         }
 
+        @Override
+        public void visitPyCallExpression(PyCallExpression node) {
+          super.visitPyCallExpression(node);
+          if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON30) && node.isCalleeText(PyNames.SUPER)) {
+            mayBeStatic[0] = false;
+          }
+        }
       };
       node.accept(visitor);
       final PsiElement identifier = node.getNameIdentifier();

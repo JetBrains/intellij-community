@@ -48,7 +48,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,7 +209,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file) || ApplicationManager.getApplication().isUnitTestMode()) return;
 
     ExtractIncludeDialog dialog = createDialog(file.getContainingDirectory(), getExtractExtension(fileType, children.first));
     dialog.show();

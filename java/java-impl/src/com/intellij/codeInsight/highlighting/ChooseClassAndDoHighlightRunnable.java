@@ -44,6 +44,6 @@ public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRu
 
   @Override
   protected PsiElementListCellRenderer<PsiClass> createRenderer() {
-    return new PsiClassListCellRenderer();
+    return PsiClassListCellRenderer.INSTANCE;
   }
 }

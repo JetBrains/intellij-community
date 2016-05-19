@@ -68,7 +68,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!EquivalenceChecker.expressionsAreEquivalent(qualifier, argument) ||
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) ||
           SideEffectChecker.mayHaveSideEffects(qualifier)) {
         return;
       }

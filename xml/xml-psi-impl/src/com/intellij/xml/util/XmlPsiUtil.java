@@ -18,7 +18,6 @@ package com.intellij.xml.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -209,12 +208,14 @@ public class XmlPsiUtil {
     return type;
   }
 
+  private static final Object LOCK = new Object();
+
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
                                             final XmlEntityDecl.EntityContextType type,
                                             final XmlEntityRef entityRef) {
     CachedValue<PsiElement> value;
-    synchronized (PsiLock.LOCK) { // we depend on targetFile and entityRef
+    synchronized (LOCK) { // we depend on targetFile and entityRef
       value = entityRef.getUserData(PARSED_DECL_KEY);
       //    return entityDecl.parse(targetFile, type);
 

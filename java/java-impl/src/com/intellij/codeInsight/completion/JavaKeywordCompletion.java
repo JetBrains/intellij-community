@@ -652,7 +652,7 @@ public class JavaKeywordCompletion {
   }
 
   private static void addBreakContinue(Consumer<LookupElement> result, PsiElement position) {
-    PsiLoopStatement loop = PsiTreeUtil.getParentOfType(position, PsiLoopStatement.class);
+    PsiLoopStatement loop = PsiTreeUtil.getParentOfType(position, PsiLoopStatement.class, true, PsiLambdaExpression.class, PsiMember.class);
 
     LookupElement br = createKeyword(position, PsiKeyword.BREAK);
     LookupElement cont = createKeyword(position, PsiKeyword.CONTINUE);

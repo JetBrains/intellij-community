@@ -51,6 +51,17 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
   }
   get src: "$jreTeamcityUrl/builds/id:$buildId/artifacts/content/$platform/$artifact", dest: deployDir
   mkdir dir: "$deployDir/jre"
-  untar src: "$deployDir/$artifact", dest: "$deployDir/jre", compression: "gzip"
+  if (SystemInfo.isWindows) {
+    untar src: "$deployDir/$artifact", dest: "$deployDir/jre", compression: "gzip"
+  }
+  else {
+    // untar task doesn't support symlinks, so we need to use native tar executable
+    exec(executable: "tar", dir: "$deployDir") {
+      arg(value: "-xf")
+      arg(value: "$artifact")
+      arg(value: "--directory")
+      arg(value: "jre")
+    }
+  }
   delete file: "$deployDir/$artifact"
 }

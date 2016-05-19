@@ -172,7 +172,7 @@ public class ConflictsDialog extends DialogWrapper{
 
 
     public MyShowConflictsInUsageViewAction() {
-      super("Show conflicts in view");
+      super("Show Conflicts in View");
     }
 
     @Override

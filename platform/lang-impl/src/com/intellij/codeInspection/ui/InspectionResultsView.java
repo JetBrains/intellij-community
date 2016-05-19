@@ -23,7 +23,9 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
+import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
@@ -476,6 +478,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
+    final Object component = myTree.getSelectionPath().getLastPathComponent();
+    if (component instanceof OfflineRefElementNode) {
+      final OfflineProblemDescriptor descriptor = ((OfflineRefElementNode)component).getOfflineDescriptor();
+      System.out.println(descriptor);
+      System.out.println(descriptor.getFQName());
+      System.out.println("--");
+    }
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -484,7 +493,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final int problemCount = myTree.getSelectedProblemCount();
       JComponent previewPanel = null;
       final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
-      if (tool != null && refEntity != null && problemCount == 1 && refEntity.isValid()) {
+      if (tool != null && refEntity != null && refEntity.isValid()) {
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
@@ -580,7 +589,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
                                 boolean isSingleInspectionRun) {
     String groupName =
       toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
-    InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity, isSingleInspectionRun);
+    InspectionTreeNode parentNode = getToolParentNode(groupName, toolWrapper.getGroupPath(), errorLevel, groupedBySeverity, isSingleInspectionRun);
     InspectionNode toolNode = new InspectionNode(toolWrapper, myInspectionProfile);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
     myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
@@ -717,6 +726,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull
   private InspectionTreeNode getToolParentNode(@NotNull String groupName,
+                                               @NotNull String[] groupPath,
                                                HighlightDisplayLevel errorLevel,
                                                boolean groupedBySeverity,
                                                boolean isSingleInspectionRun) {
@@ -744,7 +754,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (isSingleInspectionRun) {
         return getRelativeRootNode(true, errorLevel);
       }
-      group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName));
+      group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
       if (!myDisposed) {
         insertByIndex(group, getRelativeRootNode(groupedBySeverity, errorLevel));
       }

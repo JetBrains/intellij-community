@@ -38,10 +38,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -319,15 +316,23 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return getState(new Element(COMPONENT_NAME));
   }
 
-  protected Element getState(final Element element) {
-    Comparator<BaseInjection> comparator = (o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-    List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
-    Collections.sort(injectorIds);
-    for (String key : injectorIds) {
-      Set<BaseInjection> injections = new TreeSet<BaseInjection>(comparator);
-      injections.addAll(myInjections.get(key));
+  protected Element getState(Element element) {
+    Comparator<BaseInjection> comparator = (o1, o2) -> {
+      int rc = Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+      if (rc != 0) return rc;
+      return ContainerUtil.compareLexicographically(
+        Arrays.asList(o1.getInjectionPlaces()),
+        Arrays.asList(o2.getInjectionPlaces()),
+        (o11, o22) -> {
+          if (o11.isEnabled() && !o22.isEnabled()) return -1;
+          if (!o11.isEnabled() && o22.isEnabled()) return 1;
+          return Comparing.compare(o11.getElementPattern().toString(), o22.getElementPattern().toString());
+        });
+    };
+    for (String key : ContainerUtil.newTreeSet(myInjections.keySet())) {
+      Set<BaseInjection> injections = ContainerUtil.newHashSet(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
-      for (BaseInjection injection : injections) {
+      for (BaseInjection injection : ContainerUtil.sorted(injections, comparator)) {
         element.addContent(injection.getState());
       }
     }
@@ -405,10 +410,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
     main: for (BaseInjection other : importingInjections) {
-      final List<BaseInjection> matchingInjections = ContainerUtil.concat(other.getInjectionPlaces(), o -> {
-        final Collection<BaseInjection> collection = placeMap.get(o);
-        return collection == null? Collections.<BaseInjection>emptyList() : collection;
-      });
+      final Set<BaseInjection> matchingInjections = JBIterable.of(other.getInjectionPlaces())
+        .flatten(o -> JBIterable.from(placeMap.get(o))).toSet();
       if (matchingInjections.isEmpty()) {
         newInjections.add(other);
       }

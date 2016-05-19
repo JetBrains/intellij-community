@@ -385,7 +385,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       }
       final PsiExpression thenLhs = thenExpression.getLExpression();
       final PsiExpression elseLhs = elseExpression.getLExpression();
-      return EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs);
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs);
     }
 
     public static boolean isAssignment(@Nullable PsiStatement statement) {

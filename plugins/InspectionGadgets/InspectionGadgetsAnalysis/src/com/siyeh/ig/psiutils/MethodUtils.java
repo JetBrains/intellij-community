@@ -135,14 +135,14 @@ public class MethodUtils {
         if (PsiType.NULL.equals(parameterType)) {
           continue;
         }
-        if (parameterType != null && !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
+        if (parameterType != null && !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }
     }
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
-      if (!EquivalenceChecker.typesAreEquivalent(returnType, methodReturnType)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(returnType, methodReturnType)) {
         return false;
       }
     }

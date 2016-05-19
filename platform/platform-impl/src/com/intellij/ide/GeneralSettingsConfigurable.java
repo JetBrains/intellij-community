@@ -54,6 +54,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     GeneralSettings settings = GeneralSettings.getInstance();
 
     settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
+    settings.setSupportScreenReaders(myComponent.myChkSupportScreenReaders.isSelected());
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
@@ -88,6 +89,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
     isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
+    isModified |= settings.isSupportScreenReaders() != myComponent.myChkSupportScreenReaders.isSelected();
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
@@ -136,6 +138,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     super.reset();
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
+    myComponent.myChkSupportScreenReaders.setSelected(settings.isSupportScreenReaders());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
@@ -179,6 +182,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myOpenProjectInNewWindow;
     private JBRadioButton myOpenProjectInSameWindow;
     private JBRadioButton myConfirmWindowToOpenProject;
+    private JCheckBox myChkSupportScreenReaders;
 
     public MyComponent() { }
   }

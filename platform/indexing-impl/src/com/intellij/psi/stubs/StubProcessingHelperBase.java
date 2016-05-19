@@ -56,7 +56,8 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull final VirtualFile file,
                                                              @NotNull StubIdList value,
                                                              @NotNull final Processor<? super Psi> processor,
-                                                             @NotNull Class<Psi> requiredClass, final boolean skipOnErrors) {
+                                                             @NotNull Class<Psi> requiredClass,
+                                                             final boolean skipOnErrors) {
     StubTree stubTree = null;
 
     PsiFile candidatePsiFile = PsiManager.getInstance(project).findFile(file);

@@ -74,6 +74,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setContentType(UIUtil.HTML_MIME);
     description.setEditable(false);
     description.setOpaque(false);
+    description.setBackground(UIUtil.getLabelBackground());
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
@@ -91,11 +92,12 @@ public class InspectionNodeInfo extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         DisableInspectionToolAction.modifyAndCommitProjectProfile(model -> {
+          final String toolId = key.toString();
           if (enabled) {
-            model.disableTool(key.getID(), project);
+            model.disableTool(toolId, project);
           }
           else {
-            ((InspectionProfileImpl)model).enableTool(key.getID(), project);
+            ((InspectionProfileImpl)model).enableTool(toolId, project);
           }
         }, project);
         return true;
