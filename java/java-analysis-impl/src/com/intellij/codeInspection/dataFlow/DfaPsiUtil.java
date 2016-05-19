@@ -158,7 +158,7 @@ public class DfaPsiUtil {
               return false;
             }
 
-            PsiCallExpression call = ((MethodCallInstruction)instruction).getCallExpression();
+            PsiCall call = ((MethodCallInstruction)instruction).getCallExpression();
             if (call == null) return false;
 
             if (call instanceof PsiMethodCallExpression &&

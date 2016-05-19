@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,26 +66,44 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    if (group.isNamedGroup()) {
-      final JavaSdkVersion version = getJavaVersion(group);
-      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
-    }
-    return false;
+    return group.isNamedGroup() && hasAtLeastJdkVersion(group, JavaSdkVersion.JDK_1_7);
   }
 
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
-    if (ref.isNamedGroupRef()) {
-      final JavaSdkVersion version = getJavaVersion(ref);
-      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
-    }
-    return false;
+    return ref.isNamedGroupRef() && hasAtLeastJdkVersion(ref, JavaSdkVersion.JDK_1_7);
   }
 
   @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
-    final JavaSdkVersion version = getJavaVersion(regExpChar);
-    return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
+    return hasAtLeastJdkVersion(regExpChar, JavaSdkVersion.JDK_1_7);
+  }
+
+  @Override
+  public boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
+    switch(simpleClass.getKind()) {
+      case UNICODE_LINEBREAK:
+      case HORIZONTAL_SPACE:
+      case NON_HORIZONTAL_SPACE:
+      case NON_VERTICAL_SPACE:
+        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_8);
+      case VERTICAL_SPACE:
+        // is vertical tab before jdk 1.8
+        return true;
+      case UNICODE_GRAPHEME:
+      case XML_NAME_START:
+      case NON_XML_NAME_START:
+      case XML_NAME_PART:
+      case NON_XML_NAME_PART:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  private static boolean hasAtLeastJdkVersion(PsiElement element, JavaSdkVersion version) {
+    final JavaSdkVersion version1 = getJavaVersion(element);
+    return version1 != null && version1.isAtLeast(version);
   }
 
   @Nullable
@@ -95,8 +115,15 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        return JavaSdk.getInstance().getVersion(sdk);
+        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        if (version != null) {
+          return version;
+        }
       }
+    }
+    final Sdk sdk = ProjectRootManager.getInstance(element.getProject()).getProjectSdk();
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+      return JavaSdk.getInstance().getVersion(sdk);
     }
     return null;
   }

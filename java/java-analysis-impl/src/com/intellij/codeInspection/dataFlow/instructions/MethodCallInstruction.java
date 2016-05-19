@@ -37,11 +37,11 @@ import java.util.Map;
 
 
 public class MethodCallInstruction extends Instruction {
-  @Nullable private final PsiCallExpression myCall;
+  @Nullable private final PsiCall myCall;
   @Nullable private final PsiType myType;
   @NotNull private final PsiExpression[] myArgs;
   private final boolean myShouldFlushFields;
-  @NotNull private final PsiExpression myContext;
+  @NotNull private final PsiElement myContext;
   @Nullable private final PsiMethod myTargetMethod;
   private final List<MethodContract> myContracts;
   private final MethodType myMethodType;
@@ -71,14 +71,14 @@ public class MethodCallInstruction extends Instruction {
     myArgRequiredNullability = Collections.emptyMap();
   }
 
-  public MethodCallInstruction(@NotNull PsiCallExpression call, @Nullable DfaValue precalculatedReturnValue, List<MethodContract> contracts) {
+  public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<MethodContract> contracts) {
     myContext = call;
     myContracts = contracts;
     myMethodType = MethodType.REGULAR_METHOD_CALL;
     myCall = call;
     final PsiExpressionList argList = call.getArgumentList();
     myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
-    myType = myCall.getType();
+    myType = myCall instanceof PsiCallExpression ? ((PsiCallExpression)myCall).getType() : null;
 
     JavaResolveResult result = call.resolveMethodGenerics();
     myTargetMethod = (PsiMethod)result.getElement();
@@ -175,12 +175,12 @@ public class MethodCallInstruction extends Instruction {
   }
 
   @Nullable
-  public PsiCallExpression getCallExpression() {
+  public PsiCall getCallExpression() {
     return myCall;
   }
 
   @NotNull
-  public PsiExpression getContext() {
+  public PsiElement getContext() {
     return myContext;
   }
 

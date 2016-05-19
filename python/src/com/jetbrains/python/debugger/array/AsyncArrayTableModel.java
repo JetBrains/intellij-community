@@ -51,8 +51,8 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
         final PyDebugValue value = myProvider.getDebugValue();
         final PyDebugValue slicedValue =
-          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                           value.getParent(), value.getFrameAccessor());
+          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(),
+                           value.isReturnedVal(), value.isErrorOnEval(), value.getParent(), value.getFrameAccessor());
 
         ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> value.getFrameAccessor()
           .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),

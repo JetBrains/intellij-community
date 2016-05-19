@@ -109,8 +109,13 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     options.reset();
     options.selectScheme(scheme.getName());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
-    int round = (int)Math.round(Math.random() * (pages.length - 1));
-    return new SimpleEditorPreview(options, pages[round], false);
+    int index;
+    int attempt = 0;
+    do {
+      index = (int)Math.round(Math.random() * (pages.length - 1));
+    }
+    while (StringUtil.countNewLines(pages[index].getDemoText()) < 8 && ++attempt < 10);
+    return new SimpleEditorPreview(options, pages[index], false);
   }
 
   @NotNull

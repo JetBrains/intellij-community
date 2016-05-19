@@ -80,6 +80,10 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     return ServiceManager.getService(project, VcsDirtyScopeVfsListener.class);
   }
 
+  public static void install(@NotNull Project project) {
+    getInstance(project);
+  }
+
   public void setForbid(boolean forbid) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myForbid = forbid;

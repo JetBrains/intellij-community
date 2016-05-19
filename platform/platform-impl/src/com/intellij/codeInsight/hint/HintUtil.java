@@ -208,6 +208,20 @@ public class HintUtil {
       setText(component);
     }
 
+    @Override
+    public boolean requestFocusInWindow() {
+      // Forward the focus to the tooltip contents so that screen readers announce
+      // the tooltip contents right away.
+      if (myPane != null) {
+        return myPane.requestFocusInWindow();
+      } else if (myColored != null) {
+        return myColored.requestFocusInWindow();
+      } else if (myIcon != null) {
+        return myIcon.requestFocusInWindow();
+      }
+      return super.requestFocusInWindow();
+    }
+
     public void setText(@NotNull SimpleColoredComponent colored) {
       clearText();
 

@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -113,7 +112,7 @@ public class DfaUtil {
   @Nullable
   static PsiElement getClosureInside(Instruction instruction) {
     if (instruction instanceof MethodCallInstruction) {
-      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
+      PsiCall anchor = ((MethodCallInstruction)instruction).getCallExpression();
       if (anchor instanceof PsiNewExpression) {
         return ((PsiNewExpression)anchor).getAnonymousClass();
       }

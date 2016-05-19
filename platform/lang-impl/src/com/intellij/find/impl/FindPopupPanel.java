@@ -72,7 +72,9 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -103,6 +105,7 @@ public class FindPopupPanel extends JBPanel {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
   // unify with CommonShortcuts.CTRL_ENTER
   private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+
                                                                                           ? InputEvent.META_DOWN_MASK
                                                                                           : InputEvent.CTRL_DOWN_MASK);
 
@@ -113,6 +116,7 @@ public class FindPopupPanel extends JBPanel {
   private static final KeyStroke MOVE_CARET_DOWN_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke MOVE_CARET_UP_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
+  protected static final String SIZE_KEY = "find.popup";
 
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
@@ -197,6 +201,7 @@ public class FindPopupPanel extends JBPanel {
       else {
         showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(myDataContext);
       }
+      mySearchComponent.selectAll();
       myFindBalloon.show(showPoint);
       myFindBalloon.pack(true, true);
     }
@@ -549,22 +554,11 @@ public class FindPopupPanel extends JBPanel {
   }
 
   @Override
-  public void reshape(int x, int y, int w, int h) {
-    super.reshape(x, y, w, h);
-
-    if (myResultsPopup != null && myResultsPopup.isVisible()) {
-      adjustPopup();
-    }
-  }
-
-  @Override
   public void addNotify() {
     super.addNotify();
     showResultsPopupIfNeed();
     myScopeSelectionToolbar.updateActionsImmediately();
   }
-
-  private static final int POPUP_MAX_WIDTH = 600;
 
   private void scheduleUpdateResultsPopupBounds() {
     if (myUpdateResultsPopupBoundsAlarm == null || myUpdateResultsPopupBoundsAlarm.isDisposed()) return;
@@ -578,28 +572,7 @@ public class FindPopupPanel extends JBPanel {
     if (myResultsPopup == null || !myResultsPopup.isVisible()) {
       return;
     }
-    Dimension size = myResultsPopup.getComponent().getPreferredSize();
-    if (size.width + 2 < getWidth()) {
-      size.width = getWidth();
-    }
-    Dimension sz = new Dimension(size.width, size.height);
-    if (!SystemInfo.isMac) {
-      if ((sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH)) {
-        final JBScrollPane pane = new JBScrollPane();
-        final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
-        final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-        sz = new Dimension(Math.min(POPUP_MAX_WIDTH, Math.max(getWidth(), sz.width + extraWidth)),
-                           Math.min(POPUP_MAX_WIDTH, sz.height + extraHeight));
-        sz.width += 20;
-        sz.height += 2;
-      }
-      else {
-        sz.width += 2;
-        sz.height += 2;
-      }
-    }
-    myResultsPopup.setSize(sz);
-    adjustPopup();
+    myResultsPopup.setSize(myResultsPopup.getComponent().getPreferredSize());
   }
 
   private void adjustPopup() {
@@ -926,6 +899,7 @@ public class FindPopupPanel extends JBPanel {
             .setCancelCallback(new Computable<Boolean>() {
               @Override
               public Boolean compute() {
+                DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
                 if (canClose.get()) return Boolean.TRUE;
                 Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
                 Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
@@ -956,6 +930,11 @@ public class FindPopupPanel extends JBPanel {
           RelativePoint point = new RelativePoint(FindPopupPanel.this, new Point(0, FindPopupPanel.this.getHeight()));
           myResultsPopup.pack(true, true);
           myResultsPopup.show(point);
+          Dimension panelSize = getPreferredSize();
+          Rectangle rectangle = ScreenUtil.getScreenRectangle(FindPopupPanel.this);
+          Dimension prev = DimensionService.getInstance().getSize(SIZE_KEY);
+          int width = prev != null && prev.width > panelSize.width ? prev.width : panelSize.width;
+          myResultsPopup.getComponent().setPreferredSize(new Dimension(width, (int)(rectangle.getHeight() * .6)));
           Disposer.register(myDisposable, myResultsPopup);
           registerCloseAction(myResultsPopup);
           updateResultsPopupBounds();

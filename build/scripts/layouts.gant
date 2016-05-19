@@ -238,6 +238,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("forms-compiler")
         module("forms_rt")
         module("instrumentation-util")
+        module("instrumentation-util-8")
       }
 
       jar("jps-model.jar") {

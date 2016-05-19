@@ -78,8 +78,8 @@ public class FoldingModelSupport {
     for (int i = 0; i < myCount; i++) {
       if (myCount > 1) {
         myEditors[i].getFoldingModel().addListener(new MyFoldingListener(i), disposable);
-        myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
       }
+      myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
       myEditors[i].getDocument().addDocumentListener(documentListener, disposable);
     }
   }
@@ -92,7 +92,7 @@ public class FoldingModelSupport {
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
   protected void install(@Nullable final Iterator<int[]> changedLines,
-                         @NotNull final UserDataHolder context,
+                         @Nullable final UserDataHolder context,
                          @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -113,9 +113,10 @@ public class FoldingModelSupport {
 
     @NotNull private final int[] myLineCount;
 
-    public FoldingBuilder(@NotNull UserDataHolder context,
+    public FoldingBuilder(@Nullable UserDataHolder context,
                           @NotNull Settings settings) {
-      myExpandSuggester = new ExpandSuggester(context.getUserData(CACHE_KEY), settings.defaultExpanded);
+      FoldingCache cache = context != null ? context.getUserData(CACHE_KEY) : null;
+      myExpandSuggester = new ExpandSuggester(cache, settings.defaultExpanded);
       mySettings = settings;
 
       myLineCount = new int[myCount];

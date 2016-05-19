@@ -2047,10 +2047,10 @@ class list(object):
         return []
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or sublist, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: T
+        :type y: numbers.Integral | slice
+        :rtype: T | list[T]
         """
         pass
 
@@ -2169,10 +2169,10 @@ class tuple(object):
         pass
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or subtuple, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: object | unknown
+        :type y: numbers.Integral | slice
+        :rtype: object | tuple | unknown
         """
         pass
 

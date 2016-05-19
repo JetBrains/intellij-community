@@ -42,6 +42,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
@@ -288,7 +289,12 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    setFocusCycleRoot(true);
+    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
+    // in the interest of backward compatibility, we only do so when a
+    // screen reader is active.
+    // See https://github.com/JetBrains/intellij-community/commit/aa93e5f4cf7f4fd25538164ba04a7e532dc18d2e
+    // why "true" was introduced, although it seems not necessary anymore.
+    setFocusCycleRoot(!ScreenReader.isActive());
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       @Override
       public Component getDefaultComponent(final Container aContainer) {
@@ -3519,10 +3525,15 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public Accessible getAccessibleChild(int i) {
-      if (i < 0 || i >= getTabCount()) {
-        return null;
+      Accessible accessibleChild = super.getAccessibleChild(i);
+      // Note: Unlike a JTabbedPane, JBTabsImpl has many more child types than just pages.
+      // So we wrap TabLabel instances with their corresponding AccessibleTabPage, while
+      // leaving other types of children untouched.
+      if (accessibleChild instanceof TabLabel) {
+        TabLabel label = (TabLabel)accessibleChild;
+        return myInfo2Page.get(label.getInfo());
       }
-      return JBTabsImpl.this.myInfo2Page.get(JBTabsImpl.this.getTabAt(i));
+      return accessibleChild;
     }
 
     @Override
@@ -3591,6 +3602,7 @@ public class JBTabsImpl extends JComponent
       myParent = JBTabsImpl.this;
       myTabInfo = tabInfo;
       myComponent = tabInfo.getComponent();
+      setAccessibleParent(myParent);
       initAccessibleContext();
     }
 

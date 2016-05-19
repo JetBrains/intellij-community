@@ -77,6 +77,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
             myReady = true;
           }
         }
+        VcsDirtyScopeVfsListener.install(myProject);
         markEverythingDirty();
       }
     });

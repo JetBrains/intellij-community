@@ -38,6 +38,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -683,7 +686,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   private static class MyValueRenderer implements TableCellRenderer {
-    private final JLabel myComboBox = new JLabel();
+    private JTable myTable;
+    private int myRow;
+    private int myColumn;
+    private final OptionsLabel myComboBox = new OptionsLabel();
     private final JCheckBox myCheckBox = new JBCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
@@ -696,6 +702,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                                                    boolean hasFocus,
                                                    int row,
                                                    int column) {
+      myTable = table;
+      myRow = row;
+      myColumn = column;
       boolean isEnabled = true;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
         getPathForRow(row).getLastPathComponent();
@@ -740,6 +749,52 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
       myEmptyLabel.setBackground(background);
       return myEmptyLabel;
+    }
+
+    protected class OptionsLabel extends JLabel {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleOptionsLabel();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleOptionsLabel extends AccessibleJLabel implements AccessibleAction {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.PUSH_BUTTON;
+        }
+
+        @Override
+        public AccessibleAction getAccessibleAction() {
+          return this;
+        }
+
+        @Override
+        public int getAccessibleActionCount() {
+          return 1;
+        }
+
+        @Override
+        public String getAccessibleActionDescription(int i) {
+          if (i == 0) {
+            return UIManager.getString("AbstractButton.clickText");
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public boolean doAccessibleAction(int i) {
+          if (i == 0) {
+            myTable.editCellAt(myRow, myColumn);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
     }
   }
 

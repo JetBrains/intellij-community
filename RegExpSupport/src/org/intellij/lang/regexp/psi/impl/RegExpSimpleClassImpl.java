@@ -26,28 +26,32 @@ public class RegExpSimpleClassImpl extends RegExpElementImpl implements RegExpSi
         super(node);
     }
 
+    @Override
     @NotNull
     public Kind getKind() {
-        final String s = getUnescapedText();
-        if (s.equals(".")) {
-            return Kind.ANY;
-        } else if (s.equals("\\d")) {
-            return Kind.DIGIT;
-        } else if (s.equals("\\D")) {
-            return Kind.NON_DIGIT;
-        } else if (s.equals("\\w")) {
-            return Kind.WORD;
-        } else if (s.equals("\\W")) {
-            return Kind.NON_WORD;
-        } else if (s.equals("\\s")) {
-            return Kind.SPACE;
-        } else if (s.equals("\\S")) {
-            return Kind.NON_SPACE;
+        switch (getUnescapedText()) {
+            case ".": return Kind.ANY;
+            case "\\d": return Kind.DIGIT;
+            case "\\D": return Kind.NON_DIGIT;
+            case "\\w": return Kind.WORD;
+            case "\\W": return Kind.NON_WORD;
+            case "\\s": return Kind.SPACE;
+            case "\\S": return Kind.NON_SPACE;
+            case "\\h": return Kind.HORIZONTAL_SPACE;
+            case "\\H": return Kind.NON_HORIZONTAL_SPACE;
+            case "\\v": return Kind.VERTICAL_SPACE;
+            case "\\V": return Kind.NON_VERTICAL_SPACE;
+            case "\\i": return Kind.XML_NAME_START;
+            case "\\I": return Kind.NON_XML_NAME_START;
+            case "\\c": return Kind.XML_NAME_PART;
+            case "\\C": return Kind.NON_XML_NAME_PART;
+            case "\\X": return Kind.UNICODE_GRAPHEME;
+            case "\\R": return Kind.UNICODE_LINEBREAK;
+            default: assert false; return null;
         }
-        assert false;
-        return null;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitSimpleClass(this);
     }

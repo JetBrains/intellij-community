@@ -98,4 +98,14 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
     doTest();
   }
+
+  // PY-9924
+  public void testTupleGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-9924
+  public void testListGetItemWithSlice() {
+    doTest();
+  }
 }

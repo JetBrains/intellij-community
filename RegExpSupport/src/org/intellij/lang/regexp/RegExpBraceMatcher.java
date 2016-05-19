@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ public class RegExpBraceMatcher implements PairedBraceMatcher {
       new BracePair(RegExpTT.RUBY_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_QUOTED_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.CLASS_BEGIN, RegExpTT.CLASS_END, false), new BracePair(RegExpTT.LBRACE, RegExpTT.RBRACE, false),
-      new BracePair(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, false),};
+      new BracePair(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, false),
+      new BracePair(RegExpTT.BRACKET_EXPRESSION_BEGIN, RegExpTT.BRACKET_EXPRESSION_END, false)};
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {

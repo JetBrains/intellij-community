@@ -36,6 +36,7 @@ import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -170,7 +171,11 @@ public class AutoPopupController implements Disposable {
       Runnable request = () -> {
         if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
+          try {
+            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
+          }
+          catch (IndexNotReadyException ignored) { //anything can happen on alarm
+          }
         }
       };
 

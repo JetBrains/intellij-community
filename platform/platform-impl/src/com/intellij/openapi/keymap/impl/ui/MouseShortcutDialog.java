@@ -17,19 +17,17 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 /**
  * @author Vladimir Kondratyev
@@ -67,6 +65,10 @@ final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
     if (shortcut == null) {
       myText.setForeground(MouseShortcutPanel.FOREGROUND);
       myText.setText(KeyMapBundle.message("dialog.mouse.pad.default.text"));
+    }
+    else if (shortcut instanceof PressureShortcut) {
+      myText.setForeground(UIUtil.getLabelForeground());
+      myText.setText(KeyMapBundle.message("dialog.mouse.pad.shortcut.text", shortcut.toString()));
     }
     else {
       myText.setForeground(UIUtil.getLabelForeground());
