@@ -163,7 +163,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         int branch = Integer.parseInt(untilBuild);
         String corrected = (branch - 1) + ".*";
         String message = "Plain numbers in 'until-build' attribute may be misleading. '" + untilBuild + "' means the same as '" + untilBuild
-                         + ".0', so the plugin won't be compatible with " + untilBuild + ".* builds. It's better to specify '" + corrected + " instead.";
+                         + ".0', so the plugin won't be compatible with " + untilBuild + ".* builds. It's better to specify '" + corrected + "' instead.";
         holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
       }
     }

@@ -333,7 +333,7 @@ public class MarkerType {
       return null;
     }
 
-    Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
+    Comparator<PsiClass> comparator = PsiClassListCellRenderer.INSTANCE.getComparator();
     Arrays.sort(subclasses, comparator);
 
     String start = aClass.isInterface()
