@@ -23,6 +23,7 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MergeCommitsHighlighter$Factory"/>
