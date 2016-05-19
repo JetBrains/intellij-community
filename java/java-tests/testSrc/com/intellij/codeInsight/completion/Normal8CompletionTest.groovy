@@ -252,4 +252,5 @@ class Test88 {
   public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
 
   public void testNoCollectorsInComment() { doAntiTest() }
+  public void testNoContinueInsideLambdaInLoop() { doAntiTest(); }
 }
