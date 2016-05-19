@@ -127,7 +127,9 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     } else if (oldEndLine > newEndLine) {
       List<LineLayout> layouts = myLines.subList(newEndLine + 1, oldEndLine + 1);
       for (LineLayout layout : layouts) {
-        removeChunksFromCache(layout);
+        if (layout != null) {
+          removeChunksFromCache(layout);
+        }
       }
       layouts.clear();
     }

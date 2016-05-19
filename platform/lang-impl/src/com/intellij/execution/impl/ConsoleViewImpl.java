@@ -523,7 +523,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       public void mouseDragged(MouseEvent e) {
         updateStickToEndState(false);
       }
-      
+
       @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
         updateStickToEndState(false);
@@ -554,7 +554,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myEditor == null) return;
 
     JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() : 
+    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
                             myEditor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
     boolean vscrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
     boolean stickingToEnd = isStickingToEnd();
