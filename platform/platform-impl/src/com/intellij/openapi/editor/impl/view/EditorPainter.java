@@ -842,6 +842,7 @@ class EditorPainter implements TextDrawingCallback {
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
                                                                                                   false)) {
+            if (fragment.getCurrentInlays() != null) continue;
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
             if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||
@@ -864,12 +865,14 @@ class EditorPainter implements TextDrawingCallback {
     EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(false);
     if (locations == null) return;
     int lineHeight = myView.getLineHeight();
+    boolean lineCaret = myEditor.isInsertMode() != myEditor.getSettings().isBlockCursor();
     for (EditorImpl.CaretRectangle location : locations) {
       Caret caret = location.myCaret;
       int x = location.myPoint.x;
       int y = location.myPoint.y;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      if (caret != null && !myEditor.getInlayModel().getInlineElementsInRange(caret.getOffset(), caret.getOffset()).isEmpty()) {
+      if (lineCaret && caret != null &&
+          !myEditor.getInlayModel().getInlineElementsInRange(caret.getOffset(), caret.getOffset()).isEmpty()) {
         int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
         int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
         myEditor.getContentComponent().repaintEditorComponent(x1, location.myPoint.y, x2 - x1 + width, lineHeight);
