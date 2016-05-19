@@ -73,7 +73,7 @@ public class AppUIUtil {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix) {//MacOS is Unix too
       String bigIconUrl = appInfo.getBigIconUrl();
       if (bigIconUrl != null) {
         images.add(com.intellij.util.ImageLoader.loadFromResource(bigIconUrl));
@@ -82,7 +82,12 @@ public class AppUIUtil {
 
     images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getIconUrl()));
     images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
-
+    for (int i = 0; i < images.size(); i++) {
+      Image image = images.get(i);
+      if (image instanceof JBHiDPIScaledImage) {
+        images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+      }
+    }
     return images;
   }
 
