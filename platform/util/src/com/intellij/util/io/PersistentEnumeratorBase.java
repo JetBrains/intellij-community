@@ -59,7 +59,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
   protected final File myFile;
   private boolean myCorrupted = false;
-  private final int myInitialSize;
   private final Version myVersion;
   private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
   private volatile boolean myDirtyStatusUpdateInProgress;
@@ -161,7 +160,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
-    myInitialSize = initialSize;
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
     myDoCaching = doCaching;
