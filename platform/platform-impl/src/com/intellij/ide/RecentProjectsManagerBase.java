@@ -529,7 +529,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @NotNull
-  private String getProjectName(@NotNull String path) {
+  public String getProjectName(@NotNull String path) {
     String cached = myNameCache.get(path);
     if (cached != null) {
       return cached;
@@ -545,7 +545,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         myNameCache.put(p, readProjectName(p));
       }
     }, 50);
-    return FileUtilRt.getNameWithoutExtension(new File(path).getName());
+    String name = new File(path).getName();
+    return path.endsWith(".ipr") ? FileUtilRt.getNameWithoutExtension(name) : name;
   }
 
   @Override
