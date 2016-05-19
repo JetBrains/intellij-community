@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -376,7 +373,7 @@ public class TreeTable extends JBTable {
     return editResult;
   }
 
-  private boolean isTreeColumn(int column) {
+  protected boolean isTreeColumn(int column) {
     return TreeTableModel.class.isAssignableFrom(getColumnClass(column));
   }
 
