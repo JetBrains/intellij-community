@@ -18,6 +18,8 @@
     <fileBasedIndex implementation="org.intellij.images.index.ImageInfoIndex"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
+
+    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundUsageCollector"/>
   </extensions>
 
   <actions>

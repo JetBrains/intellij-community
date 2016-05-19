@@ -85,8 +85,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     setLayout(null);
 
     if (myRootPane instanceof IdeRootPane) {
-      IdeBackgroundUtil.initFramePainters(getNamedPainters("ide"));
-      IdeBackgroundUtil.initEditorPainters(getNamedPainters("editor"));
+      IdeBackgroundUtil.initFramePainters(this);
+      IdeBackgroundUtil.initEditorPainters(this);
     }
   }
 

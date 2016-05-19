@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -44,6 +43,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
@@ -189,8 +190,7 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       boolean ensureImageLoaded() {
-        String value = StringUtil.notNullize(PropertiesComponent.getInstance().getValue(propertyName),
-                                             System.getProperty(propertyName, ""));
+        String value = getBackgroundSpec(propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
           loadImageAsync(value);
@@ -210,7 +210,12 @@ final class PaintersHelper implements Painter.Listener {
         place = newPlace;
         boolean newOk = newImage != null;
         if (prevOk || newOk) {
-          repaintAllWindows();
+          if (modalityState.dominates(ModalityState.NON_MODAL)) {
+            UIUtil.getActiveWindow().repaint();
+          }
+          else {
+            IdeBackgroundUtil.repaintAllWindows();
+          }
         }
       }
 
@@ -229,17 +234,11 @@ final class PaintersHelper implements Painter.Listener {
                     (FileUtil.isAbsolutePlatformIndependent(filePath)
                      ? new File(filePath)
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              final Image m = ImageLoader.loadFromUrl(url);
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  resetImage(propertyValue, m, newAlpha, newFillType, newPlace);
-                }
-              }, modalityState);
-            }
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            final Image m = ImageLoader.loadFromUrl(url);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              resetImage(propertyValue, m, newAlpha, newFillType, newPlace);
+            }, modalityState);
           });
         }
         catch (Exception e) {
@@ -247,12 +246,6 @@ final class PaintersHelper implements Painter.Listener {
         }
       }
     };
-  }
-
-  private static void repaintAllWindows() {
-    for (Window window : Window.getWindows()) {
-      window.repaint();
-    }
   }
 
   public static AbstractPainter newImagePainter(@NotNull final Image image, final Fill fillType, final Place place, final float alpha, final Insets insets) {

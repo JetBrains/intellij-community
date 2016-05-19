@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -28,6 +29,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.tabs.JBTabs;
@@ -51,7 +53,9 @@ import java.net.URL;
  */
 public class IdeBackgroundUtil {
 
-  public static final String BG_PROPERTY_PREFIX = "idea.background.";
+  public static final String EDITOR_PROP = "idea.background.editor";
+  public static final String FRAME_PROP = "idea.background.frame";
+  public static final String TARGET_PROP = "idea.background.target";
 
   static {
     JBSwingUtilities.addGlobalCGTransform(new MyTransform());
@@ -60,19 +64,19 @@ public class IdeBackgroundUtil {
   @NotNull
   public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull JComponent component) {
     if (suppressBackground(component)) return (Graphics2D)g;
-    return withNamedPainters(g, "editor", component);
+    return withNamedPainters(g, EDITOR_PROP, component);
   }
 
   @NotNull
   public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull JComponent component) {
     if (suppressBackground(component)) return (Graphics2D)g;
-    return withNamedPainters(g, "ide", component);
+    return withNamedPainters(g, FRAME_PROP, component);
   }
 
   private static boolean suppressBackground(JComponent component) {
     String type = getComponentType(component);
     if (type == null) return false;
-    String spec = System.getProperty(BG_PROPERTY_PREFIX + "target", "*");
+    String spec = System.getProperty(TARGET_PROP, "*");
     boolean allInclusive = spec.startsWith("*");
     return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
   }
@@ -107,12 +111,13 @@ public class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
-  public static void initEditorPainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "editor", painters);
+  public static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
+    PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
-  public static void initFramePainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "ide", painters);
+  public static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
+    PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
+    PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     String path = /*UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : */null;
@@ -151,6 +156,17 @@ public class IdeBackgroundUtil {
       if (!UIUtil.isAncestor(root, t)) return v;
       return MyGraphics.wrap(v, paintersHelper, t);
     }));
+  }
+
+  @NotNull
+  public static String getBackgroundSpec(@NotNull String propertyName) {
+    return StringUtil.notNullize(PropertiesComponent.getInstance().getValue(propertyName), System.getProperty(propertyName, ""));
+  }
+
+  public static void repaintAllWindows() {
+    for (Window window : Window.getWindows()) {
+      window.repaint();
+    }
   }
 
   private static class MyGraphics extends Graphics2DDelegate {
