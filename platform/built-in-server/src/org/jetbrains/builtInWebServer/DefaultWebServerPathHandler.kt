@@ -135,11 +135,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpRequest): Boolean {
   if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
     val file = pathInfo.ioFile?.toPath() ?: Paths.get(pathInfo.file!!.path)
-    if (file.isDirectory()) {
+    if (file.isDirectory() || !hasAccess(file)) {
       Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
-      return false
-    }
-    else if (!hasAccess(file)) {
       return false
     }
   }
