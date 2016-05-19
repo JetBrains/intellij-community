@@ -56,6 +56,7 @@ public class JavaBuilderUtil {
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
   private static final Key<Set<File>> FILES_TO_COMPILE_KEY = Key.create("_files_to_compile_");
+  private static final Key<Set<File>> COMPILED_WITH_ERRORS_KEY = Key.create("_compiled_with_errors_");
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
@@ -68,6 +69,10 @@ public class JavaBuilderUtil {
   
   public static void registerFilesToCompile(CompileContext context, Collection<File> files) {
     getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
+  }
+
+  public static void registerFilesWithErrors(CompileContext context, Collection<File> files) {
+    getFilesContainer(context, COMPILED_WITH_ERRORS_KEY).addAll(files);
   }
 
   public static void registerSuccessfullyCompiled(CompileContext context, File file) {
@@ -174,9 +179,12 @@ public class JavaBuilderUtil {
           final Set<File> affectedBeforeDif = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
           affectedBeforeDif.addAll(allAffectedFiles);
 
+          final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
+          COMPILED_WITH_ERRORS_KEY.set(context, null);
+
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
-            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
+            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
             CONSTANT_SEARCH_SERVICE.get(context)
           );
 

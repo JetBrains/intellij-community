@@ -246,6 +246,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     // begin compilation round
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, JavaBuilderUtil.getDependenciesRegistrar(context), chunk.getPresentableShortName());
+    Collection<File> filesWithErrors = null;
     try {
       if (hasSourcesToCompile) {
         final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
@@ -290,7 +291,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
           finally {
             // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
-            for (File file : diagnosticSink.getFilesWithErrors()) {
+            filesWithErrors = diagnosticSink.getFilesWithErrors();
+            for (File file : filesWithErrors) {
               if (!file.exists()) {
                 FSOperations.markDeleted(context, file);
               }
@@ -315,6 +317,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     finally {
       JavaBuilderUtil.registerFilesToCompile(context, files);
+      if (filesWithErrors != null) {
+        JavaBuilderUtil.registerFilesWithErrors(context, filesWithErrors);
+      }
       JavaBuilderUtil.registerSuccessfullyCompiled(context, outputSink.getSuccessfullyCompiled());
     }
 
@@ -949,7 +954,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private final CompileContext myContext;
     private volatile int myErrorCount;
     private volatile int myWarningCount;
-    private final Set<File> myFilesWithErrors = new HashSet<File>();
+    private final Set<File> myFilesWithErrors = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     private DiagnosticSink(CompileContext context) {
       myContext = context;
@@ -1036,7 +1041,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
       final String srcPath;
       if (sourceFile != null) {
-        myFilesWithErrors.add(sourceFile);
+        if (kind == BuildMessage.Kind.ERROR) {
+          myFilesWithErrors.add(sourceFile);
+        }
         srcPath = FileUtil.toSystemIndependentName(sourceFile.getPath());
       }
       else {
@@ -1065,6 +1072,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return myWarningCount;
     }
 
+    @NotNull
     public Collection<File> getFilesWithErrors() {
       return myFilesWithErrors;
     }
