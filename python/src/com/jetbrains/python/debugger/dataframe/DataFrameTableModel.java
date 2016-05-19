@@ -21,6 +21,8 @@ import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.TableChunkDatasource;
 
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import java.util.List;
 import java.util.Map;
 
@@ -28,117 +30,119 @@ import java.util.Map;
  * Created by Yuli Fiterman on 4/26/2016.
  */
 public class DataFrameTableModel extends AsyncArrayTableModel {
-  private final Map<Integer, String> myRowLabels = Maps.newConcurrentMap();
   private final Map<Integer, ArrayChunk.ColHeader> myColHeaders = Maps.newConcurrentMap();
+  private final RowHeaderModel myRowHeaderModel;
+
   public DataFrameTableModel(int rows, int columns, TableChunkDatasource provider) {
+
     super(rows, columns, provider);
+    myRowHeaderModel = new RowHeaderModel();
   }
   /* we use labels for the first column so we need to offset columns by one everywhere */
 
   @Override
-  public int getColumnCount() {
-    return super.getColumnCount() +1;
-  }
-
-  @Override
   public Object getValueAt(int row, int col) {
-    if (col == 0) {
-      return getRowHeader(row);
+
+    Object value = super.getValueAt(row, col);
+    if (value == AsyncArrayTableModel.EMPTY_CELL_VALUE) {
+      return value;
     }
-    else
-    {
-      int frameCol = col - 1;
-      Object value = super.getValueAt(row, frameCol);
-      if ( value == AsyncArrayTableModel.EMPTY_CELL_VALUE)
-      {
-         return value;
-      }
-      TableValueDescriptor descriptor = createValueWithDescriptor(frameCol, value);
-      return descriptor != null ? descriptor : AsyncArrayTableModel.EMPTY_CELL_VALUE;
-    }
+    TableValueDescriptor descriptor = createValueWithDescriptor(col, value);
+    return descriptor != null ? descriptor : AsyncArrayTableModel.EMPTY_CELL_VALUE;
   }
 
   private TableValueDescriptor createValueWithDescriptor(int frameCol, Object value) {
     ArrayChunk.ColHeader header = myColHeaders.get(frameCol);
-    if (header == null)
-    {
-       return null;
+    if (header == null) {
+      return null;
     }
 
     return new TableValueDescriptor(value.toString(), header);
-
   }
 
-  private String getRowHeader(int row)
-  {
-    String s = myRowLabels.get(row);
-    return s == null ? String.valueOf(row) : s;
-
-  }
 
   @Override
   public Class<?> getColumnClass(int columnIndex) {
-    return columnIndex == 0 ? String.class : TableValueDescriptor.class;
+    return TableValueDescriptor.class;
   }
 
   @Override
   public String getColumnName(int col) {
-    if (col == 0)
-    {
-       return "   ";
+
+
+    ArrayChunk.ColHeader header = myColHeaders.get(col);
+    if (header != null && header.getLabel() != null) {
+      return header.getLabel();
     }
-    else
-    {
-
-      int frameColumn = col - 1;
-      ArrayChunk.ColHeader header = myColHeaders.get(frameColumn);
-      if (header != null && header.getLabel() != null)
-      {
-         return header.getLabel();
-      }
-      else
-      {
-        return super.getColumnName(frameColumn);
-
-      }
+    else {
+      return super.getColumnName(col);
     }
   }
 
 
   @Override
   protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
-    List<String> chunkRowLabels = chunk.getRowLabels();
-    if (chunkRowLabels != null)
-    {
-      for (int i = 0; i < chunkRowLabels.size(); i++) {
-        String label = chunkRowLabels.get(i);
-        String oldValue = myRowLabels.put(i + rowOffset, label);
-        if (oldValue == null)
-        {
-          final int updatedRow = i + rowOffset;
-          UIUtil.invokeLaterIfNeeded(()->
-                                       super.fireTableCellUpdated(updatedRow, 0));
-        }
-      }
-    }
+
+    myRowHeaderModel.handleChunkAdded(rowOffset, chunk);
     boolean hasNewCols = false;
     List<ArrayChunk.ColHeader> chunkColHeaders = chunk.getColHeaders();
-    if (chunkColHeaders != null)
-    {
+    if (chunkColHeaders != null) {
       for (int i = 0; i < chunkColHeaders.size(); i++) {
         ArrayChunk.ColHeader header = chunkColHeaders.get(i);
         hasNewCols |= (myColHeaders.put(i + colOffset, header) == null);
-
       }
     }
-    if (hasNewCols)
-    {
-       UIUtil.invokeLaterIfNeeded(super::fireTableStructureChanged);
+    if (hasNewCols) {
+      UIUtil.invokeLaterIfNeeded(super::fireTableStructureChanged);
     }
   }
 
   @Override
-  public void fireTableCellUpdated(int row, int column) {
-    super.fireTableCellUpdated(row, column + 1);
+  public TableModel getRowHeaderModel() {
+    return myRowHeaderModel;
+  }
+
+  private class RowHeaderModel extends AbstractTableModel {
+
+    private final Map<Integer, String> myRowLabels = Maps.newConcurrentMap();
+
+    @Override
+    public int getRowCount() {
+      return DataFrameTableModel.this.getRowCount();
+    }
+
+    @Override
+    public int getColumnCount() {
+      return 1;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+      if (column == 0) {
+        return "   ";
+      }
+      throw new IllegalArgumentException("Table only has one column");
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      String s = myRowLabels.get(rowIndex);
+      return s == null ? String.valueOf(rowIndex) : s;
+    }
+
+    public void handleChunkAdded(Integer rowOffset, ArrayChunk chunk) {
+      List<String> chunkRowLabels = chunk.getRowLabels();
+      if (chunkRowLabels != null) {
+        for (int i = 0; i < chunkRowLabels.size(); i++) {
+          String label = chunkRowLabels.get(i);
+          String oldValue = myRowLabels.put(i + rowOffset, label);
+          if (oldValue == null) {
+            final int updatedRow = i + rowOffset;
+            UIUtil.invokeLaterIfNeeded(() ->
+                                         super.fireTableCellUpdated(updatedRow, 0));
+          }
+        }
+      }
+    }
   }
 }

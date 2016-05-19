@@ -19,17 +19,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.TableChunkDatasource;
-import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
-import com.jetbrains.python.debugger.containerview.NumericContainerRendererForm;
-import com.jetbrains.python.debugger.containerview.ViewNumericContainerDialog;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 /**
@@ -49,17 +48,17 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
   protected AsyncArrayTableModel myPagingModel;
 
   public NumericContainerViewTable(
-    @NotNull Project project, @NotNull ViewNumericContainerDialog dialog,@NotNull PyDebugValue value) {
+    @NotNull Project project, @NotNull ViewNumericContainerDialog dialog, @NotNull PyDebugValue value) {
     myProject = project;
     myDialog = dialog;
-    myComponent = createForm(project,  new KeyAdapter() {
+    myComponent = createForm(project, new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doReslice();
         }
       }
-    },  new KeyAdapter() {
+    }, new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -71,10 +70,74 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
     myTable = myComponent.getTable();
   }
 
-  @NotNull
-  protected abstract NumericContainerRendererForm createForm(@NotNull Project project, KeyListener resliceCallback, KeyAdapter formatCallback);
 
-  protected abstract String getTitlePresentation(String slice) ;
+  private void initUi(@NotNull final ArrayChunk chunk, final boolean inPlace) {
+    myPagingModel = createTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
+                                     Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW));
+    myPagingModel.addToCache(chunk);
+    myDtypeKind = chunk.getType();
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTable.setModel(myPagingModel);
+      myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
+      myComponent.getFormatTextField().setText(chunk.getFormat());
+      myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
+      myTableCellRenderer = createCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, chunk);
+      if (!isNumeric()) {
+        disableColor();
+      }
+      else {
+        myComponent.getColoredCheckbox().setEnabled(true);
+      }
+
+      if (!inPlace) {
+        myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+      }
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+      if (myTable.getColumnCount() > 0) {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+      }
+    });
+  }
+
+  private void disableColor() {
+    myTableCellRenderer.setColored(false);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myComponent.getColoredCheckbox().setSelected(false);
+      myComponent.getColoredCheckbox().setEnabled(false);
+      if (myTable.getColumnCount() > 0) {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+      }
+    });
+  }
+
+  protected abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount);
+
+  protected abstract ColoredCellRenderer createCellRenderer(double minValue, double maxValue, ArrayChunk chunk);
+
+  private void initTableModel(final boolean inPlace) {
+    myPagingModel = createTableModel(myPagingModel.getRowCount(), myPagingModel.getColumnCount());
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTable.setModel(myPagingModel);
+      if (!inPlace) {
+        myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+      }
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+      if (myTable.getColumnCount() > 0) {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
+      }
+    });
+  }
+
+  @NotNull
+  private static NumericContainerRendererForm createForm(@NotNull Project project, KeyListener resliceCallback, KeyAdapter formatCallback) {
+    return new NumericContainerRendererForm(project, resliceCallback, formatCallback);
+  }
+
+  protected abstract String getTitlePresentation(String slice);
 
 
   public final NumericContainerRendererForm getComponent() {
@@ -97,9 +160,8 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
             renderer.setColored(false);
           }
         }
-        if (myTableCellRenderer != null)
-        {
-           myTableCellRenderer.setColored(myComponent.getColoredCheckbox().isSelected());
+        if (myTableCellRenderer != null) {
+          myTableCellRenderer.setColored(myComponent.getColoredCheckbox().isSelected());
         }
         myComponent.getScrollPane().repaint();
       }
@@ -132,12 +194,13 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
 
   public void init(final String slice, final boolean inPlace) {
     initComponent();
+    myComponent.getSliceTextField().setText(slice);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final PyDebugValue value = getDebugValue();
       PyDebugValue parent = value.getParent();
       final PyDebugValue slicedValue =
-        new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isErrorOnEval(),
+        new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isReturnedVal(), value.isErrorOnEval(),
                          parent, value.getFrameAccessor());
 
       final String format = getFormat().isEmpty() ? "%" : getFormat();
@@ -152,7 +215,6 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
     });
   }
 
-  protected abstract void initUi(@NotNull ArrayChunk chunk, boolean inPlace);
 
   public String getSliceText() {
     return myComponent.getSliceTextField().getText();
@@ -162,7 +224,7 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
   public ArrayChunk getChunk(int rowOffset, int colOffset, int rows, int cols) throws PyDebuggerException {
     final PyDebugValue slicedValue =
       new PyDebugValue(getSliceText(), myValue.getType(), myValue.getTypeQualifier(), myValue.getValue(), myValue.isContainer(),
-                       myValue.isErrorOnEval(),
+                       myValue.isErrorOnEval(), myValue.isReturnedVal(),
                        myValue.getParent(), myValue.getFrameAccessor());
 
     return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, getFormat());
@@ -170,7 +232,6 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
 
   public abstract boolean isNumeric();
 
-  protected abstract void initTableModel(boolean inPlace);
 
   @Override
   public final String correctStringValue(@NotNull Object value) {
@@ -194,7 +255,7 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
     myDialog.setError(message);
   }
 
-  protected  final void doReslice() {
+  protected final void doReslice() {
     clearErrorMessage();
     init(getSliceText(), false);
   }

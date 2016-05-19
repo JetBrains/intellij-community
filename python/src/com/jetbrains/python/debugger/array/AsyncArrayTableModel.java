@@ -25,8 +25,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.ArrayChunkBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import java.util.concurrent.*;
 
 /**
@@ -48,16 +50,13 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
-      public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
+      public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
 
-        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
-          @Override
-          public ArrayChunk call() throws Exception {
-            ArrayChunk chunk = myProvider.getChunk(key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                                                   Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second));
-            handleChunkAdded(key.first, key.second, chunk);
-            return chunk;
-          }
+        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> {
+          ArrayChunk chunk = myProvider.getChunk(key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                                                 Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second));
+          handleChunkAdded(key.first, key.second, chunk);
+          return chunk;
         });
 
         myExecutorService.execute(task);
@@ -74,14 +73,6 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   @Override
   public boolean isCellEditable(int row, int col) {
-    //Pair<Integer, Integer> key = itemToChunkKey(row, col);
-    //try {
-    //  return myChunkCache.get(key).isDone();
-    //}
-    //catch (ExecutionException e) {
-    //  return false;
-    //}
-    //TODO: make it editable
     return false;
   }
 
@@ -161,13 +152,11 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, coffset * CHUNK_COL_SIZE);
         final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
-          for (int c = 0; c < CHUNK_COL_SIZE; c++) {
-            chunkData[r][c] = data[roffset * CHUNK_ROW_SIZE + r][coffset * CHUNK_COL_SIZE + c];
-          }
+          System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * 30, chunkData[r], 0, CHUNK_COL_SIZE);
         }
         myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
           @Override
-          public void addListener(Runnable listener, Executor executor) {
+          public void addListener(@NotNull Runnable listener, @NotNull Executor executor) {
 
           }
 
@@ -205,5 +194,36 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
 
+  }
+
+  public TableModel getRowHeaderModel() {
+    return new RowNumberHeaderModel();
+  }
+
+
+  private class RowNumberHeaderModel extends AbstractTableModel {
+
+    @Override
+    public int getRowCount() {
+      return AsyncArrayTableModel.this.getRowCount();
+    }
+
+    @Override
+    public int getColumnCount() {
+      return 1;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+      if (column == 0) {
+        return "   ";
+      }
+      throw new IllegalArgumentException("Table only has one column");
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      return Integer.toString(rowIndex);
+    }
   }
 }

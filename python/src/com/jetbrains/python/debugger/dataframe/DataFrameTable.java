@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
+import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.NumericContainerViewTable;
 import com.jetbrains.python.debugger.array.TableChunkDatasource;
 import com.jetbrains.python.debugger.containerview.NumericContainerRendererForm;
@@ -36,66 +37,28 @@ import java.awt.event.*;
 public class DataFrameTable extends NumericContainerViewTable implements TableChunkDatasource {
 
   private Project myProject;
-  private DataFrameTableCellRenderer myDataFrameCellRenderer;
 
   public DataFrameTable(@NotNull Project project,
                         @NotNull ViewNumericContainerDialog dialog, @NotNull PyDebugValue value) {
     super(project, dialog, value);
   }
 
-  @NotNull
   @Override
-  protected NumericContainerRendererForm createForm(@NotNull Project project, KeyListener resliceCallback, KeyAdapter formatCallback) {
-    return new DataFrameTableForm(project,resliceCallback,formatCallback);
-
+  protected AsyncArrayTableModel createTableModel(int rowCount, int columnCount) {
+    return new DataFrameTableModel(rowCount, columnCount, this);
   }
 
-
-  protected final void initUi(@NotNull final ArrayChunk chunk, final boolean inPlace) {
-    myPagingModel = new DataFrameTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
-                                            Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this);
-    myPagingModel.addToCache(chunk);
-
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myTable.setModel(myPagingModel);
-      myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
-      myComponent.getFormatTextField().setText(chunk.getFormat());
-      myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
-      myDataFrameCellRenderer = new DataFrameTableCellRenderer();
-      myTableCellRenderer = myDataFrameCellRenderer;
-      myComponent.getColoredCheckbox().setEnabled(true);
-
-
-      if (!inPlace) {
-        myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-      }
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
-      myTable.setDefaultRenderer(TableValueDescriptor.class, myDataFrameCellRenderer);
-    });
+  @Override
+  protected ColoredCellRenderer createCellRenderer(double minValue, double maxValue, ArrayChunk chunk) {
+    return new DataFrameTableCellRenderer();
   }
 
   @Override
   public boolean isNumeric() {
-    return false;
+    return true;
   }
 
   protected final String getTitlePresentation(String slice) {
     return "DataFrame View: " + slice;
-  }
-
-
-  protected final void initTableModel(final boolean inPlace) {
-    myPagingModel = new DataFrameTableModel(myPagingModel.getRowCount(), myPagingModel.getColumnCount() - 1, this);
-
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myTable.setModel(myPagingModel);
-      if (!inPlace) {
-        myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-      }
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
-      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
-      myTable.setDefaultRenderer(TableValueDescriptor.class, myDataFrameCellRenderer);
-    });
   }
 }

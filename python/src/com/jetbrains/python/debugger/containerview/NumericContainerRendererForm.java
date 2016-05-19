@@ -21,9 +21,13 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 import java.awt.event.KeyListener;
 
 /**
@@ -35,7 +39,7 @@ public class NumericContainerRendererForm {
   protected final KeyListener myResliceCallback;
   protected JBScrollPane myScrollPane;
   protected EditorTextField mySliceTextField;
-  protected JBTable myTable;
+  protected JBTableWithRowHeaders myTable;
   protected EditorTextField myFormatTextField;
   protected JCheckBox myColoredCheckbox;
   protected JPanel myFormatPanel;
@@ -91,5 +95,8 @@ public class NumericContainerRendererForm {
         return editor;
       }
     };
+
+    myTable = new JBTableWithRowHeaders();
+    myScrollPane = myTable.getScrollPane();
   }
 }
