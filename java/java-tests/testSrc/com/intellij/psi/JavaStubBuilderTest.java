@@ -361,6 +361,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANNOTATION:PsiAnnotationStub[@SuppressWarnings(\"UnusedDeclaration\")]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "          NAME_VALUE_PAIR:PsiNameValuePairStubImpl\n" +
+           "            LITERAL_EXPRESSION:PsiLiteralStub\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
