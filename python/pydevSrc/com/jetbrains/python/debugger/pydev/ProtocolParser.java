@@ -34,13 +34,14 @@ public class ProtocolParser {
       reader.moveDown();
       if ("arg".equals(reader.getNodeName())) {
         signature.addArgument(readString(reader, "name", ""), readString(reader, "type", ""));
-      } else 
-      if ("return".equals(reader.getNodeName())) {
+      }
+      else if ("return".equals(reader.getNodeName())) {
         signature.addReturnType(readString(reader, "type", ""));
-      } else {
+      }
+      else {
         throw new PyDebuggerException("Expected <arg> or <return>, found " + reader.getNodeName());
       }
-      
+
       reader.moveUp();
     }
 
@@ -55,9 +56,11 @@ public class ProtocolParser {
     boolean isAsyncio;
     if (eventName.equals("threading_event")) {
       isAsyncio = false;
-    } else if (eventName.equals("asyncio_event")) {
+    }
+    else if (eventName.equals("asyncio_event")) {
       isAsyncio = true;
-    } else {
+    }
+    else {
       throw new PyDebuggerException("Expected <threading_event> or <asyncio_event>, found " + reader.getNodeName());
     }
 
@@ -74,7 +77,8 @@ public class ProtocolParser {
       String parentThread = readString(reader, "parent", "");
       if (!parentThread.isEmpty()) {
         threadingEvent = new PyThreadEvent(time, thread_id, name, parentThread, isAsyncio);
-      } else {
+      }
+      else {
         threadingEvent = new PyThreadEvent(time, thread_id, name, isAsyncio);
       }
     }
@@ -284,29 +288,25 @@ public class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, false, false, frameAccessor));
       reader.moveUp();
     }
-    if ("headerdata".equals(reader.peekNextChild()))
-    {
+    if ("headerdata".equals(reader.peekNextChild())) {
       parseArrayHeaderData(reader, result);
     }
 
     Object[][] data = parseArrayValues(reader, frameAccessor);
     result.setData(data);
     return result.createArrayChunk();
-
   }
 
   private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {
     List<String> rowHeaders = Lists.newArrayList();
     List<ArrayChunk.ColHeader> colHeaders = Lists.newArrayList();
     reader.moveDown();
-    while (reader.hasMoreChildren())
-    {
+    while (reader.hasMoreChildren()) {
       reader.moveDown();
-      if ("colheader".equals(reader.getNodeName()))
-      {
+      if ("colheader".equals(reader.getNodeName())) {
         colHeaders.add(new ArrayChunk.ColHeader(
           readString(reader, "label", null),
           readString(reader, "type", null),
@@ -314,12 +314,10 @@ public class ProtocolParser {
           readString(reader, "max", null),
           readString(reader, "min", null)));
       }
-      else if("rowheader".equals(reader.getNodeName()))
-      {
-        rowHeaders.add(readString(reader,"label", null));
+      else if ("rowheader".equals(reader.getNodeName())) {
+        rowHeaders.add(readString(reader, "label", null));
       }
-      else
-      {
+      else {
         throw new PyDebuggerException("Invalid node name" + reader.getNodeName());
       }
       reader.moveUp();
