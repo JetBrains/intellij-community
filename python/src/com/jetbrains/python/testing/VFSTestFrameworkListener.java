@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,11 +29,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -117,14 +116,11 @@ public class VFSTestFrameworkListener {
       LOG.info("Searching test runner in empty sdk");
       return null;
     }
-    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-    try {
-      return packageManager.findPackage(testPackageName, false) != null;
+    final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+    if (packages == null) {
+      return null;
     }
-    catch (ExecutionException e) {
-      LOG.info("Can't load package list " + e.getMessage());
-    }
-    return null;
+    return PyPackageUtil.findPackage(packages, testPackageName) != null;
   }
 
   public static VFSTestFrameworkListener getInstance() {

@@ -41,7 +41,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +77,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
-  private final Object myCacheLock = new Object();
-  private List<PyPackage> myPackagesCache = null;
-  private ExecutionException myExceptionCache = null;
+  @Nullable private volatile List<PyPackage> myPackagesCache = null;
+  private volatile boolean myUpdatingCache = false;
 
   @NotNull final private Sdk mySdk;
 
@@ -95,7 +93,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
         VfsUtil.markDirtyAndRefresh(true, true, true, files);
       });
       PythonSdkType.getInstance().setupSdkPaths(sdk);
-      clearCaches();
     });
   }
 
@@ -103,24 +100,25 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public void installManagement() throws ExecutionException {
     final Sdk sdk = getSdk();
     final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON26);
-    if (!hasSetuptools(false)) {
-      final String name = SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
+    if (!refreshAndCheckForSetuptools()) {
+      final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
       installManagement(name);
     }
-    if (!hasPackage(PIP, false)) {
-      final String name = PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
+    if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
+      final String name = PyPackageUtil.PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
       installManagement(name);
     }
   }
 
   @Override
-  public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-    return hasSetuptools(cachedOnly) && hasPackage(PIP, cachedOnly);
+  public boolean hasManagement() throws ExecutionException {
+    return refreshAndCheckForSetuptools() && PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) != null;
   }
 
-  private boolean hasSetuptools(boolean cachedOnly) throws ExecutionException {
+  private boolean refreshAndCheckForSetuptools() throws ExecutionException {
     try {
-      return hasPackage(SETUPTOOLS, cachedOnly) || hasPackage(DISTRIBUTE, cachedOnly);
+      final List<PyPackage> packages = refreshAndGetPackages(false);
+      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null || PyPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
     }
     catch (PyExecutionException e) {
       if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
@@ -137,7 +135,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, true, dirName + name);
     }
     finally {
-      clearCaches();
       FileUtil.delete(new File(dirName));
     }
   }
@@ -152,10 +149,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       dirName += File.separator;
     }
     return dirName;
-  }
-
-  private boolean hasPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException {
-    return findPackage(name, cachedOnly) != null;
   }
 
   PyPackageManagerImpl(@NotNull final Sdk sdk) {
@@ -224,7 +217,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     finally {
       LOG.debug("Packages cache is about to be cleared because these requirements were installed: " + requirements);
-      clearCaches();
+      refreshPackagesSynchronously();
       FileUtil.delete(buildDir);
     }
   }
@@ -250,50 +243,20 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     finally {
       LOG.debug("Packages cache is about to be cleared because these packages were uninstalled: " + packages);
-      clearCaches();
+      refreshPackagesSynchronously();
     }
   }
+
 
   @Nullable
-  public List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException {
-    synchronized (myCacheLock) {
-      if (myPackagesCache != null) {
-        return new ArrayList<PyPackage>(myPackagesCache);
-      }
-      if (myExceptionCache != null) {
-        throw myExceptionCache;
-      }
-      if (cachedOnly) {
-        return null;
-      }
-    }
-    try {
-      final List<PyPackage> packages = getPackages();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
-      }
-      synchronized (myCacheLock) {
-        myPackagesCache = packages;
-        return new ArrayList<PyPackage>(myPackagesCache);
-      }
-    }
-    catch (ExecutionException e) {
-      synchronized (myCacheLock) {
-        myExceptionCache = e;
-      }
-      throw e;
-    }
+  @Override
+  public List<PyPackage> getPackages() {
+    final List<PyPackage> packages = myPackagesCache;
+    return packages != null ? Collections.unmodifiableList(packages) : null;
   }
 
-  //@NotNull
-  //public String fetchLatestVersion(InstalledPackage pkg) throws ExecutionException {
-  //  final ArrayList<String> arguments = Lists.newArrayList("latestVersion", pkg.getName());
-  //  arguments.addAll(PyPackageService.getInstance().additionalRepositories);
-  //  return getHelperResult(PACKAGING_TOOL, arguments, false, false, null);
-  //}
-
   @NotNull
-  protected List<PyPackage> getPackages() throws ExecutionException {
+  protected List<PyPackage> collectPackages() throws ExecutionException {
     final String output;
     try {
       output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
@@ -301,8 +264,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     catch (final ProcessNotCreatedException ex) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.info("Not-env unit test mode, will return mock packages");
-        return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
-                                  new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+        return Lists.newArrayList(new PyPackage(PyPackageUtil.PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
+                                  new PyPackage(PyPackageUtil.SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
       }
       else {
         throw ex;
@@ -314,40 +277,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Nullable
   public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
-    final List<PyPackage> packages = getPackages(false);
-    if (packages != null) {
-      final Set<PyPackage> dependents = new HashSet<PyPackage>();
-      for (PyPackage p : packages) {
-        final List<PyRequirement> requirements = p.getRequirements();
-        for (PyRequirement requirement : requirements) {
-          if (requirement.getName().equals(pkg.getName())) {
-            dependents.add(p);
-          }
-        }
-      }
-      return dependents;
-    }
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException {
-    final List<PyPackage> packages = getPackages(cachedOnly);
-    if (packages != null) {
-      for (PyPackage pkg : packages) {
-        if (name.equalsIgnoreCase(pkg.getName())) {
-          return pkg;
+    final List<PyPackage> packages = refreshAndGetPackages(false);
+    final Set<PyPackage> dependents = new HashSet<PyPackage>();
+    for (PyPackage p : packages) {
+      final List<PyRequirement> requirements = p.getRequirements();
+      for (PyRequirement requirement : requirements) {
+        if (requirement.getName().equals(pkg.getName())) {
+          dependents.add(p);
         }
       }
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public final PyPackage findPackage(@NotNull final String name) throws ExecutionException {
-    return findPackage(name, PySdkUtil.isRemote(mySdk));
+    return dependents;
   }
 
   @NotNull
@@ -405,11 +345,38 @@ public class PyPackageManagerImpl extends PyPackageManager {
       .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
-  protected void clearCaches() {
-    synchronized (myCacheLock) {
-      myPackagesCache = null;
-      myExceptionCache = null;
-      LOG.debug("Packages cache is cleared");
+
+//   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
+
+  @Override
+  @NotNull
+  public List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
+    final List<PyPackage> currentPackages = myPackagesCache;
+    if (alwaysRefresh || currentPackages == null) {
+      myUpdatingCache = true;
+      try {
+        final List<PyPackage> packages = collectPackages();
+        myPackagesCache = packages;
+        return packages;
+      }
+      finally {
+        myUpdatingCache = false;
+      }
+    }
+    return Collections.unmodifiableList(currentPackages);
+  }
+
+  private void refreshPackagesSynchronously() {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    if (myUpdatingCache) {
+      return;
+    }
+    try {
+      LOG.info("Refreshing installed packages for SDK " + mySdk.getHomePath());
+      refreshAndGetPackages(true);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
     }
   }
 
@@ -568,7 +535,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           for (VirtualFile root : roots) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
               LOG.debug("Clearing packages cache on SDK change");
-              clearCaches();
+              ApplicationManager.getApplication().executeOnPooledThread(PyPackageManagerImpl.this::refreshPackagesSynchronously);
               return;
             }
           }

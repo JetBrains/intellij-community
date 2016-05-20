@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,7 @@ public abstract class PyEnvTestCase {
 
   @Nullable
   public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageManager.getInstance(sdk).findPackage("django", false);
+    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
   }
 
   public static String norm(String testDataPath) {

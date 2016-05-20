@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging.ui;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
@@ -139,17 +140,17 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
-    List<PyPackage> packages;
+
+    final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+    final List<PyPackage> packages;
     try {
-      packages = PyPackageManager.getInstance(mySdk).getPackages(false);
-      if (packages != null) {
-        Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
-      }
+      packages = Lists.newArrayList(manager.refreshAndGetPackages(false));
     }
     catch (ExecutionException e) {
       throw new IOException(e);
     }
-    return packages != null ? new ArrayList<InstalledPackage>(packages) : new ArrayList<InstalledPackage>();
+    Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
+    return new ArrayList<InstalledPackage>(packages);
   }
 
   @Override

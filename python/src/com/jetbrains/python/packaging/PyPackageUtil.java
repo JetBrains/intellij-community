@@ -17,6 +17,8 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -53,6 +55,10 @@ import java.util.stream.Stream;
  * @author vlan
  */
 public class PyPackageUtil {
+  public static final String SETUPTOOLS = "setuptools";
+  public static final String PIP = "pip";
+  public static final String DISTRIBUTE = "distribute";
+  private static final Logger LOG = Logger.getInstance(PyPackageUtil.class);
 
   @NotNull
   private static final String REQUIRES = "requires";
@@ -268,6 +274,36 @@ public class PyPackageUtil {
         return languageContribution.isPackageManagementEnabled();
       }
     }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
+  }
+
+  @Nullable
+  public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
+    final Ref<List<PyPackage>> packagesRef = Ref.create();
+    PyUtil.runWithProgress(null, "Scanning Installed Packages", true, false, indicator -> {
+      indicator.setIndeterminate(true);
+      try {
+        packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    });
+    return packagesRef.get();
+  }
+
+  @Nullable
+  public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
+    for (PyPackage pkg : packages) {
+      if (name.equalsIgnoreCase(pkg.getName())) {
+        return pkg;
+      }
+    }
+    return null;
+  }
+
+  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
+    return (findPackage(packages, SETUPTOOLS) != null || findPackage(packages, DISTRIBUTE) != null) ||
+           findPackage(packages, PIP) != null;
   }
 
   @Nullable
