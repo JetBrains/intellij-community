@@ -126,14 +126,16 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
                                                      boolean hasFocus,
                                                      int row,
                                                      int column) {
-        myLabel.setText(((PsiType)value).getPresentableText());
-        myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-        myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-        if (isSelected) {
-          myLabel.setSelectionIcon();
-        }
-        else {
-          myLabel.setRegularIcon();
+        if (value != null) {
+          myLabel.setText(((PsiType)value).getPresentableText());
+          myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+          myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+          if (isSelected) {
+            myLabel.setSelectionIcon();
+          }
+          else {
+            myLabel.setRegularIcon();
+          }
         }
         return myLabel;
       }
