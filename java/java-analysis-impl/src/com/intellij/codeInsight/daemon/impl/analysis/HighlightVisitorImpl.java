@@ -203,13 +203,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(PsiElement element) {
     if (myRefCountHolder != null && myFile instanceof ServerPageFile) {
-      // in jsp XmlAttributeValue may contain java references
+      // in JSP, XmlAttributeValue may contain java references
       try {
         for (PsiReference reference : element.getReferences()) {
-          if(reference instanceof PsiJavaReference){
-            final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+          if (reference instanceof PsiJavaReference) {
+            PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
             myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
           }
         }

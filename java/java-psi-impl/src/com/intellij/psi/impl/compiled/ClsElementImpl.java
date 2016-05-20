@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -338,7 +337,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected static class InvalidMirrorException extends RuntimeException {
-    public InvalidMirrorException(@NotNull @NonNls String message) {
+    public InvalidMirrorException(@NotNull String message) {
       super(message);
     }
 
