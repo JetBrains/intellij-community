@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.newProject.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
@@ -35,9 +34,8 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -169,14 +167,11 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
             warningList.add(frameworkName + " will be installed on the selected interpreter");
             myInstallFramework = true;
-            final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-            boolean hasManagement = false;
-            try {
-              hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
+            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+            if (packages == null) {
+              return false;
             }
-            catch (ExecutionException ignored) {
-            }
-            if (!hasManagement) {
+            if (!PyPackageUtil.hasManagement(packages)) {
               warningList.add("Python packaging tools and " + warningList);
             }
           } else {

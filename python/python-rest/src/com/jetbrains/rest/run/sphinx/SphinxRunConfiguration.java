@@ -25,9 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User : catherine
@@ -42,13 +45,12 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     final SphinxTasksModel model = new SphinxTasksModel();
     if (!model.contains("pdf") && getSdk() != null) {
-      try {
-        final PyPackage rst2pdf = PyPackageManager.getInstance(getSdk()).findPackage("rst2pdf");
+      final List<PyPackage> packages = PyPackageManager.getInstance(getSdk()).getPackages();
+      if (packages != null) {
+        final PyPackage rst2pdf = PyPackageUtil.findPackage(packages,"rst2pdf");
         if (rst2pdf != null) {
           model.add(13, "pdf");
         }
-      }
-      catch (ExecutionException ignored) {
       }
     }
 
