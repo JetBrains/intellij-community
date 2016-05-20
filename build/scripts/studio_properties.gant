@@ -351,15 +351,9 @@ def getProperties(String home, String buildNumber) {
             dir("lib") {
               jar("aswb.jar") {
                 module("aswb")
-              }
-              jar("blaze-base.jar") {
                 module("blaze-base-aswb")
-              }
-              jar("blaze-java.jar") {
+                module("blaze-cpp-aswb")
                 module("blaze-java-aswb")
-              }
-              jar("blaze-plugin-dev.jar") {
-                module("blaze-plugin-dev-aswb")
               }
               fileset(dir: "$home/../vendor/google3/blaze/blaze-base/lib") { include(name: "*.jar") }
             }
