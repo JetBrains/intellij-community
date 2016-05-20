@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,16 +61,10 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     setText(AddAnnotationPsiFix.calcText(owner, toAdd));
     if (isAnnotatedSkipInferred(owner, toAdd)) return false;
 
-    if (owner instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)owner).getReturnType();
+    return canAnnotate(owner);
+  }
 
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
-    }
-
-    if (owner instanceof PsiClass) {
-      return PsiUtil.isLanguageLevel8OrHigher(owner);
-    }
-
+  protected boolean canAnnotate(@NotNull PsiModifierListOwner owner) {
     return true;
   }
 
