@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
@@ -847,7 +848,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         for (SMTestProxy proxy : tests) {
           String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
           if (url != null) {
-            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
+            ProcessHandler handler = myRoot.getHandler();
+            String configurationName = null;
+            if (handler != null) {
+              configurationName = handler.getUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY);    
+            }
+            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(), 
+                                                                configurationName == null ? 0 : configurationName.hashCode()));
           }
         }
       });

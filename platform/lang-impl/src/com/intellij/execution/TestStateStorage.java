@@ -20,7 +20,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +46,12 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class TestStateStorage implements Disposable {
 
+  public static Key<String> RUN_CONFIGURATION_NAME_KEY = Key.create("run.configuration.name");
+  
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+
+  private static final int CURRENT_VERSION = 1; 
+  
   private final File myFile;
 
   public static File getTestHistoryRoot(Project project) {
@@ -53,11 +60,13 @@ public class TestStateStorage implements Disposable {
 
   public static class Record {
     public final int magnitude;
+    public final long configurationHash;
     public final Date date;
 
-    public Record(int magnitude, Date date) {
+    public Record(int magnitude, Date date, long configurationHash) {
       this.magnitude = magnitude;
       this.date = date;
+      this.configurationHash = configurationHash;
     }
   }
 
@@ -71,18 +80,47 @@ public class TestStateStorage implements Disposable {
   }
 
   public TestStateStorage(Project project) {
+    String directoryPath = getTestHistoryRoot(project).getPath();
 
-    myFile = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
+    myFile = new File(directoryPath + "/testStateMap");
     FileUtilRt.createParentDirs(myFile);
+
+    File versionFile = new File(directoryPath + "/version");
+    dropMapFileIfOutdated(versionFile);
+
     try {
       myMap = initializeMap();
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(() -> flushMap());
-
+    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
   }
 
+  private void dropMapFileIfOutdated(File versionFile) {
+    if (myFile.exists() && myFile.length() > 0 
+        && readVersion(versionFile) != CURRENT_VERSION) {
+      myFile.delete();
+    }
+
+    try {
+      FileUtil.writeToFile(versionFile, Integer.toString(CURRENT_VERSION));
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
+  }
+
+  private static int readVersion(File versionFile) {
+    if (!versionFile.exists()) return 0;
+
+    try {
+      return Integer.parseInt(FileUtil.loadFile(versionFile));
+    }
+    catch (NumberFormatException | IOException e) {
+      return 0;
+    }
+  }
+  
   private PersistentHashMap<String, Record> initializeMap() throws IOException {
     return IOUtil.openCleanOrResetBroken(getComputable(myFile), myFile);
   }
@@ -97,16 +135,17 @@ public class TestStateStorage implements Disposable {
     return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
       @Override
       public PersistentHashMap<String, Record> compute() throws IOException {
-        return new PersistentHashMap<String, Record>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
+        return new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
           @Override
           public void save(@NotNull DataOutput out, Record value) throws IOException {
             out.writeInt(value.magnitude);
             out.writeLong(value.date.getTime());
+            out.writeLong(value.configurationHash);
           }
 
           @Override
           public Record read(@NotNull DataInput in) throws IOException {
-            return new Record(in.readInt(), new Date(in.readLong()));
+            return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
           }
         });
       }
