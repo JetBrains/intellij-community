@@ -27,7 +27,6 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
@@ -82,7 +81,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
         if (permanentFound && nonPermanentFound) {
           e.getPresentation().setText(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"));
         }
-        else if (nonPermanentFound) {
+        else if (nonPermanentFound || !permanentFound) {
           e.getPresentation().setEnabled(false);
         }
       }
