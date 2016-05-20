@@ -31,6 +31,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,7 +74,7 @@ import java.util.Set;
  * @author Vladislav.Soroka
  * @since 10/29/13
  */
-public class ImportMavenRepositoriesTask implements Runnable {
+public class ImportMavenRepositoriesTask extends ReadTask {
 
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   @NotNull
@@ -85,7 +88,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
   }
 
   @Override
-  public void run() {
+  public void computeInReadAction(@NotNull ProgressIndicator indicator) {
     if(myProject.isDisposed()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -193,6 +196,13 @@ public class ImportMavenRepositoriesTask implements Runnable {
         }
       }
     });
+  }
+
+  @Override
+  public void onCanceled(@NotNull ProgressIndicator indicator) {
+    if (!myProject.isDisposed()) {
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+    }
   }
 
   @NotNull
