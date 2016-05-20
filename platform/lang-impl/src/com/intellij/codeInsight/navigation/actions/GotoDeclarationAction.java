@@ -97,10 +97,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (element != null) {
-            ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
-            RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+          if (startFindUsages(editor, element)) {
             return;
           }
         }
@@ -109,6 +106,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
 
       PsiElement element = elements[0];
+      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
+          startFindUsages(editor, element)) {
+        return;
+      }
+
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
       if (navElement != null) {
@@ -121,6 +123,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     finally {
       DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
+  }
+
+  private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
+    if (element != null) {
+      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      return true;
+    }
+    return false;
   }
 
   public static <T> T underModalProgress(@NotNull Project project,
