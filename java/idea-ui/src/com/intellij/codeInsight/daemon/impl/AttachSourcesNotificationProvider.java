@@ -186,7 +186,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             int major = stream.readUnsignedShort();
             StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
             LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(major);
-            if (level != null) info.append(" (").append(level.getName()).append(')');
+            if (level != null) {
+              info.append(" (").append(level == LanguageLevel.JDK_1_3 ? level.getName() + " or older" : level.getName()).append(')');
+            }
             return info.toString();
           }
         }
