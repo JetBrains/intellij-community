@@ -29,8 +29,10 @@ import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -38,7 +40,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -137,13 +138,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(false);
 
-      myPanel.setChanges(ContainerUtil.filter(changes, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return change.getBeforeRevision() != null && change.getAfterRevision() != null;
-        }
-      }));
-      myPanel.showTextStoreOption();
       JComponent panel = myPanel.getPanel();
       panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, "Patch File Settings");
       return panel;
@@ -188,13 +182,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }, ModalityState.NON_MODAL, myProject);
         return;
       }
-      myPanel.onOk();
-      boolean storeTexts = myPanel.isStoreTexts();
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, storeTexts);
-      if (storeTexts) {
-        final List<FilePath> list = ContainerUtil.map(myPanel.getIncludedChanges(), ChangesUtil::getFilePath);
-        myCommitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, list);
-      }
+      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
 
       int binaryCount = 0;
       for(Change change: changes) {

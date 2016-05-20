@@ -23,7 +23,6 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
@@ -33,8 +32,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,9 +47,6 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class CreatePatchConfigurationPanel {
   private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
@@ -62,10 +56,8 @@ public class CreatePatchConfigurationPanel {
   private JCheckBox myReversePatchCheckbox;
   private JComboBox myEncoding;
   private JLabel myErrorLabel;
-  private JCheckBox myIncludeBaseRevisionTextCheckBox;
   private Consumer<Boolean> myOkEnabledListener;
   private final Project myProject;
-  private List<Change> myChanges;
   private boolean myExecute;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
@@ -91,7 +83,6 @@ public class CreatePatchConfigurationPanel {
       }
     });
 
-    myIncludeBaseRevisionTextCheckBox.setVisible(false);
     myFileNameField.getTextField().addInputMethodListener(new InputMethodListener() {
       public void inputMethodTextChanged(final InputMethodEvent event) {
         checkName();
@@ -146,25 +137,14 @@ public class CreatePatchConfigurationPanel {
     myFileNameField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new ComboBox();
-    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision", 0));
-    myIncludeBaseRevisionTextCheckBox.setToolTipText(VcsBundle.message("create.patch.base.revision.tooltip"));
     myErrorLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
       .addComponent(myReversePatchCheckbox)
-      .addComponent(myIncludeBaseRevisionTextCheckBox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
       .addComponent(myErrorLabel)
       .getPanel();
-  }
-
-  public void showTextStoreOption() {
-    if (myChanges.size() > 0) {
-      myIncludeBaseRevisionTextCheckBox.setVisible(true);
-      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-      myIncludeBaseRevisionTextCheckBox.setSelected(configuration.INCLUDE_TEXT_INTO_PATCH);
-    }
   }
 
   private void checkName() {
@@ -179,22 +159,6 @@ public class CreatePatchConfigurationPanel {
     if (myOkEnabledListener != null) {
       myOkEnabledListener.consume(myExecute);
     }
-  }
-
-  public void onOk() {
-    if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
-      final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-      vcsConfiguration.INCLUDE_TEXT_INTO_PATCH = myIncludeBaseRevisionTextCheckBox.isSelected();
-    }
-  }
-
-  public boolean isStoreTexts() {
-    return myIncludeBaseRevisionTextCheckBox.isSelected();
-  }
-
-  public Collection<Change> getIncludedChanges() {
-    myChanges.removeAll(SelectFilesToAddTextsToPatchPanel.getBig(myChanges)) ;
-    return myChanges;
   }
 
   public JComponent getPanel() {
@@ -228,9 +192,5 @@ public class CreatePatchConfigurationPanel {
 
   public String getError() {
     return myErrorLabel.getText() == null ? "" : myErrorLabel.getText();
-  }
-
-  public void setChanges(@NotNull Collection<Change> changes) {
-    myChanges = new ArrayList<Change>(changes);
   }
 }
