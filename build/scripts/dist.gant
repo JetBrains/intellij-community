@@ -220,13 +220,16 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   buildMacZip(macAppRoot, "$paths.artifacts/${archiveName}-no-jdk.mac.zip", [paths.distAll], paths.distMac, productProperties.extraMacBins)
   requireProperty("jdk.mac", "false")
   if (p("jdk.mac") != "false") {
-    buildMacZip(macAppRoot, "$paths.artifacts/${archiveName}.mac.zip", [paths.distAll, "${paths.sandbox}/jdk.mac"], paths.distMac, productProperties.extraMacBins)
+    def jdkPath = "jre/jdk/Contents/Home/"
+    buildMacZip(macAppRoot, "$paths.artifacts/${archiveName}.mac.zip", [paths.distAll, "${paths.sandbox}/jdk.mac"], paths.distMac,
+                [jdkPath + "bin/*", jdkPath + "jre/bin/*", jdkPath + "jre/lib/jspawnhelper", jdkPath + "jre/lib/*.dylib.*"] + productProperties.extraMacBins)
   }
 
   buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-no-jdk.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
   requireProperty("jdk.linux", "false")
   if (p("jdk.linux") != "false") {
-    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
+    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"],
+               ["jre/jre/bin/*", "jre/bin/*"] + productProperties.extraLinuxBins)
   }
   return info
 }
