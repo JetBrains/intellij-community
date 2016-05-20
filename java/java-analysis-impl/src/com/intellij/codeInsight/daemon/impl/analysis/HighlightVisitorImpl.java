@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -217,7 +218,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       catch (IndexNotReadyException ignored) { }
     }
 
-    if (element.getNode().getElementType() == TokenType.BAD_CHARACTER) {
+    ASTNode node = element.getNode();
+    if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
       String message = String.format("Illegal character: \\u%04X", (int)element.textToCharArray()[0]);
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
     }
