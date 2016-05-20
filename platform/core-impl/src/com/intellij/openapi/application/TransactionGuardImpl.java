@@ -144,9 +144,13 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (app.isDispatchThread()) {
       Transaction transaction = new Transaction(runnable, getContextTransaction(), app);
       if (!canRunTransactionNow(transaction, true)) {
-        LOG.error("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                  "Please use asynchronous submit*Transaction. " +
-                  "See TransactionGuard FAQ for details. Transaction: " + runnable);
+        String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                         "Please use asynchronous submit*Transaction. " +
+                         "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
+        if (!isWriteSafeModality(ModalityState.current())) {
+          message += "\nUnsafe modality: " + ModalityState.current();
+        }
+        LOG.error(message);
       }
       runSyncTransaction(transaction);
       return;
