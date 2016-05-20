@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ public class GenericMain {
     else {
       for (GenericType tp : enclosingClasses) {
         if (buffer.length() == 0) {
-          buffer.append(DecompilerContext.getImportCollector().getShortName(tp.value));
+          buffer.append(DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')));
         }
         else {
           buffer.append(tp.value);
