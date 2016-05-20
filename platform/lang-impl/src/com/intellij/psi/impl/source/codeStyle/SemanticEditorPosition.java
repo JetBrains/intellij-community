@@ -60,5 +60,13 @@ public abstract class SemanticEditorPosition {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
   }
   
+  public boolean matchesRule(@NotNull Rule rule) {
+    return rule.check(this);
+  }
+
+  public interface Rule {
+    boolean check(SemanticEditorPosition position);
+  }
+  
   public abstract SyntaxElement map(@NotNull IElementType elementType); 
 }
