@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,25 @@ import org.jetbrains.java.decompiler.struct.StructContext;
 import java.util.*;
 import java.util.Map.Entry;
 
-
 public class ImportCollector {
-
   private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   private final Map<String, String> mapSimpleNames = new HashMap<String, String>();
   private final Set<String> setNotImportedNames = new HashSet<String>();
-  private String currentPackageSlash = "";
-  private String currentPackagePoint = "";
+  private final String currentPackageSlash;
+  private final String currentPackagePoint;
 
   public ImportCollector(ClassNode root) {
-
-    String clname = root.classStruct.qualifiedName;
-    int index = clname.lastIndexOf("/");
+    String clName = root.classStruct.qualifiedName;
+    int index = clName.lastIndexOf('/');
     if (index >= 0) {
-      currentPackageSlash = clname.substring(0, index);
-      currentPackagePoint = currentPackageSlash.replace('/', '.');
-      currentPackageSlash += "/";
+      String packageName = clName.substring(0, index);
+      currentPackageSlash = packageName + '/';
+      currentPackagePoint = packageName.replace('/', '.');
+    }
+    else {
+      currentPackageSlash = "";
+      currentPackagePoint = "";
     }
   }
 
@@ -49,42 +50,38 @@ public class ImportCollector {
     return getShortName(fullname, true);
   }
 
-  public String getShortName(String fullname, boolean imported) {
+  public String getShortName(String fullName, boolean imported) {
+    ClassesProcessor clProc = DecompilerContext.getClassProcessor();
+    ClassNode node = clProc.getMapRootClasses().get(fullName.replace('.', '/'));
 
-    ClassesProcessor clproc = DecompilerContext.getClassProcessor();
-    ClassNode node = clproc.getMapRootClasses().get(fullname.replace('.', '/'));
-
-    String retname = null;
-
+    String result = null;
     if (node != null && node.classStruct.isOwn()) {
-
-      retname = node.simpleName;
+      result = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
-        retname = node.parent.simpleName + "." + retname;
+        result = node.parent.simpleName + '.' + result;
         node = node.parent;
       }
 
       if (node.type == ClassNode.CLASS_ROOT) {
-        fullname = node.classStruct.qualifiedName;
-        fullname = fullname.replace('/', '.');
+        fullName = node.classStruct.qualifiedName;
+        fullName = fullName.replace('/', '.');
       }
       else {
-        return retname;
+        return result;
       }
     }
     else {
-      fullname = fullname.replace('$', '.');
+      fullName = fullName.replace('$', '.');
     }
 
-    String nshort = fullname;
-    String npackage = "";
+    String shortName = fullName;
+    String packageName = "";
 
-    int lastpoint = fullname.lastIndexOf(".");
-
-    if (lastpoint >= 0) {
-      nshort = fullname.substring(lastpoint + 1);
-      npackage = fullname.substring(0, lastpoint);
+    int lastDot = fullName.lastIndexOf('.');
+    if (lastDot >= 0) {
+      shortName = fullName.substring(lastDot + 1);
+      packageName = fullName.substring(0, lastDot);
     }
 
     StructContext context = DecompilerContext.getStructContext();
@@ -92,42 +89,40 @@ public class ImportCollector {
     // check for another class which could 'shadow' this one. Two cases:
     // 1) class with the same short name in the current package
     // 2) class with the same short name in the default package
-    boolean existsDefaultClass = (context.getClass(currentPackageSlash + nshort) != null
-                                  && !npackage.equals(currentPackagePoint)) // current package
-                                 || (context.getClass(nshort) != null 
-                                  && !currentPackagePoint.isEmpty());  // default package
+    boolean existsDefaultClass =
+      (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
+      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty());  // default package
 
     if (existsDefaultClass ||
-        (mapSimpleNames.containsKey(nshort) && !npackage.equals(mapSimpleNames.get(nshort)))) {
+        (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
       //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
-      return retname == null ? fullname : (npackage + "." + retname);
+      return result == null ? fullName : (packageName + "." + result);
     }
-    else if (!mapSimpleNames.containsKey(nshort)) {
-      mapSimpleNames.put(nshort, npackage);
-
+    else if (!mapSimpleNames.containsKey(shortName)) {
+      mapSimpleNames.put(shortName, packageName);
       if (!imported) {
-        setNotImportedNames.add(nshort);
+        setNotImportedNames.add(shortName);
       }
     }
 
-    return retname == null ? nshort : retname;
+    return result == null ? shortName : result;
   }
 
   public int writeImports(TextBuffer buffer) {
-    int importlines_written = 0;
+    int importLinesWritten = 0;
 
     List<String> imports = packImports();
 
     for (String s : imports) {
       buffer.append("import ");
       buffer.append(s);
-      buffer.append(";");
+      buffer.append(';');
       buffer.appendLineSeparator();
 
-      importlines_written++;
+      importLinesWritten++;
     }
 
-    return importlines_written;
+    return importLinesWritten;
   }
 
   private List<String> packImports() {
