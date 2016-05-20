@@ -58,7 +58,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private MessageBus myMessageBus;
 
-  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
+  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>(); // contents guarded by this
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
@@ -109,7 +109,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final double getPercentageOfComponentsLoaded() {
-    return ((double)myInstantiatedComponentCount) / myComponentConfigCount;
+    return (double)myInstantiatedComponentCount / myComponentConfigCount;
   }
 
   protected void createComponents(@Nullable ProgressIndicator indicator) {
@@ -272,7 +272,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
            (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
   }
 
-  public static boolean isComponentSuitableForOs(@Nullable String os) {
+  static boolean isComponentSuitableForOs(@Nullable String os) {
     if (StringUtil.isEmpty(os)) {
       return true;
     }
