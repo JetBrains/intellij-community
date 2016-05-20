@@ -216,6 +216,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       catch (IndexNotReadyException ignored) { }
     }
+
+    if (element.getNode().getElementType() == TokenType.BAD_CHARACTER) {
+      String message = String.format("Illegal character: \\u%04X", (int)element.textToCharArray()[0]);
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
+    }
   }
 
   @Override
@@ -317,7 +322,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
           else {
             final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-            final PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ? 
+            final PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
                                                      (PsiCallExpression)parent.getParent() : null;
             final JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
             final String errorMessage;
@@ -1212,7 +1217,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, myResolveHelper, list, expression)) {
         try {
           myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(expression, results, list, resolved, result, methodCallExpression, myResolveHelper));
-          
+
           if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
             myHolder.add(HighlightMethodUtil
               .checkAmbiguousMethodCallArguments(expression, results, list, resolved, result, methodCallExpression, myResolveHelper, expression.getReferenceNameElement()));
@@ -1342,7 +1347,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
-      if (results.length == 0 || results[0] instanceof MethodCandidateInfo && 
+      if (results.length == 0 || results[0] instanceof MethodCandidateInfo &&
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
                                  expression.getFunctionalInterfaceType() != null) {
         String description = null;
@@ -1379,7 +1384,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   // 15.13 | 15.27
-  // It is a compile-time error if any class or interface mentioned by either U or the function type of U 
+  // It is a compile-time error if any class or interface mentioned by either U or the function type of U
   // is not accessible from the class or interface in which the method reference expression appears.
   @NotNull
   private PsiClassType.ClassResolveResult checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression,
@@ -1396,7 +1401,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           checkFunctionalInterfaceTypeAccessible(expression, type);
         }
       }
-    } 
+    }
     return resolveResult;
   }
 
@@ -1601,14 +1606,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
-  
+
   protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
     myHolder = holder;
 
     final PsiFile file = holder.getContextFile();
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), 
+    myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file),
                                            JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
 
   }
