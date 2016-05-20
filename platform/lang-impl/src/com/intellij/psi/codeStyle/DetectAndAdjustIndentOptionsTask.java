@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -79,8 +80,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     PsiFile file = getFile();
     if (file == null) {
-      myBoundedExecutor.shutdown();
-      return null;
+      return continuationWithExecutorShutdown(EmptyRunnable.INSTANCE);
     }
     
     if (!PsiDocumentManager.getInstance(myProject).isCommitted(myDocument)) {
@@ -90,9 +90,14 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
     IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file, indicator);
     IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster();
-    myBoundedExecutor.shutdown();
-    
-    return adjuster != null ? new Continuation(() -> adjustOptions(adjuster)) : null;
+    return continuationWithExecutorShutdown(adjuster != null ? () -> adjustOptions(adjuster) : EmptyRunnable.INSTANCE);
+  }
+  
+  private Continuation continuationWithExecutorShutdown(Runnable runnable) {
+    return new Continuation(() -> {
+      myBoundedExecutor.shutdown();
+      runnable.run();
+    });
   }
   
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
