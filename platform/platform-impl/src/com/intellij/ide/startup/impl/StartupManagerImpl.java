@@ -272,7 +272,11 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     PooledThreadExecutor.INSTANCE.submit(() -> {
       LOG.debug("FW/roots waiting started");
-      while (watcher.isSettingRoots()) TimeoutUtil.sleep(10);
+      while (true) {
+        if (myProject.isDisposed()) return;
+        if (!watcher.isSettingRoots()) break;
+        TimeoutUtil.sleep(10);
+      }
       LOG.debug("FW/roots waiting finished");
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
