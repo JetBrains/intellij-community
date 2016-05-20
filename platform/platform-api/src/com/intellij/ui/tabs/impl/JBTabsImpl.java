@@ -1503,8 +1503,6 @@ public class JBTabsImpl extends JComponent
 
       if (isSingleRow()) {
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
-        mySingleRowLayout.scroll(0);
-        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
         if (divider.getParent() == this) {
