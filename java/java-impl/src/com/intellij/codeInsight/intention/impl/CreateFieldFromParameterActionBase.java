@@ -65,7 +65,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
-      processParameter(project, myParameter, !ApplicationManager.getApplication().isUnitTestMode());
+      processParameter(project, myParameter, !ApplicationManager.getApplication().isHeadlessEnvironment());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
