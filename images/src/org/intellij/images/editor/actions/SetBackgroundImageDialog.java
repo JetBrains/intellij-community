@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
@@ -52,10 +51,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
 public class SetBackgroundImageDialog extends DialogWrapper {
   private final String myPropertyTmp;
@@ -81,8 +83,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     mySelectedPath = selectedPath;
     myEditorPreview = createEditorPreview();
     myIdePreview = createIdePreview();
-    myPropertyTmp = IdeBackgroundUtil.BG_PROPERTY_PREFIX + project.getLocationHash();
-    UiNotifyConnector.doWhenFirstShown(myRoot, () -> IdeBackgroundUtil.createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
+    myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
+    UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
     setupComponents();
     restoreRecentImages();
     setSelectedPath(mySelectedPath);
@@ -191,17 +193,17 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     for (Enumeration<AbstractButton> e = getTargetRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addChangeListener(this::targetChanged);
+      button.addItemListener(this::targetChanged);
     }
     for (Enumeration<AbstractButton> e = getFillRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addChangeListener(this::fillOrPlaceChanged);
+      button.addItemListener(this::fillOrPlaceChanged);
     }
     for (Enumeration<AbstractButton> e = getPlaceRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addChangeListener(this::fillOrPlaceChanged);
+      button.addItemListener(this::fillOrPlaceChanged);
     }
     ChangeListener opacitySync = new ChangeListener() {
 
@@ -240,11 +242,14 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  private void fillOrPlaceChanged(ChangeEvent event) {
+  private void fillOrPlaceChanged(ItemEvent event) {
     updatePreview();
   }
 
-  private void targetChanged(ChangeEvent event) {
+  private void targetChanged(ItemEvent event) {
+    if (event != null && event.getStateChange() == ItemEvent.DESELECTED) {
+      return;
+    }
     if (StringUtil.isEmptyOrSpaces(mySelectedPath)) {
       retrieveExistingValue();
     }
@@ -270,7 +275,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private void retrieveExistingValue() {
     myAdjusting = true;
     String prop = getSystemProp();
-    String value = StringUtil.notNullize(myResults.get(prop), getProperty(prop));
+    String value = StringUtil.notNullize(myResults.get(prop), getBackgroundSpec(prop));
     String[] split = value.split(",");
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
@@ -292,6 +297,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    super.doOKAction();
+
     storeRecentImages();
     String value = calcNewValue();
     String prop = getSystemProp();
@@ -300,7 +307,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     if (value.startsWith(",")) value = null;
     PropertiesComponent.getInstance().setValue(prop, value);
 
-    super.doOKAction();
+    repaintAllWindows();
   }
 
   private void storeRecentImages() {
@@ -329,13 +336,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     }
   }
 
-  private static String getProperty(@NotNull String prop) {
-    return StringUtil.notNullize(PropertiesComponent.getInstance().getValue(prop), System.getProperty(prop, ""));
-  }
-
-  @NotNull
   private String getSystemProp() {
-    return IdeBackgroundUtil.BG_PROPERTY_PREFIX + (myEditorRb.isSelected() ? "editor" : "ide");
+    return myEditorRb.isSelected() ? EDITOR_PROP : FRAME_PROP;
   }
 
   private void updatePreview() {

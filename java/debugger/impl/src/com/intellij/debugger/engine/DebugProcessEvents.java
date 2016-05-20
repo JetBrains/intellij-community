@@ -316,7 +316,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void vmAttached() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(!isAttached());
-    if(myState.compareAndSet(STATE_INITIAL, STATE_ATTACHED)) {
+    if (myState.compareAndSet(State.INITIAL, State.ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
       final EventRequestManager requestManager = machineProxy.eventRequestManager();
 

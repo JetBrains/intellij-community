@@ -89,7 +89,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
@@ -108,11 +108,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  protected static final int STATE_INITIAL   = 0;
-  protected static final int STATE_ATTACHED  = 1;
-  protected static final int STATE_DETACHING = 2;
-  protected static final int STATE_DETACHED  = 3;
-  protected final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
+  enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
+  protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
   private volatile ExecutionResult myExecutionResult;
   private RemoteConnection myConnection;
@@ -707,22 +704,22 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public boolean isInInitialState() {
-    return myState.get() == STATE_INITIAL;
+    return myState.get() == State.INITIAL;
   }
 
   @Override
   public boolean isAttached() {
-    return myState.get() == STATE_ATTACHED;
+    return myState.get() == State.ATTACHED;
   }
 
   @Override
   public boolean isDetached() {
-    return myState.get() == STATE_DETACHED;
+    return myState.get() == State.DETACHED;
   }
 
   @Override
   public boolean isDetaching() {
-    return myState.get() == STATE_DETACHING;
+    return myState.get() == State.DETACHING;
   }
 
   @Override
@@ -769,7 +766,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected void closeProcess(boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (myState.compareAndSet(STATE_INITIAL, STATE_DETACHING) || myState.compareAndSet(STATE_ATTACHED, STATE_DETACHING)) {
+    if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
       try {
         getManagerThread().close();
       }
@@ -781,7 +778,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myNodeRenderersMap.clear();
         myRenderers.clear();
         DebuggerUtils.cleanupAfterProcessFinish(this);
-        myState.set(STATE_DETACHED);
+        myState.compareAndSet(State.DETACHING, State.DETACHED);
         try {
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
         }
@@ -1839,7 +1836,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void reattach(final DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread(); //TODO: remove this requirement
     ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
-    myState.set(STATE_INITIAL);
+    myState.set(State.INITIAL);
     getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {

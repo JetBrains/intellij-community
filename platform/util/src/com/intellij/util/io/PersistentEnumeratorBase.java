@@ -46,25 +46,23 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
   private static final int META_DATA_OFFSET = 4;
   protected static final int DATA_START = META_DATA_OFFSET + 16;
+  private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final ResizeableMappedFile myStorage;
   private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
   private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
+  protected final KeyDescriptor<Data> myDataDescriptor;
+  protected final File myFile;
+  private final Version myVersion;
+  private final boolean myDoCaching;
+
+  private volatile boolean myDirtyStatusUpdateInProgress;
 
   private boolean myClosed = false;
   private boolean myDirty = false;
-  protected final KeyDescriptor<Data> myDataDescriptor;
-
-  private static final CacheKey ourFlyweight = new FlyweightKey();
-
-  protected final File myFile;
   private boolean myCorrupted = false;
-  private final int myInitialSize;
-  private final Version myVersion;
   private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
-  private volatile boolean myDirtyStatusUpdateInProgress;
   private Flushable myMarkCleanCallback;
-  private final boolean myDoCaching;
 
   public static class Version {
     private final int correctlyClosedMagic;
@@ -161,7 +159,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
-    myInitialSize = initialSize;
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
     myDoCaching = doCaching;
@@ -457,12 +454,19 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   }
 
   public Data valueOf(int idx) throws IOException {
-    lockStorage();
     try {
-      int addr = indexToAddr(idx);
 
-      if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
-      return myKeyStorage.read(addr, myDataDescriptor);
+      lockStorage();
+      try {
+        int addr = indexToAddr(idx);
+
+        if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+        return myKeyStorage.read(addr, myDataDescriptor);
+      }
+      finally {
+        unlockStorage();
+      }
+
     }
     catch (IOException io) {
       markCorrupted();
@@ -471,9 +475,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
     catch (Throwable e) {
       markCorrupted();
       throw new RuntimeException(e);
-    }
-    finally {
-      unlockStorage();
     }
   }
 

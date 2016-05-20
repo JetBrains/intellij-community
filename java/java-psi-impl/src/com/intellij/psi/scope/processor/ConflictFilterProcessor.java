@@ -55,10 +55,8 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     JavaResolveResult[] cachedResult = myCachedResult;
-    if (!(myPlaceFile instanceof JavaCodeFragment) || ((JavaCodeFragment)myPlaceFile).getVisibilityChecker() == null) {
-      if (cachedResult != null && cachedResult.length == 1 && cachedResult[0].isAccessible()) {
-        return false;
-      }
+    if (cachedResult != null && cachedResult.length == 1 && cachedResult[0].isAccessible()) {
+      return false;
     }
     if (myName == null || PsiUtil.checkName(element, myName, myPlace)) {
       return super.execute(element, state);
@@ -87,13 +85,15 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   public JavaResolveResult[] getResult() {
     JavaResolveResult[] cachedResult = myCachedResult;
     if (cachedResult == null) {
-      final List<CandidateInfo> conflicts = getResults();
-      for (PsiConflictResolver resolver : myResolvers) {
-        CandidateInfo candidate = resolver.resolveConflict(conflicts);
-        if (candidate != null) {
-          conflicts.clear();
-          conflicts.add(candidate);
-          break;
+      List<CandidateInfo> conflicts = getResults();
+      if (!conflicts.isEmpty()) {
+        for (PsiConflictResolver resolver : myResolvers) {
+          CandidateInfo candidate = resolver.resolveConflict(conflicts);
+          if (candidate != null) {
+            conflicts.clear();
+            conflicts.add(candidate);
+            break;
+          }
         }
       }
       myCachedResult = cachedResult = conflicts.toArray(new JavaResolveResult[conflicts.size()]);

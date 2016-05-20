@@ -26,6 +26,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,4 +44,10 @@ public class AddNullableAnnotationIntention extends AddAnnotationIntention imple
     final List<String> notnulls = NullableNotNullManager.getInstance(project).getNotNulls();
     return ArrayUtil.toStringArray(notnulls);
   }
+
+  @Override
+  protected boolean canAnnotate(@NotNull PsiModifierListOwner owner) {
+    return AddNullableNotNullAnnotationFix.canAnnotate(owner);
+  }
+
 }
