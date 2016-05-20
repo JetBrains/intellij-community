@@ -57,14 +57,15 @@ import java.util.regex.Pattern
  */
 class DependencyResolverImpl implements DependencyResolver {
 
-  private static isArtifactResolutionQuerySupported = GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0
-  private static isDependencySubstitutionsSupported = GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0
+  private static isArtifactResolutionQuerySupported = GradleVersion.current() >= GradleVersion.version("2.0")
+  private static isDependencySubstitutionsSupported = GradleVersion.current() >= GradleVersion.version("2.5")
 
   @NotNull
   private final Project myProject
   private final boolean myIsPreview
   private final boolean myDownloadJavadoc
   private final boolean myDownloadSources
+  private final SourceSetCachedFinder mySourceSetFinder
 
   @SuppressWarnings("GroovyUnusedDeclaration")
   DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
@@ -72,13 +73,20 @@ class DependencyResolverImpl implements DependencyResolver {
     myIsPreview = isPreview
     myDownloadJavadoc = false
     myDownloadSources = false
+    mySourceSetFinder = new SourceSetCachedFinder(project)
   }
 
-  DependencyResolverImpl(@NotNull Project project, boolean isPreview, boolean downloadJavadoc, boolean downloadSources) {
+  DependencyResolverImpl(
+    @NotNull Project project,
+    boolean isPreview,
+    boolean downloadJavadoc,
+    boolean downloadSources,
+    SourceSetCachedFinder sourceSetFinder) {
     myProject = project
     myIsPreview = isPreview
     myDownloadJavadoc = downloadJavadoc
     myDownloadSources = downloadSources
+    mySourceSetFinder = sourceSetFinder
   }
 
   @Override
@@ -295,7 +303,7 @@ class DependencyResolverImpl implements DependencyResolver {
         //noinspection GrUnresolvedAccess
         if (project.hasProperty("sourceSets") && (project.sourceSets instanceof SourceSetContainer) && project.sourceSets.main) {
           //noinspection GrUnresolvedAccess
-          addSourceSetOutputDirsAsSingleEntryLibraries(result, project.sourceSets.main, runtimeClasspathOrder, runtimeScope)
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, project.sourceSets.main, runtimeClasspathOrder, scope)
         }
       }
       else if (dependency instanceof ExternalLibraryDependency) {
@@ -372,6 +380,12 @@ class DependencyResolverImpl implements DependencyResolver {
         compileClasspathFilesDependency.classpathOrder = order
       }
       result.add(compileClasspathFilesDependency)
+      for (File file : compileClasspathFiles) {
+        def outputDirSourceSet = mySourceSetFinder.findByArtifact(file.path)
+        if(outputDirSourceSet) {
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, compileClasspathOrder, compileScope)
+        }
+      }
     }
 
     if (!runtimeClasspathFiles.isEmpty()) {
@@ -389,6 +403,13 @@ class DependencyResolverImpl implements DependencyResolver {
 
       runtimeClasspathFilesDependency.classpathOrder = order
       result.add(runtimeClasspathFilesDependency)
+
+      for (File file : runtimeClasspathFiles) {
+        def outputDirSourceSet = mySourceSetFinder.findByArtifact(file.path)
+        if(outputDirSourceSet) {
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, runtimeClasspathOrder, runtimeScope)
+        }
+      }
     }
 
     addSourceSetOutputDirsAsSingleEntryLibraries(result, sourceSet, runtimeClasspathOrder, runtimeScope)
