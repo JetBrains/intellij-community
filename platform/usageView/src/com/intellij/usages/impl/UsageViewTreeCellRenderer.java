@@ -109,7 +109,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof UsageTarget) {
         UsageTarget usageTarget = (UsageTarget)userObject;
         if (!usageTarget.isValid()) {
-          append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+          if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
+            append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+          }
           return;
         }
 
