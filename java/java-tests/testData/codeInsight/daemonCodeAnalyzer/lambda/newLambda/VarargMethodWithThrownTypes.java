@@ -29,3 +29,20 @@ class Reproduction
     V apply(String s) throws IOException;
   }
 }
+
+class InferenceInVarargsParam {
+  static class Pair<A, B> {
+    static <T, K> Pair<T, K> create(T t, K k) {
+      return null;
+    }
+  }
+  protected void assertPathListEditor(String text, Pair<String, Boolean>... expectedTableItems) throws Exception {}
+
+  void testPathListSettingsEditor() throws Exception {
+    assertPathListEditor("",
+                         Pair.create("foo", false),
+                         Pair.create("bar", true),
+                         Pair.create("$(PROJECT_DIR)/hello", false),
+                         Pair.create("$(PROJECT_DIR)/hello", true));
+  }
+}
