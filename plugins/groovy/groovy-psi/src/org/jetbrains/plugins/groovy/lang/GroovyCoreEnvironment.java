@@ -94,7 +94,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.bindable.BindableTransformContributor;
+import org.jetbrains.plugins.groovy.transformations.impl.BindableTransformationSupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport;
@@ -155,7 +155,7 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new SimpleBuilderStrategySupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new ExternalBuilderStrategySupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new InitializerBuilderStrategySupport());
-      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new BindableTransformContributor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new BindableTransformationSupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new LoggingContributor());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new CategoryTransformationSupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DelegateTransformationSupport());

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.ast.bindable;
+package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.List;
 
-public class BindableTransformContributor implements AstTransformationSupport {
+public class BindableTransformationSupport implements AstTransformationSupport {
 
   private static final String BINDABLE_FQN = "groovy.beans.Bindable";
   private static final String PCL_FQN = "java.beans.PropertyChangeListener";
