@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -182,7 +181,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }, ModalityState.NON_MODAL, myProject);
         return;
       }
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
 
       int binaryCount = 0;
       for(Change change: changes) {
