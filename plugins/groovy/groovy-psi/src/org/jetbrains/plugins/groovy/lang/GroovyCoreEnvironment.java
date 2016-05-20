@@ -94,7 +94,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
-import org.jetbrains.plugins.groovy.transformations.impl.BindableTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.impl.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport;
@@ -108,10 +108,6 @@ import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.impl.CategoryTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport;
 
 /**
  * Upsource
@@ -156,6 +152,7 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new ExternalBuilderStrategySupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new InitializerBuilderStrategySupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new BindableTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new VetoableTransformationSupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new LoggingContributor());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new CategoryTransformationSupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DelegateTransformationSupport());
