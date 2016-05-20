@@ -19,11 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
@@ -33,6 +35,7 @@ public class BindableTransformContributor implements AstTransformationSupport {
 
   private static final String BINDABLE_FQN = "groovy.beans.Bindable";
   private static final String PCL_FQN = "java.beans.PropertyChangeListener";
+  private static final String PCS_FQN = "java.beans.PropertyChangeSupport";
   public static final String ORIGIN_INFO = "via @Bindable";
 
   private static boolean isApplicable(@NotNull GrTypeDefinition clazz) {
@@ -56,7 +59,8 @@ public class BindableTransformContributor implements AstTransformationSupport {
     final PsiManager manager = clazz.getManager();
     final GlobalSearchScope scope = clazz.getResolveScope();
 
-    final PsiType pclType = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory().createTypeByFQClassName(PCL_FQN, scope);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(clazz.getProject());
+    final PsiType pclType = facade.getElementFactory().createTypeByFQClassName(PCL_FQN, scope);
     final PsiArrayType pclArrayType = new PsiArrayType(pclType);
     final PsiType stringType = PsiType.getJavaLangString(manager, scope);
     final PsiType objectType = PsiType.getJavaLangObject(manager, scope);
@@ -108,9 +112,14 @@ public class BindableTransformContributor implements AstTransformationSupport {
         .addParameter("name", stringType)
     );
 
+    PsiClass docDelegate = facade.findClass(PCS_FQN, context.getCodeClass().getResolveScope());
+
     for (LightMethodBuilder method : methods) {
       method.addModifier(PsiModifier.PUBLIC);
       method.setOriginInfo(ORIGIN_INFO);
+      if (docDelegate == null) continue;
+      PsiMethod[] originalMethods = docDelegate.findMethodsBySignature(method, false);
+      method.putUserData(ResolveUtil.DOCUMENTATION_DELEGATE, ArrayUtil.getFirstElement(originalMethods));
     }
 
     context.addMethods(methods);

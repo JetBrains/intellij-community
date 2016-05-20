@@ -25,6 +25,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.SetupRule
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ast.bindable.BindableTransformContributor
 import org.junit.Before
 import org.junit.Rule
@@ -86,6 +87,7 @@ class GrBindableSupportTest {
       assert method
       assert method.containingClass == clazz
       assert method.originInfo == BindableTransformContributor.ORIGIN_INFO
+      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE)
     }
   }
 
