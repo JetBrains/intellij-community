@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonWriter;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -17,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,14 +79,11 @@ public class IpnbParser {
       if (module != null) {
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          try {
-            final PyPackage ipython = PyPackageManager.getInstance(sdk).findPackage("ipython", true);
-            final PyPackage jupyter = PyPackageManager.getInstance(sdk).findPackage("jupyter", true);
-            if (jupyter == null && ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
-              return false;
-            }
-          }
-          catch (ExecutionException ignored) {
+          final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+          final PyPackage ipython = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
+          final PyPackage jupyter = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
+          if (jupyter == null && ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
+            return false;
           }
         }
       }
