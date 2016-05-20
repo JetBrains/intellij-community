@@ -744,8 +744,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(@NotNull PropertyChangeEvent evt) {
-          JBTableHeader.this.revalidate();
-          JBTableHeader.this.repaint();
+          if ("enabled".equals(evt.getPropertyName())) {
+            JBTableHeader.this.repaint();
+          }
         }
       });
     }
