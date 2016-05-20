@@ -37,4 +37,20 @@ new MyInheritor().pp<caret>p
 ''', GrAccessorMethod)
     assert resolved.getName() == 'getPpp'
   }
+
+  void 'test transform anonymous classes'() {
+    myFixture.addFileToProject('Base.groovy', '''\
+abstract class Base {
+  abstract getFoo()
+}
+''')
+    myFixture.configureByText('a.groovy', '''\
+class A {
+  def baz = new Base() { // no error, getFoo() exists
+    def foo = 1
+  }
+}
+''')
+    myFixture.checkHighlighting()
+  }
 }

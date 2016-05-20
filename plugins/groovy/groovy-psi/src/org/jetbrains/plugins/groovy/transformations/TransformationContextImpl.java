@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,10 +102,10 @@ public class TransformationContextImpl implements TransformationContext {
     return myExtendsTypes;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getClassName() {
-    return ObjectUtils.notNull(myCodeClass.getName());
+    return myCodeClass.getName();
   }
 
   @Override

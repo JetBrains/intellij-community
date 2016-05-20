@@ -39,11 +39,9 @@ fun transformDefinition(definition: GrTypeDefinition): TransformationResult {
   ourTransformationContext.get().put(definition, true)
   try {
     val transformationContext = TransformationContextImpl(definition)
-    if (definition.name != null) {
-      for (transformation in org.jetbrains.plugins.groovy.transformations.AstTransformationSupport.EP_NAME.extensions) {
-        ProgressManager.checkCanceled()
-        transformation.applyTransformation(transformationContext)
-      }
+    for (transformation in org.jetbrains.plugins.groovy.transformations.AstTransformationSupport.EP_NAME.extensions) {
+      ProgressManager.checkCanceled()
+      transformation.applyTransformation(transformationContext)
     }
     return transformationContext.transformationResult
   }

@@ -68,7 +68,7 @@ public interface TransformationContext {
     return getCodeClass().getResolveScope();
   }
 
-  @NotNull
+  @Nullable
   String getClassName();
 
   @Nullable
