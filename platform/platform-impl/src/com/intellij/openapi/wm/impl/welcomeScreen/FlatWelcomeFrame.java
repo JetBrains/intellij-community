@@ -106,7 +106,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     setTitle(WELCOME_TITLE);
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
-    JBDimension size = JBUI.size(width, getMinimumSize().height);
+    // Android Studio: Changed default frame height to accommodate extra action.
+    JBDimension size = JBUI.size(width, Math.max(460 /* Default height */, getMinimumSize().height);
     setSize(size);
     setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
