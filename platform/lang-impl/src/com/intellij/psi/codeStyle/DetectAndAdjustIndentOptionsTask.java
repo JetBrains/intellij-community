@@ -110,7 +110,10 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   public void scheduleInBackgroundForCommittedDocument() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      computeInReadAction(new DumbProgressIndicator());
+      Continuation continuation = performInReadAction(new DumbProgressIndicator());
+      if (continuation != null) {
+        continuation.getAction().run();
+      }
     }
     else {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
