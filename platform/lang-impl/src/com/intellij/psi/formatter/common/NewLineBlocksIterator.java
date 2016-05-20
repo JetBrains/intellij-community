@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Iterator;
@@ -37,11 +39,11 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   private Stack<Block> myStack = new Stack<>();
 
   @TestOnly
-  public NewLineBlocksIterator(Block root, Document document) {
+  public NewLineBlocksIterator(@NotNull Block root, @NotNull Document document) {
     this(root, document, null);
   }
   
-  public NewLineBlocksIterator(Block root, Document document, ProgressIndicator indicator) {
+  public NewLineBlocksIterator(@NotNull Block root, @NotNull Document document, @Nullable ProgressIndicator indicator) {
     myStack.add(root);
     myDocument = document;
     myTotalLines = myDocument.getLineCount();
