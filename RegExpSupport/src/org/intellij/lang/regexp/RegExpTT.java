@@ -117,11 +117,15 @@ public interface RegExpTT {
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
     // \k<name>
     IElementType RUBY_NAMED_GROUP_REF = new RegExpElementType("RUBY_NAMED_GROUP_REF");
+    // \g<name>
+    IElementType RUBY_NAMED_GROUP_CALL = new RegExpElementType("RUBY_NAMED_GROUP_CALL");
 
     // (?'name'...
     IElementType RUBY_QUOTED_NAMED_GROUP = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP");
     // \k'name'
     IElementType RUBY_QUOTED_NAMED_GROUP_REF = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_REF");
+    // \g'name'
+    IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 

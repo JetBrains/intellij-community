@@ -407,10 +407,10 @@ public class RegExpParser implements PsiParser {
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
-    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.GT);
     }
-    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
     else if (type == RegExpTT.PYTHON_COND_REF) {
