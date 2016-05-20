@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -49,6 +50,7 @@ public class TransformationContextImpl implements TransformationContext {
   private final Collection<PsiClass> myInnerClasses = ContainerUtil.newArrayList();
   private final List<PsiClassType> myImplementsTypes = ContainerUtil.newArrayList();
   private final List<PsiClassType> myExtendsTypes = ContainerUtil.newArrayList();
+  private final MemberBuilder myMemberBuilder = new MemberBuilder(this);
 
   public TransformationContextImpl(@NotNull GrTypeDefinition codeClass) {
     myCodeClass = codeClass;
@@ -99,12 +101,6 @@ public class TransformationContextImpl implements TransformationContext {
   @NotNull
   public List<PsiClassType> getExtendsTypes() {
     return myExtendsTypes;
-  }
-
-  @Override
-  @NotNull
-  public PsiManager getManager() {
-    return getCodeClass().getManager();
   }
 
   @NotNull
@@ -211,6 +207,12 @@ public class TransformationContextImpl implements TransformationContext {
   @Override
   public void addInterface(@NotNull PsiClassType type) {
     (!getCodeClass().isInterface() || getCodeClass().isTrait() ? myImplementsTypes : myExtendsTypes).add(type);
+  }
+
+  @NotNull
+  @Override
+  public MemberBuilder getMemberBuilder() {
+    return myMemberBuilder;
   }
 
   @NotNull

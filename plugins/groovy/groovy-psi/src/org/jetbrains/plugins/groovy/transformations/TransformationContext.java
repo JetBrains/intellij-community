@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.transformations;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +49,24 @@ public interface TransformationContext {
   List<PsiClassType> getExtendsTypes();
 
   @NotNull
-  PsiManager getManager();
+  default Project getProject() {
+    return getCodeClass().getProject();
+  }
+
+  @NotNull
+  default JavaPsiFacade getPsiFacade() {
+    return JavaPsiFacade.getInstance(getProject());
+  }
+
+  @NotNull
+  default PsiManager getManager() {
+    return getCodeClass().getManager();
+  }
+
+  @NotNull
+  default GlobalSearchScope getResolveScope() {
+    return getCodeClass().getResolveScope();
+  }
 
   @NotNull
   String getClassName();
@@ -83,4 +103,7 @@ public interface TransformationContext {
   void setSuperType(@NotNull PsiClassType type);
 
   void addInterface(@NotNull PsiClassType type);
+
+  @NotNull
+  MemberBuilder getMemberBuilder();
 }
