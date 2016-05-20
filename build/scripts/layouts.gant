@@ -908,6 +908,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("forms_rt")
         module("forms-compiler")
         module("instrumentation-util")
+        module("instrumentation-util-8")
         module("jps-builders")
         module("jps-standalone-builder")
         module("java-runtime")
