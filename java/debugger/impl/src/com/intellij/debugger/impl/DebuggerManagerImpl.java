@@ -214,7 +214,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
-    debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void processAttached(final DebugProcess process) {
         process.removeDebugProcessListener(this);

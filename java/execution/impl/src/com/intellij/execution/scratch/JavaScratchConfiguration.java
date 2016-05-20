@@ -17,8 +17,8 @@ package com.intellij.execution.scratch;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -86,7 +86,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
         if (getRunnerSettings() instanceof DebuggingRunnerData) {
           final VirtualFile vFile = getConfiguration().getScratchVirtualFile();
           if (vFile != null) {
-            DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessAdapter() {
+            DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessListener() {
               @Override
               public void processAttached(DebugProcess process) {
                 if (vFile.isValid()) {

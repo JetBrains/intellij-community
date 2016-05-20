@@ -152,7 +152,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
-    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void paused(SuspendContext suspendContext) {
         myThreadBlockedMonitor.stopWatching(
@@ -1927,7 +1927,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     semaphore.down();
 
     final AtomicBoolean connectorIsReady = new AtomicBoolean(false);
-    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void connectorIsReady() {
         connectorIsReady.set(true);
