@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -36,10 +37,10 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
+import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
-
 /**
  * @author spleaner
  */
@@ -415,7 +416,7 @@ class Outer {
   }
 
   private TemplateState getState() {
-    TemplateManagerImpl.getTemplateState(getEditor())
+    editor?.with { TemplateManagerImpl.getTemplateState(it) }
   }
 
   public void testIter1() throws Throwable {
@@ -535,6 +536,60 @@ class Outer {
     assertInstanceOf(
       assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())),
       EverywhereContextType.class);
+  }
+
+  public void testJavaOtherContext() throws IOException {
+    def manager = (TemplateManagerImpl)TemplateManager.getInstance(project)
+    def stmtContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement)
+
+    configureFromFileText("a.java", "class Foo {{ iter<caret>  }}");
+
+    TemplateImpl template = TemplateSettings.instance.getTemplate("iter", "iterations")
+    assert (template in manager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
+
+    assert template.templateContext.getOwnValue(stmtContext)
+    assert !template.templateContext.getOwnValue(stmtContext.baseContextType)
+    template.templateContext.putValue(stmtContext, false)
+    template.templateContext.putValue(stmtContext.baseContextType, true)
+    try {
+      assert !(template in manager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
+    } finally {
+      template.templateContext.putValue(stmtContext, true)
+      template.templateContext.putValue(stmtContext.baseContextType, false)
+    }
+  }
+
+  public void testDontSaveDefaultContexts() {
+    def defElement = JDOMUtil.loadDocument('''\
+<context>
+  <option name="JAVA_STATEMENT" value="false"/>
+  <option name="JAVA_CODE" value="true"/>
+</context>''').rootElement
+    def defContext = new TemplateContext()
+    defContext.readTemplateContext(defElement)
+
+    assert !defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement))
+    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Declaration))
+    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+
+    def copy = defContext.createCopy()
+
+    def write = new Element("context")
+    copy.writeTemplateContext(write, defContext)
+    assert write.children.empty
+
+    copy.putValue(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
+
+    write = new Element("context")
+    copy.writeTemplateContext(write, defContext)
+    assert JDOMUtil.writeElement(write) == '''\
+<context>
+  <option name="JAVA_COMMENT" value="false" />
+</context>'''
+
+    write = new Element("context")
+    copy.writeTemplateContext(write, null)
+    assert write.children.size() == 3 : JDOMUtil.writeElement(write)
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
