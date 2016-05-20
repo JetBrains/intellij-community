@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,7 +379,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         });
       }
       final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-      final PsiType qualifierType = info.getQualifierInstanceType();
+      PsiType qualifierType = info.getQualifierInstanceType();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        qualifierType = ResolveUtil.unwrapClassType(qualifierType);
+      }
 
       //check methods processed by @Category(ClassWhichProcessMethod) annotation
       if (qualifierType != null &&
