@@ -48,7 +48,7 @@ public class PsiLiteralStub extends StubBase<PsiLiteralExpressionImpl> {
       JavaLexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
       lexer.start(myLiteralText);
       myLiteralType = type = lexer.getTokenType();
-      assert type != null;
+      assert type != null : myLiteralText;
     }
     return type;
   }
