@@ -19,12 +19,9 @@ import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +30,14 @@ import org.jetbrains.annotations.Nullable;
  * the indentation, it forwards the request to FormatterBasedLineIndentProvider.
  */
 public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
+  
+  protected enum JavaLikeElement implements SemanticEditorPosition.SyntaxElement {
+    Whitespace,
+    Semicolon,
+    BlockClosingBrace
+  }
+  
+  
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
@@ -54,39 +59,34 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   @Nullable
   protected Indent.Type getIndent(@NotNull Editor editor, int offset) {
     if (offset > 0) {
-      CharSequence docChars = editor.getDocument().getCharsSequence();
-      EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-      HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-      if (isWhitespace(iterator.getTokenType())) {
-        if (containsLineBreaks(iterator, docChars)) {
-          iterator.retreat();
-          if (!iterator.atEnd()) {
-            if (isEndOfCodeBlock(iterator)) return Indent.Type.NONE;
-          }
-        }
+      if (matchesRule(editor, offset - 1,
+                 position -> position.isAt(JavaLikeElement.Whitespace) &&
+                            position.isAtMultiline()
+                            && position
+                              .before()
+                              .beforeOptional(JavaLikeElement.Semicolon)
+                              .beforeOptional(JavaLikeElement.Whitespace)
+                              .isAt(JavaLikeElement.BlockClosingBrace)
+      )) {
+        return Indent.Type.NONE;
       }
     }
     return null;
   }
-  
-  protected abstract boolean isWhitespace(@NotNull IElementType tokenType);
-  
-  private static boolean containsLineBreaks(@NotNull HighlighterIterator iterator, @NotNull CharSequence chars) {
-    return CharArrayUtil.containLineBreaks(chars, iterator.getStart(), iterator.getEnd());
-  }
-  
-  protected boolean isEndOfCodeBlock(@NotNull HighlighterIterator iterator) {
-    if (isSemicolon(iterator.getTokenType())) iterator.retreat();
-    if (!iterator.atEnd()) {
-      if (isWhitespace(iterator.getTokenType())) iterator.retreat();
-      if (!iterator.atEnd()) {
-        return isBlockClosingBrace(iterator.getTokenType());
+
+  private boolean matchesRule(@NotNull Editor editor, int offset, @NotNull Rule rule) {
+    SemanticEditorPosition editorPosition = new SemanticEditorPosition((EditorEx)editor, offset) {
+      @Override
+      public SyntaxElement map(@NotNull IElementType elementType) {
+        return mapType(elementType);
       }
-    }
-    return false;
+    };
+    return rule.check(editorPosition);
   }
   
-  protected abstract boolean isSemicolon(@NotNull IElementType tokenType);
+  protected abstract SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType);
   
-  protected abstract boolean isBlockClosingBrace(@NotNull IElementType tokenType);
+  private interface Rule {
+    boolean check(SemanticEditorPosition wrapper);
+  }
 }
