@@ -396,6 +396,10 @@
       <pattern>a\p{123}</pattern>
       <expected>ERR</expected>
     </test>
+    <test>
+      <pattern>[\p{nothing}]</pattern>
+      <expected>ERR</expected>
+    </test>
     <test verify="false">
       <pattern><![CDATA[a\p{<error descr="Character family name expected">*</error>}b]]></pattern>
       <expected>OK</expected>
