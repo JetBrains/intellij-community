@@ -699,7 +699,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReachedInternal(suspendContext, true);
+    positionReachedInternal(suspendContext, false);
 
     if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
@@ -763,10 +763,10 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   /**
-   * @param nonUserEvent true means stopping was caused by a breakpoint or an external signal, and the tool window should be shown.
+   * @param steppingEvent true means stopping was caused by a breakpoint or an external signal, and the tool window should be shown.
    *                     false means stopping was caused by stepping, and the tool window should not be shown.
    */
-  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean nonUserEvent) {
+  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean steppingEvent) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -786,34 +786,39 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     myDispatcher.getMulticaster().sessionPaused();
-    
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (mySessionTab != null) {
-        if (nonUserEvent && XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
-          mySessionTab.toFront(true, this::updateExecutionPosition);
+
+    // user attractions should only be made if event happens independently (e.g. program paused/suspended)
+    // and should not be made when user steps in the code
+    if (!steppingEvent) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (mySessionTab != null) {
+
+          if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+            mySessionTab.toFront(true, this::updateExecutionPosition);
+          }
+
+          if (myTopFramePosition == null) {
+            // if there is no source position available, we should somehow tell the user that session is stopped.
+            // the best way is to show the stack frames.
+            XDebugSessionTab.showFramesView(this);
+          }
+
+          mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
         }
-        
-        if (myTopFramePosition == null) {
-          // if there is no source position available, we should somehow tell the user that session is stopped.
-          // the best way is to show the stack frames.
-          XDebugSessionTab.showFramesView(this);
-        }
-        
-        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
-      }
-    });
+      });
+    }
   }
 
   @Override
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
     myActiveNonLineBreakpoint = null;
-    positionReachedInternal(suspendContext, false);
+    positionReachedInternal(suspendContext, true);
   }
 
   @Override
   public void sessionPaused(@NotNull XSuspendContext suspendContext) {
     myActiveNonLineBreakpoint = null;
-    positionReachedInternal(suspendContext, true);
+    positionReachedInternal(suspendContext, false);
   }
 
   @Override

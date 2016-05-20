@@ -356,6 +356,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
         if (ui != null) {
           ui.restoreContent(viewId);
+          Content content = ui.findContent(viewId);
+
+          // if the view is not visible (e.g. Console tab is selected, while Debugger tab is not)
+          // make sure we make it visible to the user
+          if (content != null) {
+            ui.select(content, false);
+          }
         }
       }
     }
