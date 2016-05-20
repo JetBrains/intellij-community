@@ -21,19 +21,19 @@ import org.jetbrains.annotations.NotNull;
 class IndentOptionsAdjusterImpl implements IndentOptionsAdjuster {
   private static final double RATE_THRESHOLD = 0.8;
   private static final int MAX_INDENT_TO_DETECT = 8;
-
-  private final boolean isTabsUsed;
-  private final boolean isSpacesUsed;
-  private final int newIndentSize;
+  
+  private final IndentUsageStatistics myStats;
 
   public IndentOptionsAdjusterImpl(IndentUsageStatistics stats) {
-    isTabsUsed = isTabsUsed(stats);
-    isSpacesUsed = isSpacesUsed(stats);
-    newIndentSize = isSpacesUsed ? getPositiveIndentSize(stats) : 0;
+    myStats = stats;    
   }
 
   @Override
   public void adjust(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    boolean isTabsUsed = isTabsUsed(myStats);
+    boolean isSpacesUsed = isSpacesUsed(myStats);
+    int newIndentSize = isSpacesUsed ? getPositiveIndentSize(myStats) : 0;
+    
     if (isTabsUsed) {
       adjustForTabUsage(indentOptions);
     }
