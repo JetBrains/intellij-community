@@ -23,14 +23,15 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private PsiClass myServlet;
   private RefPackage myDefaultPackage;
   private THashMap<String, RefPackage> myPackages;
+  private THashMap<String, RefImplicitConstructor> myImplicitConstructors;
   private final RefManagerImpl myRefManager;
   private PsiElementVisitor myProjectIterator;
   private EntryPointsManager myEntryPointsManager;
@@ -73,6 +75,29 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myApplet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
     myServlet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
 
+  }
+
+  @Override
+  public RefImplicitConstructor getImplicitConstructor(String classFQName) {
+    if (myImplicitConstructors == null) {
+      myImplicitConstructors = new THashMap<>();
+    }
+
+    RefImplicitConstructor constructor = myImplicitConstructors.get(classFQName);
+    if (constructor == null) {
+      final RefEntity entity = getReference(CLASS, classFQName);
+      if (entity == null) return null;
+      final RefClass refClass = (RefClass)entity;
+      for (RefMethod method : refClass.getConstructors()) {
+        if (method instanceof RefImplicitConstructor) {
+          constructor = (RefImplicitConstructor)method;
+          myImplicitConstructors.put(classFQName, constructor);
+          break;
+        }
+      }
+    }
+
+    return constructor;
   }
 
   @Override
@@ -192,6 +217,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = null;
     }
     myPackages = null;
+    myImplicitConstructors = null;
     myApplet = null;
     myAppMainPattern = null;
     myAppPremainPattern = null;
@@ -241,6 +267,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   @Nullable
   public RefEntity getReference(final String type, final String fqName) {
+    if (IMPLICIT_CONSTRUCTOR.equals(type)) {
+      return getImplicitConstructor(fqName);
+    }
     if (METHOD.equals(type)) {
       return RefMethodImpl.methodFromExternalName(myRefManager, fqName);
     }
@@ -262,7 +291,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   @Nullable
   public String getType(final RefEntity ref) {
-    if (ref instanceof RefMethod) {
+    if (ref instanceof RefImplicitConstructor) {
+      return IMPLICIT_CONSTRUCTOR;
+    }
+    else if (ref instanceof RefMethod) {
       return METHOD;
     }
     else if (ref instanceof RefClass) {

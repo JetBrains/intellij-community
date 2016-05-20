@@ -34,11 +34,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
   @NonNls public static final String METHOD = "method";
+  @NonNls public static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   @NonNls public static final String FIELD = "field";
   @NonNls public static final String PARAMETER = "parameter";
   //used in OfflineProjectDescriptor
   @NonNls public static final String PACKAGE = "package";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
+
+
+  public abstract RefImplicitConstructor getImplicitConstructor(String classFQName);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the package

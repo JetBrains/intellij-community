@@ -41,7 +41,6 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
       myIsPersistent = isPersistent;
       myRefElement = ref;
-      ref = ref.getRefManager().getRefinedElement(ref);
       myFQName = ref.getExternalName();
       myType = ref.getRefManager().getType(ref);
     }
