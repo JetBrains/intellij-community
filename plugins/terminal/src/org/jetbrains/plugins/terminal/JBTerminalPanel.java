@@ -87,7 +87,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "GotoClass",
     "GotoSymbol",
     
-    "ShowSettings"
+    "ShowSettings",
+    "RecentFiles"
   };
 
 
