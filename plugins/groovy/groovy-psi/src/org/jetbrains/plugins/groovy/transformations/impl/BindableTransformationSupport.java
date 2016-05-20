@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -118,8 +117,7 @@ public class BindableTransformationSupport implements AstTransformationSupport {
       method.addModifier(PsiModifier.PUBLIC);
       method.setOriginInfo(ORIGIN_INFO);
       if (docDelegate == null) continue;
-      PsiMethod[] originalMethods = docDelegate.findMethodsBySignature(method, false);
-      method.putUserData(ResolveUtil.DOCUMENTATION_DELEGATE, ArrayUtil.getFirstElement(originalMethods));
+      method.putUserData(ResolveUtil.DOCUMENTATION_DELEGATE, docDelegate.findMethodBySignature(method, false));
     }
 
     context.addMethods(methods);
