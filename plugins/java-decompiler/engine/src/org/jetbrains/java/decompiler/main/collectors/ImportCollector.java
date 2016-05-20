@@ -15,7 +15,6 @@
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
-import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -46,13 +45,12 @@ public class ImportCollector {
     }
   }
 
-  public String getShortName(String fullname) {
-    return getShortName(fullname, true);
+  public String getShortName(String fullName) {
+    return getShortName(fullName, true);
   }
 
   public String getShortName(String fullName, boolean imported) {
-    ClassesProcessor clProc = DecompilerContext.getClassProcessor();
-    ClassNode node = clProc.getMapRootClasses().get(fullName.replace('.', '/'));
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/'));
 
     String result = null;
     if (node != null && node.classStruct.isOwn()) {
