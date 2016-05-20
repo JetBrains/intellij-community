@@ -45,7 +45,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
@@ -484,7 +483,6 @@ public class EnterHandler extends BaseEnterHandler {
       if (newIndent == null) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);
-      DetectedIndentOptionsNotificationProvider.updateIndentNotification(myFile, false);
       return myOffset + delta;
     }
 
