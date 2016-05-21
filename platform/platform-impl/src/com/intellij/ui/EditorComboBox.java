@@ -280,7 +280,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
 
   @Override
   public void addNotify() {
-    releaseEditor();
+    releaseEditor(false);
     setEditor();
 
     super.addNotify();
@@ -318,16 +318,16 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   public void removeNotify() {
     super.removeNotify();
     if (myEditorField != null) {
-      releaseEditor();
+      releaseEditor(true);
       myEditorField = null;
     }
   }
 
-  private void releaseEditor() {
+  private void releaseEditor(boolean duringRemoveNotify) {
     if (myEditorField != null) {
       final Editor editor = myEditorField.getEditor();
       if (editor != null) {
-        myEditorField.releaseEditor(editor);
+        myEditorField.releaseEditor(editor, duringRemoveNotify);
       }
     }
   }
