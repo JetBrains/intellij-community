@@ -474,6 +474,9 @@ public class RegExpParser implements PsiParser {
     }
     else {
       checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
+      if (builder.getTokenType() == RegExpTT.CARET) {
+        builder.advanceLexer();
+      }
       if (builder.getTokenType() == RegExpTT.NAME) {
         builder.advanceLexer();
       }
