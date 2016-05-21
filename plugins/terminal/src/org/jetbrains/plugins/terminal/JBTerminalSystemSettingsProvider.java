@@ -58,13 +58,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        int size;
-        if (UISettings.getInstance().PRESENTATION_MODE) {
-          size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
-        }
-        else {
-          size = myColorScheme.getGlobal().getConsoleFontSize();
-        }
+        int size = consoleFontSize(JBTerminalSystemSettingsProvider.this.myColorScheme);
 
         if (myColorScheme.getConsoleFontSize() != size) {
           myColorScheme.setConsoleFontSize(size);
@@ -80,6 +74,17 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
         fireFontChanged();
       }
     }, this);
+  }
+
+  private static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
+    int size;
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
+    }
+    else {
+      size = colorScheme.getGlobal().getConsoleFontSize();
+    }
+    return size;
   }
 
   @Override
@@ -461,7 +466,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @Override
     public int getConsoleFontSize() {
       if (myConsoleFontSize == -1) {
-        return getGlobal().getConsoleFontSize();
+        return consoleFontSize(this);
       }
       else {
         return myConsoleFontSize;
