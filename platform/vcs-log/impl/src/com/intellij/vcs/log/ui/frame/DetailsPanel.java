@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsAdapter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -74,10 +75,9 @@ class DetailsPanel extends JPanel {
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
     myScrollPane.getHorizontalScrollBar().setUnitIncrement(JBUI.scale(10));
-    myMainContentPanel = new JPanel() {
+    myMainContentPanel = new ScrollablePanel() {
       @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
+      public boolean getScrollableTracksViewportWidth() {
         boolean expanded = false;
         for (Component c : getComponents()) {
           if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
@@ -85,11 +85,7 @@ class DetailsPanel extends JPanel {
             break;
           }
         }
-        if (expanded) {
-          return size;
-        }
-        size.width = myScrollPane.getViewport().getWidth() - 5;
-        return size;
+        return !expanded;
       }
 
       @Override
