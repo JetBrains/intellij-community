@@ -274,10 +274,11 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
-    private int myConsoleFontSize = -1;
+    private int myConsoleFontSize;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
       updateGlobalScheme(globalScheme);
+      myConsoleFontSize = consoleFontSize(this);
       initFonts();
     }
 
@@ -466,7 +467,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @Override
     public int getConsoleFontSize() {
       if (myConsoleFontSize == -1) {
-        return consoleFontSize(this);
+        return getGlobal().getConsoleFontSize();
       }
       else {
         return myConsoleFontSize;
