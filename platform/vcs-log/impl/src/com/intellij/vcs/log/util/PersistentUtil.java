@@ -48,9 +48,10 @@ public class PersistentUtil {
   @NotNull
   private static File getStorageFile(@NotNull String logId, @NotNull String logKind, int version) {
     File subdir = new File(LOG_CACHE, logKind);
-    final File mapFile = new File(subdir, PathUtilRt.suggestFileName(logId, true, true) + "." + version);
+    String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
+    final File mapFile = new File(subdir, safeLogId + "." + version);
     if (!mapFile.exists()) {
-      IOUtil.deleteAllFilesStartingWith(new File(subdir, logId));
+      IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId));
     }
     return mapFile;
   }
