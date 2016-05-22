@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -47,7 +48,7 @@ public class PersistentUtil {
   @NotNull
   private static File getStorageFile(@NotNull String logId, @NotNull String logKind, int version) {
     File subdir = new File(LOG_CACHE, logKind);
-    final File mapFile = new File(subdir, logId + "." + version);
+    final File mapFile = new File(subdir, PathUtilRt.suggestFileName(logId, true, true) + "." + version);
     if (!mapFile.exists()) {
       IOUtil.deleteAllFilesStartingWith(new File(subdir, logId));
     }
