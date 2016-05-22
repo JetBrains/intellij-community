@@ -52,8 +52,8 @@ public class TableWithProgress extends JBTable {
   protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
     if (isBusy()) {
-      Dimension size = super.getPreferredSize();
-      paintFooter(g, 0, size.height, size.width, myBusyIcon.getHeight());
+      int preferredHeight = super.getPreferredSize().height;
+      paintFooter(g, 0, preferredHeight, getWidth(), getHeight() - preferredHeight);
     }
   }
 
