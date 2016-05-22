@@ -53,3 +53,5 @@ SpellChecker 1.0
 com.fedot.idea.requirejs 0.24
 com.widerwille.quicklook 0.8
 com.phpuaca 1.3.1 1.2.1
+coffeescript-idea 0.1-1-gae5a
+RESTClient 1.2
