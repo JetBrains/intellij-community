@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
@@ -35,6 +36,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.render.TextLabelPainter;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,18 +62,33 @@ class CommitPanel extends JBPanel {
 
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myDataPanel;
+  @NotNull private final RootPanel myRootPanel;
+  @NotNull private final VcsLogColorManager myColorManager;
 
   @Nullable private VcsFullCommitDetails myCommit;
 
   public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
     myLogData = logData;
+    myColorManager = colorManager;
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
 
+    myRootPanel = new RootPanel();
     myReferencesPanel = new ReferencesPanel(colorManager);
-    myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
+    myDataPanel = new DataPanel(myLogData.getProject());
 
+    JBPanel rootPanel = new JBPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)) {
+      @Override
+      public Color getBackground() {
+        return getCommitDetailsBackground();
+      }
+    };
+    rootPanel.setOpaque(false);
+    rootPanel.setBorder(JBUI.Borders.emptyRight(5));
+    rootPanel.add(myRootPanel);
+
+    add(rootPanel);
     add(myReferencesPanel);
     add(myDataPanel);
 
@@ -82,9 +99,17 @@ class CommitPanel extends JBPanel {
     if (!Comparing.equal(myCommit, commitData)) {
       if (commitData instanceof LoadingDetails) {
         myDataPanel.setData(null);
+        myRootPanel.setRoot("", null);
       }
       else {
         myDataPanel.setData(commitData);
+        VirtualFile root = commitData.getRoot();
+        if (myColorManager.isMultipleRoots()) {
+          myRootPanel.setRoot(root.getName(), VcsLogGraphTable.getRootBackgroundColor(root, myColorManager));
+        }
+        else {
+          myRootPanel.setRoot("", null);
+        }
       }
       myCommit = commitData;
     }
@@ -105,6 +130,7 @@ class CommitPanel extends JBPanel {
 
   public void update() {
     myDataPanel.update();
+    myRootPanel.update();
   }
 
   public void updateBranches() {
@@ -127,9 +153,7 @@ class CommitPanel extends JBPanel {
 
   @NotNull
   public static JBEmptyBorder getDetailsBorder() {
-    return JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                              VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                              VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0);
+    return JBUI.Borders.empty();
   }
 
   @Override
@@ -156,20 +180,18 @@ class CommitPanel extends JBPanel {
     private static final String LINK_HREF = "show-hide-branches";
 
     @NotNull private final Project myProject;
-    private final boolean myMultiRoot;
 
     @Nullable private String myMainText;
     @Nullable private List<String> myBranches;
     private boolean myExpanded = false;
 
-    DataPanel(@NotNull Project project, boolean multiRoot) {
+    DataPanel(@NotNull Project project) {
       myProject = project;
-      myMultiRoot = multiRoot;
 
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
-      setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
+      setBorder(JBUI.Borders.empty(0, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
     }
 
     @Override
@@ -195,8 +217,7 @@ class CommitPanel extends JBPanel {
       }
       else {
         String hash = commit.getId().toShortString();
-        String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1) +
-                                         (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
+        String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1));
         String messageText = getMessageText(commit);
         myMainText = messageText + "<br/><br/>" + hashAndAuthor;
       }
@@ -453,6 +474,68 @@ class CommitPanel extends JBPanel {
     @Override
     public Color getBackground() {
       return getCommitDetailsBackground();
+    }
+  }
+
+  private static class RootPanel extends JPanel {
+    @NotNull private final TextLabelPainter myLabelPainter;
+    @NotNull private String myText = "";
+    @NotNull private Color myColor = getCommitDetailsBackground();
+
+    RootPanel() {
+      myLabelPainter = new TextLabelPainter(true) {
+        @Override
+        protected Font getLabelFont() {
+          return RootPanel.getLabelFont();
+        }
+      };
+      setOpaque(false);
+    }
+
+    @NotNull
+    private static Font getLabelFont() {
+      Font font = getCommitDetailsFont();
+      return font.deriveFont(font.getSize() - 2f);
+    }
+
+    public void setRoot(@NotNull String text, @Nullable Color color) {
+      myText = text;
+      if (text.isEmpty() || color == null) {
+        myColor = getCommitDetailsBackground();
+      }
+      else {
+        myColor = color;
+      }
+    }
+
+    public void update() {
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    public boolean isVisible() {
+      return !myText.isEmpty();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      myLabelPainter.paint((Graphics2D)g, myText, 0, 0, myColor);
+    }
+
+    @Override
+    public Color getBackground() {
+      return getCommitDetailsBackground();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
     }
   }
 

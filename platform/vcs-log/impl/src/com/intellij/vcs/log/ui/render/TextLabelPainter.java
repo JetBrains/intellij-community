@@ -60,7 +60,7 @@ public class TextLabelPainter {
                             int textPadding,
                             @NotNull Color color) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
-    g2.setFont(getFont());
+    g2.setFont(getLabelFont());
     g2.setStroke(new BasicStroke(1.5f));
 
     FontMetrics fontMetrics = g2.getFontMetrics();
@@ -82,6 +82,10 @@ public class TextLabelPainter {
 
     config.restore();
     return new Rectangle(x, y, width, height);
+  }
+
+  protected Font getLabelFont() {
+    return getFont();
   }
 
   public Rectangle paint(@NotNull Graphics2D g2, @NotNull String text, int paddingX, int paddingY, @NotNull Color color) {
