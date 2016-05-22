@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.vcs.log.data.VcsLogHashMapImpl;
@@ -43,7 +44,7 @@ public class VcsRootsRegistryImpl implements VcsRootsRegistry, Disposable {
 
   @NotNull
   private static File getStorageFile(@NotNull Project project) {
-    String logId = project.getName() + "." + project.getBaseDir().getPath().hashCode();
+    String logId = PathUtilRt.suggestFileName(project.getName(), true, true) + "." + project.getBaseDir().getPath().hashCode();
     File rootsCache = new File(VcsLogHashMapImpl.LOG_CACHE, "roots");
     final File mapFile = new File(rootsCache, logId + "." + VERSION);
     if (!mapFile.exists()) {
