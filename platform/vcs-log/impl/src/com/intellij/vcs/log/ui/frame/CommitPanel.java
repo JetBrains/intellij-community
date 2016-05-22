@@ -152,7 +152,7 @@ class CommitPanel extends JBPanel {
   }
 
   private static class DataPanel extends HtmlPanel {
-    private static final int PER_ROW = 3;
+    private static final int PER_ROW = 2;
     private static final String LINK_HREF = "show-hide-branches";
 
     @NotNull private final Project myProject;
