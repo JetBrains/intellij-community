@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class AddAntBuildFile extends AnAction {
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext dataContext = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
-    final VirtualFile[] contextFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] contextFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (contextFiles == null || contextFiles.length == 0) {
       return;
     }
@@ -85,11 +85,10 @@ public class AddAntBuildFile extends AnAction {
   }
 
   public void update(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     if (project != null) {
-      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null && files.length > 0) {
         for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

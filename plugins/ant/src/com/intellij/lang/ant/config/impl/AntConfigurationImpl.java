@@ -619,7 +619,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       try {
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        final Project project = dataContext.getData(CommonDataKeys.PROJECT);
         if (project == null || project.isDisposed()) {
           targetDone.up();
         }
