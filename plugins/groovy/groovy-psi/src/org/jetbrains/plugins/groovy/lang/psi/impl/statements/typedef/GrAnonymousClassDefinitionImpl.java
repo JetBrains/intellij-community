@@ -63,6 +63,10 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
+    GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getBaseClassName(), this);
+    }
     //noinspection ConstantConditions
     return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
@@ -108,23 +112,14 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final GrTypeDefinitionStub stub = getStub();
-    if (stub == null) {
-      myCachedBaseType = null;
+    if (isInQualifiedNew()) {
       return createClassType();
     }
 
     PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null && type.isValid()) return type;
 
-    if (isInQualifiedNew()) {
-      return createClassType();
-    }
-
-    final String refText = stub.getBaseClassName();
-    assert refText != null : stub;
-    type = new GrClassReferenceType(GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(refText, this));
-
+    type = createClassType();
     myCachedBaseType = new SoftReference<PsiClassType>(type);
     return type;
   }

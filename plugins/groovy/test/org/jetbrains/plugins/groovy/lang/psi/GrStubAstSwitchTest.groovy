@@ -19,6 +19,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.util.InheritanceUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
@@ -265,6 +266,10 @@ class A {
     assert !psiFile.contentsLoaded
 
     definition.baseClassType
+    assert psiFile.stub
+    assert !psiFile.contentsLoaded
+
+    assert InheritanceUtil.isInheritor(definition, Runnable.name)
     assert psiFile.stub
     assert !psiFile.contentsLoaded
   }
