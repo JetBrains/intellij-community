@@ -135,7 +135,23 @@ public class TaskExecutionTreeTable extends TreeTable {
 
   @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
-    if (column == 1) {
+    if(column == 0) {
+      final TableCellRenderer cellRenderer = super.getCellRenderer(row, column);
+      return new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          Component component = cellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          final Color bg = isSelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          component.setBackground(bg);
+          return component;
+        }
+      };
+    } else if (column == 1) {
       return new DefaultTableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table,
