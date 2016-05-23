@@ -71,10 +71,7 @@ public class GrStubIndexer {
   @Nullable
   private static Decl processMember(StubElement<?> el, Set<String> namesCache) {
     if (el instanceof GrTypeDefinitionStub) {
-      GrTypeDefinitionStub classStub = (GrTypeDefinitionStub)el;
-      if (!classStub.isAnonymousInQualifiedNew()) {
-        return processClassDecl(classStub, namesCache);
-      }
+      return processClassDecl((GrTypeDefinitionStub)el, namesCache);
     }
     ArrayList<Decl> innerList = new ArrayList<Decl>();
     for (StubElement childElement : el.getChildrenStubs()) {

@@ -34,7 +34,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int INTERFACE = 0x02;
   private static final int ENUM = 0x04;
   private static final int ANNOTATION = 0x08;
-  private static final int IS_IN_QUALIFIED_NEW = 0x10;
   private static final int DEPRECATED_BY_DOC = 0x20;
   private static final int TRAIT = 0x40;
 
@@ -85,10 +84,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return (myFlags & ANONYMOUS) != 0;
   }
 
-  public boolean isAnonymousInQualifiedNew() {
-    return (myFlags & IS_IN_QUALIFIED_NEW) != 0;
-  }
-
   public boolean isInterface() {
     return (myFlags & INTERFACE) != 0;
   }
@@ -114,9 +109,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     if (typeDefinition.isAnonymous()) {
       flags |= ANONYMOUS;
       assert typeDefinition instanceof GrAnonymousClassDefinition;
-      if (((GrAnonymousClassDefinition)typeDefinition).isInQualifiedNew()) {
-        flags |= IS_IN_QUALIFIED_NEW;
-      }
     }
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;

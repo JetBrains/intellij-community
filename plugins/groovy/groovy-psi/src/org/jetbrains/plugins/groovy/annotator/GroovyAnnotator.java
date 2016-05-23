@@ -1236,12 +1236,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
                            : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
           myHolder.createErrorAnnotation(refElement, message);
         }
-        return;
-      }
-      if (newExpression.getQualifier() != null) {
-        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
-          myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
-        }
       }
     }
   }
