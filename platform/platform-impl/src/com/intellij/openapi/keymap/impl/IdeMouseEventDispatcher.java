@@ -271,8 +271,6 @@ public final class IdeMouseEventDispatcher {
           e.consume();
         }
       }
-      if (actions.length > 0 && e.isConsumed())
-        return true;
     }
     return e.getButton() > 3;
   }
