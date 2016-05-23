@@ -26,7 +26,6 @@ import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.simple.ThreesideDiffChangeBase.ConflictType;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -143,7 +142,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
             result[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
             result[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
 
-            ConflictType type = ThreesideDiffChangeBase.calcType(fragment, documents, comparisonPolicy);
+            MergeConflictType type = DiffUtil.getLineMergeType(fragment, documents, comparisonPolicy);
             if (!type.isChange(Side.LEFT)) result[0] = null;
             if (!type.isChange(Side.RIGHT)) result[2] = null;
             return result;

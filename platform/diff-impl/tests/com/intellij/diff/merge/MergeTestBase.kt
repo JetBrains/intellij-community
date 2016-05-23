@@ -293,7 +293,7 @@ abstract class MergeTestBase : DiffTestCase() {
       val actual = change.type
       val isLeftChange = changeType != RIGHT
       val isRightChange = changeType != LEFT
-      assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isLeftChange, actual.isRightChange))
+      assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isChange(Side.LEFT), actual.isChange(Side.RIGHT)))
     }
 
     fun Int.assertResolved(type: SidesState) {

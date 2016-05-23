@@ -29,6 +29,7 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -98,6 +99,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -946,6 +948,83 @@ public class DiffUtil {
       LOG.error("Diff fragment should not be empty");
       return TextDiffType.MODIFIED;
     }
+  }
+
+  @NotNull
+  public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
+                                               @NotNull Equality<ThreeSide> equality) {
+    boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
+    boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
+    boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
+    assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
+
+    if (isBaseEmpty) {
+      if (isLeftEmpty) { // --=
+        return new MergeConflictType(TextDiffType.INSERTED, false, true);
+      }
+      else if (isRightEmpty) { // =--
+        return new MergeConflictType(TextDiffType.INSERTED, true, false);
+      }
+      else { // =-=
+        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        return new MergeConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
+      }
+    }
+    else {
+      if (isLeftEmpty && isRightEmpty) { // -=-
+        return new MergeConflictType(TextDiffType.DELETED);
+      }
+      else { // -==, ==-, ===
+        boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
+        if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
+
+        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        return new MergeConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
+      }
+    }
+  }
+
+  @NotNull
+  public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
+                                                   @NotNull List<? extends Document> documents,
+                                                   @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareLineMergeContents(fragment, documents, policy, side1, side2));
+  }
+
+  private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
+                                                  @NotNull List<? extends Document> documents,
+                                                  @NotNull ComparisonPolicy policy,
+                                                  @NotNull ThreeSide side1,
+                                                  @NotNull ThreeSide side2) {
+    int start1 = fragment.getStartLine(side1);
+    int end1 = fragment.getEndLine(side1);
+    int start2 = fragment.getStartLine(side2);
+    int end2 = fragment.getEndLine(side2);
+
+    if (end2 - start2 != end1 - start1) return false;
+
+    Document document1 = side1.select(documents);
+    Document document2 = side2.select(documents);
+
+    for (int i = 0; i < end1 - start1; i++) {
+      int line1 = start1 + i;
+      int line2 = start2 + i;
+
+      CharSequence content1 = getLinesContent(document1, line1, line1 + 1);
+      CharSequence content2 = getLinesContent(document2, line2, line2 + 1);
+      if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
+    }
+
+    return true;
+  }
+
+  private static boolean isLineMergeIntervalEmpty(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {
+    return fragment.getStartLine(side) == fragment.getEndLine(side);
   }
 
   //
