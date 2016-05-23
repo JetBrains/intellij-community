@@ -861,6 +861,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("binary-resources")
+        module("chunkio")
         module("ddmlib")
         module("dvlib")
         module("draw9patch")
@@ -870,6 +871,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("lint-checks")
         module("ninepatch")
         module("perflib")
+        module("pixelprobe")
         module("rpclib")
         //module("builder-model")
         module("builder-test-api")
