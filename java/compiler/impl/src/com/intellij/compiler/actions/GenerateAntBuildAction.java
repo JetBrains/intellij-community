@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -103,10 +102,9 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   @Override
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(project != null);
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(e.getProject() != null);
   }
 
   private void generate(final Project project, final GenerationOptions genOptions) {
