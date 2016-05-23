@@ -30,11 +30,11 @@ import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
@@ -611,16 +611,16 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static List<MergeWordFragment> compareThreesideInner(@NotNull List<CharSequence> chunks,
-                                                              @NotNull ComparisonPolicy comparisonPolicy,
-                                                              @NotNull ProgressIndicator indicator) {
+  public static MergeInnerDifferences compareThreesideInner(@NotNull List<CharSequence> chunks,
+                                                            @NotNull ComparisonPolicy comparisonPolicy,
+                                                            @NotNull ProgressIndicator indicator) {
     if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
 
     if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
       if (isChunksEquals(chunks.get(0), chunks.get(1), comparisonPolicy) &&
           isChunksEquals(chunks.get(0), chunks.get(2), comparisonPolicy)) {
         // whitespace-only changes, ex: empty lines added/removed
-        return Collections.emptyList(); // whitespace-only changes, ex: empty lines added/removed
+        return new MergeInnerDifferences(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
       }
     }
 
@@ -631,7 +631,24 @@ public class DiffUtil {
     }
 
     if (chunks.get(0) != null && chunks.get(1) != null && chunks.get(2) != null) { // ===
-      return ByWord.compare(chunks.get(0), chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
+      List<DiffFragment> fragments1 = ByWord.compare(chunks.get(1), chunks.get(0), comparisonPolicy, indicator);
+      List<DiffFragment> fragments2 = ByWord.compare(chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
+
+      List<TextRange> left = new ArrayList<TextRange>();
+      List<TextRange> base = new ArrayList<TextRange>();
+      List<TextRange> right = new ArrayList<TextRange>();
+
+      for (DiffFragment wordFragment : fragments1) {
+        base.add(new TextRange(wordFragment.getStartOffset1(), wordFragment.getEndOffset1()));
+        left.add(new TextRange(wordFragment.getStartOffset2(), wordFragment.getEndOffset2()));
+      }
+
+      for (DiffFragment wordFragment : fragments2) {
+        base.add(new TextRange(wordFragment.getStartOffset1(), wordFragment.getEndOffset1()));
+        right.add(new TextRange(wordFragment.getStartOffset2(), wordFragment.getEndOffset2()));
+      }
+
+      return new MergeInnerDifferences(left, base, right);
     }
 
     // ==-, =-=, -==
@@ -642,7 +659,17 @@ public class DiffUtil {
 
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
-    return ContainerUtil.map(wordConflicts, fragment -> new MyWordFragment(side1, side2, fragment));
+    List<List<TextRange>> textRanges = ThreeSide.map(side -> {
+      if (side == side1) {
+        return ContainerUtil.map(wordConflicts, fragment -> new TextRange(fragment.getStartOffset1(), fragment.getEndOffset1()));
+      }
+      if (side == side2) {
+        return ContainerUtil.map(wordConflicts, fragment -> new TextRange(fragment.getStartOffset2(), fragment.getEndOffset2()));
+      }
+      return null;
+    });
+
+    return new MergeInnerDifferences(textRanges.get(0), textRanges.get(1), textRanges.get(2));
   }
 
   private static boolean isChunksEquals(@Nullable CharSequence chunk1,
@@ -1342,35 +1369,6 @@ public class DiffUtil {
     public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
       this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
-    }
-  }
-
-  private static class MyWordFragment implements MergeWordFragment {
-    @NotNull private final ThreeSide mySide1;
-    @NotNull private final ThreeSide mySide2;
-    @NotNull private final DiffFragment myFragment;
-
-    public MyWordFragment(@NotNull ThreeSide side1,
-                          @NotNull ThreeSide side2,
-                          @NotNull DiffFragment fragment) {
-      assert side1 != side2;
-      mySide1 = side1;
-      mySide2 = side2;
-      myFragment = fragment;
-    }
-
-    @Override
-    public int getStartOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getStartOffset1();
-      if (side == mySide2) return myFragment.getStartOffset2();
-      return 0;
-    }
-
-    @Override
-    public int getEndOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getEndOffset1();
-      if (side == mySide2) return myFragment.getEndOffset2();
-      return 0;
     }
   }
 

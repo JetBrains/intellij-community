@@ -24,9 +24,9 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
@@ -531,7 +531,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void performRediff(@NotNull final List<TextMergeChange> scheduled,
                                  @NotNull final List<InnerChunkData> data,
                                  @NotNull final ProgressIndicator indicator) {
-        final List<List<MergeWordFragment>> result = new ArrayList<>(data.size());
+        final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
         for (InnerChunkData chunkData : data) {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
         }

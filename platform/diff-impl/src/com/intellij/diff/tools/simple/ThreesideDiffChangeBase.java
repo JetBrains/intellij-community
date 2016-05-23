@@ -15,10 +15,10 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public abstract class ThreesideDiffChangeBase {
   protected abstract Editor getEditor(@NotNull ThreeSide side);
 
   @Nullable
-  protected abstract List<MergeWordFragment> getInnerFragments();
+  protected abstract MergeInnerDifferences getInnerFragments();
 
   @NotNull
   public TextDiffType getDiffType() {
@@ -127,15 +127,18 @@ public abstract class ThreesideDiffChangeBase {
   }
 
   protected void createInnerHighlighter(@NotNull ThreeSide side) {
-    List<MergeWordFragment> innerFragments = getInnerFragments();
     if (isResolved(side)) return;
+    MergeInnerDifferences innerFragments = getInnerFragments();
     if (innerFragments == null) return;
+
+    List<TextRange> ranges = innerFragments.get(side);
+    if (ranges == null) return;
 
     Editor editor = getEditor(side);
     int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
-    for (MergeWordFragment fragment : innerFragments) {
-      int innerStart = start + fragment.getStartOffset(side);
-      int innerEnd = start + fragment.getEndOffset(side);
+    for (TextRange fragment : ranges) {
+      int innerStart = start + fragment.getStartOffset();
+      int innerEnd = start + fragment.getEndOffset();
       myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
     }
   }

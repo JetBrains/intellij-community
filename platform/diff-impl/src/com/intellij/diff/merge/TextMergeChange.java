@@ -16,7 +16,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
@@ -53,7 +53,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
 
-  @Nullable private List<MergeWordFragment> myInnerFragments; // warning: might be out of date
+  @Nullable private MergeInnerDifferences myInnerFragments; // warning: might be out of date
 
   @CalledInAwt
   public TextMergeChange(int index,
@@ -172,12 +172,12 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   @Override
-  protected List<MergeWordFragment> getInnerFragments() {
+  protected MergeInnerDifferences getInnerFragments() {
     return myInnerFragments;
   }
 
   @CalledInAwt
-  public void setInnerFragments(@Nullable List<MergeWordFragment> innerFragments) {
+  public void setInnerFragments(@Nullable MergeInnerDifferences innerFragments) {
     if (myInnerFragments == null && innerFragments == null) return;
     myInnerFragments = innerFragments;
 
