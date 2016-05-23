@@ -15,8 +15,12 @@
  */
 package com.intellij.lang.properties.editor.inspections.incomplete;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
@@ -31,9 +35,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +43,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
-public class IncompletePropertyInspection extends LocalInspectionTool implements ResourceBundleEditorInspection {
+public class IncompletePropertyInspection extends LocalInspectionTool implements ResourceBundleEditorInspection,
+                                                                                 UnfairLocalInspectionTool {
   private static final String SUFFIXES_TAG_NAME = "suffixes";
   private static final String TOOL_KEY = "IncompleteProperty";
 
