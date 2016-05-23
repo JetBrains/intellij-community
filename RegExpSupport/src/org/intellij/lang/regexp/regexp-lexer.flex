@@ -80,7 +80,6 @@ import java.util.EnumSet;
 %xstate NEGATE_CLASS1
 %state CLASS2
 %state PROP
-%xstate BRACED_PROP
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
@@ -196,21 +195,9 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
-  {LBRACE}                    { yypopstate(); yypushstate(BRACED_PROP); return RegExpTT.LBRACE; }
+  {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
   "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); if (allowCategoryShorthand) return RegExpTT.CATEGORY_SHORT_HAND; else yypushback(1); }
   {ANY}                       { yypopstate(); yypushback(1); }
-}
-
-<BRACED_PROP> {
-  "^"      { if (allowCaretNegatedProperties) return RegExpTT.CARET; else return RegExpTT.BAD_CHARACTER; }
-  {NAME}   { return RegExpTT.NAME; }
-  {RBRACE} { yypopstate(); return RegExpTT.RBRACE; }
-  {ANY}               { if (allowDanglingMetacharacters) {
-                          yypopstate(); yypushback(1);
-                        } else {
-                          return RegExpTT.BAD_CHARACTER;
-                        }
-                      }
 }
 
 /* "{" \d+(,\d*)? "}" */
@@ -218,6 +205,17 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
 
 <EMBRACED> {
+  "^"                 {
+                        if (allowCaretNegatedProperties) {
+                          return RegExpTT.CARET;
+                        } else if (allowDanglingMetacharacters) {
+                          yypopstate();
+                          yypushback(1);
+                        } else {
+                          return RegExpTT.BAD_CHARACTER;
+                        }
+                      }
+  {NAME}              { return RegExpTT.NAME;   }
   [:digit:]+          { return RegExpTT.NUMBER; }
   ","                 { return RegExpTT.COMMA;  }
 
