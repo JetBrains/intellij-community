@@ -31,6 +31,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
@@ -46,9 +48,12 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
  * @author Rustam Vishnyakov
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider implements ProviderForCommittedDocument {
+  
+  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  
   private boolean myIsEnabledInTest;
-  private final List<VirtualFile> myAcceptedFiles = new WeakList<VirtualFile>();
-  private final List<VirtualFile> myDisabledFiles = new WeakList<VirtualFile>();
+  private final List<VirtualFile> myAcceptedFiles = new WeakList<>();
+  private final List<VirtualFile> myDisabledFiles = new WeakList<>();
 
   @Nullable
   @Override
@@ -72,7 +77,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
     TimeStampedIndentOptions indentOptions = getDefault(file.getFileType(), project, document.getModificationStamp());
     indentOptions.associateWithDocument(document);
 
-    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions);
+    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
     task.scheduleInBackgroundForCommittedDocument();
 
     return indentOptions;
