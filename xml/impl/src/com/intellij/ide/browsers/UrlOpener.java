@@ -16,9 +16,13 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
@@ -29,6 +33,10 @@ public abstract class UrlOpener {
 
   // different params order in order not to break compilation for launchBrowser(null, url)
   public static void launchBrowser(final @NotNull String url, final @Nullable WebBrowser browser) {
+    if (Registry.is("ide.built.in.web.server.activatable", false) &&
+        BuiltInServerManager.getInstance().isOnBuiltInWebServer(Urls.parse(url, false))) {
+      PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", "true");
+    }
     if (browser == null) {
       BrowserUtil.launchBrowser(url);
     }
