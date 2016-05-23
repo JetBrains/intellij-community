@@ -440,6 +440,7 @@ public class GeneratedParserUtilBase {
 
   // simple enter/exit methods pair that doesn't require frame object
   public static PsiBuilder.Marker enter_section_(PsiBuilder builder) {
+    ErrorState.get(builder).level++;
     return builder.mark();
   }
 
@@ -447,7 +448,10 @@ public class GeneratedParserUtilBase {
                                    PsiBuilder.Marker marker,
                                    @Nullable IElementType elementType,
                                    boolean result) {
-    close_marker_impl_(ErrorState.get(builder).currentFrame, marker, elementType, result);
+    ErrorState state = ErrorState.get(builder);
+    close_marker_impl_(state.currentFrame, marker, elementType, result);
+    run_hooks_impl_(builder, state, result ? elementType : null);
+    state.level--;
   }
 
   // complex enter/exit methods pair with frame object
@@ -467,6 +471,7 @@ public class GeneratedParserUtilBase {
 
   private static void enter_section_impl_(PsiBuilder builder, int level, int modifiers, IElementType elementType, String frameName) {
     ErrorState state = ErrorState.get(builder);
+    state.level++;
     Frame frame = state.FRAMES.alloc().init(builder, state, level, modifiers, elementType, frameName);
     Frame prevFrame = state.currentFrame;
     if (prevFrame != null && prevFrame.errorReportedAt > frame.position) {
@@ -487,12 +492,7 @@ public class GeneratedParserUtilBase {
       state.predicateCount++;
     }
     else if ((modifiers & _NOT_) != 0) {
-      if (state.predicateCount == 0) {
-        state.predicateSign = false;
-      }
-      else {
-        state.predicateSign = !state.predicateSign;
-      }
+      state.predicateSign = state.predicateCount != 0 && !state.predicateSign;
       state.predicateCount++;
     }
   }
@@ -535,29 +535,29 @@ public class GeneratedParserUtilBase {
       close_frame_impl_(state, frame, builder, marker, elementType, result, pinned);
       exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore);
     }
-    if (state.hooks != null) {
-      run_hooks_impl_(builder, state, level, pinned || result ? elementType : null);
-    }
+    run_hooks_impl_(builder, state, pinned || result ? elementType : null);
     state.FRAMES.recycle(frame);
+    state.level--;
   }
 
-  public static <T> void register_hook_(PsiBuilder builder, int level, Hook<T> hook, T param) {
+  public static <T> void register_hook_(PsiBuilder builder, Hook<T> hook, T param) {
     ErrorState state = ErrorState.get(builder);
-    state.hooks = Hooks.concat(hook, param, level, state.hooks);
+    state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
   }
 
-  public static <T> void register_hook_(PsiBuilder builder, int level, Hook<T[]> hook, T... param) {
+  public static <T> void register_hook_(PsiBuilder builder, Hook<T[]> hook, T... param) {
     ErrorState state = ErrorState.get(builder);
-    state.hooks = Hooks.concat(hook, param, level, state.hooks);
+    state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
   }
 
-  private static void run_hooks_impl_(PsiBuilder builder, ErrorState state, int level, @Nullable IElementType elementType) {
+  private static void run_hooks_impl_(PsiBuilder builder, ErrorState state, @Nullable IElementType elementType) {
+    if (state.hooks == null) return;
     PsiBuilder.Marker marker = elementType == null ? null : (PsiBuilder.Marker)builder.getLatestDoneMarker();
     if (elementType != null && marker == null) {
       builder.error("No expected done marker at offset " + builder.getCurrentOffset());
     }
-    while (state.hooks != null && state.hooks.level >= level) {
-      if (state.hooks.level == level) {
+    while (state.hooks != null && state.hooks.level >= state.level) {
+      if (state.hooks.level == state.level) {
         marker = ((Hook<Object>)state.hooks.hook).run(builder, marker, state.hooks.param);
       }
       state.hooks = state.hooks.next;
@@ -909,6 +909,7 @@ public class GeneratedParserUtilBase {
     public PairProcessor<IElementType, IElementType> altExtendsChecker;
 
     int predicateCount;
+    int level;
     boolean predicateSign = true;
     boolean suppressErrors;
     Hooks<?> hooks;
