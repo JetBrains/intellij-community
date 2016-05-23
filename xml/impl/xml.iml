@@ -21,6 +21,9 @@
     <orderEntry type="module" module-name="xml-analysis-impl" exported="" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="xml-structure-view-impl" exported="" />
+    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="module" module-name="built-in-server-api" />
   </component>
   <component name="copyright">
     <Base>

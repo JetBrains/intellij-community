@@ -295,7 +295,7 @@
 
     <lang.lineWrapStrategy language="TEXT" implementationClass="com.intellij.openapi.editor.TextLineWrapPositionStrategy"/>
 
-    <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
+    <!--<xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>-->
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
