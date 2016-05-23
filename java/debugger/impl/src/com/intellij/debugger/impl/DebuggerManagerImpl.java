@@ -26,7 +26,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -40,7 +39,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -56,6 +54,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -66,6 +65,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.jar.Attributes;
+import java.util.stream.Stream;
 
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
@@ -75,8 +75,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories =
-    new ArrayList<>();
+  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new SmartList<>();
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -209,41 +208,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myBreakpointManager.writeExternal(element);
   }
 
+  /**
+   * @deprecated to be removed with {@link DebuggerManager#registerPositionManagerFactory(Function)}
+   */
+  @Deprecated
+  public Stream<Function<DebugProcess, PositionManager>> getCustomPositionManagerFactories() {
+    return myCustomPositionManagerFactories.stream();
+  }
+
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
-    debugProcess.addDebugProcessListener(new DebugProcessListener() {
-      @Override
-      public void processAttached(final DebugProcess process) {
-        process.removeDebugProcessListener(this);
-        for (Function<DebugProcess, PositionManager> factory : myCustomPositionManagerFactories) {
-          final PositionManager positionManager = factory.fun(process);
-          if (positionManager != null) {
-            process.appendPositionManager(positionManager);
-          }
-        }
-        for (PositionManagerFactory factory : Extensions.getExtensions(PositionManagerFactory.EP_NAME, myProject)) {
-          final PositionManager manager = factory.createPositionManager(debugProcess);
-          if (manager != null) {
-            process.appendPositionManager(manager);
-          }
-        }
-      }
-
-      @Override
-      public void processDetached(final DebugProcess process, final boolean closedByUser) {
-        debugProcess.removeDebugProcessListener(this);
-      }
-
-      @Override
-      public void attachException(final RunProfileState state,
-                                  final ExecutionException exception,
-                                  final RemoteConnection remoteConnection) {
-        debugProcess.removeDebugProcessListener(this);
-      }
-    });
+    DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(environment.getSessionName(), debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
     if (executionResult == null) {

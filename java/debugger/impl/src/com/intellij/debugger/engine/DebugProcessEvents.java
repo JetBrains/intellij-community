@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -33,6 +32,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -51,6 +51,9 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @author lex
@@ -330,6 +333,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final ThreadDeathRequest threadDeathRequest = requestManager.createThreadDeathRequest();
       threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
       threadDeathRequest.enable();
+
+      // fill position managers
+      ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
+        .map(factory -> factory.fun(this))
+        .filter(Objects::nonNull)
+        .forEach(this::appendPositionManager);
+      Stream.of(Extensions.getExtensions(PositionManagerFactory.EP_NAME, getProject()))
+        .map(factory -> factory.createPositionManager(this))
+        .filter(Objects::nonNull)
+        .forEach(this::appendPositionManager);
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
