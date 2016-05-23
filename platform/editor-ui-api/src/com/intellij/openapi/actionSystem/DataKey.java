@@ -69,9 +69,6 @@ public class DataKey<T> {
     return myName.equals(dataId);
   }
 
-  /**
-   * @deprecated use {@link DataContext#getData(DataKey)}
-   */
   @Nullable
   public T getData(@NotNull DataContext dataContext) {
     //noinspection unchecked
