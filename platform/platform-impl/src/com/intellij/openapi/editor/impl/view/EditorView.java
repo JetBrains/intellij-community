@@ -47,14 +47,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
-  private final FontRenderContext myFontRenderContext;
   private final EditorPainter myPainter;
   private final EditorCoordinateMapper myMapper;
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
   private final TabFragment myTabFragment;
-  
+
+  private FontRenderContext myFontRenderContext;
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -69,7 +69,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private final Object myLock = new Object();
   
   public EditorView(EditorImpl editor) {
-    myFontRenderContext = createFontRenderContext();
+    setFontRenderContext();
     myEditor = editor;
     myDocument = editor.getDocument();
     
@@ -288,6 +288,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
       myMaxCharWidth = -1;
       myTabSize = -1;
     }
+    setFontRenderContext();
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -436,10 +437,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
 
-  private static FontRenderContext createFontRenderContext() {
+  private void setFontRenderContext() {
     Graphics2D g = FontInfo.createReferenceGraphics();
     try {
-      return g.getFontRenderContext();
+      myFontRenderContext = g.getFontRenderContext();
     }
     finally {
       g.dispose();
