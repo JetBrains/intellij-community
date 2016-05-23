@@ -147,7 +147,7 @@ class CommitPanel extends JBPanel {
       Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
                                    new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, BOTTOM_BORDER, 0,
+                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH - ReferencesPanel.H_GAP, BOTTOM_BORDER, 0,
                                                    new JBColor(CommitPanel::getCommitDetailsBackground))));
     }
   }
@@ -197,6 +197,8 @@ class CommitPanel extends JBPanel {
 
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+      setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
 
       addHyperlinkListener(e -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
@@ -428,11 +430,13 @@ class CommitPanel extends JBPanel {
   }
 
   private static class ReferencesPanel extends JPanel {
+    private static final int H_GAP = 4;
+    private static final int V_GAP = 3;
     @NotNull private final VcsRefPainter myReferencePainter;
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
-      super(new WrappedFlowLayout(4, 2));
+      super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
       myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);
