@@ -657,12 +657,13 @@
                      groupKey="other" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.resources.TypeCustomizerInspection"/>
 
+    <!-- Android Studio: Turned off by default. Lots of false positives in build.gradle files, the main use of Groovy in Studio -->
     <localInspection language="Groovy"
                      groupPath="Groovy"
                      shortName="GroovyAssignabilityCheck"
                      displayName="Incompatible type assignments"
                      groupName="Assignment issues"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection"/>
 
@@ -1093,9 +1094,10 @@
                      groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection"/>
+    <!-- Android Studio: Turned off by default. Lots of false positives in build.gradle files, the main use of Groovy in Studio -->
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrUnresolvedAccess" displayName="Access to unresolved expression"
                      groupName="Probable bugs"
-                     enabledByDefault="true" level="WEAK WARNING"
+                     enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySingletonAnnotation"
                      displayName="Check '@Singleton' annotation conventions"
