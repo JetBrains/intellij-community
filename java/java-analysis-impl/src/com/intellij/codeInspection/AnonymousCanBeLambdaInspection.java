@@ -284,8 +284,8 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         .giveUniqueNames(project, elementFactory, lambdaExpression,
                          usedLocalNames, variables.toArray(new PsiVariable[variables.size()]));
 
-      final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression,
-                                                                                               lambdaExpression.getBody());
+      final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(
+        lambdaExpression.getBody());
       if (singleExpr != null) {
         lambdaExpression.getBody().replace(singleExpr);
       }
