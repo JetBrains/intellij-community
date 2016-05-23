@@ -47,7 +47,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 /**
  * @author Rustam Vishnyakov
  */
-public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider implements ProviderForCommittedDocument {
+public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
   private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
   

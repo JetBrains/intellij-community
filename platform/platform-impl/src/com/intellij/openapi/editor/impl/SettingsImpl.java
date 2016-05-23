@@ -37,9 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -346,16 +344,7 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptionsByFile(file);
-
-    if (CodeStyleSettings.isRecalculateForCommittedDocument(options)) {
-      PsiDocumentManager.getInstance(project).performForCommittedDocument(document,
-                                                                          () -> CodeStyleSettingsManager.updateDocumentIndentOptions(project, document));
-    }
-    else {
-      CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
-    }
+    CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
   }
 
   @Override
