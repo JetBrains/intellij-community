@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -39,6 +38,9 @@ import org.jetbrains.annotations.Nullable;
 public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExpNamedGroupRef {
   private static final TokenSet RUBY_GROUP_REF_TOKENS =
     TokenSet.create(RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF,
+                    RegExpTT.RUBY_NAMED_GROUP_CALL, RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL);
+  private static final TokenSet GROUP_REF_TOKENS =
+    TokenSet.create(RegExpTT.PYTHON_NAMED_GROUP_REF, RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF,
                     RegExpTT.RUBY_NAMED_GROUP_CALL, RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL);
 
   public RegExpNamedGroupRefImpl(ASTNode node) {
@@ -97,8 +99,11 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
         return RegExpNamedGroupRefImpl.this;
       }
 
+      @Override
       public TextRange getRangeInElement() {
-        return new TextRange(4, getTextLength()-1);
+        final ASTNode groupNode = getNode().findChildByType(GROUP_REF_TOKENS);
+        assert groupNode != null;
+        return new TextRange(groupNode.getTextLength(), getTextLength() - 1);
       }
 
       public PsiElement resolve() {
@@ -122,9 +127,23 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
         return resolve() == element;
       }
 
+      @Override
       @NotNull
       public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<RegExpGroup>(
+          new PsiElementFilter() {
+            @Override
+            public boolean isAccepted(PsiElement element) {
+              if (!(element instanceof RegExpGroup)) {
+                return false;
+              }
+              final RegExpGroup regExpGroup = (RegExpGroup)element;
+              return regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup();
+            }
+          }
+        );
+        PsiTreeUtil.processElements(getContainingFile(), processor);
+        return processor.toArray();
       }
 
       public boolean isSoft() {
