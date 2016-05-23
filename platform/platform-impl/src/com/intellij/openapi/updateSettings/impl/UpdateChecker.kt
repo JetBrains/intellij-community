@@ -409,7 +409,7 @@ object UpdateChecker {
 
   private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()))
+    addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -420,13 +420,10 @@ object UpdateChecker {
     }
   }
 
-  /**
-   * @Deprecated, left for compatibility. Use PermanentInstallationID.get() directly 
-   */
+  @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
   @JvmStatic
-  fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
-    return PermanentInstallationID.get();
-  }
+  @Suppress("unused", "UNUSED_PARAMETER")
+  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
 
   @JvmStatic
   @Throws(IOException::class)
