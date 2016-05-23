@@ -17,10 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,16 +95,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    final GrCodeReferenceElement ref = getBaseClassReferenceGroovy();
-    final PsiElement element = ref.resolve();
-    final Project project = getProject();
-    if (element instanceof PsiClass) {
-      final GrClassReferenceType type = new GrClassReferenceType(ref);
-      return JavaPsiFacade.getElementFactory(project).createReferenceElementByType(type);
-    }
-    String qName = ref.getReferenceName(); //not null
-    assert qName != null;
-    return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));
+    return JavaPsiFacade.getElementFactory(getProject()).createReferenceElementByType(getBaseClassType());
   }
 
   @Override
@@ -132,14 +121,12 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   private PsiClassType createClassType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClassReference());
+    return new GrClassReferenceType(getBaseClassReferenceGroovy());
   }
 
   @Nullable
   private PsiClass getBaseClass() {
-    final PsiElement element = getBaseClassReferenceGroovy().resolve();
-    if (element instanceof PsiClass) return (PsiClass)element;
-    return null;
+    return getBaseClassType().resolve();
   }
 
   @NotNull
