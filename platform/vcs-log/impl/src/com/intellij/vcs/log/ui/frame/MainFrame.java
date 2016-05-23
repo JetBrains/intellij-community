@@ -102,7 +102,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new OnePixelSplitter(true, 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(uiProperties.isShowDetails());
 
@@ -127,7 +127,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     }, this);
 
-    myChangesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
+    myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
     myChangesBrowserSplitter.setFirstComponent(progressStripe);
     myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
