@@ -102,9 +102,8 @@ ESCAPE="\\"
 NAME=[:letter:]([:letter:]|_|[:digit:])*
 ANY=[^]
 
-META={ESCAPE} | {DOT} |
-  "^" | "$" | "?" | "*" | "+" | "|" |
-  {LBRACKET} | {LBRACE} | {LPAREN} | {RPAREN}
+META1 = {ESCAPE} | {LBRACKET} | "^"
+META2= {DOT} | "$" | "?" | "*" | "+" | "|" | {LBRACE} | {LPAREN} | {RPAREN}
 
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "B" | "A" | "z" | "Z" | "G"
@@ -167,8 +166,9 @@ HEX_CHAR=[0-9a-fA-F]
                                 return RegExpTT.BACKREF;
                               }
 
-{ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
-{ESCAPE}  {META}              { return RegExpTT.ESC_CHARACTER; }
+{ESCAPE}  "-"                 { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
+{ESCAPE}  {META2}             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
 {ESCAPE}  "R"                 { return RegExpTT.CHAR_CLASS;    }
 {ESCAPE}  {PROP}              { yypushstate(PROP); return RegExpTT.PROPERTY;      }

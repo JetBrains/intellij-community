@@ -430,6 +430,10 @@
       <pattern>\X</pattern>
       <expected>ERR</expected>
     </test>
+    <test>
+      <pattern><![CDATA[<weak_warning descr="Redundant character escape">\-</weak_warning>[<weak_warning descr="Redundant character escape">\*</weak_warning>\-\[\]\\<weak_warning descr="Redundant character escape">\+]</weak_warning>]]></pattern>
+      <expected>OK</expected>
+    </test>
   </charclasses>
 
   <groups>
