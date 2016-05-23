@@ -24,7 +24,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.actions.ExportToTextFileAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,7 +35,7 @@ import java.util.List;
 
 public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -58,9 +57,9 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
     }
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+  public void update(AnActionEvent e){
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
