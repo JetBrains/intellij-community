@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,11 +41,25 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull final Context context, @NotNull Runnable runNext) {
     for (final Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
+        if (context.directory == null) continue;
         final Project[] projects = ProjectManager.getInstance().getOpenProjects();
         context.project = UIUtil.invokeAndWaitIfNeeded(new Computable<Project>() {
           @Override
           public Project compute() {
-            return ProjectUtil.openProject(context.directory.getPath() + "/" + context.directoryName + "/" + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
+            String path = context.directory.getPath() + "/" + context.directoryName + "/" + entry.getSecond();
+
+            if (!RecentProjectsManagerBase.getInstance().hasPath(path)) {
+              boolean remotePath = ProjectUtil.isRemotePath(path);
+              if (!ProjectUtil.confirmLoadingFromRemotePath(
+                path,
+                remotePath ? "warning.load.project.from.share" : "warning.load.local.project",
+                remotePath ? "title.load.project.from.share" : "title.load.local.project"
+              )) {
+                return null;
+              }
+            }
+
+            return ProjectUtil.openProject(path, ArrayUtil.getFirstElement(projects), false);
           }
         });
         if (context.project == null) return;

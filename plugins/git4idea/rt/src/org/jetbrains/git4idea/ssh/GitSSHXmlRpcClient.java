@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * {@inheritDoc}
    */
   @SuppressWarnings("unchecked")
-  public boolean verifyServerHostKey(final int handler,
+  public boolean verifyServerHostKey(String token,
                                      final String hostname,
                                      final int port,
                                      final String serverHostKeyAlgorithm,
@@ -59,7 +59,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return false;
     }
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(hostname);
     parameters.add(port);
     parameters.add(serverHostKeyAlgorithm);
@@ -91,7 +91,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassphrase(final int handler,
+  public String askPassphrase(String token,
                               final String username,
                               final String keyPath,
                               final boolean resetPassword,
@@ -100,7 +100,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(keyPath);
     parameters.add(resetPassword);
@@ -121,7 +121,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public Vector<String> replyToChallenge(final int handlerNo,
+  public Vector<String> replyToChallenge(String token,
                                          final String username,
                                          final String name,
                                          final String instruction,
@@ -133,7 +133,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(name);
     parameters.add(instruction);
@@ -157,12 +157,12 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassword(final int handlerNo, final String username, final boolean resetPassword, final String lastError) {
+  public String askPassword(String token, final String username, final boolean resetPassword, final String lastError) {
     if (myClient == null) {
       return null;
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(username);
     parameters.add(resetPassword);
     parameters.add(lastError);
@@ -179,12 +179,12 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
 
   @Override
   @SuppressWarnings("unchecked")
-  public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+  public String setLastSuccessful(String token, String userName, String method, String error) {
     if (myClient == null) {
       return "";
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(userName);
     parameters.add(method);
     parameters.add(error);
@@ -204,22 +204,22 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Override
   @SuppressWarnings("unchecked")
-  public String getLastSuccessful(int handlerNo, String userName) {
+  public String getLastSuccessful(String token, String userName) {
     if (myClient == null) {
       return "";
     }
     Vector parameters = new Vector();
-    parameters.add(handlerNo);
+    parameters.add(token);
     parameters.add(userName);
     try {
       return (String)myClient.execute(methodName("getLastSuccessful"), parameters);
     }
     catch (XmlRpcException e) {
-      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
+      log("getLastSuccessful failed. token: " + token + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
     catch (IOException e) {
-      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
+      log("getLastSuccessful failed. token: " + token + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
