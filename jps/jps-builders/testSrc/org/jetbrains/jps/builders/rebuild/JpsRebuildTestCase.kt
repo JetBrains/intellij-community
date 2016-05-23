@@ -1,22 +1,20 @@
 package org.jetbrains.jps.builders.rebuild;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.TestFileSystemBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.util.JpsPathUtil;
-
-import java.io.File;
-import java.util.LinkedHashMap;
-import kotlin.properties.Delegates
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.TestFileSystemBuilder
 import com.intellij.util.io.TestFileSystemItem
+import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.util.JpsPathUtil
+import java.io.File
+import java.util.*
 
 /**
  * @author nik
  */
 public abstract class JpsRebuildTestCase: JpsBuildTestCase() {
-  protected val myOutputDirectory: File by Delegates.lazy {
+  protected val myOutputDirectory: File by lazy {
     FileUtil.createTempDirectory("jps-build-output", "")
   }
 

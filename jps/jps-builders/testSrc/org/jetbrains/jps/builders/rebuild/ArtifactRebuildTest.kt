@@ -17,13 +17,10 @@ package org.jetbrains.jps.builders.rebuild
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
-
-import java.util.jar.Attributes
-import java.util.jar.Manifest
 import java.io.File
 import java.io.FileInputStream
-import kotlin.test.assertTrue
-import kotlin.test.assertEquals
+import java.util.jar.Attributes
+import java.util.jar.Manifest
 
 /**
  * @author nik
