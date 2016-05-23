@@ -117,6 +117,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
+  public boolean hasPath(String path) {
+    final State state = getState();
+    return state != null && state.recentPaths.contains(path);
+  }
+
   public String getLastProjectPath() {
     return myState.lastPath;
   }

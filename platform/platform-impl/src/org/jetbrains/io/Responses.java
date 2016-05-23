@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -106,6 +107,11 @@ public final class Responses {
     addServer(response);
     addDate(response);
     response.setHeader("Access-Control-Allow-Origin", "*");
+    if (!response.containsHeader("X-Frame-Options")) {
+      response.addHeader("X-Frame-Options", "SameOrigin");
+    }
+    response.addHeader("X-Content-Type-Options", "nosniff");
+    response.addHeader("x-xss-protection", "1; mode=block");
     send(response, request, context);
   }
 
@@ -124,11 +130,23 @@ public final class Responses {
     }
   }
 
+  public static void sendStatus(HttpResponseStatus responseStatus, Channel channel) {
+    DefaultHttpResponse response = new DefaultHttpResponse(HTTP_1_1, responseStatus);
+    fillResponse(response);
+    ChannelFuture future = channel.write(response);
+    future.addListener(ChannelFutureListener.CLOSE);
+  }
+
   public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus) {
     sendError(request, context, new DefaultHttpResponse(HTTP_1_1, responseStatus));
   }
 
   public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponse response) {
+    fillResponse(response);
+    send(response, request, context);
+  }
+
+  private static void fillResponse(HttpResponse response) {
     response.setHeader(CONTENT_TYPE, "text/html");
     addServer(response);
     addDate(response);
@@ -136,6 +154,5 @@ public final class Responses {
     String message = response.getStatus().toString();
     response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
                                                     "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>", CharsetUtil.US_ASCII));
-    send(response, request, context);
   }
 }

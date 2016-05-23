@@ -59,6 +59,16 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
+    Map<K, V> map = new HashMap(entries.length + 1);
+    map.put(first.getFirst(), first.getSecond());
+    for (Pair<K, ? extends V> entry : entries) {
+      map.put(entry.getFirst(), entry.getSecond());
+    }
+    return map;
+  }
+
+  @NotNull
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }

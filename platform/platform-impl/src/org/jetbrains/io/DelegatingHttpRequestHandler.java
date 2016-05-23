@@ -7,16 +7,25 @@ import org.apache.sanselan.Sanselan;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.ide.WebServerManager;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
 @ChannelHandler.Sharable
 final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
+  private static boolean checkAndProcess(@NotNull HttpRequestHandler handler,
+                                         @NotNull ChannelHandlerContext context,
+                                         @NotNull HttpRequest request,
+                                         @NotNull QueryStringDecoder urlDecoder) throws IOException {
+    return handler.isSupported(request) && !NettyUtil.isWriteFromBrowserWithoutOrigin(request) && handler.isAccessible(request) && handler.process(urlDecoder, request, context);
+  }
+
   @Override
   public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
     if (!(event.getMessage() instanceof HttpRequest)) {
@@ -46,7 +55,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
 
       for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
         try {
-          if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
+          if (checkAndProcess(handler, context, request, urlDecoder)) {
             if (context.getAttachment() == null) {
               context.setAttachment(handler);
             }
@@ -58,9 +67,10 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
         }
       }
     }
-    else if (connectedHandler.isSupported(request)) {
-      connectedHandler.process(urlDecoder, request, context);
-      return;
+    else {
+      if (checkAndProcess(connectedHandler, context, request, urlDecoder)) {
+        return;
+      }
     }
     Responses.sendError(request, context, NOT_FOUND);
   }
