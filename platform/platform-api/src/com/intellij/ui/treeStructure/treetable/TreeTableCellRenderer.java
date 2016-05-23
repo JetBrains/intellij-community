@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.ClientPropertyHolder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -118,7 +119,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
    * indentation markers, styles, etc. that is handled by {@link TreeTableTree} when rendering tree nodes.</li>
    * </ul>
    */
-  private class TableCellRendererComponent extends JPanel {
+  private class TableCellRendererComponent extends OpaquePanel {
     /** The component resulting from rendering a cell of the TreeTableTree column */
     private Component myComponent;
     private boolean myExpanded;
