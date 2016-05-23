@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsAdjuster;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +58,16 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private final Document myDocument;
   private final Project myProject;
   private final IndentOptions myOptionsToAdjust;
-  private final ExecutorService myBoundedExecutor;
+  private final ExecutorService myExecutor;
 
-  public DetectAndAdjustIndentOptionsTask(Project project, Document document, @NotNull IndentOptions toAdjust) {
+  public DetectAndAdjustIndentOptionsTask(@NotNull Project project, 
+                                          @NotNull Document document, 
+                                          @NotNull IndentOptions toAdjust,
+                                          @NotNull ExecutorService executor) {
     myProject = project;
     myDocument = document;
     myOptionsToAdjust = toAdjust;
-    myBoundedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+    myExecutor = executor;
   }
   
   private PsiFile getFile() {
@@ -80,7 +82,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     PsiFile file = getFile();
     if (file == null) {
-      return continuationWithExecutorShutdown(EmptyRunnable.INSTANCE);
+      return null;
     }
     
     if (!PsiDocumentManager.getInstance(myProject).isCommitted(myDocument)) {
@@ -90,14 +92,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
     IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file, indicator);
     IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster();
-    return continuationWithExecutorShutdown(adjuster != null ? () -> adjustOptions(adjuster) : EmptyRunnable.INSTANCE);
-  }
-  
-  private Continuation continuationWithExecutorShutdown(Runnable runnable) {
-    return new Continuation(() -> {
-      myBoundedExecutor.shutdown();
-      runnable.run();
-    });
+    return new Continuation(adjuster != null ? () -> adjustOptions(adjuster) : EmptyRunnable.INSTANCE);
   }
   
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
@@ -122,7 +117,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     }
     else {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
-      manager.performForCommittedDocument(myDocument, () -> scheduleWithWriteActionPriority(myBoundedExecutor, this));
+      manager.performForCommittedDocument(myDocument, () -> scheduleWithWriteActionPriority(myExecutor, this));
     }
   }
   
