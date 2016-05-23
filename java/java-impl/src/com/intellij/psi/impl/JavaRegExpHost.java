@@ -101,6 +101,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     }
   }
 
+  @Override
+  public boolean supportsLiteralBackspace(RegExpChar aChar) {
+    return false;
+  }
+
   private static boolean hasAtLeastJdkVersion(PsiElement element, JavaSdkVersion version) {
     final JavaSdkVersion version1 = getJavaVersion(element);
     return version1 != null && version1.isAtLeast(version);

@@ -91,6 +91,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     }
   }
 
+  public boolean supportsLiteralBackspace(@Nullable RegExpChar regExpChar) {
+    final RegExpLanguageHost host = findRegExpHost(regExpChar);
+    return host != null && host.supportsLiteralBackspace(regExpChar);
+  }
+
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host != null && host.supportsNamedGroupSyntax(group);

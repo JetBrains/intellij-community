@@ -38,6 +38,10 @@ public interface RegExpLanguageHost {
     return true;
   }
 
+  default boolean supportsLiteralBackspace(RegExpChar aChar) {
+    return true;
+  }
+
   boolean isValidCategory(@NotNull String category);
   @NotNull
   String[][] getAllKnownProperties();
