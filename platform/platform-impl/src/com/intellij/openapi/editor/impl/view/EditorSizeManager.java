@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
+class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
   
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
@@ -90,6 +90,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     myDocument.addDocumentListener(this, this);
     myEditor.getFoldingModel().addListener(this, this);
     myEditor.getSoftWrapModel().getApplianceManager().addListener(mySoftWrapChangeListener);
+    myEditor.getInlayModel().addListener(this, this);
   }
 
   @Override
@@ -139,6 +140,11 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     }
     myDeferredRanges.clear();
     assertValidState();
+  }
+
+  @Override
+  public void changed(Inlay inlay) {
+    doInvalidateRange(inlay.getOffset(), inlay.getOffset());
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {

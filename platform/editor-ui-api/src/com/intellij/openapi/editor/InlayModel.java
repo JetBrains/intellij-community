@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EventListener;
 import java.util.List;
 
 public interface InlayModel {
@@ -27,4 +29,26 @@ public interface InlayModel {
   // startOffset inclusive, endOffset exclusive (unless startOffset == endOffset)
   @NotNull
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
+
+  void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
+
+  interface Listener extends EventListener {
+    void afterAdded(Inlay inlay);
+    void beforeRemoved(Inlay inlay);
+  }
+
+  abstract class Adapter implements Listener {
+    @Override
+    public void afterAdded(Inlay inlay) {
+      changed(inlay);
+    }
+
+    @Override
+    public void beforeRemoved(Inlay inlay) {
+      changed(inlay);
+    }
+
+    public void changed(Inlay inlay) {
+    }
+  }
 }

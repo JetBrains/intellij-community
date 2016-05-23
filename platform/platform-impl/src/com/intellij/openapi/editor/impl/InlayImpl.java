@@ -45,7 +45,6 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public void dispose() {
     if (isValid()) {
-      myEditor.repaint(getOffset(), getOffset(), false);
       myEditor.getInlayModel().myInlayTree.removeInterval(this);
     }
   }

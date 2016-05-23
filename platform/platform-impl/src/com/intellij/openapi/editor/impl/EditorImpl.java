@@ -590,6 +590,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myView = null;
     }
+    myInlayModel.addListener(new InlayModel.Adapter() {
+      @Override
+      public void changed(Inlay inlay) {
+        validateSize();
+        repaint(inlay.getOffset(), inlay.getOffset(), false);
+      }
+    }, myCaretModel);
 
     if (UISettings.getInstance().PRESENTATION_MODE) {
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);

@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import java.util.List;
 
 public class InlayModelImpl implements InlayModel, Disposable {
   private final EditorImpl myEditor;
+  private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
@@ -45,6 +48,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
             return interval;
           }
         };
+      }
+
+      @Override
+      void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
+        myDispatcher.getMulticaster().beforeRemoved(markerEx);
       }
     };
   }
@@ -61,7 +69,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlayImpl inlay = new InlayImpl(myEditor, offset, widthInPixels, renderer);
-    myEditor.repaint(offset, offset, false);
+    myDispatcher.getMulticaster().afterAdded(inlay);
     return inlay;
   }
 
@@ -76,5 +84,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
     });
     Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
     return result;
+  }
+
+  @Override
+  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 }
