@@ -804,6 +804,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
       session.setCurrentProject(project);
+      session.setAllProjects(Arrays.asList(project));
       session.setProjects(Arrays.asList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
@@ -811,7 +812,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
         try {
           listener.afterProjectsRead(session);
         }
-        catch (MavenExecutionException e) {
+        catch (Exception e) {
           exceptions.add(e);
         }
         finally {
