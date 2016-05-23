@@ -308,7 +308,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final Disposable myDisposable = Disposer.newDisposable();
 
   private List<CaretState> myCaretStateBeforeLastPress;
-  private LogicalPosition myLastMousePressedLocation;
+  LogicalPosition myLastMousePressedLocation;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
@@ -5775,6 +5775,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
       myMousePressArea = null;
+      myLastMousePressedLocation = null;
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
           Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
