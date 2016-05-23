@@ -144,6 +144,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         else if (dims.length > 0) {
           return null;
         }
+
+        if (callExpression.getTypeArguments().length > 0) {
+          return null;
+        }
       }
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       PsiMethodReferenceExpression methodReferenceExpression = 
