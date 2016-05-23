@@ -36,12 +36,18 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
+  private boolean myRequestFocus;
+
+  public ShowExpressionTypeHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
 
   @Override
   public boolean startInWriteAction() {
@@ -82,6 +88,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
             HintManager.getInstance().showInformationHint(editor, informationHint);
           }
         });

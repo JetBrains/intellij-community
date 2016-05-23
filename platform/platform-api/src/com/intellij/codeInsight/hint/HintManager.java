@@ -78,4 +78,6 @@ public abstract class HintManager {
   public abstract void hideAllHints();
 
   public abstract boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip);
+
+  public abstract void setRequestFocusForNextHint(boolean requestFocus);
 }

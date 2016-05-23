@@ -72,6 +72,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private final List<HintInfo> myHintsStack = new ArrayList<HintInfo>();
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
+  private boolean myRequestFocusForNextHint;
 
   private static int getPriority(QuestionAction action) {
     return action instanceof PriorityQuestionAction ? ((PriorityQuestionAction)action).getPriority() : 0;
@@ -194,6 +195,20 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   public boolean isHint(Window component) {
     return myHintsStack.contains(component);
+  }
+
+  /**
+   * Sets whether the next {@code showXxx} call will request the focus to the
+   * newly shown tooltip. Note the flag applies only to the next call, i.e. is
+   * reset to {@code false} after any {@code showXxx} is called.
+   *
+   * <p>Note: This method was created to avoid the code churn associated with
+   * creating an overload to every {@code showXxx} method with an additional
+   * {@code boolean requestFocus} parameter </p>
+   */
+  @Override
+  public void setRequestFocusForNextHint(boolean requestFocus) {
+    myRequestFocusForNextHint = requestFocus;
   }
 
   @NotNull
@@ -348,8 +363,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     // Set focus to control so that screen readers will announce the tooltip contents.
     // Users can press "ESC" to return to the editor.
-    if (ScreenReader.isActive()) {
+    if (myRequestFocusForNextHint) {
       hintInfo.setRequestFocus(true);
+      myRequestFocusForNextHint = false;
     }
     doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
