@@ -328,7 +328,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
-        assert !isReadAccessAllowed(): describe(Thread.currentThread());
         try {
           action.run();
         }
@@ -340,7 +339,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
         finally {
           Thread.interrupted(); // reset interrupted status
-          assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
       }
     });
@@ -560,7 +558,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                            // The thread will deadlock trying to get read action otherwise.
         || isHeadlessEnvironment() && !isUnitTestMode()
       ) {
-      LOG.debug("Starting process with progress from within write action makes no sense");
+      if (writeAccessAllowed) {
+        LOG.debug("Starting process with progress from within write action makes no sense");
+      }
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -607,9 +607,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
 
   @Override
-  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable final Project project, @NotNull final String progressTitle,
+  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable final Project project,
+                                                                 @NotNull final String progressTitle,
                                                                  final boolean canBeCanceled,
-                                                                 final String cancelText, final JComponent parentComponent,
+                                                                 final String cancelText,
+                                                                 final JComponent parentComponent,
                                                                  @NotNull final Runnable process) {
     assertIsDispatchThread();
     boolean writeAccessAllowed = isWriteAccessAllowed();
@@ -791,7 +793,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     final boolean success = disposeSelf(allowListenersToCancel);
-    if (!success || isUnitTestMode()) {
+    if (!success || isHeadlessEnvironment()) {
       return false;
     }
 
@@ -1071,7 +1073,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isUnitTestMode()) return true;
+    if (isHeadlessEnvironment()) return true;
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
 

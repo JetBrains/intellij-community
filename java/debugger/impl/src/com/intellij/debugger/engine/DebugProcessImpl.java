@@ -152,7 +152,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
-    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void paused(SuspendContext suspendContext) {
         myThreadBlockedMonitor.stopWatching(
@@ -271,9 +271,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       LOG.error("State is invalid " + myState.get());
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myPositionManager == null) { // no need to reset on reattach
-      myPositionManager = createPositionManager();
-    }
+    myPositionManager = new CompoundPositionManager(new PositionManagerImpl(this));
     LOG.debug("*******************VM attached******************");
     checkVirtualMachineVersion(vm);
 
@@ -346,11 +344,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     finally {
       closeProcess(true);
     }
-  }
-
-  @NotNull
-  protected CompoundPositionManager createPositionManager() {
-    return new CompoundPositionManager(new PositionManagerImpl(this));
   }
 
   @Override
@@ -1834,18 +1827,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) throws ExecutionException {
-    ApplicationManager.getApplication().assertIsDispatchThread(); //TODO: remove this requirement
-    ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
-    myState.set(State.INITIAL);
     getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
-        myRequestManager.processDetached(DebugProcessImpl.this, false);
+        closeProcess(false);
+        doReattach();
+      }
+
+      @Override
+      protected void commandCancelled() {
+        doReattach(); // if the original process is already finished
+      }
+
+      private void doReattach() {
+        DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+          ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+          myState.set(State.INITIAL);
+          myConnection = environment.getRemoteConnection();
+          getManagerThread().restartIfNeeded();
+          createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
+        });
       }
     });
-    myConnection = environment.getRemoteConnection();
-    getManagerThread().restartIfNeeded();
-    createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
   }
 
   @Nullable
@@ -1927,7 +1930,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     semaphore.down();
 
     final AtomicBoolean connectorIsReady = new AtomicBoolean(false);
-    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void connectorIsReady() {
         connectorIsReady.set(true);

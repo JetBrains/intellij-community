@@ -17,10 +17,12 @@
 package com.intellij.codeInsight.template.impl;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +46,8 @@ public class TemplateContext {
       synchronized (defaultContext == null ? myContextStates : defaultContext.myContextStates) {
         for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
           Boolean ownValue = getOwnValue(contextType);
-          if (ownValue != null) {
-            if (defaultContext == null || isEnabled(contextType) != defaultContext.isEnabled(contextType)) {
-              result.put(contextType, ownValue);
-            }
+          if (ownValue != null && shouldSaveContextValue(defaultContext, contextType, ownValue)) {
+            result.put(contextType, ownValue);
           }
         }
       }
@@ -55,7 +55,15 @@ public class TemplateContext {
     return result;
   }
 
-  public boolean isEnabled(TemplateContextType contextType) {
+  private boolean shouldSaveContextValue(@Nullable TemplateContext defaultContext, @NotNull TemplateContextType contextType, boolean enabled) {
+    if (defaultContext == null) {
+      TemplateContextType base = contextType.getBaseContextType();
+      return base == null ? enabled : enabled != isEnabled(base);
+    }
+    return enabled != defaultContext.isEnabled(contextType);
+  }
+
+  public boolean isEnabled(@NotNull TemplateContextType contextType) {
     synchronized (myContextStates) {
       Boolean storedValue = getOwnValue(contextType);
       if (storedValue == null) {
@@ -101,7 +109,8 @@ public class TemplateContext {
   }
 
   // used during initialization => no sync
-  void readTemplateContext(Element element) {
+  @VisibleForTesting
+  public void readTemplateContext(Element element) {
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
@@ -109,9 +118,19 @@ public class TemplateContext {
         myContextStates.put(name, Boolean.parseBoolean(value));
       }
     }
+
+    Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      if (getOwnValue(type) == null) {
+        Iterable<TemplateContextType> bases = JBIterable.generate(type, TemplateContextType::getBaseContextType);
+        explicitStates.put(type.getContextId(), ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(bases, this::getOwnValue), false));
+      }
+    }
+    myContextStates.putAll(explicitStates);
   }
 
-  void writeTemplateContext(Element element, @Nullable TemplateContext defaultContext) throws WriteExternalException {
+  @VisibleForTesting
+  public void writeTemplateContext(Element element, @Nullable TemplateContext defaultContext) throws WriteExternalException {
     Map<TemplateContextType, Boolean> diff = getDifference(defaultContext);
     for (TemplateContextType type : diff.keySet()) {
       Element optionElement = new Element("option");

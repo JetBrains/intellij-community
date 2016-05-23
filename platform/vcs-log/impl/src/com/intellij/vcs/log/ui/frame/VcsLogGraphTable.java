@@ -686,7 +686,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
       if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
 
-      g.fillRect(x, y, rootWidth, myUi.getTable().getRowHeight());
+      g.fillRect(x, y, rootWidth, height);
     }
   }
 

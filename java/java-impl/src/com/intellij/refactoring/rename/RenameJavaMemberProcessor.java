@@ -24,7 +24,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
@@ -150,11 +149,23 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
+  protected static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<UsageInfo> result) {
     if (!memberToRename.isPhysical()) {
       return;
     }
+
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(memberToRename.getProject());
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
+    for (UsageInfo info : result) {
+      final PsiElement element = info.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        if (((PsiReferenceExpression)element).advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement &&
+            referencesLocalMember(memberToRename, newName, elementFactory, element)) {
+          potentialConflicts.add(info.getReference());
+        }
+      }
+    }
+
     final PsiFile containingFile = memberToRename.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
@@ -204,6 +215,21 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
         }
       }
     }
+  }
+
+  private static boolean referencesLocalMember(PsiMember memberToRename,
+                                               String newName,
+                                               PsiElementFactory elementFactory,
+                                               PsiElement context) {
+    if (memberToRename instanceof PsiField) {
+      return ((PsiReferenceExpression)elementFactory.createExpressionFromText(newName, context)).resolve() != null;
+    }
+
+    if (memberToRename instanceof PsiMethod) {
+      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)elementFactory.createExpressionFromText(newName + "()", context);
+      return callExpression.getMethodExpression().multiResolve(false).length > 0;
+    }
+    return false;
   }
 
   protected static void qualifyStaticImportReferences(final List<MemberHidesStaticImportUsageInfo> staticImportHides)

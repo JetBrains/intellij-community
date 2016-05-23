@@ -407,10 +407,10 @@ public class RegExpParser implements PsiParser {
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
-    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.GT);
     }
-    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
     else if (type == RegExpTT.PYTHON_COND_REF) {
@@ -437,8 +437,8 @@ public class RegExpParser implements PsiParser {
       marker.done(RegExpElementTypes.PY_COND_REF);
     }
     else if (type == RegExpTT.PROPERTY) {
+      marker.drop();
       parseProperty(builder);
-      marker.done(RegExpElementTypes.PROPERTY);
     }
     else if (RegExpTT.SIMPLE_CLASSES.contains(type)) {
       builder.advanceLexer();
@@ -467,24 +467,29 @@ public class RegExpParser implements PsiParser {
   }
 
   private static void parseProperty(PsiBuilder builder) {
-    checkMatches(builder, RegExpTT.PROPERTY, "'\\p' expected");
-
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
     if (builder.getTokenType() == RegExpTT.CATEGORY_SHORT_HAND) {
       builder.advanceLexer();
-      return;
-    }
-    checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
-    if (builder.getTokenType() == RegExpTT.NAME) {
-      builder.advanceLexer();
-    }
-    else if (builder.getTokenType() == RegExpTT.RBRACE) {
-      builder.error("Empty character family");
     }
     else {
-      builder.error("Character family name expected");
-      builder.advanceLexer();
+      checkMatches(builder, RegExpTT.LBRACE, "Character category expected");
+      if (builder.getTokenType() == RegExpTT.CARET) {
+        builder.advanceLexer();
+      }
+      if (builder.getTokenType() == RegExpTT.NAME) {
+        builder.advanceLexer();
+      }
+      else if (builder.getTokenType() == RegExpTT.RBRACE) {
+        builder.error("Empty character family");
+      }
+      else {
+        builder.error("Character family name expected");
+        builder.advanceLexer();
+      }
+      checkMatches(builder, RegExpTT.RBRACE, "Unclosed character family");
     }
-    checkMatches(builder, RegExpTT.RBRACE, "Unclosed character family");
+    marker.done(RegExpElementTypes.PROPERTY);
   }
 
   private static void patternExpected(PsiBuilder builder) {

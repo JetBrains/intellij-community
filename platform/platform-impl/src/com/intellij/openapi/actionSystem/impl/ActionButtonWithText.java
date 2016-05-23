@@ -146,6 +146,14 @@ public class ActionButtonWithText extends ActionButton {
                                               textRect.y + fm.getAscent());
   }
 
+  @Override
+  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+    super.presentationPropertyChanded(e);
+    if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
+      revalidate(); // recalc preferred size & repaint instantly
+    }
+  }
+
   public Color getInactiveTextColor() {
     return UIUtil.getInactiveTextColor();
   }

@@ -52,8 +52,8 @@ public class TableWithProgress extends JBTable {
   protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
     if (isBusy()) {
-      Dimension size = super.getPreferredSize();
-      paintFooter(g, 0, size.height, size.width, myBusyIcon.getHeight());
+      int preferredHeight = super.getPreferredSize().height;
+      paintFooter(g, 0, preferredHeight, getWidth(), getHeight() - preferredHeight);
     }
   }
 
@@ -74,7 +74,7 @@ public class TableWithProgress extends JBTable {
     @Override
     protected Rectangle calculateBounds(@NotNull JComponent container) {
       Dimension iconSize = getPreferredSize();
-      return new Rectangle((container.getWidth() - iconSize.width) / 2, container.getHeight() - iconSize.height, iconSize.width,
+      return new Rectangle((container.getWidth() - iconSize.width) / 2, container.getPreferredSize().height - iconSize.height, iconSize.width,
                            iconSize.height);
     }
   }

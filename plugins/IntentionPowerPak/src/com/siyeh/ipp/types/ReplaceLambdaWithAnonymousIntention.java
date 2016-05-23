@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -74,7 +75,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     LOG.assertTrue(anonymousClass != null);
     final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
     if (infos != null && infos.size() == 1) {
-      final PsiMethod member = infos.get(0).getPsiMember();
+      PsiMethod member = infos.get(0).getPsiMember();
       final PsiParameter[] parameters = member.getParameterList().getParameters();
       if (parameters.length == paramListCopy.length) {
         for (int i = 0; i < parameters.length; i++) {
@@ -89,6 +90,17 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       LOG.assertTrue(codeBlock != null);
 
       codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
+
+      final PsiElement parent = anonymousClass.getParent().getParent();
+      if (parent instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)parent)) {
+        final PsiExpression operand = ((PsiTypeCastExpression)parent).getOperand();
+        LOG.assertTrue(operand != null);
+        PsiNewExpression expression = (PsiNewExpression)parent.replace(operand);
+        final PsiAnonymousClass simplifiedClass = expression.getAnonymousClass();
+        LOG.assertTrue(simplifiedClass != null);
+        member = simplifiedClass.getMethods()[0];
+      }
+
       GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }

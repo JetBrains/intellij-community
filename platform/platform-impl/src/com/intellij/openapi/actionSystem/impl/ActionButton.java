@@ -30,7 +30,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
   private JBDimension myMinimumButtonSize;
-  private PropertyChangeListener myActionButtonSynchronizer;
+  private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   private Icon myIcon;
   protected final Presentation myPresentation;
@@ -193,18 +192,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void removeNotify() {
-    if (myActionButtonSynchronizer != null) {
-      myPresentation.removePropertyChangeListener(myActionButtonSynchronizer);
-      myActionButtonSynchronizer = null;
+    if (myPresentationListener != null) {
+      myPresentation.removePropertyChangeListener(myPresentationListener);
+      myPresentationListener = null;
     }
     super.removeNotify();
   }
 
   public void addNotify() {
     super.addNotify();
-    if (myActionButtonSynchronizer == null) {
-      myActionButtonSynchronizer = new ActionButtonSynchronizer();
-      myPresentation.addPropertyChangeListener(myActionButtonSynchronizer);
+    if (myPresentationListener == null) {
+      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
     AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
@@ -366,32 +364,27 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myAction;
   }
 
-  private class ActionButtonSynchronizer implements PropertyChangeListener {
-    @NonNls protected static final String SELECTED_PROPERTY_NAME = "selected";
-
-    public void propertyChange(PropertyChangeEvent e) {
-      String propertyName = e.getPropertyName();
-      if (Presentation.PROP_TEXT.equals(propertyName)) {
-        updateToolTipText();
-        revalidate(); // recalc preferred size & repaint instantly
-      }
-      else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_ICON.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-        setDisabledIcon(myPresentation.getDisabledIcon());
-        repaint();
-      }
-      else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
-      }
-      else if (SELECTED_PROPERTY_NAME.equals(propertyName)) {
-        repaint();
-      }
+  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+    String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName)) {
+      updateToolTipText();
+    }
+    else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_ICON.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
+      setDisabledIcon(myPresentation.getDisabledIcon());
+      repaint();
+    }
+    else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
+    }
+    else if ("selected".equals(propertyName)) {
+      repaint();
     }
   }
 

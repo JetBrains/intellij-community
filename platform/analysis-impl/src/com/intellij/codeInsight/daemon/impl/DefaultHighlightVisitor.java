@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -29,10 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -96,8 +94,15 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element);
     }
     else {
+      ASTNode node = element.getNode();
+      if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
+        String message = String.format("Illegal character: \\u%04X", (int)element.textToCharArray()[0]);
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
+      }
+
       if (myRunAnnotators) runAnnotators(element);
     }
+
     if (myAnnotationHolder.hasAnnotations()) {
       for (Annotation annotation : myAnnotationHolder) {
         myHolder.add(HighlightInfo.fromAnnotation(annotation, null, myBatchMode));

@@ -19,7 +19,7 @@ import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebugUIEnvironment;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
+import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.DefaultExecutionResult;
@@ -69,7 +69,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     if (serverMode) {
       serverModeHandler.attachRemote();
       DebuggerManager.getInstance(executionEnvironment.getProject())
-        .addDebugProcessListener(processHandler, new DebugProcessAdapter() {
+        .addDebugProcessListener(processHandler, new DebugProcessListener() {
           public void processDetached(DebugProcess process, boolean closedByUser) {
             try {
               serverModeHandler.detachRemote();

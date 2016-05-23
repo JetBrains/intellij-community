@@ -321,7 +321,7 @@ def test() {
 }
 
 test()
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testEllipsisArgs() {
@@ -345,7 +345,7 @@ def test() {
 
 test()
 
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testShouldChooseMethodFromOwnerInJava() {
@@ -575,7 +575,7 @@ def test() {
 }
 
 test()
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testEllipsisArgsInJava() {
@@ -606,7 +606,7 @@ def test() {
 
 test()
 
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testTarget() {
@@ -616,7 +616,7 @@ def foo(@DelegatesTo.Target def o, @DelegatesTo Closure c) {}
 foo(4) {
   intVal<caret>ue()
 }
-''', 'Integer')
+''', 'java.lang.Integer')
   }
 
   void testTarget2() {
@@ -626,7 +626,7 @@ def foo(@DelegatesTo.Target('t') def o, @DelegatesTo(target = 't') Closure c) {}
 foo(4) {
   intVal<caret>ue()
 }
-''', 'Integer')
+''', 'java.lang.Integer')
   }
 
   void testGenericTypeIndex() {
@@ -636,7 +636,7 @@ public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTy
 foo([1:'ab', 2:'cde']) {
   sub<caret>string(1)
 }
-''', 'String')
+''', 'java.lang.String')
   }
 
   void testGenericTypeIndex1() {
@@ -646,7 +646,7 @@ public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTy
 foo([1:'ab', 2:'cde']) {
   int<caret>Value(1)
 }
-''', 'Integer')
+''', 'java.lang.Integer')
   }
 
   void testDelegateAndDelegatesTo() {
@@ -674,7 +674,7 @@ def staticOnWrapper() {
     }
     assert wrapper.list == [1]
 }
-''', 'List')
+''', 'java.util.List')
   }
 
   void testClassTest() {
@@ -735,7 +735,7 @@ doX {
 
     final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     final resolved = assertInstanceOf(ref.resolve(), PsiMethod)
-    final containingClass = resolved.containingClass.name
+    final containingClass = resolved.containingClass.qualifiedName
     assertEquals(resolvedClass, containingClass)
   }
 
@@ -787,5 +787,24 @@ new A({
     fo<caret>o()
 })
 ''', 'Boo'
+  }
+
+  void 'test @DelegatesTo type'() {
+    assertScript '''\
+def foo(@DelegatesTo(type = 'String') Closure datesProcessor) {}
+
+foo {
+  toUppe<caret>rCase()
+}
+''', 'java.lang.String'
+  }
+
+  void 'test @DelegatesTo type with generics'() {
+    assertScript '''\
+def foo(@DelegatesTo(type = 'List<Date>') Closure datesProcessor) {}
+foo {
+  get(0).aft<caret>er(null)
+}
+''', 'java.util.Date'
   }
 }

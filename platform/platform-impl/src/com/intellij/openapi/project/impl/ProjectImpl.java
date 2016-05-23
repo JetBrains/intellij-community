@@ -285,9 +285,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
-    if (!isDefault() &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
-        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       distributeProgress();
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
@@ -351,10 +349,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assert application.isWriteAccessAllowed();  // dispose must be under write action
+    application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
+    if (ProjectManagerEx.getInstanceEx().isProjectOpened(this)) {
+      throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
+    }
 
     // we use super here, because temporarilyDisposed will be true if project closed
     LOG.assertTrue(!super.isDisposed());

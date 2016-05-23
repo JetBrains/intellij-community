@@ -190,6 +190,15 @@ public class GenericPatchApplier {
     final SplitHunk copy = copySplitHunk(hunk, new ArrayList<String>(), new ArrayList<String>());
 
     final List<BeforeAfter<List<String>>> steps = copy.getPatchSteps();
+    if (steps.isEmpty()) {
+      int contextSize = hunk.getContextBefore().size() + hunk.getContextAfter().size();
+      LOG.warn(constructHunkWarnMessage(hunk.getStartLineBefore(), hunk.getStartLineAfter(), contextSize, contextSize));
+      StringBuilder sb = new StringBuilder();
+      StringUtil.join(hunk.getContextBefore(), "\n", sb);
+      StringUtil.join(hunk.getContextAfter(), "\n", sb);
+      LOG.debug(sb.toString());
+      return copy;
+    }
     final BeforeAfter<List<String>> first = steps.get(0);
     final int lastStepIndex = steps.size() - 1;
     final BeforeAfter<List<String>> last = steps.get(lastStepIndex);
@@ -209,6 +218,12 @@ public class GenericPatchApplier {
       steps.set(lastStepIndex, lastCopy);
     }
     return copy;
+  }
+
+  @NotNull
+  private static String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
+    return String.format("Can't detect hunk modification lines for: -%d,%d +%d,%d", startLineBefore, sizeBefore,
+                         startLineAfter, sizeAfter);
   }
 
   private static BeforeAfter<List<String>> copyBeforeAfter(BeforeAfter<List<String>> first) {
@@ -1076,12 +1091,12 @@ public class GenericPatchApplier {
   public static class SplitHunk {
     private final List<String> myContextBefore;
     private final List<String> myContextAfter;
-    private final List<BeforeAfter<List<String>>> myPatchSteps;
+    @NotNull private final List<BeforeAfter<List<String>>> myPatchSteps;
     private final int myStartLineBefore;
     private final int myStartLineAfter;
 
     public SplitHunk(int startLineBefore, int startLineAfter,
-                     List<BeforeAfter<List<String>>> patchSteps,
+                     @NotNull List<BeforeAfter<List<String>>> patchSteps,
                      List<String> contextAfter,
                      List<String> contextBefore) {
       myStartLineBefore = startLineBefore;
@@ -1124,8 +1139,18 @@ public class GenericPatchApplier {
         final List<String> contextAfter = new ArrayList<String>();
         final List<BeforeAfter<List<String>>> steps = new ArrayList<BeforeAfter<List<String>>>();
         final int endIdx = readOne(lines, contextBefore, contextAfter, steps, i);
-        result.add(new SplitHunk(hunk.getStartLineBefore() + i - inheritedContext - newSize,
-                                 hunk.getStartLineAfter() + i - inheritedContext - oldSize, steps, contextAfter, contextBefore));
+        int startLineBefore = hunk.getStartLineBefore();
+        int startLineAfter = hunk.getStartLineAfter();
+        if (steps.isEmpty()) {
+          // skip empty chunk, but warn
+          LOG.warn(constructHunkWarnMessage(startLineBefore, startLineAfter, hunk.getEndLineBefore() - startLineBefore,
+                                            hunk.getEndLineAfter() - startLineAfter));
+          LOG.debug("Wrong chunk text: " + hunk.getText());
+        }
+        else {
+          result.add(new SplitHunk(startLineBefore + i - inheritedContext - newSize,
+                                   startLineAfter + i - inheritedContext - oldSize, steps, contextAfter, contextBefore));
+        }
         for (BeforeAfter<List<String>> step : steps) {
           newSize += step.getAfter().size();
           oldSize += step.getBefore().size();
@@ -1209,6 +1234,7 @@ public class GenericPatchApplier {
       return myContextAfter;
     }
 
+    @NotNull
     public List<BeforeAfter<List<String>>> getPatchSteps() {
       return myPatchSteps;
     }

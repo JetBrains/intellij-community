@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 
 /**
@@ -30,7 +31,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
   public void handleInsert(InsertionContext context, LookupElement item) {
     Editor editor = context.getEditor();
     char completionChar = context.getCompletionChar();
-    if (completionChar == ' ' || myIgnoreOnChars.indexOf(completionChar) >= 0) return;
+    if (completionChar == ' ' || StringUtil.containsChar(myIgnoreOnChars, completionChar)) return;
     Project project = editor.getProject();
     if (project != null) {
       if (!isCharAtSpace(editor)) {

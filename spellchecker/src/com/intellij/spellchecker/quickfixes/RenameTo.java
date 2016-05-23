@@ -119,6 +119,11 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @Nullable
   private static Editor getEditorFromFocus() {
     final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -107,14 +108,23 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    if (isInQualifiedNew()) {
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub == null) {
+      myCachedBaseType = null;
       return createClassType();
     }
 
     PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null && type.isValid()) return type;
 
-    type = createClassType();
+    if (isInQualifiedNew()) {
+      return createClassType();
+    }
+
+    final String refText = stub.getBaseClassName();
+    assert refText != null : stub;
+    type = new GrClassReferenceType(GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(refText, this));
+
     myCachedBaseType = new SoftReference<PsiClassType>(type);
     return type;
   }
@@ -256,5 +266,4 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAnonymousClassDefinition(this);
   }
-
 }

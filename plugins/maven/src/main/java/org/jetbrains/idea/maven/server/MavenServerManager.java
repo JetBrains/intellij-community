@@ -82,7 +82,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
-  private static final String DEFAULT_VM_OPTIONS = "-Xmx512m";
+  private static final String DEFAULT_VM_OPTIONS = "-Xmx768m";
 
   private static final String FORCE_MAVEN2_OPTION = "-Didea.force.maven2";
 
@@ -314,7 +314,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
         else {
           if (!xmxSet) {
-            params.getVMParametersList().add("-Xmx512m");
+            params.getVMParametersList().add("-Xmx768m");
           }
         }
 

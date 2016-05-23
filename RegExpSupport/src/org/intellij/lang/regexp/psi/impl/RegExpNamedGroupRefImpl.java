@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -36,6 +37,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExpNamedGroupRef {
+  private static final TokenSet RUBY_GROUP_REF_TOKENS =
+    TokenSet.create(RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF,
+                    RegExpTT.RUBY_NAMED_GROUP_CALL, RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL);
+
   public RegExpNamedGroupRefImpl(ASTNode node) {
     super(node);
   }
@@ -76,8 +81,8 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
   @Override
   public boolean isRubyNamedGroupRef() {
-    return getNode().findChildByType(RegExpTT.RUBY_NAMED_GROUP_REF) != null ||
-           getNode().findChildByType(RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF) != null;
+    final ASTNode node = getNode();
+    return node.findChildByType(RUBY_GROUP_REF_TOKENS) != null;
   }
 
   @Override

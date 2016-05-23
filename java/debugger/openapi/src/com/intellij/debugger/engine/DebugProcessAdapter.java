@@ -20,40 +20,9 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.sun.jdi.ThreadReference;
 
-public class DebugProcessAdapter implements DebugProcessListener{
-  //executed in manager thread
-  public void connectorIsReady() {
-  }
-
-  //executed in manager thread
-  public void paused(SuspendContext suspendContext) {
-
-  }
-
-  //executed in manager thread
-  public void resumed(SuspendContext suspendContext) {
-
-  }
-
-  //executed in manager thread
-  public void processDetached(DebugProcess process, boolean closedByUser) {
-
-  }
-
-  //executed in manager thread
-  public void processAttached(DebugProcess process) {
-
-  }
-
-  //executed in manager thread
-  public void threadStarted(DebugProcess proc, ThreadReference thread) {
-  }
-
-  //executed in manager thread
-  public void threadStopped(DebugProcess proc, ThreadReference thread) {
-  }
-
-  public void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
-
-  }
+/**
+ * @deprecated use {@link DebugProcessListener}
+ */
+@Deprecated
+public class DebugProcessAdapter implements DebugProcessListener {
 }

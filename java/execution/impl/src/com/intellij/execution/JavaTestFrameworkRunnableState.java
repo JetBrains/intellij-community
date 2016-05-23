@@ -136,6 +136,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+    handler.putUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY, getConfiguration().getName());
+    
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {

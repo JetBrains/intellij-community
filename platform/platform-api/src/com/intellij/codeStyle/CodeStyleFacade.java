@@ -47,7 +47,7 @@ public abstract class CodeStyleFacade {
    * @param offset the caret offset in the editor.
    * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
-   * @deprecated Use {@link #getLineIndent(Editor, Document, int)} instead.
+   * @deprecated Use {@link #getLineIndent(Editor, int)} instead.
    */
   @Nullable
   @Deprecated
@@ -55,17 +55,16 @@ public abstract class CodeStyleFacade {
   
   /**
    * Calculates the indent that should be used for the line at specified offset in the specified
-   * document.
+   * editor.
    *
    * @param editor the editor for which the indent must be returned.
-   * @param document the document for which the indent should be calculated.
    * @param offset the caret offset in the editor.
    * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
    */
-  public String getLineIndent(@NotNull Editor editor, @NotNull Document document, int offset) {
+  public String getLineIndent(@NotNull Editor editor, int offset) {
     //noinspection deprecation
-    return getLineIndent(document, offset);
+    return getLineIndent(editor.getDocument(), offset);
   }
 
   public abstract int getIndentSize(FileType fileType);

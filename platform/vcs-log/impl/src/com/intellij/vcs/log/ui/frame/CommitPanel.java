@@ -40,6 +40,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,17 +78,14 @@ class CommitPanel extends JBPanel {
     myColorManager = colorManager;
     myDataPack = dataPack;
 
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new MigLayout("flowy, ins 0, hidemode 3, gapy 0, fill", null, "0[]0[]push"));
     setOpaque(false);
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
 
-    myReferencesPanel.setAlignmentX(LEFT_ALIGNMENT);
-    myDataPanel.setAlignmentX(LEFT_ALIGNMENT);
-
-    add(myReferencesPanel);
-    add(myDataPanel);
+    add(myReferencesPanel, "growx, wmax 100%, growy 0");
+    add(myDataPanel, "growx, wmax 100%, growy");
   }
 
   public void setDataPack(@NotNull VisiblePack visiblePack) {
@@ -346,13 +344,6 @@ class CommitPanel extends JBPanel {
       }
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = Math.max(size.height, 4 * getFontMetrics(getFont()).getHeight());
-      return size;
-    }
-
     @NotNull
     private String getMessageText(@NotNull VcsFullCommitDetails commit) {
       String fullMessage = commit.getFullMessage();
@@ -441,7 +432,7 @@ class CommitPanel extends JBPanel {
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
-      super(new FlowLayout(FlowLayout.LEADING, 4, 2));
+      super(new WrappedFlowLayout(4, 2));
       myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);
@@ -460,7 +451,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Dimension getMaximumSize() {
-      return super.getPreferredSize();
+      return new Dimension(super.getMaximumSize().width, super.getPreferredSize().height);
     }
 
     @Override

@@ -17,10 +17,9 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -42,26 +41,17 @@ public class PersistentUtil {
   }
 
   private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
-      @Override
-      public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
-    return StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile root) {
-        return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
-      }
-    }, ".").hashCode();
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+    return StringUtil.join(sortedRoots, root -> root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName(), ".").hashCode();
   }
 
   @NotNull
   private static File getStorageFile(@NotNull String logId, @NotNull String logKind, int version) {
     File subdir = new File(LOG_CACHE, logKind);
-    final File mapFile = new File(subdir, logId + "." + version);
+    String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
+    final File mapFile = new File(subdir, safeLogId + "." + version);
     if (!mapFile.exists()) {
-      IOUtil.deleteAllFilesStartingWith(new File(subdir, logId));
+      IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId));
     }
     return mapFile;
   }
@@ -73,11 +63,8 @@ public class PersistentUtil {
                                                                        int version) throws IOException {
     final File storageFile = getStorageFile(logId, logKind, version);
 
-    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<T>, IOException>() {
-      @Override
-      public PersistentEnumerator<T> compute() throws IOException {
-        return new PersistentEnumerator<T>(storageFile, keyDescriptor, Page.PAGE_SIZE);
-      }
+    return IOUtil.openCleanOrResetBroken(() -> {
+      return new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE);
     }, storageFile);
   }
 
@@ -86,11 +73,8 @@ public class PersistentUtil {
     throws IOException {
     final File storageFile = getStorageFile(logId, logKind, version);
 
-    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentStringEnumerator, IOException>() {
-      @Override
-      public PersistentStringEnumerator compute() throws IOException {
-        return new PersistentStringEnumerator(storageFile);
-      }
+    return IOUtil.openCleanOrResetBroken(() -> {
+      return new PersistentStringEnumerator(storageFile);
     }, storageFile);
   }
 }

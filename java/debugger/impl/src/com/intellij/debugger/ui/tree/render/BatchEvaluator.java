@@ -55,7 +55,7 @@ public class BatchEvaluator {
 
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       public void processDetached(DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;

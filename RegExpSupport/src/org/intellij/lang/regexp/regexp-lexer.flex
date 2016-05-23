@@ -19,7 +19,7 @@ import java.util.EnumSet;
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
-    final ArrayList<Integer> states = new ArrayList();
+    final ArrayList<Integer> states = new ArrayList<>();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
@@ -35,6 +35,7 @@ import java.util.EnumSet;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowCategoryShorthand;
     private boolean allowPosixBracketExpressions;
+    private boolean allowCaretNegatedProperties;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -48,6 +49,7 @@ import java.util.EnumSet;
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowCategoryShorthand = capabilities.contains(RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
       this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
+      this.allowCaretNegatedProperties = capabilities.contains(RegExpCapability.CARET_NEGATED_PROPERTIES);
     }
 
     private void yypushstate(int state) {
@@ -78,6 +80,7 @@ import java.util.EnumSet;
 %xstate NEGATE_CLASS1
 %state CLASS2
 %state PROP
+%xstate BRACED_PROP
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
@@ -177,8 +180,8 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE} "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
 {ESCAPE} "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
-{ESCAPE} "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
-{ESCAPE} "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
+{ESCAPE} "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
+{ESCAPE} "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
@@ -193,9 +196,21 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
-  {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+  {LBRACE}                    { yypopstate(); yypushstate(BRACED_PROP); return RegExpTT.LBRACE; }
   "L"|"M"|"Z"|"S"|"N"|"P"|"C" { yypopstate(); if (allowCategoryShorthand) return RegExpTT.CATEGORY_SHORT_HAND; else yypushback(1); }
   {ANY}                       { yypopstate(); yypushback(1); }
+}
+
+<BRACED_PROP> {
+  "^"      { if (allowCaretNegatedProperties) return RegExpTT.CARET; else return RegExpTT.BAD_CHARACTER; }
+  {NAME}   { return RegExpTT.NAME; }
+  {RBRACE} { yypopstate(); return RegExpTT.RBRACE; }
+  {ANY}               { if (allowDanglingMetacharacters) {
+                          yypopstate(); yypushback(1);
+                        } else {
+                          return RegExpTT.BAD_CHARACTER;
+                        }
+                      }
 }
 
 /* "{" \d+(,\d*)? "}" */
@@ -203,7 +218,6 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
 
 <EMBRACED> {
-  {NAME}              { return RegExpTT.NAME;   }
   [:digit:]+          { return RegExpTT.NUMBER; }
   ","                 { return RegExpTT.COMMA;  }
 

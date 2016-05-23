@@ -417,6 +417,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
+  public void testIllegalWhitespaces() { doTest(false, false); }
+
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {
     @Override

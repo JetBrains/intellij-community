@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsAdapter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -35,6 +36,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,6 +60,7 @@ class DetailsPanel extends JPanel {
 
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final MigLayout myLayout;
 
   @NotNull private VisiblePack myDataPack;
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
@@ -74,10 +77,10 @@ class DetailsPanel extends JPanel {
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
     myScrollPane.getHorizontalScrollBar().setUnitIncrement(JBUI.scale(10));
-    myMainContentPanel = new JPanel() {
+    myLayout = new MigLayout("flowy, ins 0, hidemode 3, gap 0, fill");
+    myMainContentPanel = new ScrollablePanel(myLayout) {
       @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
+      public boolean getScrollableTracksViewportWidth() {
         boolean expanded = false;
         for (Component c : getComponents()) {
           if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
@@ -85,11 +88,13 @@ class DetailsPanel extends JPanel {
             break;
           }
         }
-        if (expanded) {
-          return size;
-        }
-        size.width = myScrollPane.getViewport().getWidth() - 5;
-        return size;
+        return !expanded;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension preferredSize = super.getPreferredSize();
+        return new Dimension(preferredSize.width, Math.max(preferredSize.height, myScrollPane.getViewport().getHeight()));
       }
 
       @Override
@@ -107,7 +112,6 @@ class DetailsPanel extends JPanel {
         }
       }
     };
-    myMainContentPanel.setLayout(new BoxLayout(myMainContentPanel, BoxLayout.Y_AXIS));
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
       protected boolean isStatusVisible() {
@@ -179,21 +183,9 @@ class DetailsPanel extends JPanel {
     int requiredCount = Math.min(selectionLength, MAX_ROWS);
     for (int i = existingCount; i < requiredCount; i++) {
       if (i > 0) {
-        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
+        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null), "growx, wmax 100%, growy 0");
       }
-      int index = i;
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack) {
-        @Override
-        public Dimension getMaximumSize() {
-          Dimension preferredSize = super.getPreferredSize();
-          if (index == mySelection.size() - 1) {
-            // last component can grow
-            Dimension maximumSize = super.getMaximumSize();
-            return new Dimension(preferredSize.width, maximumSize.height);
-          }
-          return preferredSize;
-        }
-      });
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack));
     }
 
     // clear superfluous items
@@ -213,11 +205,12 @@ class DetailsPanel extends JPanel {
       myMainContentPanel.add(label);
     }
 
-    for (int i = myMainContentPanel.getComponentCount() - 1; i >= 0; i--) {
-      ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
+    mySelection = Ints.asList(Arrays.copyOf(selection, requiredCount));
+
+    for (int i = 0; i < mySelection.size(); i++) {
+      myLayout.setComponentConstraints(getCommitPanel(i), "growx, wmax 100%, growy" + (i == mySelection.size() - 1 ? ", push" : ""));
     }
 
-    mySelection = Ints.asList(Arrays.copyOf(selection, requiredCount));
     repaint();
   }
 

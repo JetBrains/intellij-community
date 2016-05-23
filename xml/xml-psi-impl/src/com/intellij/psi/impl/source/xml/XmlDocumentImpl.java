@@ -161,8 +161,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
-    MY_ROOT_TAG_UPDATER.set(this, null);
-    MY_PROLOG_UPDATER.set(this, null);
+    myRootTag = null;
+    myProlog = null;
     super.clearCaches();
   }
 

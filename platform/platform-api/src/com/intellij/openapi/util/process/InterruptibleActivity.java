@@ -22,8 +22,8 @@ package com.intellij.openapi.util.process;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 
 import java.util.concurrent.TimeUnit;
 
@@ -101,7 +101,7 @@ public abstract class InterruptibleActivity {
     final int[] retcode = new int[1];
 
     try {
-      GuiUtils.runOrInvokeAndWait(() -> retcode[0] = processTimeout());
+      UIUtil.invokeAndWaitIfNeeded(() -> retcode[0] = processTimeout());
     }
     catch (Exception e) {
       throw new RuntimeException(e);

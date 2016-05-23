@@ -617,7 +617,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
     return mySuppressActions.computeIfAbsent(wrapper, (w) -> {
       final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(w);
-      return actions == null ? Collections.emptySet() : ContainerUtil.newHashSet(actions);
+      return actions == null ? Collections.emptySet() : ContainerUtil.newLinkedHashSet(actions);
     });
   }
 

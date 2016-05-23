@@ -327,6 +327,45 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testSourceSetOutputDirsAsRuntimeDependenciesOfDependantModules() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "project(':projectA') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    runtime project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "projectA", "projectA_main", "projectA_test", "projectB", "projectB_main", "projectB_test", "projectC", "projectC_main", "projectC_test");
+
+    assertModuleModuleDepScope("projectB_main", "projectA_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("projectC_main", "projectA_main", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("projectC_main", "projectB_main", DependencyScope.RUNTIME);
+
+    final String path = pathFromBasedir("projectA/build/generated-resources/main");
+    final String classesPath = "file://" + path;
+    final String depName = PathUtil.toPresentableUrl(path);
+    assertModuleLibDep("projectA_main", depName, classesPath);
+    assertModuleLibDepScope("projectA_main", depName, DependencyScope.RUNTIME);
+    assertModuleLibDep("projectB_main", depName, classesPath);
+    assertModuleLibDepScope("projectB_main", depName, DependencyScope.COMPILE);
+    assertModuleLibDep("projectC_main", depName, classesPath);
+    assertModuleLibDepScope("projectC_main", depName, DependencyScope.RUNTIME);
+  }
+
+  @Test
   public void testProjectArtifactDependencyInTestAndArchivesConfigurations() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 

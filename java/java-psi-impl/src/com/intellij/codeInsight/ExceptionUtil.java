@@ -474,8 +474,7 @@ public class ExceptionUtil {
             PsiElement element = info.getElement();
             if (info instanceof MethodCandidateInfo &&
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
-                !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method) &&
-                ((MethodCandidateInfo)info).isApplicable()) {
+                !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
               return Pair.create((PsiMethod)element, ((MethodCandidateInfo)info).getSubstitutor(false));
             }
             return null;

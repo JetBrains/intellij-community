@@ -1993,4 +1993,12 @@ class Main {
 }
 '''
   }
+
+  void 'test static GDK method applicable'() {
+    testHighlighting '''
+def doParse() {
+  Date.parse('dd.MM.yyyy', '01.12.2016')
+}
+''', GroovyAssignabilityCheckInspection
+  }
 }

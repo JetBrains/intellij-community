@@ -36,8 +36,8 @@ public class SharedIndicesData {
   private static IndexedStateMap ourSharedFileInputs;
   private static IndexedStateMap ourSharedFileContentIndependentInputs;
   private static IndexedStateMap ourSharedContentInputs;
-  static final boolean ourFileSharedIndicesEnabled = SystemProperties.getBooleanProperty("idea.shared.input.index.enabled", true);
-  static final boolean DO_CHECKS = ourFileSharedIndicesEnabled && SystemProperties.getBooleanProperty("idea.shared.input.index.checked", true);
+  static final boolean ourFileSharedIndicesEnabled = SystemProperties.getBooleanProperty("idea.shared.input.index.enabled", false);
+  static final boolean DO_CHECKS = ourFileSharedIndicesEnabled && SystemProperties.getBooleanProperty("idea.shared.input.index.checked", false);
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
 

@@ -16,14 +16,16 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.formatting.Indent;
+import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +36,25 @@ import org.jetbrains.annotations.Nullable;
  * the indentation, it forwards the request to FormatterBasedLineIndentProvider.
  */
 public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
+  
+  protected enum JavaLikeElement implements SemanticEditorPosition.SyntaxElement {
+    Whitespace,
+    Semicolon,
+    BlockOpeningBrace,
+    BlockClosingBrace,
+    ArrayOpeningBracket
+  }
+  
+  
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @NotNull Document document, int offset) {
-    Indent.Type indent = getIndent(editor, document, offset);
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+    Indent.Type indent = getIndent(editor, offset);
     if (indent == Indent.Type.NONE) return null;
-    return super.getLineIndent(project, editor, document, offset);
+    else if (indent == Indent.Type.CONTINUATION) {
+      return getContinuationIndent(editor, offset);
+    }
+    return super.getLineIndent(project, editor, offset);
   }
 
   @Override
@@ -53,39 +68,69 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   protected abstract boolean isSuitableForLanguage(@NotNull Language language);
   
   @Nullable
-  protected Indent.Type getIndent(@NotNull Editor editor, @NotNull Document document, int offset) {
-    CharSequence docChars = document.getCharsSequence();
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    if (isWhitespace(iterator.getTokenType())) {
-      if (containsLineBreaks(iterator, docChars)) {
-        iterator.retreat();
-        if (!iterator.atEnd()) {
-          if (isEndOfCodeBlock(iterator)) return Indent.Type.NONE;
+  protected Indent.Type getIndent(@NotNull Editor editor, int offset) {
+    if (offset > 0) {
+      offset --;
+      if (getPosition(editor, offset).matchesRule(
+        position -> position.isAt(JavaLikeElement.Whitespace) &&
+                    position.isAtMultiline())) {
+        if (getPosition(editor, offset).matchesRule(
+          position -> position
+            .before()
+            .beforeOptional(JavaLikeElement.Semicolon)
+            .beforeOptional(JavaLikeElement.Whitespace)
+            .isAt(JavaLikeElement.BlockClosingBrace))) {
+          return Indent.Type.NONE;
+        }
+        else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(JavaLikeElement.ArrayOpeningBracket) 
+        )) {
+          return Indent.Type.CONTINUATION;
         }
       }
     }
     return null;
   }
-  
-  protected abstract boolean isWhitespace(@NotNull IElementType tokenType);
-  
-  private static boolean containsLineBreaks(@NotNull HighlighterIterator iterator, @NotNull CharSequence chars) {
-    return CharArrayUtil.containLineBreaks(chars, iterator.getStart(), iterator.getEnd());
+
+  protected SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
+    return new SemanticEditorPosition((EditorEx)editor, offset) {
+      @Override
+      public SyntaxElement map(@NotNull IElementType elementType) {
+        return mapType(elementType);
+      }
+    };
   }
   
-  protected boolean isEndOfCodeBlock(@NotNull HighlighterIterator iterator) {
-    if (isSemicolon(iterator.getTokenType())) iterator.retreat();
-    if (!iterator.atEnd()) {
-      if (isWhitespace(iterator.getTokenType())) iterator.retreat();
-      if (!iterator.atEnd()) {
-        return isBlockClosingBrace(iterator.getTokenType());
+  protected abstract SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType);
+  
+  @Nullable
+  private static String getContinuationIndent(@NotNull Editor editor, int offset) {
+    Project project = editor.getProject();
+    if (project != null) {
+      Document document = editor.getDocument();
+      String lastLineIndent = getLastLineIndent(document.getCharsSequence(), offset);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file != null) {
+        CommonCodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file);
+        return 
+          lastLineIndent + new IndentInfo(0, options.CONTINUATION_INDENT_SIZE, 0, false).generateNewWhiteSpace(options);
       }
     }
-    return false;
+    return null;
   }
   
-  protected abstract boolean isSemicolon(@NotNull IElementType tokenType);
-  
-  protected abstract boolean isBlockClosingBrace(@NotNull IElementType tokenType);
+  @NotNull
+  private static String getLastLineIndent(@NotNull CharSequence docChars, int offset) {
+    int indentStart = CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
+    if (indentStart > 0) {
+      indentStart = CharArrayUtil.shiftBackwardUntil(docChars, indentStart, "\n") + 1;
+      if (indentStart >= 0) {
+        int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
+        if (indentEnd > indentStart) {
+          return docChars.subSequence(indentStart, indentEnd).toString(); 
+        }
+      }
+    }
+    return "";
+  }
 }

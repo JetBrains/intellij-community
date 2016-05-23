@@ -887,6 +887,17 @@ public class InferenceSession {
       if (typeTypeByParentCall != null) {
         return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, lambdaExpression));
       }
+
+      //during checked exception constraint processing
+      //we may need to infer types for nested calls to infer unhandled exceptions inside lambda body
+      //at this time, types of interface method parameter types must be already calculated
+      // that's why walkUp in InferenceSessionContainer stops at this point and
+      //that's why we can reuse this type here
+      final PsiType cachedLambdaType = LambdaUtil.getFunctionalTypeMap().get(lambdaExpression);
+      if (cachedLambdaType != null) {
+        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(cachedLambdaType, lambdaExpression));
+      }
+
       return inferParent || !(PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent()) instanceof PsiExpressionList) 
              ? LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType()) : null;
     }

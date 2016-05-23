@@ -16,12 +16,15 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 
@@ -36,7 +39,12 @@ class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   public static final GroovyLightProjectDescriptor GROOVY_2_2 = new GroovyLightProjectDescriptor(mockGroovy2_2LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_3 = new GroovyLightProjectDescriptor(mockGroovy2_3LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_LATEST = new GroovyLightProjectDescriptor(bundledGroovyJar as String)
-
+  public static final GroovyLightProjectDescriptor GROOVY_LATEST_REAL_JDK = new GroovyLightProjectDescriptor(bundledGroovyJar as String) {
+    @Override
+    Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false)
+    }
+  }
   private final String myLibPath
 
   protected GroovyLightProjectDescriptor(String libPath) {

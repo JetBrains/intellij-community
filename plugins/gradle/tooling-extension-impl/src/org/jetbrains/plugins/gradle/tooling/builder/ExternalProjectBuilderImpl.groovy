@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -47,10 +48,11 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
   private final cache = new ConcurrentHashMap<String, ExternalProject>()
   private final myTasksFactory = new TasksFactory()
+  private SourceSetCachedFinder mySourceSetFinder
 
   @Override
   public boolean canBuild(String modelName) {
-    return ExternalProject.name.equals(modelName) || ExternalProjectPreview.name.equals(modelName)
+    return ExternalProject.name == modelName || ExternalProjectPreview.name == modelName
   }
 
   @Nullable
@@ -59,12 +61,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     ExternalProject externalProject = cache[project.path]
     if (externalProject != null) return externalProject
 
+    if(!mySourceSetFinder) mySourceSetFinder = new SourceSetCachedFinder(project)
+
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-    def isPreview = ExternalProjectPreview.name.equals(modelName)
+    def isPreview = ExternalProjectPreview.name == modelName
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
     defaultExternalProject.name = project.name
-    defaultExternalProject.QName = ":".equals(project.path) ? project.name : project.path
+    defaultExternalProject.QName = ":" == project.path ? project.name : project.path
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir
@@ -148,7 +152,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
+  private Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
@@ -256,7 +260,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         additionalIdeaGenDirs.removeAll(files)
       }
 
-      if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
+      if (SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
         if (!inheritOutputDirs && ideaTestOutDir != null) {
           javaDirectorySet.outputDir = ideaTestOutDir
           resourcesDirectorySet.outputDir = ideaTestOutDir
@@ -271,7 +275,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
       else {
-        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && ideaOutDir != null) {
+        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name && ideaOutDir != null) {
           javaDirectorySet.outputDir = ideaOutDir
           resourcesDirectorySet.outputDir = ideaOutDir
         }
@@ -325,7 +329,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           }
         }
 
-        if (ideaPluginModule && !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && !SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
+        if (ideaPluginModule && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name && SourceSet.TEST_SOURCE_SET_NAME != sourceSet.name) {
           sources.values().each {
             ideaSourceDirs.removeAll(it.srcDirs)
             ideaTestSourceDirs.removeAll(it.srcDirs)
@@ -334,7 +338,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       }
 
       if(resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
+        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
 

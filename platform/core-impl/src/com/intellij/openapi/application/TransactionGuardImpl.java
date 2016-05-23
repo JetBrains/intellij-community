@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.Semaphore;
@@ -62,7 +63,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private void pollQueueLater() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    invokeLater(new Runnable() {
       @Override
       public void run() {
         Queue<Transaction> queue = getQueue(myCurrentTransaction);
@@ -72,7 +73,7 @@ public class TransactionGuardImpl extends TransactionGuard {
           runSyncTransaction(next);
         }
       }
-    }, ModalityState.any());
+    });
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
@@ -121,7 +122,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (isDispatchThread) {
       runnable.run();
     } else {
-      app.invokeLater(runnable, ModalityState.any());
+      invokeLater(runnable);
     }
   }
 
@@ -144,9 +145,13 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (app.isDispatchThread()) {
       Transaction transaction = new Transaction(runnable, getContextTransaction(), app);
       if (!canRunTransactionNow(transaction, true)) {
-        LOG.error("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                  "Please use asynchronous submit*Transaction. " +
-                  "See TransactionGuard FAQ for details. Transaction: " + runnable);
+        String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                         "Please use asynchronous submit*Transaction. " +
+                         "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
+        if (!isWriteSafeModality(ModalityState.current())) {
+          message += "\nUnsafe modality: " + ModalityState.current();
+        }
+        LOG.error(message);
       }
       runSyncTransaction(transaction);
       return;
@@ -237,13 +242,17 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     final TransactionIdImpl id = getContextTransaction();
-    Application app = ApplicationManager.getApplication();
-    app.invokeLater(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         submitTransaction(parentDisposable, id, transaction);
       }
-    }, ModalityState.any());
+    };
+    invokeLater(runnable);
+  }
+
+  private static void invokeLater(Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any(), Condition.FALSE);
   }
 
   @Override

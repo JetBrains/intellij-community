@@ -72,7 +72,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
   public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
   // asked only for non-DVCS
-  public boolean INCLUDE_TEXT_INTO_PATCH = false;
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;

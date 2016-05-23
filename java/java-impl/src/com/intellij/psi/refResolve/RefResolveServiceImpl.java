@@ -19,7 +19,6 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -436,12 +435,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             if (!myApplication.isDisposed()) {
-              try {
-                processBatch(indicator, files);
-              }
-              catch (RuntimeInterruptedException ignore) {
-                // see future.cancel() in disable()
-              }
+              processBatch(indicator, files);
             }
           }
         };

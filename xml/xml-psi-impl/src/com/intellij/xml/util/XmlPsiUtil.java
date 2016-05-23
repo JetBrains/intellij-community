@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -208,29 +209,23 @@ public class XmlPsiUtil {
     return type;
   }
 
-  private static final Object LOCK = new Object();
-
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
                                             final XmlEntityDecl.EntityContextType type,
                                             final XmlEntityRef entityRef) {
-    CachedValue<PsiElement> value;
-    synchronized (LOCK) { // we depend on targetFile and entityRef
-      value = entityRef.getUserData(PARSED_DECL_KEY);
-      //    return entityDecl.parse(targetFile, type);
+    CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
 
-      if (value == null) {
-        value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(new CachedValueProvider<PsiElement>() {
-          @Override
-          public Result<PsiElement> compute() {
-            final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-            if (res == null) return new Result<PsiElement>(res, targetFile);
-            if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
-            return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
-          }
-        }, false);
-        entityRef.putUserData(PARSED_DECL_KEY, value);
-      }
+    if (value == null) {
+      value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(new CachedValueProvider<PsiElement>() {
+        @Override
+        public Result<PsiElement> compute() {
+          final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
+          if (res == null) return new Result<PsiElement>(res, targetFile);
+          if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
+          return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
+        }
+      }, false);
+      value = ((XmlEntityRefImpl)entityRef).putUserDataIfAbsent(PARSED_DECL_KEY, value);
     }
 
     return value.getValue();

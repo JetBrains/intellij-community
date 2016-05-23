@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
@@ -46,6 +47,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -170,7 +172,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
-                  String result = getEncodedContent(virtualFile, project, parameters);
+                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName());
                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
                 }
               });
@@ -190,6 +192,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     finally {
       StreamUtil.closeStream(stream);
+    }
+  }
+
+  private static String getFileHeaderTemplateName() {
+    if (PlatformUtils.isIntelliJ()) {
+      return FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java");
+    }
+    else if (PlatformUtils.isPhpStorm()) {
+      return FileTemplateBase.getQualifiedName("PHP File Header", "php");
+    } else {
+      throw new IllegalStateException("Provide file header template for your IDE");
     }
   }
 
@@ -231,10 +244,18 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static String getEncodedContent(VirtualFile virtualFile,
+                                         Project project,
+                                         Map<String, String> parameters) throws IOException {
+    return getEncodedContent(virtualFile, project, parameters,
+                             FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java"));
+  }
+
+  private static String getEncodedContent(VirtualFile virtualFile,
                                           Project project,
-                                          Map<String, String> parameters) throws IOException {
+                                          Map<String, String> parameters,
+                                          String fileHeaderTemplateName) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
-    final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+    final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
     final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
     String result = convertTemplates(text, pattern, templateText);
