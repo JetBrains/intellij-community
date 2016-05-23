@@ -1263,18 +1263,25 @@ public class MavenProjectsTree {
         generalSettings, embedder, files, explicitProfiles, myProjectLocator);
 
       for (MavenProjectReaderResult result : results) {
+        MavenProject mavenProjectCandidate = null;
         for (MavenProject mavenProject : mavenProjects) {
-          if (mavenProject.getMavenId().equals(result.mavenModel.getMavenId())) {
-            MavenProjectChanges changes = mavenProject.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
-            if (result.nativeMavenProject != null) {
-              for (MavenImporter eachImporter : mavenProject.getSuitableImporters()) {
-                eachImporter.resolve(project, mavenProject, result.nativeMavenProject, embedder, context);
-              }
-            }
-
-            fireProjectResolved(Pair.create(mavenProject, changes), result.nativeMavenProject);
+          MavenId mavenId = result.mavenModel.getMavenId();
+          if (mavenProject.getMavenId().equals(mavenId)) {
+            mavenProjectCandidate = mavenProject;
+            break;
+          } else if (mavenProject.getMavenId().equals(mavenId.getGroupId(), mavenId.getArtifactId())) {
+            mavenProjectCandidate = mavenProject;
           }
         }
+
+        if(mavenProjectCandidate == null) continue;
+        MavenProjectChanges changes = mavenProjectCandidate.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
+        if (result.nativeMavenProject != null) {
+          for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
+            eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
+          }
+        }
+        fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
       }
     }
     finally {
