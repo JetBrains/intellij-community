@@ -18,16 +18,19 @@ package com.intellij.ide.browsers;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.awt.event.InputEvent;
 
@@ -110,6 +113,10 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
       Url url = WebBrowserService.getInstance().getUrlToOpen(psiFile, preferLocalUrl);
       if (url != null) {
         ApplicationManager.getApplication().saveAll();
+        if (Registry.is("ide.built.in.web.server.activatable", false) &&
+            BuiltInServerManager.getInstance().isOnBuiltInWebServer(url)) {
+          PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", "true");
+        }
         BrowserUtil.launchBrowser(url.toExternalForm());
       }
     }

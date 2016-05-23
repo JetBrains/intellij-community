@@ -18,6 +18,9 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="xml-psi-impl" exported="" />
+    <orderEntry type="module" module-name="xml-analysis-impl" exported="" />
+    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="module" module-name="built-in-server-api" />
   </component>
   <component name="copyright">
     <Base>

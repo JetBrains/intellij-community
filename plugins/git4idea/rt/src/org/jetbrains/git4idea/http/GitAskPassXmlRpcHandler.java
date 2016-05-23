@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,25 +31,25 @@ public interface GitAskPassXmlRpcHandler {
 
   /**
    * Get the username from the user to access the given URL.
-   * @param handler XML RPC handler number.
+   * @param token   Access token.
    * @param url     URL which Git tries to access.
    * @return The Username which should be used for the URL.
    */
   // UnusedDeclaration suppressed: the method is used via XML RPC
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  String askUsername(int handler, @NotNull String url);
+  String askUsername(String token, @NotNull String url);
 
   /**
    * Get the password from the user to access the given URL.
    * It is assumed that the username either is specified in the URL (http://username@host.com), or has been asked earlier.
-   * @param handler XML RPC handler number.
+   * @param token   Access token.
    * @param url     URL which Git tries to access.
    * @return The password which should be used for the URL.
    */
   // UnusedDeclaration suppressed: the method is used via XML RPC
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  String askPassword(int handler, @NotNull String url);
+  String askPassword(String token, @NotNull String url);
 
 }
