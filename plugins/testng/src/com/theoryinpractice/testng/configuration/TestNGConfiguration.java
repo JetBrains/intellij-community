@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TestNGConfiguration extends JavaTestConfigurationBase {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
@@ -423,5 +425,18 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public String getFrameworkPrefix() {
     return "g";
+  }
+
+  @Nullable
+  public Set<String> calculateGroupNames() {
+    if (!TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
+      return null;
+    }
+
+    Set<String> groups = StringUtil.split(data.getGroupName(), ",").stream()
+      .map(String::trim)
+      .filter(StringUtil::isNotEmpty)
+      .collect(Collectors.toSet());
+    return groups.isEmpty() ? null : groups;
   }
 }
