@@ -77,13 +77,7 @@ public class IdeaTextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, false);
-  }
-
-  @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath,
-                                           final boolean reversePatch, final boolean includeBaseText) throws VcsException {
+  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, @NotNull final String basePath, final boolean reversePatch) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<Change>(changes));
@@ -93,11 +87,8 @@ public class IdeaTextPatchBuilder {
         revisions.add(new BeforeAfter<AirContentRevision>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
-      public void run() {
-        ProgressManager.checkCanceled();
-      }
-    }, includeBaseText);
+    return TextPatchBuilder
+      .buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, ProgressManager::checkCanceled);
   }
 
   @Nullable
