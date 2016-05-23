@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -90,13 +89,10 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     final Set<TemplateImpl> templates = myConfigurable.getSelectedTemplates().keySet();
 
 
-    CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(templates, template -> {
-      TemplateContext zeroContext = new TemplateContext();
-      for (TemplateContextType type : TemplateContextType.EP_NAME.getExtensions()) {
-        zeroContext.setEnabled(type, false);
-      }
-      return JDOMUtil.writeElement(TemplateSettings.serializeTemplate(template, zeroContext));
-    }, SystemProperties.getLineSeparator())));
+    CopyPasteManager.getInstance().setContents(
+      new StringSelection(StringUtil.join(templates,
+                                          template -> JDOMUtil.writeElement(TemplateSettings.serializeTemplate(template)),
+                                          SystemProperties.getLineSeparator())));
     
   }
 

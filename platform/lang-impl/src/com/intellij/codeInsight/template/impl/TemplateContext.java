@@ -39,28 +39,9 @@ public class TemplateContext {
     return cloneResult;
   }
 
-  Map<TemplateContextType, Boolean> getDifference(@Nullable TemplateContext defaultContext) {
-    Map<TemplateContextType, Boolean> result = ContainerUtil.newLinkedHashMap();
-    synchronized (myContextStates) {
-      //noinspection NestedSynchronizedStatement
-      synchronized (defaultContext == null ? myContextStates : defaultContext.myContextStates) {
-        for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-          Boolean ownValue = getOwnValue(contextType);
-          if (ownValue != null && shouldSaveContextValue(defaultContext, contextType, ownValue)) {
-            result.put(contextType, ownValue);
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  private boolean shouldSaveContextValue(@Nullable TemplateContext defaultContext, @NotNull TemplateContextType contextType, boolean enabled) {
-    if (defaultContext == null) {
-      TemplateContextType base = contextType.getBaseContextType();
-      return base == null ? enabled : enabled != isEnabled(base);
-    }
-    return enabled != defaultContext.isEnabled(contextType);
+  @Nullable
+  TemplateContextType getDifference(@NotNull TemplateContext defaultContext) {
+    return ContainerUtil.find(TemplateManagerImpl.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
   }
 
   public boolean isEnabled(@NotNull TemplateContextType contextType) {
@@ -130,13 +111,19 @@ public class TemplateContext {
   }
 
   @VisibleForTesting
-  public void writeTemplateContext(Element element, @Nullable TemplateContext defaultContext) throws WriteExternalException {
-    Map<TemplateContextType, Boolean> diff = getDifference(defaultContext);
-    for (TemplateContextType type : diff.keySet()) {
-      Element optionElement = new Element("option");
-      optionElement.setAttribute("name", type.getContextId());
-      optionElement.setAttribute("value", diff.get(type).toString());
-      element.addContent(optionElement);
+  public void writeTemplateContext(Element element) throws WriteExternalException {
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      Boolean ownValue = getOwnValue(type);
+      if (ownValue != null) {
+        TemplateContextType base = type.getBaseContextType();
+        boolean baseEnabled = base != null && isEnabled(base);
+        if (ownValue != baseEnabled) {
+          Element optionElement = new Element("option");
+          optionElement.setAttribute("name", type.getContextId());
+          optionElement.setAttribute("value", ownValue.toString());
+          element.addContent(optionElement);
+        }
+      }
     }
   }
 

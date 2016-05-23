@@ -575,20 +575,13 @@ class Outer {
     def copy = defContext.createCopy()
 
     def write = new Element("context")
-    copy.writeTemplateContext(write, defContext)
-    assert write.children.empty
+    copy.writeTemplateContext(write)
+    assert write.children.size() == 2 : JDOMUtil.writeElement(write)
 
     copy.putValue(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
 
     write = new Element("context")
-    copy.writeTemplateContext(write, defContext)
-    assert JDOMUtil.writeElement(write) == '''\
-<context>
-  <option name="JAVA_COMMENT" value="false" />
-</context>'''
-
-    write = new Element("context")
-    copy.writeTemplateContext(write, null)
+    copy.writeTemplateContext(write)
     assert write.children.size() == 3 : JDOMUtil.writeElement(write)
   }
 

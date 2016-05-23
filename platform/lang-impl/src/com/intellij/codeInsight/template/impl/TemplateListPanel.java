@@ -555,7 +555,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return !template.equals(defaultTemplate) ||
            !template.getVariables().equals(defaultTemplate.getVariables()) ||
            !areOptionsEqual(template, defaultTemplate) ||
-           !getTemplateContext(template).getDifference(defaultTemplate.getTemplateContext()).isEmpty();
+           getTemplateContext(template).getDifference(defaultTemplate.getTemplateContext()) != null;
   }
 
   private ToolbarDecorator initToolbar() {

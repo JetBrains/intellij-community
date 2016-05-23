@@ -245,7 +245,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isDeactivated;
   }
 
-  public TemplateContext getTemplateContext() {
+  @NotNull public TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -473,7 +473,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public boolean contextsEqual(TemplateImpl defaultTemplate) {
-    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()).isEmpty();
+    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()) == null;
   }
 
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
