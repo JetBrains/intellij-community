@@ -44,6 +44,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -347,7 +348,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          LOG.error("Illegal watcher command: '" + line + "'");
+          String message = "Illegal watcher command: '" + line + "'";
+          if (line.length() <= 20) message += " " + Arrays.toString(line.chars().toArray());
+          LOG.error(message);
           return;
         }
 
