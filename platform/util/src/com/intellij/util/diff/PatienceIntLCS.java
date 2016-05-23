@@ -50,10 +50,11 @@ class PatienceIntLCS {
   }
 
   public void execute(boolean failOnSmallReduction) throws FilesTooBigForDiffException {
-    execute(myStart1, myCount1, myStart2, myCount2, failOnSmallReduction);
+    int thresholdCheckCounter = failOnSmallReduction ? 2 : -1;
+    execute(myStart1, myCount1, myStart2, myCount2, thresholdCheckCounter);
   }
 
-  private void execute(int start1, int count1, int start2, int count2, boolean failOnSmallReduction) throws FilesTooBigForDiffException {
+  private void execute(int start1, int count1, int start2, int count2, int thresholdCheckCounter) throws FilesTooBigForDiffException {
     if (count1 == 0 && count2 == 0) {
       return;
     }
@@ -77,11 +78,14 @@ class PatienceIntLCS {
       addChange(start1, count1, start2, count2);
     }
     else {
+      if (thresholdCheckCounter == 0) checkReduction(count1, count2);
+      thresholdCheckCounter = Math.max(-1, thresholdCheckCounter - 1);
+
       UniqueLCS uniqueLCS = new UniqueLCS(myFirst, mySecond, start1, count1, start2, count2);
       int[][] matching = uniqueLCS.execute();
 
       if (matching == null) {
-        checkReduction(count1, count2, failOnSmallReduction);
+        if (thresholdCheckCounter >= 0) checkReduction(count1, count2);
         IntLCS intLCS = new IntLCS(myFirst, mySecond, start1, count1, start2, count2, myChanges1, myChanges2);
         intLCS.execute();
       }
@@ -93,8 +97,7 @@ class PatienceIntLCS {
         c1 = matching[0][0];
         c2 = matching[1][0];
 
-        checkReduction(c1, c2, failOnSmallReduction);
-        execute(start1, c1, start2, c2, false);
+        execute(start1, c1, start2, c2, thresholdCheckCounter);
 
         for (int i = 1; i < matching[0].length; i++) {
           s1 = matching[0][i - 1] + 1;
@@ -104,8 +107,7 @@ class PatienceIntLCS {
           c2 = matching[1][i] - s2;
 
           if (c1 > 0 || c2 > 0) {
-            checkReduction(c1, c2, failOnSmallReduction);
-            execute(start1 + s1, c1, start2 + s2, c2, false);
+            execute(start1 + s1, c1, start2 + s2, c2, thresholdCheckCounter);
           }
         }
 
@@ -126,8 +128,7 @@ class PatienceIntLCS {
           c2 = count2 - s2;
         }
 
-        checkReduction(c1, c2, failOnSmallReduction);
-        execute(start1 + s1, c1, start2 + s2, c2, false);
+        execute(start1 + s1, c1, start2 + s2, c2, thresholdCheckCounter);
       }
     }
   }
@@ -161,8 +162,7 @@ class PatienceIntLCS {
     return new BitSet[]{myChanges1, myChanges2};
   }
 
-  private void checkReduction(int count1, int count2, boolean failOnSmallReduction) throws FilesTooBigForDiffException {
-    if (!failOnSmallReduction) return;
+  private void checkReduction(int count1, int count2) throws FilesTooBigForDiffException {
     if (count1 * 2 < myCount1) return;
     if (count2 * 2 < myCount2) return;
     throw new FilesTooBigForDiffException(0);
