@@ -117,7 +117,7 @@ public final class ExecutionHandler {
       final AntCommandLineBuilder builder = new AntCommandLineBuilder();
 
       builder.setBuildFile(buildFile.getAllOptions(), VfsUtilCore.virtualToIoFile(buildFile.getVirtualFile()));
-      builder.calculateProperties(dataContext, additionalProperties);
+      builder.calculateProperties(dataContext, buildFile.getProject(), additionalProperties);
       builder.addTargets(targets);
 
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());

@@ -22,7 +22,10 @@ import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -52,20 +55,21 @@ public class AntCommandLineBuilder {
   @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
   @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
 
-  public void calculateProperties(final DataContext dataContext, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
+  public void calculateProperties(final DataContext dataContext, Project project, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
-      expandProperty(dataContext, property);
+      expandProperty(dataContext, project, property);
     }
     for (BuildFileProperty property : additionalProperties) {
-      expandProperty(dataContext, property);
+      expandProperty(dataContext, project, property);
     }
   }
 
-  private void expandProperty(DataContext dataContext, BuildFileProperty property) throws Macro.ExecutionCancelledException {
+  private void expandProperty(DataContext dataContext, Project project, BuildFileProperty property) throws Macro.ExecutionCancelledException {
     String value = property.getPropertyValue();
     final MacroManager macroManager = GlobalAntConfiguration.getMacroManager();
     value = macroManager.expandMacrosInString(value, true, dataContext);
     value = macroManager.expandMacrosInString(value, false, dataContext);
+    value = PathMacroManager.getInstance(project).expandPath(value);
     myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
   }
 
