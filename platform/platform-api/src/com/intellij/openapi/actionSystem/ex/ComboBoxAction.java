@@ -38,6 +38,7 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setEnabled(myPresentation.isEnabled());
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
-      setFocusable(false);
+      setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));

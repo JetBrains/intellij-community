@@ -17,6 +17,7 @@ package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -172,7 +173,10 @@ public class Wrapper extends JPanel implements NullableComponent {
 
     private void init() {
       UIUtil.setFocusProxy(this, true);
-      setFocusable(true);
+      // Note: Temporary workaround for screen readers until new version of IntelliJ,
+      // where this FocusHolder class has been deleted, is merged back.
+      // See https://github.com/JetBrains/intellij-community/commit/94d00ea76d1f3ea36db6cd035655e12c635fb636
+      setFocusable(!ScreenReader.isActive());
       addFocusListener(this);
     }
 
