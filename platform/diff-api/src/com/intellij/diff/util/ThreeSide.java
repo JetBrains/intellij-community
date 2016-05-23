@@ -15,6 +15,8 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,5 +100,14 @@ public enum ThreeSide {
     assert list.size() == 3;
     int index = list.indexOf(value);
     return index != -1 ? fromIndex(index) : null;
+  }
+
+  @NotNull
+  public static <T> List<T> map(@NotNull Function<ThreeSide, T> function) {
+    return ContainerUtil.list(
+      function.fun(LEFT),
+      function.fun(BASE),
+      function.fun(RIGHT)
+    );
   }
 }

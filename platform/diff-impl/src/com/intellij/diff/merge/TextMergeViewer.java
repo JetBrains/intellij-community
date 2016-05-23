@@ -355,14 +355,20 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         indicator.checkCanceled();
 
         List<DocumentContent> contents = myMergeRequest.getContents();
+        List<Document> documents = ContainerUtil.map(contents, DocumentContent::getDocument);
         List<CharSequence> sequences = ReadAction.compute(() -> {
-          return ContainerUtil.map(contents, (content) -> content.getDocument().getImmutableCharSequence());
+          return ContainerUtil.map(documents, Document::getImmutableCharSequence);
         });
 
         List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                       ComparisonPolicy.DEFAULT, indicator);
 
-        return apply(lineFragments);
+        List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
+          indicator.checkCanceled();
+          return ContainerUtil.map(lineFragments, (fragment -> DiffUtil.getLineMergeType(fragment, documents, ComparisonPolicy.DEFAULT)));
+        });
+
+        return apply(lineFragments, conflictTypes);
       }
       catch (DiffTooBigException e) {
         return applyNotification(DiffNotifications.createDiffTooBig());
@@ -380,7 +386,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @NotNull
-    private Runnable apply(@NotNull final List<MergeLineFragment> fragments) {
+    private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
+                           @NotNull final List<MergeConflictType> conflictTypes) {
       return () -> {
         setInitialOutputContent();
 
@@ -392,7 +399,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         for (int index = 0; index < fragments.size(); index++) {
           MergeLineFragment fragment = fragments.get(index);
-          TextMergeChange change = new TextMergeChange(TextMergeViewer.this, index, fragment);
+          MergeConflictType conflictType = conflictTypes.get(index);
+
+          TextMergeChange change = new TextMergeChange(index, fragment, conflictType, TextMergeViewer.this);
           myAllMergeChanges.add(change);
           onChangeAdded(change);
         }
@@ -509,11 +518,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
         myScheduled.clear();
 
-        final Document[] documents = new Document[]{
-          getEditor(ThreeSide.LEFT).getDocument(),
-          getEditor(ThreeSide.BASE).getDocument(),
-          getEditor(ThreeSide.RIGHT).getDocument()};
-
+        List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
         final ProgressIndicator indicator = myProgress;
@@ -1123,7 +1128,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   private static class InnerChunkData {
     @NotNull public final CharSequence[] text = new CharSequence[3];
 
-    public InnerChunkData(@NotNull TextMergeChange change, @NotNull Document[] documents) {
+    public InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
       for (ThreeSide side : ThreeSide.values()) {
         if (change.isChange(side) && !change.isResolved(side)) {
           text[side.getIndex()] = getChunkContent(change, documents, side);
@@ -1133,7 +1138,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @Nullable
     @CalledWithReadLock
-    private static CharSequence getChunkContent(@NotNull TextMergeChange change, @NotNull Document[] documents, @NotNull ThreeSide side) {
+    private static CharSequence getChunkContent(@NotNull TextMergeChange change,
+                                                @NotNull List<Document> documents,
+                                                @NotNull ThreeSide side) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
       return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;

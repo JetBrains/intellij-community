@@ -130,10 +130,18 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                     comparisonPolicy, indicator);
 
+      List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        return ContainerUtil.map(lineFragments, (fragment) -> DiffUtil.getLineMergeType(fragment, documents, comparisonPolicy));
+      });
+
       if (getHighlightPolicy().isFineFragments()) {
         List<MergeLineFragment> fineLineFragments = new ArrayList<>(lineFragments.size());
 
-        for (final MergeLineFragment fragment : lineFragments) {
+        for (int i = 0; i < lineFragments.size(); i++) {
+          final MergeLineFragment fragment = lineFragments.get(i);
+          final MergeConflictType conflictType = conflictTypes.get(i);
+
           CharSequence[] chunks = ReadAction.compute(() -> {
             indicator.checkCanceled();
 
@@ -142,9 +150,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
             result[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
             result[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
 
-            MergeConflictType type = DiffUtil.getLineMergeType(fragment, documents, comparisonPolicy);
-            if (!type.isChange(Side.LEFT)) result[0] = null;
-            if (!type.isChange(Side.RIGHT)) result[2] = null;
+            if (!conflictType.isChange(Side.LEFT)) result[0] = null;
+            if (!conflictType.isChange(Side.RIGHT)) result[2] = null;
             return result;
           });
 
@@ -152,10 +159,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
           fineLineFragments.add(new MergeLineFragmentImpl(fragment, wordFragments));
         }
 
-        lineFragments = fineLineFragments;
+        return apply(fineLineFragments, conflictTypes);
       }
-
-      return apply(lineFragments, comparisonPolicy);
+      else {
+        return apply(lineFragments, conflictTypes);
+      }
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -180,14 +188,17 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
   @NotNull
   private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
-                         @NotNull final ComparisonPolicy comparisonPolicy) {
+                         @NotNull final List<MergeConflictType> conflictTypes) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
 
       resetChangeCounters();
-      for (MergeLineFragment fragment : fragments) {
-        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
+      for (int i = 0; i < fragments.size(); i++) {
+        MergeLineFragment fragment = fragments.get(i);
+        MergeConflictType conflictType = conflictTypes.get(i);
+
+        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType, this);
         myDiffChanges.add(change);
         onChangeAdded(change);
       }

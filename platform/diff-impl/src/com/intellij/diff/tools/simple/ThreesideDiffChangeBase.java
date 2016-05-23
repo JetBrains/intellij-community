@@ -15,15 +15,10 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,11 +32,8 @@ public abstract class ThreesideDiffChangeBase {
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
   @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
 
-  public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
-                                 @NotNull List<? extends EditorEx> editors,
-                                 @NotNull ComparisonPolicy policy) {
-    List<Document> documents = ContainerUtil.map(editors, Editor::getDocument);
-    myType = DiffUtil.getLineMergeType(fragment, documents, policy);
+  public ThreesideDiffChangeBase(@NotNull MergeConflictType type) {
+    myType = type;
   }
 
   @CalledInAwt

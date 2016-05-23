@@ -15,14 +15,10 @@
  */
 package com.intellij.diff.merge;
 
-import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
-import com.intellij.diff.util.DiffGutterRenderer;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
@@ -60,8 +56,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable private List<MergeWordFragment> myInnerFragments; // warning: might be out of date
 
   @CalledInAwt
-  public TextMergeChange(@NotNull TextMergeViewer viewer, int index, @NotNull MergeLineFragment fragment) {
-    super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
+  public TextMergeChange(int index,
+                         @NotNull MergeLineFragment fragment,
+                         @NotNull MergeConflictType conflictType,
+                         @NotNull TextMergeViewer viewer) {
+    super(conflictType);
     myMergeViewer = viewer;
     myViewer = viewer.getViewer();
 
