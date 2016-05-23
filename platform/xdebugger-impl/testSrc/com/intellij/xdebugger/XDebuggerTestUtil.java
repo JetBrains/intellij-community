@@ -394,6 +394,13 @@ public class XDebuggerTestUtil {
     assertEquals(offset, n.myPosition.getOffset());
   }
 
+  public static void assertSourcePosition(final XStackFrame frame, VirtualFile file, int line) {
+    XSourcePosition position = frame.getSourcePosition();
+    assertNotNull(position);
+    assertEquals(file, position.getFile());
+    assertEquals(line, position.getLine());
+  }
+
   public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) {
     long end = System.currentTimeMillis() + timeoutInMillis;
     long remaining = timeoutInMillis;
