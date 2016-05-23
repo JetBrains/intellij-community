@@ -659,10 +659,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      boolean committedDocumentNeeded = false;
       for (FileIndentOptionsProvider provider : Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME)) {
         if (!isFullReformat || provider.useOnFullReformat()) {
-          committedDocumentNeeded |= provider instanceof ProviderForCommittedDocument;
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
             if (providerProcessor != null) {
@@ -675,28 +673,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      IndentOptions options = getIndentOptions(file.getFileType());
-      if (committedDocumentNeeded) {
-        markOptionsInaccurateIfDocumentUncommitted(options, file);
-      }
-      return options;
+      return getIndentOptions(file.getFileType());
     }
     else
       return OTHER_INDENT_OPTIONS;
   }
-
-  private static void markOptionsInaccurateIfDocumentUncommitted(@NotNull IndentOptions options, @NotNull PsiFile file) {
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = manager.getDocument(file);
-    if (document != null && !manager.isCommitted(document)) {
-      options.setRecalculateForCommittedDocument(true);
-    }
-  }
-
-  public static boolean isRecalculateForCommittedDocument(@NotNull IndentOptions options) {
-    return options.isRecalculateForCommittedDocument();
-  }
-
+  
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
     return
       formatRange != null &&
