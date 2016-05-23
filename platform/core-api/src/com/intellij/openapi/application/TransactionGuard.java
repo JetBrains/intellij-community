@@ -30,12 +30,22 @@ import org.jetbrains.annotations.Nullable;
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
  *
- * Transactions are run on UI thread. They have read access by default. All write actions that don't happen as the result of direct user input
- * should be performed inside a transaction. No write action should be performed from within an {@code invokeLater}-like call
- * unless wrapped into a transaction.<p/>
+ * Transactions are run on UI thread and have read access. Write actions that modify model are only allowed inside write-safe contexts. These are:
+ * <ul>
+ *   <li>Transactions</li>
+ *   <li>Direct user activity processing (key/mouse presses, actions)</li>
+ *   <li>{@link Application#invokeLater(Runnable, ModalityState)} calls with a modality state that's either non-modal
+ *   or was started inside a write-safe context (for example, a dialog shown from an action wrapped into a transaction)</li>
+ * </ul>
+ *
+ * All other contexts are considered write-unsafe, and model modifications are not allowed from them.
+ * Even if user activity happens in such context
+ * (e.g. someone clicks a button in a dialog shown from {@link javax.swing.SwingUtilities#invokeLater(Runnable)}),
+ * this will result in an assertion.
+ * Synchronous transactions ({@link #submitTransactionAndWait(Runnable)} are also not allowed from such invokeLater calls.
  *
  * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Disposable, Runnable)}. It either runs the transaction immediately
- * (if on UI thread and not inside invokeLater) or queues it to invoke at some later moment, when it becomes possible.<p/>
+ * (if in write-safe context on UI thread) or queues it to invoke at some later moment, when it becomes possible.<p/>
  *
  * Sometimes transactions need to be processed as soon as possible, even if another transaction is already running. Example:
  * outer transaction has shown a dialog with a modal progress that performs a write action inside (which requires a transaction)
@@ -44,37 +54,27 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p><h1>FAQ</h1></p>
  *
- * Q: How large/long should transactions be?
- * A: As short as possible, but not shorter. Take them for minimal period of time that you need the model you're working with
- * to be consistent. If your action doesn't display any modal progresses or dialogs, transaction can be omitted.
- * If the action only displays a dialog (e.g. Settings) and does nothing else, and that dialog is ready to possible PSI/VFS events,
- * there should also be no transaction for all the dialog showing time. Actions inside the dialog should care of transactions themselves.
- * If the dialog isn't prepared to any model changes from outside, a transaction around showing the dialog is advised.<p/>
+ * Q: When should transactions be used?
+ * A: Whenever the code inside isn't prepared to model being modified from the outside world. Which is, almost always. AnAction-s
+ * are wrapped into transactions by default. It only makes sense to opt out (by overriding AnAction#startInTransaction), if your actions
+ * don't modify the PSI/document/VFS model in any way, and can be invoked in a dialog that's shown from invokeLater.
+ * Example: editor actions in dialogs like "Enter Password", which doesn't care about model and can be requested to be shown from background threads
+ * in any modality state.
+ * <p/>
  *
- * The most complicated case is when the action both displays modal dialogs and performs modifications. The only case when those dialogs
- * should be shown under a transaction is when the mere reason of their showing lies somewhere in PSI/VFS/project model, and they are not
- * prepared to foreign code affecting the state of things at the moment of showing. For example, dialogs asking for making files writable
- * are shown only because VFS indicates the file is read-only. So they wouldn't make sense if they allowed modifications to that file
- * while they're shown. Their clients are not prepared to such changes either. So such dialogs should be shown under the same transaction,
- * as the following meaningful modifications performed by the action. Most refactoring dialogs are similar and refactoring actions should
- * take transactions for the whole refactoring process, with all the dialogs inside.<p/>
- *
- * But note that some background processes may need occasional transactions, and will therefore be paused until the dialog is closed.
- * Therefore, it's still advisable that the transactions be as short as possible and preferably exclude any modal dialogs
- * for which transaction-ness is not critical. So a better overall strategy would be to either make the dialogs non-modal,
- * or at least make them and the code that shows them prepared for possible model changes while the dialog is shown.<p/>
- *
- * Dialogs that have per-project modality must never be shown from a transaction, because this would disallow making changes in another
- * project: they'd be blocked by the running transaction.
- *
- * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
- * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Disposable, Runnable)}  or
- * {@link #submitTransaction(Disposable, TransactionId, Runnable)}
+ * Q: I've got <b>"Write access is allowed from model transactions only"</b>
+ *    or <b>"Cannot run synchronous submitTransactionAndWait"</b> exception, what do I do?<br/>
+ * A: You're likely inside an "invokeLater"-like call. If this code is showing a dialog that requires model consistency during its lifetime,
+ * consider replacing invokeLater with {@link #submitTransaction(Disposable, Runnable)} or
+ * {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
+ * Otherwise, use {@link Application#invokeLater(Runnable, ModalityState)}
+ * and pass a modality state that appeared in a write-safe context (e.g. a background progress started in an action).
+ * Most likely {@link ModalityState#defaultModalityState()} will do.
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
  * A: Transactions are more abstract and can contain several write actions and even commands inside. Read/write actions guarantee that no
- * one else will modify the model, while transactions allow for some modification, but in a way controlled by transaction kinds. Commands
+ * one else will modify the model, while transactions allow for some modification, but in a controlled way. Commands
  * are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
  *
  * @see Application#runReadAction(Runnable)
@@ -83,9 +83,14 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class TransactionGuard {
+  private static volatile TransactionGuard ourInstance;
 
   public static TransactionGuard getInstance() {
-    return ServiceManager.getService(TransactionGuard.class);
+    TransactionGuard instance = ourInstance;
+    if (instance == null) {
+      ourInstance = instance = ServiceManager.getService(TransactionGuard.class);
+    }
+    return instance;
   }
 
   /**
