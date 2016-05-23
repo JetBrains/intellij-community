@@ -101,6 +101,11 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
       inlineSameParameterValue(method, parameterToInline, defToInline);
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
