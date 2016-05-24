@@ -236,21 +236,19 @@ public final class BindingProperty extends Property<RadComponent, String> {
         return;
       }
       ApplicationManager.getApplication().runWriteAction(
-        () -> {
-          CommandProcessor.getInstance().executeCommand(
-            project,
-            () -> {
-              try {
-                oldBindingField.delete();
-              }
-              catch (IncorrectOperationException e) {
-                Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
-                                         CommonBundle.getErrorTitle());
-              }
-            },
-            UIDesignerBundle.message("command.delete.unused.field"), undoGroupId
-          );
-        }
+        () -> CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> {
+            try {
+              oldBindingField.delete();
+            }
+            catch (IncorrectOperationException e) {
+              Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
+                                       CommonBundle.getErrorTitle());
+            }
+          },
+          UIDesignerBundle.message("command.delete.unused.field"), undoGroupId
+        )
       );
     }
   }

@@ -57,9 +57,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
   @NotNull
   private static List<Pair<String, String>> toListWithKeyName(@NotNull Collection<Pair<String, Key>> list) {
-    return ContainerUtil.map(list, pair -> {
-      return Pair.create(pair.first, pair.second.toString());
-    });
+    return ContainerUtil.map(list, pair -> Pair.create(pair.first, pair.second.toString()));
   }
 
   private static AnsiEscapeDecoder.ColoredChunksAcceptor createExpectedAcceptor(@NotNull final Pair<String, Key>... expected) {

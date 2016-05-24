@@ -84,9 +84,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
       assertTrue(Arrays.asList(moduleModel.orderEntries().librariesOnly().classes().getRoots()).contains(myRoot));
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        moduleModel.commit();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
     }
 
     assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));

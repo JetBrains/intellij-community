@@ -253,15 +253,11 @@ public class RepositoryLibraryPropertiesEditor {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      initVersionsPanel();
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> initVersionsPanel(), ModalityState.any());
   }
 
   private void versionsFailedToLoad() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      setState(State.FailedToLoad);
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> setState(State.FailedToLoad), ModalityState.any());
   }
 
   public String getSelectedVersion() {

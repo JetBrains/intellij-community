@@ -296,9 +296,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     private int myLen = 0;
 
     public void start() {
-      myThread = new Thread(() -> {
-        doJob();
-      }, "py console printer");
+      myThread = new Thread(() -> doJob(), "py console printer");
       myThread.setDaemon(true);
       myThread.start();
     }

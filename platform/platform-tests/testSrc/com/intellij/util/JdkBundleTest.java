@@ -37,9 +37,7 @@ public class JdkBundleTest {
   private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
 
   private static File[] findJdkInDirectory (File locationToSearch, String version) {
-    return locationToSearch.listFiles(pathname -> {
-      return pathname.getName().contains(version);
-    });
+    return locationToSearch.listFiles(pathname -> pathname.getName().contains(version));
   }
 
   @Test

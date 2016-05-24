@@ -107,9 +107,7 @@ public abstract class PyTestCase extends UsefulTestCase {
    * Reformats currently configured file.
    */
   protected final void reformatFile() {
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      doPerformFormatting();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> doPerformFormatting());
   }
 
   private void doPerformFormatting() throws IncorrectOperationException {

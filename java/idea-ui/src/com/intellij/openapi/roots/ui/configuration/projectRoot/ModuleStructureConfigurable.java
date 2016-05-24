@@ -306,9 +306,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected Comparator<MyNode> getNodeComparator() {
     List<Comparator<MyNode>> comparators = ContainerUtil
-      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), moduleStructureExtension -> {
-        return moduleStructureExtension.getNodeComparator();
-      });
+      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), moduleStructureExtension -> moduleStructureExtension.getNodeComparator());
     return new MergingComparator<MyNode>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
   }
 

@@ -410,24 +410,22 @@ public class BoundedTaskExecutorTest extends TestCase {
       Set<Thread> workers = ContainerUtil.newConcurrentSet();
 
       CountDownLatch allStarted = new CountDownLatch(1);
-      List<Future> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              allStarted.await();
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
+      List<Future> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            allStarted.await();
           }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
 
-          @Override
-          public String toString() {
-            return "warmup";
-          }
-        });
-      });
+        @Override
+        public String toString() {
+          return "warmup";
+        }
+      }));
 
 
       List<Future> futures = new ArrayList<>(N);

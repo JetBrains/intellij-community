@@ -160,9 +160,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
           @Override
           public void threadAction() {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext));
-            });
+            ApplicationManager.getApplication().runReadAction(() -> positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext)));
           }
         });
         final SourcePosition sourcePosition = positionRef.get();

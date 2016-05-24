@@ -42,9 +42,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       TypingTarget typingTarget = findTarget(context);
       if (typingTarget != null) {
-        typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> {
-          typeByRobot(context.getRobot(), text).notify(result);
-        });
+        typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeByRobot(context.getRobot(), text).notify(result));
       } else {
         typeByRobot(context.getRobot(), text).notify(result);
       }

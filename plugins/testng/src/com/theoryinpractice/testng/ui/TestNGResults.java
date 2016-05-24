@@ -324,9 +324,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     //look up the psiclass now
     if (owner.getPsiElement() == null) {
       final TestProxy finalOwner = owner;
-      ApplicationManager.getApplication().runReadAction(() -> {
-        finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
-      });
+      ApplicationManager.getApplication().runReadAction(() -> finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass())));
     }
     return owner;
   }

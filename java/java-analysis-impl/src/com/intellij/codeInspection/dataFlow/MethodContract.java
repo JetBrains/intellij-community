@@ -47,9 +47,7 @@ public class MethodContract {
 
   @Override
   public String toString() {
-    return StringUtil.join(arguments, constraint -> {
-      return constraint.toString();
-    }, ", ") + " -> " + returnValue;
+    return StringUtil.join(arguments, constraint -> constraint.toString(), ", ") + " -> " + returnValue;
   }
 
   public enum ValueConstraint {

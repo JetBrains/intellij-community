@@ -117,9 +117,7 @@ public abstract class CloudServerRuntimeInstance
         if (applications == null) {
           return Collections.emptyList();
         }
-        return ContainerUtil.map(applications, application -> {
-          return createApplicationRuntime(application);
-        });
+        return ContainerUtil.map(applications, application -> createApplicationRuntime(application));
       }
     });
   }

@@ -63,9 +63,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       TypingTarget typingTarget = findTarget(context);
       if (typingTarget != null) {
-        typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> {
-          typeCodes(context, context.getRobot(), codes).notify(result);
-        });
+        typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeCodes(context, context.getRobot(), codes).notify(result));
       } else {
         typeCodes(context, context.getRobot(), codes).notify(result);
       }

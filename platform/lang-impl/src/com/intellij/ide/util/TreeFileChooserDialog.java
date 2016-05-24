@@ -406,9 +406,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       if (myFileType != null && myProject != null) {
         GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
         Collection<VirtualFile> virtualFiles = FileTypeIndex.getFiles(myFileType, scope);
-        fileNames = ContainerUtil.map2Array(virtualFiles, String.class, file -> {
-          return file.getName();
-        });
+        fileNames = ContainerUtil.map2Array(virtualFiles, String.class, file -> file.getName());
       }
       else {
         fileNames = FilenameIndex.getAllFilenames(myProject);

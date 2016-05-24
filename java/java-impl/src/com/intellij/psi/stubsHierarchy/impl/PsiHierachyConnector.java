@@ -32,9 +32,7 @@ public class PsiHierachyConnector implements HierarchyConnector {
 
   @Override
   public void connect(final Symbol sym) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      connectInternal((Symbol.ClassSymbol)sym);
-    });
+    ApplicationManager.getApplication().runReadAction(() -> connectInternal((Symbol.ClassSymbol)sym));
   }
 
   private void connectInternal(Symbol.ClassSymbol sym) {

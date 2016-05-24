@@ -359,9 +359,7 @@ public class FindUsagesManager {
       }
       try {
         for (final PsiElement element : elements) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            PsiUtilCore.ensureValid(element);
-          });
+          ApplicationManager.getApplication().runReadAction(() -> PsiUtilCore.ensureValid(element));
           handler.processElementUsages(element, usageInfoProcessor, optionsClone);
           for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
             try {
@@ -401,9 +399,7 @@ public class FindUsagesManager {
   private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
-                                                                          element -> {
-                                                                            return convertToUsageTarget(element, findUsagesOptions);
-                                                                          });
+                                                                          element -> convertToUsageTarget(element, findUsagesOptions));
     return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
   }
 

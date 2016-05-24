@@ -152,9 +152,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   public static PsiType[] getParameterTypes(final Pair<PsiMethod, PsiSubstitutor> pair) {
-    return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, psiParameter -> {
-      return pair.second.substitute(psiParameter.getType());
-    });
+    return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, psiParameter -> pair.second.substitute(psiParameter.getType()));
   }
 
   @NotNull

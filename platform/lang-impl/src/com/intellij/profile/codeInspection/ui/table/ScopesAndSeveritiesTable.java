@@ -407,9 +407,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     @Override
     public void addRow() {
-      final List<Descriptor> descriptors = ContainerUtil.map(myTableSettings.getNodes(), inspectionConfigTreeNode -> {
-        return inspectionConfigTreeNode.getDefaultDescriptor();
-      });
+      final List<Descriptor> descriptors = ContainerUtil.map(myTableSettings.getNodes(), inspectionConfigTreeNode -> inspectionConfigTreeNode.getDefaultDescriptor());
       final ScopesChooser scopesChooser = new ScopesChooser(descriptors, myInspectionProfile, myProject, myScopeNames) {
         @Override
         protected void onScopeAdded() {

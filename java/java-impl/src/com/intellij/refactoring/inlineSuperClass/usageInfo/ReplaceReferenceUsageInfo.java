@@ -36,9 +36,7 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
     super(referenceExpression);
     myTargetClass = targetClasses[0];
     myConflict = targetClasses.length > 1 ? referenceExpression.getText() + "can be replaced with any of " + StringUtil.join(targetClasses,
-                                                                                                                             psiClass -> {
-                                                                                                                               return psiClass.getQualifiedName();
-                                                                                                                             }, ", ") : null;
+                                                                                                                             psiClass -> psiClass.getQualifiedName(), ", ") : null;
   }
 
   public void fixUsage() throws IncorrectOperationException {

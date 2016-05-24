@@ -205,10 +205,8 @@ public class TestNGConfigurationModel
             throw new RuntimeException(e);
         }
       }  else {
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-          ((com.intellij.openapi.editor.Document)document)
-            .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
-        });
+        WriteCommandAction.runWriteCommandAction(project, () -> ((com.intellij.openapi.editor.Document)document)
+          .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value));
       }
 
     }

@@ -124,9 +124,7 @@ public class SingleClassesTest {
     File parent = classFile.getParentFile();
     if (parent != null) {
       final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
-      File[] inner = parent.listFiles((dir, name) -> {
-        return name.matches(pattern);
-      });
+      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
       if (inner != null) Collections.addAll(files, inner);
     }
 

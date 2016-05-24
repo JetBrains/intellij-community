@@ -170,9 +170,7 @@ public class PyRequirement {
   @Override
   public String toString() {
     return myName + StringUtil.join(myVersionSpecs,
-                                    spec -> {
-                                      return spec.toString();
-                                    },
+                                    spec -> spec.toString(),
                                     ","
     );
   }

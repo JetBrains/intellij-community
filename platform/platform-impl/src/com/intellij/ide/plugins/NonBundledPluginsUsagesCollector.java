@@ -43,9 +43,7 @@ public class NonBundledPluginsUsagesCollector extends UsagesCollector {
       }
     });
 
-    return ContainerUtil.map2Set(nonBundledEnabledPlugins, descriptor -> {
-      return new UsageDescriptor(descriptor.getPluginId().getIdString(), 1);
-    });
+    return ContainerUtil.map2Set(nonBundledEnabledPlugins, descriptor -> new UsageDescriptor(descriptor.getPluginId().getIdString(), 1));
   }
 
 }

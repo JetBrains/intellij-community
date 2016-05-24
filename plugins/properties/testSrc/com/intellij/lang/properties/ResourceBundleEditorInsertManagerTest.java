@@ -100,10 +100,8 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     final ResourceBundle bundle = basePropertiesFile.getResourceBundle();
     final ResourceBundlePropertiesUpdateManager manager = new ResourceBundlePropertiesUpdateManager(bundle);
     assertInstanceOf(manager, ResourceBundlePropertiesUpdateManager.class);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                               testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
-                                                                       manager);
-                                             });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
+                                              manager));
     myFixture.checkResultByFile(getTestName(true) + "/p.properties", getTestName(true) + "/p-after.properties", true);
     myFixture.checkResultByFile(getTestName(true) + "/p_en.properties", getTestName(true) + "/p-after_en.properties",true);
   }

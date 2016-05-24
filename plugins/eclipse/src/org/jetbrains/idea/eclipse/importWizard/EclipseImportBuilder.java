@@ -250,9 +250,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       if (!files.isEmpty()) {
         final int resultCode = Messages.showYesNoCancelDialog(ApplicationNamesInfo.getInstance().getFullProductName() +
                                                               " module files found:\n" +
-                                                              StringUtil.join(files, file -> {
-                                                                return file.getPath();
-                                                              }, "\n") +
+                                                              StringUtil.join(files, file -> file.getPath(), "\n") +
                                                               ".\n Would you like to reuse them?", "Module Files Found",
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
@@ -309,15 +307,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         ClasspathStorage.setStorageType(rootModel,
                                         getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClassPathStorageUtil.DEFAULT_STORAGE);
         if (model != null) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            rootModel.commit();
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> rootModel.commit());
         }
       }
       if (model == null) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(rootModels, moduleModel));
       }
     }
     catch (Exception e) {

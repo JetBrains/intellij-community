@@ -800,9 +800,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final StringBuffer buf = new StringBuffer();
       processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
         if (buf.length() > 0) buf.append("<br>");
-        buf.append(StringUtil.join(path, psiFile -> {
-          return psiFile.getName();
-        }, delim));
+        buf.append(StringUtil.join(path, psiFile -> psiFile.getName(), delim));
         return true;
       });
       final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, XmlStringUtil.wrapInHtml(buf));

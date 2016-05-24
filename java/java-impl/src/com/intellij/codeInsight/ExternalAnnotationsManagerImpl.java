@@ -159,10 +159,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        application.invokeLater(() -> {
-          DumbService.getInstance(project).withAlternativeResolveEnabled(
-            () -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value));
-        }, project.getDisposed());
+        application.invokeLater(() -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+          () -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)), project.getDisposed());
       }
       break;
     }

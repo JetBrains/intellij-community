@@ -31,49 +31,47 @@ public class PyStudyCheckAction extends StudyCheckAction {
   public static final String ACTION_ID = "PyCheckAction";
   
   public void check(@NotNull Project project) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-        final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
-        if (selectedEditor == null) return;
-        final StudyState studyState = new StudyState(selectedEditor);
-        if (!studyState.isValid()) {
-          LOG.info("StudyCheckAction was invoked outside study editor");
-          return;
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+      final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
+      if (selectedEditor == null) return;
+      final StudyState studyState = new StudyState(selectedEditor);
+      if (!studyState.isValid()) {
+        LOG.info("StudyCheckAction was invoked outside study editor");
+        return;
+      }
+      if (StudyCheckUtils.hasBackgroundProcesses(project)) return;
+
+
+      if (!runTask(project)) return;
+
+      final Task task = studyState.getTask();
+      final VirtualFile taskDir = studyState.getTaskDir();
+      StudyCheckUtils.flushWindows(task, taskDir);
+
+
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
+
+      final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
+      Process testProcess = null;
+      String commandLine = "";
+      try {
+        final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
+        if (executablePath != null) {
+          commandLine = executablePath.getPath();
+          testProcess = testRunner.createCheckProcess(project, commandLine);
         }
-        if (StudyCheckUtils.hasBackgroundProcesses(project)) return;
-
-
-        if (!runTask(project)) return;
-
-        final Task task = studyState.getTask();
-        final VirtualFile taskDir = studyState.getTaskDir();
-        StudyCheckUtils.flushWindows(task, taskDir);
-
-
-        ApplicationManager.getApplication().invokeLater(
-          () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
-
-        final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
-        Process testProcess = null;
-        String commandLine = "";
-        try {
-          final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
-          if (executablePath != null) {
-            commandLine = executablePath.getPath();
-            testProcess = testRunner.createCheckProcess(project, commandLine);
-          }
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-        }
-        if (testProcess == null) {
-          return;
-        }
-        myCheckInProgress.set(true);
-        StudyCheckTask checkTask = getCheckTask(project, studyState, testRunner, testProcess, commandLine);
-        ProgressManager.getInstance().run(checkTask);
-      });
-    });
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+      if (testProcess == null) {
+        return;
+      }
+      myCheckInProgress.set(true);
+      StudyCheckTask checkTask = getCheckTask(project, studyState, testRunner, testProcess, commandLine);
+      ProgressManager.getInstance().run(checkTask);
+    }));
   }
 
   private static boolean runTask(@NotNull Project project) {
@@ -105,9 +103,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                     continue;
                   }
                   if (EduNames.STUDY.equals(myTaskManger.getCourse().getCourseMode())) {
-                    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-                      StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
-                    }));
+                    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
                   }
                 }
                 StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);

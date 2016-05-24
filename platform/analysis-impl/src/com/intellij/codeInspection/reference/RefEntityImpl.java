@@ -106,9 +106,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   @Override
   public void accept(@NotNull final RefVisitor refVisitor) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      refVisitor.visitElement(RefEntityImpl.this);
-    });
+    ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitElement(RefEntityImpl.this));
   }
 
   @Override

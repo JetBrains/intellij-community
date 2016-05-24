@@ -173,9 +173,7 @@ public class PluginInstaller {
         try {
           GuiUtils.runOrInvokeAndWait(() -> {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-            String deps = StringUtil.join(depends, node -> {
-              return node.getName();
-            }, ", ");
+            String deps = StringUtil.join(depends, node -> node.getName(), ", ");
             String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
             proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
           });
@@ -193,9 +191,7 @@ public class PluginInstaller {
         try {
           GuiUtils.runOrInvokeAndWait(() -> {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-            String deps = StringUtil.join(optionalDeps, node -> {
-              return node.getName();
-            }, ", ");
+            String deps = StringUtil.join(optionalDeps, node -> node.getName(), ", ");
             String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
             proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
           });

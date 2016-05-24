@@ -154,8 +154,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> {
-      return getSDKLibVersion(library);
-    });
+    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
   }
 }

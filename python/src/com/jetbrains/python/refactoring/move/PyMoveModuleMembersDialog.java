@@ -259,18 +259,14 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   @NotNull
   public List<PyElement> getSelectedTopLevelSymbols() {
     final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
-    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, info -> {
-      return info.getMember();
-    });
+    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, info -> info.getMember());
     return ContainerUtil.sorted(selectedElements, (e1, e2) -> PyPsiUtils.isBefore(e1, e2) ? -1 : 1);
   }
 
   @NotNull
   private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
     final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
-    return ContainerUtil.mapNotNull(moduleMembers, element -> {
-      return new PyModuleMemberInfo(element);
-    });
+    return ContainerUtil.mapNotNull(moduleMembers, element -> new PyModuleMemberInfo(element));
   }
 
   @NotNull

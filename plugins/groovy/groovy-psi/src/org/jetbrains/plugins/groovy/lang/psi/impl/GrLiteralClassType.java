@@ -125,9 +125,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
 
-    return name + "<" + StringUtil.join(params, psiType -> {
-      return psiType.getPresentableText();
-    }, ", ") + ">";
+    return name + "<" + StringUtil.join(params, psiType -> psiType.getPresentableText(), ", ") + ">";
   }
 
   @Override

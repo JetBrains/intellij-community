@@ -65,9 +65,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
-      searchExistingImplementations();
-    }), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
       Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
                                CodeInsightBundle.message("copy.abstract.method.title"));

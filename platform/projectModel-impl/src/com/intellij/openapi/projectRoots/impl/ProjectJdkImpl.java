@@ -320,9 +320,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       if (myListeners.isEmpty()) {
         return;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        fireRootSetChanged();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> fireRootSetChanged());
     }
   }
 

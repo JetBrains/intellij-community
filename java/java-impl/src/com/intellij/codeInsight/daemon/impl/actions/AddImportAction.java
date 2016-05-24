@@ -210,9 +210,7 @@ public class AddImportAction implements QuestionAction {
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
     StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass));
-    }), QuickFixBundle.message("add.import"), null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass))), QuickFixBundle.message("add.import"), null);
   }
 
   private void _addImport(PsiReference ref, PsiClass targetClass) {

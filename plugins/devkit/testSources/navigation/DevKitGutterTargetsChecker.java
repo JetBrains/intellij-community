@@ -59,8 +59,6 @@ public class DevKitGutterTargetsChecker {
       throw new IllegalArgumentException(gutterMark.getClass() + ": gutter not supported");
     }
 
-    UsefulTestCase.assertSameElements(ContainerUtil.map(targetElements, element -> {
-      return SymbolPresentationUtil.getSymbolPresentableText(element);
-    }), expectedTargets);
+    UsefulTestCase.assertSameElements(ContainerUtil.map(targetElements, element -> SymbolPresentationUtil.getSymbolPresentableText(element)), expectedTargets);
   }
 }

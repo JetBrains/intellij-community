@@ -42,9 +42,7 @@ public enum DocStringFormat {
 
   @NotNull
   private static List<String> getAllNames() {
-    return Collections.unmodifiableList(ContainerUtil.map(values(), format -> {
-      return format.getName();
-    }));
+    return Collections.unmodifiableList(ContainerUtil.map(values(), format -> format.getName()));
   }
 
   public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();

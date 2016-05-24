@@ -13,9 +13,7 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
   }
 
   public void testDifferentTypes() throws Exception {
-    doTest(Function.ID, Function.ID, fields -> {
-      return new PsiField[0];
-    }, true
+    doTest(Function.ID, Function.ID, fields -> new PsiField[0], true
     );
   }
 

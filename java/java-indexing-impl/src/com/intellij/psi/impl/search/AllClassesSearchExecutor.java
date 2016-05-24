@@ -152,9 +152,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         super.visitClass(aClass);
       }
     };
-    ApplicationManager.getApplication().runReadAction(() -> {
-      scopeRoot.accept(visitor);
-    });
+    ApplicationManager.getApplication().runReadAction(() -> scopeRoot.accept(visitor));
 
     return !stopped[0];
   }

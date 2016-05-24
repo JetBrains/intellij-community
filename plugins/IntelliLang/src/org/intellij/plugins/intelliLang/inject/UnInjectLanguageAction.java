@@ -63,9 +63,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      invokeImpl(project, editor, file);
-    });
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
 
   public static void invokeImpl(Project project, Editor editor, PsiFile file) {

@@ -43,9 +43,7 @@ public class FileReferenceUtil {
   public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond, final Boolean soft) {
     final FileReference[] references = set.getAllReferences();
 
-    return ContainerUtil.map2Array(references, PsiReference.class, (NotNullFunction<FileReference, PsiReference>)fileReference -> {
-      return new MyFileReference(fileReference, cond, soft);
-    });
+    return ContainerUtil.map2Array(references, PsiReference.class, (NotNullFunction<FileReference, PsiReference>)fileReference -> new MyFileReference(fileReference, cond, soft));
   }
 
   public static Condition<PsiFile> byType(FileType instance) {

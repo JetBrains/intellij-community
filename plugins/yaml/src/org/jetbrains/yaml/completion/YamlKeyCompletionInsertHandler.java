@@ -36,9 +36,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
     if (oldValue != null) {
-      WriteCommandAction.runWriteCommandAction(context.getProject(), () -> {
-        created.setValue(oldValue);
-      });
+      WriteCommandAction.runWriteCommandAction(context.getProject(), () -> created.setValue(oldValue));
     }
 
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
@@ -74,9 +72,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     }
 
     context.setTailOffset(keyValue.getTextRange().getEndOffset());
-    WriteCommandAction.runWriteCommandAction(context.getProject(), () -> {
-      keyValue.getParentMapping().deleteKeyValue(keyValue);
-    });
+    WriteCommandAction.runWriteCommandAction(context.getProject(), () -> keyValue.getParentMapping().deleteKeyValue(keyValue));
     return oldValue;
   }
 

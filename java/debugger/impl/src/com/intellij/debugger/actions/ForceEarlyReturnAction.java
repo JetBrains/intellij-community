@@ -172,12 +172,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   }
 
   private static void showError(final Project project, final String message) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Messages.showMessageDialog(project,
-                                 message,
-                                 UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
-                                 Messages.getErrorIcon());
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                   message,
+                                                                                   UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
+                                                                                   Messages.getErrorIcon()), ModalityState.any());
   }
 
   public void update(@NotNull AnActionEvent e) {

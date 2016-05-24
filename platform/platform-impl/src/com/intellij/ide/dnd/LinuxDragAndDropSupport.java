@@ -84,9 +84,7 @@ public class LinuxDragAndDropSupport {
 
   @NotNull
   public static String toUriList(@NotNull final List<File> files) {
-    return StringUtil.join(files, file -> {
-      return file.toURI().toString();
-    }, "\n");
+    return StringUtil.join(files, file -> file.toURI().toString(), "\n");
   }
 
   public static boolean isMoveOperation(@NotNull final Transferable transferable) {

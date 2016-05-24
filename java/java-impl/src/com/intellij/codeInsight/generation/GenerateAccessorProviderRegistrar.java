@@ -47,8 +47,6 @@ public class GenerateAccessorProviderRegistrar {
   }
 
   protected synchronized static List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
-    return ContainerUtil.concat(ourProviders, s -> {
-      return s.fun(psiClass);
-    });
+    return ContainerUtil.concat(ourProviders, s -> s.fun(psiClass));
   }
 }

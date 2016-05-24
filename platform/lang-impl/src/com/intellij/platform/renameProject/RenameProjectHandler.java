@@ -120,9 +120,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
           return false;
         }
         final Ref<Boolean> success = Ref.create(Boolean.TRUE);
-        CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> modifiableModel.commit());
-        }), IdeBundle.message("command.renaming.module", myModule.getName()), null);
+        CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> modifiableModel.commit())), IdeBundle.message("command.renaming.module", myModule.getName()), null);
         return success.get().booleanValue();
       }
       return true;

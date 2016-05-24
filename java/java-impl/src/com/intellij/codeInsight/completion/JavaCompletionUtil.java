@@ -112,18 +112,14 @@ public class JavaCompletionUtil {
   }
 
   public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
-    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> {
-      return SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
-    }));
+    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
   public static List<PsiMethod> getAllMethods(LookupElement item) {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;
 
-    return ContainerUtil.mapNotNull(pointers, pointer -> {
-      return pointer.getElement();
-    });
+    return ContainerUtil.mapNotNull(pointers, pointer -> pointer.getElement());
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, @Nullable final PsiType varType,

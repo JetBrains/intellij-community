@@ -217,9 +217,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     PsiElement[] elements = item.getElementsToSurround(getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     assertTrue(surrounder.isApplicable(elements));
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder));
 
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
@@ -227,9 +225,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   private void doTestWithTemplateFinish(@NotNull String fileName, Surrounder surrounder, @Nullable String textToType) {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     configureByFile(BASE_PATH + fileName + ".java");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder));
 
     if (textToType != null) {
       type(textToType);

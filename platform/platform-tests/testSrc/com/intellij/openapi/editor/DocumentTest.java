@@ -85,18 +85,10 @@ public class DocumentTest extends LightPlatformTestCase {
     mustThrow(() -> doc.insertString(1, "x"));
     mustThrow(() -> doc.deleteString(1, 2));
     mustThrow(() -> doc.replaceString(1, 2, "s"));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      doc.insertString(1,"s");
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      doc.deleteString(1,2);
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      doc.replaceString(1,2,"xxx");
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      doc.setText("sss");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(1, "s"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.deleteString(1, 2));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.replaceString(1, 2, "xxx"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.setText("sss"));
 
     DocumentImpl console = new DocumentImpl("xxxx", true);
     // need no stinking command

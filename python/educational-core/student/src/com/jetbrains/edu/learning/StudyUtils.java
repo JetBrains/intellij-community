@@ -345,9 +345,7 @@ public class StudyUtils {
       final DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
       for (final RangeMarker block : blocks) {
-        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-          document.removeGuardedBlock(block);
-        }));
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> document.removeGuardedBlock(block)));
       }
     }
   }

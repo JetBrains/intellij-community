@@ -152,9 +152,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @NotNull
   private List<Update> getAllScheduledUpdates() {
-    return ContainerUtil.concat(myScheduledUpdates.values(), map -> {
-      return map.keySet();
-    });
+    return ContainerUtil.concat(myScheduledUpdates.values(), map -> map.keySet());
   }
 
   public final boolean isPassThrough() {
@@ -306,9 +304,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
 
       if (each.executeInWriteAction()) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          execute(each);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> execute(each));
       }
       else {
         execute(each);

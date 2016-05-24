@@ -46,9 +46,7 @@ public class FoldingTest extends AbstractEditorTest {
       myModel.addFoldRegion(5, 9, "/*...*/");
     });
     assertSize(2, myModel.getAllFoldRegions());
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      myEditor.getDocument().deleteString(0, 5);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(0, 5));
     assertSize(1, myModel.getAllFoldRegions());
   }
 
@@ -172,9 +170,7 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(0, 10, "...");
     addCollapsedFoldRegion(1, 9, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      myEditor.getDocument().deleteString(0, 1);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(0, 1));
 
     addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
     
@@ -186,9 +182,7 @@ public class FoldingTest extends AbstractEditorTest {
     addFoldRegion(0, 4, "...");
     assertNumberOfValidFoldRegions(2);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      myEditor.getDocument().deleteString(4, 5);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(4, 5));
 
 
     assertNumberOfValidFoldRegions(1);
@@ -197,9 +191,7 @@ public class FoldingTest extends AbstractEditorTest {
   public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
     addCollapsedFoldRegion(10, 15, "...");
     addCollapsedFoldRegion(10, 14, "...");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      myEditor.getDocument().deleteString(14, 15);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(14, 15));
 
 
     FoldRegion region = myModel.getCollapsedRegionAtOffset(10);

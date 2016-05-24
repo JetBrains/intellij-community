@@ -166,9 +166,7 @@ public class GrAliasImportIntention extends Intention {
 
         if (brokenOff) {
           if (importStatement != null) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              importStatement.delete();
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> importStatement.delete());
           }
           return;
         }

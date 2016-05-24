@@ -207,9 +207,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> {
-        return item.getData().getFirst();
-      }));
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> item.getData().getFirst()));
     for (AbstractTreeNode node : nodes) {
       final Pair<AbstractUrl, String> pair = createPairForNode(node);
       if (pair != null) {
@@ -228,9 +226,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> {
-        return item.getData().getFirst();
-      }));
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> item.getData().getFirst()));
     for (AbstractTreeNode node : nodes) {
       final Pair<AbstractUrl, String> pair = createPairForNode(node);
       if (pair != null && !set.contains(pair.getFirst())) return true;

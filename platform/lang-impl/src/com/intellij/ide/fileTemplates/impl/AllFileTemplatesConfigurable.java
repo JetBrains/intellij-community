@@ -101,9 +101,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myProject = project;
     myManager = getInstance(project);
     myScheme = myManager.getCurrentScheme();
-    myInternalTemplateNames = ContainerUtil.map2Set(myManager.getInternalTemplates(), template -> {
-      return template.getName();
-    });
+    myInternalTemplateNames = ContainerUtil.map2Set(myManager.getInternalTemplates(), template -> template.getName());
   }
 
   private void onRemove() {
@@ -224,9 +222,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         @Override
         protected FileTemplateNode initModel() {
           SortedSet<FileTemplateGroupDescriptor> categories =
-            new TreeSet<FileTemplateGroupDescriptor>((o1, o2) -> {
-              return o1.getTitle().compareTo(o2.getTitle());
-            });
+            new TreeSet<FileTemplateGroupDescriptor>((o1, o2) -> o1.getTitle().compareTo(o2.getTitle()));
 
 
           for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
@@ -235,9 +231,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
           //noinspection HardCodedStringLiteral
           return new FileTemplateNode("ROOT", null,
-                                      ContainerUtil.map2List(categories, s -> {
-                                        return new FileTemplateNode(s);
-                                      }));
+                                      ContainerUtil.map2List(categories, s -> new FileTemplateNode(s)));
         }
       };
       allTabs.add(myOtherTemplatesList);

@@ -434,9 +434,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     if (!changed.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        FileContentUtilCore.reparseFiles(changed);
-      }, ApplicationManager.getApplication().getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
     }
   }
 

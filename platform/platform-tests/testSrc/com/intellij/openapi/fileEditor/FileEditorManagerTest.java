@@ -209,9 +209,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   private void assertOpenFiles(String... fileNames) {
     EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    List<String> names = ContainerUtil.map(files, composite -> {
-      return composite.getFile().getName();
-    });
+    List<String> names = ContainerUtil.map(files, composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 

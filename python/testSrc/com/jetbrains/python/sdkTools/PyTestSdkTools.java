@@ -93,9 +93,7 @@ public final class PyTestSdkTools {
       // Associate with module
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
-      UsefulTestCase.edt(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk);
-      }));
+      UsefulTestCase.edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk)));
     }
 
 

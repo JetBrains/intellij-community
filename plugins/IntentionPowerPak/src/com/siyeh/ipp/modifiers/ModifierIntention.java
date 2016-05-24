@@ -66,9 +66,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       conflictsDialogOK = true;
     } else {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts,
-                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                                    modifierList.setModifierProperty(getModifier(), true);
-                                                                  }));
+                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> modifierList.setModifierProperty(getModifier(), true)));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {

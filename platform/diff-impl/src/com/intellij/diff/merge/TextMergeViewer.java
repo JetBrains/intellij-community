@@ -320,27 +320,25 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       // we need invokeLater() here because viewer is partially-initialized (ex: there are no toolbar or status panel)
       // user can see this state while we're showing progress indicator, so we want let init() to finish.
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ProgressManager.getInstance().run(new Task.Modal(getProject(), "Computing Differences...", true) {
-          private Runnable myCallback;
+      ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "Computing Differences...", true) {
+        private Runnable myCallback;
 
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            myCallback = doPerformRediff(indicator);
-          }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          myCallback = doPerformRediff(indicator);
+        }
 
-          @Override
-          public void onCancel() {
-            myMergeContext.finishMerge(MergeResult.CANCEL);
-          }
+        @Override
+        public void onCancel() {
+          myMergeContext.finishMerge(MergeResult.CANCEL);
+        }
 
-          @Override
-          public void onSuccess() {
-            if (isDisposed()) return;
-            myCallback.run();
-          }
-        });
-      });
+        @Override
+        public void onSuccess() {
+          if (isDisposed()) return;
+          myCallback.run();
+        }
+      }));
     }
 
     @NotNull
@@ -349,9 +347,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         indicator.checkCanceled();
 
         List<DocumentContent> contents = myMergeRequest.getContents();
-        List<CharSequence> sequences = ReadAction.compute(() -> {
-          return ContainerUtil.map(contents, (content) -> content.getDocument().getImmutableCharSequence());
-        });
+        List<CharSequence> sequences = ReadAction.compute(() -> ContainerUtil.map(contents, (content) -> content.getDocument().getImmutableCharSequence()));
 
         List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                       ComparisonPolicy.DEFAULT, indicator);
@@ -511,9 +507,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
         final ProgressIndicator indicator = myProgress;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          performRediff(scheduled, data, indicator);
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> performRediff(scheduled, data, indicator));
       }
 
       @CalledInBackground
@@ -872,9 +866,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         String title = e.getPresentation().getText() + " in merge";
 
-        executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> {
-          apply(side, selectedChanges);
-        });
+        executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
       }
 
       private boolean isSomeChangeSelected(@NotNull ThreeSide side) {

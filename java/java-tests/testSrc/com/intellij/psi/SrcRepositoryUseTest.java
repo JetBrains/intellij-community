@@ -650,9 +650,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
   public void testModification2() throws Exception {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true));
 
 
     PsiClass aClass2 = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
@@ -666,14 +664,10 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
     final PsiFile psiFile = aClass.getContainingFile();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), "");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), ""));
 
     LOG.assertTrue(!aClass.isValid());
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text));
 
 
     aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));

@@ -45,9 +45,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
-    return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), virtualFile -> {
-      return PsiManager.getInstance(module.getProject()).findDirectory(virtualFile);
-    });
+    return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), virtualFile -> PsiManager.getInstance(module.getProject()).findDirectory(virtualFile));
   }
 
   @Override

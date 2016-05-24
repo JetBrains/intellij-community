@@ -84,9 +84,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     Hashtable<String, Object> response = createIssueSearchRequest(query, offset, limit, withClosed).execute();
 
     Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
-    return ContainerUtil.map2Array(bugs, BugzillaTask.class, hashTable -> {
-      return new BugzillaTask(hashTable, BugzillaRepository.this);
-    });
+    return ContainerUtil.map2Array(bugs, BugzillaTask.class, hashTable -> new BugzillaTask(hashTable, BugzillaRepository.this));
   }
 
   private BugzillaXmlRpcRequest createIssueSearchRequest(String query, int offset, int limit, boolean withClosed) throws Exception {
@@ -243,9 +241,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   @NotNull
   private static List<String> extractNotEmptyNames(@NotNull Vector<Hashtable<String, ?>> vector) {
-    return ContainerUtil.mapNotNull(vector, table -> {
-      return StringUtil.nullize((String)table.get("name"));
-    });
+    return ContainerUtil.mapNotNull(vector, table -> StringUtil.nullize((String)table.get("name")));
   }
 
   @Override

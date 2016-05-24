@@ -369,12 +369,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         result.contentType != null &&
         result.contentType.contains(HTML_MIME) &&
         new String(result.bytes).contains("<html")) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Messages.showMessageDialog(project,
-                                   XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                   XmlBundle.message("invalid.url.title"),
-                                   Messages.getErrorIcon());
-      }, indicator.getModalityState());
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                                                                     XmlBundle.message("invalid.url.title"),
+                                                                                     Messages.getErrorIcon()), indicator.getModalityState());
       return false;
     }
     return true;
@@ -494,12 +492,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Messages.showMessageDialog(project,
-                                     XmlBundle.message("invalid.url.message", dtdUrl),
-                                     XmlBundle.message("invalid.url.title"),
-                                     Messages.getErrorIcon());
-        }, indicator.getModalityState());
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                       XmlBundle.message("invalid.url.message", dtdUrl),
+                                                                                       XmlBundle.message("invalid.url.title"),
+                                                                                       Messages.getErrorIcon()), indicator.getModalityState());
       }
     }
 

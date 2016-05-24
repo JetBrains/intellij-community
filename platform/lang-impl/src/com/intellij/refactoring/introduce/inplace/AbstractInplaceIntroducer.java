@@ -142,9 +142,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected final void setPreviewText(final String text) {
     if (myPreview == null) return; //already disposed
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), text);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), text));
   }
 
   protected final JComponent getPreviewComponent() {
@@ -320,9 +318,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             final V variable = getVariable();
             if (inputName == null || variable == null || !isIdentifier(inputName, variable.getLanguage())) {
               final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
-              ApplicationManager.getApplication().runWriteAction(() -> {
-                myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]);
-              });
+              ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]));
             }
           }
           templateState.gotoEnd(true);

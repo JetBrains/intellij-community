@@ -68,9 +68,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiClass[] classes = JavaDirectoryService.getInstance()
       .getPackage(getContentDirectory().findSubdirectory("src").findSubdirectory("com").findSubdirectory("package1")).getClasses();
     sortClassesByName(classes);
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      classes[0].delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> classes[0].delete());
 
 
     PlatformTestUtil.waitForAlarm(600);
@@ -199,12 +197,10 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final Document document = FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile());
     final int caretPosition = document.getText().indexOf("public class InnerClass") - 1;
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(myProject,
-                                                    () -> document.insertString(caretPosition, "\n"),
-                                                    "typing",
-                                                    null);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject,
+                                                                                                         () -> document.insertString(caretPosition, "\n"),
+                                                                                                         "typing",
+                                                                                                         null));
 
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);

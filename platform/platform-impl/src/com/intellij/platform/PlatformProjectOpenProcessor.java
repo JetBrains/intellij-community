@@ -217,9 +217,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
       final Project finalProject = project;
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(finalProject);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(finalProject));
       return project;
     }
 

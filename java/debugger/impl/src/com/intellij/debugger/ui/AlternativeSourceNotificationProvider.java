@@ -119,9 +119,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
       ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
                                                              ComboBoxClassElement.class,
-                                                             psiClass -> {
-                                                               return new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement());
-                                                             });
+                                                             psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
 
       return new AlternativeSourceNotificationPanel(elems, baseClass, myProject, file);
     }

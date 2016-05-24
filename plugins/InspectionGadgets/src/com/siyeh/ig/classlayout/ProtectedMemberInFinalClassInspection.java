@@ -124,9 +124,7 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
           return;
         }
         final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts,
-                                                                    () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                                      modifierList.setModifierProperty(PRIVATE, true);
-                                                                    }));
+                                                                    () -> ApplicationManager.getApplication().runWriteAction(() -> modifierList.setModifierProperty(PRIVATE, true)));
         conflictsDialogOK = conflictsDialog.showAndGet();
       }
       if (conflictsDialogOK) {

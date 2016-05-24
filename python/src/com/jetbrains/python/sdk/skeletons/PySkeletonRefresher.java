@@ -356,9 +356,7 @@ public class PySkeletonRefresher {
     }
 
     if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
     }
 
     return errorList;

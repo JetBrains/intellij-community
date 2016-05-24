@@ -170,9 +170,7 @@ public abstract class StringMatcher<T> {
 
     protected MatcherSet(Set<StringMatcher> target) {
       super(target);
-      myPattern = StringUtil.join(target, s -> {
-        return s.getPattern();
-      }, "|");
+      myPattern = StringUtil.join(target, s -> s.getPattern(), "|");
     }
 
     public static StringMatcher create(Set<StringMatcher> matchers) {

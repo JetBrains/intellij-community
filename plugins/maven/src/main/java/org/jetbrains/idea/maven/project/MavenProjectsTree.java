@@ -1246,9 +1246,7 @@ public class MavenProjectsTree {
 
     try {
       process.checkCanceled();
-      final List<String> names = ContainerUtil.mapNotNull(mavenProjects, project12 -> {
-        return project12.getDisplayName();
-      });
+      final List<String> names = ContainerUtil.mapNotNull(mavenProjects, project12 -> project12.getDisplayName());
       final String text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200);
       process.setText(ProjectBundle.message("maven.resolving.pom", text));
       process.setText2("");

@@ -195,9 +195,7 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
-      });
+      WriteCommandAction.runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 

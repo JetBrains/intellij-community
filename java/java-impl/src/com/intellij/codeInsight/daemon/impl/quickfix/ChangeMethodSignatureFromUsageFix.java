@@ -229,9 +229,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         }
       };
       processor.run();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        UndoUtil.markPsiFileForUndo(file);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> UndoUtil.markPsiFileForUndo(file));
       return Arrays.asList(newParametersInfo);
     }
     else {

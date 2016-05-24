@@ -137,9 +137,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
 
 
       final TreeSet<String> suffixesToIgnore = new TreeSet<String>(ContainerUtil.map(allFilesWithoutTranslation,
-                                                                                     file -> {
-                                                                                       return PropertiesUtil.getSuffix(file);
-                                                                                     }));
+                                                                                     file -> PropertiesUtil.getSuffix(file)));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
         DisableInspectionToolAction.modifyAndCommitProjectProfile(
           modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);
@@ -148,15 +146,11 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   public boolean isPropertyComplete(final String key, final ResourceBundle resourceBundle) {
-    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), file -> {
-      return file.findPropertyByKey(key);
-    }), resourceBundle);
+    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), file -> file.findPropertyByKey(key)), resourceBundle);
   }
 
   private boolean isPropertyComplete(final List<IProperty> properties, final ResourceBundle resourceBundle) {
-    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, property -> {
-      return property.getPropertiesFile();
-    });
+    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, property -> property.getPropertiesFile());
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!existed.contains(file) && !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(file))) {
         return false;

@@ -61,9 +61,7 @@ public class XmlTagWriteTest extends LightCodeInsightTestCase{
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText("<b>\n0123456</b>");
     final XmlText text = (XmlText) tag.getValue().getChildren()[0];
     String textS = text.getText();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      text.insertText("lala", 2);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> text.insertText("lala", 2));
 
     XmlText text2 = (XmlText)tag.getValue().getChildren()[0];
     assertEquals(textS.substring(0, 2) + "lala" + textS.substring(2), text2.getText());

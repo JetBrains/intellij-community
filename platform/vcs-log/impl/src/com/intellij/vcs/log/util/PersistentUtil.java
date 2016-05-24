@@ -63,9 +63,7 @@ public class PersistentUtil {
                                                                        int version) throws IOException {
     final File storageFile = getStorageFile(logId, logKind, version);
 
-    return IOUtil.openCleanOrResetBroken(() -> {
-      return new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE);
-    }, storageFile);
+    return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE), storageFile);
   }
 
   @NotNull
@@ -73,8 +71,6 @@ public class PersistentUtil {
     throws IOException {
     final File storageFile = getStorageFile(logId, logKind, version);
 
-    return IOUtil.openCleanOrResetBroken(() -> {
-      return new PersistentStringEnumerator(storageFile);
-    }, storageFile);
+    return IOUtil.openCleanOrResetBroken(() -> new PersistentStringEnumerator(storageFile), storageFile);
   }
 }

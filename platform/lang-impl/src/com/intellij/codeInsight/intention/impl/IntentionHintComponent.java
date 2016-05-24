@@ -642,9 +642,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       final IntentionSettingsConfigurable configurable = new IntentionSettingsConfigurable();
-      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-        SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName));
-      });
+      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName)));
     }
   }
 

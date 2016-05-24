@@ -36,16 +36,12 @@ public abstract class TaskDialogPanelProvider {
 
   public static List<TaskDialogPanel> getOpenTaskPanels(@NotNull Project project, @NotNull Task task) {
     return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME),
-                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> {
-                                      return provider.getOpenTaskPanel(project, task);
-                                    });
+                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getOpenTaskPanel(project, task));
   }
     
   public static List<TaskDialogPanel> getCloseTaskPanels(@NotNull Project project, @NotNull LocalTask task) {
     return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME),
-                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> {
-                                      return provider.getCloseTaskPanel(project, task);
-                                    });
+                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getCloseTaskPanel(project, task));
   }
     
   @Nullable

@@ -49,19 +49,17 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
     final List<Change> notConflicts = ContainerUtil.collect(getNotConflicts(mergeList));
     final Project project = mergeList.getLeftChangeList().getProject();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        mergeList.startBulkUpdate();
-        try {
-          for (Change change : notConflicts) {
-            Change.doApply(change, MergeList.BRANCH_SIDE);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      mergeList.startBulkUpdate();
+      try {
+        for (Change change : notConflicts) {
+          Change.doApply(change, MergeList.BRANCH_SIDE);
         }
-        finally {
-          mergeList.finishBulkUpdate();
-        }
-      }, null, DiffBundle.message("save.merge.result.command.name"));
-    });
+      }
+      finally {
+        mergeList.finishBulkUpdate();
+      }
+    }, null, DiffBundle.message("save.merge.result.command.name")));
 
     if (myDiffPanel != null) {
       myDiffPanel.requestScrollEditors();

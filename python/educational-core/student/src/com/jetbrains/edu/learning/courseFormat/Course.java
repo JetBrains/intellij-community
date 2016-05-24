@@ -77,9 +77,7 @@ public class Course {
   }
 
   public static String getAuthorsString(@NotNull List<CourseInfo.Author> authors) {
-    return StringUtil.join(authors, author -> {
-      return author.getName();
-    }, ", ");
+    return StringUtil.join(authors, author -> author.getName(), ", ");
   }
 
   public void setAuthors(String[] authors) {

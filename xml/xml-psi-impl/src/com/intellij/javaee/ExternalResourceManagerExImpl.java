@@ -273,15 +273,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
     final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      instance.addResource(url, location);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> instance.addResource(url, location));
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          instance.removeResource(url);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> instance.removeResource(url));
       }
     });
   }
@@ -624,16 +620,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @TestOnly
   public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      getInstance().addResource(url, location);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> getInstance().addResource(url, location));
 
     Disposer.register(disposable, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          getInstance().removeResource(url);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> getInstance().removeResource(url));
       }
     });
   }

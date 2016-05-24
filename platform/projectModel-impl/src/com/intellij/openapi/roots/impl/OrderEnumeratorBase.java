@@ -325,9 +325,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public void forEach(@NotNull final Processor<OrderEntry> processor) {
-    forEach((entry, handlers) -> {
-      return processor.process(entry);
-    });
+    forEach((entry, handlers) -> processor.process(entry));
   }
 
   protected abstract void forEach(@NotNull PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor);

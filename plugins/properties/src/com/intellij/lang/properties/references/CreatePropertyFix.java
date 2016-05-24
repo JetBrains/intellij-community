@@ -151,16 +151,14 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     }
     UndoUtil.markPsiFileForUndo(psiElement.getContainingFile());
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        try {
-          I18nUtil.createProperty(project, selectedPropertiesFiles, key, value);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      try {
+        I18nUtil.createProperty(project, selectedPropertiesFiles, key, value);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
   }
 
   public boolean startInWriteAction() {

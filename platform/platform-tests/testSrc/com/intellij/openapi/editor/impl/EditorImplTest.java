@@ -352,7 +352,7 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getCaretModel().addCaretListener(caretListener);
     myEditor.getSelectionModel().addSelectionListener(selectionListener);
     ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(true);
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {myEditor.getDocument().insertString(0, " ");});
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().insertString(0, " "));
     assertEquals("", output.toString());
     ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(false);
     myEditor.getSelectionModel().removeSelectionListener(selectionListener);

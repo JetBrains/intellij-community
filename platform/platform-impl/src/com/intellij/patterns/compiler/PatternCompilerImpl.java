@@ -333,9 +333,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         throw e.getTargetException();
       }
     }
-    throw new NoSuchMethodException("unknown symbol: " + methodName + "(" + StringUtil.join(arguments, o -> {
-      return String.valueOf(o);
-    }, ", ") + ")");
+    throw new NoSuchMethodException("unknown symbol: " + methodName + "(" + StringUtil.join(arguments, o -> String.valueOf(o), ", ") + ")");
   }
 
   @Nullable

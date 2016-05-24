@@ -67,9 +67,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   }
 
   public List<PsiElement> getTargetElements() {
-    return ContainerUtil.mapNotNull(myPointers.getValue(), (NullableFunction<SmartPsiElementPointer, PsiElement>)smartPsiElementPointer -> {
-      return smartPsiElementPointer.getElement();
-    });
+    return ContainerUtil.mapNotNull(myPointers.getValue(), (NullableFunction<SmartPsiElementPointer, PsiElement>)smartPsiElementPointer -> smartPsiElementPointer.getElement());
   }
 
   public boolean equals(final Object o) {

@@ -63,9 +63,7 @@ public class ResolvePerformanceTest extends ResolveTestCase {
     resolveAllReferences(references);
     System.out.println("Not cached resolve: " + (System.currentTimeMillis() - time)/(double)1000 + "s");
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ResolveCache.getInstance(myProject).clearCache(true);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ResolveCache.getInstance(myProject).clearCache(true));
 
     time = System.currentTimeMillis();
     // Cached pass

@@ -79,9 +79,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), "zzz", "ttt");
 
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      properties.get(1).getPsiElement().delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> properties.get(1).getPsiElement().delete());
 
     List<IProperty> propertiesAfter = propertiesFile.getProperties();
     assertEquals(1, propertiesAfter.size());
@@ -92,9 +90,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      property.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> property.delete());
 
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
@@ -103,9 +99,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-        property.delete();
-      });
+    WriteCommandAction.runWriteCommandAction(null, () -> property.delete());
 
 
     assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());

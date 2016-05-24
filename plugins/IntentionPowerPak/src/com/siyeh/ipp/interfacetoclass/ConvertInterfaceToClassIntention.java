@@ -139,9 +139,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
       }
       final ConflictsDialog conflictsDialog = new ConflictsDialog(anInterface.getProject(), conflicts,
-                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                                    convertInterfaceToClass(anInterface);
-                                                                  }));
+                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> convertInterfaceToClass(anInterface)));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {

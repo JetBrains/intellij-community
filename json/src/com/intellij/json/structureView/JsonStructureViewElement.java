@@ -66,9 +66,7 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
     }
     if (value instanceof JsonObject) {
       final JsonObject object = ((JsonObject)value);
-      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, (Function<JsonProperty, TreeElement>)property -> {
-        return new JsonStructureViewElement(property);
-      });
+      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, (Function<JsonProperty, TreeElement>)property -> new JsonStructureViewElement(property));
     }
     else if (value instanceof JsonArray) {
       final JsonArray array = (JsonArray)value;

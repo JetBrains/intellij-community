@@ -140,13 +140,9 @@ public class WindowSystemPlaybackCall {
           return;
         }
 
-        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> {
-          result.setRejected("Cannot activate tool window with id:" + id);
-        });
+        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> result.setRejected("Cannot activate tool window with id:" + id));
       }
-    }).doWhenRejected(() -> {
-      result.setRejected("Cannot retrieve open project");
-    });
+    }).doWhenRejected(() -> result.setRejected("Cannot retrieve open project"));
 
     return result;
   }
@@ -197,9 +193,7 @@ public class WindowSystemPlaybackCall {
             return;
           }
           selectNext(context, path.split("\\|"), 0, selectedPath[0].getSubElements(), result);
-        })).doWhenRejected(() -> {
-          result.setRejected("Cannot invoke popup menu from the ShowPopupMenu action, action call rejected");
-        });
+        })).doWhenRejected(() -> result.setRejected("Cannot invoke popup menu from the ShowPopupMenu action, action call rejected"));
     });
 
     return result;

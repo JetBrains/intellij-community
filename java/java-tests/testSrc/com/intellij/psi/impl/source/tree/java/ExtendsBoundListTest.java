@@ -26,27 +26,21 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromFront() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      typeParameter.getExtendsList().getReferenceElements()[0].delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> typeParameter.getExtendsList().getReferenceElements()[0].delete());
 
     check();
   }
 
   public void testRemoveBoundFromEnd() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      typeParameter.getExtendsList().getReferenceElements()[1].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }
 
   public void testRemoveBoundFromMiddle() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      typeParameter.getExtendsList().getReferenceElements()[1].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }

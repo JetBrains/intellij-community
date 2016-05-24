@@ -56,9 +56,7 @@ public class CustomResourceBundleState {
   }
 
   public List<VirtualFile> getFiles(@NotNull final VirtualFileManager manager) {
-    return ContainerUtil.mapNotNull(getFileUrls(), url -> {
-      return manager.findFileByUrl(url);
-    });
+    return ContainerUtil.mapNotNull(getFileUrls(), url -> manager.findFileByUrl(url));
   }
 
   @Nullable

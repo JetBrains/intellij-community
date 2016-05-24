@@ -172,9 +172,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @TestOnly
   public static void disposeApplication() {
     if (ourApplication != null) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(ourApplication);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
 
       ourApplication = null;
     }

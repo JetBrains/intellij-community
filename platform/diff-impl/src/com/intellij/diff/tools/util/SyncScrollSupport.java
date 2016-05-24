@@ -286,9 +286,7 @@ public class SyncScrollSupport {
 
             doScrollVertically(editor, offsets[i], animateSlaves);
 
-            editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-              exitDisableScrollSection();
-            });
+            editor.getScrollingModel().runActionOnScrollingFinished(() -> exitDisableScrollSection());
           }
         }
       });

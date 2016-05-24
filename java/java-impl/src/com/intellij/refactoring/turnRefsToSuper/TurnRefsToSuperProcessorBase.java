@@ -96,9 +96,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
           myVariablesRenames.put(pointer, variableRenamer.getNewName(variable));
         }
   
-        Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
-          variableRenamer.findUsages(myVariablesUsages, false, false);
-        });
+        Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> variableRenamer.findUsages(myVariablesUsages, false, false));
   
         if (!ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {

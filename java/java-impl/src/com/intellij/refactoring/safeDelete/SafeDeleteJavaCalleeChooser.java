@@ -122,9 +122,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
     @Override
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
-        return ContainerUtil.map(getTopLevelItems(), info -> {
-          return info.getCalledMethod();
-        });
+        return ContainerUtil.map(getTopLevelItems(), info -> info.getCalledMethod());
       }
 
       final List<PsiMethod> callees = computeCalleesSafeToDelete(getMethod());

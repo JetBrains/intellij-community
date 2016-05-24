@@ -124,9 +124,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
         }
       }
     }
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> {
-      return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
-    });
+    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix));
   }
 
 

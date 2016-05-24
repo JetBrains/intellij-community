@@ -71,33 +71,29 @@ public class PythonSdkTableListener implements ApplicationComponent {
   }
 
   private static void removeLibrary(final Sdk sdk) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        final LibraryTable.ModifiableModel libraryTableModel =
-          ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
-        final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(sdk.getName()));
-        if (library != null) {
-          libraryTableModel.removeLibrary(library);
-        }
-        libraryTableModel.commit();
-      });
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final LibraryTable.ModifiableModel libraryTableModel =
+        ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+      final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(sdk.getName()));
+      if (library != null) {
+        libraryTableModel.removeLibrary(library);
+      }
+      libraryTableModel.commit();
+    }), ModalityState.NON_MODAL);
   }
 
   private static void renameLibrary(final Sdk sdk, final String previousName) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        final LibraryTable.ModifiableModel libraryTableModel =
-          ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
-        final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(previousName));
-        if (library != null) {
-          final Library.ModifiableModel model = library.getModifiableModel();
-          model.setName(PythonFacet.getFacetLibraryName(sdk.getName()));
-          model.commit();
-        }
-        libraryTableModel.commit();
-      });
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final LibraryTable.ModifiableModel libraryTableModel =
+        ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+      final Library library = libraryTableModel.getLibraryByName(PythonFacet.getFacetLibraryName(previousName));
+      if (library != null) {
+        final Library.ModifiableModel model = library.getModifiableModel();
+        model.setName(PythonFacet.getFacetLibraryName(sdk.getName()));
+        model.commit();
+      }
+      libraryTableModel.commit();
+    }), ModalityState.NON_MODAL);
   }
 
   @NotNull

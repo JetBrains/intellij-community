@@ -236,9 +236,7 @@ final class PaintersHelper implements Painter.Listener {
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             final Image m = ImageLoader.loadFromUrl(url);
-            ApplicationManager.getApplication().invokeLater(() -> {
-              resetImage(propertyValue, m, newAlpha, newFillType, newPlace);
-            }, modalityState);
+            ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newPlace), modalityState);
           });
         }
         catch (Exception e) {

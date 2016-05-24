@@ -239,9 +239,7 @@ public class JdkChooserPanel extends JPanel {
     if (jdk == null) {
       return null;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManager.getInstance(project).setProjectSdk(jdk);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(jdk));
     return jdk;
   }
 

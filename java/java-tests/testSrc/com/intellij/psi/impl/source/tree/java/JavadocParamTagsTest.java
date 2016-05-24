@@ -41,9 +41,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     final PsiDocComment docComment = method.getDocComment();
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      tags[0].delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> tags[0].delete());
 
     assertEquals("/**\n" +
                  " * Javadoc\n" +
@@ -64,9 +62,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     final PsiDocComment docComment = method.getDocComment();
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      tags[1].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> tags[1].delete());
 
     assertEquals("/**\n" +
                  " * Javadoc\n" +
@@ -88,9 +84,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     final PsiDocComment docComment = method.getDocComment();
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      tags[1].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> tags[1].delete());
 
     assertEquals("/**\n" +
                  " * Javadoc\n" +

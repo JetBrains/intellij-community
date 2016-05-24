@@ -281,9 +281,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                                               boolean toCopyJavaDoc,
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
-    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, s -> {
-      return new CandidateInfo(s.getElement(), s.getSubstitutor());
-    });
+    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, s -> new CandidateInfo(s.getElement(), s.getSubstitutor()));
     final List<PsiMethod> methods = overrideOrImplementMethodCandidates(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
     return convert2GenerationInfos(methods);
   }
@@ -302,9 +300,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
-    return ContainerUtil.map2List(methods, s -> {
-      return createGenerationInfo(s);
-    });
+    return ContainerUtil.map2List(methods, s -> createGenerationInfo(s));
   }
 
   public static PsiGenerationInfo<PsiMethod> createGenerationInfo(PsiMethod s) {

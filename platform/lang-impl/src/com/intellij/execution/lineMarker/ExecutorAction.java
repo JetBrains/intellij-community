@@ -40,9 +40,7 @@ public class ExecutorAction extends AnAction {
   @NotNull
   public static AnAction[] getActions(final int order) {
     return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class,
-                                   (Function<Executor, AnAction>)executor -> {
-                                     return new ExecutorAction(ActionManager.getInstance().getAction(executor.getContextActionId()), executor, order);
-                                   });
+                                   (Function<Executor, AnAction>)executor -> new ExecutorAction(ActionManager.getInstance().getAction(executor.getContextActionId()), executor, order));
   }
 
   private final AnAction myOrigin;
@@ -75,9 +73,7 @@ public class ExecutorAction extends AnAction {
     if (context.getLocation() == null) return null;
     List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
     List<ConfigurationFromContext> list = ContainerUtil.mapNotNull(producers,
-                                                                   producer -> {
-                                                                     return createConfiguration(producer, context);
-                                                                   }
+                                                                   producer -> createConfiguration(producer, context)
     );
     if (list.isEmpty()) return null;
     ConfigurationFromContext configuration = list.get(myOrder < list.size() ? myOrder : 0);

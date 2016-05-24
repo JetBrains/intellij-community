@@ -381,9 +381,7 @@ public class RegistryUi implements Disposable {
 
 
       if (r == Messages.OK) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          app.restart(true);
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
       }
     }
   }

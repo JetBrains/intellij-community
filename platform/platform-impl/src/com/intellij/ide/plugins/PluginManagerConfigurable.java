@@ -131,9 +131,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     Disposer.register(d, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          showShutdownDialogIfNeeded();
-        }, ApplicationManager.getApplication().getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> showShutdownDialogIfNeeded(), ApplicationManager.getApplication().getDisposed());
       }
     });
   }

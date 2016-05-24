@@ -321,9 +321,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
             LOG.assertTrue(methodCallExpression != null);
             conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
-                                           StringUtil.join(targetContainingClasses, psiClass -> {
-                                             return RefactoringUIUtil.getDescription(psiClass, false);
-                                           }, ","));
+                                           StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ","));
           }
         }
       }

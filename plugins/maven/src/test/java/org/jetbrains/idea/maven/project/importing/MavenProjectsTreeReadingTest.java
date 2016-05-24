@@ -2254,9 +2254,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         log += "<none> ";
         return;
       }
-      log += StringUtil.join(updated, each -> {
-        return each.getMavenId().getArtifactId();
-      }, " ") + " ";
+      log += StringUtil.join(updated, each -> each.getMavenId().getArtifactId(), " ") + " ";
     }
 
     @Override

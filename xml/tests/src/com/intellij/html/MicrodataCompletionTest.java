@@ -108,9 +108,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropValue() throws Throwable {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Person.html");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://data-vocabulary.org/Person\"><div itemprop=\"<caret>\"></div></section>",
                  "name", "nickname", "photo", "title", "role", "url", "affiliation", "friend", "acquaintance", "address"
     );
@@ -118,9 +116,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropValueSchemaOrgFormat() throws Throwable {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Product.html");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().addResource("http://schema.org/Product", virtualFile.getPath());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://schema.org/Product", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://schema.org/Product\"><div itemprop=\"<caret>\"></div></section>",
                  "additionalType",
                  "aggregateRating",
@@ -157,9 +153,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropValueSchemaOrgFormatWithLinks() throws Throwable {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Rating.html");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().addResource("http://schema.org/Rating", virtualFile.getPath());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://schema.org/Rating", virtualFile.getPath()));
     doTestInHtml("<section itemscope itemtype=\"http://schema.org/Rating\"><div itemprop=\"<caret>\"></div></section>",
                  "alternateName",
                  "bestRating",
@@ -191,9 +185,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropValueFromRef() throws Throwable {
     final VirtualFile virtualFile = myFixture.copyFileToProject("Person.html");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", virtualFile.getPath()));
     doTestInHtml("<body>" +
                  "<section itemscope itemtype=\"http://data-vocabulary.org/Person\" itemref=\"foo\"></section>" +
                  "<section id=\"foo\"><div itemprop=\"<caret>\"></div></section>" +

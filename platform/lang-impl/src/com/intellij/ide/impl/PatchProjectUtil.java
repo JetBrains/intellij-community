@@ -136,9 +136,7 @@ public class PatchProjectUtil {
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ModifiableModelCommitter.multiCommit(models, modulesModel);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(models, modulesModel));
   }
 
   public static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {

@@ -656,9 +656,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private List<InspectionToolWrapper> createTools(Project project) {
     if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), state -> {
-        return state.getTool();
-      });
+      return ContainerUtil.map(mySource.getDefaultStates(project), state -> state.getTool());
     }
     return myRegistrar.createTools();
   }

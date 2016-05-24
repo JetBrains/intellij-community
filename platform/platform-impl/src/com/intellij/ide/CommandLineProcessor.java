@@ -149,9 +149,7 @@ public class CommandLineProcessor {
         try {
           final String url = URLDecoder.decode(command, "UTF-8");
           JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            JBProtocolCommand.handleCurrentCommand();
-          }, ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand(), ModalityState.any());
         }
         catch (UnsupportedEncodingException e) {
           LOG.error(e);

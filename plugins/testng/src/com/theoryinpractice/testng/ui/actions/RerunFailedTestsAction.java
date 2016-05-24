@@ -70,9 +70,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                 final GlobalSearchScope scope = getConfiguration().getConfigurationModule().getSearchScope();
                 final Project project = getConfiguration().getProject();
                 for (final AbstractTestProxy proxy : failedTests) {
-                  ApplicationManager.getApplication().runReadAction(() -> {
-                    includeFailedTestWithDependencies(classes, scope, project, proxy);
-                  });
+                  ApplicationManager.getApplication().runReadAction(() -> includeFailedTestWithDependencies(classes, scope, project, proxy));
                 }
               }
 

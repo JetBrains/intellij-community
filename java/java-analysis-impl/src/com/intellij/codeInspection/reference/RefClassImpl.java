@@ -289,9 +289,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this);
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this));
     } else {
       super.accept(visitor);
     }

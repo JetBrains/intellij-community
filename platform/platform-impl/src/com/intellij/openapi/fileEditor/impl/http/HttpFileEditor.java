@@ -41,9 +41,7 @@ class HttpFileEditor extends BaseRemoteFileEditor {
     RemoteFileInfo fileInfo = virtualFile.getFileInfo();
     assert fileInfo != null;
     fileInfo.download()
-      .done(file -> ApplicationManager.getApplication().invokeLater(() -> {
-        contentLoaded();
-      }, myProject.getDisposed()))
+      .done(file -> ApplicationManager.getApplication().invokeLater(() -> contentLoaded(), myProject.getDisposed()))
       .rejected(throwable -> contentRejected());
   }
 

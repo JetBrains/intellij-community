@@ -369,9 +369,7 @@ public class GroovyCompletionUtil {
       String tailText = getPackageText((PsiClass)element);
       final PsiClass psiClass = (PsiClass)element;
       if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
-        tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> {
-          return psiTypeParameter.getName();
-        }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
+        tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(), "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }
       builder = builder.withTailText(tailText, true);
     }

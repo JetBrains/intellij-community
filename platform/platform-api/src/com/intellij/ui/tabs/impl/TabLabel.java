@@ -119,9 +119,7 @@ public class TabLabel extends JPanel implements Accessible {
             if (index > 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index - 1), false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+              myTabs.select(myTabs.getTabAt(index - 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
             }
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
@@ -129,9 +127,7 @@ public class TabLabel extends JPanel implements Accessible {
             if (index < myTabs.getTabCount() - 1) {
               e.consume();
               // Select the next tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index + 1), false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+              myTabs.select(myTabs.getTabAt(index + 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
             }
           }
           }

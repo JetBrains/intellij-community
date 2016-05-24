@@ -45,8 +45,6 @@ public class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
       return Collections.emptyList();
     }
     
-    return ContainerUtil.map(locations, location -> {
-      return new GotoRelatedItem(location.getPsiElement());
-    });
+    return ContainerUtil.map(locations, location -> new GotoRelatedItem(location.getPsiElement()));
   }
 }

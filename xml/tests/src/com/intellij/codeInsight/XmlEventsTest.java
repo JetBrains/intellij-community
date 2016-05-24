@@ -69,9 +69,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      xmlText.insertText("bb", 2);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> xmlText.insertText("bb", 2));
 
     assertEquals("(text changed to 'aabba' was: 'aaa')\n", listener.getEventString());
   }
@@ -115,9 +113,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
   public void test5() throws Exception{
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      tagFromText.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> tagFromText.delete());
 
     assertEquals("(Xml document changed)\n", listener.getEventString());
   }
@@ -170,9 +166,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText(text);
     final XmlAttribute attribute = tag.getAttribute("name", null);
     assert attribute != null;
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      attribute.setValue("new");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> attribute.setValue("new"));
 
 
     assertEquals(attribute.getValue(), "new");

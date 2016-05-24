@@ -245,9 +245,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   @NotNull
   public static List<PluginId> mapToPluginIds(List<IdeaPluginDescriptor> plugins) {
-    return ContainerUtil.map(plugins, descriptor -> {
-      return descriptor.getPluginId();
-    });
+    return ContainerUtil.map(plugins, descriptor -> descriptor.getPluginId());
   }
 
   private static String getTextPrefix() {
@@ -659,9 +657,7 @@ public abstract class PluginManagerMain implements Disposable {
         message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
       }
       else if (!disabled.isEmpty()) {
-        message += "Updated plugins " + StringUtil.join(disabled, pluginDescriptor -> {
-          return pluginDescriptor.getName();
-        }, ", ") + " are disabled.";
+        message += "Updated plugins " + StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", ") + " are disabled.";
       }
 
       if (!disabledDependants.isEmpty()) {
@@ -671,9 +667,7 @@ public abstract class PluginManagerMain implements Disposable {
           message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
         }
         else {
-          message += " plugins " + StringUtil.join(disabledDependants, pluginDescriptor -> {
-            return pluginDescriptor.getName();
-          }, ", ") + ".";
+          message += " plugins " + StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", ") + ".";
         }
       }
       message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";

@@ -368,23 +368,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        try {
+    ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      try {
 
-          if (currentValue.isEmpty() &&
-              ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-              propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
-            myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-          } else {
-            myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-          }
+        if (currentValue.isEmpty() &&
+            ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
+            propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+          myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+        } else {
+          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
         }
-        catch (final IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      });
-    });
+      }
+      catch (final IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }));
   }
 
   void recreateEditorsPanel() {
@@ -856,9 +854,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public Document[] getDocuments() {
-    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> {
-      return FileDocumentManager.getInstance().getDocument(propertiesFile);
-    });
+    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
   }
 
   Map<VirtualFile, EditorEx> getTranslationEditors() {
@@ -925,23 +921,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
                   if (currentSelectedProperty == null) {
                     return;
                   }
-                  ApplicationManager.getApplication().runWriteAction(() -> {
-                    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-                      try {
-                        for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-                          final Editor translationEditor = entry.getValue();
-                          if (translationEditor != editor) {
-                            final VirtualFile propertiesFile = entry.getKey();
-                            myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-                            translationEditor.getDocument().setText(valueToPropagate);
-                          }
+                  ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                    try {
+                      for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+                        final Editor translationEditor = entry.getValue();
+                        if (translationEditor != editor) {
+                          final VirtualFile propertiesFile = entry.getKey();
+                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+                          translationEditor.getDocument().setText(valueToPropagate);
                         }
                       }
-                      catch (final IncorrectOperationException e1) {
-                        LOG.error(e1);
-                      }
-                    });
-                  });
+                    }
+                    catch (final IncorrectOperationException e1) {
+                      LOG.error(e1);
+                    }
+                  }));
                 }
               });
               EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);

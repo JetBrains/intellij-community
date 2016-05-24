@@ -64,9 +64,7 @@ public class SetupTaskChooserAction extends AnAction {
       public void elementChosen(Object element) {
         if (element != null) {
           final SetupTask task = (SetupTask) element;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            runSetupTask(task.getName(), module);
-          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> runSetupTask(task.getName(), module), ModalityState.NON_MODAL);
         }
       }
     }, ModalityState.current(), false);

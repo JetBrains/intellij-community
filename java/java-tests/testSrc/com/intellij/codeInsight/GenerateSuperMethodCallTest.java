@@ -59,9 +59,7 @@ public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
           return super.getHandler();
         }
       }.getHandler();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        handler.invoke(getProject(), getEditor(), getFile());
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> handler.invoke(getProject(), getEditor(), getFile()));
 
 
       checkResultByFile(after);

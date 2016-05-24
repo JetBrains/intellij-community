@@ -391,9 +391,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       );
     }
     if (!deps.isEmpty()) {
-      final String listOfSelectedPlugins = StringUtil.join(ideaPluginDescriptors, pluginDescriptor -> {
-        return pluginDescriptor.getName();
-      }, ", ");
+      final String listOfSelectedPlugins = StringUtil.join(ideaPluginDescriptors, pluginDescriptor -> pluginDescriptor.getName(), ", ");
       final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<IdeaPluginDescriptor>();
       final String listOfDependencies = StringUtil.join(deps, pluginId -> {
         final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);

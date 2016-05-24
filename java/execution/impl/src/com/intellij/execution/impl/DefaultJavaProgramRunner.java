@@ -219,11 +219,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     private void showThreadDump(final String out, final List<ThreadState> threadStates) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
-                                                  new ThreadDumpConsoleFactory(myProject, threadStates) : null,
-                                         "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out);
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
+                                                                                                      new ThreadDumpConsoleFactory(myProject, threadStates) : null,
+                                       "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out), ModalityState.NON_MODAL);
     }
   }
 

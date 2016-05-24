@@ -163,9 +163,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
       conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myClass.delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myClass.delete());
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =

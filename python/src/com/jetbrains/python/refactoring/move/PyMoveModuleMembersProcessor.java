@@ -89,9 +89,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (final PsiNamedElement element : myElements) {
-      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> {
-        return new MyUsageInfo(usageInfo, element);
-      }));
+      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
     }
     return result.toArray(new UsageInfo[result.size()]);
   }

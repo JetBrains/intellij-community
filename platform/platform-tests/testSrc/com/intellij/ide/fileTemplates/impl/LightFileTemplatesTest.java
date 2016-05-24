@@ -141,9 +141,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
       ProjectManager.getInstance().closeProject(project);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(project);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
     }
   }
 

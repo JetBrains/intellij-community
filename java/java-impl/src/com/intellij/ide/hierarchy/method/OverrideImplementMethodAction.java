@@ -47,43 +47,41 @@ abstract class OverrideImplementMethodAction extends AnAction {
     if (project == null) return;
 
     final String commandName = event.getPresentation().getText();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
 
-        try{
-          final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
-          if (selectedDescriptors.length > 0) {
-            final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
-            for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-              final PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
-              if (containingFile != null) {
-                final VirtualFile vFile = containingFile.getVirtualFile();
-                if (vFile != null) {
-                  files.add(vFile);
-                }
+      try{
+        final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+        if (selectedDescriptors.length > 0) {
+          final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
+          for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
+            final PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
+            if (containingFile != null) {
+              final VirtualFile vFile = containingFile.getVirtualFile();
+              if (vFile != null) {
+                files.add(vFile);
               }
-            }
-            final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
-            if (!status.hasReadonlyFiles()) {
-              for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-                final PsiElement aClass = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass();
-                if (aClass instanceof PsiClass) {
-                  OverrideImplementUtil.overrideOrImplement((PsiClass)aClass, methodHierarchyBrowser.getBaseMethod());
-                }
-              }
-              ToolWindowManager.getInstance(project).activateEditorComponent();
-            }
-            else {
-              ApplicationManager.getApplication().invokeLater(
-                () -> Messages.showErrorDialog(project, status.getReadonlyFilesMessage(), commandName));
             }
           }
+          final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
+          if (!status.hasReadonlyFiles()) {
+            for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
+              final PsiElement aClass = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass();
+              if (aClass instanceof PsiClass) {
+                OverrideImplementUtil.overrideOrImplement((PsiClass)aClass, methodHierarchyBrowser.getBaseMethod());
+              }
+            }
+            ToolWindowManager.getInstance(project).activateEditorComponent();
+          }
+          else {
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showErrorDialog(project, status.getReadonlyFilesMessage(), commandName));
+          }
         }
-        catch(IncorrectOperationException e){
-          LOG.error(e);
-        }
-      }, commandName, null);
-    });
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+      }
+    }, commandName, null));
   }
 
   public final void update(final AnActionEvent e) {

@@ -144,9 +144,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private void removeFacet(BuildoutFacet facet) {
     final ModifiableFacetModel model = FacetManager.getInstance(myModule).createModifiableModel();
     model.removeFacet(facet);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      model.commit();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 
   @Override

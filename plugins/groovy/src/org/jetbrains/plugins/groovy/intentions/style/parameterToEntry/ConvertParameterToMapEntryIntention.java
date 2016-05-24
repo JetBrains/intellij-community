@@ -173,9 +173,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   private static String[] generateValidNames(final String[] names, final GrParameter param) {
-    return ContainerUtil.map2Array(names, String.class, s -> {
-      return (new GroovyValidationUtil.ParameterNameSuggester(s, param)).generateName();
-    });
+    return ContainerUtil.map2Array(names, String.class, s -> (new GroovyValidationUtil.ParameterNameSuggester(s, param)).generateName());
   }
 
   private static void performRefactoring(final PsiElement element,
@@ -274,9 +272,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           final GrNamedArgument namedArg;
           if (argInfo.isMultiArg) {
             if (argInfo.args.isEmpty()) continue;
-            String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, element1 -> {
-              return element1.getText();
-            }), ", ") + "]";
+            String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, element1 -> element1.getText()), ", ") + "]";
             for (PsiElement psiElement : argInfo.args) {
               psiElement.delete();
             }

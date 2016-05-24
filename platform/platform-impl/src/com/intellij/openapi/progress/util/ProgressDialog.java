@@ -216,9 +216,7 @@ class ProgressDialog implements Disposable {
 
   void enableCancelButtonIfNeeded(final boolean enable) {
     if (myProgressWindow.myShouldShowCancel) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myCancelButton.setEnabled(enable);
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> myCancelButton.setEnabled(enable), ModalityState.any());
     }
   }
 

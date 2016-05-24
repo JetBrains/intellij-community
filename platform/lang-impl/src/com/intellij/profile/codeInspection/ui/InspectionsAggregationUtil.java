@@ -32,9 +32,7 @@ import java.util.Set;
  */
 public class InspectionsAggregationUtil {
   public static List<HighlightDisplayKey> getInspectionsKeys(final InspectionConfigTreeNode node) {
-    return ContainerUtil.map(getInspectionsNodes(node), node1 -> {
-      return node1.getKey();
-    });
+    return ContainerUtil.map(getInspectionsNodes(node), node1 -> node1.getKey());
   }
 
   public static List<InspectionConfigTreeNode> getInspectionsNodes(final InspectionConfigTreeNode node) {

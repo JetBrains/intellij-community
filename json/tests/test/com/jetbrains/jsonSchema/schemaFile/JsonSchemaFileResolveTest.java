@@ -58,18 +58,14 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
     container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
 
     try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                                 myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-                                               });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
       Assert.assertNotNull(position);
       PsiElement resolve = position.resolve();
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
@@ -83,18 +79,14 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
     container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
 
     try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                                 myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-                                               });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
       Assert.assertNotNull(position);
       PsiElement resolve = position.resolve();
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);

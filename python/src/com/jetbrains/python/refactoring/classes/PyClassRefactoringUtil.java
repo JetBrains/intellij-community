@@ -420,9 +420,7 @@ public final class PyClassRefactoringUtil {
 
   @NotNull
   private static List<PsiElement> multiResolveExpression(@NotNull PyReferenceExpression expr) {
-    return ContainerUtil.mapNotNull(expr.getReference().multiResolve(false), result -> {
-      return result.getElement();
-    });
+    return ContainerUtil.mapNotNull(expr.getReference().multiResolve(false), result -> result.getElement());
   }
 
   /**

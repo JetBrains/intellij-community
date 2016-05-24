@@ -213,9 +213,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   @SuppressWarnings({"UNUSED_SYMBOL"})
   private void checkPsi(final PsiFile file, String textAfter) {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      performFormatting(file);
-    }), "", "");
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
 
 
     String fileText = file.getText();

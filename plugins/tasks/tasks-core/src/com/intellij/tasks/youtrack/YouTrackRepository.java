@@ -117,9 +117,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
       List<Element> children = element.getChildren("issue");
 
-      final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> {
-        return createIssue(o);
-      });
+      final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
       return tasks.toArray(new Task[tasks.size()]);
     }
     finally {

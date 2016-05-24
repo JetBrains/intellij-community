@@ -220,9 +220,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
     else if (useScope instanceof LocalSearchScope) {
       final Set<VirtualFile> files = new HashSet<VirtualFile>();
-      addAllNotNull(files, map(((LocalSearchScope)useScope).getScope(), element -> {
-        return PsiUtilCore.getVirtualFile(element);
-      }));
+      addAllNotNull(files, map(((LocalSearchScope)useScope).getScope(), element -> PsiUtilCore.getVirtualFile(element)));
       scope = GlobalSearchScope.filesScope(project, files);
     }
     else {

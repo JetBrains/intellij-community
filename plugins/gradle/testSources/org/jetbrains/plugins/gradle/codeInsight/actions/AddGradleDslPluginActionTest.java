@@ -39,9 +39,7 @@ public class AddGradleDslPluginActionTest extends LightPlatformCodeInsightFixtur
 
   private void doTest(String file, String pluginName) {
     AddGradleDslPluginAction.TEST_THREAD_LOCAL.set(pluginName);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CodeInsightTestUtil.doActionTest(new AddGradleDslPluginAction(), file, myFixture);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeInsightTestUtil.doActionTest(new AddGradleDslPluginAction(), file, myFixture));
   }
 
   @Override

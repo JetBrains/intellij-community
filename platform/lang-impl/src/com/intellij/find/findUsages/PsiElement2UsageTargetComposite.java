@@ -50,9 +50,7 @@ public class PsiElement2UsageTargetComposite extends PsiElement2UsageTargetAdapt
 
   @Override
   public VirtualFile[] getFiles() {
-    Set<VirtualFile> files = ContainerUtil.map2Set(myDescriptor.getAllElements(), element -> {
-      return PsiUtilCore.getVirtualFile(element);
-    });
+    Set<VirtualFile> files = ContainerUtil.map2Set(myDescriptor.getAllElements(), element -> PsiUtilCore.getVirtualFile(element));
     return VfsUtilCore.toVirtualFileArray(files);
   }
 

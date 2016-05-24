@@ -95,10 +95,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
           profile.readExternal(element);
         }
         catch (Exception ignored) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
-                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                                                                       InspectionsBundle.message("inspection.errors.occurred.dialog.title")), ModalityState.NON_MODAL);
         }
         return profile;
       }
@@ -206,10 +204,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         throw e;
       }
       catch (Exception ignored) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
-                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
+                                                                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title")), ModalityState.NON_MODAL);
       }
     }
     return getProfile(path, false);

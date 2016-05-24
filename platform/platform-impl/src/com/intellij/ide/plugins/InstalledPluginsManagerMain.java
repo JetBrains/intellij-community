@@ -181,9 +181,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!notInstalled.isEmpty()) {
-      String deps = StringUtil.join(notInstalled, id -> {
-        return id.toString();
-      }, ", ");
+      String deps = StringUtil.join(notInstalled, id -> id.toString(), ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
       MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
     }
@@ -195,9 +193,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         }
       }
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
-      String deps = StringUtil.join(dependencies, descriptor -> {
-        return descriptor.getName();
-      }, ", ");
+      String deps = StringUtil.join(dependencies, descriptor -> descriptor.getName(), ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
       if (MessagesEx.showOkCancelDialog(parent, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[dependencies.size()]), Boolean.TRUE);

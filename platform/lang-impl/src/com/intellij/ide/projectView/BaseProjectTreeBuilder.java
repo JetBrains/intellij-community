@@ -78,9 +78,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
           _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
-          callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> {
-            result.setRejected();
-          });
+          callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
         }
       });
     }

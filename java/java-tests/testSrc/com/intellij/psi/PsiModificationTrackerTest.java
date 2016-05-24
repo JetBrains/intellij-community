@@ -160,9 +160,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker modificationTracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count = modificationTracker.getJavaStructureModificationCount();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      file.getContainingDirectory().delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> file.getContainingDirectory().delete());
 
     assertTrue(count+":"+modificationTracker.getJavaStructureModificationCount(), modificationTracker.getJavaStructureModificationCount() > count);
   }
@@ -177,9 +175,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     long count1 = tracker.getJavaStructureModificationCount();
     PsiJavaFile psiFile = (PsiJavaFile)psiManager.findFile(file);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "class Foo {}");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
 
 
     assertEquals(count1, tracker.getJavaStructureModificationCount()); // no PSI changes yet
@@ -213,9 +209,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "class Foo {}");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
     DocumentCommitThread.getInstance().waitForAllCommits();
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
@@ -240,9 +234,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     long count1 = tracker.getJavaStructureModificationCount();
     assertFalse(count1 == count0);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.deleteString(0, document.getTextLength());
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, document.getTextLength()));
     DocumentCommitThread.getInstance().waitForAllCommits();
 
     // gc softly-referenced file and AST

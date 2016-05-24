@@ -138,9 +138,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
     myTestIndentOptions.TAB_SIZE = 2;
     myTestIndentOptions.USE_TAB_CHARACTER = true;
     PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                               CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextRange().getEndOffset());
-                                             });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextRange().getEndOffset()));
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
@@ -153,9 +151,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
     myTestIndentOptions.USE_TAB_CHARACTER = true;
     PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
     // Just any range smaller than the file
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                               CodeStyleManager.getInstance(getProject()).reformatText(file, 6, file.getTextRange().getEndOffset() - 1);
-                                             });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(file, 6, file.getTextRange().getEndOffset() - 1));
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
@@ -165,9 +161,7 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
     myTestIndentOptions.TAB_SIZE = 2;
     myTestIndentOptions.USE_TAB_CHARACTER = true;
     PsiFile file = myFixture.configureByFile(getTestName(true) + "_before.java");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-                                               CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextRange().getEndOffset());
-                                             });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextRange().getEndOffset()));
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 }

@@ -252,10 +252,8 @@ public class InstalledPackagesPanel extends JPanel {
 
       @Override
       public void consume(Exception e) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Messages.showErrorDialog("Error occurred. Please, check your internet connection.",
-                                   "Upgrade Package Failed.");
-        }, ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog("Error occurred. Please, check your internet connection.",
+                                                                                     "Upgrade Package Failed."), ModalityState.any());
       }
     });
   }

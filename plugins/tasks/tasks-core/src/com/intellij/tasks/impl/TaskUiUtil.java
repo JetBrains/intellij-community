@@ -65,9 +65,7 @@ public class TaskUiUtil {
     @Nullable
     @Override
     public final NotificationInfo notifyFinished() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        updateUI();
-      }, myModalityState);
+      ApplicationManager.getApplication().invokeLater(() -> updateUI(), myModalityState);
       return null;
     }
 

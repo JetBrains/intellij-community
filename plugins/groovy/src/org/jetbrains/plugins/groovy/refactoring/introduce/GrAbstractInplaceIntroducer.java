@@ -175,9 +175,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   @NotNull
   protected PsiElement[] restoreOccurrences() {
-    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), marker -> {
-      return PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
-    });
+    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), marker -> PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class));
     return PsiUtilCore.toPsiElementArray(result);
   }
 

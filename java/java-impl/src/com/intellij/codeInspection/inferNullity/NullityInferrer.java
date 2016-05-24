@@ -182,9 +182,7 @@ public class NullityInferrer {
   private static void invoke(final Project project,
                              final PsiModifierListOwner element,
                              final String fqn, final String toRemove) {
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile()));
   }
 
   public int getCount() {

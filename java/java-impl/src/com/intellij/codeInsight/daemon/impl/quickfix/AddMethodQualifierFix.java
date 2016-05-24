@@ -129,9 +129,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {
-            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), () -> {
-              qualify(selectedValue, editor);
-            });
+            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), () -> qualify(selectedValue, editor));
           }
           return FINAL_CHOICE;
         }

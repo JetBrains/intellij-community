@@ -333,9 +333,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
           });
         }
 
-        ApplicationManager.getApplication().invokeLater(() -> {
-          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
-        }, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false), project.getDisposed());
       }
     }
   }
@@ -399,9 +397,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
           }
         }
       }
-      ApplicationManager.getApplication().invokeLater(() -> {
-        SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
-      }, project.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews), project.getDisposed());
     }
   }
 }

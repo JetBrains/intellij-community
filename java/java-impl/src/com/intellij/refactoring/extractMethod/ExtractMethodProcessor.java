@@ -618,9 +618,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
       }
     });
-    final List<PsiExpression> map = ContainerUtil.map(filter, statement -> {
-      return ((PsiReturnStatement)statement).getReturnValue();
-    });
+    final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
     return map.toArray(new PsiExpression[map.size()]);
   }
 

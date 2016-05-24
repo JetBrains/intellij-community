@@ -239,9 +239,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               }
             }
 
-            final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
-              renamer.findUsages(usages, false, false);
-            });
+            final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> renamer.findUsages(usages, false, false));
 
             if (!ProgressManager.getInstance()
               .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
@@ -317,9 +315,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       else {
         if (mySnapshot != null) {
           if (isIdentifier(myInsertedName, myLanguage)) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              mySnapshot.apply(myInsertedName);
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
           }
         }
       }

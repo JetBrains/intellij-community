@@ -74,9 +74,7 @@ public class StaticIconFieldsAction extends AnAction {
   }
 
   private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      indicator.setText("Searching for: " + allIcons.getQualifiedName());
-    });
+    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
 
     ReferencesSearch.search(allIcons).forEach(reference -> {
       PsiElement elt = reference.getElement();

@@ -88,14 +88,12 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       AnAction action = myActionManager.getAction(actionId);
       wrappers.add(new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context));
     }
-    return ContainerUtil.process(ContainerUtil.map(wrappers, (Function<ActionWrapper, MatchedValue>)w -> {
-      return new MatchedValue(w, pattern) {
-        @Nullable
-        @Override
-        public String getValueText() {
-          return pattern;
-        }
-      };
+    return ContainerUtil.process(ContainerUtil.map(wrappers, (Function<ActionWrapper, MatchedValue>)w -> new MatchedValue(w, pattern) {
+      @Nullable
+      @Override
+      public String getValueText() {
+        return pattern;
+      }
     }), consumer);
   }
 

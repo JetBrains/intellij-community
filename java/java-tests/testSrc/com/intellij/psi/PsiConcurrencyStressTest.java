@@ -137,9 +137,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          WriteCommandAction.runWriteCommandAction(null, () -> {
-            psiMethods[random.nextInt(psiMethods.length)].delete();
-          });
+          WriteCommandAction.runWriteCommandAction(null, () -> psiMethods[random.nextInt(psiMethods.length)].delete());
         }
         break;
     }

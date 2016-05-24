@@ -145,9 +145,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
     final String paramStr = "(" +
                             StringUtil.join(parameters,
-                                            parameter -> {
-                                              return PyUtil.getReadableRepr(parameter, false);
-                                            },
+                                            parameter -> PyUtil.getReadableRepr(parameter, false),
                                             ", ") +
                             ")";
     cat.addItem(escaper.apply(paramStr));

@@ -225,9 +225,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog rebuild() {
-    return compile(false, compileStatusNotification -> {
-      getCompilerManager().rebuild(compileStatusNotification);
-    });
+    return compile(false, compileStatusNotification -> getCompilerManager().rebuild(compileStatusNotification));
   }
 
   protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {

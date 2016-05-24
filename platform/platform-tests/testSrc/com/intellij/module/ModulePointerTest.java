@@ -79,9 +79,7 @@ public class ModulePointerTest extends PlatformTestCase {
     assertSame(module, pointer.getModule());
     assertEquals("xxx", pointer.getModuleName());
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      modifiableModel.dispose();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.dispose());
 
 
     assertNull(pointer.getModule());

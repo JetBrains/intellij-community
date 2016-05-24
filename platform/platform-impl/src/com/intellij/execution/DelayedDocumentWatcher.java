@@ -87,9 +87,7 @@ public class DelayedDocumentWatcher {
         @Override
         public void beforeAllDocumentsSaving() {
           myDocumentSavingInProgress = true;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myDocumentSavingInProgress = false;
-          }, ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> myDocumentSavingInProgress = false, ModalityState.any());
         }
       });
     }
@@ -177,9 +175,7 @@ public class DelayedDocumentWatcher {
           return false;
         }
       });
-      ApplicationManager.getApplication().invokeLater(() -> {
-        errorsFoundConsumer.consume(errorsFound);
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.consume(errorsFound), ModalityState.any());
     });
   }
 }

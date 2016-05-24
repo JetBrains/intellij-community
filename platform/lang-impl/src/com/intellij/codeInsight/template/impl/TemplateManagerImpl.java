@@ -176,9 +176,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
     Runnable r = () -> {
       if (selectionString != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          EditorModificationUtil.deleteSelectedText(editor);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
       }
       else {
         editor.getSelectionModel().removeSelection();

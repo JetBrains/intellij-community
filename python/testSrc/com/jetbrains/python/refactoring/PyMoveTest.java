@@ -87,9 +87,7 @@ public class PyMoveTest extends PyTestCase {
   public void testCollectMovableModuleMembers() {
     myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers((PyFile)myFixture.getFile());
-    final List<String> names = ContainerUtil.map(members, element -> {
-      return element.getName();
-    });
+    final List<String> names = ContainerUtil.map(members, element -> element.getName());
     assertSameElements(names, "CONST", "C", "outer_func");
   }
 

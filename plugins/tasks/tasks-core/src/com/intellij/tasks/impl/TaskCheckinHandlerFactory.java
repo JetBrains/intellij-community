@@ -50,9 +50,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
           final LocalTask localTask = manager.addTask(task);
           localTask.setUpdated(new Date());
 
-          ApplicationManager.getApplication().invokeLater(() -> {
-            WorkingContextManager.getInstance(project).saveContext(localTask);
-          }, project.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
         }
       }
     };

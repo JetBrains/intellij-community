@@ -68,6 +68,14 @@ public class InferenceVariable extends LightTypeParameter {
     return result.toArray(new PsiClassType[result.size()]);
   }
 
+  public static void addBound(PsiType inferenceVariableType, PsiType boundType, InferenceBound inferenceBound, InferenceSession session) {
+    final InferenceVariable variable = session.getInferenceVariable(inferenceVariableType);
+    if (variable != null) {
+
+      variable.addBound(boundType, inferenceBound, session.myIncorporationPhase);
+    }
+  }
+
   public boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {
     if (inferenceBound == InferenceBound.EQ &&
         PsiUtil.resolveClassInClassTypeOnly(classType) == this) {

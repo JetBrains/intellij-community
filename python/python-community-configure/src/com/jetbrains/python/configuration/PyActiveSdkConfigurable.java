@@ -315,9 +315,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManager.getInstance(myProject).setProjectSdk(item);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(item));
     if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);
     }

@@ -245,9 +245,7 @@ public class MoveClassesOrPackagesUtil {
         LOG.assertTrue(newClass != null, "name: " + aClassName +
                                          ", file: " + file +
                                          ", classes: " + StringUtil.join(((PsiClassOwner)file).getClasses(),
-                                                                         psiClass -> {
-                                                                           return psiClass.getName();
-                                                                         }, " "));
+                                                                         psiClass -> psiClass.getName(), " "));
       }
     }
     return newClass;

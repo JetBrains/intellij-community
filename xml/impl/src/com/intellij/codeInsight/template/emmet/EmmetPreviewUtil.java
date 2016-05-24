@@ -110,9 +110,7 @@ public class EmmetPreviewUtil {
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> CodeStyleManager.getInstance(file.getProject()).reformat(copy));
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> CodeStyleManager.getInstance(file.getProject()).reformat(copy)));
     return copy.getText();
   }
 

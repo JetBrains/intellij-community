@@ -126,9 +126,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (!areChildrenLoaded(id)) {
       nameIds  = persistAllChildren(file, id, nameIds);
     }
-    return ContainerUtil.map2Array(nameIds, String.class, id1 -> {
-      return id1.name.toString();
-    });
+    return ContainerUtil.map2Array(nameIds, String.class, id1 -> id1.name.toString());
   }
 
   @Override

@@ -199,9 +199,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       myTypeItems = typeItems;
       myGlobalTail = globalTail;
       myHasParameters = hasParameters;
-      myLookupString = StringUtil.join(myTypeItems, item -> {
-        return item.getType().getPresentableText();
-      }, ", ");
+      myLookupString = StringUtil.join(myTypeItems, item -> item.getType().getPresentableText(), ", ");
     }
 
     @NotNull

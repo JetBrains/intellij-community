@@ -345,9 +345,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         createTempFiles(javaParameters);
       }
 
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      }) : null;
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
 
       final List<String> testNames = new ArrayList<String>();
 

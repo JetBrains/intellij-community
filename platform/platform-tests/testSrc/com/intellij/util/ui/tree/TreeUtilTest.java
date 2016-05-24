@@ -138,9 +138,7 @@ public class TreeUtilTest extends PlatformTestCase {
     DefaultMutableTreeNode node1_1 = new DefaultMutableTreeNode("1_1");
     node1.add(node1_1);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    TreeUtil.sort(model, (o1, o2) -> {
-      return o1.toString().compareTo(o2.toString());
-    });
+    TreeUtil.sort(model, (o1, o2) -> o1.toString().compareTo(o2.toString()));
     assertEquals(node1, root.getChildAt(0));
     assertEquals(node2, root.getChildAt(1));
     assertEquals(node1_1, node1.getChildAt(0));

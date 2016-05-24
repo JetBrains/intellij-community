@@ -137,9 +137,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
 
           Project finalProject = project;
           if (!((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).isAlreadyShown()) {
-            TransactionGuard.submitTransaction(project, () -> {
-              ShowSettingsUtil.getInstance().showSettingsDialog(finalProject, ShowSettingsUtilImpl.getConfigurableGroups(finalProject, true));
-            });
+            TransactionGuard.submitTransaction(project, () -> ShowSettingsUtil.getInstance().showSettingsDialog(finalProject, ShowSettingsUtilImpl.getConfigurableGroups(finalProject, true)));
           }
           applicationEvent.setHandled(true);
         }

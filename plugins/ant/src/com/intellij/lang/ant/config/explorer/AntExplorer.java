@@ -501,9 +501,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
     final List<T> result = new ArrayList<T>();
-    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, buildFile -> {
-      return function.fun(buildFile);
-    }));
+    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, buildFile -> function.fun(buildFile)));
     return result.isEmpty() ? null : result;
   }
 

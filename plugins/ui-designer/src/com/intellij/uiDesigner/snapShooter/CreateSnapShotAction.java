@@ -214,22 +214,20 @@ public class CreateSnapShotAction extends AnAction {
 
       if (snapshot != null) {
         final String snapshot1 = snapshot;
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            try {
-              PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
-                .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
-              formFile = (PsiFile)dir.add(formFile);
-              formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
-              formFile.getViewProvider().getDocument().setText(snapshot1);
-              view.selectElement(formFile);
-            }
-            catch (IncorrectOperationException ex) {
-              Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
-                                         UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
-            }
-          }, "", null);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          try {
+            PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
+              .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
+            formFile = (PsiFile)dir.add(formFile);
+            formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
+            formFile.getViewProvider().getDocument().setText(snapshot1);
+            view.selectElement(formFile);
+          }
+          catch (IncorrectOperationException ex) {
+            Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
+                                       UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+          }
+        }, "", null));
       }
     }
 

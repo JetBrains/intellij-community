@@ -156,9 +156,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     synchronized (ourTracesLock) {
       final File tracesDirectoryFile = new File(tracesDirectory);
-      final File[] testMethodTraces = tracesDirectoryFile.listFiles((dir, name) -> {
-        return name.endsWith(".tr");
-      });
+      final File[] testMethodTraces = tracesDirectoryFile.listFiles((dir, name) -> name.endsWith(".tr"));
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {

@@ -149,9 +149,7 @@ public class PyPackageUtil {
 
   @NotNull
   public static String requirementsToString(@NotNull List<PyRequirement> requirements) {
-    return StringUtil.join(requirements, requirement -> {
-      return String.format("'%s'", requirement.toString());
-    }, ", ");
+    return StringUtil.join(requirements, requirement -> String.format("'%s'", requirement.toString()), ", ");
   }
 
   @Nullable

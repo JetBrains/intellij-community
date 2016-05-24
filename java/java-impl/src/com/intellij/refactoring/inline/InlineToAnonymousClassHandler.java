@@ -114,9 +114,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
 
     final Ref<String> errorMessage = new Ref<String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
-      errorMessage.set(getCannotInlineMessage(psiClass));
-    }), "Check if inline is possible...", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage(psiClass))), "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;

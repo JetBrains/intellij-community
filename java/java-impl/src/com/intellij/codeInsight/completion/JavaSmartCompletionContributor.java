@@ -90,9 +90,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
       if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
         PsiType[] types = ExpectedTypesGetter.getExpectedTypes(element, false);
-        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, (Function<PsiType, ElementFilter>)type -> {
-          return new AssignableFromFilter(type);
-        }));
+        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, (Function<PsiType, ElementFilter>)type -> new AssignableFromFilter(type)));
       }
     }
 

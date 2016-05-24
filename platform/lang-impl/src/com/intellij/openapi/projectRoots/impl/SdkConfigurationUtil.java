@@ -117,15 +117,11 @@ public class SdkConfigurationUtil {
   }
 
   public static void addSdk(@NotNull final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectJdkTable.getInstance().addJdk(sdk);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
   public static void removeSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectJdkTable.getInstance().removeJdk(sdk);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
 
   @Nullable

@@ -107,9 +107,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      invokeImpl(targetClass);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
   }
 
   @Nullable

@@ -963,9 +963,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (!list.getName().equals(subId) && (oldName == null || !oldName.equals(subId))) {
         return;
       }
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myDependencyValidationManager.fireScopeListeners();
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> myDependencyValidationManager.fireScopeListeners(), myProject.getDisposed());
     }
 
     @Override

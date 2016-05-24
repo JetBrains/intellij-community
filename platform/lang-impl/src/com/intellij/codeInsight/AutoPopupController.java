@@ -191,16 +191,14 @@ public class AutoPopupController implements Disposable {
     TransactionGuard guard = TransactionGuard.getInstance();
     TransactionId id = guard.getContextTransaction();
     final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
-    pdm.performLaterWhenAllCommitted(() -> {
-      guard.submitTransaction(project, id, () -> {
-        if (pdm.hasUncommitedDocuments()) {
-          // no luck, will try later
-          runTransactionWithEverythingCommitted(project, runnable);
-        }
-        else {
-          runnable.run();
-        }
-      });
-    });
+    pdm.performLaterWhenAllCommitted(() -> guard.submitTransaction(project, id, () -> {
+      if (pdm.hasUncommitedDocuments()) {
+        // no luck, will try later
+        runTransactionWithEverythingCommitted(project, runnable);
+      }
+      else {
+        runnable.run();
+      }
+    }));
   }
 }

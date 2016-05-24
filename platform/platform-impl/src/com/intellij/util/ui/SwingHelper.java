@@ -224,9 +224,7 @@ public class SwingHelper {
             setPreferredWidthToFitText((JTextField)component);
           }
         }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          adjustDialogSizeToFitPreferredSize(dialogWrapper);
-        }, ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(() -> adjustDialogSizeToFitPreferredSize(dialogWrapper), ModalityState.any());
       }
     });
   }

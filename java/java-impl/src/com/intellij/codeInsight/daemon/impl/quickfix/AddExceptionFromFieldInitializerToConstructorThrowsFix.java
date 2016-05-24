@@ -82,9 +82,7 @@ public class AddExceptionFromFieldInitializerToConstructorThrowsFix extends Base
         PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(aClass);
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            defaultConstructorFix.invoke(project, null, file);
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, null, file));
           constructors = aClass.getConstructors();
           LOG.assertTrue(constructors.length != 0);
         }

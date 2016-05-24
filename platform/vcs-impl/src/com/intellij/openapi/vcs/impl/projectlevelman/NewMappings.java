@@ -363,7 +363,7 @@ public class NewMappings {
 
   public boolean isEmpty() {
     synchronized (myLock) {
-      return mySortedMappings.length == 0 || ContainerUtil.and(mySortedMappings, mapping -> { return mapping.getVcs().isEmpty(); });
+      return mySortedMappings.length == 0 || ContainerUtil.and(mySortedMappings, mapping -> mapping.getVcs().isEmpty());
     }
   }
 

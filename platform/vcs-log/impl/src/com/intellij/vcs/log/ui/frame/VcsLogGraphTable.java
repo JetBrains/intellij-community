@@ -355,9 +355,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (details == null || details instanceof LoadingDetails) return defaultStyle;
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
-      ContainerUtil.map(myHighlighters, highlighter -> {
-        return highlighter.getStyle(details, selected);
-      });
+      ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 

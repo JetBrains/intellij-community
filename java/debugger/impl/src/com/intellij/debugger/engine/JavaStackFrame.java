@@ -282,9 +282,7 @@ public class JavaStackFrame extends XStackFrame {
         final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
         final Map<String, LocalVariableProxyImpl> visibleVariables =
           ContainerUtil.map2Map(getVisibleVariables(),
-                                var -> {
-                                  return Pair.create(var.name(), var);
-                                });
+                                var -> Pair.create(var.name(), var));
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {

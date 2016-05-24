@@ -68,22 +68,18 @@ public class GroovyStubNotificationProvider extends EditorNotifications.Provider
   private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText("This stub is generated for Groovy class to make Groovy-Java cross-compilation possible");
-    panel.createActionLabel("Go to the Groovy class", () -> {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        final PsiClass original = findClassByStub(project, file);
-        if (original != null) {
-          original.navigate(true);
-        }
-      });
-    });
-    panel.createActionLabel("Exclude from stub generation", () -> {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        final PsiClass psiClass = findClassByStub(project, file);
-        if (psiClass != null) {
-          ExcludeFromStubGenerationAction.doExcludeFromStubGeneration(psiClass.getContainingFile());
-        }
-      });
-    });
+    panel.createActionLabel("Go to the Groovy class", () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+      final PsiClass original = findClassByStub(project, file);
+      if (original != null) {
+        original.navigate(true);
+      }
+    }));
+    panel.createActionLabel("Exclude from stub generation", () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+      final PsiClass psiClass = findClassByStub(project, file);
+      if (psiClass != null) {
+        ExcludeFromStubGenerationAction.doExcludeFromStubGeneration(psiClass.getContainingFile());
+      }
+    }));
     return panel;
   }
 

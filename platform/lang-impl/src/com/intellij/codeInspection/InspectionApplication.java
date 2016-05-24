@@ -143,9 +143,7 @@ public class InspectionApplication {
         return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
       PatchProjectUtil.patchProject(myProject);
 

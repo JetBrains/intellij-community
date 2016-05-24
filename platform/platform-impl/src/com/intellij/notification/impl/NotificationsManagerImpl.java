@@ -152,9 +152,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
     Application application = ApplicationManager.getApplication();
     if (application instanceof ApplicationEx && !((ApplicationEx)application).isLoaded()) {
-      application.invokeLater(() -> {
-        showNotification(notification, project);
-      }, ModalityState.current());
+      application.invokeLater(() -> showNotification(notification, project), ModalityState.current());
       return;
     }
 

@@ -307,9 +307,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getParameters() {
-    return ContainerUtil.map(getParameterSubstrings(), substring -> {
-      return substring.toString();
-    });
+    return ContainerUtil.map(getParameterSubstrings(), substring -> substring.toString());
   }
 
   @NotNull
@@ -467,9 +465,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getRaisedExceptions() {
-    return ContainerUtil.mapNotNull(getExceptionFields(), field -> {
-      return StringUtil.nullize(field.getType());
-    });
+    return ContainerUtil.mapNotNull(getExceptionFields(), field -> StringUtil.nullize(field.getType()));
   }
 
   @Nullable
@@ -621,9 +617,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull
     public List<String> getNames() {
-      return ContainerUtil.map(myNames, substring -> {
-        return substring.toString();
-      });
+      return ContainerUtil.map(myNames, substring -> substring.toString());
     }
 
     @Nullable

@@ -1314,7 +1314,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private static List<Module> orderEntriesToOwnerModules(List<OrderEntry> orderEntries) {
-    return ContainerUtil.map(orderEntries, orderEntry -> { return orderEntry.getOwnerModule(); });
+    return ContainerUtil.map(orderEntries, orderEntry -> orderEntry.getOwnerModule());
   }
 
   private static List<Module> orderEntriesToDepModules(List<OrderEntry> orderEntries) {

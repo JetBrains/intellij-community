@@ -87,9 +87,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     List<Element> children = getStories(query, max);
 
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> {
-      return createIssue(o);
-    });
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
     return tasks.toArray(new Task[tasks.size()]);
   }
 

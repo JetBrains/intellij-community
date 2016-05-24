@@ -324,9 +324,7 @@ public class PluginsAdvertiser implements StartupActivity {
               }
             }
 
-            ApplicationManager.getApplication().invokeLater(() -> {
-              onSuccess();
-            }, ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().invokeLater(() -> onSuccess(), ModalityState.NON_MODAL);
 
           }
           catch (Exception e) {

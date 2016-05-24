@@ -108,9 +108,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     }
 
     if (applyContent != null) {
-      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> {
-        myOutput.getDocument().setText(applyContent);
-      });
+      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
     }
 
     if (myApplyCallback != null) myApplyCallback.consume(result);

@@ -486,9 +486,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
 
       case MODULES:
-        String modules = StringUtil.join(myModules, module -> {
-          return pathToName(module.getModuleFilePath());
-        }, ", ");
+        String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
 
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
@@ -517,9 +515,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", myModule.getName());
 
       case MODULES:
-        String modules = StringUtil.join(myModules, module -> {
-          return module.getName();
-        }, ", ");
+        String modules = StringUtil.join(myModules, module -> module.getName(), ", ");
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:

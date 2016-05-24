@@ -53,12 +53,8 @@ public abstract class DiffWindowBase {
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
-      .setPreferredFocusedComponent(() -> {
-        return myProcessor.getPreferredFocusedComponent();
-      })
-      .setOnShowCallback(() -> {
-        myProcessor.updateRequest();
-      })
+      .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
+      .setOnShowCallback(() -> myProcessor.updateRequest())
       .build();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);

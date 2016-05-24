@@ -218,15 +218,13 @@ public final class InsertComponentProcessor extends EventProcessor {
           return;
         }
         ApplicationManager.getApplication().runWriteAction(
-          () -> {
-            CreateFieldFix.runImpl(editor.getProject(),
-                                   editor.getRootContainer(),
-                                   aClass,
-                                   insertedComponent.getComponentClassName(),
-                                   insertedComponent.getBinding(),
-                                   false, // silently skip all errors (if any)
-                                   null);
-          }
+          () -> CreateFieldFix.runImpl(editor.getProject(),
+                                     editor.getRootContainer(),
+                                     aClass,
+                                     insertedComponent.getComponentClassName(),
+                                     insertedComponent.getBinding(),
+                                     false, // silently skip all errors (if any)
+                                     null)
         );
       }
     }

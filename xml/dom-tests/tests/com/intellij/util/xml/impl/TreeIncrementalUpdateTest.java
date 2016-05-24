@@ -373,9 +373,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
 
     final XmlTag tag = element.getXmlTag();
     final XmlTag childTag = tag.getSubTags()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      childTag.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> childTag.delete());
 
     putExpected(new DomEvent(element, false));
     assertResultsAndClear();

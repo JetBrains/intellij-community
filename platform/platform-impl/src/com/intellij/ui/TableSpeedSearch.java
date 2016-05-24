@@ -31,9 +31,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   }
 
   public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
-    this(table, (o, c) -> {
-      return toStringConvertor.convert(o);
-    });
+    this(table, (o, c) -> toStringConvertor.convert(o));
   }
 
   public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {

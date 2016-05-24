@@ -84,9 +84,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final PsiElement[] roots,
                                                   final Function<PsiElement, PsiType> migrationTypeFunction,
                                                   final boolean optimizeImports) {
-    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, element -> {
-      return element.getContainingFile();
-    });
+    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, element -> element.getContainingFile());
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules) {
       @Override
       public void performRefactoring(@NotNull final UsageInfo[] usages) {
