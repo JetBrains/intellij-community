@@ -563,6 +563,11 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 if can_skip and plugin_manager is not None and main_debugger.has_plugin_line_breaks:
                     can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
 
+                if can_skip and main_debugger.show_return_values:
+                    # trace function for showing return values after step over
+                    if info.pydev_step_cmd == CMD_STEP_OVER and frame.f_back == info.pydev_step_stop:
+                        can_skip = False
+
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
