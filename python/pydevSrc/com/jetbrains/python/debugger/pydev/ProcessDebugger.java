@@ -91,4 +91,7 @@ public interface ProcessDebugger {
   void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
+
+  void suspendOtherThreads(PyThreadInfo thread);
+
 }
