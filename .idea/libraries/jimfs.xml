@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="jimfs">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1" recursive="false" type="SOURCES" />
+  </library>
+</component>
