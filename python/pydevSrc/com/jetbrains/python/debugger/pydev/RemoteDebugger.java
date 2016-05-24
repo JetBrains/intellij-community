@@ -587,6 +587,7 @@ public class RemoteDebugger implements ProcessDebugger {
           thread.setStopReason(event.getStopReason());
           thread.setMessage(event.getMessage());
           myDebugProcess.threadSuspended(thread);
+          myDebugProcess.suspendAllOtherThreads(thread);
           break;
         }
         case AbstractCommand.RESUME_THREAD: {
@@ -751,6 +752,15 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     execute(factory.createRemoveCommand(this));
+  }
+
+  @Override
+  public void suspendOtherThreads(PyThreadInfo thread) {
+    for (PyThreadInfo otherThread : getThreads()) {
+      if (!otherThread.getId().equals(thread.getId())) {
+        suspendThread(otherThread.getId());
+      }
+    }
   }
 
   private void fireCloseEvent() {
