@@ -58,6 +58,12 @@ public class SuppressForClassFix extends SuppressFix {
   @Override
   @NotNull
   public String getText() {
+    return getFamilyName();
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.class");
   }
 }
