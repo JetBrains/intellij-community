@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.ui.ValidationInfo;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,4 +70,9 @@ public interface CommitSession {
    * @since 10.5
    */
   String getHelpId();
+
+  @CalledInAwt
+  default ValidationInfo validateFields() {
+    return null;
+  }
 }
