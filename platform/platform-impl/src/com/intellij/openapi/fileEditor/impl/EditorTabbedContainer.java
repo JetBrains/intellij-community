@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -127,7 +128,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           }
 
           if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-            newFile.refresh(true, false);
+            VfsUtil.markDirtyAndRefresh(true, false, false, newFile);
           }
         }
       }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
