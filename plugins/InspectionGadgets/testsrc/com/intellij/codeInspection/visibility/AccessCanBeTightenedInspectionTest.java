@@ -138,7 +138,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "");
     myFixture.addFileToProject("x/C.java",
       "package x; \n" +
-      "<warning descr=\"Access can be package-private\">public</warning> class C {\n" +
+      "<warning descr=\"Access can be package local\">public</warning> class C {\n" +
       "}");
     myFixture.configureByFiles("x/C.java", "x/Sub.java");
     myFixture.checkHighlighting();
