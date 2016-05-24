@@ -72,6 +72,7 @@ import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import java.util.Arrays;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.*;
 
@@ -176,6 +177,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     myOldSdks = new SdkLeakTracker();
   }
 
+  // Android Studio: Our classpath matches multiple platform prefixes (CidrCommon, etc.), but the default should be AndroidStudio, and
+  // if adt-branding is not on the classpath, then we should simply run as IDEA.
+  private static final String[] PREFIX_CANDIDATES = {"AndroidStudio", "Idea"}; /*
   private static final String[] PREFIX_CANDIDATES = {
     "Rider", "GoLand",
     null,
@@ -185,8 +189,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"};
+  */
 
   public static void doAutodetectPlatformPrefix() {
+    // Android Studio: allow -Didea.platform.prefix to override auto-detection mechanism
+    if (Arrays.asList(PREFIX_CANDIDATES).contains(System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY))) {
+      ourPlatformPrefixInitialized = true;
+    }
+
     if (ourPlatformPrefixInitialized) {
       return;
     }
