@@ -318,7 +318,7 @@ class EditorCoordinateMapper {
         lastColumn = endColumn;
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
       }
-      if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
+      if (column > lastColumn && myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         column--;
         x += myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       }
