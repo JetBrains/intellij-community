@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
@@ -161,20 +160,20 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  private class PsiCorrectedClassType extends PsiClassType.Stub {
+  public class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
-    public PsiCorrectedClassType(LanguageLevel languageLevel,
-                                 PsiClassType delegate,
-                                 CorrectedResolveResult resolveResult) {
+    private PsiCorrectedClassType(LanguageLevel languageLevel,
+                                  PsiClassType delegate,
+                                  CorrectedResolveResult resolveResult) {
       this(languageLevel, delegate, resolveResult, delegate.getAnnotationProvider());
     }
 
-    public PsiCorrectedClassType(LanguageLevel languageLevel,
-                                 PsiClassType delegate,
-                                 CorrectedResolveResult resolveResult,
-                                 TypeAnnotationProvider delegateAnnotationProvider) {
+    private PsiCorrectedClassType(LanguageLevel languageLevel,
+                                  PsiClassType delegate,
+                                  CorrectedResolveResult resolveResult,
+                                  TypeAnnotationProvider delegateAnnotationProvider) {
       super(languageLevel, delegateAnnotationProvider);
       myDelegate = delegate;
       myResolveResult = resolveResult;
