@@ -30,7 +30,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.formatting.Indent.*;
+import static com.intellij.formatting.Indent.Type;
 import static com.intellij.formatting.Indent.Type.*;
 
 /**
@@ -51,15 +51,15 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
-    Type indent = getIndent(editor, offset);
+    Type indent = getIndent(project, editor, language, offset);
     if (indent != null){
-      return getIndentString(editor, offset, indent);
+      return getIndentString(project, editor, offset, indent);
     }
     return super.getLineIndent(project, editor, language, offset);
   }
   
   @Nullable
-  protected Type getIndent(@NotNull Editor editor, int offset) {
+  protected Type getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
       offset --;
       if (getPosition(editor, offset).matchesRule(
@@ -71,7 +71,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
             .beforeOptional(JavaLikeElement.Semicolon)
             .beforeOptional(JavaLikeElement.Whitespace)
             .isAt(JavaLikeElement.BlockClosingBrace))) {
-          return NONE;
+          return getBlockIndentType(project, language);
         }
         else if (getPosition(editor, offset).matchesRule(
           position -> position.before().isAt(JavaLikeElement.ArrayOpeningBracket) 
@@ -81,7 +81,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         else if (getPosition(editor, offset).matchesRule(
           position -> position.before().isAt(JavaLikeElement.BlockOpeningBrace) 
         )) {
-          return NORMAL;
+          return getIndentTypeInBlock(project, language);
         }
       }
     }
@@ -97,11 +97,11 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     };
   }
   
+  @Nullable
   protected abstract SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType);
   
   @Nullable
-  private static String getIndentString(@NotNull Editor editor, int offset, Type indentType) {
-    Project project = editor.getProject();
+  private static String getIndentString(@NotNull Project project, @NotNull Editor editor, int offset, Type indentType) {
     if (project != null) {
       Document document = editor.getDocument();
       String lastLineIndent = getLastLineIndent(document.getCharsSequence(), offset);
@@ -140,5 +140,27 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
     }
     return "";
+  }
+  
+  @Nullable
+  private static Type getIndentTypeInBlock(@NotNull Project project, @Nullable Language language) {
+    if (language != null) {
+      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
+        return  settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null; 
+      }
+    }
+    return NORMAL;
+  }
+  
+  @Nullable
+  private static Type getBlockIndentType(@NotNull Project project, @Nullable Language language) {
+    if (language != null) {
+      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE || settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE) {
+        return NONE;
+      }
+    }
+    return null;
   }
 }
