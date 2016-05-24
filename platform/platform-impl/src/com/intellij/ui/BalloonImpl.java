@@ -339,26 +339,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     MnemonicHelper.init(content);
 
     if (!myDialogMode) {
-      new AwtVisitor(content) {
-        @Override
-        public boolean visit(Component component) {
-          if (component instanceof JLabel) {
-            JLabel label = (JLabel)component;
-            if (label.getDisplayedMnemonic() != '\0' || label.getDisplayedMnemonicIndex() >= 0) {
-              myDialogMode = true;
-              return true;
-            }
+      for (Component component : UIUtil.uiTraverser(myContent)) {
+        if (component instanceof JLabel) {
+          JLabel label = (JLabel)component;
+          if (label.getDisplayedMnemonic() != '\0' || label.getDisplayedMnemonicIndex() >= 0) {
+            myDialogMode = true;
+            break;
           }
-          else if (component instanceof JCheckBox) {
-            JCheckBox checkBox = (JCheckBox)component;
-            if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
-              myDialogMode = true;
-              return true;
-            }
-          }
-          return false;
         }
-      };
+        else if (component instanceof JCheckBox) {
+          JCheckBox checkBox = (JCheckBox)component;
+          if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
+            myDialogMode = true;
+            break;
+          }
+        }
+      }
     }
 
     myShadow = shadow;
@@ -369,13 +365,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myAnimationCycle = animationCycle;
 
     if (smallVariant) {
-      new AwtVisitor(myContent) {
-        @Override
-        public boolean visit(Component component) {
-          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
-          return false;
-        }
-      };
+      for (Component component : UIUtil.uiTraverser(myContent)) {
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
+      }
     }
   }
 
@@ -584,19 +576,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     if (myHideOnLinkClick) {
-      final Ref<JEditorPane> ref = Ref.create(null);
-      new AwtVisitor(myContent) {
-        @Override
-        public boolean visit(Component component) {
-          if (component instanceof JEditorPane) {
-            ref.set((JEditorPane)component);
-            return true;
-          }
-          return false;
-        }
-      };
-      if (!ref.isNull()) {
-        ref.get().addHyperlinkListener(new HyperlinkAdapter() {
+      JEditorPane editorPane = UIUtil.uiTraverser(myContent).traverse().filter(JEditorPane.class).first();
+      if (editorPane != null) {
+        editorPane.addHyperlinkListener(new HyperlinkAdapter() {
           @Override
           protected void hyperlinkActivated(HyperlinkEvent e) {
             hide();

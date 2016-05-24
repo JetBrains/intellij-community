@@ -117,7 +117,7 @@ public abstract class ToolbarUpdater implements Activatable {
   protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
 
   protected void updateActionTooltips() {
-    for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
+    for (ActionButton actionButton : UIUtil.uiTraverser(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
       actionButton.updateToolTipText();
     }
   }

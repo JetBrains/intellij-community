@@ -76,7 +76,7 @@ public class FindUsagesInFileAction extends AnAction {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null ||
         EditorGutter.KEY.getData(dataContext) != null ||
-        CommonDataKeys.EDITOR_VIRTUAL_SPACE.getData(dataContext) == Boolean.TRUE) {
+        Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
 

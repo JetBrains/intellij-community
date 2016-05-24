@@ -146,8 +146,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
+  public String findAvailableDebugAddress(boolean useSockets) throws ExecutionException {
     if (useSockets) {
       final int freePort;
       try {
@@ -158,29 +157,32 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       return Integer.toString(freePort);
     }
-
-    try {
-      TransportService.ListenKey listenKey = transportService.startListening();
-      final String address = listenKey.address();
-      transportService.stopListening(listenKey);
-      return address;
-    }
-    catch (IOException e) {
-      int tryNum = 0;
-      while (true) {
-        try {
-          TransportService.ListenKey listenKey = transportService.startListening("javadebug_" + (int)(Math.random()*1000));
-          final String address = listenKey.address();
-          transportService.stopListening(listenKey);
-          return address;
-        }
-        catch (Exception ex) {
-          if (tryNum++ > 10) {
-            throw new ExecutionException(DebugProcessImpl.processError(ex));
+    else {
+      TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(false);
+      try {
+        return tryShmemConnect(transportService, null);
+      }
+      catch (IOException e) {
+        int tryNum = 0;
+        while (true) {
+          try {
+            return tryShmemConnect(transportService, "javadebug_" + (int)(Math.random() * 1000));
+          }
+          catch (Exception ex) {
+            if (tryNum++ > 10) {
+              throw new ExecutionException(DebugProcessImpl.processError(ex));
+            }
           }
         }
       }
     }
+  }
+
+  private static String tryShmemConnect(TransportServiceWrapper transportService, String address) throws IOException {
+    TransportService.ListenKey listenKey = transportService.startListening(address);
+    address = listenKey.address();
+    transportService.stopListening(listenKey);
+    return address;
   }
 
   public static boolean isRemote(DebugProcess debugProcess) {

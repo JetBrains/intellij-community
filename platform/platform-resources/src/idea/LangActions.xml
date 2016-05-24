@@ -888,21 +888,6 @@
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
-    <!-- SM Test Runner Actions -->
-    <group id="SMTestRunnerTestsTree">
-      <separator/>
-      <action id="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowStatisticsAction"
-              class="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowStatisticsAction"
-              text="Show Statistics"/>
-      <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
-    </group>
-    <group id="SMTestRunnerStatistics">
-      <separator/>
-      <action id="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
-              class="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
-              text="Navigate to Test"/>
-      <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
-    </group>
     <group>
       <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
               text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>

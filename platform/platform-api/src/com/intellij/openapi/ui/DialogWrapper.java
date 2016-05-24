@@ -48,7 +48,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -898,32 +897,24 @@ public abstract class DialogWrapper {
   }
 
   public static void unregisterKeyboardActions(final JRootPane rootPane) {
-    new AwtVisitor(rootPane) {
-      @Override
-      public boolean visit(final Component component) {
-        if (component instanceof JComponent) {
-          final JComponent eachComp = (JComponent)component;
-          final ActionMap actionMap = eachComp.getActionMap();
-          final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
-          for (KeyStroke eachStroke : strokes) {
-            boolean remove = true;
-            if (actionMap != null) {
-              for (int i : new int[]{JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW}) {
-                final InputMap inputMap = eachComp.getInputMap(i);
-                final Object key = inputMap.get(eachStroke);
-                if (key != null) {
-                  final Action action = actionMap.get(key);
-                  if (action instanceof UIResource) remove = false;
-                }
-              }
+    for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
+      ActionMap actionMap = eachComp.getActionMap();
+      KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
+      for (KeyStroke eachStroke : strokes) {
+        boolean remove = true;
+        if (actionMap != null) {
+          for (int i : new int[]{JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW}) {
+            final InputMap inputMap = eachComp.getInputMap(i);
+            final Object key = inputMap.get(eachStroke);
+            if (key != null) {
+              final Action action = actionMap.get(key);
+              if (action instanceof UIResource) remove = false;
             }
-
-            if (remove) eachComp.unregisterKeyboardAction(eachStroke);
           }
         }
-        return false;
+        if (remove) eachComp.unregisterKeyboardAction(eachStroke);
       }
-    };
+    }
   }
 
 

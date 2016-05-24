@@ -126,7 +126,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     myPluginManagerMain.ignoreChanges();
     if (prev) return;
 
-    Disposable d = UIUtil.getParents(myPluginManagerMain.getMainPanel()).filter(Disposable.class).first();
+    Disposable d = UIUtil.uiParents(myPluginManagerMain.getMainPanel(), false).filter(Disposable.class).first();
     if (d == null) return;
     Disposer.register(d, new Disposable() {
       @Override

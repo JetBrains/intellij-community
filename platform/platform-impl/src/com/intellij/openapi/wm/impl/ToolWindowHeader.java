@@ -211,7 +211,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       @Override
       protected void updateActionTooltips() {
-        for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
+        for (ActionButton actionButton : UIUtil.uiTraverser(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
           actionButton.updateTooltip();
         }
       }

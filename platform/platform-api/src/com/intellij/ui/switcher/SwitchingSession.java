@@ -17,12 +17,12 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Alarm;
@@ -302,7 +302,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     Point selected = null;
     Map<SwitchTarget, Point> target2Point = new HashMap<SwitchTarget, Point>();
     for (SwitchTarget each : myTargets) {
-      Rectangle eachRec = each.getRectangle().getRectangleOn(myRootComponent);
+      RelativeRectangle rectangle = each.getRectangle();
+      if (rectangle == null) continue;
+      Rectangle eachRec = rectangle.getRectangleOn(myRootComponent);
       Point eachPoint = null;
       switch (direction) {
         case up:
@@ -336,7 +338,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
         }
         points.add(selected);
         target2Point.put(each, selected);
-      } else {
+      }
+      else {
         points.add(eachPoint);
         target2Point.put(each, eachPoint);
       }
@@ -345,6 +348,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     TreeMap<Integer, SwitchTarget> distance = new TreeMap<Integer, SwitchTarget>();
     for (SwitchTarget eachTarget : myTargets) {
       Point eachPoint = target2Point.get(eachTarget);
+      if (eachPoint == null || selected == null) continue;
       if (selected == eachPoint) continue;
 
       double eachDistance = sqrt(abs(eachPoint.getX() - selected.getX())) + sqrt(abs(eachPoint.getY() - selected.getY()));
@@ -356,6 +360,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     for (Integer eachDistance : distancesArray) {
       SwitchTarget eachTarget = distance.get(eachDistance);
       Point eachPoint = target2Point.get(eachTarget);
+      if (eachPoint == null || selected == null) continue;
       switch (direction) {
         case up:
           if (eachPoint.y <= selected.y) {
@@ -383,7 +388,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     for (int i = distancesArray.length - 1; i >= 0; i--) {
       SwitchTarget eachTarget = distance.get(distancesArray[i]);
       Point eachPoint = target2Point.get(eachTarget);
-
+      if (eachPoint == null || selected == null) continue;
       switch (direction) {
         case up:
           if (eachPoint.y >= selected.y) {
@@ -415,7 +420,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     int index = all.indexOf(getSelection());
     if (index + 1 < myTargets.size()) {
       return all.get(index + 1);
-    } else {
+    }
+    else {
       return all.get(0);
     }
   }
