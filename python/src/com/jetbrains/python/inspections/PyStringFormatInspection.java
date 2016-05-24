@@ -19,12 +19,15 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -35,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.IntSummaryStatistics;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
@@ -66,6 +66,8 @@ public class PyStringFormatInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
     private static class Inspection {
+      private static final List<String> CHECKED_TYPES = Arrays.asList("str", "int", "long", "float", "complex", "None");
+      private static final List<String> NUMERIC_TYPES = Arrays.asList("int", "long", "float", "complex");
       private static final ImmutableMap<Character, String> PERCENT_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
         .put('d', "int or long or float")
         .put('i', "int or long or float")
@@ -83,6 +85,25 @@ public class PyStringFormatInspection extends PyInspection {
         .put('r', "str")
         .put('s', "str")
         .put('b', "bytes")
+        .build();
+
+
+      private static final ImmutableMap<Character, String> NEW_STYLE_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
+        .put('s', "str or None")
+        .put('b', "int")
+        .put('c', "int")
+        .put('d', "int")
+        .put('o', "int")
+        .put('x', "int")
+        .put('X', "int")
+        .put('n', "int or long or float or complex")
+        .put('e', "long or float or complex")
+        .put('E', "long or float or complex")
+        .put('f', "long or float or complex")
+        .put('F', "long or float or complex")
+        .put('g', "long or float or complex")
+        .put('G', "long or float or complex")
+        .put('%', "long or float")
         .build();
 
       private final Map<String, Boolean> myUsedMappingKeys = new HashMap<>();
@@ -367,14 +388,13 @@ public class PyStringFormatInspection extends PyInspection {
       private void inspectPercentFormat(@NotNull final PyStringLiteralExpression formatExpression) {
         final String value = formatExpression.getStringValue();
         final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
-        
+
         myExpectedArguments = chunks.size();
         myUsedMappingKeys.clear();
 
         // if use mapping keys
         final boolean mapping = chunks.size() > 0 && chunks.get(0).getMappingKey() != null;
         for (int i = 0; i < chunks.size(); ++i) {
-          
           PyStringFormatParser.PercentSubstitutionChunk chunk = as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
           if (chunk != null) {
             // Mapping key
@@ -410,6 +430,104 @@ public class PyStringFormatInspection extends PyInspection {
             registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"), new PyAddSpecifierToFormatQuickFix());
             return;
           }
+        }
+      }
+
+      private void inspectNewStyleValues(@NotNull final PyStringLiteralExpression formatExpression) {
+        final String value = formatExpression.getStringValue();
+        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(value));
+        myExpectedArguments = chunks.size();
+
+        for (int i = 0; i < chunks.size(); i++) {
+          final PyStringFormatParser.NewStyleSubstitutionChunk chunk =
+            as(chunks.get(i), PyStringFormatParser.NewStyleSubstitutionChunk.class);
+
+          if (chunk != null) {
+            String mappingKey = inspectNewStyleChunk(formatExpression, i, chunk);
+            inspectNewStyleArgumentForChunk(i, chunk, mappingKey, formatExpression);
+          }
+        }
+      }
+
+      private int inspectNewStyleArgumentForChunk(int i,
+                                                  @NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
+                                                  @NotNull String mappingKey, @NotNull PyStringLiteralExpression formatExpression) {
+        int arguments = 0;
+        final PsiElement resolve = new PySubstitutionChunkReference(formatExpression, chunk, i).resolve();
+        if (resolve == null) {
+          final String chunkMapping = chunk.getMappingKey();
+          if (chunkMapping != null) {
+            registerProblem(formatExpression, PyBundle.message("INSP.unused.mapping", chunkMapping));
+          }
+          else {
+            registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
+          }
+        }
+        else {
+          final PyTypedElement typedElement = as(resolve, PyTypedElement.class);
+          if (typedElement != null) {
+            if (myFormatSpec.containsKey(mappingKey)) {
+              final PyType actual = myTypeEvalContext.getType(typedElement);
+              final PyType expected = PyTypeParser.getTypeByName(formatExpression, myFormatSpec.get(mappingKey));
+              if (expected != null && actual != null
+                  && CHECKED_TYPES.contains(actual.getName())
+                  && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+                registerProblem(resolve, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
+              }
+            }
+          }
+          arguments++;
+        }
+        return arguments;
+      }
+
+      private String inspectNewStyleChunk(@NotNull PyStringLiteralExpression formatExpression,
+                                          int i,
+                                          PyStringFormatParser.NewStyleSubstitutionChunk chunk) {
+        String mappingKey = Integer.toString(i + 1);
+        final HashSet<String> types = new HashSet<>();
+        boolean hasTypeOptions = false;
+
+        if (chunk.getMappingKey() != null) {
+          mappingKey = chunk.getMappingKey();
+          myUsedMappingKeys.put(mappingKey, false);
+        }
+
+        // inspect options available only for numeric types
+        if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
+          addTypes(types, NUMERIC_TYPES);
+          hasTypeOptions = true;
+        }
+
+        if (chunk.getPrecision() != null) {
+          // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex
+          final List<String> availableTypes = Arrays.asList("str", "float", "complex");
+          addTypes(types, availableTypes);
+          hasTypeOptions = true;
+        }
+
+        final char conversionType = chunk.getConversionType();
+        if (NEW_STYLE_FORMAT_CONVERSIONS.containsKey(conversionType)) {
+          final String[] s = NEW_STYLE_FORMAT_CONVERSIONS.get(conversionType).split(" or ");
+          addTypes(types, Arrays.asList(s));
+          hasTypeOptions = true;
+        }
+
+        if (!types.isEmpty()) {
+          myFormatSpec.put(mappingKey, StringUtil.join(types, " or "));
+        }
+        else if (hasTypeOptions) {
+          registerProblem(formatExpression, PyBundle.message("INSP.incompatible.options", i));
+        }
+        return mappingKey;
+      }
+
+      private static void addTypes(@NotNull final Set<String> types, @NotNull final List<String> availableTypes) {
+        if (!types.isEmpty()) {
+          types.retainAll(availableTypes);
+        }
+        else {
+          types.addAll(availableTypes);
         }
       }
 
@@ -479,6 +597,22 @@ public class PyStringFormatInspection extends PyInspection {
           return;
         }
         inspection.inspectValues(node.getRightExpression());
+      }
+    }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      final PyExpression callee = node.getCallee();
+      if (callee != null && callee.getName() != null && callee.getName().equals(PyNames.FORMAT)) {
+        final PyStringLiteralExpression literalExpression = PsiTreeUtil.getChildOfType(callee, PyStringLiteralExpression.class);
+        if (literalExpression != null) {
+          final Inspection inspection = new Inspection(this, myTypeEvalContext);
+          final PyArgumentList list = node.getArgumentList();
+
+          if (list != null) {
+            inspection.inspectNewStyleValues(literalExpression);
+          }
+        }
       }
     }
   }
