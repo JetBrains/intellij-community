@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,10 +26,10 @@ public class LineIndentProviderEP {
   public final static ExtensionPointName<LineIndentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lineIndentProvider");
   
   @Nullable
-  public static LineIndentProvider findLineIndentProvider(@Nullable PsiFile psiFile) {
+  public static LineIndentProvider findLineIndentProvider(@Nullable Language language) {
     LineIndentProvider foundProvider = null;
     for (LineIndentProvider provider : EP_NAME.getExtensions()) {
-      if (foundProvider == null || provider.isSuitableFor(psiFile) && foundProvider.getClass().isInstance(provider)) {
+      if (foundProvider == null || provider.isSuitableFor(language) && foundProvider.getClass().isInstance(provider)) {
         foundProvider = provider;
       }
     }

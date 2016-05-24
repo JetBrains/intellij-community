@@ -50,23 +50,13 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
     Type indent = getIndent(editor, offset);
     if (indent != null){
       return getIndentString(editor, offset, indent);
     }
-    return super.getLineIndent(project, editor, offset);
+    return super.getLineIndent(project, editor, language, offset);
   }
-
-  @Override
-  public final boolean isSuitableFor(@Nullable PsiFile file) {
-    if (file != null) {
-      return isSuitableForLanguage(file.getLanguage());
-    }
-    return false;
-  }
-  
-  protected abstract boolean isSuitableForLanguage(@NotNull Language language);
   
   @Nullable
   protected Type getIndent(@NotNull Editor editor, int offset) {

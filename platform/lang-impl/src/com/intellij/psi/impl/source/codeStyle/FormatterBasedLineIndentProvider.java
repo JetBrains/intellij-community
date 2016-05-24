@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +30,14 @@ import org.jetbrains.annotations.Nullable;
 public class FormatterBasedLineIndentProvider implements LineIndentProvider {
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
     Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
   }
 
   @Override
-  public boolean isSuitableFor(@Nullable PsiFile file) {
+  public boolean isSuitableFor(@Nullable Language language) {
     return true;
   }
 }
