@@ -503,6 +503,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  public void suspendAllOtherThreads(PyThreadInfo thread) {
+    if (thread.getStopReason() == AbstractCommand.SET_BREAKPOINT) { // add check for breakpoint setting
+      myDebugger.suspendOtherThreads(thread);
+    }
+  }
+
   private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
