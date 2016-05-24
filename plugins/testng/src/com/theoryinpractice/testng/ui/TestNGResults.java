@@ -37,7 +37,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
@@ -52,11 +51,9 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.List;
 
 public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
   @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
@@ -154,12 +151,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public TestConsoleProperties getProperties() {
     return myProperties;
-  }
-
-  protected JComponent createStatisticsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout()); //do not remove wrapper panel 
-    panel.add(ScrollPaneFactory.createScrollPane(resultsTable), BorderLayout.CENTER);
-    return panel;
   }
 
   private void updateStatusLine() {
