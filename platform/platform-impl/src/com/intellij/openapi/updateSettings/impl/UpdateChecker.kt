@@ -21,10 +21,7 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -46,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.loadElement
@@ -77,7 +75,7 @@ object UpdateChecker {
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
-  private val ourShownNotificationTypes = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
+  private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
@@ -365,7 +363,8 @@ object UpdateChecker {
       }
       else {
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL)
+        ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+        showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
@@ -377,7 +376,8 @@ object UpdateChecker {
       else {
         val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
         val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
-        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE)
+        ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
+        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS)
       }
     }
     else if (alwaysShowResults) {
@@ -385,20 +385,17 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?, message: String, action: (() -> Unit), notificationType: NotificationUniqueType) {
-    if (!ourShownNotificationTypes.add(notificationType)) {
-      return
-    }
-
+  private fun showNotification(project: Project?, message: String, action: () -> Unit, notificationType: NotificationUniqueType) {
     val listener = NotificationListener { notification, event ->
       notification.expire()
       action.invoke()
     }
 
     val title = IdeBundle.message("update.notifications.title")
-    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener)
-        .whenExpired { ourShownNotificationTypes.remove(notificationType) }
-        .notify(project)
+    val notification = NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener)
+    notification.whenExpired { ourShownNotifications.remove(notificationType, notification) }
+    notification.notify(project)
+    ourShownNotifications.putValue(notificationType, notification)
   }
 
   @JvmStatic
@@ -540,7 +537,5 @@ object UpdateChecker {
     }
   }
 
-  private enum class NotificationUniqueType {
-    NEW_CHANNEL, UPDATE_IN_CHANNEL, PLUGINS_UPDATE
-  }
+  private enum class NotificationUniqueType { PLATFORM, PLUGINS }
 }
