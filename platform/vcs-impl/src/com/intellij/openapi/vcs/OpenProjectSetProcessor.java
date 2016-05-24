@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -68,6 +69,7 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   }
 
   private static boolean warnAboutOpening(String path) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     if (!RecentProjectsManager.getInstance().hasPath(path)) {
       boolean remotePath = ProjectUtil.isRemotePath(path);
       if (!ProjectUtil.confirmLoadingFromRemotePath(
