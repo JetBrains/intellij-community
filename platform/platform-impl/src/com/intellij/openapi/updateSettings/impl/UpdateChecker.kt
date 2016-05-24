@@ -133,8 +133,7 @@ object UpdateChecker {
     else if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
       val e = result.error
       if (e != null) LOG.debug(e)
-      val cause = e?.message ?: "internal error"
-      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", cause))
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
       return
     }
 
@@ -391,7 +390,7 @@ object UpdateChecker {
       return
     }
 
-    var listener = NotificationListener { notification, event ->
+    val listener = NotificationListener { notification, event ->
       notification.expire()
       action.invoke()
     }
