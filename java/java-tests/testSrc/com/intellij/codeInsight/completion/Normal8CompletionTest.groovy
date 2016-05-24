@@ -222,6 +222,12 @@ class Test88 {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  public void testStaticallyImportedCollectorsToList() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('collect(toList())') })
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   public void testAllCollectors() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
