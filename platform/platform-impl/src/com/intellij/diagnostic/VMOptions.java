@@ -195,14 +195,12 @@ public class VMOptions {
       return new File(ourTestPath);
     }
 
-    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
-    if (vmOptionsFile == null) {
-      // launchers should specify a path to an options file used to configure a JVM
-      LOG.warn("VM options file path missing");
+    String location = PathManager.getCustomOptionsDirectory();
+    if (location == null) {
+      LOG.warn("custom options directory not specified (" + PathManager.PROPERTY_PATHS_SELECTOR + " not set?)");
       return null;
     }
-
-    return getCustomFile(true);
+    return new File(location, getCustomFileName());
   }
 
   @Nullable
