@@ -312,7 +312,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public void update(final AnActionEvent event) {
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
-        event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE) == Boolean.TRUE) {
+        Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       event.getPresentation().setEnabled(false);
       return;
     }
