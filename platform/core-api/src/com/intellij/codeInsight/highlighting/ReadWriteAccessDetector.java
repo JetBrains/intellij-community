@@ -24,7 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * This extension is used in Find Usages, Highlighting and other places to
+ * classify the psi expression as:
+ * <ul>
+ * <li>read variable expression (e.g. {@code int var = expression;} ), see {@link Access#Read}</li>
+ * <li>write variable expression (e.g. {@code expression = value;} ), see {@link Access#Write}</li> or
+ * <li>read/write variable expression (e.g. {@code var++;} ), see {@link Access#ReadWrite}</li>
+ * </ul>
+ *
  */
 public abstract class ReadWriteAccessDetector {
   public static final ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
