@@ -358,17 +358,20 @@ object UpdateChecker {
         UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
+      ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+
       if (alwaysShowResults) {
         runnable.invoke()
       }
       else {
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
         showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
       val runnable = { PluginUpdateInfoDialog(updatedPlugins, enableLink).show() }
+
+      ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
       if (alwaysShowResults) {
         runnable.invoke()
@@ -376,7 +379,6 @@ object UpdateChecker {
       else {
         val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
         val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
-        ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
         showNotification(project, message, runnable, NotificationUniqueType.PLUGINS)
       }
     }
