@@ -699,7 +699,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReachedInternal(suspendContext, XPauseReason.BREAKPOINT);
+    positionReachedInternal(suspendContext, true);
 
     if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
@@ -762,7 +762,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myPaused.set(false);
   }
 
-  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, @NotNull XPauseReason reason) {
+  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean attract) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -785,7 +785,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     // user attractions should only be made if event happens independently (e.g. program paused/suspended)
     // and should not be made when user steps in the code
-    if (reason != XPauseReason.STEPPING) {
+    if (attract) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (mySessionTab != null) {
 
@@ -807,15 +807,13 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
-    positionReached(suspendContext, XPauseReason.STEPPING);
+    positionReached(suspendContext, false);
   }
 
-  @Override
-  public void positionReached(@NotNull XSuspendContext suspendContext, @NotNull XPauseReason reason) {
+  public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
     myActiveNonLineBreakpoint = null;
-    positionReachedInternal(suspendContext, reason);
+    positionReachedInternal(suspendContext, attract);
   }
-
 
   @Override
   public void sessionResumed() {
