@@ -106,7 +106,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   protected boolean isKnownSubLanguage(@NotNull final Language language) {
     for (Language knownLanguage : knownLanguageSet) {
-      if (language.is(knownLanguage)) {
+      if (language.is(knownLanguage) || knownLanguage.getDialects().contains(language)) {
         return true;
       }
     }
