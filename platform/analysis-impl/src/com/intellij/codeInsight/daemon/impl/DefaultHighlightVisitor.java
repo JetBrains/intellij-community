@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
@@ -96,8 +95,11 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     else {
       ASTNode node = element.getNode();
       if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
-        String message = String.format("Illegal character: \\u%04X", (int)element.textToCharArray()[0]);
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create());
+        char c = element.textToCharArray()[0];
+        boolean printable = StringUtil.isPrintableUnicode(c) && !Character.isSpaceChar(c);
+        String hex = String.format("U+%04X", (int)c);
+        String text = "Illegal character: " + (printable ? c + " (" + hex + ")" : hex);
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(text).create());
       }
 
       if (myRunAnnotators) runAnnotators(element);
