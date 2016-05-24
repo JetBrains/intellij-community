@@ -54,7 +54,9 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     myProjectSettings = GithubProjectSettings.getInstance(project);
 
     myPanel = new GithubCreatePullRequestPanel();
-    myPanel.getShowDiffButton().addActionListener(e -> myWorker.showDiffDialog(myPanel.getSelectedBranch()));
+    myPanel.getShowDiffButton().addActionListener(e -> {
+      myWorker.showDiffDialog(myPanel.getSelectedBranch());
+    });
     myPanel.getSelectForkButton().addActionListener(e -> {
       ForkInfo fork = myWorker.showTargetDialog();
       if (fork != null) {

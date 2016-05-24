@@ -244,7 +244,9 @@ public class GithubUtil {
       GithubApiUtil.askForTwoFactorCodeSMS(new GithubConnection(oldAuth, false));
 
       final Ref<String> codeRef = new Ref<String>();
-      ApplicationManager.getApplication().invokeAndWait(() -> codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null)), indicator.getModalityState());
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
+      }, indicator.getModalityState());
       if (codeRef.isNull()) {
         throw new GithubOperationCanceledException("Can't get two factor authentication code");
       }

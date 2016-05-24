@@ -251,7 +251,9 @@ public class LineStatusTracker {
     MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
-    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> new LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range)));
+    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
+      return new LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range);
+    }));
 
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
 

@@ -109,7 +109,9 @@ public class ExternalDiffToolUtil {
     Charset charset = content.getCharset();
     if (charset == null) charset = Charset.defaultCharset();
 
-    String contentData = ReadAction.compute(() -> content.getDocument().getText());
+    String contentData = ReadAction.compute(() -> {
+      return content.getDocument().getText();
+    });
     if (separator != LineSeparator.LF) {
       contentData = StringUtil.convertLineSeparators(contentData, separator.getSeparatorString());
     }
@@ -375,7 +377,9 @@ public class ExternalDiffToolUtil {
     @Override
     public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(() -> myDocument.setText(content));
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDocument.setText(content);
+      });
     }
   }
 

@@ -983,14 +983,16 @@ public class DiffUtil {
         return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        if (myUnderBulkUpdate) {
-          DocumentUtil.executeInBulk(myDocument, true, this::execute);
-        }
-        else {
-          execute();
-        }
-      }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument));
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          if (myUnderBulkUpdate) {
+            DocumentUtil.executeInBulk(myDocument, true, this::execute);
+          }
+          else {
+            execute();
+          }
+        }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
+      });
     }
 
     @CalledWithWriteLock

@@ -257,7 +257,9 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), () -> myViewer.replaceChange(this, side));
+    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), () -> {
+      myViewer.replaceChange(this, side);
+    });
   }
 
   @Nullable

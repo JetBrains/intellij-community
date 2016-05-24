@@ -227,7 +227,9 @@ public class GithubRebaseAction extends DumbAwareAction {
       List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
       GitPreservingProcess process = new GitPreservingProcess(project, git, rootsToSave, "Rebasing", "upstream/master",
                                                               GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
-                                                              () -> doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator));
+                                                              () -> {
+                                                                doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
+                                                              });
       process.execute();
     }
     finally {

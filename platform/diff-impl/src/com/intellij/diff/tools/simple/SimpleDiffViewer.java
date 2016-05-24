@@ -195,7 +195,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
+      CharSequence[] texts = ReadAction.compute(() -> {
+        return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
+      });
 
       List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
@@ -534,7 +536,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (!isEditable(myModifiedSide)) return;
 
       String title = e.getPresentation().getText() + " selected changes";
-      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> apply(selectedChanges));
+      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> {
+        apply(selectedChanges);
+      });
     }
 
     protected boolean isSomeChangeSelected(@NotNull Side side) {

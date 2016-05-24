@@ -537,7 +537,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
       String title = e.getPresentation().getText() + " in patch resolve";
 
-      executeCommand(title, () -> apply(selectedChanges));
+      executeCommand(title, () -> {
+        apply(selectedChanges);
+      });
     }
 
     private boolean isSomeChangeSelected(@NotNull Side side) {
