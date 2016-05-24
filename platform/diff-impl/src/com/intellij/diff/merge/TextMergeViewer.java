@@ -1126,14 +1126,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   }
 
   private static class InnerChunkData {
-    @NotNull public final CharSequence[] text = new CharSequence[3];
+    @NotNull public final List<CharSequence> text;
 
     public InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
-      for (ThreeSide side : ThreeSide.values()) {
-        if (change.isChange(side) && !change.isResolved(side)) {
-          text[side.getIndex()] = getChunkContent(change, documents, side);
-        }
-      }
+      text = ThreeSide.map(side -> {
+        if (!change.isChange(side) || change.isResolved(side)) return null;
+        return getChunkContent(change, documents, side);
+      });
     }
 
     @Nullable

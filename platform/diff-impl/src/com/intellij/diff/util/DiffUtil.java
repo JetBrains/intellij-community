@@ -611,31 +611,32 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static List<MergeWordFragment> compareThreesideInner(@NotNull CharSequence[] chunks,
+  public static List<MergeWordFragment> compareThreesideInner(@NotNull List<CharSequence> chunks,
                                                               @NotNull ComparisonPolicy comparisonPolicy,
                                                               @NotNull ProgressIndicator indicator) {
-    if (chunks[0] == null && chunks[1] == null && chunks[2] == null) return null; // ---
+    if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
 
     if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
-      if (isChunksEquals(chunks[0], chunks[1], comparisonPolicy) &&
-          isChunksEquals(chunks[0], chunks[2], comparisonPolicy)) {
+      if (isChunksEquals(chunks.get(0), chunks.get(1), comparisonPolicy) &&
+          isChunksEquals(chunks.get(0), chunks.get(2), comparisonPolicy)) {
+        // whitespace-only changes, ex: empty lines added/removed
         return Collections.emptyList(); // whitespace-only changes, ex: empty lines added/removed
       }
     }
 
-    if (chunks[0] == null && chunks[1] == null ||
-        chunks[0] == null && chunks[2] == null ||
-        chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
+    if (chunks.get(0) == null && chunks.get(1) == null ||
+        chunks.get(0) == null && chunks.get(2) == null ||
+        chunks.get(1) == null && chunks.get(2) == null) { // =--, -=-, --=
       return null;
     }
 
-    if (chunks[0] != null && chunks[1] != null && chunks[2] != null) { // ===
-      return ByWord.compare(chunks[0], chunks[1], chunks[2], comparisonPolicy, indicator);
+    if (chunks.get(0) != null && chunks.get(1) != null && chunks.get(2) != null) { // ===
+      return ByWord.compare(chunks.get(0), chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
     }
 
     // ==-, =-=, -==
-    final ThreeSide side1 = chunks[0] != null ? ThreeSide.LEFT : ThreeSide.BASE;
-    final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
+    final ThreeSide side1 = chunks.get(0) != null ? ThreeSide.LEFT : ThreeSide.BASE;
+    final ThreeSide side2 = chunks.get(2) != null ? ThreeSide.RIGHT : ThreeSide.BASE;
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
 

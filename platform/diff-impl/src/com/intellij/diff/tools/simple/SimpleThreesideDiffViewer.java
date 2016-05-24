@@ -142,17 +142,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
           final MergeLineFragment fragment = lineFragments.get(i);
           final MergeConflictType conflictType = conflictTypes.get(i);
 
-          CharSequence[] chunks = ReadAction.compute(() -> {
+          List<CharSequence> chunks = ReadAction.compute(() -> {
             indicator.checkCanceled();
-
-            CharSequence[] result = new CharSequence[3];
-            result[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
-            result[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
-            result[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
-
-            if (!conflictType.isChange(Side.LEFT)) result[0] = null;
-            if (!conflictType.isChange(Side.RIGHT)) result[2] = null;
-            return result;
+            return ThreeSide.map(side -> {
+              if (!conflictType.isChange(side)) return null;
+              return getChunkContent(fragment, documents, side);
+            });
           });
 
           List<MergeWordFragment> wordFragments = DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator);
