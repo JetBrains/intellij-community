@@ -2309,7 +2309,7 @@ public class UIUtil {
 
   public static void removeScrollBorder(final Component c) {
     for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
-      if (!getParents(scrollPane)
+      if (!uiParents(scrollPane, true)
         .takeWhile(Conditions.notEqualTo(c))
         .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
         .isEmpty()) continue;
@@ -2775,23 +2775,13 @@ public class UIUtil {
   }
 
   @NotNull
-  public static JBIterable<Component> getParents(@Nullable Component c) {
-    return uiParents(c, true);
-  }
-
-  @NotNull
   public static JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
     return strict ? JBIterable.generate(c, COMPONENT_PARENT).skip(1) : JBIterable.generate(c, COMPONENT_PARENT);
   }
 
   @NotNull
-  public static JBTreeTraverser<Component> uiTraverser() {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
-  }
-
-  @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
-    return uiTraverser().withRoot(component);
+    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
