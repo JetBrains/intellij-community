@@ -58,7 +58,8 @@ class StatisticsSenderTest: LightPlatformTestCase() {
             }
 
             override fun post(url: String, file: File): ResponseData? {
-                throw UnsupportedOperationException()
+                lastSendDataUrl = url
+                return ResponseData(200)
             }
 
             override fun get(url: String): ResponseData? {
@@ -91,9 +92,7 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         val sender = StatisticSender(urlProvider, logFileManager, requestService)
         sender.sendStatsData("uuid-secret-xxx")
 
-        UsefulTestCase.assertEquals("http://localhost:8080/upload", lastSendDataUrl)
-        UsefulTestCase.assertEquals("uuid-secret-xxx", lastSendData!!["uid"])
-        UsefulTestCase.assertEquals(text, lastSendData!!["content"])
+        UsefulTestCase.assertEquals("http://localhost:8080/upload/uuid-secret-xxx", lastSendDataUrl)
         
         UsefulTestCase.assertTrue(!file.exists() || file.readText().isEmpty())
         UsefulTestCase.assertTrue(!tmpFile.exists() || tmpFile.readText().isEmpty())
