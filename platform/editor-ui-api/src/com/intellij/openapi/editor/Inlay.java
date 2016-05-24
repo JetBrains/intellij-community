@@ -18,17 +18,21 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public interface Inlay extends Disposable, UserDataHolderEx {
   boolean isValid();
+
   int getOffset();
-  @Nullable Renderer getRenderer();
+
+  @NotNull Renderer getRenderer();
+
   int getWidthInPixels();
 
-  interface Renderer {
-    void paint(@NotNull Graphics g, @NotNull Rectangle r);
+  abstract class Renderer {
+    public abstract void paint(@NotNull Graphics g, @NotNull Rectangle r);
+
+    public abstract int calcWidthInPixels();
   }
 }

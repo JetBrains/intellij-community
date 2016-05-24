@@ -176,8 +176,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                     Disposer.dispose(inlay);
                   }
                 }
-                int width = MyRenderer.FONT.fontMetrics().stringWidth(finalValue) + 5;
-                e.getInlayModel().addInlineElement(offset, width, new MyRenderer(finalValue));
+                e.getInlayModel().addInlineElement(offset, new MyRenderer(finalValue));
               }
             });
           }
@@ -198,12 +197,17 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  public static class MyRenderer implements Inlay.Renderer {
+  public static class MyRenderer extends Inlay.Renderer {
     private static final FontInfo FONT = new FontInfo(Font.SANS_SERIF, 10, Font.ITALIC);
     private final String myText;
 
     private MyRenderer(String text) {
       myText = text;
+    }
+
+    @Override
+    public int calcWidthInPixels() {
+      return FONT.fontMetrics().stringWidth(myText) + 5;
     }
 
     @Override

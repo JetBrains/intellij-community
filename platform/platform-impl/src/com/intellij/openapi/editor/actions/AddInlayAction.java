@@ -31,11 +31,16 @@ public class AddInlayAction extends EditorAction {
     super(new EditorActionHandler() {
       @Override
       protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-        editor.getInlayModel().addInlineElement(editor.getCaretModel().getOffset(), 50, new Inlay.Renderer() {
+        editor.getInlayModel().addInlineElement(editor.getCaretModel().getOffset(), new Inlay.Renderer() {
           @Override
           public void paint(@NotNull Graphics g, @NotNull Rectangle r) {
             g.setColor(Color.pink);
             g.drawRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3);
+          }
+
+          @Override
+          public int calcWidthInPixels() {
+            return 50;
           }
         });
       }

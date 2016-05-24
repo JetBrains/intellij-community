@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface InlayModel {
   @Nullable
-  Inlay addInlineElement(int offset, int widthInPixels, Inlay.Renderer renderer);
+  Inlay addInlineElement(int offset, @NotNull Inlay.Renderer renderer);
 
   // startOffset inclusive, endOffset exclusive (unless startOffset == endOffset)
   @NotNull

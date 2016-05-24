@@ -64,11 +64,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, int widthInPixels, @Nullable Inlay.Renderer renderer) {
+  public Inlay addInlineElement(int offset, @NotNull Inlay.Renderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlayImpl(myEditor, offset, widthInPixels, renderer);
+    InlayImpl inlay = new InlayImpl(myEditor, offset, renderer);
     myDispatcher.getMulticaster().onAdded(inlay);
     return inlay;
   }

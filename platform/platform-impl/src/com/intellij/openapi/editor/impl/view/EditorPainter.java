@@ -368,9 +368,7 @@ class EditorPainter implements TextDrawingCallback {
             for (Inlay inlay : inlays) {
               Inlay.Renderer renderer = inlay.getRenderer();
               int width = inlay.getWidthInPixels();
-              if (renderer != null) {
-                renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()));
-              }
+              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()));
               xStart += width;
             }
             return;

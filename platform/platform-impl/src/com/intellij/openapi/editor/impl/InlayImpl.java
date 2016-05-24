@@ -19,17 +19,18 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
+  @NotNull
   private final EditorImpl myEditor;
   private final int myWidthInPixels;
+  @NotNull
   private final Renderer myRenderer;
 
-  InlayImpl(@NotNull EditorImpl editor, int offset, int widthInPixels, @Nullable Renderer renderer) {
+  InlayImpl(@NotNull EditorImpl editor, int offset, @NotNull Renderer renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
-    myWidthInPixels = widthInPixels;
+    myWidthInPixels = renderer.calcWidthInPixels();
     myRenderer = renderer;
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
   }
@@ -54,7 +55,7 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     return getStartOffset();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Renderer getRenderer() {
     return myRenderer;

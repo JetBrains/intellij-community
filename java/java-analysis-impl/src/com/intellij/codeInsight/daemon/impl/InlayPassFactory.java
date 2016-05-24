@@ -151,19 +151,22 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         else myAnnotations.remove(offset);
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
-        String text = e.getValue();
-        int width = MyRenderer.FONT.fontMetrics().stringWidth(text) + 4;
-        myEditor.getInlayModel().addInlineElement(e.getKey(), width, new MyRenderer(text));
+        myEditor.getInlayModel().addInlineElement(e.getKey(), new MyRenderer(e.getValue()));
       }
     }
   }
 
-  private static class MyRenderer implements Inlay.Renderer {
+  private static class MyRenderer extends Inlay.Renderer {
     private static final FontInfo FONT = new FontInfo(Font.SANS_SERIF, 10, Font.ITALIC);
     private final String myText;
 
     private MyRenderer(String text) {
       myText = text;
+    }
+
+    @Override
+    public int calcWidthInPixels() {
+      return FONT.fontMetrics().stringWidth(myText) + 4;
     }
 
     @Override
