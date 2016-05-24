@@ -16,7 +16,7 @@
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInsight.highlighting.ReadWriteUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -119,13 +119,11 @@ public class UsageInfoToUsageConverter {
   public static Usage convert(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
-      for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
-        if (isReadWriteAccessibleElements(primaryElements, detector)) {
-          final ReadWriteAccessDetector.Access rwAccess = detector.getExpressionAccess(usageElement);
-          return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
-                                                           rwAccess != ReadWriteAccessDetector.Access.Write,
-                                                           rwAccess != ReadWriteAccessDetector.Access.Read);
-        }
+      ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
+      if (rwAccess != null) {
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
+                                                         rwAccess != ReadWriteAccessDetector.Access.Write,
+                                                         rwAccess != ReadWriteAccessDetector.Access.Read);
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);
@@ -140,15 +138,9 @@ public class UsageInfoToUsageConverter {
     return usages;
   }
 
+
   @NotNull
   public static Usage[] convert(@NotNull final PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
     return ContainerUtil.map(usageInfos, info -> convert(primaryElements, info), new Usage[usageInfos.length]);
-  }
-
-  private static boolean isReadWriteAccessibleElements(@NotNull PsiElement[] elements, @NotNull ReadWriteAccessDetector detector) {
-    for (PsiElement element : elements) {
-      if (!detector.isReadWriteAccessible(element)) return false;
-    }
-    return true;
   }
 }
