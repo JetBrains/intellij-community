@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
@@ -173,8 +174,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     int errorCount = 0;
     int start = -1;
     for (int i = 0; i <= text.length(); i++) {
-      char c = i == text.length() ? 0 : text.charAt(i);
-      if (i == text.length() || isRepresentable(c, charset)) {
+      char c = i >= text.length() ? 0 : text.charAt(i);
+      char next = i + 1 >= text.length() ? 0 : text.charAt(i + 1);
+      char prev = i == 0 ? 0 : text.charAt(i - 1);
+      if (i == text.length() || isRepresentable(c, next, prev, charset)) {
         if (start != -1) {
           TextRange range = new TextRange(start, i);
           String message = InspectionsBundle.message("unsupported.character.for.the.charset", charset);
@@ -192,8 +195,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
   }
 
-  private static boolean isRepresentable(final char c, @NotNull Charset charset) {
-    String str = Character.toString(c);
+  private static boolean isRepresentable(final char c, final char next, char prev, @NotNull Charset charset) {
+    if (charset == CharsetToolkit.UTF8_CHARSET) {
+      if (Character.isSurrogatePair(c, next) || Character.isSurrogatePair(prev, c)) return true;
+    }
+    String str = String.valueOf(c);
     ByteBuffer out = charset.encode(str);
     CharBuffer buffer = charset.decode(out);
     return str.equals(buffer.toString());
