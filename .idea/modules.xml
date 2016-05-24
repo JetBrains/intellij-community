@@ -44,6 +44,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" filepath="$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../base/chunkio/chunkio.iml" filepath="$PROJECT_DIR$/../base/chunkio/chunkio.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/../base/chunkio-processor/chunkio-processor.iml" filepath="$PROJECT_DIR$/../base/chunkio-processor/chunkio-processor.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" group="java" />

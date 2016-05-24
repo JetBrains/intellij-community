@@ -862,6 +862,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("assetstudio")
         module("binary-resources")
         module("chunkio")
+        module("chunkio-processor")
         module("ddmlib")
         module("dvlib")
         module("draw9patch")
