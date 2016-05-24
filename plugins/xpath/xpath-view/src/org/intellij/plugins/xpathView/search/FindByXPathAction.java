@@ -20,7 +20,6 @@ import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,12 +44,12 @@ import java.util.Collections;
 public class FindByXPathAction extends AnAction {
 
     public void update(AnActionEvent e) {
-        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = e.getProject();
         e.getPresentation().setEnabled(project != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = e.getProject();
         final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
 
         if (project != null) {
