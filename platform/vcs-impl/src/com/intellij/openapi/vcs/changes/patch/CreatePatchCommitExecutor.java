@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -147,16 +148,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     public void execute(Collection<Change> changes, String commitMessage) {
-      if (! myPanel.isOkToExecute()) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          @Override
-          public void run() {
-            Messages
-              .showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
-          }
-        }, ModalityState.NON_MODAL, myProject);
-        return;
-      }
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (file.exists()) {
@@ -204,7 +195,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = PATCH_PATH;
         final boolean reversePatch = myPanel.isReversePatch();
 
-        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), reversePatch);
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myPanel.getBaseDirName(), reversePatch);
         PatchWriter.writePatches(myProject, fileName, patches, myCommitContext, myPanel.getEncoding());
         final String message;
         if (binaryCount == 0) {
@@ -241,6 +232,12 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     public void executionCanceled() {
+    }
+
+    @Override
+    @Nullable
+    public ValidationInfo validateFields() {
+      return myPanel.validateFields();
     }
 
     @Override

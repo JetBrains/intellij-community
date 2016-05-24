@@ -191,8 +191,8 @@ public abstract class HistoryDialogModel {
     return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
   }
 
-  public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myProject, getChanges(), path, isReverse, null);
+  public void createPatch(String path, String basePath, boolean isReverse) throws VcsException, IOException {
+    PatchCreator.create(myProject, basePath, getChanges(), path, isReverse, null);
   }
 
   public abstract Reverter createReverter();

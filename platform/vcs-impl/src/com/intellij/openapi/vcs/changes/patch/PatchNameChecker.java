@@ -15,44 +15,25 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 
 public class PatchNameChecker {
   public final static int MAX = 100;
   private final static int MAX_PATH = 255; // Windows path len restrictions
-  private final String myName;
-  private boolean myPreventsOk;
-  private String myError;
-  private final String myPath;
 
-  public PatchNameChecker(final String name) {
-    myPath = name;
-    myName = new File(name).getName();
-    myPreventsOk = false;
-  }
-
-  public boolean nameOk() {
-    if (myName == null || myName.length() == 0) {
-      myError = "File name cannot be empty";
-      myPreventsOk = true;
-      return false;
-    } else if (myPath.length() > MAX_PATH) {
-      myError = "File path should not be too long.";
-      myPreventsOk = true;
-      return false;
-    } else if (new File(myPath).exists()) {
-      myError = "File with the same name already exists";
-      myPreventsOk = false;
-      return false;
+  @Nullable
+  public static String validateName(@NotNull String name) {
+    String fileName = new File(name).getName();
+    if (StringUtil.isEmptyOrSpaces(fileName)) {
+      return "File name cannot be empty";
     }
-    return true;
-  }
-
-  public boolean isPreventsOk() {
-    return myPreventsOk;
-  }
-
-  public String getError() {
-    return myError;
+    else if (name.length() > MAX_PATH) {
+      return "File path should not be too long.";
+    }
+    return null;
   }
 }

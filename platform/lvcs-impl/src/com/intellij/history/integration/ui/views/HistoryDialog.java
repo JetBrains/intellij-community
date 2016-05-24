@@ -456,7 +456,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel(myProject);
       p.setFileName(getDefaultPatchFile());
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.isReversePatch());
+      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch());
 
       showNotification(LocalHistoryBundle.message("message.patch.created"));
       ShowFilePathAction.openFile(new File(p.getFileName()));
@@ -474,13 +474,30 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
-    final DialogBuilder b = new DialogBuilder(myProject);
-    JComponent createPatchPanel = p.getPanel();
-    b.setPreferredFocusComponent(IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel));
-    b.setTitle(message("create.patch.dialog.title"));
-    b.setCenterPanel(createPatchPanel);
-    p.installOkEnabledListener(aBoolean -> b.setOkActionEnabled(aBoolean));
-    return b.show() == DialogWrapper.OK_EXIT_CODE;
+    final JComponent createPatchPanel = p.getPanel();
+    final DialogWrapper dialogWrapper = new DialogWrapper(myProject, true) {
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        return createPatchPanel;
+      }
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel);
+      }
+
+      @Nullable
+      @Override
+      protected ValidationInfo doValidate() {
+        return p.validateFields();
+      }
+    };
+    dialogWrapper.setTitle(message("create.patch.dialog.title"));
+    dialogWrapper.setModal(true);
+    dialogWrapper.show();
+    return dialogWrapper.getExitCode() == DialogWrapper.OK_EXIT_CODE;
   }
 
 

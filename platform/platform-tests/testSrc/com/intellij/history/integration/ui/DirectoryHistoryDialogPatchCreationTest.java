@@ -29,7 +29,7 @@ public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
     assertSize(3, m.getRevisions());
 
     m.selectRevisions(0, 2);
-    m.createPatch(patchFilePath, false);
+    m.createPatch(patchFilePath, myProject.getBasePath(), false);
     clearRoot();
 
     applyPatch();
