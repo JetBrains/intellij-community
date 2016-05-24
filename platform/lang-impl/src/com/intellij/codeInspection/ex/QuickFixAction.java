@@ -48,6 +48,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -307,10 +308,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        final ActionToolbar toolbar = UIUtil.getParentOfType(ActionToolbar.class, button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
                                                          ActionPlaces.UNKNOWN,
-                                                         DataManager.getInstance().getDataContext(button)));
+                                                         toolbar == null ? DataManager.getInstance().getDataContext(button) : toolbar.getToolbarDataContext()));
         return true;
       }
     }.installOn(button);
