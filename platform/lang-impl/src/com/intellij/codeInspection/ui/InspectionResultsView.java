@@ -27,7 +27,6 @@ import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvi
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
-import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
@@ -317,7 +316,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
     specialGroup.add(new InvokeQuickFixAction(this));
-    specialGroup.add(new InspectionsOptionsToolbarAction(this));
     return createToolbar(specialGroup);
   }
 
