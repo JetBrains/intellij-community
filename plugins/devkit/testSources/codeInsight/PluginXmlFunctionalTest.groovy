@@ -157,6 +157,13 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
   }
 
+  public void testInnerClassSmartCompletion() throws Throwable {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar extends Foo {} }");
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
   public void testResolveExtensionsFromDependentDescriptor() throws Throwable {
     addPluginXml("xxx", """
         <id>com.intellij.xxx</id>
