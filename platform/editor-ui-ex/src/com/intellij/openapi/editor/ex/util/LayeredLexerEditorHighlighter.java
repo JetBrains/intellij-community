@@ -47,7 +47,6 @@ import java.util.*;
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<>();
   private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
-  private CharSequence myText;
 
   public LayeredLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     super(highlighter, scheme);
@@ -120,7 +119,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     updateLayers();
 
-    myText = text;
     super.setText(text);
   }
 
@@ -158,12 +156,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @Override
   public void documentChanged(DocumentEvent e) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean b = updateLayers();
+    boolean changed = updateLayers();
 
     synchronized (this) {
-      myText = e.getDocument().getCharsSequence();
-      if (b) {
-        setText(myText);
+      if (changed) {
+        setText(e.getDocument().getImmutableCharSequence());
       }
       else {
         super.documentChanged(e);
@@ -175,11 +172,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean b = updateLayers();
+    final boolean changed = updateLayers();
 
     synchronized (this) {
-      if (b) {
-        setText(myText);
+      if (changed) {
+        CharSequence text = myText;
+        myText = null;
+        setText(text);
       }
       return new LayeredHighlighterIteratorImpl(startOffset);
     }
