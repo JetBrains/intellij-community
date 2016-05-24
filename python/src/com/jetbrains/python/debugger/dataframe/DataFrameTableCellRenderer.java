@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger.array;
+package com.jetbrains.python.debugger.dataframe;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -25,25 +25,16 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
-/**
- * @author amarch
- */
-class ArrayTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
 
-  private double myMin = Double.MIN_VALUE;
-  private double myMax = Double.MIN_VALUE;
-  private String myComplexMin;
-  private String myComplexMax;
+class DataFrameTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
+
+
   private boolean myColored = true;
-  private final String myType;
 
-  public ArrayTableCellRenderer(double min, double max, String type) {
+  public DataFrameTableCellRenderer() {
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(LEFT);
     setVerticalAlignment(BOTTOM);
-    myMin = min;
-    myMax = max;
-    myType = type;
   }
 
   public void setColored(boolean colored) {
@@ -57,48 +48,32 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
       setText(value.toString());
     }
 
+    if (!(value instanceof TableValueDescriptor)) {
+      return this;
+    }
+
+    TableValueDescriptor descriptor = (TableValueDescriptor)value;
+
     if (hasFocus) {
       this.setBorder(new LineBorder(JBColor.BLUE, 2));
     }
 
-    if (myMax != myMin) {
-      if (myColored && value != null) {
-        try {
-          double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
+    if (myColored) {
+      try {
+        double rangedValue = descriptor.getRangedValue();
+        if (!Double.isNaN(rangedValue)) {
           this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
         }
-        catch (NumberFormatException ignored) {
-        }
       }
-      else {
-        this.setBackground(UIUtil.getBgFillColor(table));
+      catch (NumberFormatException ignored) {
+
       }
     }
+    else {
+      this.setBackground(new JBColor(UIUtil.getBgFillColor(table), UIUtil.getBgFillColor(table)));
+    }
+
 
     return this;
-  }
-
-  public void setMin(double min) {
-    myMin = min;
-  }
-
-  public void setMax(double max) {
-    myMax = max;
-  }
-
-  public double getMin() {
-    return myMin;
-  }
-
-  public double getMax() {
-    return myMax;
-  }
-
-  public void setComplexMin(String complexMin) {
-    myComplexMin = complexMin;
-  }
-
-  public void setComplexMax(String complexMax) {
-    myComplexMax = complexMax;
   }
 }
