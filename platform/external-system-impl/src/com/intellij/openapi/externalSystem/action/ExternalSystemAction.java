@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -49,7 +48,7 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
   }
 
   protected Project getProject(AnActionEvent e) {
-    return CommonDataKeys.PROJECT.getData(e.getDataContext());
+    return e.getProject();
   }
 
   protected ProjectSystemId getSystemId(AnActionEvent e) {
