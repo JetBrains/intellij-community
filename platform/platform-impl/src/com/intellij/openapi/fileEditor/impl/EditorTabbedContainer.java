@@ -339,7 +339,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file, true)).setIcon(icon).setTooltipText(tooltip).setObject(file)
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
       .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
@@ -383,10 +383,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   public static String calcTabTitle(final Project project, final VirtualFile file) {
-    return calcTabTitle(project, file, true);
-  }
-
-  public static String calcTabTitle(final Project project, final VirtualFile file, boolean skipNonOpenedFiles) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {

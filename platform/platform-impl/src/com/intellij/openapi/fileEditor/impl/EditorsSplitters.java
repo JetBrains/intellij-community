@@ -408,10 +408,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  void updateFileName(final VirtualFile updatedFile) {
+  void updateFileName(@Nullable final VirtualFile updatedFile) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
-      windows [i].updateFileName(updatedFile);
+      for (VirtualFile file : windows[i].getFiles()) {
+        if (updatedFile == null || file.getName().equals(updatedFile.getName())) {
+          windows[i].updateFileName(file);
+        }
+      }
     }
 
     Project project = myManager.getProject();

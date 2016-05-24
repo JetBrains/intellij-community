@@ -859,7 +859,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       if (newEditor) {
         clearWindowIfNeeded(window);
 
-        ourOpenFilesSetModificationCount.incrementAndGet();
         getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(FileEditorManagerImpl.this, file);
 
         FileEditor[] newEditors = new FileEditor[newProviders.length];
@@ -947,6 +946,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               .fileOpened(FileEditorManagerImpl.this, file);
           }
         });
+        ourOpenFilesSetModificationCount.incrementAndGet();
       }
 
       //[jeka] this is a hack to support back-forward navigation
@@ -2007,6 +2007,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   public void removeSelectionRecord(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     mySelectionHistory.remove(Pair.create(file, window));
+    updateFileName(file);
   }
 
   @NotNull
