@@ -20,6 +20,7 @@ import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -262,7 +263,8 @@ internal fun HttpRequest.isSignedRequest(): Boolean {
 
 @JvmOverloads
 internal fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean = request.isSignedRequest()): HttpHeaders? {
-  if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
+  if (BuiltInServerOptions.getInstance().allowUnsignedRequests ||
+      ApplicationManager.getApplication().isUnitTestMode) {
     return EmptyHttpHeaders.INSTANCE
   }
 
