@@ -19,6 +19,8 @@ import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.externalComponents.ExternalComponentManager
+import com.intellij.ide.externalComponents.UpdatableExternalComponent
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
@@ -143,8 +145,10 @@ object UpdateChecker {
     val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
 
     val updatedPlugins: Collection<PluginDownloader>?
+    val externalUpdates: Collection<ExternalUpdate>?
     try {
       updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
+      externalUpdates = updateExternal(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -154,7 +158,7 @@ object UpdateChecker {
     // show result
 
     ApplicationManager.getApplication().invokeLater({
-      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, !fromSettings, manualCheck)
+      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
     }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
   }
@@ -291,6 +295,37 @@ object UpdateChecker {
 
   @Throws(IOException::class)
   @JvmStatic
+  fun updateExternal(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+    val result = arrayListOf<ExternalUpdate>()
+    val manager = ExternalComponentManager.getInstance()
+    indicator?.text = IdeBundle.message("updates.external.progress")
+
+    for (source in manager.componentSources) {
+      indicator?.checkCanceled()
+      if (source.name in updateSettings.enabledExternalUpdateSources) {
+        try {
+          val siteResult = arrayListOf<UpdatableExternalComponent>()
+          for (component in source.getAvailableVersions(indicator, updateSettings)) {
+            if (component.isUpdateFor(manager.findExistingComponentMatching(component, source))) {
+              siteResult.add(component)
+            }
+          }
+          if (!siteResult.isEmpty()) {
+            result.add(ExternalUpdate(siteResult, source))
+          }
+        }
+        catch (e: Exception) {
+          LOG.warn(e)
+          showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
+        }
+      }
+    }
+
+    return result
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
   fun checkAndPrepareToInstall(downloader: PluginDownloader,
                                state: InstalledPluginsState,
                                toUpdate: MutableMap<PluginId, PluginDownloader>,
@@ -346,6 +381,7 @@ object UpdateChecker {
                                updateSettings: UpdateSettings,
                                updatedPlugins: Collection<PluginDownloader>?,
                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
+                               externalUpdates: Collection<ExternalUpdate>?,
                                enableLink: Boolean,
                                alwaysShowResults: Boolean) {
     val updatedChannel = checkForUpdateResult.updatedChannel
@@ -367,8 +403,13 @@ object UpdateChecker {
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
         showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
       }
+      return
     }
-    else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
+
+    var updateFound = false
+
+    if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
+      updateFound = true
       val runnable = { PluginUpdateInfoDialog(updatedPlugins, enableLink).show() }
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
@@ -382,7 +423,27 @@ object UpdateChecker {
         showNotification(project, message, runnable, NotificationUniqueType.PLUGINS)
       }
     }
-    else if (alwaysShowResults) {
+
+    if (externalUpdates != null && !externalUpdates.isEmpty()) {
+      updateFound = true
+
+      ourShownNotifications.remove(NotificationUniqueType.EXTERNAL)?.forEach { it.expire() }
+
+      for (update in externalUpdates) {
+        val runnable = { update.source.installUpdates(update.components) }
+
+        if (alwaysShowResults) {
+          runnable.invoke()
+        }
+        else {
+          val updates = update.components.joinToString(", ")
+          val message = IdeBundle.message("updates.external.ready.message", update.components.size, updates)
+          showNotification(project, message, runnable, NotificationUniqueType.EXTERNAL)
+        }
+      }
+    }
+
+    if (!updateFound && alwaysShowResults) {
       NoUpdatesDialog(enableLink).show()
     }
   }
@@ -539,5 +600,5 @@ object UpdateChecker {
     }
   }
 
-  private enum class NotificationUniqueType { PLATFORM, PLUGINS }
+  private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 }
