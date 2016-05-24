@@ -34,7 +34,8 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
                                                      new PyIfPostfixTemplate(),
                                                      new PyWhilePostfixTemplate(),
                                                      new PyIsNonePostfixTemplate(),
-                                                     new PyIsNotNonePostfixTemplate());
+                                                     new PyIsNotNonePostfixTemplate(),
+                                                     new PyPrintPostfixTemplate());
   }
 
   @Override
