@@ -131,9 +131,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   private static List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
-    return ContainerUtil.map(wrappers, wrapper -> {
-      return wrapper.getCertificate();
-    });
+    return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }
 
   @Override

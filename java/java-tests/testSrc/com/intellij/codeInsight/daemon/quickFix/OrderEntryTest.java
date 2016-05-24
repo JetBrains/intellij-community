@@ -91,9 +91,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      WriteCommandAction.runWriteCommandAction(null, () -> {
-        action.invoke(getProject(), getEditor(), getFile());
-      });
+      WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
       final IntentionAction afterAction = findActionWithText(text, infosAfter);

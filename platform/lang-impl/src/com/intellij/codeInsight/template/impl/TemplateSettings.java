@@ -213,8 +213,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            TemplateImpl def = getDefaultTemplate(t);
-            templateSetElement.addContent(serializeTemplate(t, def == null ? null : def.getTemplateContext()));
+            templateSetElement.addContent(serializeTemplate(t));
           }
         }
 
@@ -577,7 +576,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateContext defaultContext) {
+  static Element serializeTemplate(@NotNull TemplateImpl template) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -617,7 +616,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     try {
       Element contextElement = new Element(CONTEXT);
-      template.getTemplateContext().writeTemplateContext(contextElement, defaultContext);
+      template.getTemplateContext().writeTemplateContext(contextElement);
       element.addContent(contextElement);
     } catch (WriteExternalException ignore) {
     }

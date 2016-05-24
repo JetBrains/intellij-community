@@ -15,14 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.LinkedHashMap;
@@ -48,20 +44,6 @@ public class ClassUtil {
     }
 
     return superClassNames;
-  }
-
-  @NotNull
-  public static PsiType findPsiType(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    String typeText = descriptor.getTypeText();
-    final String key = getClassKey(typeText);
-    final Object cached = ctx.get(key);
-    if (cached instanceof PsiType) {
-      return (PsiType)cached;
-    }
-
-    final PsiType found = JavaPsiFacade.getElementFactory(descriptor.getProject()).createTypeFromText(typeText, descriptor.getPlaceFile());
-    ctx.put(key, found);
-    return found;
   }
 
   public static String getClassKey(String fqName) {

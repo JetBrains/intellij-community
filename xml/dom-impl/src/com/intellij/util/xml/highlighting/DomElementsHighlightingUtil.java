@@ -42,10 +42,8 @@ public class DomElementsHighlightingUtil {
   @Nullable
   public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
-    return createProblemDescriptors(problemDescriptor, s -> {
-      return manager
-        .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes());
-    });
+    return createProblemDescriptors(problemDescriptor, s -> manager
+      .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes()));
   }
 
   // TODO: move it to DomElementProblemDescriptorImpl

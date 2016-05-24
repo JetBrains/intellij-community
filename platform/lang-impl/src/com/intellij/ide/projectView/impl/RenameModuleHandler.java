@@ -99,9 +99,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       final ModifiableModuleModel modifiableModel = renameModule(inputString);
       if (modifiableModel == null) return false;
       CommandProcessor.getInstance().executeCommand(myProject, () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                                                                         () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                modifiableModel.commit();
-                                              })), IdeBundle.message("command.renaming.module", oldName), null);
+                                                                                                         () -> ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit())), IdeBundle.message("command.renaming.module", oldName), null);
       return true;
     }
 

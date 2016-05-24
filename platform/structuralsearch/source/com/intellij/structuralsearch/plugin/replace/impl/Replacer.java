@@ -192,9 +192,7 @@ public class Replacer {
       project,
       () -> {
         ApplicationManager.getApplication().runWriteAction(
-          () -> {
-            doReplace(element, replacementInfo);
-          }
+          () -> doReplace(element, replacementInfo)
         );
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       },

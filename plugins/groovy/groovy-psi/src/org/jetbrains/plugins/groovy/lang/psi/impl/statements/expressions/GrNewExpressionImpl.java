@@ -142,17 +142,6 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Override
-  @Nullable
-  public GrExpression getQualifier() {
-    final PsiElement[] children = getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof GrExpression) return (GrExpression)child;
-      if (PsiKeyword.NEW.equals(child.getText())) return null;
-    }
-    return null;
-  }
-
-  @Override
   public GrCodeReferenceElement getReferenceElement() {
     final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
     if (anonymous != null) return anonymous.getBaseClassReferenceGroovy();

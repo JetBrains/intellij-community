@@ -631,24 +631,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      ApplicationManager.getApplication().runWriteAction(
-        new ExternalChangeAction.ExternalDocumentChange(document, project) {
-          @Override
-          public void run() {
-            boolean wasWritable = document.isWritable();
-            DocumentEx documentEx = (DocumentEx)document;
-            documentEx.setReadOnly(false);
-            LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
-            file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-            if (!isBinaryWithoutDecompiler(file)) {
-              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-              documentEx.setReadOnly(!wasWritable);
-            }
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+      new ExternalChangeAction.ExternalDocumentChange(document, project) {
+        @Override
+        public void run() {
+          boolean wasWritable = document.isWritable();
+          DocumentEx documentEx = (DocumentEx)document;
+          documentEx.setReadOnly(false);
+          LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
+          file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+          if (!isBinaryWithoutDecompiler(file)) {
+            documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+            documentEx.setReadOnly(!wasWritable);
           }
         }
-      );
-    }, UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+      }
+    ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     myUnsavedDocuments.remove(document);
 
@@ -829,9 +827,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.warn(exception);
     }
 
-    final String text = StringUtil.join(failures.values(), e -> {
-      return e.getMessage();
-    }, "\n");
+    final String text = StringUtil.join(failures.values(), e -> e.getMessage(), "\n");
 
     final DialogWrapper dialog = new DialogWrapper(null) {
       {

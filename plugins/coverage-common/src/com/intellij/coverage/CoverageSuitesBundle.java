@@ -138,9 +138,7 @@ public class CoverageSuitesBundle {
   }
 
   public String getPresentableName() {
-    return StringUtil.join(mySuites, coverageSuite -> {
-      return coverageSuite.getPresentableName();
-    }, ", ");
+    return StringUtil.join(mySuites, coverageSuite -> coverageSuite.getPresentableName(), ", ");
   }
 
   public boolean isModuleChecked(final Module module) {

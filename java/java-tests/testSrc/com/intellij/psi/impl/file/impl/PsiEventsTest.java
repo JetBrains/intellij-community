@@ -696,15 +696,11 @@ public class PsiEventsTest extends PsiTestCase {
       this.newText = newText;
       original = getFile().getText();
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        document.setText(newText);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> document.setText(newText));
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        document.setText(original);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> document.setText(original));
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
@@ -787,9 +783,7 @@ public class PsiEventsTest extends PsiTestCase {
     Document document = documentManager.getDocument(getFile());
     assertTrue(documentManager.isCommitted(document));
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.setText("");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText(""));
 
     documentManager.commitAllDocuments();
     assertTrue(documentManager.isCommitted(document));

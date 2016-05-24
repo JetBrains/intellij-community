@@ -200,9 +200,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       }
 
       ContainerUtil.sort(entries, (o1, o2) -> weights.get(o2) - weights.get(o1));
-      myPathsIndex = ContainerUtil.map2List(entries, entry -> {
-        return entry.getKey();
-      });
+      myPathsIndex = ContainerUtil.map2List(entries, entry -> entry.getKey());
     }
     return myPathsIndex;
   }

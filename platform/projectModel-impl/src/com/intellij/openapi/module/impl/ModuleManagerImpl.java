@@ -178,9 +178,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       loadModules((ModuleModelImpl)model);
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        model.commit();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> model.commit());
     }
   }
 
@@ -323,9 +321,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       final Module module = myModuleModel.getModuleByFilePath(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
       if (module != null) {
         myModuleModel.myModules.remove(module.getName());
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Disposer.dispose(module);
-        }, module.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
       }
     }
 

@@ -47,8 +47,6 @@ public class FromAbstractTypeMethodsHintProcessor extends SignatureHintProcessor
     if (aClass == null) return Collections.emptyList();
 
     Collection<MethodSignature> abstractSignatures = OverrideImplementExploreUtil.getMethodSignaturesToImplement(aClass);
-    return ContainerUtil.map(abstractSignatures, signature -> {
-      return signature.getParameterTypes();
-    });
+    return ContainerUtil.map(abstractSignatures, signature -> signature.getParameterTypes());
   }
 }

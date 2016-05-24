@@ -304,9 +304,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, myTaskManager.getLocalTasks().size()); // extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
 
-    assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> {
-      return task.getSummary().equals("New Changelist");
-    }));
+    assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> task.getSummary().equals("New Changelist")));
   }
 
   private LocalChangeList addChangeList(String title, String comment) {

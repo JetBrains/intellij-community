@@ -116,7 +116,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages(false);
           // TODO: Install Markdown from a local file
-          manager.install(list(PyRequirement.fromString("Markdown<2.2"),
+          manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
                                new PyRequirement("httplib2")), Collections.<String>emptyList());
           final List<PyPackage> packages2 = manager.getPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);

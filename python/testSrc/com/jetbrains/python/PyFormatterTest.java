@@ -455,9 +455,7 @@ public class PyFormatterTest extends PyTestCase {
     getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     final String testName = "formatter/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      myFixture.type("\n(");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> myFixture.type("\n("));
     myFixture.checkResultByFile(testName + "_after.py");
   }
 

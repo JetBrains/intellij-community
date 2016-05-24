@@ -288,9 +288,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       synchronized (this) {
         blockSwingThread();
         SwingUtilities.invokeLater(new MyRunnable("1"));
-        ApplicationManager.getApplication().invokeLater(() -> {
-          ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL);
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL), ModalityState.NON_MODAL);
         SwingUtilities.invokeLater(LEAVE_MODAL);
         ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
       }

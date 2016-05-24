@@ -161,9 +161,7 @@ public class FindDialog extends DialogWrapper {
     validateFindButton();
 
     if (haveResultsPreview()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        scheduleResultsUpdate();
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> scheduleResultsUpdate(), ModalityState.any());
     }
   }
 
@@ -550,9 +548,14 @@ public class FindDialog extends DialogWrapper {
   }
 
   public void setModel(@NotNull FindModel model) {
+    String previousStringToFind = getStringToFind();
+    String newStringToFind = model.getStringToFind();
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
+    if (!Comparing.equal(newStringToFind, previousStringToFind)) {
+      myInputComboBox.getEditor().setItem(newStringToFind);
+    }
   }
 
   private void validateFindButton() {
@@ -1304,9 +1307,7 @@ public class FindDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, null, files -> {
-          myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
-        });
+        FileChooser.chooseFiles(descriptor, myProject, null, files -> myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl()));
       }
     });
 

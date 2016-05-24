@@ -163,9 +163,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         doPostponedFormatting();
       }
       else {
-        application.runWriteAction(() -> {
-          doPostponedFormatting();
-        });
+        application.runWriteAction(() -> doPostponedFormatting());
       }
     }
   }

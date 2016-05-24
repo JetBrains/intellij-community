@@ -73,9 +73,7 @@ public class JiraLegacyApi extends JiraRemoteApi {
     if (channel != null) {
       List<Element> children = channel.getChildren("item");
       LOG.debug("Total issues in JIRA RSS feed: " + children.size());
-      return ContainerUtil.map(children, element -> {
-        return new JiraSoapTask(element, myRepository);
-      });
+      return ContainerUtil.map(children, element -> new JiraSoapTask(element, myRepository));
     }
     else {
       LOG.warn("JIRA channel not found");

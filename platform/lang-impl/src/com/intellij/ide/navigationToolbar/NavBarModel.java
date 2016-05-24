@@ -167,9 +167,7 @@ public class NavBarModel {
 
     final List<Object> updatedModel = new ArrayList<Object>();
 
-    ApplicationManager.getApplication().runReadAction(() -> {
-      traverseToRoot(psiElement, roots, updatedModel);
-    });
+    ApplicationManager.getApplication().runReadAction(() -> traverseToRoot(psiElement, roots, updatedModel));
 
     setModel(ContainerUtil.reverse(updatedModel));
   }

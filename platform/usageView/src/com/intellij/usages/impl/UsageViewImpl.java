@@ -888,9 +888,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                             UsageViewImpl.this);
               }
             }
-            ApplicationManager.getApplication().runReadAction(() -> {
-              appendUsage(usage);
-            });
+            ApplicationManager.getApplication().runReadAction(() -> appendUsage(usage));
           }
           return !indicator.isCanceled();
         };

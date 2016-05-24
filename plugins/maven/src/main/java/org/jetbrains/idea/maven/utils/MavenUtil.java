@@ -252,15 +252,11 @@ public class MavenUtil {
   }
 
   public static List<String> collectPaths(List<VirtualFile> files) {
-    return ContainerUtil.map(files, file -> {
-      return file.getPath();
-    });
+    return ContainerUtil.map(files, file -> file.getPath());
   }
 
   public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
-    return ContainerUtil.map(projects, project -> {
-      return project.getFile();
-    });
+    return ContainerUtil.map(projects, project -> project.getFile());
   }
 
   public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
@@ -272,9 +268,7 @@ public class MavenUtil {
   }
 
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
-    return ContainerUtil.map2List(map.entrySet(), tuEntry -> {
-      return Pair.create(tuEntry.getKey(), tuEntry.getValue());
-    });
+    return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
 
   public static String formatHtmlImage(URL url) {

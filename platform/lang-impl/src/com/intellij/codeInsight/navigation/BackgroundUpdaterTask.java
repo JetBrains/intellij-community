@@ -92,9 +92,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   public boolean updateComponent(final PsiElement element, @Nullable final Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
-      });
+      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element))));
       return true;
     }
 
@@ -138,13 +136,12 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    onFinished();
     myPopup.setCaption(getCaption(getCurrentSize()));
     paintBusy(false);
   }
 
   @Override
-  protected void onFinished() {
+  public void onFinished() {
     myFinished = true;
   }
 

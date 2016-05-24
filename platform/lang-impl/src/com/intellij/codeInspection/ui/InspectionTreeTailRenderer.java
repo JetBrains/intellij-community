@@ -21,12 +21,14 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,6 +38,9 @@ import java.util.TreeMap;
  */
 public abstract class InspectionTreeTailRenderer {
   private final static int MAX_LEVEL_TYPES = 5;
+
+  private final static JBColor TREE_RED = new JBColor(new Color(184, 66, 55), new Color(204, 102, 102));
+  private final static JBColor TREE_GRAY = new JBColor(Gray._153, Gray._117);
 
   private final Map<HighlightSeverity, String> myPluralizedSeverityNames = new SoftHashMap<>();
   private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = new SoftHashMap<>();
@@ -74,8 +79,8 @@ public abstract class InspectionTreeTailRenderer {
       node.visitProblemSeverities(myItemCounter);
       if (myItemCounter.size() > MAX_LEVEL_TYPES) {
         appendText(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                         myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
-               SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                                             myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
+                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
         for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
@@ -83,9 +88,9 @@ public abstract class InspectionTreeTailRenderer {
           final Integer occur = entry.getValue();
 
           SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-          if (level == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY) {
-            attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
-          }
+          attrs = attrs.derive(-1, level == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
+                                   ? TREE_RED
+                                   : TREE_GRAY, null, null);
           appendText(occur + " " + getPresentableName(level, occur > 1) + " ", attrs);
         }
       }

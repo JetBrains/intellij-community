@@ -92,9 +92,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
 
     WriteCommandAction.runWriteCommandAction(getProject(),
-                                             () -> {
-                                               myEditor.getDocument().deleteString(0, 2);
-                                             });
+                                             () -> myEditor.getDocument().deleteString(0, 2));
 
     checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
   }

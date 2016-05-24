@@ -49,7 +49,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
   }
 
   @Override
-  protected boolean isEnabled(@NotNull InspectionResultsView view) {
+  protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
     final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
     return wrapper != null && HighlightDisplayKey.find(wrapper.getShortName()) != null;
   }
@@ -69,8 +69,8 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     }
 
     @Override
-    protected boolean isEnabled(@NotNull InspectionResultsView view) {
-      final boolean enabled = super.isEnabled(view);
+    protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
+      final boolean enabled = super.isEnabled(view, e);
       if (!enabled) return false;
       final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper().getShortName());
       final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getProjectProfileImpl();
@@ -116,8 +116,8 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     }
 
     @Override
-    protected boolean isEnabled(@NotNull InspectionResultsView view) {
-      return super.isEnabled(view) && getPsiElement(view) != null;
+    protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
+      return super.isEnabled(view, e) && getPsiElement(view) != null;
     }
 
     @Override

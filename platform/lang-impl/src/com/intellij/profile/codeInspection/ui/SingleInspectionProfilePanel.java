@@ -871,14 +871,10 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           };
         final HighlightSeverity severity =
-          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> {
-            return node.getDefaultDescriptor().getState();
-          }));
+          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
         severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> {
-          return node.getDefaultDescriptor();
-        }), mySelectedProfile, project, null) {
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), mySelectedProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
             myTreeTable.updateUI();

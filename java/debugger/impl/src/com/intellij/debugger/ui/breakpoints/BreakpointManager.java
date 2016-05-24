@@ -479,9 +479,7 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint));
   }
 
   public void writeExternal(@NotNull final Element parentNode) {

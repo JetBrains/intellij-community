@@ -6,7 +6,6 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -17,7 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Files
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
@@ -102,10 +100,7 @@ internal class HeavyBuiltInWebServerTest {
       createModule(projectDirPath, project)
 
       val dir = projectDir.resolve(".coverage")
-      if (SystemInfo.isWindows) {
-        Files.setAttribute(dir, "dos:hidden", true)
-      }
-
+      dir.createDirectories()
       val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")

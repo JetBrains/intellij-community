@@ -16,9 +16,15 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -50,7 +56,6 @@ public class InspectionNodeInfo extends JPanel {
     InspectionProfileImpl currentProfile =
       (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
     HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
-    JButton button = new JButton();
     boolean enabled = currentProfile.isToolEnabled(key);
 
     JPanel titlePanel = new JPanel();
@@ -83,11 +88,7 @@ public class InspectionNodeInfo extends JPanel {
     add(pane,
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
                                new JBInsets(0, 10, 0, 0), getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width, 0));
-    add(button,
-        new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new JBInsets(15, 9, 9, 0), 0, 0));
-    button.setText((enabled ? "Disable" : "Enable") + " inspection");
-
+    JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -102,6 +103,28 @@ public class InspectionNodeInfo extends JPanel {
         }, project);
         return true;
       }
-    }.installOn(button);
+    }.installOn(enableButton);
+
+    JButton runInspectionOnButton = new JButton(InspectionsBundle.message("run.inspection.on.file.intention.text"));
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        final AnAction action = ActionManager.getInstance().getAction("RunInspectionOn");
+        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
+                                                                   DataManager.getInstance().getDataContext(runInspectionOnButton)));
+        return true;
+      }
+    }.installOn(runInspectionOnButton);
+
+    JPanel buttons = new JPanel();
+    buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
+    buttons.add(enableButton);
+    buttons.add(Box.createHorizontalStrut(JBUI.scale(3)));
+    buttons.add(runInspectionOnButton);
+
+    add(buttons,
+        new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                               new JBInsets(15, 9, 9, 0), 0, 0));
+
   }
 }

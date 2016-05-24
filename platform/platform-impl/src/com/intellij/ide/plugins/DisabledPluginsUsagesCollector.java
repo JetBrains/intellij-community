@@ -34,8 +34,6 @@ public class DisabledPluginsUsagesCollector extends UsagesCollector {
 
   @NotNull
   public Set<UsageDescriptor> getUsages() {
-    return ContainerUtil.map2Set(PluginManagerCore.getDisabledPlugins(), descriptor -> {
-      return new UsageDescriptor(descriptor, 1);
-    });
+    return ContainerUtil.map2Set(PluginManagerCore.getDisabledPlugins(), descriptor -> new UsageDescriptor(descriptor, 1));
   }
 }

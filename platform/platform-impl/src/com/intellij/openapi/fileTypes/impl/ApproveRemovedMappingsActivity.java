@@ -67,9 +67,7 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
               }
             });
             Notifications.Bus.notify(notification, project);
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              FileTypeManager.getInstance().associate(fileType, matcher);
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileType, matcher));
             iterator.remove();
           }
         }

@@ -322,9 +322,7 @@ public class CreateResourceBundleDialogComponent {
       restrictedLocales = Collections.emptyList();
     } else {
       locales = Collections.emptyList();
-      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), propertiesFile -> {
-        return propertiesFile.getLocale();
-      });
+      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.getLocale());
     }
     myLocalesModel = new CollectionListModel<Locale>(locales) {
       @Override

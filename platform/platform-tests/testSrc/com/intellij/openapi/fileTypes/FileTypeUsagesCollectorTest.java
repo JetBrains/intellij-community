@@ -37,12 +37,8 @@ public class FileTypeUsagesCollectorTest extends LightPlatformCodeInsightFixture
       assertEquals(1, usage.getValue());
     }
     assertEquals(
-      ContainerUtil.map2Set(fileTypes, (NotNullFunction<FileType, String>)fileType -> {
-        return fileType.getName();
-      }),
-      ContainerUtil.map2Set(usages, (NotNullFunction<UsageDescriptor, String>)usageDescriptor -> {
-        return usageDescriptor.getKey();
-      })
+      ContainerUtil.map2Set(fileTypes, (NotNullFunction<FileType, String>)fileType -> fileType.getName()),
+      ContainerUtil.map2Set(usages, (NotNullFunction<UsageDescriptor, String>)usageDescriptor -> usageDescriptor.getKey())
     );
   }
 

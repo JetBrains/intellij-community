@@ -102,9 +102,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   }
 
   private void addContentRoot(final String path) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ModuleRootModificationUtil.addContentRoot(getModule(), path);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.addContentRoot(getModule(), path));
   }
 
   private ModuleRootManager getRootManager() {

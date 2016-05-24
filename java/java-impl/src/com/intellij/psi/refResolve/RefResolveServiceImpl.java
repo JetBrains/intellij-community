@@ -169,9 +169,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
     List<VirtualFile> sub = new ArrayList<VirtualFile>(list).subList(0, Math.min(list.size(), 100));
-    return list.size() + " files: " + StringUtil.join(sub, file -> {
-      return file.getName();
-    }, ", ") + (list.size() == sub.size() ? "" : "...");
+    return list.size() + " files: " + StringUtil.join(sub, file -> file.getName(), ", ") + (list.size() == sub.size() ? "" : "...");
   }
 
   private void initListeners(@NotNull MessageBus messageBus, @NotNull PsiManager psiManager) {
@@ -538,9 +536,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }, indicator);
       return result[0];
     };
-    List<Future<Boolean>> futures = ContainerUtil.map(Collections.nCopies(parallelism, ""), s -> {
-      return myApplication.executeOnPooledThread(processFileFromSet);
-    });
+    List<Future<Boolean>> futures = ContainerUtil.map(Collections.nCopies(parallelism, ""), s -> myApplication.executeOnPooledThread(processFileFromSet));
 
     List<Boolean> results = ContainerUtil.map(futures, future -> {
       try {

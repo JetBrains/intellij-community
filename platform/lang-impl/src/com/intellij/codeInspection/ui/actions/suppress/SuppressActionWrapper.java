@@ -37,6 +37,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -127,9 +128,19 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     }
 
     @Override
-    protected boolean isEnabled(@NotNull InspectionResultsView view) {
-      for (SuppressableInspectionTreeNode node : getNodesToSuppress(view)) {
+    protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
+      final Set<SuppressableInspectionTreeNode> suppressNodes = getNodesToSuppress(view);
+      for (SuppressableInspectionTreeNode node : suppressNodes) {
         if (node.getAvailableSuppressActions().contains(mySuppressAction)) {
+          String text = mySuppressAction.getFamilyName();
+          if (suppressNodes.size() == 1) {
+            final PsiElement element = node.getSuppressContent().getFirst();
+            if (element != null) {
+              mySuppressAction.isAvailable(view.getProject(), null, element);
+              text = mySuppressAction.getText();
+            }
+          }
+          e.getPresentation().setText(text);
           return true;
         }
       }

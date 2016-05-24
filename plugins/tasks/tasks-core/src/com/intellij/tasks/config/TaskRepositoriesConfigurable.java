@@ -219,9 +219,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   }
 
   public void apply() throws ConfigurationException {
-    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> {
-      return taskRepository.clone();
-    });
+    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);
     RecentTaskRepositories.getInstance().addRepositories(myRepositories);

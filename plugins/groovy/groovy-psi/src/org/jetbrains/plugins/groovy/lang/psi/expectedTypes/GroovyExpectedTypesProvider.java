@@ -100,9 +100,7 @@ public class GroovyExpectedTypesProvider {
 
   public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
     TypeConstraint[] constraints = calculateTypeConstraints(element);
-    return ContainerUtil.map(constraints, constraint -> {
-      return constraint.getDefaultType();
-    });
+    return ContainerUtil.map(constraints, constraint -> constraint.getDefaultType());
   }
 
   private static class MyCalculator extends GroovyElementVisitor {

@@ -94,10 +94,8 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         return;
       }
       
-      WriteCommandAction.runWriteCommandAction(project, () -> {
-        DumbService.getInstance(project).withAlternativeResolveEnabled(
-          () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null)));
-      });
+      WriteCommandAction.runWriteCommandAction(project, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null))));
     }
 
     

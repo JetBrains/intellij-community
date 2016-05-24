@@ -73,25 +73,23 @@ class JiraSoapTask extends JiraTask {
 
     Element comments = element.getChild("comments");
     if (comments != null) {
-      myComments = ContainerUtil.map(comments.getChildren("comment"), element1 -> {
-        return new Comment() {
-          @Override
-          public String getText() {
-            return element1.getText();
-          }
+      myComments = ContainerUtil.map(comments.getChildren("comment"), element1 -> new Comment() {
+        @Override
+        public String getText() {
+          return element1.getText();
+        }
 
-          @Nullable
-          @Override
-          public String getAuthor() {
-            return element1.getAttributeValue("author");
-          }
+        @Nullable
+        @Override
+        public String getAuthor() {
+          return element1.getAttributeValue("author");
+        }
 
-          @Nullable
-          @Override
-          public Date getDate() {
-            return parseDate(element1.getAttributeValue("created"));
-          }
-        };
+        @Nullable
+        @Override
+        public Date getDate() {
+          return parseDate(element1.getAttributeValue("created"));
+        }
       });
     } else {
       myComments = ContainerUtil.emptyList();

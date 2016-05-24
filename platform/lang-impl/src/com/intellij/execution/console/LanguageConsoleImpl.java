@@ -136,9 +136,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered
-    ApplicationManager.getApplication().invokeLater(() -> {
-      installEditorFactoryListener();
-    }, getProject().getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
   }
 
   @Override

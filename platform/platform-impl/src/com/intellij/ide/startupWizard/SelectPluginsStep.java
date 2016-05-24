@@ -151,9 +151,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         requiresBuffer.append("   (");
       }
       requiresBuffer.append("required by ");
-      requiresBuffer.append(StringUtil.join(requiredBy, ideaPluginDescriptor -> {
-        return getAbbreviatedName(ideaPluginDescriptor);
-      }, ", "));
+      requiresBuffer.append(StringUtil.join(requiredBy, ideaPluginDescriptor -> getAbbreviatedName(ideaPluginDescriptor), ", "));
     }
     if (requiresBuffer.length() > 0) {
       requiresBuffer.append(")");

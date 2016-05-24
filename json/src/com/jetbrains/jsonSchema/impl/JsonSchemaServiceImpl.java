@@ -154,9 +154,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) return null;
-    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)wrapper -> {
-      return Pair.create(wrapper.isUserSchema(), wrapper.getName());
-    });
+    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
   }
 
   @Nullable

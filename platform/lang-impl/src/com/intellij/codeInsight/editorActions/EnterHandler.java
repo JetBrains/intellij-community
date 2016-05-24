@@ -477,9 +477,10 @@ public class EnterHandler extends BaseEnterHandler {
     }
     
     private int adjustLineIndent(CharSequence docChars) {
+      Language language = getLanguage(myDataContext);
       int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
       int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, myOffset);
+      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, language, myOffset);
       if (newIndent == null) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);

@@ -102,9 +102,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     }
     final ResourceBundle resourceBundle = representative.getPropertiesFile().getResourceBundle();
     final List<IProperty> properties = ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(),
-                                                                (NullableFunction<PropertiesFile, IProperty>)propertiesFile -> {
-                                                                  return propertiesFile.findPropertyByKey(key);
-                                                                });
+                                                                (NullableFunction<PropertiesFile, IProperty>)propertiesFile -> propertiesFile.findPropertyByKey(key));
     final PropertiesCopyDialog dlg = new PropertiesCopyDialog(properties, resourceBundle);
     if (!properties.isEmpty() && dlg.showAndGet()) {
       final String propertyNewName = dlg.getCurrentPropertyName();
@@ -140,9 +138,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     if (!propertiesFileMapping.isEmpty()) {
       WriteCommandAction.runWriteCommandAction(project, () -> {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
-                                                                                                (Function<PropertiesFile, PsiElement>)file -> {
-                                                                                                  return file.getContainingFile();
-                                                                                                }))) return;
+                                                                                                (Function<PropertiesFile, PsiElement>)file -> file.getContainingFile()))) return;
         for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
           final String value = entry.getKey().getValue();
           final PropertiesFile target = entry.getValue();

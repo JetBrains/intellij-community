@@ -53,9 +53,7 @@ public abstract class DiffWindowBase {
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
-      .setPreferredFocusedComponent(() -> {
-        return myProcessor.getPreferredFocusedComponent();
-      })
+      .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> {
         myProcessor.updateRequest();
       })

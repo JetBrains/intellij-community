@@ -359,9 +359,7 @@ public class TestNGUtil {
     if (psiMethods != null) {
       for (final PsiMethod psiMethod : psiMethods) {
         ApplicationManager.getApplication().runReadAction(
-          () -> {
-            appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
-          }
+          () -> appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod)
         );
       }
     }

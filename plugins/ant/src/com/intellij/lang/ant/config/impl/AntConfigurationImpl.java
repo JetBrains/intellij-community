@@ -396,9 +396,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private void runWhenInitialized(final Runnable runnable) {
     if (getProject().isInitialized()) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        runnable.run();
-      });
+      ApplicationManager.getApplication().runReadAction(() -> runnable.run());
     }
     else {
       myStartupManager.runWhenProjectIsInitialized(() -> runnable.run());
@@ -619,7 +617,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       try {
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        final Project project = dataContext.getData(CommonDataKeys.PROJECT);
         if (project == null || project.isDisposed()) {
           targetDone.up();
         }
@@ -780,9 +778,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               finally {
                 myInitThread = null;
                 myIsInitialized = Boolean.TRUE;
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  myEventDispatcher.getMulticaster().configurationLoaded();
-                }, ModalityState.any());
+                ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().configurationLoaded(), ModalityState.any());
               }
             }
           });
@@ -835,9 +831,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!app.isDispatchThread() || task.isHeadless()) {
       // for headless tasks we need to ensure async execution. 
       // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
-      app.invokeLater(() -> {
-        task.queue();
-      }, ModalityState.any());
+      app.invokeLater(() -> task.queue(), ModalityState.any());
     }
     else {
       task.queue();

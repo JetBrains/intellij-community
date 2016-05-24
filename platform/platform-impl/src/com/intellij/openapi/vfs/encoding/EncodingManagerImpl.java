@@ -13,13 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 17, 2007
- * Time: 3:20:51 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -44,8 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -107,8 +99,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
-        if (!isEditorOpenedFor(document)) return;
-        queueUpdateEncodingFromContent(document);
+        if (isEditorOpenedFor(document)) {
+          queueUpdateEncodingFromContent(document);
+        }
       }
     }, this);
     editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -165,11 +158,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
     return ApplicationManager.getApplication().runReadAction((Computable<Charset>)() -> {
-        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
-        if (charsetFromContent != null) {
-          setCachedCharsetFromContent(charsetFromContent, null, document);
-        }
-        return charsetFromContent;
+      Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
+      if (charsetFromContent != null) {
+        setCachedCharsetFromContent(charsetFromContent, null, document);
+      }
+      return charsetFromContent;
     });
   }
 

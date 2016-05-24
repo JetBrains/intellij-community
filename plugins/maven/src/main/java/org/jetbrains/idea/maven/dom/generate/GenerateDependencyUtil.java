@@ -49,9 +49,7 @@ public class GenerateDependencyUtil {
     List<MavenDomDependency> dependencies = new ArrayList<MavenDomDependency>();
 
     MavenDomProjectModelMember[] memberCandidates =
-      ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> {
-        return new MavenDomProjectModelMember(dependency);
-      });
+      ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> new MavenDomProjectModelMember(dependency));
     MemberChooser<MavenDomProjectModelMember> chooser =
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
         protected ShowContainersAction getShowContainersAction() {
@@ -76,9 +74,7 @@ public class GenerateDependencyUtil {
     if (chooser.getExitCode() == MemberChooser.OK_EXIT_CODE) {
       final MavenDomProjectModelMember[] members = chooser.getSelectedElements(new MavenDomProjectModelMember[0]);
       if (members != null) {
-        dependencies.addAll(ContainerUtil.mapNotNull(members, mavenDomProjectModelMember -> {
-          return mavenDomProjectModelMember.getDependency();
-        }));
+        dependencies.addAll(ContainerUtil.mapNotNull(members, mavenDomProjectModelMember -> mavenDomProjectModelMember.getDependency()));
       }
     }
 

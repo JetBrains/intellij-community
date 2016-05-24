@@ -91,9 +91,7 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
     assertNotNull(form);
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          myGenerator.generate(form);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> myGenerator.generate(form));
       }
       catch (Exception e) {
         fail(e.getMessage());

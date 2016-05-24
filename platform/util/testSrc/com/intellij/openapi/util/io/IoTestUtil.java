@@ -164,9 +164,7 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> {
-      return root.getPath().toUpperCase(Locale.US).charAt(0);
-    });
+    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
 
     char drive = 0;
     for (char c = 'E'; c <= 'Z'; c++) {

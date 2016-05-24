@@ -452,9 +452,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        getLibraryEditor().addRoots(rootsToAttach);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
       onRootsChanged();
       myTreeBuilder.queueUpdate();

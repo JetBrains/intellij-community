@@ -71,9 +71,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(ServerType.EP_NAME.getExtensions(),
-                                             type -> {
-                                               return type.getPresentableName();
-                                             }, ", ");
+                                             type -> type.getPresentableName(), ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);

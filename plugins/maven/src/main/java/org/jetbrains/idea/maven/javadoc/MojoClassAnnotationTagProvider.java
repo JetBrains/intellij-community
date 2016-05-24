@@ -44,9 +44,7 @@ public class MojoClassAnnotationTagProvider implements CustomJavadocTagProvider 
 
   @Override
   public List<JavadocTagInfo> getSupportedTags() {
-    return ContainerUtil.map(ANNOTATION_NAMES, name -> {
-      return new MojoAnnotationInfo(name);
-    });
+    return ContainerUtil.map(ANNOTATION_NAMES, name -> new MojoAnnotationInfo(name));
   }
 }
 

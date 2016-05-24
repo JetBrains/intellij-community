@@ -128,9 +128,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       myField = field;
       myClass = aClass;
-      myExpectedTypes = ContainerUtil.map(expectedTypes, type -> {
-        return SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type);
-      });
+      myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));
       myDefaultFieldName = field.getName();
     }
 

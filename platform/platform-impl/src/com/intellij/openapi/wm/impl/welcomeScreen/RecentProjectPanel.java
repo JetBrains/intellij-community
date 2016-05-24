@@ -154,9 +154,7 @@ public class RecentProjectPanel extends JPanel {
 
         if (selection != null && selection.length > 0) {
           final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + StringUtil.join(selection, action -> {
-                                                       return ((AnAction)action).getTemplatePresentation().getText();
-                                                     }, "'\n'") +
+                                                     "Remove '" + StringUtil.join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());

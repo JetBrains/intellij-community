@@ -264,16 +264,12 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     else if (e.getDocument() == myNewDocument) {
       commitToOriginal(e);
       if (!isValid()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          closeEditor();
-        }, myProject.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
       }
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
-      ApplicationManager.getApplication().invokeLater(() -> {
-        closeEditor();
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
     }
   }
 

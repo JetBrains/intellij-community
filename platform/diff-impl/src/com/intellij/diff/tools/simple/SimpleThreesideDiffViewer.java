@@ -22,11 +22,8 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeLineFragmentImpl;
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.simple.ThreesideDiffChangeBase.ConflictType;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -131,32 +128,32 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                     comparisonPolicy, indicator);
 
+      List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        return ContainerUtil.map(lineFragments, (fragment) -> DiffUtil.getLineMergeType(fragment, documents, comparisonPolicy));
+      });
+
+      List<MergeInnerDifferences> innerFragments = null;
       if (getHighlightPolicy().isFineFragments()) {
-        List<MergeLineFragment> fineLineFragments = new ArrayList<>(lineFragments.size());
+        innerFragments = new ArrayList<>(lineFragments.size());
 
-        for (final MergeLineFragment fragment : lineFragments) {
-          CharSequence[] chunks = ReadAction.compute(() -> {
+        for (int i = 0; i < lineFragments.size(); i++) {
+          final MergeLineFragment fragment = lineFragments.get(i);
+          final MergeConflictType conflictType = conflictTypes.get(i);
+
+          List<CharSequence> chunks = ReadAction.compute(() -> {
             indicator.checkCanceled();
-
-            CharSequence[] result = new CharSequence[3];
-            result[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
-            result[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
-            result[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
-
-            ConflictType type = ThreesideDiffChangeBase.calcType(fragment, documents, comparisonPolicy);
-            if (!type.isChange(Side.LEFT)) result[0] = null;
-            if (!type.isChange(Side.RIGHT)) result[2] = null;
-            return result;
+            return ThreeSide.map(side -> {
+              if (!conflictType.isChange(side)) return null;
+              return getChunkContent(fragment, documents, side);
+            });
           });
 
-          List<MergeWordFragment> wordFragments = DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator);
-          fineLineFragments.add(new MergeLineFragmentImpl(fragment, wordFragments));
+          innerFragments.add(DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator));
         }
-
-        lineFragments = fineLineFragments;
       }
 
-      return apply(lineFragments, comparisonPolicy);
+      return apply(lineFragments, conflictTypes, innerFragments);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -181,14 +178,19 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
   @NotNull
   private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
-                         @NotNull final ComparisonPolicy comparisonPolicy) {
+                         @NotNull final List<MergeConflictType> conflictTypes,
+                         @Nullable final List<MergeInnerDifferences> innerDifferences) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
 
       resetChangeCounters();
-      for (MergeLineFragment fragment : fragments) {
-        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
+      for (int i = 0; i < fragments.size(); i++) {
+        MergeLineFragment fragment = fragments.get(i);
+        MergeConflictType conflictType = conflictTypes.get(i);
+        MergeInnerDifferences innerFragments = innerDifferences != null ? innerDifferences.get(i) : null;
+
+        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType, innerFragments, this);
         myDiffChanges.add(change);
         onChangeAdded(change);
       }

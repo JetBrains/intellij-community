@@ -45,9 +45,7 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
     final XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) return Collections.emptyList();
 
-    return ContainerUtil.map2List(tag.getSubTags(), subTag -> {
-      return new HtmlTagTreeElement(subTag);
-    });
+    return ContainerUtil.map2List(tag.getSubTags(), subTag -> new HtmlTagTreeElement(subTag));
   }
 
   @Override

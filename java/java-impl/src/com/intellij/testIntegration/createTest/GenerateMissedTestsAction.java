@@ -101,9 +101,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
         final MissedTestsDialog dialog = new MissedTestsDialog(project, srcClass, testClass, framework);
         if (dialog.showAndGet()) {
-          WriteCommandAction.runWriteCommandAction(project, () -> {
-            JavaTestGenerator.addTestMethods(editor, testClass, srcClass, framework, dialog.getSelectedMethods(), false, false);
-          });
+          WriteCommandAction.runWriteCommandAction(project, () -> JavaTestGenerator.addTestMethods(editor, testClass, srcClass, framework, dialog.getSelectedMethods(), false, false));
         }
       }
       else {

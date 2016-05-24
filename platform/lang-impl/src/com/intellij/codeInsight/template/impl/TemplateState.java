@@ -905,9 +905,7 @@ public class TemplateState implements Disposable {
     int nextVariableNumber = getNextVariableNumber(oldVar);
     if (nextVariableNumber == -1) {
       calcResults(false);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        reformat(null);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> reformat(null));
       finishTemplateEditing();
       return;
     }

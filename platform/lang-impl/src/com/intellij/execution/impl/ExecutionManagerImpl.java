@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -413,7 +414,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       startRunnable.run();
     }
     else {
-      compileAndRun(startRunnable, environment, state, () -> {
+      compileAndRun(() -> TransactionGuard.submitTransaction(project, startRunnable), environment, state, () -> {
         if (!project.isDisposed()) {
           project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
         }

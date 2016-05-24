@@ -207,9 +207,7 @@ public class PlatformPackageUtil {
       }
     });
 
-    List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), virtualFile -> {
-      return manager.findDirectory(virtualFile);
-    });
+    List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), virtualFile -> manager.findDirectory(virtualFile));
     return directories.toArray(new PsiDirectory[directories.size()]);
   }
 

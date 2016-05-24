@@ -145,19 +145,15 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
         final List<String> resultPaths = processResult(returnCode, openPanelDidEnd);
         if (resultPaths.size() > 0) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-              final List<VirtualFile> files = getChosenFiles(resultPaths);
-              if (files.size() > 0) {
-                FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
-                impl.myCallback.consume(files);
-              }
-            });
-          }, impl.myModalityState);
+          ApplicationManager.getApplication().invokeLater(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+            final List<VirtualFile> files = getChosenFiles(resultPaths);
+            if (files.size() > 0) {
+              FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
+              impl.myCallback.consume(files);
+            }
+          }), impl.myModalityState);
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
-          }, impl.myModalityState);
+          ApplicationManager.getApplication().invokeLater(() -> ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled(), impl.myModalityState);
         }
       }
       finally {

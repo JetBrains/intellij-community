@@ -51,9 +51,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
     final SortedSet<HighlightSeverity> severities =
       LevelChooserAction.getSeverities(((SeverityProvider)inspectionProfile.getProfileManager()).getOwnSeverityRegistrar());
-    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> {
-      return new SeverityState(severity, true, false);
-    }), onClose);
+    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity, true, false)), onClose);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {

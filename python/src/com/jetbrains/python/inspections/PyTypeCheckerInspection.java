@@ -168,9 +168,7 @@ public class PyTypeCheckerInspection extends PyInspection {
               else {
                 msg = String.format("Type '%s' doesn't have expected attributes %s",
                                     actualName,
-                                    StringUtil.join(missingAttributes, s -> {
-                                      return String.format("'%s'", s);
-                                    }, ", "));
+                                    StringUtil.join(missingAttributes, s -> String.format("'%s'", s), ", "));
               }
             }
           }

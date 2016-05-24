@@ -122,9 +122,7 @@ public class PyAddImportTest extends PyTestCase {
 
   private void doAddFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-      AddImportHelper.addFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
-    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> AddImportHelper.addFromImportStatement(myFixture.getFile(), path, name, null, priority, null));
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 

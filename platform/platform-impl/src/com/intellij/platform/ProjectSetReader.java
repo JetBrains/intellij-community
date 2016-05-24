@@ -64,9 +64,7 @@ public class ProjectSetReader {
       if (object.entrySet().size() == 1 && object.entrySet().iterator().next().getValue().isJsonArray()) {
         final Map.Entry<String, JsonElement> next = object.entrySet().iterator().next();
         list = ContainerUtil.map(next.getValue().getAsJsonArray(),
-                                 o -> {
-                                   return Pair.create(next.getKey(), getString(o));
-                                 });
+                                 o -> Pair.create(next.getKey(), getString(o)));
       }
       else {
         list = ContainerUtil.map(object.entrySet(), entry1 -> {

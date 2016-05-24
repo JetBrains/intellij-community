@@ -578,9 +578,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     tool.visited.clear();
 
     Document otherDocument = PsiDocumentManager.getInstance(getProject()).getDocument(otherFile);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      otherDocument.setText("zzz");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
@@ -889,9 +887,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEquals("Delete catch for 'java.io.IOException'", fix.getText());
 
       final IntentionAction finalFix = fix;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        finalFix.invoke(getProject(), getEditor(), getFile());
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> finalFix.invoke(getProject(), getEditor(), getFile()));
 
       errors = highlightErrors();
       assertEquals(2, errors.size());
@@ -902,9 +898,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEquals("Delete catch for 'java.io.IOException'", fix.getText());
 
       final IntentionAction finalFix1 = fix;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        finalFix1.invoke(getProject(), getEditor(), getFile());
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> finalFix1.invoke(getProject(), getEditor(), getFile()));
 
       errors = highlightErrors();
       assertOneElement(errors);
@@ -915,9 +909,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEquals("Delete catch for 'java.io.IOException'", fix.getText());
 
       final IntentionAction finalFix2 = fix;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        finalFix2.invoke(getProject(), getEditor(), getFile());
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> finalFix2.invoke(getProject(), getEditor(), getFile()));
 
       errors = highlightErrors();
       assertEmpty(errors);
@@ -1243,9 +1235,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(warns);
     List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      descriptor.getAction().invoke(getProject(), getEditor(), getFile());
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> descriptor.getAction().invoke(getProject(), getEditor(), getFile()));
 
     highlightErrors();
     actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
@@ -1494,17 +1484,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void paste() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
   private void copy() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY);
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
   public void testReactivityPerformance() throws Throwable {
@@ -1713,9 +1699,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Editor xEditor = createEditor(x.getVirtualFile());
     List<HighlightInfo> xInfos = filter(CodeInsightTestFixtureImpl.instantiateAndRun(x, xEditor, new int[0], false),
                                         HighlightSeverity.WARNING);
-    HighlightInfo info = ContainerUtil.find(xInfos, xInfo -> {
-      return xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used");
-    });
+    HighlightInfo info = ContainerUtil.find(xInfos, xInfo -> xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used"));
     assertNull(xInfos.toString(), info);
 
     Editor useEditor = myEditor;
@@ -1727,9 +1711,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     xInfos = filter(CodeInsightTestFixtureImpl.instantiateAndRun(x, xEditor, new int[0], false), HighlightSeverity.WARNING);
-    info = ContainerUtil.find(xInfos, xInfo -> {
-      return xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used");
-    });
+    info = ContainerUtil.find(xInfos, xInfo -> xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used"));
     assertNotNull(xInfos.toString(), info);
   }
 
@@ -2071,9 +2053,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
     assertNull(scope);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      ((PsiJavaFile)excluded).getClasses()[0].getMethods()[0].delete();
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)excluded).getClasses()[0].getMethods()[0].delete());
 
     UIUtil.dispatchAllInvocationEvents();
     scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);

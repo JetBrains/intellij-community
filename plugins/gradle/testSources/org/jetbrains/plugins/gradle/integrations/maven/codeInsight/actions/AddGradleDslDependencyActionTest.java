@@ -41,9 +41,7 @@ public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFi
   }
 
   private void doTest(String file) {
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CodeInsightTestUtil.doActionTest(new AddGradleDslDependencyAction(), file, myFixture);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeInsightTestUtil.doActionTest(new AddGradleDslDependencyAction(), file, myFixture));
   }
 
   @Override

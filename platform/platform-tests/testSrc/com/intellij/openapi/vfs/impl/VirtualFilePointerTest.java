@@ -380,9 +380,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertFalse(pointer_f2.isValid());
     file_f1.createNewFile();
     file_f2.createNewFile();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      LocalFileSystem.getInstance().refresh(false);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> LocalFileSystem.getInstance().refresh(false));
     assertEquals("[before:false:false, after:true:true]", listener.getLog().toString());
   }
 

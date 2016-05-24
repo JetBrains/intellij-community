@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -83,6 +84,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiNamedElement) {
           myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+          if (resolved instanceof PsiMember) {
+            myRefCountHolder.registerReference(reference, new CandidateInfo(resolved, PsiSubstitutor.EMPTY));
+          }
         }
       }
     }

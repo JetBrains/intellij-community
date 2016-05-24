@@ -168,9 +168,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
 
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      pr.performRefactoring(usages);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> pr.performRefactoring(usages));
 
 
     String itemName = className + ".items";

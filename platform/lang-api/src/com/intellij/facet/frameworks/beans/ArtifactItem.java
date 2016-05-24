@@ -88,9 +88,7 @@ public class ArtifactItem {
   public String[] getRequiredClasses() {
     if (myRequiredClasses == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     
-    final List<String> classes = ContainerUtil.mapNotNull(myRequiredClasses, requiredClass -> {
-      return requiredClass.getFqn();
-    });
+    final List<String> classes = ContainerUtil.mapNotNull(myRequiredClasses, requiredClass -> requiredClass.getFqn());
 
     return ArrayUtil.toStringArray(classes);
   }

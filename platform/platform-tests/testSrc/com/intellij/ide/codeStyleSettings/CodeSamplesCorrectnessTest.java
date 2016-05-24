@@ -99,9 +99,7 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
 
   @NotNull
   private static String formReport(@NotNull List<CodeErrorReport> errorReports) {
-    return StringUtil.join(errorReports, report -> {
-      return report.createReport();
-    }, "\n");
+    return StringUtil.join(errorReports, report -> report.createReport(), "\n");
   }
 }
 

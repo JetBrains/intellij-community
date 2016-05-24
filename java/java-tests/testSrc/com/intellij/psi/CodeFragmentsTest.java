@@ -62,9 +62,7 @@ public class CodeFragmentsTest extends PsiTestCase{
     VirtualFile file = fragment.getViewProvider().getVirtualFile();
     assertInstanceOf(file, LightVirtualFile.class);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
 
 
     assertSame(fragment, PsiManager.getInstance(myProject).findFile(file));

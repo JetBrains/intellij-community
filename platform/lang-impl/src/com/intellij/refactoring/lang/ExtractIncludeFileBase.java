@@ -222,9 +222,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
           final List<IncludeDuplicate<T>> duplicates = new ArrayList<IncludeDuplicate<T>>();
           final T first = children.getFirst();
           final T second = children.getSecond();
-          PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, (start1, end1) -> {
-            duplicates.add(new IncludeDuplicate<T>((T)start1, (T)end1));
-          });
+          PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, (start1, end1) -> duplicates.add(new IncludeDuplicate<T>((T)start1, (T)end1)));
           final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
           editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
 

@@ -196,9 +196,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
         final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
-        return ContainerUtil.map(items, info -> {
-          return info.getCallerMethod();
-        });
+        return ContainerUtil.map(items, info -> info.getCallerMethod());
       }
       final List<PsiMethod> methods = super.computeCallers();
       methods.remove(getTopMethod());

@@ -259,8 +259,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       return true;
     }
 
-    final String qname = psiType.getCanonicalText();
-
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
     final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
@@ -279,7 +277,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     };
 
     for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(nameChecker, psiType, place, placeFile, qname, state)) {
+      if (!script.processExecutor(nameChecker, psiType, place, placeFile, state)) {
         return false;
       }
     }

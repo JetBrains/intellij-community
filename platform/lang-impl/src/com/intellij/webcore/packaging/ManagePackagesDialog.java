@@ -222,9 +222,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             @Override
             public void operationStarted(final String packageName) {
               if (!ApplicationManager.getApplication().isDispatchThread()) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  handleInstallationStarted(packageName);
-                }, ModalityState.stateForComponent(myMainPanel));
+                ApplicationManager.getApplication().invokeLater(() -> handleInstallationStarted(packageName), ModalityState.stateForComponent(myMainPanel));
               }
               else {
                 handleInstallationStarted(packageName);
@@ -235,9 +233,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             public void operationFinished(final String packageName,
                                           @Nullable final PackageManagementService.ErrorDescription errorDescription) {
               if (!ApplicationManager.getApplication().isDispatchThread()) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  handleInstallationFinished(packageName, errorDescription);
-                }, ModalityState.stateForComponent(myMainPanel));
+                ApplicationManager.getApplication().invokeLater(() -> handleInstallationFinished(packageName, errorDescription), ModalityState.stateForComponent(myMainPanel));
               }
               else {
                 handleInstallationFinished(packageName, errorDescription);

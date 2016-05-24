@@ -273,9 +273,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
     final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
-      convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
-    }), "Preprocess Usages", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))), "Preprocess Usages", true, project)) return;
 
     if (convertUsagesRef.isNull()) return;
     final Usage[] usages = convertUsagesRef.get();

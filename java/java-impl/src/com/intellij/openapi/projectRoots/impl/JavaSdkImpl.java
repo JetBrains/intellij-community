@@ -266,13 +266,9 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static void scanFolder(File javasFolder, ArrayList<String> result) {
-    File[] candidates = javasFolder.listFiles(pathname -> {
-      return JdkUtil.checkForJdk(pathname);
-    });
+    File[] candidates = javasFolder.listFiles(pathname -> JdkUtil.checkForJdk(pathname));
     if (candidates != null) {
-      result.addAll(ContainerUtil.map2List(candidates, file -> {
-        return file.getAbsolutePath();
-      }));
+      result.addAll(ContainerUtil.map2List(candidates, file -> file.getAbsolutePath()));
     }
   }
 

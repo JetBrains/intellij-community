@@ -59,6 +59,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -166,6 +168,39 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       @Override
       public void detached() {
         detachDebuggedProcess();
+      }
+    });
+
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void stackFrameChanged() {
+        String currentFrameThreadId = null;
+        final XStackFrame currentFrame = session.getCurrentStackFrame();
+        if (currentFrame instanceof PyStackFrame) {
+          currentFrameThreadId = ((PyStackFrame)currentFrame).getThreadId();
+        }
+        final XExecutionStack activeStack = session.getSuspendContext().getActiveExecutionStack();
+        if ((activeStack == null) || (currentFrameThreadId == null)) {
+          return;
+        }
+        final XStackFrame frameFromSuspendContext = activeStack.getTopFrame();
+        String activeStackThreadId = null;
+        if (frameFromSuspendContext instanceof PyStackFrame) {
+          activeStackThreadId = ((PyStackFrame)frameFromSuspendContext).getThreadId();
+        }
+        if (!currentFrameThreadId.equals(activeStackThreadId)) {
+          // another thread was selected, we should update suspendContext
+          PyThreadInfo threadInfo = null;
+          for (PyThreadInfo info : mySuspendedThreads) {
+            if (info.getId().equals(currentFrameThreadId)) {
+              threadInfo = info;
+              break;
+            }
+          }
+          if (threadInfo != null) {
+            getSession().positionReached(createSuspendContext(threadInfo));
+          }
+        }
       }
     });
   }

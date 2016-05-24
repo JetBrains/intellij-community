@@ -73,6 +73,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.JBUI;
@@ -854,12 +855,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       if (myProject.isDisposed() || !file.isValid()) {
         return;
       }
+
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+
       compositeRef.set(window.findFileComposite(file));
       boolean newEditor = compositeRef.isNull();
       if (newEditor) {
         clearWindowIfNeeded(window);
 
-        ourOpenFilesSetModificationCount.incrementAndGet();
         getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(FileEditorManagerImpl.this, file);
 
         FileEditor[] newEditors = new FileEditor[newProviders.length];
@@ -947,6 +950,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               .fileOpened(FileEditorManagerImpl.this, file);
           }
         });
+        ourOpenFilesSetModificationCount.incrementAndGet();
       }
 
       //[jeka] this is a hack to support back-forward navigation
@@ -964,7 +968,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     };
 
-    commitAndInvoke(runnable);
+    UIUtil.invokeAndWaitIfNeeded(runnable);
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
@@ -2007,6 +2011,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   public void removeSelectionRecord(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     mySelectionHistory.remove(Pair.create(file, window));
+    updateFileName(file);
   }
 
   @NotNull

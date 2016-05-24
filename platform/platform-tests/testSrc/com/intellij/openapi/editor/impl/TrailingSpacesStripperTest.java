@@ -174,9 +174,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     Document document = configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
     // make any modification, so that Document and file content differ. Otherwise save won't be, and "on-save" actions won't be called.
     WriteCommandAction.runWriteCommandAction(getProject(),
-                                             () -> {
-                                               document.insertString(0, " ");
-                                             });
+                                             () -> document.insertString(0, " "));
 
 
     FileDocumentManager.getInstance().saveAllDocuments();

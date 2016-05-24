@@ -70,14 +70,12 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project, @NotNull Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
     final VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
-    return forFileLanguages(project, null, t -> {
-      new WriteCommandAction(project, "Change Language") {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          changeLanguageWithUndo(project, t, filesCopy, mappings);
-        }
-      }.execute();
-    });
+    return forFileLanguages(project, null, t -> new WriteCommandAction(project, "Change Language") {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        changeLanguageWithUndo(project, t, filesCopy, mappings);
+      }
+    }.execute());
   }
 
   @NotNull

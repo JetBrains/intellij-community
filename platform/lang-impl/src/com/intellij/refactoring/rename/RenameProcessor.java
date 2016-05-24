@@ -433,9 +433,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
               public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
                 Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
-                                           StringUtil.join(mySkippedUsages, unresolvableCollisionUsageInfo -> {
-                                             return unresolvableCollisionUsageInfo.getDescription();
-                                           }, "<br>") +
+                                           StringUtil.join(mySkippedUsages, unresolvableCollisionUsageInfo -> unresolvableCollisionUsageInfo.getDescription(), "<br>") +
                                            "</html>", "Not All Usages Were Renamed", null);
               }
             };

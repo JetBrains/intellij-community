@@ -116,9 +116,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   @NotNull
   protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken... conditions) {
-    return rule(ContainerUtil.map(conditions, it -> {
-      return atom(it);
-    }));
+    return rule(ContainerUtil.map(conditions, it -> atom(it)));
   }
 
   @NotNull
@@ -189,8 +187,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
     settings.setArrangementSettings(arrangementSettings);
     ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
-    CommandProcessor.getInstance().executeCommand(getProject(), ()-> {
-    engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges);}, null, null);
+    CommandProcessor.getInstance().executeCommand(getProject(), ()-> engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges), null, null);
 
 
     // Check expectation.

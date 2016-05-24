@@ -159,9 +159,7 @@ public class StudyCheckUtils {
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          documentManager.saveDocument(document);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(document));
       }
     }
     catch (IOException e) {

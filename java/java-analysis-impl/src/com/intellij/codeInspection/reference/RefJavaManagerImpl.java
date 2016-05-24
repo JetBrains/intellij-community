@@ -53,7 +53,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private PsiClass myServlet;
   private RefPackage myDefaultPackage;
   private THashMap<String, RefPackage> myPackages;
-  private THashMap<String, RefImplicitConstructor> myImplicitConstructors;
   private final RefManagerImpl myRefManager;
   private PsiElementVisitor myProjectIterator;
   private EntryPointsManager myEntryPointsManager;
@@ -79,25 +78,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public RefImplicitConstructor getImplicitConstructor(String classFQName) {
-    if (myImplicitConstructors == null) {
-      myImplicitConstructors = new THashMap<>();
-    }
-
-    RefImplicitConstructor constructor = myImplicitConstructors.get(classFQName);
-    if (constructor == null) {
-      final RefEntity entity = getReference(CLASS, classFQName);
-      if (entity == null) return null;
-      final RefClass refClass = (RefClass)entity;
-      for (RefMethod method : refClass.getConstructors()) {
-        if (method instanceof RefImplicitConstructor) {
-          constructor = (RefImplicitConstructor)method;
-          myImplicitConstructors.put(classFQName, constructor);
-          break;
-        }
-      }
-    }
-
-    return constructor;
+    final RefEntity entity = getReference(CLASS, classFQName);
+    if (entity == null) return null;
+    final RefClass refClass = (RefClass)entity;
+    return (RefImplicitConstructor)refClass.getDefaultConstructor();
   }
 
   @Override
@@ -217,7 +201,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = null;
     }
     myPackages = null;
-    myImplicitConstructors = null;
     myApplet = null;
     myAppMainPattern = null;
     myAppPremainPattern = null;

@@ -128,8 +128,6 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-    return ContainerUtil.map(files, ideaPluginDomFileElement -> {
-      return ideaPluginDomFileElement.getRootElement();
-    });
+    return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 }

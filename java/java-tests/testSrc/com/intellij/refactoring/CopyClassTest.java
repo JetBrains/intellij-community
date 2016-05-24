@@ -126,9 +126,7 @@ public class CopyClassTest extends CodeInsightTestCase {
 
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting());
 
     PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }

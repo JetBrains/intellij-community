@@ -70,9 +70,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
       String modifierSeparator = emmetOptions.getBemModifierSeparator();
       String shortElementPrefix = emmetOptions.getBemShortElementPrefix();
 
-      List<String> classNames = ContainerUtil.map(HtmlUtil.splitClassNames(classValue), (s) -> {
-        return normalizeClassName(s, elementSeparator, shortElementPrefix);
-      });
+      List<String> classNames = ContainerUtil.map(HtmlUtil.splitClassNames(classValue), (s) -> normalizeClassName(s, elementSeparator, shortElementPrefix));
 
       BEM_STATE.set(node, new BemState(suggestBlockName(classNames), null, null));
       Set<String> newClassNames = ContainerUtil.newLinkedHashSet();

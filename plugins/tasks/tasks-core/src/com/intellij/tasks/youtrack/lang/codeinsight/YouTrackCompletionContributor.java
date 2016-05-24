@@ -54,12 +54,10 @@ public class YouTrackCompletionContributor extends CompletionContributor {
       final List<CompletionItem> suggestions = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
       // actually backed by original CompletionResultSet
       result = result.withPrefixMatcher(extractPrefix(parameters)).caseInsensitive();
-      result.addAllElements(ContainerUtil.map(suggestions, (Function<CompletionItem, LookupElement>)item -> {
-        return LookupElementBuilder.create(item, item.getOption())
-          .withTypeText(item.getDescription(), true)
-          .withInsertHandler(INSERT_HANDLER)
-          .withBoldness(item.getStyleClass().equals("keyword"));
-      }));
+      result.addAllElements(ContainerUtil.map(suggestions, (Function<CompletionItem, LookupElement>)item -> LookupElementBuilder.create(item, item.getOption())
+        .withTypeText(item.getDescription(), true)
+        .withInsertHandler(INSERT_HANDLER)
+        .withBoldness(item.getStyleClass().equals("keyword"))));
     }
     catch (Exception ignored) {
       //noinspection InstanceofCatchParameter

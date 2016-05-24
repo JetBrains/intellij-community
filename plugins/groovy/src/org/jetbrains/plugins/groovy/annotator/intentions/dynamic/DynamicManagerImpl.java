@@ -352,18 +352,14 @@ public class DynamicManagerImpl extends DynamicManager {
   public Iterable<PsiMethod> getMethods(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
-    return ContainerUtil.map(classElement.getMethods(), methodElement -> {
-      return methodElement.getPsi(PsiManager.getInstance(myProject), classQname);
-    });
+    return ContainerUtil.map(classElement.getMethods(), methodElement -> methodElement.getPsi(PsiManager.getInstance(myProject), classQname));
   }
 
   @Override
   public Iterable<PsiVariable> getProperties(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();
-    return ContainerUtil.map(classElement.getProperties(), propertyElement -> {
-      return propertyElement.getPsi(PsiManager.getInstance(myProject), classQname);
-    });
+    return ContainerUtil.map(classElement.getProperties(), propertyElement -> propertyElement.getPsi(PsiManager.getInstance(myProject), classQname));
   }
 
   @Override

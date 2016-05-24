@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,8 +42,12 @@ import java.util.stream.Stream;
 )
 public class UpdateSettings implements PersistentStateComponent<UpdateSettings.State>, UserUpdateSettings {
   public static class State {
-    @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
-    @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
+    @CollectionBean public final List<String> pluginHosts = new SmartList<>();
+    @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<>();
+
+    @CollectionBean public final List<String> enabledExternalComponentSources = new SmartList<>();
+    @CollectionBean public final List<String> knownExternalComponentSources = new SmartList<>();
+    @CollectionBean public final Map<String, String> externalUpdateChannels = new HashMap<>();
 
     public boolean CHECK_NEEDED = true;
     public long LAST_TIME_CHECKED = 0;
@@ -85,6 +91,18 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   public void setCheckNeeded(boolean value) {
     myState.CHECK_NEEDED = value;
+  }
+
+  public List<String> getEnabledExternalUpdateSources() {
+    return myState.enabledExternalComponentSources;
+  }
+
+  public List<String> getKnownExternalUpdateSources() {
+    return myState.knownExternalComponentSources;
+  }
+
+  public Map<String, String> getExternalUpdateChannels() {
+    return myState.externalUpdateChannels;
   }
 
   public boolean isSecureConnection() {

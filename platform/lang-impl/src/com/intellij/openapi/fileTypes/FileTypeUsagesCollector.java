@@ -81,9 +81,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
           }, GlobalSearchScope.projectScope(project));
       });
     }
-    return ContainerUtil.map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> {
-      return new UsageDescriptor(fileType.getName(), 1);
-    });
+    return ContainerUtil.map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> new UsageDescriptor(fileType.getName(), 1));
   }
 
   @Nullable

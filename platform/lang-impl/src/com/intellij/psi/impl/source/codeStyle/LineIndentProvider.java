@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +32,13 @@ public interface LineIndentProvider {
    *
    * @param project  The current project.
    * @param editor   The current editor.
+   * @param language Context language to be used at the current offset.
    * @param offset   The caret offset in the editor.
    * @return The indent string (possibly consisting of tabs and/or white spaces), or null if
    * LineIndentProvider can't calculate the indent (in this case no indent adjustment will be made).
    */
   @Nullable
-  String getLineIndent(@NotNull Project project, @NotNull Editor editor, int offset);
+  String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset);
   
-  boolean isSuitableFor(@Nullable PsiFile file);
+  boolean isSuitableFor(@Nullable Language language);
 }

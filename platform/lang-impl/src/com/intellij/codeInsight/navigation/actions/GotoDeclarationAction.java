@@ -29,14 +29,13 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -61,10 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -315,31 +310,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void update(final AnActionEvent event) {
-    InputEvent inputEvent = event.getInputEvent();
-    if (inputEvent instanceof MouseEvent) {
-      Component component = inputEvent.getComponent();
-      if (component != null) {
-        Point point = ((MouseEvent)inputEvent).getPoint();
-        Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
-        Project project = event.getProject();
-        if (project == null) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-
-        Editor editor = getBaseEditor(event.getDataContext(), project);
-        if (componentAt instanceof EditorGutterComponentEx) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-        else if (editor != null && componentAt == editor.getContentComponent()) {
-          LogicalPosition pos = editor.xyToLogicalPosition(SwingUtilities.convertPoint(component, point, componentAt));
-          if (EditorUtil.inVirtualSpace(editor, pos)) {
-            event.getPresentation().setEnabled(false);
-            return;
-          }
-        }
-      }
+    if (event.getProject() == null ||
+        event.getData(EditorGutter.KEY) != null ||
+        event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE) == Boolean.TRUE) {
+      event.getPresentation().setEnabled(false);
+      return;
     }
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {

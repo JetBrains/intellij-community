@@ -934,9 +934,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       if (name != null && contents.size() > 1 && !usedNames.contains(name)) {
         title = name;
       } else {
-        title = StringUtil.join(contents, (NotNullFunction<Content, String>)dom -> {
-          return dom.getTabName();
-        }, " | ");
+        title = StringUtil.join(contents, (NotNullFunction<Content, String>)dom -> dom.getTabName(), " | ");
       }
     }
     usedNames.add(title);

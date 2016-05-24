@@ -238,9 +238,7 @@ public class PyChangeSignatureTest extends PyTestCase {
       assertNotNull(function);
       final List<String> expected = Arrays.asList("a", "b", "*args", "c", "d", "**kwargs");
       final List<PyParameterInfo> parameters = new PyMethodDescriptor(function).getParameters();
-      assertEquals(expected, ContainerUtil.map(parameters, info -> {
-        return info.getOldName();
-      }));
+      assertEquals(expected, ContainerUtil.map(parameters, info -> info.getOldName()));
     });
   }
 

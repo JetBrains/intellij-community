@@ -380,9 +380,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
     myFixture.configureByText(getTestName(true) + ".java", "");
     final DocumentImpl document = (DocumentImpl)myFixture.getEditor().getDocument();
     document.setAcceptSlashR(true);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.setText(text);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
     myFixture.doHighlighting();
   }
 

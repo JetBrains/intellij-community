@@ -68,7 +68,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
-    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent);
+    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent, policy);
   }
 
   @NotNull

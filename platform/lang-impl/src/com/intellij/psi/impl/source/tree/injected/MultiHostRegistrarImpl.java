@@ -575,9 +575,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     Place shreds = window.getShreds();
     Project project = shreds.getHostPointer().getProject();
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
-    Place place = new Place(ContainerUtil.map(shreds, shred -> {
-      return ((ShredImpl) shred).withPsiRange();
-    }));
+    Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl) shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, window.isOneLine(), place);
   }
 }

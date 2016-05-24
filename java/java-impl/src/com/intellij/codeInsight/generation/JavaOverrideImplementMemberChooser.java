@@ -185,9 +185,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   }
 
   private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
-    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, s -> {
-      return new PsiMethodMember(s);
-    });
+    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, s -> new PsiMethodMember(s));
   }
 
   private class MySortByOverridingAction extends ToggleAction {

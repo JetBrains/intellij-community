@@ -259,9 +259,7 @@ public class MatcherImpl {
         }
       };
 
-      ApplicationManager.getApplication().runReadAction(() -> {
-        FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress);
-      });
+      ApplicationManager.getApplication().runReadAction(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
       progress.setText2("");
     }
     else {

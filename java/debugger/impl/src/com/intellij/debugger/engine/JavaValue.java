@@ -488,9 +488,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       protected void doAction(@Nullable final SourcePosition sourcePosition) {
         if (sourcePosition != null) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition));
-          });
+          ApplicationManager.getApplication().runReadAction(() -> navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition)));
         }
       }
     });

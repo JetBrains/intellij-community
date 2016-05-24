@@ -284,9 +284,7 @@ class SearchForUsagesRunnable implements Runnable {
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
           final UsageViewImpl finalUsageView = usageView;
-          ApplicationManager.getApplication().runReadAction(() -> {
-            finalUsageView.appendUsage(firstUsage);
-          });
+          ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
         }
       }
       else {
@@ -357,17 +355,13 @@ class SearchForUsagesRunnable implements Runnable {
         }
 
         if (usageView != null) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            usageView.appendUsage(usage);
-          });
+          ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
         }
       }
       return !indicator1.isCanceled();
     });
     if (getUsageView(indicator) != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myUsageViewManager.showToolWindow(true);
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
     Disposer.dispose(findUsagesStartedBalloon);
     ApplicationManager.getApplication().invokeLater(() -> {

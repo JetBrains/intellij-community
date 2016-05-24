@@ -142,9 +142,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiDirectory newDir = PsiManager.getInstance(getProject()).findDirectory(
       myFixture.getTempDirFixture().findOrCreateDir("new-resources-dir"));
     new MoveFilesOrDirectoriesProcessor(getProject(), new PsiElement[] {file2.getContainingFile()}, newDir, false, false, null, null).run();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      file3.getContainingFile().delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> file3.getContainingFile().delete());
 
 
     assertSize(2, file.getResourceBundle().getPropertiesFiles());
@@ -159,9 +157,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiFile file = myFixture.addFileToProject("Base_Page.properties", "");
     final PsiFile file2 = myFixture.addFileToProject("Base_Page_en.properties", "");
     final String baseName =
-      PropertiesUtil.getDefaultBaseName(map(list(file, file2), psiFile -> {
-        return PropertiesImplUtil.getPropertiesFile(file);
-      }));
+      PropertiesUtil.getDefaultBaseName(map(list(file, file2), psiFile -> PropertiesImplUtil.getPropertiesFile(file)));
     assertEquals("Base_Page", baseName);
   }
 
@@ -182,9 +178,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiFile someFile = myFixture.addFileToProject("to_remove/asd.txt", "");
     final PsiDirectory toRemove = someFile.getParent();
     assertNotNull(toRemove);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      toRemove.delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> toRemove.delete());
 
     final ResourceBundleManagerState state = resourceBundleManager.getState();
     assertNotNull(state);
@@ -193,18 +187,14 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
 
     final PsiDirectory directory = propertiesFile.getParent().getParent();
     assertNotNull(directory);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      directory.delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> directory.delete());
 
     assertSize(1, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());
 
     final PsiDirectory directory1 = propFile1.getParent().getParent();
     assertNotNull(directory1);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      directory1.delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> directory1.delete());
 
     assertSize(0, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());
@@ -228,9 +218,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
 
     final PsiDirectory toMove = myFixture.addFileToProject("asd/temp.txt", "").getParent();
     assertNotNull(toMove);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      MoveFilesOrDirectoriesUtil.doMoveDirectory(propFile1.getParent(), toMove);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> MoveFilesOrDirectoriesUtil.doMoveDirectory(propFile1.getParent(), toMove));
 
     final PsiDirectory movedDir = toMove.findSubdirectory("qwe");
     assertNotNull(movedDir);

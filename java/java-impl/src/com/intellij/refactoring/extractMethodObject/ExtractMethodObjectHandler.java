@@ -103,13 +103,9 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     CommandProcessor.getInstance().executeCommand(project,
                                                   () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
                                                     try {
-                                                      ApplicationManager.getApplication().runWriteAction(() -> {
-                                                        extractProcessor.doRefactoring();
-                                                      });
+                                                      ApplicationManager.getApplication().runWriteAction(() -> extractProcessor.doRefactoring());
                                                       processor.run();
-                                                      ApplicationManager.getApplication().runWriteAction(() -> {
-                                                        processor.runChangeSignature();
-                                                      });
+                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.runChangeSignature());
                                                     }
                                                     catch (IncorrectOperationException e) {
                                                       LOG.error(e);
@@ -117,9 +113,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
                                                     PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                     if (processor.isCreateInnerClass()) {
-                                                      ApplicationManager.getApplication().runWriteAction(() -> {
-                                                        processor.moveUsedMethodsToInner();
-                                                      });
+                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.moveUsedMethodsToInner());
                                                       PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                       if (editor != null) {
                                                         DuplicatesImpl.processDuplicates(extractProcessor, project, editor);

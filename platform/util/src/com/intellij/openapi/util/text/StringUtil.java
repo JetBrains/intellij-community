@@ -581,7 +581,7 @@ public class StringUtil extends StringUtilRt {
                                                      @NotNull @NonNls StringBuilder buffer) {
     return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
   }
-  
+
   @NotNull
   public static StringBuilder escapeStringCharacters(int length,
                                                      @NotNull String str,
@@ -639,7 +639,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  private static boolean isPrintableUnicode(char c) {
+  public static boolean isPrintableUnicode(char c) {
     int t = Character.getType(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
            t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
@@ -796,7 +796,7 @@ public class StringUtil extends StringUtilRt {
               buffer.append("\\u");
             }
             break;
-          
+
           case '0':
           case '1':
           case '2':
@@ -817,7 +817,7 @@ public class StringUtil extends StringUtilRt {
             //noinspection AssignmentToForLoopParameter
             idx = escapeEnd - 1;
             break;
-          
+
           default:
             buffer.append(ch);
             break;
@@ -3365,7 +3365,7 @@ public class StringUtil extends StringUtilRt {
 
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
-    
+
     final Matcher matcher = UNICODE_CHAR.matcher(text);
     if (!matcher.find()) return text; // fast path
 
@@ -3381,7 +3381,7 @@ public class StringUtil extends StringUtilRt {
     sb.append(text.substring(lastEnd, text.length()));
     return sb.toString();
   }
-  
+
   /**
    * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.

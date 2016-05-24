@@ -534,9 +534,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private ArrayList<Variable> updateVariablesByTemplateText() {
     List<Variable> oldVariables = getCurrentVariables();
     
-    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, variable -> {
-      return variable.getName();
-    });
+    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, variable -> variable.getName());
     
     Map<String,Variable> newVariableNames = parseVariables();
 
@@ -582,13 +580,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     //todo[peter,kirillk] without these invokeLaters this requestFocus conflicts with com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.MyDialog.MyWindowListener.windowOpened()
     IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
     final ModalityState modalityState = ModalityState.stateForComponent(myKeyField);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
-        }, modalityState);
-      }, modalityState);
-    }, modalityState);
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
   private Map<String, Variable> parseVariables() {

@@ -81,9 +81,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
 
     if (targetClasses.length > 1) {
       final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses,
-                                                                                                                     psiClass -> {
-                                                                                                                       return psiClass.getQualifiedName();
-                                                                                                                     }, ", ");
+                                                                                                                     psiClass -> psiClass.getQualifiedName(), ", ");
       appendConflict(conflict);
     }
   }
@@ -116,9 +114,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
         final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
         if (arrayDimensions.length > 0) {
           buf.append("[");
-          buf.append(StringUtil.join(arrayDimensions, psiExpression -> {
-            return psiExpression.getText();
-          }, "]["));
+          buf.append(StringUtil.join(arrayDimensions, psiExpression -> psiExpression.getText(), "]["));
           buf.append("]");
           for (int i = 0; i < newExpressionType.getArrayDimensions() - arrayDimensions.length; i++) {
             buf.append("[]");

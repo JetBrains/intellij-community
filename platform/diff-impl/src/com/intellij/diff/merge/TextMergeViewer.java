@@ -24,9 +24,9 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
@@ -335,6 +335,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
 
           @Override
+          public void onError(@NotNull Exception error) {
+            LOG.error(error);
+            myMergeContext.finishMerge(MergeResult.CANCEL);
+          }
+
+          @Override
           public void onSuccess() {
             if (isDisposed()) return;
             myCallback.run();
@@ -349,14 +355,20 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         indicator.checkCanceled();
 
         List<DocumentContent> contents = myMergeRequest.getContents();
+        List<Document> documents = ContainerUtil.map(contents, DocumentContent::getDocument);
         List<CharSequence> sequences = ReadAction.compute(() -> {
-          return ContainerUtil.map(contents, (content) -> content.getDocument().getImmutableCharSequence());
+          return ContainerUtil.map(documents, Document::getImmutableCharSequence);
         });
 
         List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                       ComparisonPolicy.DEFAULT, indicator);
 
-        return apply(lineFragments);
+        List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
+          indicator.checkCanceled();
+          return ContainerUtil.map(lineFragments, (fragment -> DiffUtil.getLineMergeType(fragment, documents, ComparisonPolicy.DEFAULT)));
+        });
+
+        return apply(lineFragments, conflictTypes);
       }
       catch (DiffTooBigException e) {
         return applyNotification(DiffNotifications.createDiffTooBig());
@@ -374,7 +386,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @NotNull
-    private Runnable apply(@NotNull final List<MergeLineFragment> fragments) {
+    private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
+                           @NotNull final List<MergeConflictType> conflictTypes) {
       return () -> {
         setInitialOutputContent();
 
@@ -386,7 +399,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         for (int index = 0; index < fragments.size(); index++) {
           MergeLineFragment fragment = fragments.get(index);
-          TextMergeChange change = new TextMergeChange(TextMergeViewer.this, index, fragment);
+          MergeConflictType conflictType = conflictTypes.get(index);
+
+          TextMergeChange change = new TextMergeChange(index, fragment, conflictType, TextMergeViewer.this);
           myAllMergeChanges.add(change);
           onChangeAdded(change);
         }
@@ -503,11 +518,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
         myScheduled.clear();
 
-        final Document[] documents = new Document[]{
-          getEditor(ThreeSide.LEFT).getDocument(),
-          getEditor(ThreeSide.BASE).getDocument(),
-          getEditor(ThreeSide.RIGHT).getDocument()};
-
+        List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
         final ProgressIndicator indicator = myProgress;
@@ -520,7 +531,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void performRediff(@NotNull final List<TextMergeChange> scheduled,
                                  @NotNull final List<InnerChunkData> data,
                                  @NotNull final ProgressIndicator indicator) {
-        final List<List<MergeWordFragment>> result = new ArrayList<>(data.size());
+        final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
         for (InnerChunkData chunkData : data) {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
         }
@@ -1115,19 +1126,20 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   }
 
   private static class InnerChunkData {
-    @NotNull public final CharSequence[] text = new CharSequence[3];
+    @NotNull public final List<CharSequence> text;
 
-    public InnerChunkData(@NotNull TextMergeChange change, @NotNull Document[] documents) {
-      for (ThreeSide side : ThreeSide.values()) {
-        if (change.isChange(side) && !change.isResolved(side)) {
-          text[side.getIndex()] = getChunkContent(change, documents, side);
-        }
-      }
+    public InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
+      text = ThreeSide.map(side -> {
+        if (!change.isChange(side) || change.isResolved(side)) return null;
+        return getChunkContent(change, documents, side);
+      });
     }
 
     @Nullable
     @CalledWithReadLock
-    private static CharSequence getChunkContent(@NotNull TextMergeChange change, @NotNull Document[] documents, @NotNull ThreeSide side) {
+    private static CharSequence getChunkContent(@NotNull TextMergeChange change,
+                                                @NotNull List<Document> documents,
+                                                @NotNull ThreeSide side) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
       return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;

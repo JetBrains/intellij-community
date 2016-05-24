@@ -31,8 +31,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -93,39 +92,38 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        AccessToken token = ReadAction.start();
-        try {
-          if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-            PsiElement psiElement = getElement(((PsiElement)element), popup);
-            psiElement = psiElement.getNavigationElement();
-            VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
+              PsiElement psiElement = getElement(((PsiElement)element), popup);
+              psiElement = psiElement.getNavigationElement();
+              VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
 
-            if (file != null && popup.getLinePosition() != -1) {
-              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
-              Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
-              if (n.canNavigate()) {
-                n.navigate(true);
-                return;
+              if (file != null && popup.getLinePosition() != -1) {
+                OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
+                Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+                if (n.canNavigate()) {
+                  n.navigate(true);
+                  return;
+                }
               }
-            }
 
-            if (file != null && popup.getMemberPattern() != null) {
+              if (file != null && popup.getMemberPattern() != null) {
+                NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+                Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+                if (member != null) {
+                  member.navigate(true);
+                }
+              }
+
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-              Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
-              if (member != null) {
-                member.navigate(true);
-              }
             }
-
-            NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+            else {
+              EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
+            }
           }
-          else {
-            EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
-          }
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
     }, IdeBundle.message("go.to.class.toolwindow.title"), true);
   }

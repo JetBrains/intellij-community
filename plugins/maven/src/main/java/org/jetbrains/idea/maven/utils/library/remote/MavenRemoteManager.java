@@ -109,9 +109,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
       startTask();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        startTask();
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> startTask(), ModalityState.any());
     }
   }
 

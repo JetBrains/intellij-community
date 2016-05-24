@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -55,7 +53,7 @@ abstract class RuleAction extends ToggleAction implements DumbAware {
     setOptionValue(state);
     myState = state;
 
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project != null) {
       project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
     }

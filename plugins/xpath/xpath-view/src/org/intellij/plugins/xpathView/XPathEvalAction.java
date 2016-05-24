@@ -136,7 +136,7 @@ public class XPathEvalAction extends XPathAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = event.getProject();
         if (project == null) {
             // no active project
             LOG.debug("No project");

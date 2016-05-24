@@ -99,9 +99,7 @@ public class EduUtils {
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          FileDocumentManager.getInstance().saveDocument(document);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -194,9 +192,7 @@ public class EduUtils {
       }
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      FileDocumentManager.getInstance().saveDocument(document);
-    }), "Create Student File", "Create Student File");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document)), "Create Student File", "Create Student File");
     document.removeDocumentListener(listener);
   }
 

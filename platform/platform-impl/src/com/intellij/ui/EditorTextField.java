@@ -244,17 +244,15 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   public void setText(@Nullable final String text) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
-        if (myEditor != null) {
-          final CaretModel caretModel = myEditor.getCaretModel();
-          if (caretModel.getOffset() >= myDocument.getTextLength()) {
-            caretModel.moveToOffset(myDocument.getTextLength());
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
+      if (myEditor != null) {
+        final CaretModel caretModel = myEditor.getCaretModel();
+        if (caretModel.getOffset() >= myDocument.getTextLength()) {
+          caretModel.moveToOffset(myDocument.getTextLength());
         }
-      }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
-    });
+      }
+    }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument()));
   }
 
   /**

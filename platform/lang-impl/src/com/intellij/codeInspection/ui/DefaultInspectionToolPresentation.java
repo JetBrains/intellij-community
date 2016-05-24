@@ -355,7 +355,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
-    getIgnoredElements().put(refEntity, getProblemElements().get(refEntity));
+    getIgnoredElements().put(refEntity, mergeDescriptors(getIgnoredElements().getOrDefault(refEntity, CommonProblemDescriptor.EMPTY_ARRAY),
+                                                         getProblemElements().getOrDefault(refEntity, CommonProblemDescriptor.EMPTY_ARRAY)));
   }
 
   @Override

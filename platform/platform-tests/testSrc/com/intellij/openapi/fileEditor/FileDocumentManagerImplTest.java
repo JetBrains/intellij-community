@@ -140,9 +140,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
 
 
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
@@ -155,9 +153,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
 
 
     myDocumentManager.saveAllDocuments();
@@ -169,9 +165,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
 
 
     myDocumentManager.saveDocument(document);
@@ -191,9 +185,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
       final Document document = myDocumentManager.getDocument(file);
       assertNotNull(file.toString(), document);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        document.insertString(0, "xxx");
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
 
 
       try {
@@ -210,9 +202,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myDocumentManager.dropAllUnsavedDocuments();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myDocumentManager.dropAllUnsavedDocuments());
     }
   }
 
@@ -221,9 +211,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     Document document = myDocumentManager.getDocument(file);
     int idCode = System.identityHashCode(document);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
     //noinspection UnusedAssignment
     document = null;
@@ -239,9 +227,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
     int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
@@ -270,9 +256,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final long stamp = file.getModificationStamp();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "xxx ");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx "));
 
 
     myDocumentManager.saveDocument(document);
@@ -286,9 +270,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final long stamp = file.getModificationStamp();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "xxx ");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx "));
 
     myDocumentManager.saveAllDocuments();
     Assert.assertNotEquals(stamp, file.getModificationStamp());
@@ -313,9 +295,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "xxx ");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx "));
 
     myDocumentManager.saveAllDocuments();
     assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
@@ -375,9 +355,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     };
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "xxx");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx"));
 
     final long stamp = document.getModificationStamp();
 
@@ -389,9 +367,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "zzz");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "zzz"));
 
 
     myReloadFromDisk = Boolean.TRUE;
@@ -406,9 +382,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "old ");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
 
     myReloadFromDisk = Boolean.FALSE;
     long oldDocumentStamp = document.getModificationStamp();
@@ -479,9 +453,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     myReloadFromDisk = Boolean.FALSE;
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.insertString(0, "old ");
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
 
     long documentStamp = document.getModificationStamp();
 
@@ -603,9 +575,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, saveListener);
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     assertNotNull(document);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(1,"y");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1, "y"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
   }

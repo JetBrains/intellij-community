@@ -159,9 +159,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
         final LocalTask associatedTask = getAssociatedTask((LocalChangeList)newDefaultList);
         if (associatedTask != null && !getActiveTask().equals(associatedTask)) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            activateTask(associatedTask, true);
-          }, myProject.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> activateTask(associatedTask, true), myProject.getDisposed());
         }
       }
     };

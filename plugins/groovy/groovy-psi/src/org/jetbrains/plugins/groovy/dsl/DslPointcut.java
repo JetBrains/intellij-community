@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 
 import java.util.*;
 
@@ -147,7 +146,7 @@ public abstract class DslPointcut<T,V> {
 
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
-        final GdslType currentType = new GdslType(ClassUtil.findPsiType(src, context));
+        final GdslType currentType = new GdslType(src.getPsiType());
         if (inner.matches(currentType, context) != null) {
           return Arrays.asList(currentType);
         }

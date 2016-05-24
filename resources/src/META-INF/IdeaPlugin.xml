@@ -299,6 +299,7 @@
     <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
 
     <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
+    <extensionPoint name="lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
 
     <extensionPoint name="custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
 
@@ -637,7 +638,7 @@
                      groupKey="group.names.javadoc.issues" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JavadocHtmlLint" bundle="messages.InspectionsBundle" key="inspection.javadoc.lint.display.name"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="ERROR"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="ERROR" unfair="true"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection"/>
     <externalAnnotator language="JAVA" implementationClass="com.intellij.codeInspection.javaDoc.JavadocHtmlLintAnnotator"/>
 

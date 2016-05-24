@@ -360,9 +360,7 @@ public class InlineUtil {
           ref = parent.replace(copy);
           if (!result.equals(inferenceResult)) {
             final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
-                                                            psiType -> {
-                                                              return psiType.getCanonicalText();
-                                                            }, ", ");
+                                                            psiType -> psiType.getCanonicalText(), ", ");
             final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
             if (argumentList != null) {
               final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();

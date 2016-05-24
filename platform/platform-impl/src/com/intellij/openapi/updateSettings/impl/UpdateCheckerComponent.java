@@ -89,9 +89,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             notification.expire();
-            app.invokeLater(() -> {
-              ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
-            }, ModalityState.NON_MODAL);
+            app.invokeLater(() -> ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class), ModalityState.NON_MODAL);
           }
         }).notify(null);
     }

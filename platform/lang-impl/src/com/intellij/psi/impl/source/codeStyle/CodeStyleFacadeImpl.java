@@ -59,13 +59,10 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public String getLineIndent(@NotNull Editor editor, int offset) {
+  public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset) {
     if (myProject == null) return null;
-    Document document = editor.getDocument();
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    PsiFile file = documentManager.getPsiFile(document);
-    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(file);
-    return lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, offset) : null;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    return lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, language, offset) : null;
   }
 
   @Override

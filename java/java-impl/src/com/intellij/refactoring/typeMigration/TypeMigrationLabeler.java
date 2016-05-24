@@ -208,9 +208,7 @@ public class TypeMigrationLabeler {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<TypeMigrationUsageInfo>();
           for (Map.Entry<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> entry : myRootsTree.entrySet()) {
             infos.add(entry.getKey());
-            infos.addAll(ContainerUtil.map(entry.getValue(), pair -> {
-              return pair.getFirst();
-            }));
+            infos.addAll(ContainerUtil.map(entry.getValue(), pair -> pair.getFirst()));
           }
           return infos;
         }
@@ -222,9 +220,7 @@ public class TypeMigrationLabeler {
             return Collections.<TypeMigrationUsageInfo>emptyList().iterator();
           }
           final List<TypeMigrationUsageInfo> in =
-            ContainerUtil.map(rawNodes, pair -> {
-              return pair.getFirst();
-            });
+            ContainerUtil.map(rawNodes, pair -> pair.getFirst());
           return in.iterator();
         }
       }));

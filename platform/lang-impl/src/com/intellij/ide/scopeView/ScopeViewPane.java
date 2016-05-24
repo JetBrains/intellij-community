@@ -139,9 +139,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   @NotNull
   public String[] getSubIds() {
-    return ContainerUtil.map2Array(getShownScopes(), String.class, scope -> {
-      return scope.getName();
-    });
+    return ContainerUtil.map2Array(getShownScopes(), String.class, scope -> scope.getName());
   }
 
   @NotNull

@@ -20,11 +20,21 @@ import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JUnitForkedStarter extends ChildVMStarter {
 
   public static void main(String[] args) throws Exception {
-    new JUnitForkedStarter().startVM(args);
+    List argList = new ArrayList();
+    for (int i = 0; i < args.length; i++) {
+      final int count = RepeatCount.getCount(args[i]);
+      if (count > 0) {
+        JUnitStarter.ourCount = count;
+        continue;
+      }
+      argList.add(args[i]);
+    }
+    new JUnitForkedStarter().startVM((String[])argList.toArray(new String[argList.size()]));
   }
 
   protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
@@ -39,7 +49,7 @@ public class JUnitForkedStarter extends ChildVMStarter {
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
     //noinspection IOResourceOpenedButNotSafelyClosed
     testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
-    System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));
+    System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, JUnitStarter.ourCount, false));
   }
 
 }

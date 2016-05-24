@@ -133,7 +133,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final Character value = ch.getValue();
-    if (value == null) {
+    if (value == null || (value == '\b' && !myLanguageHosts.supportsLiteralBackspace(ch))) {
       switch (ch.getType()) {
         case CHAR:
           myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");

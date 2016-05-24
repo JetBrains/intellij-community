@@ -50,9 +50,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     @NotNull
     @Override
     protected List<Couple<PsiType>> compute() {
-      return ContainerUtil.map(myOtherEntries, pair -> {
-        return Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second));
-      });
+      return ContainerUtil.map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
     }
   };
 

@@ -110,9 +110,7 @@ public class NewProjectUtil {
 
       final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-          applyJdkToProject(newProject, jdk);
-        }), null, null);
+        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> applyJdkToProject(newProject, jdk)), null, null);
       }
 
       final String compileOutput = dialog.getNewCompileOutput();

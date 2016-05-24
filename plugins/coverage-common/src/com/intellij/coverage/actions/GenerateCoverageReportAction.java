@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,17 @@ import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 
 public class GenerateCoverageReportAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     assert project != null;
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
@@ -53,7 +56,7 @@ public class GenerateCoverageReportAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     if (project != null) {
       final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
       if (currentSuite != null) {

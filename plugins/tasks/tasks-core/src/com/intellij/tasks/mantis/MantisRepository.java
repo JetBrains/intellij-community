@@ -181,9 +181,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = checkAllProjectsAvailable(soap);
 
     List<MantisProject> projects =
-      new ArrayList<MantisProject>(ContainerUtil.map(fetchUserProjects(soap), data -> {
-        return new MantisProject(data);
-      }));
+      new ArrayList<MantisProject>(ContainerUtil.map(fetchUserProjects(soap), data -> new MantisProject(data)));
     List<MantisFilter> commonFilters = new LinkedList<MantisFilter>();
     for (MantisProject project : projects) {
       FilterData[] rawFilters = fetchProjectFilters(soap, project);

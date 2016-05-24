@@ -231,9 +231,7 @@ public abstract class AbstractLayoutCodeProcessor {
         if (!previousTask.get() || previousTask.isCancelled()) return false;
       }
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        currentTask.run();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
 
       return currentTask.get() && !currentTask.isCancelled();
     });
@@ -531,16 +529,12 @@ public abstract class AbstractLayoutCodeProcessor {
       myProcessors.stream().forEach((processor) -> {
         Ref<FutureTask<Boolean>> writeTaskRef = Ref.create();
 
-        ApplicationManager.getApplication().runReadAction(() -> {
-          writeTaskRef.set(processor.prepareTask(file, myProcessChangedTextOnly));
-        });
+        ApplicationManager.getApplication().runReadAction(() -> writeTaskRef.set(processor.prepareTask(file, myProcessChangedTextOnly)));
 
         ProgressIndicatorProvider.checkCanceled();
         FutureTask<Boolean> writeTask = writeTaskRef.get();
         
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask);
-        }, ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask), ModalityState.defaultModalityState());
 
         checkStop(writeTask, file);
       });

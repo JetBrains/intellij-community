@@ -40,27 +40,18 @@ public class ClassContextFilter implements ContextFilter {
 
   @Override
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    final PsiFile place = descriptor.getPlaceFile();
-    return myPattern.value(Pair.create(ClassUtil.findPsiType(descriptor, ctx), place));
+    return myPattern.value(Pair.create(descriptor.getPsiType(), descriptor.getPlaceFile()));
   }
 
   public static ClassContextFilter fromClassPattern(final ElementPattern pattern) {
-    return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
-      @Override
-      public boolean value(Pair<PsiType, PsiFile> pair) {
-        final PsiType type = pair.first;
-        return type instanceof PsiClassType ? pattern.accepts(((PsiClassType)type).resolve()) : false;
-      }
+    return new ClassContextFilter(pair -> {
+      final PsiType type = pair.first;
+      return type instanceof PsiClassType && pattern.accepts(((PsiClassType)type).resolve());
     });
   }
 
   public static ClassContextFilter subtypeOf(final String typeText) {
-    return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
-      @Override
-      public boolean value(Pair<PsiType, PsiFile> p) {
-        return isSubtype(p.first, p.second, typeText);
-      }
-    });
+    return new ClassContextFilter(p -> isSubtype(p.first, p.second, typeText));
   }
 
   public static boolean isSubtype(PsiType checked, PsiFile placeFile, String typeText) {

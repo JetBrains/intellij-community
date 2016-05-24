@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +229,7 @@ public class LambdaRefactoringUtil {
 
   public static void simplifyToExpressionLambda(@NotNull final PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
-    final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, body);
+    final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(body);
     if (singleExpression != null) {
       body.replace(singleExpression);
     }

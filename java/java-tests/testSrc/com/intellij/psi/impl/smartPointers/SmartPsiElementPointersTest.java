@@ -96,9 +96,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   private static void insertString(Document document, int offset, String s) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.insertString(offset, s);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.insertString(offset, s));
   }
 
   // This test is unfair. If pointer would be asked for getElement() between commits it'll never restore again anyway.
@@ -211,9 +209,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(myFile.getFirstChild(), pointer.getElement());
 
     Document document = myFile.getViewProvider().getDocument();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.deleteString(0, document.getTextLength());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(0, document.getTextLength()));
 
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
@@ -546,9 +542,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     }
     assertNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
     assertEquals(pointer1.getRange(), range1);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      insertString(FileDocumentManager.getInstance().getDocument(vfile), 0, " ");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> insertString(FileDocumentManager.getInstance().getDocument(vfile), 0, " "));
     assertEquals(range1.shiftRight(1), pointer1.getRange());
     assertEquals(range2.shiftRight(1), pointer2.getRange());
   }
@@ -575,9 +569,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final SmartPsiElementPointer<XmlTag> fieldSetPointer = createPointer(fieldSet);
     final SmartPsiElementPointer<XmlTag> selectPointer = createPointer(select);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      insertString(getEditor().getDocument(), getEditor().getCaretModel().getOffset(), "<a></a>");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> insertString(getEditor().getDocument(), getEditor().getCaretModel().getOffset(), "<a></a>"));
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -628,9 +620,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      insertString(getEditor().getDocument(), 0, "import java.util.Map;\n");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> insertString(getEditor().getDocument(), 0, "import java.util.Map;\n"));
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -682,16 +672,14 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
-        document.setText(StringUtil.repeat("foo foo \n", 50000));
-        for (int i = 0; i < 10000; i++) {
-          document.insertString(i * 20 + 100, "x\n");
-          assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-          assertEquals(range, pointer.getRange());
-        }
-      }).cpuBound().useLegacyScaling().assertTiming();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
+      document.setText(StringUtil.repeat("foo foo \n", 50000));
+      for (int i = 0; i < 10000; i++) {
+        document.insertString(i * 20 + 100, "x\n");
+        assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+        assertEquals(range, pointer.getRange());
+      }
+    }).cpuBound().useLegacyScaling().assertTiming());
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
@@ -742,9 +730,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNull(((SmartPointerEx) pointer2).getCachedElement());
 
     TextRange range = file.getClasses()[1].getTextRange();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      document.moveText(range.getStartOffset(), range.getEndOffset(), 0);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> document.moveText(range.getStartOffset(), range.getEndOffset(), 0));
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -772,10 +758,8 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     TextRange originalRange = method.getTextRange();
     SmartPsiElementPointer pointer = createPointer(method);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      EditorModificationUtil.insertStringAtCaret(myEditor, "    void m() {\n" +
-                                                           "    }\n");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.insertStringAtCaret(myEditor, "    void m() {\n" +
+                                                                                                                "    }\n"));
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     PsiElement element = pointer.getElement();
@@ -792,9 +776,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(((SmartPointerEx) pointer).getCachedElement());
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      file.getClasses()[1].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> file.getClasses()[1].delete());
 
 
     assertNotNull(pointer.getElement());
@@ -875,21 +857,19 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     List<XmlTag> tags = ContainerUtil.newArrayList(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = tags.stream().map(this::createPointer).collect(Collectors.toList());
     Random random = new Random();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
-        for (int i = 0; i < tags.size(); i++) {
-          XmlTag tag = tags.get(i);
-          SmartPsiElementPointer pointer = pointers.get(i);
-          assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
-          assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
+    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
+      for (int i = 0; i < tags.size(); i++) {
+        XmlTag tag = tags.get(i);
+        SmartPsiElementPointer pointer = pointers.get(i);
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
 
-          tag.setName("bar" + random.nextInt(20));
-          assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
-          assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
-        }
-        PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-      }).cpuBound().useLegacyScaling().assertTiming();
-    });
+        tag.setName("bar" + random.nextInt(20));
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
+      }
+      PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+    }).cpuBound().useLegacyScaling().assertTiming());
   }
 
   @NotNull

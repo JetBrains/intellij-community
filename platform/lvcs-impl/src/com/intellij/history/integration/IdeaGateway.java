@@ -272,9 +272,7 @@ public class IdeaGateway {
   }
 
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> {
-      return doCreateEntry(each, forDeletion);
-    });
+    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
     parent.addChildren(entries);
   }
 

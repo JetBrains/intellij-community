@@ -712,9 +712,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (updated.length() > 0) {
         final Throwable e = new Throwable(updated.toString());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(() -> {
-          forceRebuild(e);
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> forceRebuild(e), ModalityState.NON_MODAL);
       }
       dropUnregisteredIndices(state);
       myInitialized = true;

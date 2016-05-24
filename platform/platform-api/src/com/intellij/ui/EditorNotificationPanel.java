@@ -90,9 +90,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
-    return createActionLabel(text, () -> {
-      executeAction(actionId);
-    });
+    return createActionLabel(text, () -> executeAction(actionId));
   }
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {

@@ -826,9 +826,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
       if (selectionPath != null) {
-        Object[] nodes = ContainerUtil.map2Array(selectionPath, treePath -> {
-          return treePath.getLastPathComponent();
-        });
+        Object[] nodes = ContainerUtil.map2Array(selectionPath, treePath -> treePath.getLastPathComponent());
         if (!myCondition.value(nodes)) return;
         presentation.setEnabled(true);
       }

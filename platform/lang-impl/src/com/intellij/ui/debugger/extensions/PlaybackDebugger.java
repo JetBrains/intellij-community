@@ -190,9 +190,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
           return;
         }
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        save();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> save());
     }
   }
 
@@ -242,9 +240,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void fillDocument(final String text) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myCodeEditor.setText(text == null ? "" : text);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myCodeEditor.setText(text == null ? "" : text));
   }
 
   @Nullable

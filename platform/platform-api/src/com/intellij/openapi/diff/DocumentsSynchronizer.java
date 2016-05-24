@@ -79,9 +79,7 @@ abstract class DocumentsSynchronizer {
       myDuringModification = true;
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         LOG.assertTrue(endOffset <= document.getTextLength());
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          document.replaceString(startOffset, endOffset, newText);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText));
       }, DiffBundle.message("save.merge.result.command.name"), document);
     }
     finally {

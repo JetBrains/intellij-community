@@ -153,9 +153,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectSdk != jdk) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          ProjectJdkTable.getInstance().removeJdk(jdk);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
       }
     }
   }
@@ -171,9 +169,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void addSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectJdkTable.getInstance().addJdk(sdk);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
 
     mySdks.add(sdk);
   }
@@ -186,9 +182,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
     if (myCreatedProject != null) {
       myProjectManager.closeProject(myCreatedProject);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(myCreatedProject);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
       myCreatedProject = null;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -238,9 +232,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectJdkTable.getInstance().addJdk(sdk);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
     mySdks.add(sdk);
     return sdk;
   }

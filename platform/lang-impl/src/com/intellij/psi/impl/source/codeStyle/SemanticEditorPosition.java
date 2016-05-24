@@ -60,6 +60,17 @@ public abstract class SemanticEditorPosition {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
   }
   
+  @SuppressWarnings("unused")
+  public boolean isAtAnyOf(@NotNull SyntaxElement... syntaxElements) {
+    if (!myIterator.atEnd()) {
+      SyntaxElement currElement = map(myIterator.getTokenType());
+      for (SyntaxElement element : syntaxElements) {
+        if (element.equals(currElement)) return true;
+      }
+    }
+    return false;
+  }
+  
   public boolean matchesRule(@NotNull Rule rule) {
     return rule.check(this);
   }

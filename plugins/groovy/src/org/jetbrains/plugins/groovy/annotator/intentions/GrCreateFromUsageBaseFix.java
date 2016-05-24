@@ -112,9 +112,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
       int index = list.getSelectedIndex();
       if (index < 0) return;
       final PsiClass aClass = (PsiClass)list.getSelectedValue();
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        invokeImpl(project, aClass);
-      }), getText(), null);
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(), null);
     };
 
     builder.

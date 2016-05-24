@@ -93,9 +93,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
       CharSequence text = generateText(random);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        document.insertString(offset, text);
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(offset, text));
     }
   }
 
@@ -107,9 +105,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       if (textLength <= 0) return;
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        document.deleteString(Math.min(from, to), Math.max(from, to));
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(Math.min(from, to), Math.max(from, to)));
     }
   }
 
@@ -122,9 +118,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
       CharSequence text = generateText(random);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        document.replaceString(Math.min(from, to), Math.max(from, to), text);
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(Math.min(from, to), Math.max(from, to), text));
     }
   }
 

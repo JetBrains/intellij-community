@@ -23,9 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -403,27 +401,27 @@ public class FindInProjectUtil {
   public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
-    final AccessToken accessToken = ReadAction.start();
-    try {
-      final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
-      if (topLevelRegExpChars.size() != 1) return "";
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+        if (topLevelRegExpChars.size() != 1) return "";
 
-      // leave only top level regExpChars
-      return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
-        final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+        // leave only top level regExpChars
+        return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
+          final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
 
-        @Override
-        public String fun(PsiElement element) {
-          if(regExpCharPsiClass.isInstance(element)) {
-            String text = element.getText();
-            if (!text.startsWith("\\")) return text;
+          @Override
+          public String fun(PsiElement element) {
+            if (regExpCharPsiClass.isInstance(element)) {
+              String text = element.getText();
+              if (!text.startsWith("\\")) return text;
+            }
+            return " ";
           }
-          return " ";
-        }
-      }, "");
-    } finally {
-      accessToken.finish();
-    }
+        }, "");
+      }
+    });
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {

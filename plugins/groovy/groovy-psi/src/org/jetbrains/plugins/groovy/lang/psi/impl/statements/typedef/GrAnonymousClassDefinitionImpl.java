@@ -17,10 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -63,6 +60,10 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
+    GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getBaseClassName(), this);
+    }
     //noinspection ConstantConditions
     return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
@@ -81,50 +82,22 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @Override
   public boolean isInQualifiedNew() {
-    final GrTypeDefinitionStub stub = getStub();
-    if (stub != null) {
-      return stub.isAnonymousInQualifiedNew();
-    }
-
-    final PsiElement parent = getParent();
-    return parent instanceof GrNewExpression && ((GrNewExpression)parent).getQualifier() != null;
+    return false;
   }
 
   @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    final GrCodeReferenceElement ref = getBaseClassReferenceGroovy();
-    final PsiElement element = ref.resolve();
-    final Project project = getProject();
-    if (element instanceof PsiClass) {
-      final GrClassReferenceType type = new GrClassReferenceType(ref);
-      return JavaPsiFacade.getElementFactory(project).createReferenceElementByType(type);
-    }
-    String qName = ref.getReferenceName(); //not null
-    assert qName != null;
-    return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));
+    return JavaPsiFacade.getElementFactory(getProject()).createReferenceElementByType(getBaseClassType());
   }
 
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final GrTypeDefinitionStub stub = getStub();
-    if (stub == null) {
-      myCachedBaseType = null;
-      return createClassType();
-    }
-
     PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null && type.isValid()) return type;
 
-    if (isInQualifiedNew()) {
-      return createClassType();
-    }
-
-    final String refText = stub.getBaseClassName();
-    assert refText != null : stub;
-    type = new GrClassReferenceType(GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(refText, this));
-
+    type = new GrClassReferenceType(getBaseClassReferenceGroovy());
     myCachedBaseType = new SoftReference<PsiClassType>(type);
     return type;
   }
@@ -135,16 +108,9 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return null;
   }
 
-  @NotNull
-  private PsiClassType createClassType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClassReference());
-  }
-
   @Nullable
   private PsiClass getBaseClass() {
-    final PsiElement element = getBaseClassReferenceGroovy().resolve();
-    if (element instanceof PsiClass) return (PsiClass)element;
-    return null;
+    return getBaseClassType().resolve();
   }
 
   @NotNull

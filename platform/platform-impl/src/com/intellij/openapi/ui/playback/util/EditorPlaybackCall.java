@@ -66,9 +66,7 @@ public class EditorPlaybackCall {
   public static AsyncResult<String> waitDaemonForFinish(final PlaybackContext context) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final Disposable connection = Disposer.newDisposable();
-    result.doWhenProcessed(() -> {
-      Disposer.dispose(connection);
-    });
+    result.doWhenProcessed(() -> Disposer.dispose(connection));
 
 
     WindowSystemPlaybackCall.findProject().doWhenDone(new Consumer<Project>() {
@@ -87,9 +85,7 @@ public class EditorPlaybackCall {
           }
         });
       }
-    }).doWhenRejected(() -> {
-      result.setRejected("Cannot find project");
-    });
+    }).doWhenRejected(() -> result.setRejected("Cannot find project"));
     
     return result;
   }

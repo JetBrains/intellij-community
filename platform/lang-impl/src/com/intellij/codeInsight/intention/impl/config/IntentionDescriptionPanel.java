@@ -133,9 +133,7 @@ public class IntentionDescriptionPanel {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           final Project project = ProjectManager.getInstance().getDefaultProject();
-          util.editConfigurable(project, pluginConfigurable, () -> {
-            pluginConfigurable.select(pluginDescriptor);
-          });
+          util.editConfigurable(project, pluginConfigurable, () -> pluginConfigurable.select(pluginDescriptor));
         }
       });
       owner = label;

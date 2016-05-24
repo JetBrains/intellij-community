@@ -368,9 +368,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        myFilteringStructure.rebuild();
-      });
+      ApplicationManager.getApplication().runReadAction(() -> myFilteringStructure.rebuild());
 
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {

@@ -153,9 +153,10 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
   @NotNull
   @Override
-  public Iterator<T> iterator() {
-    return new Iterator<T>() {
+  public ResettableIterator<T> iterator() {
+    return new ResettableIterator<T>() {
       private QueueEntry<T> cursor = TOMB;
+      private long count;
       @Override
       public boolean hasNext() {
         return cursor.next != TOMB;
@@ -164,6 +165,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
       @Override
       public T next() {
         cursor = cursor.next;
+        count++;
         return cursor.t;
       }
 
@@ -172,6 +174,40 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
         if (cursor == TOMB) throw new NoSuchElementException();
         HashSetQueue.this.remove(cursor.t);
       }
+
+      @Override
+      public Object markPosition() {
+        return new IteratorPosition<T>(cursor, count);
+      }
+
+      @Override
+      public boolean resetPosition(Object p) {
+        @SuppressWarnings("unchecked")
+        IteratorPosition<T> requested = (IteratorPosition<T>)p;
+
+        if (requested.count <= count) {
+          cursor = requested.cursor;
+          count = requested.count;
+          return true;
+        }
+        return false;
+      }
     };
+  }
+
+  private static class IteratorPosition<T> {
+    private final QueueEntry<T> cursor;
+    private final long count;
+
+    IteratorPosition(@NotNull QueueEntry<T> cursor, long count) {
+      this.cursor = cursor;
+      this.count = count;
+    }
+  }
+
+  public interface ResettableIterator<T> extends Iterator<T> {
+    Object markPosition();
+    // returns true if reset successfully, false if failed (e.g. the requested position is ahead of current)
+    boolean resetPosition(Object pos);
   }
 }

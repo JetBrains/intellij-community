@@ -113,9 +113,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
     final List<VirtualFile> virtualFiles = getPotentialRoots(myModule, dirs);
     final VirtualFile[] roots = prepare(VfsUtilCore.toVirtualFileArray(virtualFiles));
     if (roots.length == 1) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        createDescription(roots[0]);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[0]));
     }
     else {
       List<String> options = new ArrayList<String>();
@@ -131,9 +129,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
         .setItemChoosenCallback(() -> {
           final int index = files.getSelectedIndex();
           if (0 <= index && index < roots.length) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              createDescription(roots[index]);
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[index]));
           }
         }).createPopup();
       final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();

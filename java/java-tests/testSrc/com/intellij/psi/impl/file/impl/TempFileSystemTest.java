@@ -45,9 +45,7 @@ public class TempFileSystemTest extends LightPlatformCodeInsightFixtureTestCase 
     });
     PlatformTestCase.move(psiFile.getVirtualFile(), subdirectory.getVirtualFile());
     assertTrue(psiFile.isValid());
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      psiFile.delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> psiFile.delete());
 
     assertFalse(psiFile.isValid());
   }

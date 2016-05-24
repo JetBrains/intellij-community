@@ -15,7 +15,10 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -53,7 +56,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
                                         || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                         || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
 
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (!new File(myProjectPath).exists()) {
       if (Messages.showDialog(project, "The path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",

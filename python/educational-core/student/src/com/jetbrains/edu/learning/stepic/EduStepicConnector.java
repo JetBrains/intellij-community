@@ -432,9 +432,7 @@ public class EduStepicConnector {
         postUnit(lessonId, position, sectionId);
         position += 1;
       }
-      ApplicationManager.getApplication().runReadAction(() -> {
-        postAdditionalFiles(project, postedCourse.id, indicator);
-      });
+      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(project, postedCourse.id, indicator));
     }
     catch (IOException e) {
       LOG.error(e.getMessage());

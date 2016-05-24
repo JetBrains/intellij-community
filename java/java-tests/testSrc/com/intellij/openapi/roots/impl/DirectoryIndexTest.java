@@ -314,15 +314,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
     final String list = fileTypeManager.getIgnoredFilesList();
     final String list1 = list + ";" + "newDir";
     try {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        fileTypeManager.setIgnoredFilesList(list1);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list1));
       assertNotInProject(newDir);
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        fileTypeManager.setIgnoredFilesList(list);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list));
       assertInProject(newDir);
     }
   }
@@ -429,9 +425,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   private void fireRootsChanged() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
   }
 
   private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {

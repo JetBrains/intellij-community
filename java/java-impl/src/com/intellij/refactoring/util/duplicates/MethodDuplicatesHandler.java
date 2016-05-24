@@ -151,9 +151,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
       });
       if (module != null) {
         final HashSet<Module> dependencies = new HashSet<Module>();
-        ApplicationManager.getApplication().runReadAction(() -> {
-          ModuleUtilCore.collectModulesDependsOn(module, dependencies);
-        });
+        ApplicationManager.getApplication().runReadAction(() -> ModuleUtilCore.collectModulesDependsOn(module, dependencies));
         memberWithModulesMap.put(member, dependencies);
       }
     }

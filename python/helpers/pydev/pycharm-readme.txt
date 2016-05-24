@@ -1,5 +1,5 @@
 The sources in this folder are PyCharm version of the debugger PyDev.Debugger.
-They should be in sync, so after testing all commits should be backported to the original repo.
+They should be in sync, so after testing all commits should be back-ported to the original repo.
 
 How to do it?
 
@@ -15,6 +15,6 @@ and in this folder:
 4) git tag -l | xargs git tag -d
 5) git filter-branch --subdirectory-filter python/helpers/pydev --prune-empty --index-filter 'SHA=$(git write-tree); rm $GIT_INDEX_FILE && git read-tree --prefix= $SHA' -- --all
 in PyDev.Debugger folder:
-6) git remote add temp-repo <path/to/idea/foler>
+6) git remote add temp-repo <path/to/idea/folder>
 7) git fetch temp-repo
 8) Cherry-pick all the changes

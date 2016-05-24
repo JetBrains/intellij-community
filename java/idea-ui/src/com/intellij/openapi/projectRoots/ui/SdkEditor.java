@@ -216,9 +216,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        sdkModificator.commitChanges();
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
       final AdditionalDataConfigurable configurable = getAdditionalDataConfigurable();
       if (configurable != null) {
         configurable.apply();

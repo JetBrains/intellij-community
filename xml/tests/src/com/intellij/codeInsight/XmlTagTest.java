@@ -97,9 +97,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testDeleteTag() throws Throwable {
     XmlTag aTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a><b/> </a>");
     final XmlTag bTag = aTag.findFirstSubTag("b");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      bTag.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> bTag.delete());
 
     assertEquals(0, aTag.getSubTags().length);
   }
@@ -126,9 +124,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   }
 
   public void testWhitespaceInsideTag() throws Exception {
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      XmlElementFactory.getInstance(getProject()).createTagFromText("<p/>").getValue().setText("\n");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> XmlElementFactory.getInstance(getProject()).createTagFromText("<p/>").getValue().setText("\n"));
   }
 
   public void testSetAttribute_ForXhtml() throws Exception {
@@ -214,18 +210,14 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit1() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>aaa</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      xmlText.removeText(0, 3);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> xmlText.removeText(0, 3));
 
     assertEquals("<html></html>", rootTag.getText());
   }
 
   public void testTextEdit2() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a&lt;a</html>");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      rootTag.getValue().getTextElements()[0].removeText(0, 3);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> rootTag.getValue().getTextElements()[0].removeText(0, 3));
 
     assertEquals("<html></html>", rootTag.getText());
   }
@@ -233,9 +225,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit3() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a&lt;a</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      xmlText.removeText(1, 2);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> xmlText.removeText(1, 2));
 
     assertEquals(1, xmlText.getChildren().length);
     assertEquals("<html>aa</html>", rootTag.getText());
@@ -244,9 +234,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit4() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>aaa</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      xmlText.removeText(1, 2);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> xmlText.removeText(1, 2));
 
     assertEquals(1, xmlText.getChildren().length);
     assertEquals("<html>aa</html>", rootTag.getText());
@@ -278,18 +266,14 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit6() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a<b>1</b>c</html>");
     final XmlTag xmlTag = rootTag.findFirstSubTag("b");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      xmlTag.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> xmlTag.delete());
 
     assertEquals("<html>ac</html>", rootTag.getText());
   }
 
   public void testBrace() throws Exception {
    final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      tagFromText.getValue().setText("<");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> tagFromText.getValue().setText("<"));
 
     assertEquals("<", tagFromText.getValue().getTextElements()[0].getValue());
   }
@@ -327,46 +311,42 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTag root = file.getDocument().getRootTag();
     final XmlTag tag = root.findFirstSubTag("b");
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        final int offset = tag.getTextOffset();
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      final int offset = tag.getTextOffset();
 
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(root.getContainingFile());
-        RangeMarker marker = document.createRangeMarker(offset - 3, offset);
-        tag.delete();
+      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(root.getContainingFile());
+      RangeMarker marker = document.createRangeMarker(offset - 3, offset);
+      tag.delete();
 
 
-        assertEquals(4, marker.getStartOffset());
-        assertEquals(7, marker.getEndOffset());
-      }, "", null);
-    });
+      assertEquals(4, marker.getStartOffset());
+      assertEquals(7, marker.getEndOffset());
+    }, "", null));
   }
 
   // this one fails, the difference is that we do some manipulations before: move "234" before the tag
   public void testRangeMarker2() throws IOException, IncorrectOperationException {
     final XmlTag root = createTag("file.xhtml", "<a>1<b>234</b>567</a>");
     final XmlTag tag = root.findFirstSubTag("b");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(root.getContainingFile());
-        XmlTagChild child = tag.getValue().getChildren()[0];
-        assertTrue(child instanceof XmlText && child.getText().equals("234"));
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(root.getContainingFile());
+      XmlTagChild child = tag.getValue().getChildren()[0];
+      assertTrue(child instanceof XmlText && child.getText().equals("234"));
 
-        try {
-          tag.getParent().addBefore(child, tag);
+      try {
+        tag.getParent().addBefore(child, tag);
 
-          assertEquals(7, tag.getTextOffset());
-          RangeMarker marker = document.createRangeMarker(4, 7);
-          tag.delete();
+        assertEquals(7, tag.getTextOffset());
+        RangeMarker marker = document.createRangeMarker(4, 7);
+        tag.delete();
 
-          assertEquals(4, marker.getStartOffset());
-          assertEquals(7, marker.getEndOffset());
+        assertEquals(4, marker.getStartOffset());
+        assertEquals(7, marker.getEndOffset());
 
-        }
-        catch (IncorrectOperationException e) {
-        }
-      }, "", null);
-    });
+      }
+      catch (IncorrectOperationException e) {
+      }
+    }, "", null));
   }
 
   // the previous test relveals one problem with text merge, "234" in fact is not merged with "1"
@@ -460,9 +440,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xml",
                                                                                                               "<a>\n  <a/>\n</a>");
     final XmlTag tagB = file.getDocument().getRootTag();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      tagB.getSubTags()[0].delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> tagB.getSubTags()[0].delete());
 
     assertEquals("<a>\n  </a>", tagB.getText());
   }
@@ -471,9 +449,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText("test.xml", "<a>\n    <a>\n <b>\n     hasgdgasjdgasdg    asgdjhasgd</b>\n </a>\n</a>");
     final XmlTag tagB = file.getDocument().getRootTag();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      tagB.getSubTags()[0].getSubTags()[0].delete();
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> tagB.getSubTags()[0].getSubTags()[0].delete());
 
     assertEquals("<a>\n    <a>\n </a>\n</a>", tagB.getText());
   }
@@ -485,14 +461,12 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     RangeMarker rangeMarker = document.createRangeMarker(5, 5);
     final XmlText text = (XmlText) tag.getValue().getChildren()[0];
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        try{
-          text.removeText(2, 3);
-        }
-        catch(IncorrectOperationException ioe){}
-      }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      try{
+        text.removeText(2, 3);
+      }
+      catch(IncorrectOperationException ioe){}
+    }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION));
 
     assertEquals(5, rangeMarker.getStartOffset());
     assertEquals(5, rangeMarker.getEndOffset());
@@ -500,9 +474,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testXHTMLTextInsert() throws Exception {
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createXHTMLTagFromText("<a>xyz</a>");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      tag.getValue().getTextElements()[0].insertText("<", 1);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> tag.getValue().getTextElements()[0].insertText("<", 1));
 
     assertEquals("<a>x&lt;yz</a>", tag.getText());
   }
@@ -667,9 +639,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testWhitespacesInEmptyXHTMLTag() throws Exception{
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createXHTMLTagFromText("<a> <b/> </a>");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      tag.findFirstSubTag("b").delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> tag.findFirstSubTag("b").delete());
 
     assertEquals("<a>  </a>", tag.getText());
   }
@@ -679,16 +649,14 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     XmlTag tag = file.getDocument().getRootTag();
     final XmlText xmlText = tag.getValue().getTextElements()[0];
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        try {
-          xmlText.insertText("z", 1);
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
-      }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      try {
+        xmlText.insertText("z", 1);
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
+      }
+    }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION));
     assertEquals("<a>xz y</a>", tag.getText());
   }
 
@@ -790,9 +758,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   }
 
   public void testStrangeCharactesInText() throws Throwable {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>").getValue().setText("@#$%@$%$${${''}");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>").getValue().setText("@#$%@$%$${${''}"));
   }
 
   public void testPsiToDocumentSynchronizationFailed() throws Throwable {
@@ -801,26 +767,24 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     tempFile.createNewFile();
     FileUtil.writeToFile(tempFile, text);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        VirtualFileManager.getInstance().syncRefresh();
-        XmlFile file ;//createTemporaryFile("wpd.xml", text));
-        try {
-          file = (XmlFile)getPsiManager().findFile(VfsUtil.findFileByURL(tempFile.toURL()));
-        }
-        catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      VirtualFileManager.getInstance().syncRefresh();
+      XmlFile file ;//createTemporaryFile("wpd.xml", text));
+      try {
+        file = (XmlFile)getPsiManager().findFile(VfsUtil.findFileByURL(tempFile.toURL()));
+      }
+      catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
 
-        final XmlTag methodTag = file.getDocument().getRootTag().findFirstSubTag("methods");
-        try {
-          methodTag.add(XmlElementFactory.getInstance(getProject()).createTagFromText("<method/>"));
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
-      }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
-    });
+      final XmlTag methodTag = file.getDocument().getRootTag().findFirstSubTag("methods");
+      try {
+        methodTag.add(XmlElementFactory.getInstance(getProject()).createTagFromText("<method/>"));
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
+      }
+    }, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION));
   }
 
   public void testXmlFormattingException() throws Throwable {

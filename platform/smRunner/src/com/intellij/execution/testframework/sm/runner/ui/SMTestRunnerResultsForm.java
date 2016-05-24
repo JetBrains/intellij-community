@@ -28,7 +28,6 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.Disposable;
@@ -113,7 +112,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private int myIgnoredTestCount = 0;
   private long myStartTime;
   private long myEndTime;
-  private StatisticsPanel myStatisticsPane;
 
   // custom progress
   private String myCurrentCustomProgressCategory;
@@ -154,18 +152,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     */
   }
 
-  @Override
-  public void initUI() {
-    super.initUI();
-
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-      SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                                    () -> showStatisticsForSelectedProxy(),
-                                    myTreeView);
-    }
-  }
-
   protected ToolbarPanel createToolbarPanel() {
     return new SMTRunnerToolbarPanel(myProperties, this, this);
   }
@@ -176,18 +162,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
     myTreeView.setTestResultsViewer(this);
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      addTestsTreeSelectionListener(new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
-          if (selectedTest instanceof SMTestProxy) {
-            myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
-          }
-        }
-      });
-    }
-
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
@@ -231,22 +205,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     //myTreeView.setRootVisible(false);
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     return myTreeView;
-  }
-
-  protected JComponent createStatisticsPanel() {
-    // Statistics tab
-    final StatisticsPanel statisticsPane = new StatisticsPanel(myProject, this);
-    // handler to select in results viewer by statistics pane events
-    statisticsPane.addPropagateSelectionListener(createSelectMeListener());
-    // handler to select test statistics pane by result viewer events
-    setShowStatisticForProxyHandler(statisticsPane.createSelectMeListener());
-
-    myStatisticsPane = statisticsPane;
-    return myStatisticsPane.getContentPane();
-  }
-
-  public StatisticsPanel getStatisticsPane() {
-    return myStatisticsPane;
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
@@ -517,11 +475,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void selectAndNotify(@Nullable final AbstractTestProxy testProxy, @Nullable Runnable onDone) {
     selectWithoutNotify(testProxy, onDone);
 
-    // Is used by Statistic tab to differ use selection in tree
-    // from manual selection from API (e.g. test runner events)
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      showStatisticsForSelectedProxy(testProxy, false);
-    }
+
   }
 
   public void addEventsListener(final EventsListener listener) {
@@ -543,7 +497,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     super.dispose();
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
-    myStatisticsPane.doDispose();
     myDisposed = true;
   }
 

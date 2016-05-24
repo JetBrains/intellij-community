@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -45,6 +46,8 @@ public abstract class PsiType implements PsiAnnotationOwner {
       return count == 0 ? EMPTY_ARRAY : new PsiType[count];
     }
   };
+  private static final Logger LOG = Logger.getInstance("#" + PsiType.class.getName());
+
   @NotNull
   public static PsiType[] createArray(int count) {
     return ARRAY_FACTORY.create(count);
@@ -68,7 +71,8 @@ public abstract class PsiType implements PsiAnnotationOwner {
 
   @NotNull
   public PsiType annotate(@NotNull TypeAnnotationProvider provider) {
-    throw new UnsupportedOperationException("Not implemented for " + getClass());
+    LOG.error("Not implemented for " + getClass());
+    return this;
   }
 
   /**

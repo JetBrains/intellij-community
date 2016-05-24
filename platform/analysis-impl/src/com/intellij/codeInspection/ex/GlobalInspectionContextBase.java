@@ -339,9 +339,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       return tools;
     }
     Set<Tools> set = new THashSet<Tools>(tools, TOOLS_HASHING_STRATEGY);
-    set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> {
-      return new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true);
-    }));
+    set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
     return new ArrayList<Tools>(set);
   }
 

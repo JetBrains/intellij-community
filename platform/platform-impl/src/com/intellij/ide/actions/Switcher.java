@@ -138,7 +138,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) return;
 
     boolean isNewSwitcher = false;
@@ -334,9 +334,7 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows = new JBList(twModel);
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       if (pinned) {
-        new NameFilteringListModel<ToolWindow>(toolWindows, window -> {
-          return window.getStripeTitle();
-        }, new Condition<String>() {
+        new NameFilteringListModel<ToolWindow>(toolWindows, window -> window.getStripeTitle(), new Condition<String>() {
           @Override
           public boolean value(@NotNull String s) {
             return !mySpeedSearch.isPopupActive()
@@ -532,9 +530,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       files = new JBList(filesModel);
       if (pinned) {
-        new NameFilteringListModel<FileInfo>(files, info -> {
-          return info.getNameForRendering();
-        }, new Condition<String>() {
+        new NameFilteringListModel<FileInfo>(files, info -> info.getNameForRendering(), new Condition<String>() {
           @Override
           public boolean value(@NotNull String s) {
             return !mySpeedSearch.isPopupActive()

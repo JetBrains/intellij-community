@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,153 @@ import com.jetbrains.python.psi.LanguageLevel;
  */
 public class PyPropertyAccessInspectionTest extends PyTestCase {
   public void testTest() {
-    doTest();
+    doTestPy2();
   }
 
-  public void testOverrideAssignment() {  // PY-2313
-    doTest();
+  // PY-2313
+  public void testOverrideAssignment() {
+    doTestPy2();
   }
 
-  private void doTest() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
+  // PY-12773
+  public void testClassAttrAssignmentAndSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndSlotsWithDict() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndSlotsWithAttrPy2() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndSlotsWithAttrPy3() {
+    doTestPy3();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnSlotsAndEmptyParent() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnWithDictAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnWithDictAndInheritedWithAttrSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnAndInheritedWithDictSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnWithAttrAndInheritedSlotsPy2() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnWithAttrAndInheritedSlotsPy3() {
+    doTestPy3();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnAndInheritedWithAttrSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testClassAttrAssignmentAndOwnAndInheritedWithAttrAndDictSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnWithAttrAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnWithDictAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnWithAttrAndDictAndInheritedSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithAttrSlotsPy2() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithAttrSlotsPy3() {
+    doTestPy3();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithDictSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithAttrAndDictSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnWithAttrAndInheritedWithDictSlots() {
+    doTestPy2();
+  }
+
+  // PY-12773
+  public void testInheritedClassAttrAssignmentAndOwnWithDictAndInheritedWithAttrSlots() {
+    doTestPy2();
+  }
+
+  private void doTestPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
+  }
+
+  private void doTestPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestPy);
+  }
+
+  private void doTestPy() {
     myFixture.configureByFile("inspections/PyPropertyAccessInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyPropertyAccessInspection.class);
     myFixture.checkHighlighting(true, false, false);

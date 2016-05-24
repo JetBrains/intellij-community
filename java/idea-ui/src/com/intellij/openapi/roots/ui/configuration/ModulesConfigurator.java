@@ -523,9 +523,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
     final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.select(artifact, true);
-    });
+    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(artifact, true));
   }
 
   public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
@@ -545,9 +543,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public static boolean showDialog(Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> {
-      config.select(moduleToSelect, editorNameToSelect, true);
-    });
+    return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }
 
   public void moduleRenamed(Module module, final String oldName, final String name) {

@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -87,6 +89,7 @@ public class InferenceSession {
   public final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
   private final PsiElement myContext;
+  private ParameterTypeInferencePolicy myPolicy;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
@@ -104,6 +107,7 @@ public class InferenceSession {
     }
     myInferenceSessionContainer = initialState.getInferenceSessionContainer();
     myErased = initialState.isErased();
+    myPolicy = DefaultParameterTypeInferencePolicy.INSTANCE;
   }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
@@ -125,15 +129,25 @@ public class InferenceSession {
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(leftTypes[i]), substituteWithInferenceVariables(rightType)));
       }
     }
+    myPolicy = DefaultParameterTypeInferencePolicy.INSTANCE;
   }
-  
+
   public InferenceSession(PsiTypeParameter[] typeParams,
                           PsiSubstitutor siteSubstitutor,
                           PsiManager manager,
                           PsiElement context) {
+    this(typeParams, siteSubstitutor, manager, context, DefaultParameterTypeInferencePolicy.INSTANCE);
+  }
+
+  public InferenceSession(PsiTypeParameter[] typeParams,
+                          PsiSubstitutor siteSubstitutor,
+                          PsiManager manager,
+                          PsiElement context,
+                          ParameterTypeInferencePolicy policy) {
     myManager = manager;
     mySiteSubstitutor = siteSubstitutor;
     myContext = context;
+    myPolicy = policy;
 
     initBounds(typeParams);
   }
@@ -1198,7 +1212,12 @@ public class InferenceSession {
         type =  PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
       }
       else {
-        type = myErased ? null : upperBound;
+        if (myErased) {
+          type = null;
+        }
+        else {
+          type = var.getBounds(InferenceBound.UPPER).size() == 1 ? myPolicy.getInferredTypeWithNoConstraint(myManager, upperBound).first : upperBound;
+        }
       }
 
       if (type instanceof PsiIntersectionType) {

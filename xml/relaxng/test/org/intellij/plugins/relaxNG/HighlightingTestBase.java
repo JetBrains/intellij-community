@@ -122,9 +122,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
   }
 
   @Override

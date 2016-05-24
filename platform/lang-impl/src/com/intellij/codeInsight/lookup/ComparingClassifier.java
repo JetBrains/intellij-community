@@ -79,8 +79,6 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   @NotNull
   @Override
   public List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<T> items, @NotNull final ProcessingContext context) {
-    return ContainerUtil.map(items, t -> {
-      return new Pair<T, Object>(t, getWeight(t, context));
-    });
+    return ContainerUtil.map(items, t -> new Pair<T, Object>(t, getWeight(t, context)));
   }
 }

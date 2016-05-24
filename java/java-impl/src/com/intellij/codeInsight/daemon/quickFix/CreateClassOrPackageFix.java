@@ -134,9 +134,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         protected void run(@NotNull Result result) throws Throwable {
           final PsiDirectory directory = chooseDirectory(project, file);
           if (directory == null) return;
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            doCreate(directory, startElement);
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> doCreate(directory, startElement));
         }
       }.execute();
     }

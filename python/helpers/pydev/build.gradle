@@ -1,7 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-import org.gradle.api.tasks.Exec
-
 plugins {
   id "com.jetbrains.python.envs" version "0.0.2"
 }
@@ -20,14 +18,16 @@ envs {
   conda "py35_32", "3.5", ["django>=1.9", ["-U", "setuptools>=0.9"], ["-U", "wheel>=0.21", "twine"]]
 }
 
-task buildBinariesOnWindows(type: Exec, dependsOn: 'build_envs') << {
-  workingDir projectDir
+task buildBinariesOnWindows(dependsOn: 'build_envs') << {
+  exec {
+    workingDir projectDir
 
-  environment PYTHONPATH: projectDir,
-              MINICONDA32_ENVS: envs.envsDirectory,
-              MINICONDA64_ENVS: envs.envsDirectory
+    environment PYTHONPATH: projectDir,
+                MINICONDA32_ENVS: envs.envsDirectory,
+                MINICONDA64_ENVS: envs.envsDirectory
 
-  commandLine "${envs.envsDirectory}/py27_32/python.exe", "build_tools/build_binaries_windows.py"
+    commandLine "${envs.envsDirectory}/py27_32/python.exe", "build_tools/build_binaries_windows.py"
+  }
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PythonConsoleRunnerFactory;
@@ -96,7 +95,7 @@ public class PyExecuteSelectionAction extends AnAction {
 
   private static void execute(final AnActionEvent e, final String selectionText) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     Module module = e.getData(LangDataKeys.MODULE);
 
     findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, selectionText, editor), editor, project, module);
@@ -246,7 +245,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static boolean canFindConsole(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project != null) {
       Collection<RunContentDescriptor> descriptors = getConsoles(project);
       return descriptors.size() > 0;

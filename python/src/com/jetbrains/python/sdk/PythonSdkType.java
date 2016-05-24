@@ -197,9 +197,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static TreeSet<String> createVersionSet() {
-    return new TreeSet<String>((o1, o2) -> {
-      return findDigits(o1).compareTo(findDigits(o2));
-    });
+    return new TreeSet<String>((o1, o2) -> findDigits(o1).compareTo(findDigits(o2)));
   }
 
   private static String findDigits(String s) {

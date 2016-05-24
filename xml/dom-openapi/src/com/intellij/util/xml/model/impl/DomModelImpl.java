@@ -84,9 +84,7 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   @NotNull
   public List<DomFileElement<T>> getRoots() {
     if (myMergedModel == null) {
-      return ContainerUtil.mapNotNull(myConfigFiles, (NullableFunction<XmlFile, DomFileElement<T>>)xmlFile -> {
-        return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass);
-      });
+      return ContainerUtil.mapNotNull(myConfigFiles, (NullableFunction<XmlFile, DomFileElement<T>>)xmlFile -> DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass));
     }
     return myMergedModel instanceof MergedObject ? ((MergedObject) myMergedModel).getImplementations() : Collections.singletonList(myMergedModel);
   }

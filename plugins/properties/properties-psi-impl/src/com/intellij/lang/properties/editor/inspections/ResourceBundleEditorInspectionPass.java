@@ -49,9 +49,7 @@ public class ResourceBundleEditorInspectionPass {
   @Nullable
   public static InspectionPassInfo inspect(@NotNull final String key, ResourceBundle resourceBundle) {
     final List<IProperty> properties =
-      ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), propertiesFile -> {
-        return propertiesFile.findPropertyByKey(key);
-      });
+      ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.findPropertyByKey(key));
 
     if (properties.isEmpty()) {
       return null;

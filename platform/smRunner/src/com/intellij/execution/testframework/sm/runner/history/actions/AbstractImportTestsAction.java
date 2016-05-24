@@ -123,9 +123,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static void adjustHistory(Project project) {
     int historySize = getHistorySize();
 
-    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles((dir, name) -> {
-      return name.endsWith(".xml");
-    });
+    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles((dir, name) -> name.endsWith(".xml"));
     if (files != null && files.length >= historySize + 1) {
       Arrays.sort(files, (o1, o2) -> {
         final long l1 = o1.lastModified();

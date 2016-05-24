@@ -121,9 +121,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       askReferencesToRestore(project, refs, referenceData);
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      restoreReferences(referenceData, refs);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> restoreReferences(referenceData, refs));
   }
 
   protected static void addReferenceData(final PsiElement element,

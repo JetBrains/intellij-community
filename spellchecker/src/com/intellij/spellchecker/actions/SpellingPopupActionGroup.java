@@ -128,16 +128,14 @@ public final class SpellingPopupActionGroup extends ActionGroup {
       final Project project = e.getData(LangDataKeys.PROJECT);
       final Editor editor = e.getData(LangDataKeys.EDITOR);
       if (psiFile != null && project != null && editor != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            try {
-              intention.invoke(project, editor, psiFile);
-            }
-            catch (IncorrectOperationException ex) {
-              LOGGER.error(ex);
-            }
-          }, e.getPresentation().getText(), e.getActionManager().getId(SpellCheckerIntentionAction.this));
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          try {
+            intention.invoke(project, editor, psiFile);
+          }
+          catch (IncorrectOperationException ex) {
+            LOGGER.error(ex);
+          }
+        }, e.getPresentation().getText(), e.getActionManager().getId(SpellCheckerIntentionAction.this)));
       }
     }
   }

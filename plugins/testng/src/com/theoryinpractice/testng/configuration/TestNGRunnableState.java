@@ -250,9 +250,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
     if (forkPerModule()) {
-      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>((o1, o2) -> {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      });
+      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final PsiClass psiClass : classes.keySet()) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);

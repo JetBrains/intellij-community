@@ -136,9 +136,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
-      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> {
-        return new RemoteServerNode(server);
-      }));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
       return result;
     }
 

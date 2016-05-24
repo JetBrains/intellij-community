@@ -834,9 +834,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
         List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
-        return ContainerUtil.map(stubs, stub -> {
-          return stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy();
-        });
+        return ContainerUtil.map(stubs, stub -> stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
       }
       else if (description instanceof CustomDomChildrenDescriptionImpl) {
         List<DomStub> stubs = myStub.getChildrenStubs();

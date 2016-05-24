@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -115,7 +113,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     CLASS_FQ,
     CLASS_OR_PACKAGE_FQ,
     STATIC_MEMBER_FQ,
-    CLASS_IN_QUALIFIED_NEW
   }
 
   public ReferenceKind getKind(boolean forCompletion) {
@@ -153,7 +150,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     else if (parent instanceof GrNewExpression || parent instanceof GrAnonymousClassDefinition) {
       PsiElement newExpr = parent instanceof GrAnonymousClassDefinition ? parent.getParent() : parent;
       assert newExpr instanceof GrNewExpression;
-      if (((GrNewExpression)newExpr).getQualifier() != null) return ReferenceKind.CLASS_IN_QUALIFIED_NEW;
     }
 
     return ReferenceKind.CLASS;
@@ -165,7 +161,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     final ReferenceKind kind = getKind(false);
     switch (kind) {
       case CLASS:
-      case CLASS_IN_QUALIFIED_NEW:
       case CLASS_OR_PACKAGE:
         final PsiElement target = resolve();
         if (target instanceof PsiClass) {
@@ -233,7 +228,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case CLASS_OR_PACKAGE:
         if (resolve() instanceof PsiPackage) return true;
       case CLASS:
-      case CLASS_IN_QUALIFIED_NEW:
     }
     final GrCodeReferenceElement qualifier = getQualifier();
     return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
@@ -385,31 +379,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             }
           }
           break;
-        }
-        case CLASS_IN_QUALIFIED_NEW: {
-          if (ref.getParent() instanceof GrCodeReferenceElement) return GroovyResolveResult.EMPTY_ARRAY;
-          final GrNewExpression newExpression = PsiTreeUtil.getParentOfType(ref, GrNewExpression.class);
-          assert newExpression != null;
-          final GrExpression qualifier = newExpression.getQualifier();
-          assert qualifier != null;
-
-          final PsiType type = qualifier.getType();
-          if (!(type instanceof PsiClassType)) break;
-
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass psiClass = classType.resolve();
-          if (psiClass == null) break;
-
-          final PsiClass[] allInnerClasses = psiClass.getAllInnerClasses();
-          ArrayList<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-          PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
-
-          for (final PsiClass innerClass : allInnerClasses) {
-            if (refName.equals(innerClass.getName())) {
-              result.add(new GroovyResolveResultImpl(innerClass, helper.isAccessible(innerClass, ref, null)));
-            }
-          }
-          return result.toArray(new GroovyResolveResult[result.size()]);
         }
       }
 

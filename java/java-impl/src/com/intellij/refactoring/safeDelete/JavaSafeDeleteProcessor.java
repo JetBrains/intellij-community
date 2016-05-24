@@ -348,9 +348,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         unselected.removeAll(selected);
 
         if (!unselected.isEmpty()) {
-          final List<PsiMethod> unselectedMethods = ContainerUtil.map(unselected, info -> {
-            return ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod();
-          });
+          final List<PsiMethod> unselectedMethods = ContainerUtil.map(unselected, info -> ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod());
 
           for (Iterator<UsageInfo> iterator = result.iterator(); iterator.hasNext(); ) {
             final UsageInfo info = iterator.next();

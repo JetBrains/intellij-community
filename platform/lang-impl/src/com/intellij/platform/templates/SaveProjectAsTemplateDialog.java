@@ -71,9 +71,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
       myModuleCombo.setVisible(false);
     }
     else {
-      List<String> items = new ArrayList<String>(ContainerUtil.map(modules, module -> {
-        return module.getName();
-      }));
+      List<String> items = new ArrayList<String>(ContainerUtil.map(modules, module -> module.getName()));
       items.add(WHOLE_PROJECT);
       myModuleCombo.setModel(new CollectionComboBoxModel(items, WHOLE_PROJECT));
     }

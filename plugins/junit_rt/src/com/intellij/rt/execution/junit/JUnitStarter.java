@@ -21,6 +21,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -45,8 +46,9 @@ public class JUnitStarter {
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
-  private static int    ourCount = 1;
+  protected static int    ourCount = 1;
   public static boolean SM_RUNNER = isSmRunner();
+  public static String ourRepeatCount = null;
 
   private static boolean isSmRunner() {
     try {
@@ -147,6 +149,7 @@ public class JUnitStarter {
 
         final int count = RepeatCount.getCount(arg);
         if (count != 0) {
+          ourRepeatCount = arg;
           ourCount = count;
           continue;
         }
@@ -243,7 +246,7 @@ public class JUnitStarter {
           PrintStream printOutputStream = SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream();
           PrintStream printErrStream = SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream();
           return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, printOutputStream, printErrStream, newArgs)
-            .startSplitting(args, name, ourCommandFileName);
+            .startSplitting(args, name, ourCommandFileName, ourRepeatCount);
         }
       }
       testRunner.setStreams(out, err, 0);

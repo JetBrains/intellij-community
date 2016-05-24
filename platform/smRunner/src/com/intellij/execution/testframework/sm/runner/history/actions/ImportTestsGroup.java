@@ -53,9 +53,7 @@ public class
     if (project == null) return EMPTY_ARRAY;
     final Collection<String> filePaths = TestHistoryConfiguration.getInstance(project).getFiles();
     final File testHistoryRoot = TestStateStorage.getTestHistoryRoot(project);
-    final List<File> fileNames = ContainerUtil.map(filePaths, fileName -> {
-      return new File(testHistoryRoot, fileName);
-    });
+    final List<File> fileNames = ContainerUtil.map(filePaths, fileName -> new File(testHistoryRoot, fileName));
     Collections.sort(fileNames, (f1, f2) -> f1.lastModified() > f2.lastModified() ? -1 : 1);
     final int historySize = fileNames.size();
     final AnAction[] actions = new AnAction[historySize + 2];

@@ -54,9 +54,7 @@ public class StdErrorReporter extends ErrorReporter {
   public void startProcessing() {
     final Runnable task = () -> {
       try {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          StdErrorReporter.super.startProcessing();
-        });
+        ApplicationManager.getApplication().runReadAction(() -> StdErrorReporter.super.startProcessing());
 
         SwingUtilities.invokeLater(
           () -> {

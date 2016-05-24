@@ -359,9 +359,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(listStep, ActionPopupStep.class);
       if (actionPopupStep == null) return;
 
-      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, o -> {
-        return getActionByClass(o, actionPopupStep, ToggleAction.class);
-      });
+      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, o -> getActionByClass(o, actionPopupStep, ToggleAction.class));
 
       for (ToggleAction action : filtered) {
         actionPopupStep.performAction(action, 0);

@@ -344,9 +344,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       return o1.compareTo(o2);
     });
 
-    Set<String> groupNames = ContainerUtil.map2Set(groups, group -> {
-      return group.getParentGroup();
-    });
+    Set<String> groupNames = ContainerUtil.map2Set(groups, group -> group.getParentGroup());
 
     // move subgroups
     MultiMap<String, TemplatesGroup> subGroups = new MultiMap<String, TemplatesGroup>();

@@ -102,9 +102,7 @@ public final class CreateFieldFix extends QuickFix{
     CommandProcessor.getInstance().executeCommand(
       project,
       () -> ApplicationManager.getApplication().runWriteAction(
-        () -> {
-          createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer);
-        }
+        () -> createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer)
       ),
       UIDesignerBundle.message("command.create.field"),
       undoGroupId

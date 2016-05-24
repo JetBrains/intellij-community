@@ -99,9 +99,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
           final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
           final Collection<Object> variants = resolvingConverter.getVariants(context);
           final List<Pair<String, Icon>> all =
-            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, s -> {
-              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-            }));
+            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, s -> Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
           all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
             @Override
             public Object fun(final Object s) {

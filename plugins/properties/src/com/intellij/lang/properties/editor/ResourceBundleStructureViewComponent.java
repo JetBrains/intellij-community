@@ -120,9 +120,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
           ContainerUtil.mapNotNull(selectedElements, (NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>)element -> {
             final IProperty[] properties = element.getProperties();
             return properties == null ? null : ContainerUtil.newArrayList(properties);
-          })), count -> {
-            return new IProperty[count];
-          });
+          })), count -> new IProperty[count]);
       }
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

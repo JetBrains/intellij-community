@@ -103,9 +103,7 @@ public class BackgroundTaskUtil {
         }
 
         if (!resultRef.compareAndSet(null, callback)) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            finish(callback, indicator);
-          }, modality);
+          ApplicationManager.getApplication().invokeLater(() -> finish(callback, indicator), modality);
         }
         semaphore.release();
       }, indicator));

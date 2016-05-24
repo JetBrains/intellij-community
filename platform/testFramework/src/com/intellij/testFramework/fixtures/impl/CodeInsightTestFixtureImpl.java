@@ -712,9 +712,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     if (action == null) {
-      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, action1 -> {
-        return action1.getText();
-      }, ","));
+      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, action1 -> action1.getText(), ","));
     }
     return action;
   }
@@ -786,9 +784,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
 
-    return ContainerUtil.map(elements, lookupItem -> {
-      return lookupItem.getLookupString();
-    });
+    return ContainerUtil.map(elements, lookupItem -> lookupItem.getLookupString());
   }
 
   @Override

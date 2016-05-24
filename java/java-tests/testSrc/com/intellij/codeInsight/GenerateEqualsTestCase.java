@@ -21,13 +21,7 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                         final int[] hashCode,
                         final int[] nonNull,
                         boolean insertOverride) throws Exception {
-    doTest(fields -> {
-      return getIndexed(fields, equals);
-    }, fields -> {
-      return getIndexed(fields, hashCode);
-    }, fields -> {
-      return getIndexed(fields, nonNull);
-    }, insertOverride);
+    doTest(fields -> getIndexed(fields, equals), fields -> getIndexed(fields, hashCode), fields -> getIndexed(fields, nonNull), insertOverride);
   }
 
   protected void doTest(Function<PsiField[], PsiField[]> eqFunction,

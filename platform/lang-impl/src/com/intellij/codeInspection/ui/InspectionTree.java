@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -189,29 +190,25 @@ public class InspectionTree extends Tree {
       InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
       if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
-      List<RefEntity> result = new ArrayList<RefEntity>();
+      Set<RefEntity> result = new LinkedHashSet<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
       }
-      return result.toArray(new RefEntity[result.size()]);
+      return ArrayUtil.reverseArray(result.toArray(new RefEntity[result.size()]));
     }
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
-  private static void addElementsInNode(InspectionTreeNode node, List<RefEntity> out) {
+  private static void addElementsInNode(InspectionTreeNode node, Set<RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
       final RefEntity element = ((RefElementNode)node).getElement();
-      if (!out.contains(element)) {
-        out.add(0, element);
-      }
+      out.add(element);
     }
     if (node instanceof ProblemDescriptionNode) {
       final RefEntity element = ((ProblemDescriptionNode)node).getElement();
-      if (!out.contains(element)) {
-        out.add(0, element);
-      }
+      out.add(element);
     }
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {

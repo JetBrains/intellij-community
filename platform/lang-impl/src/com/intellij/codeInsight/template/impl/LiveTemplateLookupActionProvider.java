@@ -45,9 +45,7 @@ public class LiveTemplateLookupActionProvider implements LookupActionProvider {
               if (project.isDisposed()) return;
 
               final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
-              ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-                configurable.getTemplateListPanel().editTemplate(template);
-              });
+              ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.getTemplateListPanel().editTemplate(template));
             });
             return Result.HIDE_LOOKUP;
           }

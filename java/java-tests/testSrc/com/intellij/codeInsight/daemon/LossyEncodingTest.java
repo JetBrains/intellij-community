@@ -175,6 +175,18 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
   }
 
+  public void testSurrogateUTF8() throws Exception {
+    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
+    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    configureByExistingFile(virtualFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+
+    assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
+    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+
+    assertEmpty(doHighlighting());
+  }
+
   public void testInconsistentLineSeparators() throws Exception {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
     configureByExistingFile(virtualFile);

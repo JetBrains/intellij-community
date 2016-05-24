@@ -197,9 +197,7 @@ public class MergeOperations {
         final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         if (status.hasReadonlyFiles()) return;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        CommandProcessor.getInstance().executeCommand(project, myModification, getName(), null);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, myModification, getName(), null));
     }
   }
 }

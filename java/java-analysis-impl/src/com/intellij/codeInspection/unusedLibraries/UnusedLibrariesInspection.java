@@ -84,9 +84,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
             final Set<VirtualFile> files = new HashSet<VirtualFile>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
             files.removeAll(usedRoots);
             if (!files.isEmpty()) {
-              final String unusedLibraryRoots = StringUtil.join(files, file -> {
-                return file.getPresentableName();
-              }, ",");
+              final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
               String message =
                 InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
               processor.addProblemElement(refModule,

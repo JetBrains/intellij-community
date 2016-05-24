@@ -149,9 +149,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
           // XXX: strange behavior with undo/redo
 
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null);
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null));
         }
         finally {
           myChangeListener.setRunState(true);

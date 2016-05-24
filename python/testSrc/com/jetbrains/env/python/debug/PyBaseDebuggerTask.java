@@ -354,9 +354,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     private Thread myThread;
 
     public void start() {
-      myThread = new Thread(() -> {
-        doJob();
-      }, "py debugger job");
+      myThread = new Thread(() -> doJob(), "py debugger job");
       myThread.setDaemon(true);
       myThread.start();
     }

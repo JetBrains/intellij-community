@@ -23,13 +23,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
-import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
-import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
@@ -129,7 +126,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   private final Set<Object> mySuppressedNodes = new HashSet<>();
-  private final ConcurrentMap<InspectionToolWrapper, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
 
@@ -169,12 +166,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          final TreePath[] paths = myTree.getSelectionPaths();
+          LOG.assertTrue(paths != null);
           InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
+          InspectionTreeNode toSelect = null;
           synchronized (myTreeStructureUpdateLock) {
+            if (paths.length == 1) {
+              toSelect = (InspectionTreeNode)node.getNextNode();
+            }
             parent.remove(node);
             ((DefaultTreeModel)myTree.getModel()).reload(parent);
           }
-          TreeUtil.selectInTree(parent, true, myTree);
+          TreeUtil.selectInTree(toSelect == null ? parent : toSelect, true, myTree);
         }
       }
 
@@ -311,9 +314,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
+    specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
+    specialGroup.add(new ExportHTMLAction(this));
     specialGroup.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
     specialGroup.add(new InvokeQuickFixAction(this));
-    specialGroup.add(new InspectionsOptionsToolbarAction(this));
     return createToolbar(specialGroup);
   }
 
@@ -347,8 +351,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
-    group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    group.add(new ExportHTMLAction(this));
     group.add(new ContextHelpAction(HELP_ID));
 
     return createToolbar(group);
@@ -478,13 +480,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
-    final Object component = myTree.getSelectionPath().getLastPathComponent();
-    if (component instanceof OfflineRefElementNode) {
-      final OfflineProblemDescriptor descriptor = ((OfflineRefElementNode)component).getOfflineDescriptor();
-      System.out.println(descriptor);
-      System.out.println(descriptor.getFQName());
-      System.out.println("--");
-    }
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -615,8 +610,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull
   public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
-    return mySuppressActions.computeIfAbsent(wrapper, (w) -> {
-      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(w);
+    return mySuppressActions.computeIfAbsent(wrapper.getShortName(), (w) -> {
+      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(wrapper);
       return actions == null ? Collections.emptySet() : ContainerUtil.newLinkedHashSet(actions);
     });
   }

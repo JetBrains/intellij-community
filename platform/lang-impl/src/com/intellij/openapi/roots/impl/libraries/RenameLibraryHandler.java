@@ -115,9 +115,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
           }
         };
         UndoManager.getInstance(myProject).undoableActionPerformed(action);
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          modifiableModel.commit();
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit());
       }, IdeBundle.message("command.renaming.module", oldName), null);
       return success.get().booleanValue();
     }

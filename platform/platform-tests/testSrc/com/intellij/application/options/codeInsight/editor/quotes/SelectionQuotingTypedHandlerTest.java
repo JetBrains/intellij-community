@@ -40,9 +40,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
    * @param action  Runnable to be executed
    */
   public static void performAction(final Project project, final Runnable action) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, action, "test command", null);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, action, "test command", null));
   }
 
   @Override

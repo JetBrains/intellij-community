@@ -152,9 +152,7 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       if (!(rootElement instanceof IdeaPlugin)) return Collections.emptyList();
 
       IdeaPlugin plugin = (IdeaPlugin)rootElement;
-      return ContainerUtil.map(plugin.getResourceBundles(), value -> {
-        return value.getStringValue();
-      });
+      return ContainerUtil.map(plugin.getResourceBundles(), value -> value.getStringValue());
     }
   }
 }

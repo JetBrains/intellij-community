@@ -406,9 +406,7 @@ public class DomChildrenTest extends DomTestCase {
   public void testChildrenValidAfterUndefine() throws Throwable {
     final MyElement element = createElement("<a><child/></a>");
     final MyElement child = element.getChild();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      element.undefine();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> element.undefine());
 
     assertTrue(element.isValid());
     assertFalse(child.isValid());
@@ -490,9 +488,7 @@ public class DomChildrenTest extends DomTestCase {
   }
 
   private List<String> getFixedPath(final DomElement element) {
-    return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> {
-      return s.getName();
-    });
+    return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> s.getName());
   }
 
   public void testElementsWithoutXmlGetItLater() throws Throwable {

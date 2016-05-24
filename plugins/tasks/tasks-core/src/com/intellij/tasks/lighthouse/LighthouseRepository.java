@@ -100,9 +100,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
 
       List<Element> children = element.getChildren("ticket");
 
-      List<Task> taskList = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> {
-        return createIssue(o);
-      });
+      List<Task> taskList = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
       tasks.addAll(taskList);
       page++;
     }

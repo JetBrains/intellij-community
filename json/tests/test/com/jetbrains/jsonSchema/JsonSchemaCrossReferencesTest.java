@@ -217,9 +217,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
 
     try {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
       Assert.assertNotNull(referenceAt);
@@ -227,9 +225,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
@@ -266,9 +262,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
 
     try {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
       Assert.assertNotNull(referenceAt);
@@ -276,9 +270,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"enum\"", resolve.getText());
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);

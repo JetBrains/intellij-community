@@ -63,9 +63,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       final VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getParent());
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
       newProject.save();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(newProject);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
     }
     final String[] files = projectDir.list();
     if (files != null) {

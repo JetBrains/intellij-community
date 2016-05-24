@@ -301,12 +301,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public void run(@NotNull final Task task) {
     if (task.isHeadless()) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runProcessWithProgressSynchronously(task, null);
-      }
-      else {
-        new TaskRunnable(task, new EmptyProgressIndicator()).run();
-      }
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      runProcessWithProgressSynchronously(task, null);
     }
     else if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal(), null);
@@ -329,16 +325,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                               @NotNull final ProgressIndicator progressIndicator,
-                                                               @Nullable final Runnable continuation) {
+                                                        @NotNull final ProgressIndicator progressIndicator,
+                                                        @Nullable final Runnable continuation) {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.NON_MODAL);
   }
 
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                               @NotNull final ProgressIndicator progressIndicator,
-                                                               @Nullable final Runnable continuation,
-                                                               @NotNull final ModalityState modalityState) {
+                                                        @NotNull final ProgressIndicator progressIndicator,
+                                                        @Nullable final Runnable continuation,
+                                                        @NotNull final ModalityState modalityState) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
@@ -348,51 +344,73 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     Runnable action = new TaskContainer(task) {
       @Override
       public void run() {
-        boolean canceled = false;
+        boolean processCanceled = false;
+        Exception exception = null;
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
-          canceled = true;
+          processCanceled = true;
+        }
+        catch (Exception e) {
+          exception = e;
         }
 
-        if (canceled || progressIndicator.isCanceled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onCancel();
-            }
-          }, modalityState);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onSuccess();
-            }
-          }, modalityState);
-        }
+        final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+        final Exception finalException = exception;
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            finishTask(task, finalCanceled, finalException);
+          }
+        }, modalityState);
       }
     };
 
     return ApplicationManager.getApplication().executeOnPooledThread(action);
   }
 
-  protected boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
-    final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
-        .runProcessWithProgressSynchronously(new TaskContainer(task) {
-          @Override
-          public void run() {
-            new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
-          }
-        }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
-    if (result) {
-      task.onSuccess();
-    }
-    else {
-      task.onCancel();
-    }
+  public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
+    final Ref<Exception> exceptionRef = new Ref<Exception>();
+    TaskContainer taskContainer = new TaskContainer(task) {
+      @Override
+      public void run() {
+        try {
+          new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          exceptionRef.set(e);
+        }
+      }
+    };
+
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    boolean result = application.runProcessWithProgressSynchronously(taskContainer, task.getTitle(), task.isCancellable(),
+                                                                     task.getProject(), parentComponent, task.getCancelText());
+
+    finishTask(task, !result, exceptionRef.get());
     return result;
+  }
+
+  protected static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {
+    try {
+      if (exception != null) {
+        task.onError(exception);
+      }
+      else if (canceled) {
+        task.onCancel();
+      }
+      else {
+        task.onSuccess();
+      }
+    }
+    finally {
+      task.onFinished();
+    }
   }
 
   @Override
@@ -586,6 +604,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     @NotNull
     public Task getTask() {
       return myTask;
+    }
+
+    @Override
+    public String toString() {
+      return myTask.toString();
     }
   }
   protected static class TaskRunnable extends TaskContainer {

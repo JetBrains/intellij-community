@@ -86,9 +86,7 @@ public class GenericRepositoryUtil {
   }
 
   public static List<String> createPlaceholdersList(List<TemplateVariable> variables) {
-    return ContainerUtil.map2List(variables, variable -> {
-      return String.format("{%s}", variable.getName());
-    });
+    return ContainerUtil.map2List(variables, variable -> String.format("{%s}", variable.getName()));
   }
 
   public static String prettifyVariableName(String variableName) {

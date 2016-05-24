@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -219,6 +220,6 @@ public class QuickFixPreviewPanelFactory {
 
   private static void appendTextToLabel(SimpleColoredComponent label,
                                         int problemsCount) {
-    label.append(problemsCount + " problems:");
+    label.append(problemsCount + " " + StringUtil.pluralize("problem", problemsCount) + ":");
   }
 }

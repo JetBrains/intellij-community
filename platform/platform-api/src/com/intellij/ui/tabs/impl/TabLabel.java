@@ -33,7 +33,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import javafx.scene.input.KeyCode;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -119,9 +118,7 @@ public class TabLabel extends JPanel implements Accessible {
             if (index > 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index - 1), false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+              myTabs.select(myTabs.getTabAt(index - 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
             }
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
@@ -129,9 +126,7 @@ public class TabLabel extends JPanel implements Accessible {
             if (index < myTabs.getTabCount() - 1) {
               e.consume();
               // Select the next tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index + 1), false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+              myTabs.select(myTabs.getTabAt(index + 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
             }
           }
           }

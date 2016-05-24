@@ -214,9 +214,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     public List<LookupFile> getChildren(final LookupFilter filter) {
       List<LookupFile> result = new ArrayList<LookupFile>();
-      File[] files = myIoFile.listFiles(pathname -> {
-        return filter.isAccepted(new IoFile(pathname));
-      });
+      File[] files = myIoFile.listFiles(pathname -> filter.isAccepted(new IoFile(pathname)));
       if (files == null) return result;
 
       for (File each : files) {

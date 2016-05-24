@@ -220,9 +220,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
     File testDir = new File(testDirPath);
-    final File[] files = testDir.listFiles((dir, name) -> {
-      return name.startsWith(BEFORE_PREFIX);
-    });
+    final File[] files = testDir.listFiles((dir, name) -> name.startsWith(BEFORE_PREFIX));
 
     if (files == null || files.length == 0) {
       fail("Test files not found in " + testDirPath);

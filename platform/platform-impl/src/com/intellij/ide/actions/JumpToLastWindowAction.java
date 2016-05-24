@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,15 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 
 public class JumpToLastWindowAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -42,7 +40,7 @@ public class JumpToLastWindowAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;

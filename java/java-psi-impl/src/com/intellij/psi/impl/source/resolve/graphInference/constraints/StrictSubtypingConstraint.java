@@ -69,12 +69,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myT, InferenceBound.UPPER, session.myIncorporationPhase);
+      InferenceVariable.addBound(myS, myT, InferenceBound.UPPER, session);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myS, InferenceBound.LOWER, session.myIncorporationPhase);
+      InferenceVariable.addBound(myT, myS, InferenceBound.LOWER, session);
       return true;
     }
     if (myT instanceof PsiArrayType) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -166,8 +165,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
 
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
-    ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
     ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);

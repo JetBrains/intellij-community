@@ -120,6 +120,11 @@ public class GitTask {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
+        @Override public void onError(@NotNull Exception error) {
+          super.onError(error);
+          commonOnCancel(LOCK, resultHandler);
+          completed.set(true);
+        }
       };
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override

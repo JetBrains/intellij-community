@@ -279,9 +279,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     if (psiExpression instanceof PsiReferenceExpression) {
       references.add((PsiReferenceExpression)psiExpression);
     }
-    return ContainerUtil.mapNotNull(references, (NullableFunction<PsiReferenceExpression, PsiElement>)expression1 -> {
-      return expression1.resolve();
-    });
+    return ContainerUtil.mapNotNull(references, (NullableFunction<PsiReferenceExpression, PsiElement>)expression1 -> expression1.resolve());
   }
 
   private static boolean isReferenceToOneOf(PsiReferenceExpression reference, List<PsiElement> elements) {

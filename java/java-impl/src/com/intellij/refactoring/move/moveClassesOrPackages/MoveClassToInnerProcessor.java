@@ -233,9 +233,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
-                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> {
-                                       return psiClass.getName();
-                                     }, ", "),
+                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
                                      myTargetClass.getQualifiedName());
   }
 

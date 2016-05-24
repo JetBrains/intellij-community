@@ -133,9 +133,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     public void actionPerformed(AnActionEvent e) {
       CommandProcessor.getInstance().executeCommand(
         mySelection.get(0).getProject(),
-        () -> ApplicationManager.getApplication().runWriteAction(() -> {
-          createListener();
-        }), UIDesignerBundle.message("create.listener.command"), null
+        () -> ApplicationManager.getApplication().runWriteAction(() -> createListener()), UIDesignerBundle.message("create.listener.command"), null
       );
     }
 
