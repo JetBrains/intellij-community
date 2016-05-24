@@ -592,7 +592,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     myInlayModel.addListener(new InlayModel.Adapter() {
       @Override
-      public void changed(Inlay inlay) {
+      public void onChanged(Inlay inlay) {
         validateSize();
         repaint(inlay.getOffset(), inlay.getOffset(), false);
       }

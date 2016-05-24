@@ -33,22 +33,22 @@ public interface InlayModel {
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
   interface Listener extends EventListener {
-    void afterAdded(Inlay inlay);
-    void beforeRemoved(Inlay inlay);
+    void onAdded(Inlay inlay);
+
+    void onRemoved(Inlay inlay);
   }
 
   abstract class Adapter implements Listener {
     @Override
-    public void afterAdded(Inlay inlay) {
-      changed(inlay);
+    public void onAdded(Inlay inlay) {
+      onChanged(inlay);
     }
 
     @Override
-    public void beforeRemoved(Inlay inlay) {
-      changed(inlay);
+    public void onRemoved(Inlay inlay) {
+      onChanged(inlay);
     }
 
-    public void changed(Inlay inlay) {
-    }
+    public void onChanged(Inlay inlay) {}
   }
 }

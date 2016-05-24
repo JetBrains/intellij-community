@@ -143,7 +143,7 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
   }
 
   @Override
-  public void changed(Inlay inlay) {
+  public void onChanged(Inlay inlay) {
     doInvalidateRange(inlay.getOffset(), inlay.getOffset());
   }
 

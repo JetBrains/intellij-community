@@ -52,7 +52,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
       @Override
       void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
-        myDispatcher.getMulticaster().beforeRemoved(markerEx);
+        myDispatcher.getMulticaster().onRemoved(markerEx);
       }
     };
   }
@@ -69,7 +69,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlayImpl inlay = new InlayImpl(myEditor, offset, widthInPixels, renderer);
-    myDispatcher.getMulticaster().afterAdded(inlay);
+    myDispatcher.getMulticaster().onAdded(inlay);
     return inlay;
   }
 

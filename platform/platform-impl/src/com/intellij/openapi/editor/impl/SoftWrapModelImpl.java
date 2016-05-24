@@ -655,7 +655,7 @@ public class SoftWrapModelImpl extends InlayModel.Adapter implements SoftWrapMod
   }
 
   @Override
-  public void changed(Inlay inlay) {
+  public void onChanged(Inlay inlay) {
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
