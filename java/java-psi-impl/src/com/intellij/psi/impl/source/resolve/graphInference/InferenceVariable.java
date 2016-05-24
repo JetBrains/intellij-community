@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.augment.TypeAnnotationModifier;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -71,6 +72,14 @@ public class InferenceVariable extends LightTypeParameter {
   public static void addBound(PsiType inferenceVariableType, PsiType boundType, InferenceBound inferenceBound, InferenceSession session) {
     final InferenceVariable variable = session.getInferenceVariable(inferenceVariableType);
     if (variable != null) {
+      for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
+        if (boundType instanceof PsiClassType) {
+          final TypeAnnotationProvider annotationProvider = modifier.getTypeAnnotationProvider(inferenceVariableType, (PsiClassType)boundType);
+          if (annotationProvider != null) {
+            boundType = boundType.annotate(annotationProvider);
+          }
+        }
+      }
 
       variable.addBound(boundType, inferenceBound, session.myIncorporationPhase);
     }

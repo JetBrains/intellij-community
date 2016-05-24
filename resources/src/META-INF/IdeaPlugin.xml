@@ -299,6 +299,7 @@
     <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
 
     <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
+    <extensionPoint name="lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
 
     <extensionPoint name="custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
 
