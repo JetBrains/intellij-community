@@ -31,7 +31,8 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
   }
 
   protected int startSplitting(String[] args,
-                               String configName) throws Exception {
+                               String configName,
+                               String repeatCount) throws Exception {
     myRootDescription = createRootDescription(args, configName);
     if (myRootDescription == null) {
       return  -1;
@@ -40,11 +41,10 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final List children = getChildren(myRootDescription);
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
-      return splitChildren(children, 0, forkTillMethod, null, System.getProperty("java.class.path")
-      );
+      return splitChildren(children, 0, forkTillMethod, null, System.getProperty("java.class.path"), repeatCount);
     }
     else {
-      return splitPerModule();
+      return splitPerModule(repeatCount);
     }
   }
 
@@ -53,10 +53,10 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
                                    String packageName,
                                    String workingDir,
                                    String classpath,
-                                   int result) throws Exception {
+                                   String repeatCount, int result) throws Exception {
     if (myForkMode.equals("none")) {
       final List childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription);
-      return startChildFork(childArgs, new File(workingDir), classpath);
+      return startChildFork(childArgs, new File(workingDir), classpath, repeatCount);
     }
     else {
       final List children = new ArrayList(getChildren(myRootDescription));
@@ -66,7 +66,7 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
         }
       }
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
-      return splitChildren(children, result, forkTillMethod, new File(workingDir), classpath);
+      return splitChildren(children, result, forkTillMethod, new File(workingDir), classpath, repeatCount);
     }
   }
 
@@ -74,16 +74,16 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
                               int result,
                               boolean forkTillMethod,
                               File workingDir,
-                              String classpath) throws IOException, InterruptedException {
+                              String classpath, String repeatCount) throws IOException, InterruptedException {
     for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
       final Object child = children.get(i);
       final List childTests = getChildren(child);
       final int childResult;
       if (childTests.isEmpty() || !forkTillMethod) {
-        childResult = startChildFork(createChildArgs(child), workingDir, classpath);
+        childResult = startChildFork(createChildArgs(child), workingDir, classpath, repeatCount);
       }
       else {
-        childResult = splitChildren(childTests, result, forkTillMethod, workingDir, classpath);
+        childResult = splitChildren(childTests, result, forkTillMethod, workingDir, classpath, repeatCount);
       }
       result = Math.min(childResult, result);
     }

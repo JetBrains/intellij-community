@@ -22,7 +22,6 @@ package org.testng;
 
 import com.beust.jcommander.JCommander;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
-import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 
 import java.io.*;
@@ -114,7 +113,7 @@ public class RemoteTestNGStarter {
       if (commandFileName != null) {
         if (workingDirs != null && new File(workingDirs).length() > 0) {
           System.exit(new TestNGForkedSplitter(workingDirs, System.out, System.err, newArgs)
-                        .startSplitting(args, param, commandFileName));
+                        .startSplitting(args, param, commandFileName, null));
           return;
         }
       }

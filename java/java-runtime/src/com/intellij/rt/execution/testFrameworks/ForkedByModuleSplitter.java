@@ -43,7 +43,8 @@ public abstract class ForkedByModuleSplitter {
 
   public int startSplitting(String[] args,
                             String configName,
-                            String commandLinePath) throws Exception {
+                            String commandLinePath,
+                            String repeatCount) throws Exception {
     args = myForkedDebuggerHelper.excludeDebugPortFromArgs(args);
 
     myVMParameters = new ArrayList();
@@ -60,14 +61,14 @@ public abstract class ForkedByModuleSplitter {
     }
 
     long time = System.currentTimeMillis();
-    int result = startSplitting(args, configName);
+    int result = startSplitting(args, configName, repeatCount);
     myForkedDebuggerHelper.closeDebugSocket();
     sendTime(time);
     return result;
   }
 
   //read output from wrappers
-  protected int startChildFork(List args, File workingDir, String classpath) throws IOException, InterruptedException {
+  protected int startChildFork(List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
     List vmParameters = new ArrayList(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
@@ -94,6 +95,9 @@ public abstract class ForkedByModuleSplitter {
     builder.add(getStarterName());
     builder.add(testOutputPath);
     builder.add(args);
+    if (repeatCount != null) {
+      builder.add(repeatCount);
+    }
     builder.setWorkingDir(workingDir);
 
     final Process exec = builder.createProcess();
@@ -103,7 +107,7 @@ public abstract class ForkedByModuleSplitter {
   }
 
   //read file with classes grouped by module
-  protected int splitPerModule() throws IOException {
+  protected int splitPerModule(String repeatCount) throws IOException {
     int result = 0;
     final BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath));
     try {
@@ -126,7 +130,7 @@ public abstract class ForkedByModuleSplitter {
             classNames.add(className);
           }
 
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, result);
+          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result);
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
@@ -140,14 +144,14 @@ public abstract class ForkedByModuleSplitter {
     return result;
   }
 
-  protected abstract int startSplitting(String[] args, String configName) throws Exception;
+  protected abstract int startSplitting(String[] args, String configName, String repeatCount) throws Exception;
 
   protected abstract int startPerModuleFork(String moduleName,
                                             List classNames,
                                             String packageName,
                                             String workingDir,
                                             String classpath,
-                                            int result) throws Exception;
+                                            String repeatCount, int result) throws Exception;
 
   protected abstract String getStarterName();
   
