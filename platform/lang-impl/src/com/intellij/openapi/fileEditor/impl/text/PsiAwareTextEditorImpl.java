@@ -20,15 +20,21 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
@@ -40,12 +46,37 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @NotNull
   @Override
+  protected Runnable loadEditorInBackground() {
+    Runnable baseAction = super.loadEditorInBackground();
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
+    Document document = FileDocumentManager.getInstance().getDocument(myFile);
+    CodeFoldingState foldingState = document != null && !myProject.isDefault()
+                                    ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
+                                    : null;
+    return () -> {
+      baseAction.run();
+      if (foldingState != null) {
+        foldingState.setToEditor(getEditor());
+      }
+      if (psiFile != null) {
+        DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+      }
+      EditorNotifications.getInstance(myProject).updateNotifications(myFile);
+    };
+  }
+
+  @NotNull
+  @Override
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new PsiAwareTextEditorComponent(project, file, this);
   }
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    if (!AsyncEditorLoader.isEditorLoaded(getEditor())) {
+      return null;
+    }
+
     if (myBackgroundHighlighter == null) {
       myBackgroundHighlighter = new TextEditorBackgroundHighlighter(myProject, getEditor());
     }

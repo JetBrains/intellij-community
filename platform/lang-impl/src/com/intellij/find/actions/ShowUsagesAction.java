@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1067,13 +1068,20 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                         int maxUsages,
                         @NotNull FindUsagesOptions options,
                         boolean isWarning) {
-    JComponent label = createHintComponent(hint, handler, popupPosition, editor, ShowUsagesAction::hideHints, maxUsages, options, isWarning);
-    if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
-      HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
-                                                               HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
-    }
-    else {
-      HintManager.getInstance().showInformationHint(editor, label);
+    Runnable runnable = () -> {
+      JComponent label = createHintComponent(hint, handler, popupPosition, editor, ShowUsagesAction::hideHints, maxUsages, options, isWarning);
+      if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
+        HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
+                                                                 HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
+      }
+      else {
+        HintManager.getInstance().showInformationHint(editor, label);
+      }
+    };
+    if (editor == null) {
+      runnable.run();
+    } else {
+      AsyncEditorLoader.performWhenLoaded(editor, runnable);
     }
   }
 
