@@ -237,8 +237,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
                 result instanceof PsiClassReferenceType ||
                 result instanceof TypeCorrector.PsiCorrectedClassType ||
                 result instanceof PsiArrayType ||
-                result instanceof PsiWildcardType ||
-                result instanceof PsiCapturedWildcardType) {
+                result instanceof PsiWildcardType) {
               return result.annotate(new TypeAnnotationProvider() {
                 @NotNull
                 @Override
