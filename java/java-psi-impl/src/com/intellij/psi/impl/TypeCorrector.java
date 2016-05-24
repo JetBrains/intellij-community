@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
@@ -105,7 +106,7 @@ class TypeCorrector extends PsiTypeMapper {
     if (vFile == null) {
       return psiClass;
     }
-    
+
     final FileIndexFacade index = FileIndexFacade.getInstance(file.getProject());
     if (!index.isInSource(vFile) && !index.isInLibrarySource(vFile) && !index.isInLibraryClasses(vFile)) {
       return psiClass;
@@ -167,7 +168,14 @@ class TypeCorrector extends PsiTypeMapper {
     public PsiCorrectedClassType(LanguageLevel languageLevel,
                                  PsiClassType delegate,
                                  CorrectedResolveResult resolveResult) {
-      super(languageLevel, delegate.getAnnotationProvider());
+      this(languageLevel, delegate, resolveResult, delegate.getAnnotationProvider());
+    }
+
+    public PsiCorrectedClassType(LanguageLevel languageLevel,
+                                 PsiClassType delegate,
+                                 CorrectedResolveResult resolveResult,
+                                 TypeAnnotationProvider delegateAnnotationProvider) {
+      super(languageLevel, delegateAnnotationProvider);
       myDelegate = delegate;
       myResolveResult = resolveResult;
     }
@@ -202,6 +210,13 @@ class TypeCorrector extends PsiTypeMapper {
           return mapType(type);
         }
       });
+    }
+
+    @NotNull
+    @Override
+    public PsiCorrectedClassType annotate(@NotNull TypeAnnotationProvider provider) {
+      return provider == getAnnotationProvider() ? this
+                                                 : new PsiCorrectedClassType(myLanguageLevel, myDelegate, myResolveResult, provider);
     }
 
     @Override
