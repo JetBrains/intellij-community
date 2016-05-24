@@ -1,5 +1,5 @@
 The sources in this folder are PyCharm version of the debugger PyDev.Debugger.
-They should be in sync, so after testing all commits should be backported to the original repo.
+They should be in sync, so after testing all commits should be back-ported to the original repo.
 
 How to do it?
 
