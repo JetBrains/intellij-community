@@ -233,11 +233,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           final PsiType result = substituteTypeParameter(typeParameter);
           if (result != null) {
             PsiUtil.ensureValidType(result);
-            if (result instanceof PsiImmediateClassType ||
-                result instanceof PsiClassReferenceType ||
-                result instanceof TypeCorrector.PsiCorrectedClassType ||
-                result instanceof PsiArrayType ||
-                result instanceof PsiWildcardType) {
+            if (false) {
               return result.annotate(new TypeAnnotationProvider() {
                 @NotNull
                 @Override
