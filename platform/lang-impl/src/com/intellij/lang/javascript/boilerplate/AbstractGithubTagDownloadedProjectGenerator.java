@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,6 @@ import java.net.URLEncoder;
 public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebProjectTemplate<GithubTagInfo> {
 
   private static final Logger LOG = Logger.getInstance(AbstractGithubTagDownloadedProjectGenerator.class);
-  protected static final Key<Runnable> POST_REFRESH_ACTIVITY = Key.create("POST_REFRESH_ACTIVITY");
 
   @NotNull
   @Nls
@@ -79,7 +77,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       showErrorMessage(project, e.getMessage());
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
-      baseDir.refresh(true, true, module.getUserData(POST_REFRESH_ACTIVITY));
+      baseDir.refresh(true, true);
     });
   }
 
