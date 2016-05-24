@@ -39,6 +39,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -284,7 +285,11 @@ public class ExternalSystemNotificationManager implements Disposable {
           prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
         final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
         final NavigatableMessageElement navigatableMessageElement;
-        if (notificationData.hasLinks()) {
+        // Note: Given that screen readers don't currently support hyperlinks and
+        // that having a cell editor for a panel in a tree view node makes
+        // the user-interaction confusing for keyboard only users,
+        // don't create a editable element if screen reader is active.
+        if (notificationData.hasLinks() && !ScreenReader.isActive()) {
           navigatableMessageElement = new EditableNotificationMessageElement(
             notification,
             kind,
