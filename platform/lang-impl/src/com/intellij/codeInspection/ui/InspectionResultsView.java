@@ -129,7 +129,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   private final Set<Object> mySuppressedNodes = new HashSet<>();
-  private final ConcurrentMap<InspectionToolWrapper, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
 
@@ -621,8 +621,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull
   public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
-    return mySuppressActions.computeIfAbsent(wrapper, (w) -> {
-      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(w);
+    return mySuppressActions.computeIfAbsent(wrapper.getShortName(), (w) -> {
+      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(wrapper);
       return actions == null ? Collections.emptySet() : ContainerUtil.newLinkedHashSet(actions);
     });
   }
