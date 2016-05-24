@@ -172,7 +172,9 @@ public class FindManagerImpl extends FindManager {
       };
       myFindDialog.setModal(true);
     }
-    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
+    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState() ||
+             !Comparing.equal(myFindDialog.getModel().getStringToFind(), model.getStringToFind())
+            ) {
       myFindDialog.setModel(model);
       myFindDialog.setOkHandler(handler);
       return;
