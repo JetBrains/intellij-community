@@ -102,15 +102,13 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   @Nullable
   private static String getIndentString(@NotNull Project project, @NotNull Editor editor, int offset, Type indentType) {
-    if (project != null) {
-      Document document = editor.getDocument();
-      String lastLineIndent = getLastLineIndent(document.getCharsSequence(), offset);
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file != null) {
-        CommonCodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file);
-        return 
-          lastLineIndent + new IndentInfo(0, indentTypeToSize(indentType, options), 0, false).generateNewWhiteSpace(options);
-      }
+    Document document = editor.getDocument();
+    String lastLineIndent = getLastLineIndent(document.getCharsSequence(), offset);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file != null) {
+      CommonCodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file);
+      return 
+        lastLineIndent + new IndentInfo(0, indentTypeToSize(indentType, options), 0, false).generateNewWhiteSpace(options);
     }
     return null;
   }
