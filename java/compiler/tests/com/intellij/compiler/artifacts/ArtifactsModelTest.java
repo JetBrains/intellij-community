@@ -71,9 +71,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
   }
 
   private static void commit(ModifiableArtifactModel model) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      model.commit();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 
   public void testChangeArtifact() throws Exception {
