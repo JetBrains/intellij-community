@@ -122,18 +122,22 @@ public interface XDebugSession extends AbstractDebuggerSession {
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
   /**
-   * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
-   *
+   * Call this method when position is reached after "Run to cursor" or "Step over" command.
    * @param suspendContext context
+   * @deprecated use {@link #positionReached(XSuspendContext, XPauseReason)} instead
    */
   void positionReached(@NotNull XSuspendContext suspendContext);
 
   /**
-   * Call this method when target is interrupted by an event, that is not triggered by a user (e.g. a signal or exception)
+   * Call this method when position is reached after "Run to cursor", "Step over", or because of a signal ar other reason.
    *
    * @param suspendContext context
+   * @param reason         reason for which the process is stopped. Depending on the reason, UI is updated and attractions are made.
+   *                       For instance, when the process is stopped due to the "Step" command, no special attractions are made.
+   *                       On the other hand, when the process is stopped on a breakpoint, signal etc., debugger tool window might be
+   *                       focused (depending on the settings).
    */
-  void sessionPaused(@NotNull XSuspendContext suspendContext);
+  void positionReached(@NotNull XSuspendContext suspendContext, @NotNull XPauseReason reason);
 
   /**
    * Call this method when session resumed because of some external event, e.g. from the debugger console

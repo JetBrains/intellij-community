@@ -699,7 +699,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReachedInternal(suspendContext, false);
+    positionReachedInternal(suspendContext, XPauseReason.BREAKPOINT);
 
     if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
@@ -762,11 +762,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myPaused.set(false);
   }
 
-  /**
-   * @param steppingEvent true means stopping was caused by a breakpoint or an external signal, and the tool window should be shown.
-   *                     false means stopping was caused by stepping, and the tool window should not be shown.
-   */
-  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean steppingEvent) {
+  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, @NotNull XPauseReason reason) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -789,7 +785,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     // user attractions should only be made if event happens independently (e.g. program paused/suspended)
     // and should not be made when user steps in the code
-    if (!steppingEvent) {
+    if (reason != XPauseReason.STEPPING) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (mySessionTab != null) {
 
@@ -811,15 +807,15 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
-    myActiveNonLineBreakpoint = null;
-    positionReachedInternal(suspendContext, true);
+    positionReached(suspendContext, XPauseReason.STEPPING);
   }
 
   @Override
-  public void sessionPaused(@NotNull XSuspendContext suspendContext) {
+  public void positionReached(@NotNull XSuspendContext suspendContext, @NotNull XPauseReason reason) {
     myActiveNonLineBreakpoint = null;
-    positionReachedInternal(suspendContext, false);
+    positionReachedInternal(suspendContext, reason);
   }
+
 
   @Override
   public void sessionResumed() {
