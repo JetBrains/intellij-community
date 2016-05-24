@@ -37,7 +37,7 @@ public class ToggleShowIndentLinesGloballyAction extends ToggleAction implements
     if (editor != null && editor.getSettings().isIndentGuidesShown() != state) {
       editor.getSettings().setIndentGuidesShown(state);
     }
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project != null) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }

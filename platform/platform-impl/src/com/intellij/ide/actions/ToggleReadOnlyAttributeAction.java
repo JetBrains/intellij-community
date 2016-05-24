@@ -76,7 +76,7 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
         catch (IOException x) {
           Notifications.Bus.notify(
             new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, CommonBundle.getErrorTitle(), x.getMessage(), NotificationType.ERROR),
-            CommonDataKeys.PROJECT.getData(e.getDataContext()));
+            e.getProject());
         }
       });
     }

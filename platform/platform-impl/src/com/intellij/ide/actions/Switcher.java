@@ -138,7 +138,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) return;
 
     boolean isNewSwitcher = false;
