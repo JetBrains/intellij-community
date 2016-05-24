@@ -3371,7 +3371,7 @@ public class JBTabsImpl extends JComponent
     @Override
     public RelativeRectangle getRectangle() {
       TabLabel label = myInfo2Label.get(myInfo);
-      if (label.getRootPane() == null) return null;
+      if (label == null || label.getRootPane() == null) return null;
 
       Rectangle b = label.getBounds();
       b.x += 2;

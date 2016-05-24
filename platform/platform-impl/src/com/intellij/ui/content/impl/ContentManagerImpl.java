@@ -43,10 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -148,7 +146,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       if (myUI instanceof SwitchProvider) {
         return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
       }
-      return new SmartList<SwitchTarget>();
+      return Collections.emptyList();
     }
 
     @Override

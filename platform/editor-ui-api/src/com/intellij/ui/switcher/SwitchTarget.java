@@ -17,6 +17,7 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.awt.RelativeRectangle;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -25,6 +26,8 @@ public interface SwitchTarget {
   ActionCallback switchTo(boolean requestFocus);
 
   boolean isVisible();
+
+  @Nullable
   RelativeRectangle getRectangle();
 
   Component getComponent();

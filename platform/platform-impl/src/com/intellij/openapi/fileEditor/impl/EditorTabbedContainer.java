@@ -73,6 +73,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -580,7 +581,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     @Override
     public List<SwitchTarget> getTargets(final boolean onlyVisible, boolean originalProvider) {
       TabInfo selected = myTabs.getSelectedInfo();
-      if (selected == null) return null;
+      if (selected == null) return Collections.emptyList();
       return UIUtil.uiTraverser(selected.getComponent())
         .traverse()
         .filter(JBTabs.class)
