@@ -33,7 +33,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import javafx.scene.input.KeyCode;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
