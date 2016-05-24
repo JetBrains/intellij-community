@@ -20,7 +20,10 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.AntNoFileException;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +42,6 @@ import java.util.Set;
 
 public class AddAntBuildFile extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -64,10 +66,10 @@ public class AddAntBuildFile extends AnAction {
         antConfiguration.addBuildFile(file);
         filesAdded++;
       }
-      catch (AntNoFileException e) {
-        String message = e.getMessage();
+      catch (AntNoFileException ex) {
+        String message = ex.getMessage();
         if (message == null || message.length() == 0) {
-          message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
+          message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", ex.getFile().getPresentableUrl());
         }
         if (errors.length() > 0) {
           errors.append("\n");
