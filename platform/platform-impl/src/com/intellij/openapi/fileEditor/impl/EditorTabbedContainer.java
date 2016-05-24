@@ -58,7 +58,6 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -74,7 +73,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -581,43 +579,26 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   private class MySwitchProvider implements SwitchProvider {
     @Override
     public List<SwitchTarget> getTargets(final boolean onlyVisible, boolean originalProvider) {
-      final ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
       TabInfo selected = myTabs.getSelectedInfo();
-      new AwtVisitor(selected.getComponent()) {
-        @Override
-        public boolean visit(Component component) {
-          if (component instanceof JBTabs) {
-            JBTabs tabs = (JBTabs)component;
-            if (tabs != myTabs) {
-              result.addAll(tabs.getTargets(onlyVisible, false));
-              return true;
-            }
-          }
-          return false;
-        }
-      };
-      return result;
+      if (selected == null) return null;
+      return UIUtil.uiTraverser(selected.getComponent())
+        .traverse()
+        .filter(JBTabs.class)
+        .filter(Conditions.notEqualTo(myTabs))
+        .flatten(o -> o.getTargets(onlyVisible, false))
+        .toList();
     }
 
     @Override
     public SwitchTarget getCurrentTarget() {
       TabInfo selected = myTabs.getSelectedInfo();
-      final Ref<SwitchTarget> targetRef = new Ref<SwitchTarget>();
-      new AwtVisitor(selected.getComponent()) {
-        @Override
-        public boolean visit(Component component) {
-          if (component instanceof JBTabs) {
-            JBTabs tabs = (JBTabs)component;
-            if (tabs != myTabs) {
-              targetRef.set(tabs.getCurrentTarget());
-              return true;
-            }
-          }
-          return false;
-        }
-      };
-
-      return targetRef.get();
+      if (selected == null) return null;
+      JBTabs tabs = UIUtil.uiTraverser(selected.getComponent())
+        .traverse()
+        .filter(JBTabs.class)
+        .filter(Conditions.notEqualTo(myTabs))
+        .first();
+      return tabs == null ? null : tabs.getCurrentTarget();
     }
 
     @Override
