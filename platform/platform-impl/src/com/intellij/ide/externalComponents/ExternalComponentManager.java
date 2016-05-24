@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.externalComponents;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * Keeps track of the external components and component sources that can be updated.
  */
 public abstract class ExternalComponentManager {
+  @NotNull
   public static ExternalComponentManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ExternalComponentManager.class);
+    return ServiceManager.getService(ExternalComponentManager.class);
   }
 
   @NotNull
