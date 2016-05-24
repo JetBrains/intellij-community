@@ -21,6 +21,8 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
@@ -231,15 +233,21 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           final PsiType result = substituteTypeParameter(typeParameter);
           if (result != null) {
             PsiUtil.ensureValidType(result);
-            return result.annotate(new TypeAnnotationProvider() {
-              @NotNull
-              @Override
-              public PsiAnnotation[] getAnnotations() {
-                return ArrayUtil.mergeArrays(result.getAnnotations(), classType.getAnnotations());
-              }
-            });
+            if (result instanceof PsiImmediateClassType ||
+                result instanceof PsiClassReferenceType ||
+                result instanceof TypeCorrector.PsiCorrectedClassType ||
+                result instanceof PsiArrayType ||
+                result instanceof PsiWildcardType) {
+              return result.annotate(new TypeAnnotationProvider() {
+                @NotNull
+                @Override
+                public PsiAnnotation[] getAnnotations() {
+                  return ArrayUtil.mergeArrays(result.getAnnotations(), classType.getAnnotations());
+                }
+              });
+            }
           }
-          return null;
+          return result;
         }
         return classType;
       }
