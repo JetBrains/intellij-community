@@ -793,7 +793,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     final boolean success = disposeSelf(allowListenersToCancel);
-    if (!success || isHeadlessEnvironment()) {
+    if (!success || isUnitTestMode()) {
       return false;
     }
 
