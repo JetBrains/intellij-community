@@ -49,8 +49,19 @@ public class BackgroundTaskQueue {
 
     myProcessor = new QueueProcessor<TaskData>((data, continuation) -> {
       Task.Backgroundable task = data.task;
+      
       ProgressIndicator indicator = data.indicator;
+      if (indicator == null) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          indicator = new EmptyProgressIndicator();
+        }
+        else {
+          indicator = new BackgroundableProcessIndicator(task);
+        }
+      }
+      
       ModalityState modalityState = data.modalityState;
+      if (modalityState == null) modalityState = ModalityState.NON_MODAL;
 
       if (StringUtil.isEmptyOrSpaces(task.getTitle())) {
         task.setTitle(myTitle);
@@ -91,24 +102,15 @@ public class BackgroundTaskQueue {
   }
 
   public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
-    if (modalityState == null) modalityState = ModalityState.NON_MODAL;
-    if (indicator == null) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        indicator = new EmptyProgressIndicator();
-      }
-      else {
-        indicator = new BackgroundableProcessIndicator(task);
-      }
-    }
     myProcessor.add(new TaskData(task, modalityState, indicator), modalityState);
   }
 
   private static class TaskData {
     @NotNull public final Task.Backgroundable task;
-    @NotNull public final ModalityState modalityState;
-    @NotNull public final ProgressIndicator indicator;
+    @Nullable public final ModalityState modalityState;
+    @Nullable public final ProgressIndicator indicator;
 
-    public TaskData(@NotNull Task.Backgroundable task, @NotNull ModalityState modalityState, @NotNull ProgressIndicator indicator) {
+    public TaskData(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
       this.task = task;
       this.modalityState = modalityState;
       this.indicator = indicator;
