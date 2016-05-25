@@ -136,8 +136,8 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
     for (InspectionProfileImpl profile : profiles) {
       myComboModel.add(profile);
     }
-    myProfilesComboBox.setSelectedIndex(0);
     findFirstGlobalProfile();
+    myProfilesComboBox.setSelectedIndex(0);
   }
 
   void addProfile(InspectionProfileImpl inspectionProfile) {
