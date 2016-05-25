@@ -187,7 +187,7 @@ public abstract class InspectionRVContentProvider {
         }
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
-            insertByIndex(packageNode, moduleNode);
+            moduleNode.insertByOrder(packageNode);
             for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
               appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
             }
@@ -289,7 +289,7 @@ public abstract class InspectionRVContentProvider {
                 return false;
               }
               else {
-                insertByIndex(finalPrevNode, refElementNode);
+                refElementNode.insertByOrder(finalPrevNode);
                 result.set(nodeToBeAdded);
                 return false;
               }
@@ -301,11 +301,11 @@ public abstract class InspectionRVContentProvider {
       if(!result.isNull()) return result.get();
 
       if (!firstLevel.get()) {
-        insertByIndex(prevNode, currentNode);
+        currentNode.insertByOrder(prevNode);
       }
       final UserObjectContainer owner = container.getOwner();
       if (owner == null) {
-        insertByIndex(currentNode, parentNode);
+        parentNode.insertByOrder(currentNode);
         return nodeToBeAdded;
       }
       container = owner;
@@ -349,18 +349,7 @@ public abstract class InspectionRVContentProvider {
         }
       }
     }
-    insertByIndex(child, parent);
-  }
-
-  public static void insertByIndex(InspectionTreeNode child, InspectionTreeNode parent) {
-    if (parent.getIndex(child) != -1) {
-      return;
-    }
-    final int i = TreeUtil.indexedBinarySearch(parent, child, InspectionResultsViewComparator.getInstance());
-    if (i >= 0){
-      return;
-    }
-    parent.insert(child, -i -1);
+    parent.insertByOrder(child);
   }
 
   private static void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {

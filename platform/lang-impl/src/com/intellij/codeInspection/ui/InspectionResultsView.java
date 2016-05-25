@@ -88,8 +88,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.codeInspection.ex.InspectionRVContentProvider.insertByIndex;
-
 /**
  * @author max
  */
@@ -751,7 +749,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
       if (!myDisposed) {
-        insertByIndex(group, getRelativeRootNode(groupedBySeverity, errorLevel));
+        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group);
       }
     }
     return group;
@@ -766,7 +764,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
-          insertByIndex(severityGroupNode, root);
+          root.insertByOrder(severityGroupNode);
         }
       }
       return severityGroupNode;
