@@ -118,7 +118,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private PsiElement resolveKeywordFormat(@NotNull PyArgumentList argumentList) {
     final PyKeywordArgument keywordResult = argumentList.getKeywordArgument(myChunk.getMappingKey());
     if (keywordResult != null) {
-      return keywordResult;
+      return keywordResult.getValueExpression();
     }
     else {
       final List<PyStarArgument> keywordStarArgs = getStarArguments(argumentList, true);
@@ -275,7 +275,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       if (keyExpression instanceof PyStringLiteralExpression) {
         final PyStringLiteralExpression key = (PyStringLiteralExpression)keyExpression;
         if (key.getStringValue().equals(myChunk.getMappingKey())) {
-          return Ref.create(key);
+          return Ref.create(keyValueExpression.getValue());
         }
       }
       else if (!(keyExpression instanceof PyLiteralExpression)) {

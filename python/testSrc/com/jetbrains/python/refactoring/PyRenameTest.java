@@ -238,11 +238,6 @@ public class PyRenameTest extends PyTestCase {
   }
 
   // PY-2748
-  public void testFormatStringKeyword() {
-    doTest("renamed");
-  }
-
-  // PY-2748
   public void testFormatStringDictLiteral() {
     doUnsupportedOperationTest();
   }

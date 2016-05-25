@@ -618,8 +618,8 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatStringKWArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyKeywordArgument);
-    assertEquals("fst", ((PyKeywordArgument)target).getKeyword());
+    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertTrue(12 == ((PyNumericLiteralExpression)target).getLongValue());
   }
 
   //PY-2748
@@ -638,15 +638,15 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatArgsAndKWargs1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyKeywordArgument);
-    assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("keyword", ((PyStringLiteralExpression)target).getStringValue());
   }
 
   //PY-2748
   public void testFormatStringWithPackedDictAsArgument() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
-    assertEquals("\"fst\"", target.getText());    
+    assertEquals("\"f\"", target.getText());    
   }
 
   //PY-2748
@@ -679,14 +679,15 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testPercentKeyWordArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PyStringLiteralExpression);
-    assertEquals("kwg", ((PyStringLiteralExpression)target).getStringValue());
+    assertTrue(target instanceof PyNumericLiteralExpression);
+    assertNotNull(((PyNumericLiteralExpression)target).getLongValue());
+    assertTrue(4181 == ((PyNumericLiteralExpression)target).getLongValue());
   }
 
   public void testPercentStringKeyWordArgWithParentheses() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
-    assertEquals("snd", ((PyStringLiteralExpression)target).getStringValue());    
+    assertEquals("s", ((PyStringLiteralExpression)target).getStringValue());    
   }
 
   //PY-2748
