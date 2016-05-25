@@ -177,6 +177,11 @@ public final class LanguageConsoleBuilder {
   }
 
   @NotNull
+  public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
+    return build(project, language, null);
+  }
+
+  @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language, @Nullable VirtualFile virtualFileToReuse) {
     final VirtualFile virtualFile =
       virtualFileToReuse != null ? virtualFileToReuse : new LightVirtualFile(language.getDisplayName() + " Console", language, "");
