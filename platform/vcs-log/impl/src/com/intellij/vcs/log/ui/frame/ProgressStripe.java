@@ -22,7 +22,6 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AsyncProcessIcon;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,7 +109,7 @@ public class ProgressStripe extends JBPanel {
 
     private void adjustFiller() {
       if (myFiller != null && myToolbar.getHeight() != 0) {
-        Dimension dimension = new Dimension(0, myToolbar.getHeight() - VcsLogIcons.Stripes.getIconHeight() / 2);
+        Dimension dimension = new Dimension(0, myToolbar.getHeight() - StripesAnimatedIcon.getHeight() / 2);
         myFiller.changeShape(dimension, dimension, dimension);
       }
     }

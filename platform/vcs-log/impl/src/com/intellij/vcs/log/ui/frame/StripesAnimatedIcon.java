@@ -141,4 +141,8 @@ public class StripesAnimatedIcon implements Icon {
     });
     return icon;
   }
+
+  public static int getHeight() {
+    return VcsLogIcons.Stripes.getIconHeight();
+  }
 }
