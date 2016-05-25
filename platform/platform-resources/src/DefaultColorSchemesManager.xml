@@ -752,12 +752,12 @@
       </option>
       <option name="LOG_WARNING_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="ffa500" deuteranopia="a89c11" protanopia="a89c11"/>
+          <option name="FOREGROUND" value="a66f00" deuteranopia="a89c11" protanopia="a89c11"/>
         </value>
       </option>
       <option name="LOG_ERROR_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="ff0000" deuteranopia="d95716" protanopia="d95716"/>
+          <option name="FOREGROUND" value="cd0000" deuteranopia="d95716" protanopia="d95716"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
@@ -1691,7 +1691,7 @@
       </option>
       <option name="LOG_ERROR_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="ff6b68" deuteranopia="bd693c" protanopia="bd693c"/>
+          <option name="FOREGROUND" value="cc666e" deuteranopia="bd693c" protanopia="bd693c"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
