@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -434,7 +435,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
         int y = c.getHeight() - 45;
-        if (balloonLayout != null) {
+        if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
           Component component = balloonLayout.getTopBalloonComponent();
           if (component != null) {
             y = SwingUtilities.convertPoint(component, 0, -45, c).y;
@@ -463,6 +464,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     if (splitters != null) return splitters;
     FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
     return ex == null ? pane : ex.getSplitters();
+  }
+
+  private static boolean isBottomSideToolWindowsVisible(@NotNull JRootPane parent) {
+    ToolWindowsPane pane = UIUtil.findComponentOfType(parent, ToolWindowsPane.class);
+    return pane != null && pane.isBottomSideToolWindowsVisible();
   }
 
   public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {

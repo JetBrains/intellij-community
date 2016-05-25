@@ -449,6 +449,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     return myBottomStripe.isVisible() ? myBottomStripe.getHeight() : 0;
   }
 
+  public boolean isBottomSideToolWindowsVisible() {
+    return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
+  }
+
   @Nullable
   Stripe getStripeFor(String id) {
     ToolWindow window = myManager.getToolWindow(id);
