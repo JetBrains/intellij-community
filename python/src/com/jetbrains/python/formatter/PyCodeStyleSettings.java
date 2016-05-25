@@ -88,6 +88,10 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
 
+  public boolean OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY = true;
+  public boolean OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = false;
+  public boolean OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = false;
+
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }
