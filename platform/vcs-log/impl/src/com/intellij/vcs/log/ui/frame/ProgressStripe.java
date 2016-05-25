@@ -17,7 +17,9 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullComputable;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AsyncProcessIcon;
 import icons.VcsLogIcons;
@@ -28,30 +30,93 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
-public class ProgressStripe extends JBLoadingPanel {
-  public ProgressStripe(@NotNull JComponent component, @NotNull JComponent toolbar, @NotNull Disposable parent, int startDelayMs) {
-    super(new BorderLayout(), panel -> new MyLoadingDecorator(component, toolbar, panel, parent, startDelayMs));
-    setLoadingText("");
-    add(component);
+public class ProgressStripe extends JBPanel {
+  @NotNull
+  private final JBPanel myPanel;
+  private final NotNullComputable<MyLoadingDecorator> myCreateLoadingDecorator;
+  protected MyLoadingDecorator myDecorator;
+
+  public ProgressStripe(@NotNull JComponent targetComponent, @NotNull JComponent toolbar, @NotNull Disposable parent, int startDelayMs) {
+    super(new BorderLayout());
+    myPanel = new JBPanel(new BorderLayout());
+    myPanel.setOpaque(false);
+    myPanel.add(targetComponent);
+
+    myCreateLoadingDecorator = () -> {
+      Disposable disposable = Disposer.newDisposable();
+      Disposer.register(parent, disposable);
+      return new MyLoadingDecorator(targetComponent, toolbar, myPanel, disposable, startDelayMs);
+    };
+    createLoadingDecorator();
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myCreateLoadingDecorator != null) {
+      if (myDecorator != null) {
+        remove(myDecorator.getComponent());
+        myDecorator.dispose();
+      }
+      createLoadingDecorator();
+    }
+  }
+
+  private void createLoadingDecorator() {
+    myDecorator = myCreateLoadingDecorator.compute();
+    add(myDecorator.getComponent(), BorderLayout.CENTER);
+    myDecorator.setLoadingText("");
+  }
+
+  public void startLoading() {
+    myDecorator.startLoading(false);
+  }
+
+  public void startLoadingImmediately() {
+    myDecorator.startLoadingImmediately();
+  }
+
+  public void stopLoading() {
+    myDecorator.stopLoading();
   }
 
   private static class MyLoadingDecorator extends LoadingDecorator {
+    @NotNull
+    private final Disposable myDisposable;
+    @NotNull
+    private final JComponent myToolbar;
+    @NotNull
+    private final ComponentAdapter myListener;
     private Box.Filler myFiller;
 
     public MyLoadingDecorator(@NotNull JComponent component,
                               @NotNull JComponent toolbar,
                               @NotNull JPanel contentPanel,
-                              @NotNull Disposable parent,
+                              @NotNull Disposable disposable,
                               int startDelayMs) {
-      super(contentPanel, parent, startDelayMs, false, StripesAnimatedIcon.generateIcon(component));
-      toolbar.addComponentListener(new ComponentAdapter() {
+      super(contentPanel, disposable, startDelayMs, false, StripesAnimatedIcon.generateIcon(component));
+      myDisposable = disposable;
+      myToolbar = toolbar;
+      myListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
           super.componentResized(e);
-          Dimension dimension = new Dimension(0, toolbar.getHeight() - VcsLogIcons.Stripes.getIconHeight() / 2);
-          myFiller.changeShape(dimension, dimension, dimension);
+          adjustFiller();
         }
-      });
+      };
+      myToolbar.addComponentListener(myListener);
+      adjustFiller();
+    }
+
+    private void adjustFiller() {
+      if (myFiller != null && myToolbar.getHeight() != 0) {
+        Dimension dimension = new Dimension(0, myToolbar.getHeight() - VcsLogIcons.Stripes.getIconHeight() / 2);
+        myFiller.changeShape(dimension, dimension, dimension);
+      }
+    }
+
+    public void startLoadingImmediately() {
+      _startLoading(false);
     }
 
     @Override
@@ -67,6 +132,11 @@ public class ProgressStripe extends JBLoadingPanel {
       parent.add(result, BorderLayout.NORTH);
 
       return result;
+    }
+
+    public void dispose() {
+      myToolbar.removeComponentListener(myListener);
+      Disposer.dispose(myDisposable);
     }
   }
 }
