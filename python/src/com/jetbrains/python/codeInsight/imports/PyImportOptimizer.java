@@ -18,12 +18,13 @@ package com.jetbrains.python.codeInsight.imports;
 import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyBlock;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,6 @@ import java.util.*;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
-  private static final boolean SORT_IMPORTS = true;
 
   @Override
   public boolean supports(PsiFile file) {
@@ -68,13 +68,15 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final PyFile myFile;
     private final List<PyImportStatementBase> myImportBlock;
     private final Map<ImportPriority, List<PyImportStatementBase>> myGroups;
+    private final PyCodeStyleSettings myPySettings;
 
     private ImportSorter(@NotNull PyFile file) {
       myFile = file;
+      myPySettings = CodeStyleSettingsManager.getSettings(myFile.getProject()).getCustomSettings(PyCodeStyleSettings.class);
       myImportBlock = myFile.getImportBlock();
-      myGroups = new EnumMap<ImportPriority, List<PyImportStatementBase>>(ImportPriority.class);
+      myGroups = new EnumMap<>(ImportPriority.class);
       for (ImportPriority priority : ImportPriority.values()) {
-        myGroups.put(priority, new ArrayList<PyImportStatementBase>());
+        myGroups.put(priority, new ArrayList<>());
       }
     }
 
@@ -106,7 +108,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     private boolean groupsNotSorted() {
       final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
-      return SORT_IMPORTS && ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
+      return ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
     private boolean needBlankLinesBetweenGroups() {
@@ -120,7 +122,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private void applyResults() {
-      if (SORT_IMPORTS) {
+      if (myPySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
           Collections.sort(imports, AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
