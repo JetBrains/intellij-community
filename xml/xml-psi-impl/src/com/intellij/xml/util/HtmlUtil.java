@@ -57,10 +57,7 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -695,8 +692,23 @@ public class HtmlUtil {
     }
   }
 
-  public static Iterable<String> splitClassNames(@NotNull String classAttributeValue) {
+  @Nullable
+  public static Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
     // comma is useduse as separator because class name cannot contain comma but it can be part of JSF classes attributes
-    return StringUtil.tokenize(classAttributeValue, " \t,");
+    return classAttributeValue != null ? StringUtil.tokenize(classAttributeValue, " \t,") : Collections.emptyList();
+  }
+
+  @Contract("!null -> !null")
+  public static String getTagPresentation(final @Nullable XmlTag tag) {
+    if (tag == null) return null;
+    StringBuilder builder = new StringBuilder(tag.getLocalName());
+    String id = StringUtil.nullize(tag.getAttributeValue(ID_ATTRIBUTE_NAME), true);
+    if (id != null) {
+      builder.append('#').append(id);
+    }
+    for (String className : splitClassNames(tag.getAttributeValue(CLASS_ATTRIBUTE_NAME))) {
+      builder.append('.').append(className);
+    }
+    return builder.toString();
   }
 }
