@@ -33,7 +33,7 @@ public abstract class BinaryOutputReader extends BaseDataReader {
   }
 
   @Override
-  protected boolean readAvailable() throws IOException {
+  protected boolean readAvailableNonBlocking() throws IOException {
     byte[] buffer = myBuffer;
 
     boolean read = false;
@@ -44,6 +44,22 @@ public abstract class BinaryOutputReader extends BaseDataReader {
 
       onBinaryAvailable(buffer, n);
     }
+
+    return read;
+  }
+
+  protected final boolean readAvailableBlocking() throws IOException {
+    boolean read = false;
+
+    byte[] buffer = myBuffer;
+
+      int n;
+      while ((n = myStream.read(buffer)) >= 0) {
+        if (n > 0) {
+          read = true;
+          onBinaryAvailable(buffer, n);
+        }
+      }
 
     return read;
   }
