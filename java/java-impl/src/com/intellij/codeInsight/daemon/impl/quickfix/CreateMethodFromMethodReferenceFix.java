@@ -110,8 +110,17 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     expression = getMethodReference();
     LOG.assertTrue(expression.isValid());
 
-    if (!expression.isConstructor() && shouldCreateStaticMember(expression, targetClass)) {
-      PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
+    boolean shouldBeAbstract = false;
+    if (!expression.isConstructor()) {
+      if (shouldCreateStaticMember(expression, targetClass)) {
+        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
+      }
+      else if (targetClass.isInterface()) {
+        shouldBeAbstract = true;
+        PsiCodeBlock body = method.getBody();
+        assert body != null;
+        body.delete();
+      }
     }
 
     final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
@@ -126,7 +135,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
 
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, false,
+    CreateMethodFromUsageFix.doCreate(targetClass, method, shouldBeAbstract,
                                       ContainerUtil.map2List(interfaceMethod.getParameterList().getParameters(), parameter -> Pair.create(null, substitutor.substitute(parameter.getType()))),
                                       PsiSubstitutor.EMPTY,
                                       expectedTypes, context);
