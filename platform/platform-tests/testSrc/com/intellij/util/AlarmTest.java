@@ -32,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class AlarmPerformanceTest extends PlatformTestCase {
+public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
@@ -60,7 +60,7 @@ public class AlarmPerformanceTest extends PlatformTestCase {
 
     for (int i = 0; i < N; i++) {
       final int finalI = i;
-      alarm.addRequest(() -> log.append(finalI).append(" "), 0);
+      alarm.addRequest(() -> log.append(finalI+" "), 0);
     }
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
