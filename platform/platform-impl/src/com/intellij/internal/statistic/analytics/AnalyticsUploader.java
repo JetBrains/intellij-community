@@ -416,6 +416,7 @@ public class AnalyticsUploader {
   }
 
   // Similar to ExceptionUntil.getRootCause, but attempts to avoid infinite recursion
+  // Copied to LLDBUsageTracker.getRootCause
   private static Throwable getRootCause(Throwable e) {
     int depth = 0;
     while (depth++ < 20) {
