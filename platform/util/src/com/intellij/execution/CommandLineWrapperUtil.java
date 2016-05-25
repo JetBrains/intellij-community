@@ -28,8 +28,6 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class CommandLineWrapperUtil {
-  public static final Attributes.Name IJ_CLASS_PATH_JAR = new Attributes.Name("IntellijJ-Class-Path-Jar");
-
   @NotNull
   public static File createClasspathJarFile(Manifest manifest, List<String> pathList) throws IOException {
     return createClasspathJarFile(manifest, pathList, false);
@@ -48,8 +46,6 @@ public class CommandLineWrapperUtil {
       classPath.append(url);
     }
     manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath.toString());
-
-    manifest.getMainAttributes().put(IJ_CLASS_PATH_JAR, "true");
 
     File jarFile = FileUtil.createTempFile("classpath", ".jar", true);
     new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest).close();
