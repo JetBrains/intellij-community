@@ -76,12 +76,9 @@ public class KeymapUtil {
       if (!acceleratorText.isEmpty()) {
         s += ", " + acceleratorText;
       }
-    } else if (shortcut instanceof PressureShortcut) {
-      s += shortcut.toString();
     }
     else if (shortcut instanceof MouseShortcut) {
-      MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-      s = getMouseShortcutText(mouseShortcut.getButton(), mouseShortcut.getModifiers(), mouseShortcut.getClickCount());
+      s = getMouseShortcutText((MouseShortcut)shortcut);
     }
     else if (shortcut instanceof KeyboardModifierGestureShortcut) {
       final KeyboardModifierGestureShortcut gestureShortcut = (KeyboardModifierGestureShortcut)shortcut;
@@ -104,6 +101,11 @@ public class KeymapUtil {
     else {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut);
     }
+  }
+
+  public static String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
+    if (shortcut instanceof PressureShortcut) return shortcut.toString();
+    return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
   }
 
   /**
