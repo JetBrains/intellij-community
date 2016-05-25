@@ -474,26 +474,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
-    final JComponent createPatchPanel = p.getPanel();
-    final DialogWrapper dialogWrapper = new DialogWrapper(myProject, true) {
-      @Nullable
-      @Override
-      protected JComponent createCenterPanel() {
-        return createPatchPanel;
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel);
-      }
-
-      @Nullable
-      @Override
-      protected ValidationInfo doValidate() {
-        return p.validateFields();
-      }
-    };
+    final DialogWrapper dialogWrapper = new MyDialogWrapper(myProject, p);
     dialogWrapper.setTitle(message("create.patch.dialog.title"));
     dialogWrapper.setModal(true);
     dialogWrapper.show();
@@ -643,6 +624,35 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public Dimension preferredLayoutSize(Container parent) {
         return myContent.getPreferredSize();
       }
+    }
+  }
+
+  private static class MyDialogWrapper extends DialogWrapper {
+    @NotNull private final CreatePatchConfigurationPanel myPanel;
+
+    protected MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
+      super(project, true);
+      myPanel = centralPanel;
+      init();
+      initValidation();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myPanel.getPanel();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myPanel.getPanel());
+    }
+
+    @Nullable
+    @Override
+    protected ValidationInfo doValidate() {
+      return myPanel.validateFields();
     }
   }
 }
