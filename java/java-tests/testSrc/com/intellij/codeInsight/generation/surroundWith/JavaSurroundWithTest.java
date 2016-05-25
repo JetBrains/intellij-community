@@ -96,6 +96,10 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testSurroundWithStatementWithoutSelection() throws Exception {
+    doTest(new JavaWithIfSurrounder());
+  }
+
   public void testSurroundNonExpressionWithParenthesis() throws Exception {
     doTest(new JavaWithParenthesesSurrounder());
   }
