@@ -70,7 +70,7 @@ public class ProblemPreviewEditorPresentation {
     final boolean[] isUpdated = new boolean[]{false};
     final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
-      .filter(d -> d instanceof ProblemDescriptorBase)
+      .filter(ProblemDescriptorBase.class::isInstance)
       .map(d -> ((ProblemDescriptorBase)d).getPsiElement())
       .filter(e -> e != null && e.isValid())
       .map(ProblemPreviewEditorPresentation::getWholeElement)
@@ -91,7 +91,7 @@ public class ProblemPreviewEditorPresentation {
       if (elements.size() == 1) {
         final PsiElement element = elements.get(0).getElement();
         LOG.assertTrue(element != null);
-        final int offset = element.getTextOffset();
+        final int offset = element.getTextRange().getEndOffset();
         myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
       } else {
         myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
