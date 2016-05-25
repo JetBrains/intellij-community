@@ -37,6 +37,10 @@ public class OctalLiteralFixesTest extends IGQuickFixesTestCase {
     doTest("RemoveLeadingZero", InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
   }
 
+  public void testRemoveLeadingZeroLong() {
+    doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
+  }
+
   @Override
   protected String getRelativePath() {
     return "numeric/octal";
