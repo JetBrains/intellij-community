@@ -93,7 +93,7 @@ public class ProgressStripe extends JBPanel {
                               @NotNull JPanel contentPanel,
                               @NotNull Disposable disposable,
                               int startDelayMs) {
-      super(contentPanel, disposable, startDelayMs, false, StripesAnimatedIcon.generateIcon(component));
+      super(contentPanel, disposable, startDelayMs, false, ProgressStripeIcon.generateIcon(component));
       myDisposable = disposable;
       myToolbar = toolbar;
       myListener = new ComponentAdapter() {
@@ -109,7 +109,7 @@ public class ProgressStripe extends JBPanel {
 
     private void adjustFiller() {
       if (myFiller != null && myToolbar.getHeight() != 0) {
-        Dimension dimension = new Dimension(0, myToolbar.getHeight() - StripesAnimatedIcon.getHeight() / 2);
+        Dimension dimension = new Dimension(0, myToolbar.getHeight() - ProgressStripeIcon.getHeight() / 2);
         myFiller.changeShape(dimension, dimension, dimension);
       }
     }

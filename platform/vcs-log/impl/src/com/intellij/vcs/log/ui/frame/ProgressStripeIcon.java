@@ -30,43 +30,45 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 
-public class StripesAnimatedIcon implements Icon {
-  private static final Icon STRIPES = VcsLogIcons.Stripes;
+public class ProgressStripeIcon {
   private static final int TRANSLATE = 1;
+  private static final Icon STRIPES = VcsLogIcons.Stripes;
 
-  @NotNull
-  private final JComponent myReferenceComponent;
-  private final int myShift;
-  @NotNull
-  private final Icon myCropIcon;
-  private final Icon myIcon;
+  private static class StripesIcon implements Icon {
+    @NotNull
+    private final JComponent myReferenceComponent;
+    private final int myShift;
+    @NotNull
+    private final Icon myCropIcon;
+    private final Icon myIcon;
 
-  public StripesAnimatedIcon(@NotNull JComponent component, int shift, @NotNull Icon icon) {
-    myReferenceComponent = component;
-    myShift = shift;
+    public StripesIcon(@NotNull JComponent component, int shift, @NotNull Icon icon) {
+      myReferenceComponent = component;
+      myShift = shift;
 
-    myIcon = icon;
-    myCropIcon = IconUtil.cropIcon(icon, new Rectangle(myIcon.getIconWidth() - myShift, 0, myShift, icon.getIconHeight()));
-  }
-
-  @Override
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    myCropIcon.paintIcon(c, g, x, y);
-    int shift = myShift;
-    while (shift < getIconWidth()) {
-      myIcon.paintIcon(c, g, x + shift, y);
-      shift += myIcon.getIconWidth();
+      myIcon = icon;
+      myCropIcon = IconUtil.cropIcon(icon, new Rectangle(myIcon.getIconWidth() - myShift, 0, myShift, icon.getIconHeight()));
     }
-  }
 
-  @Override
-  public int getIconWidth() {
-    return myReferenceComponent.getWidth();
-  }
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      myCropIcon.paintIcon(c, g, x, y);
+      int shift = myShift;
+      while (shift < getIconWidth()) {
+        myIcon.paintIcon(c, g, x + shift, y);
+        shift += myIcon.getIconWidth();
+      }
+    }
 
-  @Override
-  public int getIconHeight() {
-    return myIcon.getIconHeight();
+    @Override
+    public int getIconWidth() {
+      return myReferenceComponent.getWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myIcon.getIconHeight();
+    }
   }
 
   private static class GradientIcon implements Icon {
@@ -120,7 +122,7 @@ public class StripesAnimatedIcon implements Icon {
     }
     else {
       for (int i = 0; i < STRIPES.getIconWidth(); i += JBUI.scale(TRANSLATE)) {
-        result.add(new StripesAnimatedIcon(component, i, STRIPES));
+        result.add(new StripesIcon(component, i, STRIPES));
       }
       result = ContainerUtil.reverse(result);
     }
@@ -143,6 +145,6 @@ public class StripesAnimatedIcon implements Icon {
   }
 
   public static int getHeight() {
-    return VcsLogIcons.Stripes.getIconHeight();
+    return STRIPES.getIconHeight();
   }
 }
