@@ -449,10 +449,9 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private int inspectNewStyleArgumentForChunk(int i,
-                                                  @NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
-                                                  @NotNull String mappingKey, @NotNull PyStringLiteralExpression formatExpression) {
-        int arguments = 0;
+      private void inspectNewStyleArgumentForChunk(int i,
+                                                   @NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
+                                                   @NotNull String mappingKey, @NotNull PyStringLiteralExpression formatExpression) {
         final PsiElement resolve = new PySubstitutionChunkReference(formatExpression, chunk, i).resolve();
         if (resolve == null) {
           final String chunkMapping = chunk.getMappingKey();
@@ -476,9 +475,7 @@ public class PyStringFormatInspection extends PyInspection {
               }
             }
           }
-          arguments++;
         }
-        return arguments;
       }
 
       private String inspectNewStyleChunk(@NotNull PyStringLiteralExpression formatExpression,
@@ -607,11 +604,7 @@ public class PyStringFormatInspection extends PyInspection {
         final PyStringLiteralExpression literalExpression = PsiTreeUtil.getChildOfType(callee, PyStringLiteralExpression.class);
         if (literalExpression != null) {
           final Inspection inspection = new Inspection(this, myTypeEvalContext);
-          final PyArgumentList list = node.getArgumentList();
-
-          if (list != null) {
-            inspection.inspectNewStyleValues(literalExpression);
-          }
+          inspection.inspectNewStyleValues(literalExpression);
         }
       }
     }
