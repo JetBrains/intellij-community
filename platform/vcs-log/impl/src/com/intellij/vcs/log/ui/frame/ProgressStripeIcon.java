@@ -15,100 +15,121 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.util.List;
 
-public class ProgressStripeIcon {
+public abstract class ProgressStripeIcon implements Icon {
   private static final int TRANSLATE = 1;
-  private static final Icon STRIPES = VcsLogIcons.Stripes;
+  private static final int HEIGHT = 3;
+  @NotNull
+  private final JComponent myReferenceComponent;
+  private final int myShift;
 
-  private static class StripesIcon implements Icon {
-    @NotNull
-    private final JComponent myReferenceComponent;
-    private final int myShift;
-    @NotNull
-    private final Icon myCropIcon;
-    private final Icon myIcon;
+  private ProgressStripeIcon(@NotNull JComponent component, int shift) {
+    myReferenceComponent = component;
+    myShift = shift;
+  }
 
-    public StripesIcon(@NotNull JComponent component, int shift, @NotNull Icon icon) {
-      myReferenceComponent = component;
-      myShift = shift;
+  public abstract int getChunkWidth();
 
-      myIcon = icon;
-      myCropIcon = IconUtil.cropIcon(icon, new Rectangle(myIcon.getIconWidth() - myShift, 0, myShift, icon.getIconHeight()));
+  protected abstract void paint(@NotNull Graphics2D g2, int x, int y, int shift);
+
+  @Override
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    Graphics2D g2 = (Graphics2D)g;
+
+    int shift = myShift - getChunkWidth();
+    while (shift < getIconWidth()) {
+      paint(g2, x, y, shift);
+      shift += getChunkWidth();
+    }
+
+    config.restore();
+  }
+
+  @Override
+  public int getIconWidth() {
+    return myReferenceComponent.getWidth();
+  }
+
+  @Override
+  public int getIconHeight() {
+    return getHeight();
+  }
+
+  public static int getHeight() {
+    return JBUI.scale(HEIGHT);
+  }
+
+  private static class StripeIcon extends ProgressStripeIcon {
+    private static final JBColor BG_COLOR = new JBColor(Gray._165, Gray._88);
+    private static final JBColor FG_COLOR = new JBColor(Gray._255, Gray._128);
+    private static final int WIDTH = 16;
+    private static final int START = 4;
+
+    private StripeIcon(@NotNull JComponent component, int shift) {
+      super(component, shift);
     }
 
     @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      myCropIcon.paintIcon(c, g, x, y);
-      int shift = myShift;
-      while (shift < getIconWidth()) {
-        myIcon.paintIcon(c, g, x + shift, y);
-        shift += myIcon.getIconWidth();
-      }
+    public int getChunkWidth() {
+      return JBUI.scale(WIDTH);
     }
 
     @Override
-    public int getIconWidth() {
-      return myReferenceComponent.getWidth();
-    }
+    protected void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
+      g2.setColor(BG_COLOR);
+      g2.fillRect(x + shift, y, JBUI.scale(WIDTH), JBUI.scale(HEIGHT));
 
-    @Override
-    public int getIconHeight() {
-      return myIcon.getIconHeight();
+      g2.setColor(FG_COLOR);
+
+      Path2D.Double path = new Path2D.Double();
+      float incline = JBUI.scale(HEIGHT) / 2.0f;
+      path.moveTo(x + shift + JBUI.scale(START), y + JBUI.scale(HEIGHT));
+      path.lineTo(x + shift + JBUI.scale(START) + incline, y);
+      path.lineTo(x + shift + JBUI.scale(HEIGHT) - JBUI.scale(START), y);
+      path.lineTo(x + shift + JBUI.scale(HEIGHT) - JBUI.scale(START) - incline, y + JBUI.scale(HEIGHT));
+      path.lineTo(x + shift + JBUI.scale(START), y + JBUI.scale(HEIGHT));
+      path.closePath();
+
+      g2.fill(new Area(path));
     }
   }
 
-  private static class GradientIcon implements Icon {
+  private static class GradientIcon extends ProgressStripeIcon {
     private static final JBColor DARK_BLUE = new JBColor(0x4d9ff8, 0x525659);
     private static final JBColor LIGHT_BLUE = new JBColor(0x90c2f8, 0x5e6266);
-    static final int GRADIENT_WIDTH = JBUI.scale(128);
-    @NotNull
-    private final JComponent myReferenceComponent;
-    private final int myShift;
+    private static final int GRADIENT = 128;
 
     private GradientIcon(@NotNull JComponent component, int shift) {
-      myReferenceComponent = component;
-      myShift = shift;
+      super(component, shift);
     }
 
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      Graphics2D g2 = (Graphics2D)g;
-      int shift = myShift - 2 * GRADIENT_WIDTH;
-      while (shift < getIconWidth()) {
-        paint(g2, x, y, shift);
-        shift += 2 * GRADIENT_WIDTH;
-      }
+    public int getChunkWidth() {
+      return 2 * JBUI.scale(GRADIENT);
     }
 
-    public void paint(Graphics2D g2, int x, int y, int shift) {
-      g2.setPaint(new GradientPaint(x + shift, y, DARK_BLUE, x + shift + GRADIENT_WIDTH, y, LIGHT_BLUE));
-      g2.fill(new Rectangle(x + shift, y, GRADIENT_WIDTH, getIconHeight()));
-      g2.setPaint(new GradientPaint(x + shift + GRADIENT_WIDTH, y, LIGHT_BLUE, x + shift + 2 * GRADIENT_WIDTH, y, DARK_BLUE));
-      g2.fill(new Rectangle(x + shift + GRADIENT_WIDTH, y, GRADIENT_WIDTH, getIconHeight()));
-    }
-
-    @Override
-    public int getIconWidth() {
-      return myReferenceComponent.getWidth();
-    }
-
-    @Override
-    public int getIconHeight() {
-      return STRIPES.getIconHeight();
+    public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
+      g2.setPaint(new GradientPaint(x + shift, y, DARK_BLUE, x + shift + JBUI.scale(GRADIENT), y, LIGHT_BLUE));
+      g2.fill(new Rectangle(x + shift, y, JBUI.scale(GRADIENT), getIconHeight()));
+      g2.setPaint(new GradientPaint(x + shift + JBUI.scale(GRADIENT), y, LIGHT_BLUE, x + shift + 2 * JBUI.scale(GRADIENT), y, DARK_BLUE));
+      g2.fill(new Rectangle(x + shift + JBUI.scale(GRADIENT), y, JBUI.scale(GRADIENT), getIconHeight()));
     }
   }
 
@@ -116,13 +137,13 @@ public class ProgressStripeIcon {
   public static AsyncProcessIcon generateIcon(@NotNull JComponent component) {
     List<Icon> result = ContainerUtil.newArrayList();
     if (UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
-      for (int i = 0; i < 2 * GradientIcon.GRADIENT_WIDTH; i += JBUI.scale(TRANSLATE)) {
+      for (int i = 0; i < 2 * JBUI.scale(GradientIcon.GRADIENT); i += JBUI.scale(TRANSLATE)) {
         result.add(new GradientIcon(component, i));
       }
     }
     else {
-      for (int i = 0; i < STRIPES.getIconWidth(); i += JBUI.scale(TRANSLATE)) {
-        result.add(new StripesIcon(component, i, STRIPES));
+      for (int i = 0; i < JBUI.scale(StripeIcon.WIDTH); i += JBUI.scale(TRANSLATE)) {
+        result.add(new StripeIcon(component, i));
       }
       result = ContainerUtil.reverse(result);
     }
@@ -142,9 +163,5 @@ public class ProgressStripeIcon {
       }
     });
     return icon;
-  }
-
-  public static int getHeight() {
-    return STRIPES.getIconHeight();
   }
 }
