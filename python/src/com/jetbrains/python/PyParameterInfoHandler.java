@@ -75,7 +75,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   private static PyArgumentList findArgumentList(final ParameterInfoContext context) {
-    return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PyArgumentList.class);
+    return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset()-1, PyArgumentList.class);
   }
 
   @Override
