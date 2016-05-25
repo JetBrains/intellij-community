@@ -501,7 +501,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.5+")
+  @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
     createSettingsFile("include 'core'\n" +
                        "include 'service'\n" +

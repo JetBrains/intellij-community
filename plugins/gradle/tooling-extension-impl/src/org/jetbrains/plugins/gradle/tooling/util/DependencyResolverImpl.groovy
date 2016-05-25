@@ -58,7 +58,7 @@ import java.util.regex.Pattern
 class DependencyResolverImpl implements DependencyResolver {
 
   private static isArtifactResolutionQuerySupported = GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0
-  private static isDependencySubstitutionsSupported = GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0
+  private static isDependencySubstitutionsSupported = GradleVersion.current().compareTo(GradleVersion.version("2.5")) > 0
 
   @NotNull
   private final Project myProject
