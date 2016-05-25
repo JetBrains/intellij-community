@@ -459,7 +459,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  private GroovyResolveResult[] doPolyResolve(@SuppressWarnings("UnusedParameters") boolean incompleteCode) {
+  private GroovyResolveResult[] doPolyResolve(boolean incompleteCode) {
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
