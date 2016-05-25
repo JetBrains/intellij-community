@@ -798,7 +798,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void threadSuspended(final PyThreadInfo threadInfo) {
+  public void threadSuspended(final PyThreadInfo threadInfo, boolean updateSourcePosition) {
     if (!mySuspendedThreads.contains(threadInfo)) {
       mySuspendedThreads.add(threadInfo);
 
@@ -821,14 +821,20 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
           }
         }
-
         if (breakpoint != null) {
-          if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
-            resume(suspendContext);
-          }
+          // add check for breakpoint type
+          suspendAllOtherThreads(threadInfo);
         }
-        else {
-          getSession().positionReached(suspendContext);
+
+        if (updateSourcePosition) {
+          if (breakpoint != null) {
+            if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
+              resume(suspendContext);
+            }
+          }
+          else {
+            getSession().positionReached(suspendContext);
+          }
         }
       }
     }

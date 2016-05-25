@@ -586,8 +586,13 @@ public class RemoteDebugger implements ProcessDebugger {
           thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
           thread.setStopReason(event.getStopReason());
           thread.setMessage(event.getMessage());
-          myDebugProcess.threadSuspended(thread);
-          myDebugProcess.suspendAllOtherThreads(thread);
+          boolean updateSourcePosition = true;
+          if (event.getStopReason() == AbstractCommand.SUSPEND_THREAD) {
+            // That means that the thread was stopped manually from the Java side either while suspending all threads
+            // or after the "Pause" command. In both cases we shouldn't change debugger focus if session is already suspended.
+            updateSourcePosition = !myDebugProcess.getSession().isSuspended();
+          }
+          myDebugProcess.threadSuspended(thread, updateSourcePosition);
           break;
         }
         case AbstractCommand.RESUME_THREAD: {
@@ -611,7 +616,7 @@ public class RemoteDebugger implements ProcessDebugger {
               // notify UI of suspended threads left in debugger if one thread finished its work
               if ((threadInfo != null) && (threadInfo.getState() == PyThreadInfo.State.SUSPENDED)) {
                 myDebugProcess.threadResumed(threadInfo);
-                myDebugProcess.threadSuspended(threadInfo);
+                myDebugProcess.threadSuspended(threadInfo, true);
               }
             }
           }
