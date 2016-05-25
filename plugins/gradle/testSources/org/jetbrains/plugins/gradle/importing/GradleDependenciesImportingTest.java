@@ -540,7 +540,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.5+")
+  @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
     createSettingsFile("include 'core'\n" +
                        "include 'service'\n" +
@@ -643,5 +643,42 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
     assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED, DependencyScope.RUNTIME);
+  }
+
+  @Test
+  @TargetVersions("2.0+")
+  public void testProvidedTransitiveDependencies() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "project(':projectA') {\n" +
+      "  apply plugin: 'java'\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  apply plugin: 'war'\n" +
+      "  dependencies {\n" +
+      "    providedCompile project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "projectA", "projectA_main", "projectA_test", "projectB", "projectB_main", "projectB_test", "projectC", "projectC_main", "projectC_test");
+
+    assertModuleModuleDepScope("projectB_main", "projectA_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("projectC_main", "projectA_main", DependencyScope.PROVIDED);
+    assertModuleModuleDepScope("projectC_main", "projectB_main", DependencyScope.PROVIDED);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "projectA", "projectB", "projectC");
+    assertModuleModuleDepScope("projectB", "projectA", DependencyScope.COMPILE);
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) >= 0) {
+      assertModuleModuleDepScope("projectC", "projectA", DependencyScope.PROVIDED);
+    }
+    assertModuleModuleDepScope("projectC", "projectB", DependencyScope.PROVIDED);
   }
 }

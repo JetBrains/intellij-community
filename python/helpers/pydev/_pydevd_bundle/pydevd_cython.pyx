@@ -470,7 +470,8 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
                         frame.f_back.f_locals[RETURN_VALUES_PREFIX + name] = arg
             if main_debugger.remove_return_values_flag:
-                # show return values was turned off, we should remove them from locals dict
+                # Showing return values was turned off, we should remove them from locals dict.
+                # The values can be in the current frame or in the back one
                 for var_name in dict_keys(frame.f_locals):
                     if var_name.startswith(RETURN_VALUES_PREFIX):
                         dict_pop(frame.f_locals, var_name)
@@ -565,7 +566,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
                 if can_skip and main_debugger.show_return_values:
                     # trace function for showing return values after step over
-                    if info.pydev_step_cmd == CMD_STEP_OVER and frame.f_back == info.pydev_step_stop:
+                    if info.pydev_step_cmd == CMD_STEP_OVER and hasattr(frame, "f_back") and frame.f_back == info.pydev_step_stop:
                         can_skip = False
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,

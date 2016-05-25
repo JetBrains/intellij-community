@@ -222,7 +222,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
     Language language = myTargetSuperClass.getLanguage();
-    final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
+    final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySuperSignature(myTargetSuperClass, method.getSignature(substitutor), false);
     if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
         method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);

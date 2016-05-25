@@ -179,11 +179,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
   }
 
   @Override
-  protected boolean readAvailable() throws IOException {
-    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
-  }
-
-  @Override
   protected void close() throws IOException {
     myReader.close();
   }

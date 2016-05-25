@@ -138,6 +138,7 @@ public class IdeEventQueue extends EventQueue {
 
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
+  private boolean myWinMetaPressed;
 
   private int myInputMethodLock;
 
@@ -370,6 +371,9 @@ public class IdeEventQueue extends EventQueue {
     e = fixNonEnglishKeyboardLayouts(e);
 
     e = mapEvent(e);
+    if (Registry.is("keymap.windows.as.meta")) {
+      e = mapMetaState(e);
+    }
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
@@ -527,6 +531,38 @@ public class IdeEventQueue extends EventQueue {
                            src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
       }
     }
+    return e;
+  }
+
+  private AWTEvent mapMetaState(AWTEvent e) {
+    if (myWinMetaPressed) {
+      Application app = ApplicationManager.getApplication();
+      if (app == null || !app.isActive()) {
+        myWinMetaPressed = false;
+        return e;
+      }
+    }
+
+    if (e instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)e;
+      if (ke.getKeyCode() == KeyEvent.VK_WINDOWS) {
+        if (ke.getID() == KeyEvent.KEY_PRESSED) myWinMetaPressed = true;
+        if (ke.getID() == KeyEvent.KEY_RELEASED) myWinMetaPressed = false;
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers(), KeyEvent.VK_META, ke.getKeyChar(),
+                            ke.getKeyLocation());
+      }
+      if (myWinMetaPressed) {
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | InputEvent.META_MASK, ke.getKeyCode(),
+                            ke.getKeyChar(), ke.getKeyLocation());
+      }
+    }
+
+    if (myWinMetaPressed && e instanceof MouseEvent && ((MouseEvent)e).getButton() != 0) {
+      MouseEvent me = (MouseEvent)e;
+      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers() | InputEvent.META_MASK, me.getX(), me.getY(),
+                            me.getClickCount(), me.isPopupTrigger(), me.getButton());
+    }
+
     return e;
   }
 

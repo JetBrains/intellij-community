@@ -140,18 +140,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   private static PsiFile getFile(Project project, Document document) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
-    if (file != null) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-
-      if (file instanceof PsiCompiledFile) {
-        file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      }
-    }
-
-    return file;
+    return file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file;
   }
 
   /**

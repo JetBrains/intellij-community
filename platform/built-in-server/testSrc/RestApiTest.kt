@@ -64,9 +64,11 @@ internal class RestApiTest : BuiltInServerTestCase() {
     val column = manager.annotation?.column ?: -1
 
     var connection = URL("$serviceUrl?file=${manager.filePath ?: ""}&line=$line&column=$column").openConnection() as HttpURLConnection
+    BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
 
     connection = URL("$serviceUrl").openConnection() as HttpURLConnection
+    BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     connection.requestMethod = "POST"
     connection.doOutput = true
     JsonWriter(connection.outputStream.bufferedWriter()).use {

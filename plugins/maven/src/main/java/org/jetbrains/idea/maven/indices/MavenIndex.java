@@ -394,7 +394,9 @@ public class MavenIndex {
         myUpdateTimestamp = System.currentTimeMillis();
       }
 
-      oldData.close(true);
+      if(oldData != null) {
+        oldData.close(true);
+      }
 
       for (File each : FileUtil.notNullize(myDir.listFiles())) {
         if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(myDataDirName)) {

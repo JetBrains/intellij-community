@@ -20,7 +20,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -114,7 +113,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
     ProgressStripe progressStripe =
-      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (myDecorator != null && myLogData.getProgress().isRunning()) startLoadingImmediately();
+        }
+      };
     myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
       public void progressStarted() {

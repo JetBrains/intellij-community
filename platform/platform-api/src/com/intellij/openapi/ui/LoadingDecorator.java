@@ -113,7 +113,7 @@ public class LoadingDecorator {
     }
   }
 
-  private void _startLoading(final boolean takeSnapshot) {
+  protected void _startLoading(final boolean takeSnapshot) {
     myLoadingLayer.setVisible(true, takeSnapshot);
   }
 
