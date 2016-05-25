@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -220,7 +221,7 @@ public class ClassPath {
               }
             }
             catch (Exception e) {
-              Logger.getInstance(ClassPath.class).info("url: " + url + " / " + referencedJar, e);
+              Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
         }
@@ -430,11 +431,14 @@ public class ClassPath {
     try {
       JarInputStream inputStream = new JarInputStream(new FileInputStream(file));
       try {
-        final Manifest manifest = inputStream.getManifest();
+        Manifest manifest = inputStream.getManifest();
         if (manifest != null) {
-          final String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-          if (classPath != null) {
-            return classPath.split(" ");
+          String signature = manifest.getMainAttributes().getValue(CommandLineWrapperUtil.IJ_CLASS_PATH_JAR);
+          if (Boolean.parseBoolean(signature)) {
+            String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+            if (classPath != null) {
+              return classPath.split(" ");
+            }
           }
         }
       }
