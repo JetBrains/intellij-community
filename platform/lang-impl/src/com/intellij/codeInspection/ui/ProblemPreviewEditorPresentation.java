@@ -72,7 +72,8 @@ public class ProblemPreviewEditorPresentation {
     final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
       .filter(ProblemDescriptorBase.class::isInstance)
-      .map(d -> ((ProblemDescriptorBase)d).getPsiElement())
+      .map(ProblemDescriptorBase.class::cast)
+      .map(ProblemDescriptorBase::getPsiElement)
       .filter(e -> e != null && e.isValid())
       .map(ProblemPreviewEditorPresentation::getWholeElement)
       .map((e) -> {
@@ -86,18 +87,20 @@ public class ProblemPreviewEditorPresentation {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      myView.invalidate();
-      myView.validate();
-      UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
-      if (elements.size() == 1) {
-        final PsiElement element = elements.get(0).getElement();
-        LOG.assertTrue(element != null);
-        final DocumentEx document = myEditor.getDocument();
-        final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
-                                    document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
-        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
-      } else {
-        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+      if (!myEditor.isDisposed()) {
+        myView.invalidate();
+        myView.validate();
+        UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
+        if (elements.size() == 1) {
+          final PsiElement element = elements.get(0).getElement();
+          LOG.assertTrue(element != null);
+          final DocumentEx document = myEditor.getDocument();
+          final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+                                      document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
+        } else {
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+        }
       }
     });
 
