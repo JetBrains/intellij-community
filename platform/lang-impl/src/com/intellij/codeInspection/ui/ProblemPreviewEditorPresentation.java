@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  * @author Dmitry Batkovich
  */
 public class ProblemPreviewEditorPresentation {
+  private final static int VIEW_ADDITIONAL_OFFSET = 4;
   private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
@@ -91,7 +92,9 @@ public class ProblemPreviewEditorPresentation {
       if (elements.size() == 1) {
         final PsiElement element = elements.get(0).getElement();
         LOG.assertTrue(element != null);
-        final int offset = element.getTextRange().getEndOffset();
+        final DocumentEx document = myEditor.getDocument();
+        final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+                                    document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
         myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
       } else {
         myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
