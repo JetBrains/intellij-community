@@ -122,12 +122,14 @@ public class StripesAnimatedIcon implements Icon {
       for (int i = 0; i < STRIPES.getIconWidth(); i += JBUI.scale(TRANSLATE)) {
         result.add(new StripesAnimatedIcon(component, i, STRIPES));
       }
+      result = ContainerUtil.reverse(result);
     }
 
-    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[result.size()]), result.get(0)) {
+    Icon passive = result.get(0);
+    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[result.size()]), passive) {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(component.getWidth(), result.get(0).getIconHeight());
+        return new Dimension(component.getWidth(), passive.getIconHeight());
       }
     };
     component.addComponentListener(new ComponentAdapter() {
