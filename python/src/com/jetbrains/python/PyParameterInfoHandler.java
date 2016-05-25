@@ -21,6 +21,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -58,7 +59,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @Override
   public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
-    PyArgumentList argumentList = findArgumentList(context);
+    PyArgumentList argumentList = findArgumentList(context, -1);
     if (argumentList != null) {
       final PyCallExpression callExpr = argumentList.getCallExpression();
       if (callExpr != null) {
@@ -74,8 +75,16 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return null;
   }
 
-  private static PyArgumentList findArgumentList(final ParameterInfoContext context) {
-    return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset()-1, PyArgumentList.class);
+  private static PyArgumentList findArgumentList(final ParameterInfoContext context, int parameterListStart) {
+    final int offset = context.getOffset();
+    PyArgumentList argumentList = ParameterInfoUtils.findParentOfType(context.getFile(), offset - 1, PyArgumentList.class);
+    if (argumentList != null) {
+      final TextRange range = argumentList.getTextRange();
+      if (parameterListStart >= 0 && range.getStartOffset() != parameterListStart){
+        argumentList = PsiTreeUtil.getParentOfType(argumentList, PyArgumentList.class);
+      }
+    }
+    return argumentList;
   }
 
   @Override
@@ -85,7 +94,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @Override
   public PyArgumentList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
-    return findArgumentList(context);
+    return findArgumentList(context, context.getParameterListStart());
   }
 
   /**
