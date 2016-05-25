@@ -228,4 +228,10 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
     checkResultByText("class C { String s = \"<selection>AB\\\\CD<caret></selection>\"; }");
   }
+
+  public void testToggleCaseForEscapedChar() throws IOException {
+    init("class C { String s = \"<selection>ab\\ncd<caret></selection>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
+  }
 }
