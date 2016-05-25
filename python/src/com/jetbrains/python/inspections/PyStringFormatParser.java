@@ -364,6 +364,7 @@ public class PyStringFormatParser {
       } catch (NumberFormatException e) {
         chunk.setMappingKey(name);
       }
+      myPos = nameEnd;
     }
     else {
       chunk.setAutoPosition(autoPositionedFieldsCount);
@@ -377,13 +378,14 @@ public class PyStringFormatParser {
       final String conversion = myLiteral.substring(myPos, conversionEnd);
       if (StringUtil.containsAnyChar(conversion, CONVERSIONS)) {
         chunk.setConversion(conversion);
-        myPos = conversionEnd + 1;
+        myPos = conversionEnd;
       }
     }
 
     // parse format spec
     // [[fill]align][sign][#][0][width][,][.precision][type]
     if (isAt(':')) {
+      //skip ":"
       myPos++;
 
       //skip align options

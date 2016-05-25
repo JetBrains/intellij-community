@@ -463,4 +463,40 @@ public class PyStringFormatParserTest extends TestCase {
     assertSize(1, topLevelFields);
     return topLevelFields.get(0);
   }
+
+  public void testNewStyleMappingKeyFormatSpec() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{a:d}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 5), chunks.get(0).getTextRange());
+    assertEquals("a", ((NewStyleSubstitutionChunk)chunks.get(0)).getMappingKey());
+    assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
+  }
+
+  public void testNewStyleMappingKeyConversionFormatSpec() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{a!s:.2d}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 9), chunks.get(0).getTextRange());
+    assertEquals("a", ((NewStyleSubstitutionChunk)chunks.get(0)).getMappingKey());
+    assertEquals("s", ((NewStyleSubstitutionChunk)chunks.get(0)).getConversion());
+    assertEquals("2", ((NewStyleSubstitutionChunk)chunks.get(0)).getPrecision());
+    assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
+  }
+
+  public void testSkipAlign() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{a:*^d}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 7), chunks.get(0).getTextRange());
+    assertEquals("a", ((NewStyleSubstitutionChunk)chunks.get(0)).getMappingKey());
+    assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
+  }
+
+  public void testNewStyleAllPossibleSpecs() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{a!s:#010,.2d}");
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(0, 14), chunks.get(0).getTextRange());
+    assertEquals("a", ((NewStyleSubstitutionChunk)chunks.get(0)).getMappingKey());
+    assertEquals("s", ((NewStyleSubstitutionChunk)chunks.get(0)).getConversion());
+    assertEquals("2", ((NewStyleSubstitutionChunk)chunks.get(0)).getPrecision());
+    assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
+  }
 }
