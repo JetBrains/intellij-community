@@ -106,18 +106,18 @@ public class RegExpParser implements PsiParser {
    * CLOSURE     ::= GROUP QUANTIFIER
    */
   private boolean parseAtom(PsiBuilder builder) {
-    PsiBuilder.Marker marker = parseGroup(builder);
+    final PsiBuilder.Marker marker = parseGroup(builder);
 
     if (marker == null) {
       return false;
     }
-    marker = marker.precede();
+    final PsiBuilder.Marker marker2 = marker.precede();
 
     if (parseQuantifier(builder)) {
-      marker.done(RegExpElementTypes.CLOSURE);
+      marker2.done(RegExpElementTypes.CLOSURE);
     }
     else {
-      marker.drop();
+      marker2.drop();
     }
 
     return true;
@@ -134,9 +134,9 @@ public class RegExpParser implements PsiParser {
 
     if (builder.getTokenType() == RegExpTT.LBRACE) {
       builder.advanceLexer();
-      boolean minOmitted = false;
-      if (builder.getTokenType() == RegExpTT.COMMA && myCapabilities.contains(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS)) {
-        minOmitted = true;
+      final boolean minOmitted = builder.getTokenType() == RegExpTT.COMMA &&
+                                 myCapabilities.contains(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
+      if (minOmitted) {
         builder.advanceLexer();
       }
       else if (builder.getTokenType() != RegExpTT.NUMBER && myCapabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) {
@@ -229,20 +229,21 @@ public class RegExpParser implements PsiParser {
   }
 
   private boolean parseClassIntersection(PsiBuilder builder) {
-    PsiBuilder.Marker marker = builder.mark();
+    final PsiBuilder.Marker marker = builder.mark();
 
     if (!parseClassdef(builder, false)) {
       marker.drop();
       return false;
     }
+    if (RegExpTT.ANDAND != builder.getTokenType()) {
+      marker.drop();
+      return true;
+    }
     while (RegExpTT.ANDAND == builder.getTokenType()) {
       builder.advanceLexer();
       parseClassdef(builder, true);
-      marker.done(RegExpElementTypes.INTERSECTION);
-      marker = marker.precede();
     }
-
-    marker.drop();
+    marker.done(RegExpElementTypes.INTERSECTION);
     return true;
   }
 
@@ -280,12 +281,11 @@ public class RegExpParser implements PsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     makeChar(builder);
 
-    IElementType t = builder.getTokenType();
-    if (t == RegExpTT.MINUS) {
+    if (builder.getTokenType() == RegExpTT.MINUS) {
       final PsiBuilder.Marker m = builder.mark();
       builder.advanceLexer();
 
-      t = builder.getTokenType();
+      final IElementType t = builder.getTokenType();
       if (RegExpTT.CHARACTERS2.contains(t)) {
         m.drop();
         makeChar(builder);
