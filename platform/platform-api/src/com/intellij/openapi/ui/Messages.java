@@ -912,7 +912,7 @@ public class Messages {
                                           @Nullable Icon icon,
                                           @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
 
     final InputDialog dialog = project != null ? new PasswordInputDialog(project, message, title, icon, validator)
@@ -956,7 +956,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
@@ -974,7 +974,7 @@ public class Messages {
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
@@ -1004,7 +1004,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
 
@@ -1027,7 +1027,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(message, title, icon, initialValue, validator);
@@ -1044,7 +1044,7 @@ public class Messages {
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     dialog.show();
@@ -1061,7 +1061,7 @@ public class Messages {
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<String, Boolean>(ourTestInputImplementation.show(message), checked);
+      return new Pair<String, Boolean>(ourTestInputImplementation.show(message, validator), checked);
     }
     else {
       InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
@@ -1078,7 +1078,7 @@ public class Messages {
                                                 String initialValue,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
