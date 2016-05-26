@@ -1,6 +1,8 @@
 package com.intellij.stats.completion.storage
 
 import com.intellij.stats.completion.AsciiMessageCharStorage
+import com.intellij.stats.completion.LogFileManager
+import com.intellij.stats.completion.LogFileManagerImpl
 import com.intellij.stats.completion.UniqueFilesProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -84,5 +86,54 @@ class AsciiMessageStorageTest {
         assertThat(tmpFile.length()).isEqualTo(10)
     }
     
+    
+}
+
+
+
+class FileLoggerTest {
+    
+    lateinit var fileLogger: LogFileManager
+    lateinit var filesProvider: UniqueFilesProvider
+
+    @Before
+    fun setUp() {
+        filesProvider = UniqueFilesProvider("chunk", File("."))
+        fileLogger = LogFileManagerImpl(filesProvider)
+    }
+
+    @After
+    fun tearDown() {
+        val dir = filesProvider.getStatsDataDirectory()
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun test_chunk_is_around_256Kb() {
+        val bytesToWrite = 1024 * 256
+        (0..bytesToWrite).forEach {
+            fileLogger.println("")
+        }
+
+        val rootDir = filesProvider.getStatsDataDirectory()
+        val chunks = rootDir.listFiles(FileFilter { it.isFile }).filter { it.name.startsWith("chunk") }
+        assertThat(chunks).hasSize(1)
+
+        val fileLength = chunks.first().length()
+        assertThat(fileLength).isLessThan(256 * 1024)
+        assertThat(fileLength).isGreaterThan(200 * 1024)
+    }
+    
+    @Test
+    fun test_multiple_chunks() {
+        val bytesToWrite = 2 * 1024 * 256
+        (0..bytesToWrite).forEach {
+            fileLogger.println("")
+        }
+
+        val rootDir = filesProvider.getStatsDataDirectory()
+        val chunks = rootDir.listFiles(FileFilter { it.isFile }).filter { it.name.startsWith("chunk") }
+        assertThat(chunks).hasSize(2)
+    }
     
 }
