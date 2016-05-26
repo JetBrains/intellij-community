@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -22,7 +21,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -64,11 +62,11 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   private final String mySourceFileToRunGenerationOn;
   @NotNull
   private final String myUseQuickFixWithThisModuleOnly;
-  private PyFile myGeneratedSkeleton;
 
   /**
    * @param expectedSkeletonFile          if you want test to compare generated result with some file, provide its name.
-   *                                      Pass null if you do not want to compare result with anything (you may do it yourself with {@link #getGeneratedSkeleton()})
+   *                                      Pass null if you do not want to compare result with anything
+   *                                      (you may do it yourself by overwriting {@link #runTestOn(String)}) but <strong>call super</strong>
    * @param moduleNameToBeGenerated       name of module you think we should generate in dotted notation (like "System.Web" or "com.myModule").
    *                                      System will wait for skeleton file for this module to be generated
    * @param sourceFileToRunGenerationOn   Source file where we should run "generate stubs" on. Be sure to place "caret" on appropriate place!
@@ -142,11 +140,12 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
         throw new FileComparisonFailure("asd", skeletonText, actual, skeletonFile.getAbsolutePath());
       }
     }
-    myGeneratedSkeleton = (PyFile)myFixture.configureByFile(skeletonFile.getName());
+    myFixture.configureByFile(skeletonFile.getName());
   }
 
   /**
    * Removes strings that starts with "# by generator", because generator version may change
+   *
    * @param textToClean text to remove strings from
    * @return text after cleanup
    */
@@ -166,13 +165,5 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   @Override
   public Set<String> getTags() {
     return Collections.unmodifiableSet(IRON_TAGS);
-  }
-
-  /**
-   * @return File for generated skeleton. Call it after {@link #runTestOn(String)} only!
-   */
-  @NotNull
-  PyFile getGeneratedSkeleton() {
-    return myGeneratedSkeleton;
   }
 }

@@ -1,19 +1,21 @@
 package com.jetbrains.env.python.dotNet;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * IronPython.NET specific tests
  *
  * @author Ilya.Kazakevich
  */
-public class PyIronPythonTest extends PyEnvTestCase {
+public final class PyIronPythonTest extends PyEnvTestCase {
 
   /**
    * IronPython tag
@@ -100,17 +102,19 @@ public class PyIronPythonTest extends PyEnvTestCase {
       "System.Web",
       "import_system.py",
       null
-    );
-    runPythonTest(task);
-    final PyFile skeleton = task.getGeneratedSkeleton();
-    new ReadAction() {
+    ) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
-                             skeleton.getTopLevelClasses(),
-                             skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+      public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
+        super.runTestOn(sdkHome);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final PyFile skeleton = (PyFile)myFixture.getFile();
+          Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
+                               skeleton.getTopLevelClasses(),
+                               skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+        });
       }
-    }.execute();
+    };
+    runPythonTest(task);
   }
 
   /**

@@ -170,6 +170,9 @@ public class PyExtractMethodUtil {
 
       // replace statements with call
       callElement = replaceElements(elementsRange, callElement);
+      // Both statements are used in finder, so should be valid at this moment
+      PyPsiUtils.assertValid(statement1);
+      PyPsiUtils.assertValid(statement2);
       callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
       if (callElement != null) {
         processDuplicates(callElement, generatedMethod, finder, editor);
