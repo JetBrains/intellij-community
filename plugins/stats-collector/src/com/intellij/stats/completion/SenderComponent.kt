@@ -51,16 +51,6 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
 
 class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
     
-    private fun fillSwapFileIfNeeded(fileToSend: File) {
-        if (fileToSend.exists()) {
-            if (fileToSend.length() > 0) {
-                return
-            }
-            fileToSend.delete()
-        }
-        logFileManager.renameLogFile(fileToSend)
-    }
-
     fun sendStatsData(uid: String) {
 //        assertNotEDT()
 //        val fileToSend = File(FilePathProvider.getInstance().swapFile)
