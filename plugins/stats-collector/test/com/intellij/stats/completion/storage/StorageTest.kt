@@ -9,7 +9,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.io.FileFilter
 
 
 class FilesProviderTest {
@@ -31,7 +30,7 @@ class FilesProviderTest {
 
     private fun removeAllFilesInStatsDataDirectory() {
         val dir = provider.getStatsDataDirectory()
-        dir.listFiles(FileFilter { it.isFile }).forEach { it.delete() }
+        dir.deleteRecursively()
     }
 
     @Test
@@ -41,12 +40,8 @@ class FilesProviderTest {
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
-
-        val directory = provider.getStatsDataDirectory()
-        val createdFiles = directory
-                .listFiles(FileFilter { it.isFile })
-                .filter { it.name.startsWith("chunk") }
-                .count()
+        
+        val createdFiles = provider.getDataFiles().count()
         
         assertThat(createdFiles).isEqualTo(3)
     }
@@ -115,8 +110,7 @@ class FileLoggerTest {
             fileLogger.println("")
         }
 
-        val rootDir = filesProvider.getStatsDataDirectory()
-        val chunks = rootDir.listFiles(FileFilter { it.isFile }).filter { it.name.startsWith("chunk") }
+        val chunks = filesProvider.getDataFiles()
         assertThat(chunks).hasSize(1)
 
         val fileLength = chunks.first().length()
@@ -126,14 +120,19 @@ class FileLoggerTest {
     
     @Test
     fun test_multiple_chunks() {
-        val bytesToWrite = 2 * 1024 * 256
+        writeKb(256)
+        writeKb(256)
+
+        val files = filesProvider.getDataFiles()
+        assertThat(files).hasSize(2)
+        assertThat(files[0].name.substringAfter('_').toInt()).isLessThan(files[1].name.substringAfter('_').toInt())
+    }
+
+    private fun writeKb(kb: Int) {
+        val bytesToWrite = 1024 * kb
         (0..bytesToWrite).forEach {
             fileLogger.println("")
         }
-
-        val rootDir = filesProvider.getStatsDataDirectory()
-        val chunks = rootDir.listFiles(FileFilter { it.isFile }).filter { it.name.startsWith("chunk") }
-        assertThat(chunks).hasSize(2)
     }
-    
+
 }
