@@ -260,7 +260,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("Note: " + text + "  ");
+    myErrorLabel.setText("<html>Note: " + text + "  </html>");
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
   }
 
