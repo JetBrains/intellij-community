@@ -28,6 +28,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -127,8 +128,7 @@ public class PsiScopesUtil {
       processTypeDeclarations(lub, place, processor);
     }
     else if (type instanceof PsiCapturedWildcardType) {
-      final PsiType upperBound =
-        PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), place.getResolveScope());
+      final PsiType upperBound = getUpperBound((PsiCapturedWildcardType)type, place);
       if (upperBound != null) {
         processTypeDeclarations(PsiUtil.captureToplevelWildcards(upperBound, place), place, processor);
       }
@@ -140,6 +140,15 @@ public class PsiScopesUtil {
         clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), clazz, place);
       }
     }
+  }
+
+  private static PsiType getUpperBound(PsiCapturedWildcardType type, PsiElement place) {
+    GlobalSearchScope placeResolveScope = place.getResolveScope();
+    PsiType upperBound = PsiClassImplUtil.correctType(type.getUpperBound(), placeResolveScope);
+    while (upperBound instanceof PsiCapturedWildcardType) {
+      upperBound = PsiClassImplUtil.correctType(((PsiCapturedWildcardType)upperBound).getUpperBound(), placeResolveScope);
+    }
+    return upperBound;
   }
 
   public static boolean resolveAndWalk(@NotNull PsiScopeProcessor processor,
@@ -355,8 +364,7 @@ public class PsiScopesUtil {
             processQualifierType(((PsiDisjunctionType)type).getLeastUpperBound(), processor, manager, methodCall);
           }
           else if (type instanceof PsiCapturedWildcardType) {
-            final PsiType upperBound =
-              PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), methodCall.getResolveScope());
+            final PsiType upperBound = getUpperBound((PsiCapturedWildcardType)type, methodCall);
             if (upperBound != null) {
               processQualifierType(PsiUtil.captureToplevelWildcards(upperBound, methodCall), processor, manager, methodCall);
             }
