@@ -393,4 +393,9 @@ public class StructMethod extends StructMember {
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
     return (StructLocalVariableTableAttribute)getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
   }
+
+  @Override
+  public String toString() {
+    return name;
+  }
 }
