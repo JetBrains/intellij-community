@@ -1996,7 +1996,6 @@ public abstract class DialogWrapper {
 
   /**
    * @see Adapter
-   * @see PropertyDoNotAskOption
    */
   public interface DoNotAskOption {
 
@@ -2071,24 +2070,6 @@ public abstract class DialogWrapper {
 
     @NotNull
     String getDoNotShowMessage();
-  }
-
-  /**
-   * The implementation which saves the "don't show again" checkbox state to the {@link PropertiesComponent}.
-   */
-  public static class PropertyDoNotAskOption extends DoNotAskOption.Adapter {
-    @NotNull private final String myProperty;
-
-    public PropertyDoNotAskOption(@NotNull String property) {
-      myProperty = property;
-    }
-
-    @Override
-    public void rememberChoice(boolean isSelected, int exitCode) {
-      if (exitCode != CANCEL_EXIT_CODE) {
-        PropertiesComponent.getInstance().setValue(myProperty, isSelected);
-      }
-    }
   }
 
   @NotNull
