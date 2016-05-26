@@ -1,5 +1,6 @@
 package com.intellij.stats.completion.storage
 
+import com.intellij.stats.completion.AsciiMessageCharStorage
 import com.intellij.stats.completion.UniqueFilesProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -47,7 +48,36 @@ class FilesProviderTest {
         
         assertThat(createdFiles).isEqualTo(3)
     }
+}
+
+
+class AsciiMessageStorageTest {
     
+    lateinit var storage: AsciiMessageCharStorage
+
+    @Before
+    fun setUp() {
+        storage = AsciiMessageCharStorage()
+    }
+
+    @Test
+    fun test_size_with_new_lines() {
+        storage.appendLine("text")
+        assertThat(storage.sizeWithNewLine("")).isEqualTo(6)
+    }
+    
+    @Test
+    fun test_size_is_same_as_file_size() {
+        storage.appendLine("text")
+        storage.appendLine("text")
+        assertThat(storage.size).isEqualTo(10)
+
+        val tmpFile = File("tmp_test")
+        tmpFile.delete()
+
+        storage.dump(tmpFile)
+        assertThat(tmpFile.length()).isEqualTo(10)
+    }
     
     
 }
