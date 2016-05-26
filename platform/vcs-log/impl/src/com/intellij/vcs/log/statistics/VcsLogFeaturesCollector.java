@@ -59,8 +59,10 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
         }
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
-            .ensureProperKey(factory.getId()), ui.isHighlighterEnabled(factory.getId())));
+          if (factory.showMenuItem()) {
+            usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
+              .ensureProperKey(factory.getId()), ui.isHighlighterEnabled(factory.getId())));
+          }
         }
 
         return usages;
