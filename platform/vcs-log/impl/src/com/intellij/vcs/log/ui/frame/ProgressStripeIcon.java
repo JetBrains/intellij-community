@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -114,9 +115,13 @@ public abstract class ProgressStripeIcon implements Icon {
     }
   }
 
+  // this icon is not used under darcula
+  @SuppressWarnings("UseJBColor")
   private static class GradientIcon extends ProgressStripeIcon {
-    private static final JBColor DARK_BLUE = new JBColor(0x4d9ff8, 0x525659);
-    private static final JBColor LIGHT_BLUE = new JBColor(0x90c2f8, 0x5e6266);
+    private static final Color DARK_BLUE = new Color(0x4d9ff8);
+    private static final Color DARK_GRAY = Gray._165;
+    private static final Color LIGHT_BLUE = new Color(0x90c2f8);
+    private static final Color LIGHT_GRAY = new Color(0xdbdbdb);
     private static final int GRADIENT = 128;
 
     private GradientIcon(@NotNull JComponent component, int shift) {
@@ -128,9 +133,19 @@ public abstract class ProgressStripeIcon implements Icon {
     }
 
     public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
-      g2.setPaint(new GradientPaint(x + shift, y, DARK_BLUE, x + shift + JBUI.scale(GRADIENT), y, LIGHT_BLUE));
+      Color dark;
+      Color light;
+      if (IntelliJLaf.isGraphite()) {
+        dark = DARK_GRAY;
+        light = LIGHT_GRAY;
+      }
+      else {
+        dark = DARK_BLUE;
+        light = LIGHT_BLUE;
+      }
+      g2.setPaint(new GradientPaint(x + shift, y, dark, x + shift + JBUI.scale(GRADIENT), y, light));
       g2.fill(new Rectangle(x + shift, y, JBUI.scale(GRADIENT), getIconHeight()));
-      g2.setPaint(new GradientPaint(x + shift + JBUI.scale(GRADIENT), y, LIGHT_BLUE, x + shift + 2 * JBUI.scale(GRADIENT), y, DARK_BLUE));
+      g2.setPaint(new GradientPaint(x + shift + JBUI.scale(GRADIENT), y, light, x + shift + 2 * JBUI.scale(GRADIENT), y, dark));
       g2.fill(new Rectangle(x + shift + JBUI.scale(GRADIENT), y, JBUI.scale(GRADIENT), getIconHeight()));
     }
   }
