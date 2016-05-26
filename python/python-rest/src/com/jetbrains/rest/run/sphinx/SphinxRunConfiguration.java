@@ -23,6 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +40,19 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
 
   @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
-    RestConfigurationEditor editor = new RestConfigurationEditor(getProject(), this, new SphinxTasksModel());
+    final SphinxTasksModel model = new SphinxTasksModel();
+    if (!model.contains("pdf")) {
+      try {
+        final PyPackage rst2pdf = PyPackageManager.getInstance(getSdk()).findPackage("rst2pdf");
+        if (rst2pdf != null) {
+          model.add(13, "pdf");
+        }
+      }
+      catch (ExecutionException ignored) {
+      }
+    }
+
+    RestConfigurationEditor editor = new RestConfigurationEditor(getProject(), this, model);
     editor.setConfigurationName("Sphinx task");
     editor.setOpenInBrowserVisible(false);
     editor.setInputDescriptor(FileChooserDescriptorFactory.createSingleFolderDescriptor());
