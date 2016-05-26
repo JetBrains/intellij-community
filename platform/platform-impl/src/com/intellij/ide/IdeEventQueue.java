@@ -55,8 +55,6 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
@@ -83,7 +81,7 @@ public class IdeEventQueue extends EventQueue {
   private final Alarm myIdleRequestsAlarm = new Alarm();
   private final Alarm myIdleTimeCounterAlarm = new Alarm();
   private long myIdleTime;
-  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
+  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<>();
   // IdleListener -> MyFireIdleRequest
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
@@ -116,8 +114,8 @@ public class IdeEventQueue extends EventQueue {
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
   private WindowManagerEx myWindowManager;
-  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
-  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
+  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<>();
+  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<>();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
@@ -139,21 +137,17 @@ public class IdeEventQueue extends EventQueue {
     addIdleTimeCounterRequest();
 
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
-
-      @Override
-      public void propertyChange(@NotNull final PropertyChangeEvent e) {
-        final Application application = ApplicationManager.getApplication();
-        if (application == null) {
-          // We can get focus event before application is initialized
-          return;
-        }
-        application.assertIsDispatchThread();
-        final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
-        final Component focusOwner = keyboardFocusManager.getFocusOwner();
-        if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
-          exitSuspendMode();
-        }
+    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
+      final Application application = ApplicationManager.getApplication();
+      if (application == null) {
+        // We can get focus event before application is initialized
+        return;
+      }
+      application.assertIsDispatchThread();
+      final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
+      final Component focusOwner = keyboardFocusManager.getFocusOwner();
+      if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
+        exitSuspendMode();
       }
     });
 
@@ -284,12 +278,7 @@ public class IdeEventQueue extends EventQueue {
   private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
-      Disposer.register(parent, new Disposable() {
-        @Override
-        public void dispose() {
-          set.remove(dispatcher);
-        }
-      });
+      Disposer.register(parent, () -> set.remove(dispatcher));
     }
   }
 
@@ -681,9 +670,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
-    Window showingWindow = wnd;
-
     if (wnd != null && !wnd.isShowing()) {
+      Window showingWindow = wnd;
       while (showingWindow != null) {
         if (showingWindow.isShowing()) break;
         showingWindow = (Window)showingWindow.getParent();
@@ -939,11 +927,10 @@ public class IdeEventQueue extends EventQueue {
     while (!exitCondition.value(event));
   }
 
-
+  @FunctionalInterface
   public interface EventDispatcher {
     boolean dispatch(AWTEvent e);
   }
-
 
   private final class MyFireIdleRequest implements Runnable {
     private final Runnable myRunnable;
@@ -1126,12 +1113,7 @@ public class IdeEventQueue extends EventQueue {
 
   public void disableInputMethods(Disposable parentDisposable) {
     myInputMethodLock++;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myInputMethodLock--;
-      }
-    });
+    Disposer.register(parentDisposable, () -> myInputMethodLock--);
   }
 
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
