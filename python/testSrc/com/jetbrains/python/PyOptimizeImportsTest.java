@@ -145,6 +145,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-18792, PY-19292
+  public void testOrderNamesInsightFromImportDoesntAffectAlreadyOrderedImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
   // PY-18792, PY-12926
   public void testJoinFromImportsForSameSource() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
@@ -155,6 +161,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
   public void testJoinFromImportsForSameSourceAndSortNames() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
+  // PY-18792, PY-12926
+  public void testJoinFromImportsDoesntAffectSingleImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
     doTest();
   }
 
