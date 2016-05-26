@@ -33,6 +33,7 @@ import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -357,12 +358,11 @@ public class RefManagerImpl extends RefManager {
     synchronized (myRefTable) {
       answer = new ArrayList<RefElement>(myRefTable.values());
     }
-    ContainerUtil.quickSort(answer, (o1, o2) -> {
+    ContainerUtil.quickSort(answer, (o1, o2) -> ReadAction.compute(() -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-
       return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
-    });
+    }));
 
     return answer;
   }
