@@ -1148,6 +1148,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else if (initializer instanceof PsiLiteralExpression) {
       return true;
     }
+    else if (initializer instanceof PsiPrefixExpression && ((PsiPrefixExpression)initializer).getOperand() instanceof PsiLiteralExpression) {
+      return true;
+    }
     else if (initializer instanceof PsiArrayAccessExpression) {
       final PsiExpression arrayExpression = ((PsiArrayAccessExpression)initializer).getArrayExpression();
       final PsiExpression indexExpression = ((PsiArrayAccessExpression)initializer).getIndexExpression();
