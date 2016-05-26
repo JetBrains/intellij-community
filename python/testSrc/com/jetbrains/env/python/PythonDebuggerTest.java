@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author traff
@@ -934,6 +936,46 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "foo").hasValue("33");
+        resume();
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testSuspendAllThreadsPolicy() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 12);
+        setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.ALL);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("m").hasValue("42");
+        assertNull(getRunningThread());
+        resume();
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testSuspendOneThreadPolicy() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 12);
+        setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.THREAD);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("m").hasValue("42");
+        assertEquals("Thread1", getRunningThread());
         resume();
       }
     });
