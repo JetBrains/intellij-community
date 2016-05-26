@@ -17,7 +17,8 @@ abstract class UrlProvider {
 }
 
 abstract class FilePathProvider {
-    abstract fun getUniqueFile(): File  
+    abstract fun getUniqueFile(): File
+    abstract fun getDataFiles(): List<File>
     abstract fun getStatsDataDirectory(): File
     
     companion object {
@@ -50,11 +51,22 @@ open class UniqueFilesProvider(private val baseName: String, private val rootDir
                 .listFiles(FileFilter { it.isFile })
                 .filter { it.name.startsWith(baseName) }
                 .map { it.name.substringAfter('_') }
-                .map { it.toIntOrZero() }
-                .max() ?: 0
-
-        val file = File(dir, "${baseName}_${currentMaxIndex + 1}")
+                .filter { it.isIntConvertable() }
+                .map { it.toInt() }
+                .max()
+        
+        val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
+        
+        val file = File(dir, "${baseName}_$newIndex")
         return file
+    }
+
+    override fun getDataFiles(): List<File> {
+        val dir = getStatsDataDirectory()
+        return dir.listFiles(FileFilter { it.isFile })
+                .filter { it.name.startsWith(baseName) }
+                .filter { it.name.substringAfter('_').isIntConvertable() }
+                .sortedBy { it.getChunkNumber() }
     }
 
     override fun getStatsDataDirectory(): File {
@@ -64,12 +76,15 @@ open class UniqueFilesProvider(private val baseName: String, private val rootDir
         }
         return dir
     }
+    
+    private fun File.getChunkNumber() = this.name.substringAfter('_').toInt()
 
-    private fun String.toIntOrZero(): Int {
+    private fun String.isIntConvertable(): Boolean {
         try {
-            return this.toInt()
+            this.toInt()
+            return true
         } catch (e: NumberFormatException) {
-            return 0
+            return false
         }
     }
 
