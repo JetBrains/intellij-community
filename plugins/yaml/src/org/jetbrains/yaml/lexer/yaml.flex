@@ -111,7 +111,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 // NB !(!a|b) is "a - b"
 // From the spec
-ANY_CHAR = [^\n] | "\n"
+ANY_CHAR = [^]
 
 NS_CHAR = [^\n\t\r\ ]
 NS_INDICATOR = [-?:,\[\]\{\}#&*!|>'\"%@`]

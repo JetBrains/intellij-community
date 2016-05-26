@@ -55,7 +55,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 ////////// NewLines and spaces /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mONE_NL = \r | \n | \r\n                                    // NewLines
+mONE_NL = \R                                                        // NewLines
 WHITE_SPACE = " " | \t | \f | \\ {mONE_NL}                          // Whitespaces
 mNLS = {mONE_NL}({mONE_NL}|{WHITE_SPACE})*
 
