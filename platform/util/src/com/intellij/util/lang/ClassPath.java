@@ -220,7 +220,7 @@ public class ClassPath {
               }
             }
             catch (Exception e) {
-              Logger.getInstance(ClassPath.class).info("url: " + url + " / " + referencedJar, e);
+              Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
         }
@@ -430,11 +430,14 @@ public class ClassPath {
     try {
       JarInputStream inputStream = new JarInputStream(new FileInputStream(file));
       try {
-        final Manifest manifest = inputStream.getManifest();
+        Manifest manifest = inputStream.getManifest();
         if (manifest != null) {
           final String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
           if (classPath != null) {
-            return classPath.split(" ");
+            String[] urls = classPath.split(" ");
+            if (urls.length > 0 && urls[0].startsWith("file:")) {
+              return urls;
+            }
           }
         }
       }
