@@ -124,7 +124,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    if (isLeaf()) {
+    if (isLeaf() && !myPresentation.isElementIgnored(getElement())) {
       counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
       return;
     }
