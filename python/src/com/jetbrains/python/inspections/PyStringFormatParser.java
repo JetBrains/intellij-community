@@ -180,11 +180,9 @@ public class PyStringFormatParser {
     }
   }
   public static class NewStyleSubstitutionChunk extends SubstitutionChunk {
-    @Nullable private String myMappingKey;
     @Nullable private String myConversion;
-    @Nullable private String myWidth;
-    @Nullable private String myPrecision;
-    @Nullable private Integer myPosition;
+    @Nullable private String myFieldNameAttribute;
+    @Nullable private String myMappingKeyElementIndex;
     private char myConversionType;
     private boolean signOption;
     private boolean zeroPadding;
@@ -196,39 +194,12 @@ public class PyStringFormatParser {
     }
 
     @Nullable
-    public String getMappingKey() {
-      return myMappingKey;
-    }
-
-    public void setMappingKey(@Nullable String mappingKey) {
-      myMappingKey = mappingKey;
-    }
-
-    @Nullable
     public String getConversion() {
       return myConversion;
     }
 
     public void setConversion(@Nullable String conversion) {
       myConversion = conversion;
-    }
-
-    @Nullable
-    public String getWidth() {
-      return myWidth;
-    }
-
-    public void setWidth(@Nullable String width) {
-      myWidth = width;
-    }
-
-    @Nullable
-    public String getPrecision() {
-      return myPrecision;
-    }
-
-    public void setPrecision(@Nullable String precision) {
-      myPrecision = precision;
     }
 
     public boolean hasSignOption() {
@@ -269,6 +240,24 @@ public class PyStringFormatParser {
 
     public void setThousandsSeparator(boolean thousandsSeparator) {
       this.thousandsSeparator = thousandsSeparator;
+    }
+
+    @Nullable
+    public String getFieldNameAttribute() {
+      return myFieldNameAttribute;
+    }
+
+    public void setFieldNameAttribute(@NotNull String fieldNameAttribute) {
+      myFieldNameAttribute = fieldNameAttribute;
+    }
+
+    @Nullable
+    public String getMappingKeyElementIndex() {
+      return myMappingKeyElementIndex;
+    }
+
+    public void setMappingKeyElementIndex(@Nullable String mappingKeyElementIndex) {
+      myMappingKeyElementIndex = mappingKeyElementIndex;
     }
   }
 
@@ -371,6 +360,48 @@ public class PyStringFormatParser {
       autoPositionedFieldsCount++;
     }
 
+    // parse field name attribute name
+    if (isAt('.') ) {
+      myPos++;
+
+      final int attributeEnd = StringUtil.indexOfAny(myLiteral, "!:.[}", myPos, end);
+      if (attributeEnd > 0 && myPos < attributeEnd) {
+        final String attributeName = myLiteral.substring(myPos, attributeEnd);
+        chunk.setFieldNameAttribute(attributeName);
+        myPos = attributeEnd;
+      }
+    }
+
+    // parse field name element indexes
+    if (isAt('[')) {
+      myPos++;
+
+      final int indexElementEnd = StringUtil.indexOfAny(myLiteral, "!:.]", myPos, end);
+      if (indexElementEnd > 0 && myPos < indexElementEnd) {
+        final String index = myLiteral.substring(myPos, indexElementEnd);
+        chunk.setMappingKeyElementIndex(index);
+        myPos = indexElementEnd + 1;
+      }
+    }
+
+    // skip other attribute names and element indexes
+    while (isAt('.') || isAt('[')) {
+      if (isAt('.')) {
+        myPos++;
+        final int attributeEnd = StringUtil.indexOfAny(myLiteral, "!:.[", myPos, end);
+        if (attributeEnd > 0 && myPos < attributeEnd) {
+          myPos = attributeEnd;
+        }
+      }
+      else {
+        myPos++;
+        final int attributeEnd = StringUtil.indexOf(myLiteral, ']', myPos, end);
+        if (attributeEnd > 0 && myPos < attributeEnd) {
+          myPos = attributeEnd + 1;
+        }
+      };
+    }
+
     // conversion
     myPos = Math.max(myPos, StringUtil.indexOf(myLiteral, '!', myPos, end) + 1);
     final int conversionEnd = StringUtil.indexOfAny(myLiteral, ":}", myPos, end);
@@ -436,12 +467,12 @@ public class PyStringFormatParser {
       int mappingEnd = myLiteral.indexOf(')', myPos+1);
       if (mappingEnd < 0) {
         chunk.setEndIndex(myLiteral.length());
-        chunk.setMappingKey(myLiteral.substring(myPos+1));
+        chunk.setMappingKey(myLiteral.substring(myPos + 1));
         chunk.setUnclosedMapping(true);
         myPos = myLiteral.length();
         return;
       }
-      chunk.setMappingKey(myLiteral.substring(myPos+1, mappingEnd));
+      chunk.setMappingKey(myLiteral.substring(myPos + 1, mappingEnd));
       myPos = mappingEnd+1;
     }
     else  {

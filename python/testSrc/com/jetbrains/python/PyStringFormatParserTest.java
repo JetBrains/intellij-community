@@ -499,4 +499,57 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals("2", ((NewStyleSubstitutionChunk)chunks.get(0)).getPrecision());
     assertEquals('d', ((NewStyleSubstitutionChunk)chunks.get(0)).getConversionType());
   }
+  
+  public void testNewStyleFiledNameWithAttribute() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{foo.a}");
+    assertEquals(1, chunks.size());
+    final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
+    assertEquals(TextRange.create(0, 7), chunk.getTextRange());
+    assertEquals("foo", chunk.getMappingKey());
+    assertNotNull(chunk.getFieldNameAttribute());
+    assertEquals("a", chunk.getFieldNameAttribute());
+  }
+  
+  public void testNewStyleFiledNameWithElementIndex() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{foo[a]}");
+    assertEquals(1, chunks.size());
+    final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
+    assertEquals(TextRange.create(0, 8), chunk.getTextRange());
+    assertEquals("foo", chunk.getMappingKey());
+    assertNotNull(chunk.getMappingKeyElementIndex());
+    assertEquals("a", chunk.getMappingKeyElementIndex());
+  }
+
+  public void testNewStyleFiledNameWithAttributeWithFormatSpec() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{foo.a:d}");
+    assertEquals(1, chunks.size());
+    final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
+    assertEquals(TextRange.create(0, 9), chunk.getTextRange());
+    assertEquals("foo", chunk.getMappingKey());
+    assertNotNull(chunk.getFieldNameAttribute());
+    assertEquals("a", chunk.getFieldNameAttribute());
+    assertEquals('d', chunk.getConversionType());
+  }
+
+  public void testNewStyleFiledNameWithElementIndexWithFormatSpec() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{foo[a]:d}");
+    assertEquals(1, chunks.size());
+    final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
+    assertEquals(TextRange.create(0, 10), chunk.getTextRange());
+    assertEquals("foo", chunk.getMappingKey());
+    assertNotNull(chunk.getMappingKeyElementIndex());
+    assertEquals("a", chunk.getMappingKeyElementIndex());
+    assertEquals('d', chunk.getConversionType());
+  } 
+  
+  public void testNewStyleFieldNameWithNestedElementIndex() {
+    final List<FormatStringChunk> chunks = parseNewStyleFormat("{foo[a][1].a[1]:d}");
+    assertEquals(1, chunks.size());
+    final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
+    assertEquals(TextRange.create(0, 18), chunk.getTextRange());
+    assertEquals("foo", chunk.getMappingKey());
+    assertNotNull(chunk.getMappingKeyElementIndex());
+    assertEquals("a", chunk.getMappingKeyElementIndex());
+    assertEquals('d', chunk.getConversionType());
+  }
 }
