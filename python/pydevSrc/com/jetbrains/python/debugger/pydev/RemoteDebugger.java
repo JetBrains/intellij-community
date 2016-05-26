@@ -572,6 +572,11 @@ public class RemoteDebugger implements ProcessDebugger {
           final PyThreadInfo thread = parseThreadEvent(frame);
           if (!thread.isPydevThread()) {  // ignore pydevd threads
             myThreads.put(thread.getId(), thread);
+            if (myDebugProcess.getSession().isSuspended() && myDebugProcess.isSuspendedOnAllThreadsPolicy()) {
+              // Sometimes the notification about new threads may come slow from the Python side. We should check if
+              // the current session is suspended in the "Suspend all threads" mode and suspend new thread, which hasn't been suspended
+              suspendThread(thread.getId());
+            }
           }
           break;
         }
