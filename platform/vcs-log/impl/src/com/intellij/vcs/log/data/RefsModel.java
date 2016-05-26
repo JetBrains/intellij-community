@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.data;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;

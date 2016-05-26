@@ -22,8 +22,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackChangeListener;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import org.jetbrains.annotations.NotNull;

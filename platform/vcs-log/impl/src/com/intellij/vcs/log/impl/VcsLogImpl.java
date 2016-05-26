@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;

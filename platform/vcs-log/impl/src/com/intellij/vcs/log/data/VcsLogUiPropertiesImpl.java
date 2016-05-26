@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
