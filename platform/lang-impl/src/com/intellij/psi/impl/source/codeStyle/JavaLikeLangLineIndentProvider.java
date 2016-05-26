@@ -152,12 +152,21 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
                                         @NotNull CharSequence docChars,
                                         @NotNull SyntaxElement afterElement,
                                         int offset) {
-    if (JavaLikeElement.BlockOpeningBrace.equals(afterElement)) {
+    if (JavaLikeElement.BlockOpeningBrace.equals(afterElement) &&  !isOnSeparateLine(editor, afterElement, offset)) {
       return findStatementStart(editor, afterElement, offset);
     }
-    else {
-      return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
+    return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
+  }
+  
+  
+  private boolean isOnSeparateLine(@NotNull Editor editor, @NotNull SyntaxElement element, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    position.beforeOptional(JavaLikeElement.Whitespace);
+    if (position.isAt(element)) {
+      position.before();
+      if (position.isAtEnd() || position.isAt(JavaLikeElement.Whitespace) && position.isAtMultiline()) return true;
     }
+    return false;
   }
   
   

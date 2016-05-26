@@ -49,6 +49,6 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
 
   @Override
   public boolean isSuitableFor(@Nullable Language language) {
-    return false;
+    return language != null && language.isKindOf(JavaLanguage.INSTANCE);
   }
 }
