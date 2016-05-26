@@ -60,26 +60,28 @@ class Test {
 
 
         val urlProvider = ServiceManager.getService(UrlProvider::class.java)
-        val logFileManager = ServiceManager.getService(LogFileManager::class.java)
-        val requestService: RequestService = object : RequestService() {
-            override fun post(url: String, params: Map<String, String>): ResponseData {
-                Thread.sleep(5000)
-                return ResponseData(200)
-            }
-
-            override fun post(url: String, file: File): ResponseData? {
-                throw UnsupportedOperationException()
-            }
-
-            override fun get(url: String): ResponseData? {
-                throw UnsupportedOperationException()
-            }
-        }
+        val requestService = mock(RequestService::class.java)
+        
+        
+//        val requestService: RequestService = object : RequestService() {
+//            override fun post(url: String, params: Map<String, String>): ResponseData {
+//                Thread.sleep(5000)
+//                return ResponseData(200)
+//            }
+//
+//            override fun post(url: String, file: File): ResponseData? {
+//                throw UnsupportedOperationException()
+//            }
+//
+//            override fun get(url: String): ResponseData? {
+//                throw UnsupportedOperationException()
+//            }
+//        }
         
         val file = File(path)
         file.writeText("Some existing data to send")
 
-        val sender = StatisticSender(urlProvider, logFileManager, requestService)
+        val sender = StatisticSender(urlProvider, requestService)
         
         ApplicationManager.getApplication().executeOnPooledThread { 
             sender.sendStatsData("unique-installation-id")

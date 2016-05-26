@@ -49,18 +49,23 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     }
 }
 
-class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
+class StatisticSender(val urlProvider: UrlProvider, val requestService: RequestService) {
     
     fun sendStatsData(uid: String) {
-//        assertNotEDT()
-//        val fileToSend = File(FilePathProvider.getInstance().swapFile)
-//        fillSwapFileIfNeeded(fileToSend)
-//        if (fileToSend.length() > 0) {
-//            val url = urlProvider.statsServerPostUrl
-//            sendContent(url, uid, fileToSend, onSendAction = Runnable {
-//                fileToSend.delete()
-//            })
-//        }
+        assertNotEDT()
+        val filesToSend = FilePathProvider.getInstance().getDataFiles()
+        filesToSend.forEach {
+            if (it.length() > 0) {
+                val url = urlProvider.statsServerPostUrl
+                val isSentSuccessfully = sendContent(url, uid, it)
+                if (isSentSuccessfully) {
+                    it.delete()
+                }
+                else {
+                    return
+                }
+            }
+        }
     }
 
     private fun assertNotEDT() {
@@ -68,11 +73,12 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
         assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
     }
 
-    private fun sendContent(url: String, uid: String, file: File, onSendAction: Runnable) {
+    private fun sendContent(url: String, uid: String, file: File): Boolean {
         val data = requestService.post("$url/$uid", file)
         if (data != null && data.code >= 200 && data.code < 300) {
-            onSendAction.run()
+            return true
         }
+        return false
     }
     
 }

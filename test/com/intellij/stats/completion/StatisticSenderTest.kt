@@ -13,8 +13,8 @@ import java.io.File
 
 
 class StatisticsSenderTest: LightPlatformTestCase() {
-    lateinit var file: File
-    lateinit var tmpFile: File
+    lateinit var secondFile: File
+    lateinit var firstFile: File
     lateinit var urlProvider: UrlProvider
     lateinit var pathProvider: FilePathProvider
     lateinit var requestService: RequestService
@@ -39,33 +39,18 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     
     override fun setUp() {
         super.setUp()
-        
-        tmpFile = File("tmp.txt")
-        file = File("text.txt")
+
+        firstFile = File("chunk_0")
+        secondFile = File("chunk_1")
 
         urlProvider = mock(UrlProvider::class.java)
         `when`(urlProvider.statsServerPostUrl).thenReturn("http://localhost:8080/upload")
 
         pathProvider = mock(FilePathProvider::class.java)
-//        `when`(pathProvider.statsFilePath).thenReturn(file.absolutePath)
-//        `when`(pathProvider.swapFile).thenReturn(tmpFile.absolutePath)
+        `when`(pathProvider.getDataFiles()).thenAnswer { listOf(firstFile, secondFile) }
 
-        requestService = object : RequestService() {
-            override fun post(url: String, params: Map<String, String>): ResponseData? {
-                lastSendData = params
-                lastSendDataUrl = url
-                return ResponseData(200)
-            }
-
-            override fun post(url: String, file: File): ResponseData? {
-                lastSendDataUrl = url
-                return ResponseData(200)
-            }
-
-            override fun get(url: String): ResponseData? {
-                throw UnsupportedOperationException()
-            }
-        }
+        requestService = mock(RequestService::class.java)
+        `when`(requestService.post("x", File("x"))).thenReturn(ResponseData(200))
         
         pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         oldFilePathProvider = pico.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
@@ -77,25 +62,21 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     override fun tearDown() {
         super.tearDown()
-        if (file.exists()) {
-            file.delete()
+        if (secondFile.exists()) {
+            secondFile.delete()
         }
-        if (tmpFile.exists()) {
-            tmpFile.delete()
+        if (firstFile.exists()) {
+            firstFile.delete()
         }
     }
 
 
     fun `test data is sent and removed`() {
-        file.writeText(text)
-        var logFileManager = LogFileManagerImpl(FilePathProvider.getInstance())
-        val sender = StatisticSender(urlProvider, logFileManager, requestService)
+        val sender = StatisticSender(urlProvider, requestService)
         sender.sendStatsData("uuid-secret-xxx")
-
-        UsefulTestCase.assertEquals("http://localhost:8080/upload/uuid-secret-xxx", lastSendDataUrl)
         
-        UsefulTestCase.assertTrue(!file.exists() || file.readText().isEmpty())
-        UsefulTestCase.assertTrue(!tmpFile.exists() || tmpFile.readText().isEmpty())
+        UsefulTestCase.assertTrue(!secondFile.exists())
+        UsefulTestCase.assertTrue(!firstFile.exists())
     }
     
     
