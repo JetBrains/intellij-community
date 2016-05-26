@@ -35,9 +35,9 @@ class FilesProviderTest {
     fun test_three_new_files_created() {
         val provider = UniqueFilesProvider("chunk", root)
         
-        provider.newUniqueFile()
-        provider.newUniqueFile()
-        provider.newUniqueFile()
+        provider.getUniqueFile().createNewFile()
+        provider.getUniqueFile().createNewFile()
+        provider.getUniqueFile().createNewFile()
 
         val directory = provider.getStatsDataDirectory()
         val createdFiles = directory

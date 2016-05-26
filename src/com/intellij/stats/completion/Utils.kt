@@ -17,8 +17,7 @@ abstract class UrlProvider {
 }
 
 abstract class FilePathProvider {
-
-    abstract fun newUniqueFile(): File
+    abstract fun getUniqueFile(): File  
     abstract fun getStatsDataDirectory(): File
     
     companion object {
@@ -43,8 +42,8 @@ class InternalUrlProvider: UrlProvider() {
 class PluginDirectoryFilePathProvider() : UniqueFilesProvider("chunk", getPluginDirPath())
 
 open class UniqueFilesProvider(private val baseName: String, private val rootDirectory: File) : FilePathProvider() {
-
-    override fun newUniqueFile(): File {
+    
+    override fun getUniqueFile(): File {
         val dir = getStatsDataDirectory()
 
         val currentMaxIndex = dir
@@ -55,7 +54,6 @@ open class UniqueFilesProvider(private val baseName: String, private val rootDir
                 .max() ?: 0
 
         val file = File(dir, "${baseName}_${currentMaxIndex + 1}")
-        file.createNewFile()
         return file
     }
 
