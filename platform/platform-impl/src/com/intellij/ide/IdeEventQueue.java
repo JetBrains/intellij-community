@@ -63,6 +63,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Vladimir Kondratyev
@@ -78,36 +79,23 @@ public class IdeEventQueue extends EventQueue {
   private final Object myLock = new Object();
 
   private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   private final Alarm myIdleRequestsAlarm = new Alarm();
-
   private final Alarm myIdleTimeCounterAlarm = new Alarm();
-
   private long myIdleTime;
-
   private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
   // IdleListener -> MyFireIdleRequest
-
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
-
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
-
   private final IdePopupManager myPopupManager = new IdePopupManager();
-
-
   private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
-
   private boolean mySuspendMode;
-
   /**
    * We exit from suspend mode when focus owner changes and no more WindowEvent.WINDOW_OPENED events
    * <p/>
    * in the queue. If WINDOW_OPENED event does exists in the queues then we restart the alarm.
    */
   private Component myFocusOwner;
-
   private final Runnable myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
 
   /**
@@ -123,24 +111,17 @@ public class IdeEventQueue extends EventQueue {
    * Swing event.
    */
   private int myEventCount;
-  private int myKeyboardEventsInTheQueue; // accessed in EDT only
-
+  private final AtomicInteger myKeyboardEventsInTheQueue = new AtomicInteger();
   private boolean myIsInInputEvent;
-
   private AWTEvent myCurrentEvent;
-
   private long myLastActiveTime;
-
   private WindowManagerEx myWindowManager;
-
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
   private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
-
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
-
   private int myInputMethodLock;
 
   private static class IdeEventQueueHolder {
@@ -407,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     }
     finally {
       if (isKeyboardEvent(e)) {
-        myKeyboardEventsInTheQueue--;
+        myKeyboardEventsInTheQueue.decrementAndGet();
       }
     }
   }
@@ -594,7 +575,7 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = myKeyboardEventsInTheQueue != 0;
+    myKeyboardBusy = myKeyboardEventsInTheQueue.get() != 0;
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -1158,7 +1139,7 @@ public class IdeEventQueue extends EventQueue {
   public void postEvent(@NotNull AWTEvent event) {
     myFrequentEventDetector.eventHappened(event);
     if (isKeyboardEvent(event)) {
-      myKeyboardEventsInTheQueue++;
+      myKeyboardEventsInTheQueue.incrementAndGet();
     }
     super.postEvent(event);
   }
