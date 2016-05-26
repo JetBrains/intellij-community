@@ -17,6 +17,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -40,7 +41,8 @@ public class BackgroundTaskQueue {
   @NotNull private final String myTitle;
   @NotNull private final QueueProcessor<TaskData> myProcessor;
 
-  private boolean myForceAsyncInTests = false;
+  @NotNull private final Object TEST_TASK_LOCK = new Object();
+  private volatile boolean myForceAsyncInTests = false;
 
   public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
     myTitle = title;
@@ -49,8 +51,20 @@ public class BackgroundTaskQueue {
 
     myProcessor = new QueueProcessor<TaskData>((data, continuation) -> {
       Task.Backgroundable task = data.task;
+      
       ProgressIndicator indicator = data.indicator;
+      if (indicator == null) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          indicator = new EmptyProgressIndicator();
+        }
+        else {
+          // BackgroundableProcessIndicator should be created from EDT
+          indicator = new BackgroundableProcessIndicator(task);
+        }
+      }
+      
       ModalityState modalityState = data.modalityState;
+      if (modalityState == null) modalityState = ModalityState.NON_MODAL;
 
       if (StringUtil.isEmptyOrSpaces(task.getTitle())) {
         task.setTitle(myTitle);
@@ -91,24 +105,21 @@ public class BackgroundTaskQueue {
   }
 
   public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
-    if (modalityState == null) modalityState = ModalityState.NON_MODAL;
-    if (indicator == null) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        indicator = new EmptyProgressIndicator();
-      }
-      else {
-        indicator = new BackgroundableProcessIndicator(task);
-      }
+    TaskData taskData = new TaskData(task, modalityState, indicator);
+    if (!myForceAsyncInTests && ApplicationManager.getApplication().isUnitTestMode()) {
+      runTaskInCurrentThread(taskData);
     }
-    myProcessor.add(new TaskData(task, modalityState, indicator), modalityState);
+    else {
+      myProcessor.add(taskData, modalityState);
+    }
   }
 
   private static class TaskData {
     @NotNull public final Task.Backgroundable task;
-    @NotNull public final ModalityState modalityState;
-    @NotNull public final ProgressIndicator indicator;
+    @Nullable public final ModalityState modalityState;
+    @Nullable public final ProgressIndicator indicator;
 
-    public TaskData(@NotNull Task.Backgroundable task, @NotNull ModalityState modalityState, @NotNull ProgressIndicator indicator) {
+    public TaskData(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
       this.task = task;
       this.modalityState = modalityState;
       this.indicator = indicator;
@@ -117,7 +128,6 @@ public class BackgroundTaskQueue {
 
   @TestOnly
   public void setForceAsyncInTests(boolean value, @Nullable Disposable disposable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myForceAsyncInTests = value;
     if (disposable != null) {
       Disposer.register(disposable, new Disposable() {
@@ -126,6 +136,57 @@ public class BackgroundTaskQueue {
           myForceAsyncInTests = false;
         }
       });
+    }
+  }
+
+  private void runTaskInCurrentThread(@NotNull TaskData data) {
+    Task.Backgroundable task = data.task;
+
+    ProgressIndicator indicator = data.indicator;
+    if (indicator == null) indicator = new EmptyProgressIndicator();
+
+    ModalityState modalityState = data.modalityState;
+    if (modalityState == null) modalityState = ModalityState.NON_MODAL;
+
+    boolean processCanceled = false;
+    Exception exception = null;
+    try {
+      synchronized (TEST_TASK_LOCK) {
+        task.run(indicator);
+      }
+    }
+    catch (ProcessCanceledException e) {
+      processCanceled = true;
+    }
+    catch (Exception e) {
+      exception = e;
+    }
+
+    final boolean finalCanceled = processCanceled || indicator.isCanceled();
+    final Exception finalException = exception;
+    Runnable finishTask = () -> {
+      try {
+        if (finalException != null) {
+          task.onError(finalException);
+        }
+        else if (finalCanceled) {
+          task.onCancel();
+        }
+        else {
+          task.onSuccess();
+        }
+      }
+      finally {
+        task.onFinished();
+      }
+    };
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      finishTask.run();
+    }
+    else {
+      application.invokeLater(finishTask, modalityState);
     }
   }
 }

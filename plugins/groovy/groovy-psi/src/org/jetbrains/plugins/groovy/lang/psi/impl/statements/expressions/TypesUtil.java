@@ -32,6 +32,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -634,6 +635,7 @@ public class TypesUtil {
     return type;
   }
 
+  @Contract("null, _ -> false")
   public static boolean isClassType(@Nullable PsiType type, @NotNull String qName) {
     return qName.equals(getQualifiedName(type));
   }

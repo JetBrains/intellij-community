@@ -47,13 +47,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.sun.tools.doclint.DocLint
 import java.io.File
 
-class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
+class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
+    ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
+
   data class Info(val file: PsiFile)
   data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
   data class Result(val annotations: List<Anno>)
 
   override fun collectInformation(file: PsiFile): Info? =
-      if (isJava8SourceFile(file) && file.text.contains("/**") && isToolEnabled(file)) Info(file) else null
+      if (isJava8SourceFile(file) && "/**" in file.text && isToolEnabled(file)) Info(file) else null
 
   override fun doAnnotate(collectedInfo: Info): Result? {
     val file = collectedInfo.file.virtualFile!!
@@ -116,7 +118,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
       file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun isToolEnabled(file: PsiFile) =
-      InspectionProjectProfileManager.getInstance(file.project).inspectionProfile.isToolEnabled(key.value, file)
+      manual || InspectionProjectProfileManager.getInstance(file.project).inspectionProfile.isToolEnabled(key.value, file)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")

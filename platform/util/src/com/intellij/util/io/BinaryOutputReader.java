@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,32 @@ public abstract class BinaryOutputReader extends BaseDataReader {
   }
 
   @Override
-  protected boolean readAvailable() throws IOException {
+  protected boolean readAvailableNonBlocking() throws IOException {
     byte[] buffer = myBuffer;
-
     boolean read = false;
-    while (myStream.available() > 0) {
-      int n = myStream.read(buffer);
-      if (n <= 0) break;
-      read = true;
 
-      onBinaryAvailable(buffer, n);
+    int n;
+    while (myStream.available() > 0 && (n = myStream.read(buffer)) >= 0) {
+      if (n > 0) {
+        read = true;
+        onBinaryAvailable(buffer, n);
+      }
+    }
+
+    return read;
+  }
+
+  @Override
+  protected final boolean readAvailableBlocking() throws IOException {
+    byte[] buffer = myBuffer;
+    boolean read = false;
+
+    int n;
+    while ((n = myStream.read(buffer)) >= 0) {
+      if (n > 0) {
+        read = true;
+        onBinaryAvailable(buffer, n);
+      }
     }
 
     return read;

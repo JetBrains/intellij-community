@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 class RemoveLeadingZeroFix extends InspectionGadgetsFix {
@@ -31,8 +29,7 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message(
-      "remove.leading.zero.to.make.decimal.quickfix");
+    return InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix");
   }
 
     @NotNull
@@ -42,11 +39,10 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
     }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
-    final PsiElement element = descriptor.getPsiElement();
-    final String text = element.getText();
-    final int max = text.length() - 1;
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
+    final PsiLiteralExpression literal = (PsiLiteralExpression)descriptor.getPsiElement();
+    final String text = literal.getText();
+    final int max = text.length() - (PsiType.LONG.equals(literal.getType()) ? 2 : 1);
     if (max < 1) {
       return;
     }
@@ -54,12 +50,7 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
     while (index < max && (text.charAt(index) == '0' || text.charAt(index) == '_')) {
       index++;
     }
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
     final String textWithoutLeadingZeros = text.substring(index);
-    final PsiExpression decimalNumber =
-      factory.createExpressionFromText(textWithoutLeadingZeros,
-                                       element);
-    element.replace(decimalNumber);
+    PsiReplacementUtil.replaceExpression(literal, textWithoutLeadingZeros);
   }
 }

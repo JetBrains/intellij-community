@@ -118,9 +118,9 @@ public abstract class DslPointcut<T,V> {
 
       @Override
       List<GdslType> matches(GdslType src, ProcessingContext context) {
-        final PsiFile placeFile = context.get(GdslUtil.INITIAL_CONTEXT).getPlaceFile();
+        final PsiFile placeFile = context.get(GdslUtil.INITIAL_CONTEXT).justGetPlaceFile();
         if (ClassContextFilter.isSubtype(src.psiType, placeFile, (String)arg)) {
-          return Arrays.asList(src);
+          return Collections.singletonList(src);
         }
         return null;
       }

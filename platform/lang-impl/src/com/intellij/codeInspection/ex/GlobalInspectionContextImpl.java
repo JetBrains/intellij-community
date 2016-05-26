@@ -638,19 +638,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
 
-    ReadAction.run(() -> {
-      for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-        try {
-          extension.performPostRunActivities(needRepeatSearchRequest, this);
-        }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+    for (GlobalInspectionContextExtension extension : myExtensions.values()) {
+      try {
+        extension.performPostRunActivities(needRepeatSearchRequest, this);
       }
-    });
+      catch (ProcessCanceledException | IndexNotReadyException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;

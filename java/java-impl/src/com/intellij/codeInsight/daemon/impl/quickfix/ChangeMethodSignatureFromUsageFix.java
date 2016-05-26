@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -318,6 +319,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
           buf.append(presentableText);
         }
         else {
+          if (PsiPolyExpressionUtil.isPolyExpression(expression)) return null;
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
           if (exprType == null) return null;
           if (exprType instanceof PsiDisjunctionType) {
@@ -391,6 +393,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       else if (expression != null) {
         if (varargParam != null && pi >= parameters.length) return false;
+        if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
         PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
         if (exprType == null) return false;
         if (exprType instanceof PsiDisjunctionType) {

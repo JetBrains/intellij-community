@@ -81,6 +81,8 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JCheckBox myOpenFilesInEditor = createOpenInEditorCB();
+  private boolean myUnknownFileType = false;
+
   private JTextField myNewNameField;
   private final PsiElement[] myElements;
   private final Project myProject;
@@ -248,7 +250,9 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   }
 
   public boolean openInEditor() {
-    return myOpenFilesInEditor.isSelected();
+    return myOpenFilesInEditor.isVisible() &&
+           myOpenFilesInEditor.isSelected() &&
+           !myUnknownFileType;
   }
 
   @Override
@@ -266,12 +270,16 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         return;
       }
 
-      if (myFileCopy && FileTypeChooser.getKnownFileTypeOrAssociate(myTargetDirectory.getVirtualFile(), newName, myProject) == null) {
-        return;
+      if (myFileCopy) {
+        if (FileTypeChooser.getKnownFileTypeOrAssociate(myTargetDirectory.getVirtualFile(), newName, myProject) == null) {
+          myUnknownFileType = true;
+        }
       }
     }
 
-    saveOpenInEditorState(myOpenFilesInEditor.isSelected());
+    if (myOpenFilesInEditor.isVisible()) {
+      saveOpenInEditorState(myOpenFilesInEditor.isSelected());
+    }
     if (myShowDirectoryField) {
       final String targetDirectoryName = myTargetDirectoryField.getChildComponent().getText();
 

@@ -309,7 +309,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
-    setShowReturnValues(PyDebuggerSettings.getInstance().WATCH_RETURN_VALUES);
+    setShowReturnValues(PyDebuggerSettings.getInstance().watchReturnValues);
   }
 
   @Override
@@ -413,17 +413,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
-    settings.add(new WatchLastMethodReturnValueAction(this));
+    settings.add(new WatchReturnValuesAction(this));
   }
 
-  private static class WatchLastMethodReturnValueAction extends ToggleAction {
+  private static class WatchReturnValuesAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
     private final PyDebugProcess myProcess;
     private final String myText;
 
-    public WatchLastMethodReturnValueAction(@NotNull PyDebugProcess debugProcess) {
+    public WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
       super("", "Enables watching executed functions return values", null);
-      myWatchesReturnValues = PyDebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+      myWatchesReturnValues = PyDebuggerSettings.getInstance().watchReturnValues;
       myProcess = debugProcess;
       myText = "Show Return Values";
     }
@@ -444,7 +444,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     @Override
     public void setSelected(AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
-      PyDebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
+      PyDebuggerSettings.getInstance().watchReturnValues = watch;
       final Project project = e.getProject();
       if (project != null) {
         myProcess.setShowReturnValues(myWatchesReturnValues);

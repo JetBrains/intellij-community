@@ -94,7 +94,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   @Nullable
   public static List<AnAction> buildSurroundActions(final Project project, final Editor editor, PsiFile file, @Nullable Surrounder surrounder){
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
+    boolean hasSelection = selectionModel.hasSelection();
+    if (!hasSelection) {
       selectionModel.selectLineAtCaret();
     }
     int startOffset = selectionModel.getSelectionStart();
@@ -109,7 +110,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
     TextRange textRange = new TextRange(startOffset, endOffset);
     for(SurroundWithRangeAdjuster adjuster: Extensions.getExtensions(SurroundWithRangeAdjuster.EP_NAME)) {
-      textRange = adjuster.adjustSurroundWithRange(file, textRange);
+      textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
       if (textRange == null) return null;
     }
     startOffset = textRange.getStartOffset();
