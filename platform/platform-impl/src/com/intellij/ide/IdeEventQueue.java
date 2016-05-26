@@ -123,6 +123,7 @@ public class IdeEventQueue extends EventQueue {
    * Swing event.
    */
   private int myEventCount;
+  private int myKeyboardEventsInTheQueue; // accessed in EDT only
 
   private boolean myIsInInputEvent;
 
@@ -356,50 +357,57 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-    if (!appIsLoaded()) {
-      try {
-        super.dispatchEvent(e);
+    try {
+      if (!appIsLoaded()) {
+        try {
+          super.dispatchEvent(e);
+        }
+        catch (Throwable t) {
+          processException(t);
+        }
+        return;
+      }
+
+      e = InertialMouseRouter.changeSourceIfNeeded(e);
+
+      e = fixNonEnglishKeyboardLayouts(e);
+
+      e = mapEvent(e);
+      if (Registry.is("keymap.windows.as.meta")) {
+        e = mapMetaState(e);
+      }
+
+      boolean wasInputEvent = myIsInInputEvent;
+      myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+      if (myIsInInputEvent) {
+        HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+      }
+      AWTEvent oldEvent = myCurrentEvent;
+      myCurrentEvent = e;
+
+      boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
+      try (AccessToken ignored = startActivity(userActivity)) {
+        _dispatchEvent(e, false);
       }
       catch (Throwable t) {
         processException(t);
       }
-      return;
-    }
+      finally {
+        myIsInInputEvent = wasInputEvent;
+        myCurrentEvent = oldEvent;
 
-    e = InertialMouseRouter.changeSourceIfNeeded(e);
+        for (EventDispatcher each : myPostProcessors) {
+          each.dispatch(e);
+        }
 
-    e = fixNonEnglishKeyboardLayouts(e);
-
-    e = mapEvent(e);
-    if (Registry.is("keymap.windows.as.meta")) {
-      e = mapMetaState(e);
-    }
-
-    boolean wasInputEvent = myIsInInputEvent;
-    myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
-    if (myIsInInputEvent) {
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-    }
-    AWTEvent oldEvent = myCurrentEvent;
-    myCurrentEvent = e;
-
-    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
-    try (AccessToken ignored = startActivity(userActivity)) {
-      _dispatchEvent(e, false);
-    }
-    catch (Throwable t) {
-      processException(t);
+        if (e instanceof KeyEvent) {
+          maybeReady();
+        }
+      }
     }
     finally {
-      myIsInInputEvent = wasInputEvent;
-      myCurrentEvent = oldEvent;
-
-      for (EventDispatcher each : myPostProcessors) {
-        each.dispatch(e);
-      }
-
-      if (e instanceof KeyEvent) {
-        maybeReady();
+      if (isKeyboardEvent(e)) {
+        myKeyboardEventsInTheQueue--;
       }
     }
   }
@@ -586,10 +594,7 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = e instanceof KeyEvent ||
-                     peekEvent(KeyEvent.KEY_PRESSED) != null ||
-                     peekEvent(KeyEvent.KEY_RELEASED) != null ||
-                     peekEvent(KeyEvent.KEY_TYPED) != null;
+    myKeyboardBusy = myKeyboardEventsInTheQueue != 0;
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -1150,9 +1155,16 @@ public class IdeEventQueue extends EventQueue {
 
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
-  public void postEvent(@NotNull AWTEvent theEvent) {
-    myFrequentEventDetector.eventHappened(theEvent);
-    super.postEvent(theEvent);
+  public void postEvent(@NotNull AWTEvent event) {
+    myFrequentEventDetector.eventHappened(event);
+    if (isKeyboardEvent(event)) {
+      myKeyboardEventsInTheQueue++;
+    }
+    super.postEvent(event);
+  }
+
+  private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
+    return event instanceof KeyEvent && (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED || event.getID() == KeyEvent.KEY_TYPED);
   }
 
   @Override
