@@ -61,6 +61,7 @@ public class CreatePatchConfigurationPanel {
   private ComboBox<Charset> myEncoding;
   private JLabel myWarningLabel;
   private final Project myProject;
+  @Nullable private File myCommonParentPath;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
@@ -124,6 +125,10 @@ public class CreatePatchConfigurationPanel {
       .getPanel();
   }
 
+  public void setCommonParentPath(@Nullable File commonParentPath) {
+    myCommonParentPath = commonParentPath;
+  }
+
   private void checkExist() {
     myWarningLabel.setText(new File(getFileName()).exists() ? "File with the same name already exists" : "");
   }
@@ -163,6 +168,10 @@ public class CreatePatchConfigurationPanel {
     if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
     File baseFile = new File(baseDirName);
     if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
+    if (myCommonParentPath != null && !FileUtil.isAncestor(baseFile, myCommonParentPath, false)) {
+      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentPath.getPath()),
+                                myBasePathField);
+    }
     return null;
   }
 

@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -455,6 +456,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel(myProject);
       p.setFileName(getDefaultPatchFile());
+      p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
       myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch());
 
