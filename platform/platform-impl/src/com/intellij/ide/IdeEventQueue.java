@@ -526,11 +526,11 @@ public class IdeEventQueue extends EventQueue {
       if (ke.getKeyCode() == KeyEvent.VK_WINDOWS) {
         if (ke.getID() == KeyEvent.KEY_PRESSED) myWinMetaPressed = true;
         if (ke.getID() == KeyEvent.KEY_RELEASED) myWinMetaPressed = false;
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers(), KeyEvent.VK_META, ke.getKeyChar(),
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx(), KeyEvent.VK_META, ke.getKeyChar(),
                             ke.getKeyLocation());
       }
       if (myWinMetaPressed) {
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | InputEvent.META_MASK, ke.getKeyCode(),
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | InputEvent.META_MASK, ke.getKeyCode(),
                             ke.getKeyChar(), ke.getKeyLocation());
       }
     }
