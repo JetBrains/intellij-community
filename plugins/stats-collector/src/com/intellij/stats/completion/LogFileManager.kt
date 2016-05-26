@@ -8,7 +8,6 @@ import java.util.concurrent.locks.ReentrantLock
 
 interface LogFileManager {
     fun println(message: String)
-    fun read(): String
     fun renameLogFile(swap: File): Boolean
     fun dispose()
 }
@@ -26,7 +25,7 @@ fun newFileAppender(file: File): PrintWriter {
     return PrintWriter(bufferedWriter)
 }
 
-class SelfOpeningWriter {
+class SelfOpeningWriter(private val filePathProvider: FilePathProvider) {
     private var writer: PrintWriter? = null
 
     fun println(message: String) {
@@ -36,14 +35,10 @@ class SelfOpeningWriter {
     
     private fun getWriter(): PrintWriter {
         if (writer == null) {
-            val file = ensureFileCreated(FilePathProvider.getInstance().statsFilePath)
+            val file = ensureFileCreated(filePathProvider.newUniqueFile().absolutePath)
             writer = newFileAppender(file)
         }
         return writer!!
-    }
-    
-    fun flush() {
-        writer?.flush()
     }
     
     fun close() {
@@ -52,36 +47,53 @@ class SelfOpeningWriter {
     }
 }
 
-class LogFileManagerImpl: LogFileManager {
-    private val lock = ReentrantLock()
-    private val writer = SelfOpeningWriter()
 
-    override fun dispose() {
-        withFileLock {
-            writer.close()
-        }
+class AsciiMessageCharStorage {
+    
+    private val lines = mutableListOf<String>()
+    private var size: Int = 0
+    
+    fun appendLine(line: String) {
+        size += line.length
+        lines.add(line)
     }
 
-    override fun println(message: String) {
-        withFileLock {
-            writer.println(message)
-        }
-    }
-
-    override fun read(): String {
-        return withFileLock {
-            writer.flush()
-            val file = File(getLogFilePath())
-            if (file.exists()) file.readText() else ""
-        }
+    fun sizeWith(newLine: String): Int = size + newLine.length
+    
+    fun clear() {
+        size = 0
+        lines.clear()
     }
     
-    override fun renameLogFile(swap: File): Boolean {
-        return withFileLock {
-            writer.close()
-            val logFile = File(getLogFilePath())
-            if (logFile.exists()) logFile.renameTo(swap) else false
+}
+
+class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
+    
+    private val lock = ReentrantLock()
+    
+    private val MAX_SIZE_BYTE = 250 * 1024
+    private val storage = AsciiMessageCharStorage()
+    
+
+    override fun println(message: String) {
+        if (storage.sizeWith(message) > MAX_SIZE_BYTE) {
+            scheduleSend(storage)
+            storage.clear()
         }
+        storage.appendLine(message)
+    }
+
+    private fun scheduleSend(storage: AsciiMessageCharStorage) {
+        //save to file
+        //schedule sending
+    }
+
+    override fun renameLogFile(swap: File): Boolean {
+        throw UnsupportedOperationException()
+    }
+
+    override fun dispose() {
+        throw UnsupportedOperationException()
     }
 
     private fun <R> withFileLock(block: () -> R): R {
@@ -92,9 +104,7 @@ class LogFileManagerImpl: LogFileManager {
             lock.unlock()
         }
     }
-    
-    private fun getLogFilePath(): String {
-        val pathProvider = FilePathProvider.getInstance()
-        return pathProvider.statsFilePath
-    }
+}
+
+fun main(args: Array<String>) {
 }

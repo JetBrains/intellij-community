@@ -3,7 +3,6 @@ package com.intellij.stats.completion
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -23,7 +22,7 @@ class FileLoggerTest : PlatformTestCase() {
         super.setUp()
         path = createTempFile("x.txt").absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
-        `when`(mockPathProvider.statsFilePath).thenReturn(path)
+//        `when`(mockPathProvider.statsFilePath).thenReturn(path)
 
         pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         
@@ -62,7 +61,7 @@ class FileLoggerTest : PlatformTestCase() {
     }
 
     private fun performLogging(): CompletionLogger {
-        val logFileManager = LogFileManagerImpl()
+        val logFileManager = LogFileManagerImpl(FilePathProvider.getInstance())
         var loggerProvider = CompletionFileLoggerProvider(logFileManager)
         var logger = loggerProvider.newCompletionLogger()
 //        logger.completionStarted(emptyList(), false, 1)
