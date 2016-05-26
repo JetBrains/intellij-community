@@ -21,10 +21,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition.SyntaxElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,29 +41,30 @@ import static com.intellij.formatting.Indent.Type.*;
  */
 public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
   
-  protected enum JavaLikeElement implements SemanticEditorPosition.SyntaxElement {
+  protected enum JavaLikeElement implements SyntaxElement {
     Whitespace,
     Semicolon,
     BlockOpeningBrace,
     BlockClosingBrace,
-    ArrayOpeningBracket
+    ArrayOpeningBracket,
+    RightParenthesis,
+    LeftParenthesis
   }
-  
   
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
-    Type indent = getIndent(project, editor, language, offset);
-    if (indent != null){
-      return getIndentString(project, editor, offset, indent);
+    Pair<Type,SyntaxElement> indentData = getIndent(project, editor, language, offset);
+    if (indentData != null){
+      return getIndentString(project, editor, offset, indentData);
     }
     return super.getLineIndent(project, editor, language, offset);
   }
   
   @Nullable
-  protected Type getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
+  protected Pair<Type,SyntaxElement> getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
-      offset --;
+      offset--;
       if (getPosition(editor, offset).matchesRule(
         position -> position.isAt(JavaLikeElement.Whitespace) &&
                     position.isAtMultiline())) {
@@ -71,17 +74,17 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
             .beforeOptional(JavaLikeElement.Semicolon)
             .beforeOptional(JavaLikeElement.Whitespace)
             .isAt(JavaLikeElement.BlockClosingBrace))) {
-          return getBlockIndentType(project, language);
+          return createIndentData(getBlockIndentType(project, language), JavaLikeElement.BlockClosingBrace);
         }
         else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(JavaLikeElement.ArrayOpeningBracket) 
+          position -> position.before().isAt(JavaLikeElement.ArrayOpeningBracket)
         )) {
-          return CONTINUATION;
+          return createIndentData(CONTINUATION, JavaLikeElement.ArrayOpeningBracket);
         }
         else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(JavaLikeElement.BlockOpeningBrace) 
+          position -> position.before().isAt(JavaLikeElement.BlockOpeningBrace)
         )) {
-          return getIndentTypeInBlock(project, language);
+          return createIndentData(getIndentTypeInBlock(project, language), JavaLikeElement.BlockOpeningBrace);
         }
       }
     }
@@ -98,17 +101,20 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   @Nullable
-  protected abstract SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType);
+  protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
   
   @Nullable
-  private static String getIndentString(@NotNull Project project, @NotNull Editor editor, int offset, Type indentType) {
+  private String getIndentString(@NotNull Project project,
+                                        @NotNull Editor editor,
+                                        int offset,
+                                        @NotNull Pair<Type, SyntaxElement> indentData) {
     Document document = editor.getDocument();
-    String lastLineIndent = getLastLineIndent(document.getCharsSequence(), offset);
+    String baseIndent = getBaseIndent(editor, indentData.second, offset);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file != null) {
       CommonCodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file);
-      return 
-        lastLineIndent + new IndentInfo(0, indentTypeToSize(indentType, options), 0, false).generateNewWhiteSpace(options);
+      return
+        baseIndent + new IndentInfo(0, indentTypeToSize(indentData.first, options), 0, false).generateNewWhiteSpace(options);
     }
     return null;
   }
@@ -124,11 +130,12 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   @NotNull
-  private static String getLastLineIndent(@NotNull CharSequence docChars, int offset) {
+  private String getBaseIndent(@NotNull Editor editor, @NotNull SyntaxElement afterElement, int offset) {
+    CharSequence docChars = editor.getDocument().getCharsSequence();
     if (offset > 0) {
-      int indentStart = CharArrayUtil.shiftBackward(docChars, offset - 1, " \t\n\r");
-      if (indentStart > 0) {
-        indentStart = CharArrayUtil.shiftBackwardUntil(docChars, indentStart, "\n") + 1;
+      int indentLineOffset = getOffsetInBaseIndentLine(editor, docChars, afterElement, offset - 1);
+      if (indentLineOffset > 0) {
+        int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, indentLineOffset, "\n") + 1;
         if (indentStart >= 0) {
           int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
           if (indentEnd > indentStart) {
@@ -138,6 +145,38 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
     }
     return "";
+  }
+
+
+  private int getOffsetInBaseIndentLine(@NotNull Editor editor,
+                                        @NotNull CharSequence docChars,
+                                        @NotNull SyntaxElement afterElement,
+                                        int offset) {
+    if (JavaLikeElement.BlockOpeningBrace.equals(afterElement)) {
+      return findStatementStart(editor, afterElement, offset);
+    }
+    else {
+      return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
+    }
+  }
+  
+  
+  private int findStatementStart(@NotNull Editor editor, @NotNull SyntaxElement afterElement, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    position
+      .beforeOptional(JavaLikeElement.Whitespace)
+      .beforeOptional(afterElement)
+      .beforeOptional(JavaLikeElement.Whitespace);
+    if (position.isAt(JavaLikeElement.RightParenthesis)) {
+      position.beforeParentheses(JavaLikeElement.LeftParenthesis, JavaLikeElement.RightParenthesis);
+    }
+    while (!position.isAtEnd()) {
+      if (position.isAt(JavaLikeElement.Whitespace) && position.isAtMultiline()) {
+        return position.after().getStartOffset();
+      }
+      position.before();
+    }
+    return -1;
   }
   
   @Nullable
@@ -160,5 +199,10 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
     }
     return null;
+  }
+  
+  @Nullable
+  private static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
+    return type != null ? Pair.create(type, element) : null;
   }
 }

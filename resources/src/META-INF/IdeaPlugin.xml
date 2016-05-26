@@ -1320,6 +1320,7 @@
                              implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
 
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaBackspaceHandler"/>
+    <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
 
     <usageTargetProvider implementation="com.intellij.find.findUsages.ThrowsUsageTargetProvider"/>
 
