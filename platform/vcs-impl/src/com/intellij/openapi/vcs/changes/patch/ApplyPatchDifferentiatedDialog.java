@@ -354,7 +354,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
       final VirtualFile file = filePresentationModel != null ? filePresentationModel.getVf() : null;
       if (file == null) {
-        ApplicationManager.getApplication().invokeLater(myReset, ModalityState.stateForComponent(getRootPane()));
+        ApplicationManager.getApplication().invokeLater(myReset, ModalityState.stateForComponent(myCenterPanel));
         return;
       }
 
@@ -374,7 +374,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         myReader = patchReader;
         updateTree(true);
         paintBusy(false);
-      }, ModalityState.stateForComponent(getRootPane()));
+      }, ModalityState.stateForComponent(myCenterPanel));
     }
   }
 
