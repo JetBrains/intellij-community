@@ -132,6 +132,31 @@ public class PyOptimizeImportsTest extends PyTestCase {
       });
     }
   }
+  
+  // PY-18792
+  public void testDisableAlphabeticalOrder() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY = false;
+    doTest();
+  }
+
+  // PY-18792, PY-19292
+  public void testOrderNamesInsideFromImport() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
+  // PY-18792, PY-12926
+  public void testJoinFromImportsForSameSource() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+  
+  // PY-18792, PY-12926
+  public void testJoinFromImportsForSameSourceAndSortNames() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
