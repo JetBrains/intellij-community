@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.references;
+package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class RegistryImplicitPropertyUsageProvider extends ImplicitPropertyUsageProvider {
+
   @Override
   protected boolean isUsed(Property property) {
-    if (PsiUtil.isIdeaProject(property.getProject())) {
-      final PsiFile file = property.getContainingFile();
-      if (file != null && file.getName().equals("registry.properties")) {
-        final String name = property.getName();
-        return name.endsWith(".description") || name.endsWith(".restartRequired");
-      }
+    if (RegistryPropertiesAnnotator.isRegistryPropertiesFile(property.getContainingFile())) {
+      final String name = property.getName();
+      return name != null && RegistryPropertiesAnnotator.isImplicitUsageKey(name);
     }
     return false;
   }
