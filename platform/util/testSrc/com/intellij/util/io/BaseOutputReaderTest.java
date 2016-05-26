@@ -66,21 +66,21 @@ public class BaseOutputReaderTest {
   @Test(timeout = 30000)
   public void testBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, true, true);
-    assertThat(lines.size()).isBetween(5, 7);
-    assertThat(lines).startsWith(TEST_DATA[0], TEST_DATA[1], TEST_DATA[2]).endsWith(TEST_DATA[4]);
-    assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
+    assertThat(lines.size()).isBetween(7, 8);
+    assertThat(lines).startsWith(r(TEST_DATA[0]), r(TEST_DATA[1]), r(TEST_DATA[2])).endsWith(r(TEST_DATA[4]), r(TEST_DATA[5]), r(TEST_DATA[6]));
+    assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(TEST_DATA, BaseOutputReaderTest::r, ""));
   }
 
   @Test(timeout = 30000)
   public void testBlockingLineRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, false, true);
-    assertThat(lines).containsExactly(TEST_DATA[0], TEST_DATA[1] + TEST_DATA[2], TEST_DATA[3], TEST_DATA[4]);
+    assertThat(lines).containsExactly(r(TEST_DATA[0]), r(TEST_DATA[1] + TEST_DATA[2]), r(TEST_DATA[3]), r(TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]));
   }
 
   @Test(timeout = 30000)
   public void testBlockingLineReadTrimmed() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, false, false);
-    assertThat(lines).containsExactly(TEST_DATA[0].trim(), TEST_DATA[1] + TEST_DATA[2].trim(), TEST_DATA[3].trim(), TEST_DATA[4].trim());
+    assertThat(lines).containsExactly(TEST_DATA[0].trim(), TEST_DATA[1] + TEST_DATA[2].trim(), TEST_DATA[3].trim(), TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]);
   }
 
   @Test(timeout = 30000)
@@ -92,9 +92,9 @@ public class BaseOutputReaderTest {
   @Test(timeout = 30000)
   public void testNonBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, true, true, true);
-    assertThat(lines.size()).isBetween(5, 7);
-    assertThat(lines).startsWith(TEST_DATA[0], TEST_DATA[1], TEST_DATA[2]).endsWith(TEST_DATA[4]);
-    assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
+    assertThat(lines.size()).isBetween(7, 8);
+    assertThat(lines).startsWith(r(TEST_DATA[0]), r(TEST_DATA[1]), r(TEST_DATA[2])).endsWith(r(TEST_DATA[4]), r(TEST_DATA[5]), r(TEST_DATA[6]));
+    assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(TEST_DATA, BaseOutputReaderTest::r, ""));
   }
 
   // Stopping is not supported for an open stream in blocking mode
@@ -140,6 +140,10 @@ public class BaseOutputReaderTest {
     }
   }
 
+  private static String r(String line) {
+    return StringUtil.endsWith(line, "\r\n") ? line.substring(0, line.length() - 2) + '\n' : line;
+  }
+
   private Process launchTest(String mode) throws Exception {
     String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
 
@@ -154,8 +158,15 @@ public class BaseOutputReaderTest {
   }
 
   public static class Runner {
-    private static final String[] TEST_DATA =
-      {"first\n", "incomplete", "-continuation\n", new String(new char[16*1024]).replace('\0', 'x') + '\n', "last"};
+    private static final String[] TEST_DATA = {
+      "first\r\n",
+      "incomplete",
+      "-continuation\r\n",
+      new String(new char[8*1024-1]).replace('\0', 'x') + "\r\n",
+      "last",
+      "\rdone.",
+      "\r"
+    };
 
     private static final int SEND_TIMEOUT = 500;
     private static final int SLEEP_TIMEOUT = 60000;
