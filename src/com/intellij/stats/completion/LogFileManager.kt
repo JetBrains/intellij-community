@@ -10,14 +10,15 @@ interface LogFileManager {
 class AsciiMessageCharStorage {
     
     private val lines = mutableListOf<String>()
-    private var size: Int = 0
+    var size: Int = 0
+        private set
     
     fun appendLine(line: String) {
-        size += line.length
+        size += line.length + 1
         lines.add(line)
     }
 
-    fun sizeWith(newLine: String): Int = size + newLine.length
+    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + 1
     
     fun clear() {
         size = 0
@@ -38,7 +39,7 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
     private val storage = AsciiMessageCharStorage()
 
     override fun println(message: String) {
-        if (storage.sizeWith(message) > MAX_SIZE_BYTE) {
+        if (storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
             saveDataChunk(storage)
             storage.clear()
         }
