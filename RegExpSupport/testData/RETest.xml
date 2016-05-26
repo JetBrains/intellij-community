@@ -233,6 +233,10 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>[a&amp;&amp;]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>a[a[b][c]]</pattern>
       <expected>OK</expected>
     </test>
@@ -885,6 +889,10 @@
     </test>
     <test>
       <pattern>\E</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>a|*</pattern>
       <expected>ERR</expected>
     </test>
   </incomplete>

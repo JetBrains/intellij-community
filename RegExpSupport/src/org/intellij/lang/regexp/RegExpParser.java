@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-@SuppressWarnings({"RedundantIfStatement"})
 public class RegExpParser implements PsiParser {
   private final EnumSet<RegExpCapability> myCapabilities;
 
@@ -37,9 +36,9 @@ public class RegExpParser implements PsiParser {
     myCapabilities = capabilities;
   }
 
+  @Override
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
-//        builder.setDebugMode(true);
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
 
     parsePattern(builder);
@@ -68,7 +67,6 @@ public class RegExpParser implements PsiParser {
     while (builder.getTokenType() == RegExpTT.UNION) {
       builder.advanceLexer();
       if (!parseBranch(builder)) {
-        // TODO: no test coverage
         patternExpected(builder);
         break;
       }
@@ -84,7 +82,7 @@ public class RegExpParser implements PsiParser {
    */
   @SuppressWarnings({"StatementWithEmptyBody"})
   private boolean parseBranch(PsiBuilder builder) {
-    PsiBuilder.Marker marker = builder.mark();
+    final PsiBuilder.Marker marker = builder.mark();
 
     if (!parseAtom(builder)) {
       final IElementType token = builder.getTokenType();
@@ -97,7 +95,7 @@ public class RegExpParser implements PsiParser {
       return false;
     }
 
-    for (; parseAtom(builder);) ;
+    while (parseAtom(builder)) ;
 
     marker.done(RegExpElementTypes.BRANCH);
     return true;
@@ -189,10 +187,7 @@ public class RegExpParser implements PsiParser {
   }
 
   private static void parseQuantifierType(PsiBuilder builder) {
-    if (builder.getTokenType() == RegExpTT.PLUS) {
-      builder.advanceLexer();
-    }
-    else if (builder.getTokenType() == RegExpTT.QUEST) {
+    if (builder.getTokenType() == RegExpTT.PLUS || builder.getTokenType() == RegExpTT.QUEST) {
       builder.advanceLexer();
     }
     else {
@@ -265,12 +260,8 @@ public class RegExpParser implements PsiParser {
     else if (token == RegExpTT.PROPERTY) {
       parseProperty(builder);
     }
-    else if (mayBeEmpty) {
-      // TODO: no test coverage
-      return true;
-    }
     else {
-      return false;
+      return mayBeEmpty;
     }
     return true;
   }
@@ -322,7 +313,7 @@ public class RegExpParser implements PsiParser {
 
   private static void makeChar(PsiBuilder builder) {
     final IElementType t = builder.getTokenType();
-    PsiBuilder.Marker m = builder.mark();
+    final PsiBuilder.Marker m = builder.mark();
     builder.advanceLexer();
     m.done(t == RegExpTT.CHAR_CLASS ? RegExpElementTypes.SIMPLE_CLASS : RegExpElementTypes.CHAR);
   }
@@ -362,7 +353,6 @@ public class RegExpParser implements PsiParser {
       if (builder.getTokenType() == RegExpTT.COLON) {
         builder.advanceLexer();
         if (!parsePattern(builder)) {
-          // TODO: no test coverage
           patternExpected(builder);
         }
         else {
