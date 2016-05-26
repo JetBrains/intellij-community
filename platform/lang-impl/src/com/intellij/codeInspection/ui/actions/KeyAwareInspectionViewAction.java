@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
@@ -29,21 +30,30 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
 public abstract class KeyAwareInspectionViewAction extends InspectionViewActionBase {
+  private static final Logger LOG = Logger.getInstance(KeyAwareInspectionViewAction.class);
+
   public KeyAwareInspectionViewAction(String name) {
     super(name);
   }
@@ -122,9 +132,53 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      final PsiElement psiElement = getPsiElement(view);
-      assert psiElement != null;
-      new RunInspectionIntention(key).invoke(view.getProject(), null, psiElement.getContainingFile());
+      Set<PsiFile> files = new THashSet<>();
+      for (RefEntity entity : view.getTree().getSelectedElements()) {
+        if (entity instanceof RefElement && entity.isValid()) {
+          final PsiElement element = ((RefElement)entity).getElement();
+          final PsiFile file = element.getContainingFile();
+          files.add(file);
+        }
+      }
+
+      boolean useModule = true;
+      Module module = null;
+      for (PsiFile file : files) {
+        final Module currentFileModule = ModuleUtilCore.findModuleForPsiElement(file);
+        if (currentFileModule != null) {
+          if (module == null) {
+            module = currentFileModule;
+          }
+          else if (currentFileModule != module) {
+            useModule = false;
+            break;
+          }
+        }
+        else {
+          useModule = false;
+          break;
+        }
+      }
+
+      final PsiElement context;
+      final AnalysisScope scope;
+      switch (files.size()) {
+        case 0:
+          context = null;
+          scope = new AnalysisScope(view.getProject());
+          break;
+        case 1:
+          final PsiFile theFile = ContainerUtil.getFirstItem(files);
+          LOG.assertTrue(theFile != null);
+          context = theFile;
+          scope = new AnalysisScope(theFile);
+          break;
+        default:
+          context = null;
+          scope = new AnalysisScope(view.getProject(), files.stream().map(PsiFile::getVirtualFile).collect(Collectors.toList()));
+      }
+
+      RunInspectionIntention.selectScopeAndRunInspection(key.toString(), scope, useModule ? module : null, context, view.getProject());
     }
 
     @Nullable

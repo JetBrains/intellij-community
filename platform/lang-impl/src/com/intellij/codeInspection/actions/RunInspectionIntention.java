@@ -40,6 +40,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
@@ -79,7 +80,6 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (file != null) {
@@ -89,21 +89,29 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       }
     }
 
+    selectScopeAndRunInspection(myShortName, analysisScope, module, file, project);
+  }
+
+  public static void selectScopeAndRunInspection(@NotNull String toolShortName,
+                                                 @NotNull AnalysisScope customScope,
+                                                 @Nullable Module module,
+                                                 @Nullable PsiElement context,
+                                                 @NotNull Project project) {
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
-      analysisScope,
+      customScope,
       module != null ? module.getName() : null,
-      true, AnalysisUIOptions.getInstance(project), file);
+      true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;
     }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
-    final InspectionToolWrapper wrapper = LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName);
-    LOG.assertTrue(wrapper != null, "Can't find tool with name = \"" + myShortName + "\"");
-    rerunInspection(wrapper, managerEx, analysisScope, file);
+    customScope = dlg.getScope(uiOptions, customScope, project, module);
+    final InspectionToolWrapper wrapper = LocalInspectionToolWrapper.findTool2RunInBatch(project, context, toolShortName);
+    LOG.assertTrue(wrapper != null, "Can't find tool with name = \"" + toolShortName + "\"");
+    rerunInspection(wrapper, (InspectionManagerEx)InspectionManager.getInstance(project), customScope, context);
   }
 
   public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
