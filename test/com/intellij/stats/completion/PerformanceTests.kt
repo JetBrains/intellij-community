@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -34,8 +33,8 @@ class Test {
         path = createTempFile("x.txt").absolutePath
         tmpPath = createTempFile("xtmp.txt").absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
-        `when`(mockPathProvider.statsFilePath).thenReturn(path)
-        `when`(mockPathProvider.swapFile).thenReturn(tmpPath)
+//        `when`(mockPathProvider.statsFilePath).thenReturn(path)
+//        `when`(mockPathProvider.swapFile).thenReturn(tmpPath)
         
         
         oldPathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider

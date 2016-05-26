@@ -47,8 +47,8 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         `when`(urlProvider.statsServerPostUrl).thenReturn("http://localhost:8080/upload")
 
         pathProvider = mock(FilePathProvider::class.java)
-        `when`(pathProvider.statsFilePath).thenReturn(file.absolutePath)
-        `when`(pathProvider.swapFile).thenReturn(tmpFile.absolutePath)
+//        `when`(pathProvider.statsFilePath).thenReturn(file.absolutePath)
+//        `when`(pathProvider.swapFile).thenReturn(tmpFile.absolutePath)
 
         requestService = object : RequestService() {
             override fun post(url: String, params: Map<String, String>): ResponseData? {
@@ -88,7 +88,7 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     fun `test data is sent and removed`() {
         file.writeText(text)
-        var logFileManager = LogFileManagerImpl()
+        var logFileManager = LogFileManagerImpl(FilePathProvider.getInstance())
         val sender = StatisticSender(urlProvider, logFileManager, requestService)
         sender.sendStatsData("uuid-secret-xxx")
 

@@ -62,15 +62,15 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
     }
 
     fun sendStatsData(uid: String) {
-        assertNotEDT()
-        val fileToSend = File(FilePathProvider.getInstance().swapFile)
-        fillSwapFileIfNeeded(fileToSend)
-        if (fileToSend.length() > 0) {
-            val url = urlProvider.statsServerPostUrl
-            sendContent(url, uid, fileToSend, onSendAction = Runnable {
-                fileToSend.delete()
-            })
-        }
+//        assertNotEDT()
+//        val fileToSend = File(FilePathProvider.getInstance().swapFile)
+//        fillSwapFileIfNeeded(fileToSend)
+//        if (fileToSend.length() > 0) {
+//            val url = urlProvider.statsServerPostUrl
+//            sendContent(url, uid, fileToSend, onSendAction = Runnable {
+//                fileToSend.delete()
+//            })
+//        }
     }
 
     private fun assertNotEDT() {
