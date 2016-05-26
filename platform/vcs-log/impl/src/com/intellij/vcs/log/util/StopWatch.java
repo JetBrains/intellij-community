@@ -61,12 +61,8 @@ public class StopWatch {
   public void report() {
     String message = myOperation + " took " + (System.currentTimeMillis() - myStartTime) + " ms";
     if (myDurationPerRoot.size() > 1) {
-      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(), new Function<Map.Entry<VirtualFile, Long>, String>() {
-        @Override
-        public String fun(Map.Entry<VirtualFile, Long> entry) {
-          return "    " + entry.getKey().getName() + ": " + entry.getValue() + " ms";
-        }
-      }, "\n");
+      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),
+                                        entry -> "    " + entry.getKey().getName() + ": " + entry.getValue() + " ms", "\n");
     }
     LOG.debug(message);
   }

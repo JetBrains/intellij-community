@@ -96,12 +96,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @NotNull
   private static List<List<String>> getRecentGroup(Deque<UserGroup> stateField) {
-    return ContainerUtil.map2List(stateField, new Function<UserGroup, List<String>>() {
-      @Override
-      public List<String> fun(UserGroup group) {
-        return group.users;
-      }
-    });
+    return ContainerUtil.map2List(stateField, group -> group.users);
   }
 
   @Override

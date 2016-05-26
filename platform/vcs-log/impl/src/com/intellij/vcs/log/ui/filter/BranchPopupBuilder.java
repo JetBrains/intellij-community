@@ -79,12 +79,7 @@ public abstract class BranchPopupBuilder {
         if (recentItem.size() == 1) {
           final String item = ContainerUtil.getFirstItem(recentItem);
           if (filteredGroups.singletonGroups.contains(item) ||
-              ContainerUtil.find(filteredGroups.expandedGroups.values(), new Condition<TreeSet<String>>() {
-                @Override
-                public boolean value(TreeSet<String> strings) {
-                  return strings.contains(item);
-                }
-              }) != null) {
+              ContainerUtil.find(filteredGroups.expandedGroups.values(), strings -> strings.contains(item)) != null) {
             continue;
           }
         }

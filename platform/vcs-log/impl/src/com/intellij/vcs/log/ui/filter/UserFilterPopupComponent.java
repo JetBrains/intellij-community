@@ -94,14 +94,11 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myLogData.getAllUsers(), new Function<VcsUser, String>() {
-      @Override
-      public String fun(VcsUser user) {
-        String shortPresentation = VcsUserUtil.getShortPresentation(user);
-        Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
-        if (firstAndLastName == null) return shortPresentation;
-        return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
-      }
+    return ContainerUtil.map(myLogData.getAllUsers(), user -> {
+      String shortPresentation = VcsUserUtil.getShortPresentation(user);
+      Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
+      if (firstAndLastName == null) return shortPresentation;
+      return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
     });
   }
 

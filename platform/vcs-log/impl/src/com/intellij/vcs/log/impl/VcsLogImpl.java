@@ -106,12 +106,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
-    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().startsWith(reference);
-      }
-    });
+    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, ref -> ref.getName().startsWith(reference));
     if (matchingRefs.isEmpty()) {
       return myUi.jumpToCommitByPartOfHash(reference);
     }

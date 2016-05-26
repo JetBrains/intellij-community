@@ -71,14 +71,10 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
-    return new Function<Integer, Hash>() {
-      @Nullable
-      @Override
-      public Hash fun(Integer commitIndex) {
-        CommitId commitId = hashMap.getCommitId(commitIndex);
-        if (commitId == null) return null;
-        return commitId.getHash();
-      }
+    return commitIndex -> {
+      CommitId commitId = hashMap.getCommitId(commitIndex);
+      if (commitId == null) return null;
+      return commitId.getHash();
     };
   }
 

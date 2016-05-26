@@ -86,17 +86,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
 
     myRefresher =
-      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, new Consumer<DataPack>() {
-        @Override
-        public void consume(DataPack dataPack) {
-          fireDataPackChangeEvent(dataPack);
-        }
-      }, new Consumer<Exception>() {
-        @Override
-        public void consume(Exception e) {
-          if (!(e instanceof ProcessCanceledException)) {
-            LOG.error(e);
-          }
+      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
+                              dataPack -> fireDataPackChangeEvent(dataPack), e -> {
+        if (!(e instanceof ProcessCanceledException)) {
+          LOG.error(e);
         }
       }, RECENT_COMMITS_COUNT);
 
@@ -117,12 +110,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void fireDataPackChangeEvent(@NotNull final DataPack dataPack) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        for (DataPackChangeListener listener : myDataPackChangeListeners) {
-          listener.onDataPackChange(dataPack);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (DataPackChangeListener listener : myDataPackChangeListeners) {
+        listener.onDataPackChange(dataPack);
       }
     });
   }
@@ -165,15 +155,12 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     final StopWatch initSw = StopWatch.start("initialize");
     myDataLoaderQueue.clear();
 
-    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
-      @Override
-      public void consume(ProgressIndicator indicator) throws VcsException {
-        resetState();
-        readCurrentUser();
-        DataPack dataPack = myRefresher.readFirstBlock();
-        fireDataPackChangeEvent(dataPack);
-        initSw.report();
-      }
+    runInBackground(indicator -> {
+      resetState();
+      readCurrentUser();
+      DataPack dataPack = myRefresher.readFirstBlock();
+      fireDataPackChangeEvent(dataPack);
+      initSw.report();
     }, "Loading History...");
   }
 

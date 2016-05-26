@@ -61,12 +61,7 @@ public class TimedVcsCommitImpl implements TimedVcsCommit {
 
   @Override
   public String toString() {
-    return myHash.toShortString() + "|-" + StringUtil.join(ContainerUtil.map(myParents, new Function<Hash, String>() {
-      @Override
-      public String fun(Hash hash) {
-        return hash.toShortString();
-      }
-    }), ",") + ":" + myTime;
+    return myHash.toShortString() + "|-" + StringUtil.join(ContainerUtil.map(myParents, hash -> hash.toShortString()), ",") + ":" + myTime;
   }
 
   @Override

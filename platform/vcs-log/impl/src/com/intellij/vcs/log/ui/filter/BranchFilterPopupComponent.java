@@ -66,12 +66,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @Override
   protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
     return VcsLogBranchFilterImpl
-      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
-        @Override
-        public String fun(VcsRef vcsRef) {
-          return vcsRef.getName();
-        }
-      }));
+      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), vcsRef -> vcsRef.getName()));
   }
 
   @Override
@@ -118,12 +113,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
-      @Override
-      public String fun(VcsRef ref) {
-        return ref.getName();
-      }
-    });
+    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), ref -> ref.getName());
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {

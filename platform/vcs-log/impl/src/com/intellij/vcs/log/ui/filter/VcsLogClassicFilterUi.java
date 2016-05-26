@@ -84,13 +84,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myUiProperties = uiProperties;
     myDataPack = initialDataPack;
 
-    NotNullComputable<VcsLogDataPack> dataPackGetter = new NotNullComputable<VcsLogDataPack>() {
-      @NotNull
-      @Override
-      public VcsLogDataPack compute() {
-        return myDataPack;
-      }
-    };
+    NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter);
     myUserFilterModel = new FilterModel<VcsLogUserFilter>(dataPackGetter);
     myDateFilterModel = new FilterModel<VcsLogDateFilter>(dataPackGetter);
@@ -103,13 +97,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private void updateUiOnFilterChange() {
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
-      model.addSetFilterListener(new Runnable() {
-        @Override
-        public void run() {
-          myUi.applyFiltersAndUpdateUi();
-          myBranchFilterModel
-            .onStructureFilterChanged(new HashSet<VirtualFile>(myLogData.getRoots()), myStructureFilterModel.getFilter());
-        }
+      model.addSetFilterListener(() -> {
+        myUi.applyFiltersAndUpdateUi();
+        myBranchFilterModel
+          .onStructureFilterChanged(new HashSet<VirtualFile>(myLogData.getRoots()), myStructureFilterModel.getFilter());
       });
     }
   }
@@ -127,12 +118,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     };
     textFilter.setText(myTextFilterModel.getText());
-    textFilter.getTextEditor().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myTextFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
-        textFilter.addCurrentTextToHistory();
-      }
+    textFilter.getTextEditor().addActionListener(e -> {
+      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
+      textFilter.addCurrentTextToHistory();
     });
     textFilter.addDocumentListener(new DocumentAdapter() {
       @Override
@@ -158,30 +146,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull
   public ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return new BranchFilterPopupComponent(myUi, myUiProperties, myBranchFilterModel).initUi();
-      }
-    }));
-    actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi();
-      }
-    }));
-    actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return new DateFilterPopupComponent(myDateFilterModel).initUi();
-      }
-    }));
-    actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager()).initUi();
-      }
-    }));
+    actionGroup.add(new FilterActionComponent(() -> new BranchFilterPopupComponent(myUi, myUiProperties, myBranchFilterModel).initUi()));
+    actionGroup.add(new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi()));
+    actionGroup.add(new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi()));
+    actionGroup.add(new FilterActionComponent(
+      () -> new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager()).initUi()));
     return actionGroup;
   }
 

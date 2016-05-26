@@ -96,25 +96,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     List<String> result = new ArrayList<String>();
 
     result.addAll(myBranches);
-    result.addAll(ContainerUtil.map(myPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myPatterns, pattern -> pattern.pattern()));
 
-    result.addAll(ContainerUtil.map(myExcludedBranches, new Function<String, String>() {
-      @Override
-      public String fun(String branchName) {
-        return "-" + branchName;
-      }
-    }));
-    result.addAll(ContainerUtil.map(myExcludedPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return "-" + pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myExcludedBranches, branchName -> "-" + branchName));
+    result.addAll(ContainerUtil.map(myExcludedPatterns, pattern -> "-" + pattern.pattern()));
 
     return result;
   }

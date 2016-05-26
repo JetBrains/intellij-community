@@ -42,17 +42,10 @@ public class GoToHashOrRefAction extends DumbAwareAction {
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     Collection<VcsRef> visibleBranches = VcsLogUtil.getVisibleBranches(log, visibleRoots);
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, new Function<String, Future>() {
-      @Override
-      public Future fun(String text) {
-        return log.jumpToReference(text);
-      }
-    }, new Function<VcsRef, Future>() {
-      @Override
-      public Future fun(VcsRef vcsRef) {
-        return logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot());
-      }
-    }, logUi.getColorManager(), new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, text -> log.jumpToReference(text),
+                                                      vcsRef -> logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot()),
+                                                      logUi.getColorManager(),
+                                                      new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }
 

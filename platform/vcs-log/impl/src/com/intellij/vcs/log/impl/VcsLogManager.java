@@ -206,16 +206,13 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public void consume(@NotNull final Exception e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!myIsBroken) {
-            myIsBroken = true;
-            processErrorFirstTime(e);
-          }
-          else {
-            LOG.debug(e);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myIsBroken) {
+          myIsBroken = true;
+          processErrorFirstTime(e);
+        }
+        else {
+          LOG.debug(e);
         }
       });
     }

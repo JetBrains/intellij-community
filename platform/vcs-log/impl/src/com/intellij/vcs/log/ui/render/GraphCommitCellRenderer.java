@@ -188,12 +188,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private static List<VcsRef> getBranches(Collection<VcsRef> refs) {
-    return ContainerUtil.filter(refs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getType().isBranch();
-      }
-    });
+    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
   }
 
   private static class PaintInfo {

@@ -37,12 +37,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   @NotNull private final Collection<FilePath> myFiles;
 
   public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
-    this(ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
-      @Override
-      public FilePath fun(VirtualFile file) {
-        return VcsUtil.getFilePath(file);
-      }
-    }));
+    this(ContainerUtil.map(files, file -> VcsUtil.getFilePath(file)));
   }
 
   public VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {

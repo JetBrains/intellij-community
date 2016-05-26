@@ -114,12 +114,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       return String.valueOf(tabbedContent.getTabs().size() + 1);
     }
     else {
-      List<Content> contents = ContainerUtil.filter(toolWindow.getContentManager().getContents(), new Condition<Content>() {
-        @Override
-        public boolean value(Content content) {
-          return TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
-        }
-      });
+      List<Content> contents = ContainerUtil.filter(toolWindow.getContentManager().getContents(),
+                                                    content -> TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY)));
       return String.valueOf(contents.size() + 1);
     }
   }

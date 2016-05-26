@@ -83,23 +83,20 @@ public class GoToHashOrRefPopup {
                                    : myOnSelectedRef.fun(mySelectedRef));
             myFuture = future;
             showProgress();
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  future.get();
-                  okPopup();
-                }
-                catch (CancellationException ex) {
-                  cancelPopup();
-                }
-                catch (InterruptedException ex) {
-                  cancelPopup();
-                }
-                catch (ExecutionException ex) {
-                  LOG.error(ex);
-                  cancelPopup();
-                }
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              try {
+                future.get();
+                okPopup();
+              }
+              catch (CancellationException ex) {
+                cancelPopup();
+              }
+              catch (InterruptedException ex) {
+                cancelPopup();
+              }
+              catch (ExecutionException ex) {
+                LOG.error(ex);
+                cancelPopup();
               }
             });
           }
@@ -135,21 +132,11 @@ public class GoToHashOrRefPopup {
   }
 
   private void cancelPopup() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myPopup.cancel();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> myPopup.cancel());
   }
 
   private void okPopup() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myPopup.closeOk(null);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> myPopup.closeOk(null));
   }
 
   public void show(@NotNull JComponent anchor) {
@@ -243,24 +230,18 @@ public class GoToHashOrRefPopup {
     @Nullable
     @Override
     protected InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
-      return new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
-          mySelectedRef = (VcsRef)item.getObject();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              // handleInsert is called in the middle of some other code that works with editor
-              // (see CodeCompletionHandlerBase.insertItem)
-              // for example, scrolls editor
-              // problem is that in onOk we make text field not editable
-              // by some reason this is done by disposing its editor and creating a new one
-              // so editor gets disposed here and CodeCompletionHandlerBase can not finish doing whatever it is doing with it
-              // I counter this by invoking onOk in invokeLater
-              myTextField.onOk();
-            }
-          });
-        }
+      return (context, item1) -> {
+        mySelectedRef = (VcsRef)item1.getObject();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          // handleInsert is called in the middle of some other code that works with editor
+          // (see CodeCompletionHandlerBase.insertItem)
+          // for example, scrolls editor
+          // problem is that in onOk we make text field not editable
+          // by some reason this is done by disposing its editor and creating a new one
+          // so editor gets disposed here and CodeCompletionHandlerBase can not finish doing whatever it is doing with it
+          // I counter this by invoking onOk in invokeLater
+          myTextField.onOk();
+        });
       };
     }
   }

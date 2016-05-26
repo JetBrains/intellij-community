@@ -111,12 +111,9 @@ class VisiblePackBuilder {
   private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
                                       @NotNull Collection<String> hashes,
                                       @NotNull PermanentGraph.SortType sortType) {
-    final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, new Function<String, Integer>() {
-      @Override
-      public Integer fun(String partOfHash) {
-        CommitId commitId = myHashMap.findCommitId(new CommitIdByStringCondition(partOfHash));
-        return commitId != null ? myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
-      }
+    final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
+      CommitId commitId = myHashMap.findCommitId(new CommitIdByStringCondition(partOfHash));
+      return commitId != null ? myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false,
@@ -149,12 +146,9 @@ class VisiblePackBuilder {
   }
 
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull final VcsLogBranchFilter filter) {
-    return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), new Function<VcsRef, Integer>() {
-      @Override
-      public Integer fun(@NotNull VcsRef ref) {
-        boolean acceptRef = filter.matches(ref.getName());
-        return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
-      }
+    return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), ref -> {
+      boolean acceptRef = filter.matches(ref.getName());
+      return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
     }));
   }
 
@@ -190,12 +184,7 @@ class VisiblePackBuilder {
                                     @NotNull final PermanentGraph<Integer> permanentGraph,
                                     @NotNull List<VcsLogDetailsFilter> detailsFilters,
                                     @Nullable final Set<Integer> matchingHeads) {
-    boolean matchesAllDetails = ContainerUtil.and(detailsFilters, new Condition<VcsLogDetailsFilter>() {
-      @Override
-      public boolean value(VcsLogDetailsFilter filter) {
-        return filter.matches(commit);
-      }
-    });
+    boolean matchesAllDetails = ContainerUtil.and(detailsFilters, filter -> filter.matches(commit));
     return matchesAllDetails && matchesAnyHead(permanentGraph, commit, matchingHeads);
   }
 
@@ -216,12 +205,7 @@ class VisiblePackBuilder {
     if (details != null) {
       return details;
     }
-    return UIUtil.invokeAndWaitIfNeeded(new Computable<VcsCommitMetadata>() {
-      @Override
-      public VcsCommitMetadata compute() {
-        return myCommitDetailsGetter.getCommitDataIfAvailable(commitIndex);
-      }
-    });
+    return UIUtil.invokeAndWaitIfNeeded((Computable<VcsCommitMetadata>)() -> myCommitDetailsGetter.getCommitDataIfAvailable(commitIndex));
   }
 
   @NotNull
@@ -248,12 +232,7 @@ class VisiblePackBuilder {
       }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
-      logs.addAll(ContainerUtil.map(matchingCommits, new Function<TimedVcsCommit, CommitId>() {
-        @Override
-        public CommitId fun(TimedVcsCommit commit) {
-          return new CommitId(commit.getId(), root);
-        }
-      }));
+      logs.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));
     }
 
     return logs;
@@ -274,11 +253,6 @@ class VisiblePackBuilder {
       return null;
     }
 
-    return ContainerUtil.map2Set(commits, new Function<CommitId, Integer>() {
-      @Override
-      public Integer fun(CommitId commitId) {
-        return myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      }
-    });
+    return ContainerUtil.map2Set(commits, commitId -> myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()));
   }
 }

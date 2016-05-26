@@ -33,14 +33,11 @@ public class HeavyAwareExecutor implements Disposable {
   }
 
   public void execute(@NotNull Runnable command) {
-    SingleAlarm alarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          if (myIsExecuted.compareAndSet(false, true)) {
-            Disposer.dispose(HeavyAwareExecutor.this);
-            command.run();
-          }
+    SingleAlarm alarm = new SingleAlarm(() -> {
+      if (!HeavyProcessLatch.INSTANCE.isRunning()) {
+        if (myIsExecuted.compareAndSet(false, true)) {
+          Disposer.dispose(this);
+          command.run();
         }
       }
     }, DELAY_MILLIS, Alarm.ThreadToUse.SWING_THREAD, this);
