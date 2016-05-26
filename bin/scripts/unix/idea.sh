@@ -185,7 +185,7 @@ EC=$?
 
 test $EC -ne 88 && exit $EC
 
-RESTARTER="$HOME/.@@system_selector@@/restart/restarter.sh"
+RESTARTER="$HOME/.@@system_selector@@/system/restart/restarter.sh"
 if [ -x "$RESTARTER" ]; then
   "$RESTARTER"
   "$RM" -f "$RESTARTER"
