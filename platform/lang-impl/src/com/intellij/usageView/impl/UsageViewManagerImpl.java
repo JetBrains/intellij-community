@@ -62,9 +62,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                             boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
 
+    Content contentToDelete = null;
     if (!toOpenInNewTab && reusable) {
       Content[] contents = myFindContentManager.getContents();
-      Content contentToDelete = null;
 
       for (Content content : contents) {
         if (!content.isPinned() &&
@@ -76,9 +76,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
           }
         }
       }
-      if (contentToDelete != null) {
-        myFindContentManager.removeContent(contentToDelete, true);
-      }
     }
     Content content = ContentFactory.SERVICE.getInstance().createContent(component, contentName, isLockable);
     content.setTabName(tabName);
@@ -87,6 +84,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
 
     myFindContentManager.addContent(content);
+    if (contentToDelete != null) {
+      myFindContentManager.removeContent(contentToDelete, true);
+    }
     myFindContentManager.setSelectedContent(content);
 
     return content;
