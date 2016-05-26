@@ -39,9 +39,9 @@ class _PropertiesLexer implements FlexLexer {
    * Translates characters to character classes
    */
   private static final String ZZ_CMAP_PACKED = 
-    "\11\0\1\3\1\1\1\6\1\5\1\2\22\0\1\11\1\7\1\0"+
-    "\1\7\26\0\1\10\2\0\1\10\36\0\1\4\50\0\1\6\u1fa2\0"+
-    "\1\6\1\6\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\udfe6\0";
+    "\11\0\1\4\1\2\1\1\1\5\1\3\22\0\1\11\1\7\1\0"+
+    "\1\7\26\0\1\10\2\0\1\10\36\0\1\6\50\0\1\1\u1fa2\0"+
+    "\1\1\1\1\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\udfe6\0";
 
   /** 
    * Translates characters to character classes
@@ -59,12 +59,12 @@ class _PropertiesLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\4\0\1\1\1\2\1\3\1\4\1\3\1\5\1\6"+
+    "\4\0\1\1\1\2\1\3\1\4\1\3\2\5\1\6"+
     "\1\5\1\3\1\7\2\2\1\0\1\1\2\4\1\0"+
     "\1\5\1\10\1\11";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[24];
+    int [] result = new int[25];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -90,11 +90,12 @@ class _PropertiesLexer implements FlexLexer {
 
   private static final String ZZ_ROWMAP_PACKED_0 =
     "\0\0\0\12\0\24\0\36\0\50\0\62\0\74\0\106"+
-    "\0\120\0\132\0\144\0\156\0\170\0\120\0\202\0\214"+
-    "\0\74\0\226\0\240\0\252\0\170\0\264\0\276\0\310";
+    "\0\120\0\132\0\144\0\156\0\170\0\202\0\120\0\214"+
+    "\0\226\0\74\0\240\0\252\0\264\0\202\0\276\0\310"+
+    "\0\322";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[24];
+    int [] result = new int[25];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -117,25 +118,24 @@ class _PropertiesLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\1\5\3\6\1\7\1\6\1\5\1\10\1\11\1\6"+
-    "\1\12\2\13\1\14\1\15\1\6\3\12\1\14\1\12"+
-    "\2\13\1\6\1\15\1\6\2\12\1\16\1\17\1\12"+
-    "\2\13\1\6\1\15\1\6\3\12\1\20\1\5\3\0"+
-    "\1\21\1\0\2\5\3\0\3\6\1\0\1\6\3\0"+
-    "\1\6\2\5\1\22\2\5\2\0\3\5\1\10\2\0"+
-    "\1\23\1\24\1\23\2\10\2\23\12\0\1\12\2\0"+
-    "\1\12\1\25\1\0\4\12\1\0\3\13\1\0\1\13"+
-    "\3\0\1\13\1\12\2\6\1\14\1\25\1\6\3\12"+
-    "\1\14\2\12\1\26\2\12\2\0\3\12\1\0\2\6"+
-    "\1\27\1\0\1\6\3\0\1\6\1\0\2\6\1\30"+
-    "\1\0\1\6\3\0\1\6\2\5\2\0\1\21\1\0"+
-    "\2\5\2\0\1\23\2\0\7\23\1\10\1\5\1\22"+
-    "\2\10\2\23\3\10\2\12\1\0\1\12\1\25\1\0"+
-    "\4\12\1\0\3\6\1\0\1\6\3\0\1\17\1\0"+
-    "\3\6\1\0\1\6\3\0\1\20";
+    "\2\5\4\6\1\7\1\10\1\11\1\6\1\12\1\13"+
+    "\2\14\1\15\1\14\1\16\2\12\1\15\1\12\1\13"+
+    "\2\14\1\6\1\14\1\16\1\12\1\17\1\20\1\12"+
+    "\1\13\2\14\1\6\1\14\1\16\2\12\1\21\2\5"+
+    "\4\0\1\22\1\5\4\0\4\6\3\0\1\6\3\5"+
+    "\1\23\6\5\2\10\2\0\2\24\1\25\1\10\2\24"+
+    "\12\0\2\12\2\0\1\12\1\0\1\26\5\12\2\14"+
+    "\1\13\1\14\1\26\2\12\1\13\2\0\4\14\3\0"+
+    "\1\14\2\12\2\6\1\15\1\6\1\26\2\12\1\15"+
+    "\3\12\1\27\6\12\2\0\2\6\1\30\1\6\3\0"+
+    "\1\6\2\0\2\6\1\31\1\6\3\0\1\6\3\5"+
+    "\3\0\1\22\1\5\2\0\2\24\2\0\6\24\2\10"+
+    "\1\5\1\23\6\10\3\12\1\0\1\12\1\0\1\26"+
+    "\3\12\2\0\4\6\3\0\1\20\2\0\4\6\3\0"+
+    "\1\21";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[210];
+    int [] result = new int[220];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -173,11 +173,11 @@ class _PropertiesLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\4\0\4\1\1\11\4\1\1\11\2\1\1\0\3\1"+
+    "\4\0\4\1\1\11\5\1\1\11\2\1\1\0\3\1"+
     "\1\0\3\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[24];
+    int [] result = new int[25];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
