@@ -340,12 +340,7 @@ public class PyPsiUtils {
 
   @NotNull
   public static PsiElement getRealContext(@NotNull final PsiElement element) {
-    if (!element.isValid()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("PyPsiUtil.getRealContext(" + element + ") called. Returned null. Element in invalid");
-      }
-      return element;
-    }
+    assertValid(element);
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyExpressionCodeFragment) {
       final PsiElement context = file.getContext();
@@ -595,6 +590,16 @@ public class PyPsiUtils {
       componentNames.add(refName);
     }
     return QualifiedName.fromComponents(componentNames);
+  }
+
+  public static void assertValid(@Nullable final PsiElement element) {
+    if (element == null) {
+      return;
+    }
+    if (! element.isValid()) {
+      throw new PsiInvalidElementAccessException(element, "Element is invalid. You should never work with invalid elements. " +
+                                                          "See _possible_ (and not guaranteed) reason before this message ");
+    }
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

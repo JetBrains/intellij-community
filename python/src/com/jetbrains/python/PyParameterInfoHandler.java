@@ -28,6 +28,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public void updateUI(final PyCallExpression.PyArgumentsMapping oldMapping, @NotNull final ParameterInfoUIContext context) {
     if (oldMapping == null) return;
     final PyCallExpression callExpression = oldMapping.getCallExpression();
-    if (!callExpression.isValid()) return;
+    PyPsiUtils.assertValid(callExpression);
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);

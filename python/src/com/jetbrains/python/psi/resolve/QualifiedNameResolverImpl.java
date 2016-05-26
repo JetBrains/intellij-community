@@ -40,6 +40,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -409,6 +410,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Nullable
   public PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
     // prerequisites
+    PyPsiUtils.assertValid(directory);
     if (directory == null || !directory.isValid()) return null;
 
     PsiElement seeker = directory;

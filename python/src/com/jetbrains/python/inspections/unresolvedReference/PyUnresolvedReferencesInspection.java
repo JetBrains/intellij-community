@@ -33,7 +33,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Consumer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +60,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -1150,9 +1150,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void optimizeImports() {
       final List<PsiElement> elementsToDelete = collectUnusedImportElements();
       for (PsiElement element : elementsToDelete) {
-        if (element.isValid()) {
-          element.delete();
-        }
+        PyPsiUtils.assertValid(element);
+        element.delete();
       }
     }
   }

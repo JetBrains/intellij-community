@@ -377,6 +377,7 @@ public class PyBuiltinCache {
    */
   public boolean isBuiltin(@Nullable PsiElement target) {
     if (target == null) return false;
+    PyPsiUtils.assertValid(target);
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();
     if (!(the_file instanceof PyFile)) {
