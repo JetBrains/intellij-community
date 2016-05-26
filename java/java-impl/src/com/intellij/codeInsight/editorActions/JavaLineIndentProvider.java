@@ -46,9 +46,9 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   protected SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType) {
     return SYNTAX_MAP.get(tokenType);
   }
-
+  
   @Override
-  public boolean isSuitableFor(@Nullable Language language) {
-    return language != null && language.isKindOf(JavaLanguage.INSTANCE);
+  public boolean isSuitableForLanguage(@NotNull Language language) {
+    return language.isKindOf(JavaLanguage.INSTANCE);
   }
 }

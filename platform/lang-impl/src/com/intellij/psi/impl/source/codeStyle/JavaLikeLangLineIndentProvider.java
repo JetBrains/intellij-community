@@ -214,4 +214,11 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   private static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
     return type != null ? Pair.create(type, element) : null;
   }
+
+  @Override
+  public final boolean isSuitableFor(@Nullable Language language) {
+    return language != null && isSuitableForLanguage(language);
+  }
+  
+  public abstract boolean isSuitableForLanguage(@NotNull Language language);
 }
