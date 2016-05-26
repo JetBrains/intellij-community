@@ -54,10 +54,18 @@ class FilesProviderTest {
 class AsciiMessageStorageTest {
     
     lateinit var storage: AsciiMessageCharStorage
+    lateinit var tmpFile: File
 
     @Before
     fun setUp() {
         storage = AsciiMessageCharStorage()
+        tmpFile = File("tmp_test")
+        tmpFile.delete()
+    }
+
+    @After
+    fun tearDown() {
+        tmpFile.delete()
     }
 
     @Test
@@ -71,9 +79,6 @@ class AsciiMessageStorageTest {
         storage.appendLine("text")
         storage.appendLine("text")
         assertThat(storage.size).isEqualTo(10)
-
-        val tmpFile = File("tmp_test")
-        tmpFile.delete()
 
         storage.dump(tmpFile)
         assertThat(tmpFile.length()).isEqualTo(10)
