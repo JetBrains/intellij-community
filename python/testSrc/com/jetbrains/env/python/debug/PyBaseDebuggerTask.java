@@ -28,12 +28,17 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyThreadInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -212,6 +217,35 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   private void doToggleBreakpoint(String file, int line) {
     Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
     XDebuggerTestUtil.toggleBreakpoint(getProject(), LocalFileSystem.getInstance().findFileByPath(file), line);
+  }
+
+  public static void setBreakpointSuspendPolicy(Project project, int line, SuspendPolicy policy) {
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    for (XBreakpoint breakpoint : XDebuggerTestUtil.getBreakpoints(breakpointManager)) {
+      if (breakpoint instanceof XLineBreakpoint) {
+        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+
+        if (lineBreakpoint.getLine() == line) {
+          new WriteAction() {
+            @Override
+            protected void run(@NotNull Result result) throws Throwable {
+              lineBreakpoint.setSuspendPolicy(policy);
+            }
+          }.execute();
+        }
+      }
+    }
+  }
+
+  public String getRunningThread() {
+    for (PyThreadInfo thread : myDebugProcess.getThreads()) {
+      if (!thread.isPydevThread()) {
+        if ((thread.getState() == null) || (thread.getState() == PyThreadInfo.State.RUNNING)) {
+          return thread.getName();
+        }
+      }
+    }
+    return null;
   }
 
   protected Variable eval(String name) throws InterruptedException {
