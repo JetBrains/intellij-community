@@ -108,24 +108,20 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-      @Override
-      public void run() {
-        final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
-          @Override
-          public boolean value(EnvironmentVariable item) {
-            return StringUtil.equals(environmentVariable.getName(), item.getName());
-          }
-        });
-        if (actualEnvVar == null) {
-          return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
+        @Override
+        public boolean value(EnvironmentVariable item) {
+          return StringUtil.equals(environmentVariable.getName(), item.getName());
         }
+      });
+      if (actualEnvVar == null) {
+        return;
+      }
 
-        setSelection(actualEnvVar);
-        if (actualEnvVar.getNameIsWriteable()) {
-          editSelection(0);
-        }
+      setSelection(actualEnvVar);
+      if (actualEnvVar.getNameIsWriteable()) {
+        editSelection(0);
       }
     });
   }

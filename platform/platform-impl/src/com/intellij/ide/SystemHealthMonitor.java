@@ -111,37 +111,34 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        app.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
-            if (component != null) {
-              Rectangle rect = component.getVisibleRect();
-              JBPopupFactory.getInstance()
-                .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
-                  @Override
-                  protected void hyperlinkActivated(HyperlinkEvent e) {
-                    String url = e.getDescription();
-                    if ("ack".equals(url)) {
-                      myProperties.setValue(ignoreKey, "true");
-                    }
-                    else {
-                      BrowserUtil.browse(url);
-                    }
+        app.invokeLater(() -> {
+          JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
+          if (component != null) {
+            Rectangle rect = component.getVisibleRect();
+            JBPopupFactory.getInstance()
+              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
+                @Override
+                protected void hyperlinkActivated(HyperlinkEvent e) {
+                  String url = e.getDescription();
+                  if ("ack".equals(url)) {
+                    myProperties.setValue(ignoreKey, "true");
                   }
-                })
-                .setFadeoutTime(-1)
-                .setHideOnFrameResize(false)
-                .setHideOnLinkClick(true)
-                .setDisposable(app)
-                .createBalloon()
-                .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
-            }
-
-            Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
-            notification.setImportant(true);
-            Notifications.Bus.notify(notification);
+                  else {
+                    BrowserUtil.browse(url);
+                  }
+                }
+              })
+              .setFadeoutTime(-1)
+              .setHideOnFrameResize(false)
+              .setHideOnLinkClick(true)
+              .setDisposable(app)
+              .createBalloon()
+              .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
           }
+
+          Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
+          notification.setImportant(true);
+          Notifications.Bus.notify(notification);
         });
       }
     });
@@ -165,19 +162,16 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         if (!reported.get()) {
           Future<Long> future = ourFreeSpaceCalculation.get();
           if (future == null) {
-            ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Long>() {
-              @Override
-              public Long call() throws Exception {
-                // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
-                // so several times try to recalculate usable space on receiving 0 to be sure
-                long fileUsableSpace = file.getUsableSpace();
-                while (fileUsableSpace == 0) {
-                  TimeoutUtil.sleep(5000);  // hopefully we will not hummer disk too much
-                  fileUsableSpace = file.getUsableSpace();
-                }
-
-                return fileUsableSpace;
+            ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
+              // so several times try to recalculate usable space on receiving 0 to be sure
+              long fileUsableSpace = file.getUsableSpace();
+              while (fileUsableSpace == 0) {
+                TimeoutUtil.sleep(5000);  // hopefully we will not hummer disk too much
+                fileUsableSpace = file.getUsableSpace();
               }
+
+              return fileUsableSpace;
             }));
           }
           if (!future.isDone() || future.isCancelled()) {
@@ -199,26 +193,20 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
               reported.compareAndSet(false, true);
 
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-                  String message = IdeBundle.message("low.disk.space.message", productName);
-                  if (fileUsableSpace < 100 * 1024) {
-                    LOG.warn(message + " (" + fileUsableSpace + ")");
-                    Messages.showErrorDialog(message, "Fatal Configuration Problem");
+              SwingUtilities.invokeLater(() -> {
+                String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+                String message = IdeBundle.message("low.disk.space.message", productName);
+                if (fileUsableSpace < 100 * 1024) {
+                  LOG.warn(message + " (" + fileUsableSpace + ")");
+                  Messages.showErrorDialog(message, "Fatal Configuration Problem");
+                  reported.compareAndSet(true, false);
+                  restart(timeout);
+                }
+                else {
+                  GROUP.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(() -> {
                     reported.compareAndSet(true, false);
                     restart(timeout);
-                  }
-                  else {
-                    GROUP.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
-                      @Override
-                      public void run() {
-                        reported.compareAndSet(true, false);
-                        restart(timeout);
-                      }
-                    }).notify(null);
-                  }
+                  }).notify(null);
                 }
               });
             }

@@ -66,7 +66,11 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   @Override
   public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
-    super.handleEvent(event, associated);
+    // do not resolve conflicts on CHANGE_LEVEL if VisibilityChecker is present
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL &&
+        (!(myPlaceFile instanceof JavaCodeFragment) || ((JavaCodeFragment)myPlaceFile).getVisibilityChecker() == null)) {
+      super.handleEvent(event, associated);
+    }
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStaticScopeFlag = true;
     }

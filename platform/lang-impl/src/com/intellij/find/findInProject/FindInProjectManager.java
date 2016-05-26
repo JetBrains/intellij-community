@@ -83,17 +83,13 @@ public class FindInProjectManager {
       findManager.showFindPopup(findModel, dataContext);
       return;
     }
-    findManager.showFindDialog(findModel, new Runnable() {
-      @Override
-      public void run() {
-        findModel.setOpenInNewTabVisible(false);
-        if (isOpenInNewTabEnabled) {
-          FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
-        }
-
-        startFindInProject(findModel);
+    findManager.showFindDialog(findModel, () -> {
+      findModel.setOpenInNewTabVisible(false);
+      if (isOpenInNewTabEnabled) {
+        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
       }
 
+      startFindInProject(findModel);
     });
     findModel.setOpenInNewTabVisible(false);
   }
@@ -127,13 +123,10 @@ public class FindInProjectManager {
               myIsFindInProgress = true;
 
               try {
-                Processor<UsageInfo> consumer = new Processor<UsageInfo>() {
-                  @Override
-                  public boolean process(UsageInfo info) {
-                    Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-                    usage.getPresentation().getIcon(); // cache icon
-                    return processor.process(usage);
-                  }
+                Processor<UsageInfo> consumer = info -> {
+                  Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+                  usage.getPresentation().getIcon(); // cache icon
+                  return processor.process(usage);
                 };
                 FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
               }

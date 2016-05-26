@@ -120,12 +120,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
               }
               else {
                 final String instanceExprText = instanceExpr.getText();
-                addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
-                  @Override
-                  public String fun(String attribute) {
-                    return instanceExprText + "." + attribute;
-                  }
-                }));
+                addArguments(argumentList, ContainerUtil.map(attrNames, attribute -> instanceExprText + "." + attribute));
               }
             }
             // Class().method() -> method(Class().foo)
@@ -142,12 +137,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
                                                                                   assignmentText);
               //noinspection ConstantConditions
               anchor.getParent().addBefore(assignment, anchor);
-              addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
-                @Override
-                public String fun(String attribute) {
-                  return targetName + "." + attribute;
-                }
-              }));
+              addArguments(argumentList, ContainerUtil.map(attrNames, attribute -> targetName + "." + attribute));
             }
           }
         }

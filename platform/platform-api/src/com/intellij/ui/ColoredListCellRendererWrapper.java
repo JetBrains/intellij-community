@@ -26,7 +26,7 @@ import javax.swing.*;
  */
 public abstract class ColoredListCellRendererWrapper<T> extends ColoredListCellRenderer {
   @Override
-  protected final void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     @SuppressWarnings("unchecked") final T t = (T)value;
     doCustomize(list, t, index, selected, hasFocus);
   }

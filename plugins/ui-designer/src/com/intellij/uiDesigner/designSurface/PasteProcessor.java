@@ -126,22 +126,20 @@ public class PasteProcessor extends EventProcessor {
       final RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
-        new Runnable() {
-          public void run() {
-            location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
-            for(RadComponent c: componentsToPaste) {
-              FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
-                public boolean visit(final IComponent component) {
-                  if (component.getBinding() != null) {
-                    InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
-                  }
-                  return true;
+        () -> {
+          location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
+          for(RadComponent c: componentsToPaste) {
+            FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
+              public boolean visit(final IComponent component) {
+                if (component.getBinding() != null) {
+                  InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
                 }
-              });
-            }
-            FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
-            myEditor.refreshAndSave(true);
+                return true;
+              }
+            });
           }
+          FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
+          myEditor.refreshAndSave(true);
         }, UIDesignerBundle.message("command.paste"), null);
       endPaste();
     }

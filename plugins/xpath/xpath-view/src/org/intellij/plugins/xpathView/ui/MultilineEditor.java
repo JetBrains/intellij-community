@@ -129,14 +129,12 @@ public class MultilineEditor extends JPanel {
     }
 
     private void refocus() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                final Editor editor = myEditorTextField.getEditor();
-                if (editor != null) {
-                    editor.getContentComponent().requestFocus();
-                }
-                myEditorTextField.selectAll();
+        SwingUtilities.invokeLater(() -> {
+            final Editor editor = myEditorTextField.getEditor();
+            if (editor != null) {
+                editor.getContentComponent().requestFocus();
             }
+            myEditorTextField.selectAll();
         });
     }
 

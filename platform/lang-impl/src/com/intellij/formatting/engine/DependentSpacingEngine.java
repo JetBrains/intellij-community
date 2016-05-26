@@ -52,16 +52,13 @@ public class DependentSpacingEngine {
   private final BlockRangesMap myBlockRangesMap;
   
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
-    new TreeMap<TextRange, DependantSpacingImpl>(new Comparator<TextRange>() {
-      @Override
-      public int compare(final TextRange o1, final TextRange o2) {
-        int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
+    new TreeMap<TextRange, DependantSpacingImpl>((o1, o2) -> {
+      int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 
-        if (offsetsDelta == 0) {
-          offsetsDelta = o2.getStartOffset() - o1.getStartOffset();     // starting earlier is greater
-        }
-        return offsetsDelta;
+      if (offsetsDelta == 0) {
+        offsetsDelta = o2.getStartOffset() - o1.getStartOffset();     // starting earlier is greater
       }
+      return offsetsDelta;
     });
 
   public DependentSpacingEngine(BlockRangesMap helper) {

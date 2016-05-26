@@ -270,22 +270,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (ApplicationManager.getApplication().isDisposed()) {
-          return;
-        }
-        final Document[] unsavedDocuments = getUnsavedDocuments();
-        for (Document document : unsavedDocuments) {
-          VirtualFile file = getFile(document);
-          if (file == null) continue;
-          Project project = ProjectUtil.guessProjectForFile(file);
-          if (project == null) continue;
-          if (PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) continue;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (ApplicationManager.getApplication().isDisposed()) {
+        return;
+      }
+      final Document[] unsavedDocuments = getUnsavedDocuments();
+      for (Document document : unsavedDocuments) {
+        VirtualFile file = getFile(document);
+        if (file == null) continue;
+        Project project = ProjectUtil.guessProjectForFile(file);
+        if (project == null) continue;
+        if (PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) continue;
 
-          saveDocument(document);
-        }
+        saveDocument(document);
       }
     });
   }
@@ -422,25 +419,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       return;
     }
 
-    PomModelImpl.guardPsiModificationsIn(new ThrowableRunnable<IOException>() {
-      @Override
-      public void run() throws IOException {
-        myMultiCaster.beforeDocumentSaving(document);
-        LOG.assertTrue(file.isValid());
+    PomModelImpl.guardPsiModificationsIn(() -> {
+      myMultiCaster.beforeDocumentSaving(document);
+      LOG.assertTrue(file.isValid());
 
-        String text = document.getText();
-        String lineSeparator = getLineSeparator(document, file);
-        if (!lineSeparator.equals("\n")) {
-          text = StringUtil.convertLineSeparators(text, lineSeparator);
-        }
-
-        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-        LoadTextUtil.write(project, file, FileDocumentManagerImpl.this, text, document.getModificationStamp());
-
-        myUnsavedDocuments.remove(document);
-        LOG.assertTrue(!myUnsavedDocuments.contains(document));
-        myTrailingSpacesStripper.clearLineModificationFlags(document);
+      String text = document.getText();
+      String lineSeparator = getLineSeparator(document, file);
+      if (!lineSeparator.equals("\n")) {
+        text = StringUtil.convertLineSeparators(text, lineSeparator);
       }
+
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+      LoadTextUtil.write(project, file, FileDocumentManagerImpl.this, text, document.getModificationStamp());
+
+      myUnsavedDocuments.remove(document);
+      LOG.assertTrue(!myUnsavedDocuments.contains(document));
+      myTrailingSpacesStripper.clearLineModificationFlags(document);
     });
   }
 
@@ -637,26 +631,23 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(
-          new ExternalChangeAction.ExternalDocumentChange(document, project) {
-            @Override
-            public void run() {
-              boolean wasWritable = document.isWritable();
-              DocumentEx documentEx = (DocumentEx)document;
-              documentEx.setReadOnly(false);
-              LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
-              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              if (!isBinaryWithoutDecompiler(file)) {
-                documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-                documentEx.setReadOnly(!wasWritable);
-              }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      ApplicationManager.getApplication().runWriteAction(
+        new ExternalChangeAction.ExternalDocumentChange(document, project) {
+          @Override
+          public void run() {
+            boolean wasWritable = document.isWritable();
+            DocumentEx documentEx = (DocumentEx)document;
+            documentEx.setReadOnly(false);
+            LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
+            file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+            if (!isBinaryWithoutDecompiler(file)) {
+              documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
+              documentEx.setReadOnly(!wasWritable);
             }
           }
-        );
-      }
+        }
+      );
     }, UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     myUnsavedDocuments.remove(document);
@@ -664,47 +655,44 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster.fileContentReloaded(file, document);
   }
 
-  private volatile PairProcessor<VirtualFile, Document> askReloadFromDisk = new PairProcessor<VirtualFile, Document>() {
-    @Override
-    public boolean process(final VirtualFile file, final Document document) {
-      String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
+  private volatile PairProcessor<VirtualFile, Document> askReloadFromDisk = (file, document) -> {
+    String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
 
-      final DialogBuilder builder = new DialogBuilder();
-      builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
-      builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
-      builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
-      builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
+    final DialogBuilder builder = new DialogBuilder();
+    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
+    builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
+    builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
+    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
 
-          FileType fileType = file.getFileType();
-          String fsContent = LoadTextUtil.loadText(file).toString();
-          DocumentContent content1 = DiffContentFactory.getInstance().create(fsContent, fileType);
-          DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
-          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
-          String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
-          String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
-          DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
-          request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true);
-          DialogBuilder diffBuilder = new DialogBuilder(project);
-          DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
-          diffPanel.setRequest(request);
-          diffBuilder.setCenterPanel(diffPanel.getComponent());
-          diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
-          diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
-          diffBuilder.addCancelAction();
-          diffBuilder.setTitle(title);
-          if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
-            builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
-          }
+        FileType fileType = file.getFileType();
+        String fsContent = LoadTextUtil.loadText(file).toString();
+        DocumentContent content1 = DiffContentFactory.getInstance().create(fsContent, fileType);
+        DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
+        String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
+        String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
+        String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
+        DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+        request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true);
+        DialogBuilder diffBuilder = new DialogBuilder(project);
+        DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
+        diffPanel.setRequest(request);
+        diffBuilder.setCenterPanel(diffPanel.getComponent());
+        diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
+        diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
+        diffBuilder.addCancelAction();
+        diffBuilder.setTitle(title);
+        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
+          builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
         }
-      });
-      builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
-      builder.setButtonsAlignment(SwingConstants.CENTER);
-      builder.setHelpId("reference.dialogs.fileCacheConflict");
-      return builder.show() == 0;
-    }
+      }
+    });
+    builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
+    builder.setButtonsAlignment(SwingConstants.CENTER);
+    builder.setHelpId("reference.dialogs.fileCacheConflict");
+    return builder.show() == 0;
   };
 
   @TestOnly
@@ -841,11 +829,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.warn(exception);
     }
 
-    final String text = StringUtil.join(failures.values(), new Function<IOException, String>() {
-      @Override
-      public String fun(IOException e) {
-        return e.getMessage();
-      }
+    final String text = StringUtil.join(failures.values(), e -> {
+      return e.getMessage();
     }, "\n");
 
     final DialogWrapper dialog = new DialogWrapper(null) {

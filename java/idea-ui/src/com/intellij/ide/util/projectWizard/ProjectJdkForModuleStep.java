@@ -92,18 +92,16 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
         final ProjectSdksModel projectJdksModel = projectConfig.getProjectJdksModel();
         final boolean[] successfullyAdded = new boolean[1];
         projectJdksModel.reset(project);
-        projectJdksModel.doAdd(myPanel, type, new Consumer<Sdk>() {
-          public void consume(final Sdk jdk) {
-            successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
-            myJdkChooser.updateList(jdk, type, projectJdksModel.getSdks());
+        projectJdksModel.doAdd(myPanel, type, jdk -> {
+          successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
+          myJdkChooser.updateList(jdk, type, projectJdksModel.getSdks());
 
-            if (!successfullyAdded[0]) {
-              try {
-                projectJdksModel.apply(jdkConfig);
-              }
-              catch (ConfigurationException e1) {
-                //name can't be wrong
-              }
+          if (!successfullyAdded[0]) {
+            try {
+              projectJdksModel.apply(jdkConfig);
+            }
+            catch (ConfigurationException e1) {
+              //name can't be wrong
             }
           }
         });
@@ -116,11 +114,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
       public void actionPerformed(ActionEvent e) {
         
         final Sdk jdk = getJdk();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            ProjectRootManagerEx.getInstanceEx(defaultProject).setProjectSdk(jdk);
-          }
-        };
+        final Runnable runnable = () -> ProjectRootManagerEx.getInstanceEx(defaultProject).setProjectSdk(jdk);
         ApplicationManager.getApplication().runWriteAction(runnable);
         mySetAsDefaultButton.setEnabled(false);
       }

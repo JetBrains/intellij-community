@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,16 @@ public class MethodUtils {
 
   private MethodUtils() {}
 
+  public static boolean isComparatorCompare(@Nullable PsiMethod method) {
+    return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
+  }
+
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    if (method == null) {
-      return false;
-    }
-    return methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
   }
 
   public static boolean isHashCode(@Nullable PsiMethod method) {
-    if (method == null) {
-      return false;
-    }
-    return methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
+    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
   public static boolean isToString(@Nullable PsiMethod method) {
@@ -137,14 +135,14 @@ public class MethodUtils {
         if (PsiType.NULL.equals(parameterType)) {
           continue;
         }
-        if (parameterType != null && !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
+        if (parameterType != null && !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }
     }
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
-      if (!EquivalenceChecker.typesAreEquivalent(returnType, methodReturnType)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(returnType, methodReturnType)) {
         return false;
       }
     }

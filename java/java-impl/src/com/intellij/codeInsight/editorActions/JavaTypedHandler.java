@@ -133,12 +133,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
           (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            new JavaSmartEnterProcessor().process(project, editor, file);
-          }
-        }, "Insert block statement", null);
+        CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file), "Insert block statement", null);
         return Result.STOP;
       }
 

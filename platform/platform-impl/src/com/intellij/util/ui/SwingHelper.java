@@ -211,55 +211,43 @@ public class SwingHelper {
 
   public static void resizeDialogToFitTextFor(@NotNull final JComponent... components) {
     if (components.length == 0) return;
-    doWithDialogWrapper(components[0], new Consumer<DialogWrapper>() {
-      @Override
-      public void consume(final DialogWrapper dialogWrapper) {
-        if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {
-          for (Component component : components) {
-            if (component instanceof TextFieldWithHistoryWithBrowseButton) {
-              setPreferredWidthToFitText((TextFieldWithHistoryWithBrowseButton)component);
-            }
-            else if (component instanceof TextFieldWithBrowseButton) {
-              setPreferredWidthToFitText((TextFieldWithBrowseButton)component);
-            }
-            else if (component instanceof JTextField) {
-              setPreferredWidthToFitText((JTextField)component);
-            }
+    doWithDialogWrapper(components[0], dialogWrapper -> {
+      if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {
+        for (Component component : components) {
+          if (component instanceof TextFieldWithHistoryWithBrowseButton) {
+            setPreferredWidthToFitText((TextFieldWithHistoryWithBrowseButton)component);
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              adjustDialogSizeToFitPreferredSize(dialogWrapper);
-            }
-          }, ModalityState.any());
+          else if (component instanceof TextFieldWithBrowseButton) {
+            setPreferredWidthToFitText((TextFieldWithBrowseButton)component);
+          }
+          else if (component instanceof JTextField) {
+            setPreferredWidthToFitText((JTextField)component);
+          }
         }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          adjustDialogSizeToFitPreferredSize(dialogWrapper);
+        }, ModalityState.any());
       }
     });
   }
 
   private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<DialogWrapper> consumer) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
-          return;
-        }
-        component.putClientProperty(DIALOG_RESIZED_TO_FIT_TEXT, true);
-        DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
-        if (dialogWrapper != null) {
-          consumer.consume(dialogWrapper);
-        }
-        else {
-          UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
-            @Override
-            public void run() {
-              DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
-              if (dialogWrapper != null) {
-                consumer.consume(dialogWrapper);
-              }
-            }
-          });
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
+        return;
+      }
+      component.putClientProperty(DIALOG_RESIZED_TO_FIT_TEXT, true);
+      DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
+      if (dialogWrapper != null) {
+        consumer.consume(dialogWrapper);
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(component, () -> {
+          DialogWrapper dialogWrapper1 = DialogWrapper.findInstance(component);
+          if (dialogWrapper1 != null) {
+            consumer.consume(dialogWrapper1);
+          }
+        });
       }
     });
   }

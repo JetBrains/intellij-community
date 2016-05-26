@@ -225,23 +225,17 @@ public abstract class AbstractLayoutCodeProcessor {
     final FutureTask<Boolean> previousTask = getPreviousProcessorTask(file, processChangedTextOnly);
     final FutureTask<Boolean> currentTask = prepareTask(file, processChangedTextOnly);
 
-    return new FutureTask<Boolean>(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        if (previousTask != null) {
-          previousTask.run();
-          if (!previousTask.get() || previousTask.isCancelled()) return false;
-        }
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            currentTask.run();
-          }
-        });
-
-        return currentTask.get() && !currentTask.isCancelled();
+    return new FutureTask<Boolean>(() -> {
+      if (previousTask != null) {
+        previousTask.run();
+        if (!previousTask.get() || previousTask.isCancelled()) return false;
       }
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        currentTask.run();
+      });
+
+      return currentTask.get() && !currentTask.isCancelled();
     });
   }
 
@@ -324,33 +318,27 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<FutureTask<Boolean>>();
-    Runnable readAction = new Runnable() {
-      @Override
-      public void run() {
-        if (!checkFileWritable(file)) return;
-        try{
-          FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
-          writeActionRunnable.set(writeTask);
-        }
-        catch(IncorrectOperationException e){
-          LOG.error(e);
-        }
+    Runnable readAction = () -> {
+      if (!checkFileWritable(file)) return;
+      try{
+        FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
+        writeActionRunnable.set(writeTask);
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
       }
     };
-    Runnable writeAction = new Runnable() {
-      @Override
-      public void run() {
-        if (writeActionRunnable.isNull()) return;
-        FutureTask<Boolean> task = writeActionRunnable.get();
-        task.run();
-        try {
-          task.get();
-        }
-        catch (CancellationException ignored) {
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    Runnable writeAction = () -> {
+      if (writeActionRunnable.isNull()) return;
+      FutureTask<Boolean> task = writeActionRunnable.get();
+      task.run();
+      try {
+        task.get();
+      }
+      catch (CancellationException ignored) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     };
     runLayoutCodeProcess(readAction, writeAction, false );
@@ -401,53 +389,37 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final ModalityState modalityState = ModalityState.current();
 
-    final Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(readAction);
+    final Runnable process = () -> ApplicationManager.getApplication().runReadAction(readAction);
+
+    Runnable runnable = () -> {
+      try {
+        ProgressManager.getInstance().runProcess(process, progressWindow);
       }
-    };
+      catch(ProcessCanceledException e) {
+        return;
+      }
+      catch(IndexNotReadyException e) {
+        return;
+      }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
+      final Runnable writeRunnable = () -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
         try {
-          ProgressManager.getInstance().runProcess(process, progressWindow);
-        }
-        catch(ProcessCanceledException e) {
-          return;
-        }
-        catch(IndexNotReadyException e) {
-          return;
-        }
+          writeAction.run();
 
-        final Runnable writeRunnable = new Runnable() {
-          @Override
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              @Override
-              public void run() {
-                if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-                try {
-                  writeAction.run();
-
-                  if (myPostRunnable != null) {
-                    ApplicationManager.getApplication().invokeLater(myPostRunnable);
-                  }
-                }
-                catch (IndexNotReadyException ignored) {
-                }
-              }
-            }, myCommandName, null);
+          if (myPostRunnable != null) {
+            ApplicationManager.getApplication().invokeLater(myPostRunnable);
           }
-        };
+        }
+        catch (IndexNotReadyException ignored) {
+        }
+      }, myCommandName, null);
 
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          writeRunnable.run();
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(writeRunnable, modalityState, myProject.getDisposed());
-        }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        writeRunnable.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(writeRunnable, modalityState, myProject.getDisposed());
       }
     };
 
@@ -534,12 +506,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
         if (shouldProcessFile(file)) {
           updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), getPresentablePath(file));
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-            @Override
-            public void run() {
-              performFileProcessing(file);
-            }
-          });
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(file));
         }
       }
 

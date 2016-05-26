@@ -120,12 +120,7 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     if (!isWaitingForConnection()) {
       setWaitingForConnection(true);
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          waitForConnection(getCurrentStateMessage(), getConnectionTitle());
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()));
     }
   }
 }

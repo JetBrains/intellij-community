@@ -156,26 +156,23 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myDebuggerSession =
-            DebuggerManagerEx.getInstanceEx(myProject)
-              .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-                                                                  .runProfile(new MockConfiguration())
-                                                                  .build(), javaCommandLineState, debugParameters, false));
-          XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
-            @Override
-            @NotNull
-            public XDebugProcess start(@NotNull XDebugSession session) {
-              return JavaDebugProcess.create(session, myDebuggerSession);
-            }
-          });
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        myDebuggerSession =
+          DebuggerManagerEx.getInstanceEx(myProject)
+            .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+                                                                .runProfile(new MockConfiguration())
+                                                                .build(), javaCommandLineState, debugParameters, false));
+        XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull XDebugSession session) {
+            return JavaDebugProcess.create(session, myDebuggerSession);
+          }
+        });
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
       }
     }, ModalityState.defaultModalityState());
     myDebugProcess = myDebuggerSession.getProcess();
@@ -366,14 +363,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     if(request.isDone()) {
       thread.interrupt();
     }
-      waitFor(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            thread.join();
-          }
-          catch (InterruptedException ignored) {
-          }
+      waitFor(() -> {
+        try {
+          thread.join();
+        }
+        catch (InterruptedException ignored) {
         }
       });
 
@@ -400,12 +394,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     });
 
-    waitFor(new Runnable() {
-      @Override
-      public void run() {
-        s.waitFor();
-      }
-    });
+    waitFor(() -> s.waitFor());
   }
 
   public DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
@@ -443,15 +432,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void createBreakpointInHelloWorld() {
-    DebuggerInvocationUtil.invokeAndWait(myProject, new Runnable() {
-      @Override
-      public void run() {
-        BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-        PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass("HelloWorld", GlobalSearchScope.allScope(myProject));
-        assertNotNull(psiClass);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-        breakpointManager.addLineBreakpoint(document, 3);
-      }
+    DebuggerInvocationUtil.invokeAndWait(myProject, () -> {
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+      PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass("HelloWorld", GlobalSearchScope.allScope(myProject));
+      assertNotNull(psiClass);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
+      breakpointManager.addLineBreakpoint(document, 3);
     }, ApplicationManager.getApplication().getDefaultModalityState());
   }
 

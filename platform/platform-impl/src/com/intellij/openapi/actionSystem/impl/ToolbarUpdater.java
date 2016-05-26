@@ -108,12 +108,7 @@ public abstract class ToolbarUpdater implements Activatable {
           fm.doWhenFocusSettlesDown(updateRunnable);
         }
         else {
-          UiNotifyConnector.doWhenFirstShown(myComponent, new Runnable() {
-            @Override
-            public void run() {
-              fm.doWhenFocusSettlesDown(updateRunnable);
-            }
-          });
+          UiNotifyConnector.doWhenFirstShown(myComponent, () -> fm.doWhenFocusSettlesDown(updateRunnable));
         }
       }
     }

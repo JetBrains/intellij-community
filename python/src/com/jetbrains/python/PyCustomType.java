@@ -261,17 +261,14 @@ public class PyCustomType implements PyClassLikeType {
                                  @NotNull final TypeEvalContext context) {
     for (final PyClassLikeType type : myTypesToMimic) {
       // Only visit methods that are allowed by filter (if any)
-      type.visitMembers(new Processor<PsiElement>() {
-        @Override
-        public boolean process(final PsiElement t) {
-          if (!(t instanceof PyElement)) {
-            return true;
-          }
-          if (myFilter == null || myFilter.process((PyElement)t)) {
-            return processor.process(t);
-          }
+      type.visitMembers(t -> {
+        if (!(t instanceof PyElement)) {
           return true;
         }
+        if (myFilter == null || myFilter.process((PyElement)t)) {
+          return processor.process(t);
+        }
+        return true;
       }, inherited, context);
     }
   }

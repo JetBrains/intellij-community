@@ -50,19 +50,13 @@ public class MnemonicHelper extends ComponentTreeWatcher {
    public void propertyChange(PropertyChangeEvent evt) {
      final Object source = evt.getSource();
      //noinspection SSBasedInspection
-     SwingUtilities.invokeLater(new Runnable() {
-       // It is needed to process this event later,
-       // because the method is invoked from the setText method
-       // before Swing updates mnemonics
-       @Override
-       public void run() {
-         if (source instanceof AbstractButton) {
-           // see javax.swing.AbstractButton.setText
-           DialogUtil.registerMnemonic(((AbstractButton)source));
-         } else if (source instanceof JLabel) {
-           // javax.swing.JLabel.setText
-           DialogUtil.registerMnemonic(((JLabel)source), null);
-         }
+     SwingUtilities.invokeLater(() -> {
+       if (source instanceof AbstractButton) {
+         // see javax.swing.AbstractButton.setText
+         DialogUtil.registerMnemonic(((AbstractButton)source));
+       } else if (source instanceof JLabel) {
+         // javax.swing.JLabel.setText
+         DialogUtil.registerMnemonic(((JLabel)source), null);
        }
      });
    }

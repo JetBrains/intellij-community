@@ -49,10 +49,8 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
         process.getManagerThread().invoke(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads));
-              }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads));
             }, ModalityState.NON_MODAL);
           }
         });

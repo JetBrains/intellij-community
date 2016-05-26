@@ -786,12 +786,7 @@ public class TypesUtil {
       @Override
       protected PsiType[] inferComponents() {
         final GrAnnotationMemberValue[] initializers = value.getInitializers();
-        return ContainerUtil.map(initializers, new Function<GrAnnotationMemberValue, PsiType>() {
-          @Override
-          public PsiType fun(GrAnnotationMemberValue value) {
-            return inferAnnotationMemberValueType(value);
-          }
-        }, PsiType.createArray(initializers.length));
+        return ContainerUtil.map(initializers, value1 -> inferAnnotationMemberValueType(value1), PsiType.createArray(initializers.length));
       }
 
       @Override

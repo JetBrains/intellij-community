@@ -140,12 +140,8 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
       sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
-      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null), new Function<PyClass, String>() {
-          @Override
-          public String fun(PyClass cls) {
-            return PyUtil.isObjectClass(cls) ? null : cls.getName();
-          }
-        });
+      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null),
+                                                           cls -> PyUtil.isObjectClass(cls) ? null : cls.getName());
       if (!supers.isEmpty()) {
         sb.append("(");
         StringUtil.join(supers, ", ", sb);

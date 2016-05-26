@@ -10,7 +10,9 @@ private enum class TypeMarker {
   ELEMENT, CDATA, TEXT, ELEMENT_END
 }
 
-fun writeElement(element: Element, out: OutputStream) = writeElement(element, DataOutputStream(out))
+fun writeElement(element: Element, out: OutputStream) {
+  writeElement(element, DataOutputStream(out))
+}
 
 fun writeElement(element: Element, out: DataOutputStream) {
   writeElement(out, element)

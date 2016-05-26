@@ -136,11 +136,8 @@ public class PatchProjectUtil {
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableModelCommitter.multiCommit(models, modulesModel);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModifiableModelCommitter.multiCommit(models, modulesModel);
     });
   }
 

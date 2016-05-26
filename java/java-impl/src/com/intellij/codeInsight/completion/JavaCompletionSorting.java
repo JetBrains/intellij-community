@@ -277,16 +277,13 @@ public class JavaCompletionSorting {
 
     public PreferDefaultTypeWeigher(ExpectedTypeInfo[] expectedTypes, CompletionParameters parameters) {
       super("defaultType");
-      myExpectedTypes = expectedTypes == null ? null : ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, new Function<ExpectedTypeInfo, ExpectedTypeInfo>() {
-        @Override
-        public ExpectedTypeInfo fun(ExpectedTypeInfo info) {
-          PsiType type = removeClassWildcard(info.getType());
-          PsiType defaultType = removeClassWildcard(info.getDefaultType());
-          if (type == info.getType() && defaultType == info.getDefaultType()) {
-            return info;
-          }
-          return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType(), null, ExpectedTypeInfoImpl.NULL);
+      myExpectedTypes = expectedTypes == null ? null : ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, info -> {
+        PsiType type = removeClassWildcard(info.getType());
+        PsiType defaultType = removeClassWildcard(info.getDefaultType());
+        if (type == info.getType() && defaultType == info.getDefaultType()) {
+          return info;
         }
+        return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType(), null, ExpectedTypeInfoImpl.NULL);
       });
       myParameters = parameters;
 

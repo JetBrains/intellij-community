@@ -2254,11 +2254,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         log += "<none> ";
         return;
       }
-      log += StringUtil.join(updated, new Function<MavenProject, String>() {
-        @Override
-        public String fun(MavenProject each) {
-          return each.getMavenId().getArtifactId();
-        }
+      log += StringUtil.join(updated, each -> {
+        return each.getMavenId().getArtifactId();
       }, " ") + " ";
     }
 

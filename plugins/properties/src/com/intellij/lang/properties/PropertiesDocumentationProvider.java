@@ -69,11 +69,8 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
         if (background != null) {
           info +="<div bgcolor=#"+ GuiUtils.colorToHex(background)+">";
         }
-        String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim();
-          }
+        String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), s -> {
+          return StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim();
         }), "<br>");
         info += "<font color=#" + GuiUtils.colorToHex(attributes.getForegroundColor()) + ">" + doc + "</font>\n<br>";
         if (background != null) {

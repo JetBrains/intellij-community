@@ -421,14 +421,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     ArrayList<PsiField> initializedFields = new ArrayList<PsiField>(fieldsToInitializers.keySet());
 
-    Collections.sort(initializedFields, new Comparator<PsiField>() {
-      public int compare(PsiField field1, PsiField field2) {
-        Initializer i1 = fieldsToInitializers.get(field1);
-        Initializer i2 = fieldsToInitializers.get(field2);
-        if(i1.movedFieldsUsed.contains(field2)) return 1;
-        if(i2.movedFieldsUsed.contains(field1)) return -1;
-        return 0;
-      }
+    Collections.sort(initializedFields, (field1, field2) -> {
+      Initializer i1 = fieldsToInitializers.get(field1);
+      Initializer i2 = fieldsToInitializers.get(field2);
+      if(i1.movedFieldsUsed.contains(field2)) return 1;
+      if(i2.movedFieldsUsed.contains(field1)) return -1;
+      return 0;
     });
 
     for (final PsiField initializedField : initializedFields) {

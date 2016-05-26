@@ -165,16 +165,13 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     final int endOffset = markupDocument.getTextLength();
 
     final Ref<RangeHighlighterEx> found = new Ref<RangeHighlighterEx>();
-    markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        GutterMark renderer = highlighter.getGutterIconRenderer();
-        if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
-          found.set(highlighter);
-          return false;
-        }
-        return true;
+    markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      GutterMark renderer = highlighter.getGutterIconRenderer();
+      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
+        found.set(highlighter);
+        return false;
       }
+      return true;
     });
     return found.get();
   }
@@ -336,13 +333,9 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.setColor(new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          //noinspection UseJBColor
-          return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
-        }
+      g.setColor(new JBColor(() -> {
+        //noinspection UseJBColor
+        return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
       }));
       g.fillRect(x, y, getIconWidth(), getIconHeight());
 

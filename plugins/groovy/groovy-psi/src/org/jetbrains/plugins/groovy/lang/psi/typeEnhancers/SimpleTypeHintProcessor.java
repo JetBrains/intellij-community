@@ -42,16 +42,13 @@ public class SimpleTypeHintProcessor extends SignatureHintProcessor {
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull PsiSubstitutor substitutor,
                                                  @NotNull String[] options) {
-    return Collections.singletonList(ContainerUtil.map(options, new Function<String, PsiType>() {
-      @Override
-      public PsiType fun(String value) {
-        try {
-          PsiType type = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(value, method);
-          return DefaultGroovyMethods.asBoolean(type) ? type : PsiType.NULL;
-        }
-        catch (IncorrectOperationException e) {
-          return PsiType.NULL;
-        }
+    return Collections.singletonList(ContainerUtil.map(options, value -> {
+      try {
+        PsiType type = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(value, method);
+        return DefaultGroovyMethods.asBoolean(type) ? type : PsiType.NULL;
+      }
+      catch (IncorrectOperationException e) {
+        return PsiType.NULL;
       }
     }, new PsiType[options.length]));
   }

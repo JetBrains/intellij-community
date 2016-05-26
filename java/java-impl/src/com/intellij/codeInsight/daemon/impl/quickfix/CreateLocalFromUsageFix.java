@@ -144,11 +144,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(localVariable);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(localVariable);
           });
         }
       }

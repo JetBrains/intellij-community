@@ -365,12 +365,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), new Processor<PsiFile>() {
-      @Override
-      public boolean process(final PsiFile psiFile) {
-        return true;
-      }
-    }, true); // to initialize caches
+    PsiSearchHelper.SERVICE.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), psiFile -> true, true); // to initialize caches
 
 /*
     rootManager.startChange();
@@ -423,12 +418,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     assertEquals(expectedFiles.length, files.size());
 
-    Collections.sort(files, new Comparator<PsiFile>() {
-      @Override
-      public int compare(PsiFile file1, PsiFile file2) {
-        return file1.getName().compareTo(file2.getName());
-      }
-    });
+    Collections.sort(files, (file1, file2) -> file1.getName().compareTo(file2.getName()));
     Arrays.sort(expectedFiles);
 
     for(int i = 0; i < expectedFiles.length; i++){
@@ -445,12 +435,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     assertEquals(expectedFiles.length, files.length);
 
-    Arrays.sort(files, new Comparator<PsiFile>() {
-      @Override
-      public int compare(PsiFile file1, PsiFile file2) {
-        return file1.getName().compareTo(file2.getName());
-      }
-    });
+    Arrays.sort(files, (file1, file2) -> file1.getName().compareTo(file2.getName()));
     Arrays.sort(expectedFiles);
 
     for(int i = 0; i < expectedFiles.length; i++){

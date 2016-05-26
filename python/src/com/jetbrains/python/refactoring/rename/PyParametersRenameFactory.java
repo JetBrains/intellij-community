@@ -67,18 +67,15 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
 
     public PyParametersRenamer(final PyParameter element, String newName) {
       PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      PyOverridingMethodsSearch.search(function, true).forEach(new Processor<PyFunction>() {
-        @Override
-        public boolean process(PyFunction pyFunction) {
-          PyParameter[] parameters = pyFunction.getParameterList().getParameters();
-          for (PyParameter parameter : parameters) {
-            PyNamedParameter named = parameter.getAsNamed();
-            if (named != null && Comparing.equal(named.getName(), element.getName())) {
-              myElements.add(named);
-            }
+      PyOverridingMethodsSearch.search(function, true).forEach(pyFunction -> {
+        PyParameter[] parameters = pyFunction.getParameterList().getParameters();
+        for (PyParameter parameter : parameters) {
+          PyNamedParameter named = parameter.getAsNamed();
+          if (named != null && Comparing.equal(named.getName(), element.getName())) {
+            myElements.add(named);
           }
-          return true;
         }
+        return true;
       });
       suggestAllNames(element.getName(), newName);
     }

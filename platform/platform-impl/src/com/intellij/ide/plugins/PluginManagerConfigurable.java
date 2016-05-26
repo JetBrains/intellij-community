@@ -131,11 +131,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     Disposer.register(d, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showShutdownDialogIfNeeded();
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          showShutdownDialogIfNeeded();
         }, ApplicationManager.getApplication().getDisposed());
       }
     });
@@ -192,12 +189,9 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   @Override
   @Nullable
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (myPluginManagerMain != null) {
-          myPluginManagerMain.filter(option);
-        }
+    return () -> {
+      if (myPluginManagerMain != null) {
+        myPluginManagerMain.filter(option);
       }
     };
   }

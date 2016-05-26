@@ -269,16 +269,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         if (method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null) {
           PsiClass aClass = method.getContainingClass();
           final Set<PsiClass> probableTypes = new HashSet<PsiClass>();
-          InheritanceUtil.processSupers(aClass, false, new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
-                for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
-                  ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
-                }
+          InheritanceUtil.processSupers(aClass, false, psiClass -> {
+            for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
+              for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
+                ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
               }
-              return true;
             }
+            return true;
           });
           List<PsiClass> filtered = ContainerUtil.filter(candidates, new Condition<PsiClass>() {
             @Override
@@ -339,12 +336,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         !LaterInvocator.isInModalContext() &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          action.execute();
-        }
-      });
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return Result.CLASS_AUTO_IMPORTED;
     }
 
@@ -435,16 +427,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        List<PsiClass> classesToImport = getClassesToImport(true);
-        PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
-        if (classes.length == 0) return;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      List<PsiClass> classesToImport = getClassesToImport(true);
+      PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+      if (classes.length == 0) return;
 
-        AddImportAction action = createAddImportAction(classes, project, editor);
-        action.execute();
-      }
+      AddImportAction action = createAddImportAction(classes, project, editor);
+      action.execute();
     });
   }
 

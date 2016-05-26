@@ -212,8 +212,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       //noinspection ResultOfObjectAllocationIgnored
       new IdeaApplication(args);
     }
-    gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-    writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
+    gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+    writePauses = gatherStatistics ? new PausesStat("Write action") : null;
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
@@ -454,7 +454,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> ApplicationImpl.super.createComponents(indicator);
+    Runnable task = () -> super.createComponents(indicator);
 
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -511,10 +511,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
 
-    if (gatherWriteActionStatistics) {
+    if (gatherStatistics) {
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
     }
   }
 
@@ -1096,14 +1097,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final boolean gatherWriteActionStatistics;
+  private final boolean gatherStatistics;
   private final PausesStat writePauses;
 
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
-    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
+    if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       writePauses.started();
     }
     myWriteActionPending = true;
@@ -1142,7 +1143,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
     finally {
       myWriteActionsStack.pop();
-      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
+      if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         writePauses.finished("write action ("+clazz+")");
       }
       if (myWriteActionsStack.isEmpty()) {

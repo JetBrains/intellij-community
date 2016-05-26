@@ -149,12 +149,7 @@ public class TemplateState implements Disposable {
       @Override
       public void beforeCommandFinished(CommandEvent event) {
         if (started && !isDisposed()) {
-          Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              afterChangedUpdate();
-            }
-          };
+          Runnable runnable = () -> afterChangedUpdate();
           final LookupImpl lookup = myEditor != null ? (LookupImpl)LookupManager.getActiveLookup(myEditor) : null;
           if (lookup != null) {
             lookup.performGuardedChange(runnable);
@@ -410,40 +405,37 @@ public class TemplateState implements Disposable {
   }
 
   private void processAllExpressions(@NotNull final TemplateImpl template) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
-        for (int i = 0; i < template.getSegmentsCount(); i++) {
-          int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
-          mySegments.addSegment(segmentOffset, segmentOffset);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
+      for (int i = 0; i < template.getSegmentsCount(); i++) {
+        int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
+        mySegments.addSegment(segmentOffset, segmentOffset);
+      }
 
-        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
-        calcResults(false);
-        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
-        calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
-        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
-        doReformat(null);
+      LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
+      calcResults(false);
+      LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
+      calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
+      LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
+      doReformat(null);
 
-        int nextVariableNumber = getNextVariableNumber(-1);
+      int nextVariableNumber = getNextVariableNumber(-1);
 
-        if (nextVariableNumber >= 0) {
-          fireWaitingForInput();
-        }
+      if (nextVariableNumber >= 0) {
+        fireWaitingForInput();
+      }
 
-        if (nextVariableNumber == -1) {
+      if (nextVariableNumber == -1) {
+        finishTemplateEditing();
+      }
+      else {
+        setCurrentVariableNumber(nextVariableNumber);
+        initTabStopHighlighters();
+        initListeners();
+        focusCurrentExpression();
+        currentVariableChanged(-1);
+        if (isMultiCaretMode()) {
           finishTemplateEditing();
-        }
-        else {
-          setCurrentVariableNumber(nextVariableNumber);
-          initTabStopHighlighters();
-          initListeners();
-          focusCurrentExpression();
-          currentVariableChanged(-1);
-          if (isMultiCaretMode()) {
-            finishTemplateEditing();
-          }
         }
       }
     });
@@ -462,19 +454,16 @@ public class TemplateState implements Disposable {
       rangeMarker.setGreedyToRight(true);
     }
     final RangeMarker finalRangeMarker = rangeMarker;
-    final Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        IntArrayList indices = initEmptyVariables();
-        mySegments.setSegmentsGreedy(false);
-        LOG.assertTrue(myTemplateRange.isValid(),
-                       "template key: " + myTemplate.getKey() + "; " +
-                       "template text" + myTemplate.getTemplateText() + "; " +
-                       "variable number: " + getCurrentVariableNumber());
-        reformat(finalRangeMarker);
-        mySegments.setSegmentsGreedy(true);
-        restoreEmptyVariables(indices);
-      }
+    final Runnable action = () -> {
+      IntArrayList indices = initEmptyVariables();
+      mySegments.setSegmentsGreedy(false);
+      LOG.assertTrue(myTemplateRange.isValid(),
+                     "template key: " + myTemplate.getKey() + "; " +
+                     "template text" + myTemplate.getTemplateText() + "; " +
+                     "variable number: " + getCurrentVariableNumber());
+      reformat(finalRangeMarker);
+      mySegments.setSegmentsGreedy(true);
+      restoreEmptyVariables(indices);
     };
     ApplicationManager.getApplication().runWriteAction(action);
   }
@@ -491,19 +480,16 @@ public class TemplateState implements Disposable {
   }
 
   private void shortenReferences() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiFile file = getPsiFile();
-        if (file != null) {
-          IntArrayList indices = initEmptyVariables();
-          mySegments.setSegmentsGreedy(false);
-          for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-            processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
-          }
-          mySegments.setSegmentsGreedy(true);
-          restoreEmptyVariables(indices);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final PsiFile file = getPsiFile();
+      if (file != null) {
+        IntArrayList indices = initEmptyVariables();
+        mySegments.setSegmentsGreedy(false);
+        for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+          processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }
+        mySegments.setSegmentsGreedy(true);
+        restoreEmptyVariables(indices);
       }
     });
   }
@@ -581,40 +567,37 @@ public class TemplateState implements Disposable {
       myEditor.getSelectionModel().setSelection(start, end);
     }
 
-    DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        Expression expressionNode = getCurrentExpression();
-        List<TemplateExpressionLookupElement> lookupItems;
-        try {
-          lookupItems = getCurrentExpressionLookupItems();
-        }
-        catch (IndexNotReadyException e) {
-          lookupItems = Collections.emptyList();
-        }
-        final PsiFile psiFile = getPsiFile();
-        if (!lookupItems.isEmpty()) {
-          if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
-            insertSingleItem(lookupItems);
-          }
-          else {
-            for (LookupElement lookupItem : lookupItems) {
-              assert lookupItem != null : expressionNode;
-            }
-
-            runLookup(lookupItems, expressionNode.getAdvertisingText());
-          }
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+      Expression expressionNode = getCurrentExpression();
+      List<TemplateExpressionLookupElement> lookupItems;
+      try {
+        lookupItems = getCurrentExpressionLookupItems();
+      }
+      catch (IndexNotReadyException e) {
+        lookupItems = Collections.emptyList();
+      }
+      final PsiFile psiFile = getPsiFile();
+      if (!lookupItems.isEmpty()) {
+        if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
+          insertSingleItem(lookupItems);
         }
         else {
-          try {
-            Result result = expressionNode.calculateResult(getCurrentExpressionContext());
-            if (result != null) {
-              result.handleFocused(psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
-                                   mySegments.getSegmentEnd(currentSegmentNumber));
-            }
+          for (LookupElement lookupItem : lookupItems) {
+            assert lookupItem != null : expressionNode;
           }
-          catch (IndexNotReadyException ignore) {
+
+          runLookup(lookupItems, expressionNode.getAdvertisingText());
+        }
+      }
+      else {
+        try {
+          Result result = expressionNode.calculateResult(getCurrentExpressionContext());
+          if (result != null) {
+            result.handleFocused(psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
+                                 mySegments.getSegmentEnd(currentSegmentNumber));
           }
+        }
+        catch (IndexNotReadyException ignore) {
         }
       }
     });
@@ -709,64 +692,57 @@ public class TemplateState implements Disposable {
 
     fixOverlappedSegments(myCurrentSegmentNumber);
 
-    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed()) {
-          return;
-        }
-        BitSet calcedSegments = new BitSet();
-        int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
-
-        do {
-          maxAttempts--;
-          calcedSegments.clear();
-          for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
-            String variableName = myTemplate.getVariableNameAt(i);
-            final int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-            if (segmentNumber < 0) continue;
-            final Expression expression = myTemplate.getExpressionAt(i);
-            final Expression defaultValue = myTemplate.getDefaultValueAt(i);
-            String oldValue = getVariableValueText(variableName);
-            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-              @Override
-              public void run() {
-                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
-              }
-            });
-            final TextResult value = getVariableValue(variableName);
-            assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
-            String newValue = value.getText();
-            if (!newValue.equals(oldValue)) {
-              calcedSegments.set(segmentNumber);
-            }
-          }
-
-          List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
-          boolean selectionCalculated = false;
-          for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
-            if (!calcedSegments.get(i)) {
-              String variableName = myTemplate.getSegmentName(i);
-              if (variableName.equals(TemplateImpl.SELECTION)) {
-                if (mySelectionCalculated) {
-                  continue;
-                }
-                selectionCalculated = true;
-              }
-              if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
-              String newValue = getVariableValueText(variableName);
-              int start = mySegments.getSegmentStart(i);
-              int end = mySegments.getSegmentEnd(i);
-              changes.add(new TemplateDocumentChange(newValue, start, end, i));
-            }
-          }
-          executeChanges(changes);
-          if (selectionCalculated) {
-            mySelectionCalculated = true;
-          }
-        }
-        while (!calcedSegments.isEmpty() && maxAttempts >= 0);
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      if (isDisposed()) {
+        return;
       }
+      BitSet calcedSegments = new BitSet();
+      int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
+
+      do {
+        maxAttempts--;
+        calcedSegments.clear();
+        for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
+          String variableName = myTemplate.getVariableNameAt(i);
+          final int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+          if (segmentNumber < 0) continue;
+          final Expression expression = myTemplate.getExpressionAt(i);
+          final Expression defaultValue = myTemplate.getDefaultValueAt(i);
+          String oldValue = getVariableValueText(variableName);
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(
+            () -> recalcSegment(segmentNumber, isQuick, expression, defaultValue));
+          final TextResult value = getVariableValue(variableName);
+          assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
+          String newValue = value.getText();
+          if (!newValue.equals(oldValue)) {
+            calcedSegments.set(segmentNumber);
+          }
+        }
+
+        List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
+        boolean selectionCalculated = false;
+        for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
+          if (!calcedSegments.get(i)) {
+            String variableName = myTemplate.getSegmentName(i);
+            if (variableName.equals(TemplateImpl.SELECTION)) {
+              if (mySelectionCalculated) {
+                continue;
+              }
+              selectionCalculated = true;
+            }
+            if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
+            String newValue = getVariableValueText(variableName);
+            int start = mySegments.getSegmentStart(i);
+            int end = mySegments.getSegmentEnd(i);
+            changes.add(new TemplateDocumentChange(newValue, start, end, i));
+          }
+        }
+        executeChanges(changes);
+        if (selectionCalculated) {
+          mySelectionCalculated = true;
+        }
+      }
+      while (!calcedSegments.isEmpty() && maxAttempts >= 0);
     });
   }
 
@@ -789,20 +765,14 @@ public class TemplateState implements Disposable {
       return;
     }
     if (changes.size() > 1) {
-      ContainerUtil.sort(changes, new Comparator<TemplateDocumentChange>() {
-        @Override
-        public int compare(TemplateDocumentChange o1, TemplateDocumentChange o2) {
-          int startDiff = o2.startOffset - o1.startOffset;
-          return startDiff != 0 ? startDiff : o2.endOffset - o1.endOffset;
-        }
+      ContainerUtil.sort(changes, (o1, o2) -> {
+        int startDiff = o2.startOffset - o1.startOffset;
+        return startDiff != 0 ? startDiff : o2.endOffset - o1.endOffset;
       });
     }
-    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-      @Override
-      public void run() {
-        for (TemplateDocumentChange change : changes) {
-          replaceString(change.newValue, change.startOffset, change.endOffset, change.segmentNumber);
-        }
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
+      for (TemplateDocumentChange change : changes) {
+        replaceString(change.newValue, change.startOffset, change.endOffset, change.segmentNumber);
       }
     });
   }
@@ -935,11 +905,8 @@ public class TemplateState implements Disposable {
     int nextVariableNumber = getNextVariableNumber(oldVar);
     if (nextVariableNumber == -1) {
       calcResults(false);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          reformat(null);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        reformat(null);
       });
       finishTemplateEditing();
       return;
@@ -1174,12 +1141,9 @@ public class TemplateState implements Disposable {
       int index = indices.get(i);
       rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
-    Collections.sort(rangesToRemove, new Comparator<TextRange>() {
-      @Override
-      public int compare(TextRange o1, TextRange o2) {
-        int startDiff = o2.getStartOffset() - o1.getStartOffset();
-        return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
-      }
+    Collections.sort(rangesToRemove, (o1, o2) -> {
+      int startDiff = o2.getStartOffset() - o1.getStartOffset();
+      return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
     });
     DocumentUtil.executeInBulk(myDocument, true, () -> {
       if (isDisposed()) {
@@ -1245,12 +1209,9 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-        @Override
-        public void run() {
-          for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-            optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
-          }
+      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+        for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+          optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }
       });
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);

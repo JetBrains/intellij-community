@@ -79,12 +79,7 @@ public class TestStateStorage implements Disposable {
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(new Runnable() {
-      @Override
-      public void run() {
-        flushMap();
-      }
-    });
+    myMapFlusher = FlushingDaemon.everyFiveSeconds(() -> flushMap());
 
   }
 

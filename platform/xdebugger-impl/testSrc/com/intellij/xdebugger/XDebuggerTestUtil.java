@@ -165,11 +165,7 @@ public class XDebuggerTestUtil {
   public static void waitForSwing() throws InterruptedException, InvocationTargetException {
     final com.intellij.util.concurrency.Semaphore s = new com.intellij.util.concurrency.Semaphore();
     s.down();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        s.up();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> s.up());
     s.waitForUnsafe();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
@@ -335,11 +331,8 @@ public class XDebuggerTestUtil {
 
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
     final XTestNavigatable n = new XTestNavigatable();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        value.computeSourcePosition(n);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      value.computeSourcePosition(n);
     });
     assertNotNull(n.myPosition);
     assertEquals(file, n.myPosition.getFile());

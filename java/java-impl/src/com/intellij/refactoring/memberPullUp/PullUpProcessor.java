@@ -110,12 +110,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(mySourceClass);
-    data.addMembers(myMembersToMove, new Function<MemberInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfo info) {
-        return info.getMember();
-      }
-    });
+    data.addMembers(myMembersToMove, info -> info.getMember());
     return data;
   }
 
@@ -140,45 +135,32 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
       processor.updateUsage(element);
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        processMethodsDuplicates();
-      }
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   private void processMethodsDuplicates() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!myTargetSuperClass.isValid()) return;
-            final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
-            final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
-            for (PsiClass aClass : search) {
-              final PsiFile containingFile = aClass.getContainingFile();
-              if (containingFile != null) {
-                final VirtualFile virtualFile = containingFile.getVirtualFile();
-                if (virtualFile != null) {
-                  hierarchyFiles.add(virtualFile);
-                }
-              }
-            }
-            final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
-            for (PsiMember psiMember : myMembersAfterMove) {
-              if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
-                methodsToSearchDuplicates.add(psiMember);
-              }
-            }
-
-            MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      if (!myTargetSuperClass.isValid()) return;
+      final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
+      final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+      for (PsiClass aClass : search) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (containingFile != null) {
+          final VirtualFile virtualFile = containingFile.getVirtualFile();
+          if (virtualFile != null) {
+            hierarchyFiles.add(virtualFile);
           }
-        });
+        }
       }
-    }, MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
+      final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
+      for (PsiMember psiMember : myMembersAfterMove) {
+        if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
+          methodsToSearchDuplicates.add(psiMember);
+        }
+      }
+
+      MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+    }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
   @Override
@@ -341,12 +323,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     @Override
     @NotNull
     public PsiElement[] getElements() {
-      return ContainerUtil.map(myMembersToMove, new Function<MemberInfo, PsiElement>() {
-        @Override
-        public PsiElement fun(MemberInfo info) {
-          return info.getMember();
-        }
-      }, PsiElement.EMPTY_ARRAY);
+      return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
     @Override

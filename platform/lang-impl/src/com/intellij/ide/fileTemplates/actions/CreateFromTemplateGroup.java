@@ -74,26 +74,23 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    Arrays.sort(templates, new Comparator<FileTemplate>() {
-      @Override
-      public int compare(FileTemplate template1, FileTemplate template2) {
-        // java first
-        if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
-          return -1;
-        }
-        if (template2.isTemplateOfType(StdFileTypes.JAVA) && !template1.isTemplateOfType(StdFileTypes.JAVA)) {
-          return 1;
-        }
-
-        // group by type
-        int i = template1.getExtension().compareTo(template2.getExtension());
-        if (i != 0) {
-          return i;
-        }
-
-        // group by name if same type
-        return template1.getName().compareTo(template2.getName());
+    Arrays.sort(templates, (template1, template2) -> {
+      // java first
+      if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
+        return -1;
       }
+      if (template2.isTemplateOfType(StdFileTypes.JAVA) && !template1.isTemplateOfType(StdFileTypes.JAVA)) {
+        return 1;
+      }
+
+      // group by type
+      int i = template1.getExtension().compareTo(template2.getExtension());
+      if (i != 0) {
+        return i;
+      }
+
+      // group by name if same type
+      return template1.getName().compareTo(template2.getName());
     });
     List<AnAction> result = new ArrayList<AnAction>();
 

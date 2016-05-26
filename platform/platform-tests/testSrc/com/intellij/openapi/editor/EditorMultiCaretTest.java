@@ -72,25 +72,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCustomShortcut() throws Throwable {
-    doWithAltClickShortcut(new ThrowableRunnable() {
-      @Override
-      public void run() throws IOException {
-        initText("<caret>text");
-        mouse().alt().clickAt(0, 2);
-        checkResultByText("<caret>te<caret>xt");
-      }
+    doWithAltClickShortcut(() -> {
+      initText("<caret>text");
+      mouse().alt().clickAt(0, 2);
+      checkResultByText("<caret>te<caret>xt");
     });
   }
   
   public void testCaretRemovalWithCustomShortcutDoesntAffectOtherSelections() throws Throwable {
-    doWithAltClickShortcut(new ThrowableRunnable() {
-      @Override
-      public void run() throws IOException {
-        initText("<selection>some<caret></selection> text");
-        mouse().alt().clickAt(0, 6);
-        mouse().alt().clickAt(0, 6);
-        checkResultByText("<selection>some<caret></selection> text");
-      }
+    doWithAltClickShortcut(() -> {
+      initText("<selection>some<caret></selection> text");
+      mouse().alt().clickAt(0, 6);
+      mouse().alt().clickAt(0, 6);
+      checkResultByText("<selection>some<caret></selection> text");
     });
   }
 

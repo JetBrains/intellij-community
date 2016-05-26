@@ -64,7 +64,13 @@ public class EditSettingsAction extends InspectionViewActionBase {
         return;
       }
     }
-    if (EditInspectionToolsSettingsAction.editToolSettings(view.getProject(), inspectionProfile, profileIsDefined, null) && profileIsDefined) {
+
+    final String[] path = view.getTree().getSelectedGroupPath();
+    if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, profileIsDefined, (c) -> {
+      if (path != null) {
+        c.selectInspectionGroup(path);
+      }
+    })) {
       view.updateCurrentProfile();
     }
   }

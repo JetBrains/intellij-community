@@ -139,15 +139,12 @@ public abstract class IntroduceFieldCentralPanel {
       for (PsiField field : fields) {
         final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
         if (setUpMethod != null) {
-          final Processor<PsiReference> initializerSearcher = new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              final PsiElement referenceElement = reference.getElement();
-              if (referenceElement instanceof PsiExpression) {
-                return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
-              }
-              return true;
+          final Processor<PsiReference> initializerSearcher = reference -> {
+            final PsiElement referenceElement = reference.getElement();
+            if (referenceElement instanceof PsiExpression) {
+              return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
             }
+            return true;
           };
           if (ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).forEach(initializerSearcher)) {
             return false;

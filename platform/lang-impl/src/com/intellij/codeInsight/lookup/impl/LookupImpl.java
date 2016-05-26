@@ -57,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -85,12 +86,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     protected void processKeyEvent(@NotNull final KeyEvent e) {
       final char keyChar = e.getKeyChar();
       if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
-        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e);
-          }
-        });
+        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(
+          () -> IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e));
         return;
       }
 
@@ -147,6 +144,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myList.setFocusable(false);
     myList.setFixedCellWidth(50);
+
+    // a new top level frame just got the focus. This is important to prevent screen readers
+    // from announcing the title of the top level frame when the list is shown (or hidden),
+    // as they usually do when a new top-level frame receives the focus.
+    AccessibleContextUtil.setParent(myList, myEditor.getContentComponent());
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
@@ -492,15 +494,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myFinishing = true;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myEditor.getDocument().startGuardedBlockChecking();
-        try {
-          insertLookupString(item, getPrefixLength(item));
-        }
-        finally {
-          myEditor.getDocument().stopGuardedBlockChecking();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myEditor.getDocument().startGuardedBlockChecking();
+      try {
+        insertLookupString(item, getPrefixLength(item));
+      }
+      finally {
+        myEditor.getDocument().stopGuardedBlockChecking();
       }
     });
 
@@ -749,12 +749,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         markSelectionTouched();
 
         if (clickCount == 2){
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              finishLookup(NORMAL_SELECT_CHAR);
-            }
-          }, "", null);
+          CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookup(NORMAL_SELECT_CHAR), "", null);
         }
         return true;
       }

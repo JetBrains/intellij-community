@@ -87,18 +87,15 @@ class LineMarkersUtil {
       final boolean lineSeparatorPlacementChanged = !Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        ((MarkupModelEx)markupModel).changeAttributesInBatch((RangeHighlighterEx)marker, new Consumer<RangeHighlighterEx>() {
-          @Override
-          public void consume(RangeHighlighterEx markerEx) {
-            if (rendererChanged) {
-              markerEx.setGutterIconRenderer(newRenderer);
-            }
-            if (lineSeparatorColorChanged) {
-              markerEx.setLineSeparatorColor(info.separatorColor);
-            }
-            if (lineSeparatorPlacementChanged) {
-              markerEx.setLineSeparatorPlacement(info.separatorPlacement);
-            }
+        ((MarkupModelEx)markupModel).changeAttributesInBatch((RangeHighlighterEx)marker, markerEx -> {
+          if (rendererChanged) {
+            markerEx.setGutterIconRenderer(newRenderer);
+          }
+          if (lineSeparatorColorChanged) {
+            markerEx.setLineSeparatorColor(info.separatorColor);
+          }
+          if (lineSeparatorPlacementChanged) {
+            markerEx.setLineSeparatorPlacement(info.separatorPlacement);
           }
         });
       }

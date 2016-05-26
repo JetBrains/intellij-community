@@ -124,13 +124,11 @@ public class NoButtonGroupInspection extends BaseFormInspection {
             buttonsToGroup.add(component);
         }
       }
-      Collections.sort(buttonsToGroup, new Comparator<RadComponent>() {
-        public int compare(final RadComponent o1, final RadComponent o2) {
-          if (myVerticalGroup) {
-            return o1.getConstraints().getRow() - o2.getConstraints().getRow();
-          }
-          return o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
+      Collections.sort(buttonsToGroup, (o1, o2) -> {
+        if (myVerticalGroup) {
+          return o1.getConstraints().getRow() - o2.getConstraints().getRow();
         }
+        return o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
       });
 
       // ensure that selected radio buttons are in adjacent cells, and exclude from grouping

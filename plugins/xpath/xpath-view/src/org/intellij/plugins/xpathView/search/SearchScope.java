@@ -204,12 +204,7 @@ public final class SearchScope {
             final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
             Collections.addAll(libraryFiles, enumerator.getClassesRoots());
             Collections.addAll(libraryFiles, enumerator.getSourceRoots());
-            final Processor<VirtualFile> adapter = new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile virtualFile) {
-                return iterator.processFile(virtualFile);
-              }
-            };
+            final Processor<VirtualFile> adapter = virtualFile1 -> iterator.processFile(virtualFile1);
             for (final VirtualFile file : libraryFiles) {
               iterateRecursively(file, adapter, true);
             }

@@ -51,7 +51,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+  protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
     // Fix GTK background
     if (UIUtil.isUnderGTKLookAndFeel()){
       final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();

@@ -71,12 +71,7 @@ public class ExtractMethodHelper {
           }
         });
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            replaceDuplicates(callElement, editor, replacer, duplicates);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(callElement, editor, replacer, duplicates));
       }
     });
   }
@@ -138,17 +133,9 @@ public class ExtractMethodHelper {
 
   private static void replaceDuplicate(final Project project, final Consumer<Pair<SimpleMatch, PsiElement>> replacer,
                                        final Pair<SimpleMatch, PsiElement> replacement) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            replacer.consume(replacement);
-          }
-        });
-      }
-    }, "Replace duplicate", null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      replacer.consume(replacement);
+    }), "Replace duplicate", null);
   }
 
 

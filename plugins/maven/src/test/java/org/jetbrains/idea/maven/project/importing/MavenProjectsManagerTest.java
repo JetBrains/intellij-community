@@ -943,16 +943,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     createProjectSubDir("src/main/java");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
-        for (OrderEntry each : model.getOrderEntries()) {
-          if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
-            model.removeOrderEntry(each);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+      for (OrderEntry each : model.getOrderEntries()) {
+        if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
+          model.removeOrderEntry(each);
         }
-        model.commit();
       }
+      model.commit();
     });
 
 

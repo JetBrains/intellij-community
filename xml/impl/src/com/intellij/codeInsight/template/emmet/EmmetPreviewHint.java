@@ -104,22 +104,14 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
 
   public void updateText(@NotNull final Producer<String> contentProducer) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isDisposed) {
-          final String newText = contentProducer.produce();
-          if (StringUtil.isEmpty(newText)) {
-            hide();
-          }
-          else if (!myEditor.getDocument().getText().equals(newText)) {
-            DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-              @Override
-              public void run() {
-                myEditor.getDocument().setText(newText);
-              }
-            });
-          }
+    myAlarm.addRequest(() -> {
+      if (!isDisposed) {
+        final String newText = contentProducer.produce();
+        if (StringUtil.isEmpty(newText)) {
+          hide();
+        }
+        else if (!myEditor.getDocument().getText().equals(newText)) {
+          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
         }
       }
     }, 100);
@@ -201,12 +193,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(EmmetPreviewHint.this);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(EmmetPreviewHint.this));
   }
 
   @Override

@@ -322,20 +322,17 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (element == null) return null;
 
     final List<PomTarget> targets = ContainerUtil.newArrayList();
-    final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
-      @Override
-      public void consume(PomTarget target) {
-        if (target instanceof PsiDeclaredTarget) {
-          final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
-          final PsiElement navigationElement = declaredTarget.getNavigationElement();
-          final TextRange range = declaredTarget.getNameIdentifierRange();
-          if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
-            .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
-            return;
-          }
+    final Consumer<PomTarget> consumer = target -> {
+      if (target instanceof PsiDeclaredTarget) {
+        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+        final PsiElement navigationElement = declaredTarget.getNavigationElement();
+        final TextRange range = declaredTarget.getNameIdentifierRange();
+        if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
+          .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
+          return;
         }
-        targets.add(target);
       }
+      targets.add(target);
     };
 
     PsiElement parent = element;

@@ -46,15 +46,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
 
-  public static final Comparator<ThreadReferenceProxyImpl> ourComparator = new Comparator<ThreadReferenceProxyImpl>() {
-    @Override
-    public int compare(ThreadReferenceProxyImpl th1, ThreadReferenceProxyImpl th2) {
-      int res = Comparing.compare(th2.isSuspended(), th1.isSuspended());
-      if (res == 0) {
-        return th1.name().compareToIgnoreCase(th2.name());
-      }
-      return res;
+  public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
+    int res = Comparing.compare(th2.isSuspended(), th1.isSuspended());
+    if (res == 0) {
+      return th1.name().compareToIgnoreCase(th2.name());
     }
+    return res;
   };
 
   public ThreadReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ThreadReference threadReference) {

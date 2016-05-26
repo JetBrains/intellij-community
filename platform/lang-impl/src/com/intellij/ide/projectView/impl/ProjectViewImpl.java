@@ -180,12 +180,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private static final String ATTRIBUTE_ID = "id";
   private JPanel myViewContentPanel;
-  private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = new Comparator<AbstractProjectViewPane>() {
-    @Override
-    public int compare(final AbstractProjectViewPane o1, final AbstractProjectViewPane o2) {
-      return o1.getWeight() - o2.getWeight();
-    }
-  };
+  private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = (o1, o2) -> o1.getWeight() - o2.getWeight();
   private final FileEditorManager myFileEditorManager;
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
@@ -551,12 +546,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        splitterProportions.restoreSplitterProportions(myPanel);
-      }
-    });
+    SwingUtilities.invokeLater(() -> splitterProportions.restoreSplitterProportions(myPanel));
 
     if (loadPaneExtensions) {
       ensurePanesLoaded();
@@ -870,13 +860,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (!views.isEmpty()) {
       list.setSelectedValue(views.get(0), true);
     }
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (list.getSelectedIndex() < 0) return;
-        AbstractProjectViewPane pane = (AbstractProjectViewPane)list.getSelectedValue();
-        changeView(pane.getId());
-      }
+    Runnable runnable = () -> {
+      if (list.getSelectedIndex() < 0) return;
+      AbstractProjectViewPane pane = (AbstractProjectViewPane)list.getSelectedValue();
+      changeView(pane.getId());
     };
 
     new PopupChooserBuilder(list).
@@ -1154,27 +1141,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       String title = IdeBundle.message("detach.library");
       int ret = Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon());
       if (ret != Messages.OK) return;
-      CommandProcessor.getInstance().executeCommand(module.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          final Runnable action = new Runnable() {
-            @Override
-            public void run() {
-              ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-              OrderEntry[] orderEntries = rootManager.getOrderEntries();
-              ModifiableRootModel model = rootManager.getModifiableModel();
-              OrderEntry[] modifiableEntries = model.getOrderEntries();
-              for (int i = 0; i < orderEntries.length; i++) {
-                OrderEntry entry = orderEntries[i];
-                if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
-                  model.removeOrderEntry(modifiableEntries[i]);
-                }
-              }
-              model.commit();
+      CommandProcessor.getInstance().executeCommand(module.getProject(), () -> {
+        final Runnable action = () -> {
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+          OrderEntry[] orderEntries = rootManager.getOrderEntries();
+          ModifiableRootModel model = rootManager.getModifiableModel();
+          OrderEntry[] modifiableEntries = model.getOrderEntries();
+          for (int i = 0; i < orderEntries.length; i++) {
+            OrderEntry entry = orderEntries[i];
+            if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
+              model.removeOrderEntry(modifiableEntries[i]);
             }
-          };
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
+          }
+          model.commit();
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
       }, title, null);
     }
 

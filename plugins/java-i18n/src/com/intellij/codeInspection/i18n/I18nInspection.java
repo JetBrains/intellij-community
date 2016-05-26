@@ -287,13 +287,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final JTextField text = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
       new FieldPanel(text, CodeInsightBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     CodeInsightBundle.message("inspection.i18n.option.ignore.comment.title"), null, new Runnable() {
-        @Override
-        public void run() {
-          nonNlsCommentPattern = text.getText();
-          cacheNonNlsCommentPattern();
-        }
-      });
+                     CodeInsightBundle.message("inspection.i18n.option.ignore.comment.title"), null, () -> {
+                       nonNlsCommentPattern = text.getText();
+                       cacheNonNlsCommentPattern();
+                     });
     panel.add(nonNlsCommentPatternComponent, gc);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
@@ -443,15 +440,12 @@ public class I18nInspection extends BaseLocalInspectionTool {
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         //do it later because it is invoked from write action
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiExpression)) return;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          PsiElement element = descriptor.getPsiElement();
+          if (!(element instanceof PsiExpression)) return;
 
-            PsiExpression[] expressions = {(PsiExpression)element};
-            new IntroduceConstantHandler().invoke(project, expressions);
-          }
+          PsiExpression[] expressions = {(PsiExpression)element};
+          new IntroduceConstantHandler().invoke(project, expressions);
         }, project.getDisposed());
       }
 

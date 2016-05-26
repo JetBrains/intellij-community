@@ -114,6 +114,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       public String getTemplatesDir() {
         return new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR).getPath();
       }
+
+      @NotNull
+      @Override
+      public Project getProject() {
+        return project;
+      }
     };
   }
 
@@ -451,9 +457,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void loadState(State state) {
-    ExportableFileTemplateSettings.getInstance(myProject);
     XmlSerializerUtil.copyBean(state, myState);
     FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
+    ExportableFileTemplateSettings.getInstance(scheme.getProject());
     setScheme(scheme);
   }
 

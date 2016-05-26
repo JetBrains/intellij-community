@@ -167,20 +167,8 @@ public class ProcessListUtil {
     // 12  S user ./command argument list
 
     return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,comm"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(final String commandOnly) {
-                                  return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
-                                                            new NullableFunction<String, List<ProcessInfo>>() {
-                                                              @Nullable
-                                                              @Override
-                                                              public List<ProcessInfo> fun(String full) {
-                                                                return parseMacOutput(commandOnly, full);
-                                                              }
-                                                            });
-                                }
-                              });
+                              commandOnly -> parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
+                                                        full -> parseMacOutput(commandOnly, full)));
   }
 
 
@@ -268,13 +256,7 @@ public class ProcessListUtil {
   @Nullable
   static List<ProcessInfo> getProcessList_WindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(String output) {
-                                  return parseWMICOutput(output);
-                                }
-                              });
+                              output -> parseWMICOutput(output));
   }
 
   @Nullable
@@ -326,13 +308,7 @@ public class ProcessListUtil {
   @Nullable
   static List<ProcessInfo> getProcessList_WindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(String output) {
-                                  return parseListTasksOutput(output);
-                                }
-                              });
+                              output -> parseListTasksOutput(output));
   }
 
   @Nullable

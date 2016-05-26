@@ -147,12 +147,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
       for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, new ThrowableConvertor<Element, EditorColorsScheme, Throwable>() {
-          @Override
-          public EditorColorsScheme convert(Element element) throws Throwable {
-            return new ReadOnlyColorsSchemeImpl(element);
-          }
-        });
+        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, element -> new ReadOnlyColorsSchemeImpl(element));
       }
     }
   }
@@ -232,15 +227,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme[] getAllSchemes() {
     EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
-    Arrays.sort(result, new Comparator<EditorColorsScheme>() {
-      @Override
-      public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
-        if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
-        if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
-        if (s1.getName().equals(DEFAULT_NAME)) return -1;
-        if (s2.getName().equals(DEFAULT_NAME)) return 1;
-        return s1.getName().compareToIgnoreCase(s2.getName());
-      }
+    Arrays.sort(result, (s1, s2) -> {
+      if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
+      if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
+      if (s1.getName().equals(DEFAULT_NAME)) return -1;
+      if (s2.getName().equals(DEFAULT_NAME)) return 1;
+      return s1.getName().compareToIgnoreCase(s2.getName());
     });
     return result;
   }

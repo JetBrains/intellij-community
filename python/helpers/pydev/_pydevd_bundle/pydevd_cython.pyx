@@ -207,7 +207,8 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
+    dict_keys, dict_pop, RETURN_VALUES_PREFIX
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
@@ -461,6 +462,27 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             main_debugger = None
             thread = None
 
+    def manage_return_values(self, main_debugger, frame, event, arg):
+        try:
+            if main_debugger.show_return_values:
+                if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
+                    name = frame.f_code.co_name
+                    if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                        frame.f_back.f_locals[RETURN_VALUES_PREFIX + name] = arg
+            if main_debugger.remove_return_values_flag:
+                # show return values was turned off, we should remove them from locals dict
+                for var_name in dict_keys(frame.f_locals):
+                    if var_name.startswith(RETURN_VALUES_PREFIX):
+                        dict_pop(frame.f_locals, var_name)
+                if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                    for var_name in dict_keys(frame.f_back.f_locals):
+                        if var_name.startswith(RETURN_VALUES_PREFIX):
+                            dict_pop(frame.f_back.f_locals, var_name)
+                main_debugger.remove_return_values_flag = False
+        except:
+            main_debugger.remove_return_values_flag = False
+            traceback.print_exc()
+
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     def trace_dispatch(self, frame, str event, arg):
         cdef str filename;
@@ -677,6 +699,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
                             # ignore library files while stepping
                             return self.trace_dispatch
+
+                if main_debugger.show_return_values or main_debugger.remove_return_values_flag:
+                    self.manage_return_values(main_debugger, frame, event, arg)
+
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
@@ -785,7 +811,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 if stop and step_cmd != -1 and IS_PY3K:
                     # in Py3k we start script via our custom `execfile` function, and we shouldn't stop there
                     # while stepping when execution is finished
-                    if event == 'return' and hasattr(frame, "f_back"):
+                    if event == 'return' and hasattr(frame, "f_back") and hasattr(frame.f_back, "f_code"):
                         back_filename = os.path.basename(frame.f_back.f_code.co_filename)
                         file_type = get_file_type(back_filename)
                         if file_type == PYDEV_FILE:

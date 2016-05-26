@@ -190,15 +190,12 @@ public class PyIndentUtil {
       return Collections.emptyList();
     }
 
-    final List<String> result = ContainerUtil.map(Iterables.skip(lines, ignoreFirstLine ? 1 : 0), new Function<String, String>() {
-      @Override
-      public String fun(String line) {
-        if (StringUtil.isEmptyOrSpaces(line)) {
-          return "";
-        }
-        else {
-          return newIndent + line.substring(oldIndent.length());
-        }
+    final List<String> result = ContainerUtil.map(Iterables.skip(lines, ignoreFirstLine ? 1 : 0), line -> {
+      if (StringUtil.isEmptyOrSpaces(line)) {
+        return "";
+      }
+      else {
+        return newIndent + line.substring(oldIndent.length());
       }
     });
     if (ignoreFirstLine) {

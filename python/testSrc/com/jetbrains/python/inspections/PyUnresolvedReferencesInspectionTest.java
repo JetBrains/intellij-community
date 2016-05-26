@@ -234,32 +234,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-7389
   public void testComprehensionScope27() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest());
   }
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-7516

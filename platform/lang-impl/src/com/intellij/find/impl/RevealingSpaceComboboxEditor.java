@@ -34,13 +34,10 @@ public class RevealingSpaceComboboxEditor extends StringComboboxEditor {
   public RevealingSpaceComboboxEditor(final Project project, ComboBox comboBox) {
     super(project, FileTypes.PLAIN_TEXT, comboBox);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Editor editor = getEditor();
-        if (editor != null) {
-          editor.getSettings().setWhitespacesShown(true);
-        }
+    SwingUtilities.invokeLater(() -> {
+      Editor editor = getEditor();
+      if (editor != null) {
+        editor.getSettings().setWhitespacesShown(true);
       }
     });
   }

@@ -158,12 +158,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myUsagePreviewPanel.isVisible()) {
-              updatePreviewPanel();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myUsagePreviewPanel.isVisible()) {
+            updatePreviewPanel();
           }
         });
       }
@@ -214,12 +211,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     autoScrollToSourceHandler.install(myTree);
     rightGroup.add(autoScrollToSourceHandler.createToggleAction());
 
-    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, new Consumer<TodoFilter>() {
-      @Override
-      public void consume(TodoFilter todoFilter) {
-        setTodoFilter(todoFilter);
-      }
-    });
+    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter));
     rightGroup.add(setTodoFilterAction);
     rightGroup.add(new MyPreviewAction());
     toolBarPanel.add(
@@ -422,35 +414,23 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   protected void rebuildWithAlarm(final Alarm alarm) {
     alarm.cancelAllRequests();
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final Set<VirtualFile> files = new HashSet<VirtualFile>();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              myTodoTreeBuilder.collectFiles(new Processor<VirtualFile>() {
-                @Override
-                public boolean process(VirtualFile virtualFile) {
-                  files.add(virtualFile);
-                  return true;
-                }
-              });
-            }
-            catch (IndexNotReadyException ignore) {
-            }
-          }
-        });
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            myTodoTreeBuilder.rebuildCache(files);
-            updateTree();
-          }
-        };
-        ApplicationManager.getApplication().invokeLater(runnable);
-      }
+    alarm.addRequest(() -> {
+      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      ApplicationManager.getApplication().runReadAction(() -> {
+        try {
+          myTodoTreeBuilder.collectFiles(virtualFile -> {
+            files.add(virtualFile);
+            return true;
+          });
+        }
+        catch (IndexNotReadyException ignore) {
+        }
+      });
+      final Runnable runnable = () -> {
+        myTodoTreeBuilder.rebuildCache(files);
+        updateTree();
+      };
+      ApplicationManager.getApplication().invokeLater(runnable);
     }, 300);
   }
 

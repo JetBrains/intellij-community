@@ -97,11 +97,9 @@ public final class ModuleCompilerUtil {
 
   public static void sortModules(final Project project, final List<Module> modules) {
     final Application application = ApplicationManager.getApplication();
-    Runnable sort = new Runnable() {
-      public void run() {
-        Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
-        Collections.sort(modules, comparator);
-      }
+    Runnable sort = () -> {
+      Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
+      Collections.sort(modules, comparator);
     };
     if (application.isDispatchThread()) {
       sort.run();
@@ -120,15 +118,12 @@ public final class ModuleCompilerUtil {
 
       public Iterator<T> getIn(final ModuleRootModel model) {
         final List<T> dependencies = new ArrayList<T>();
-        model.orderEntries().compileOnly().forEachModule(new Processor<Module>() {
-          @Override
-          public boolean process(Module module) {
-            T depModel = models.get(module);
-            if (depModel != null) {
-              dependencies.add(depModel);
-            }
-            return true;
+        model.orderEntries().compileOnly().forEachModule(module -> {
+          T depModel = models.get(module);
+          if (depModel != null) {
+            dependencies.add(depModel);
           }
+          return true;
         });
         return dependencies.iterator();
       }
@@ -215,12 +210,9 @@ public final class ModuleCompilerUtil {
           enumerator = enumerator.productionOnly();
         }
         final List<ModuleSourceSet> deps = new ArrayList<ModuleSourceSet>();
-        enumerator.forEachModule(new Processor<Module>() {
-          @Override
-          public boolean process(Module module) {
-            deps.add(new ModuleSourceSet(module, n.getType()));
-            return true;
-          }
+        enumerator.forEachModule(module -> {
+          deps.add(new ModuleSourceSet(module, n.getType()));
+          return true;
         });
         if (n.getType() == ModuleSourceSet.Type.TEST) {
           deps.add(new ModuleSourceSet(n.getModule(), ModuleSourceSet.Type.PRODUCTION));

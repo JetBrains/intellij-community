@@ -186,34 +186,31 @@ public int getOffset(int index) {
 
   public void sortHandlers(final StructContext context) {
 
-    Collections.sort(exceptionTable.getHandlers(), new Comparator<ExceptionHandler>() {
+    Collections.sort(exceptionTable.getHandlers(), (handler0, handler1) -> {
 
-      public int compare(ExceptionHandler handler0, ExceptionHandler handler1) {
-
-        if (handler0.to == handler1.to) {
-          if (handler0.exceptionClass == null) {
-            return 1;
-          }
-          else {
-            if (handler1.exceptionClass == null) {
-              return -1;
-            }
-            else if (handler0.exceptionClass.equals(handler1.exceptionClass)) {
-              return (handler0.from > handler1.from) ? -1 : 1; // invalid code
-            }
-            else {
-              if (Util.instanceOf(context, handler0.exceptionClass, handler1.exceptionClass)) {
-                return -1;
-              }
-              else {
-                return 1;
-              }
-            }
-          }
+      if (handler0.to == handler1.to) {
+        if (handler0.exceptionClass == null) {
+          return 1;
         }
         else {
-          return (handler0.to > handler1.to) ? 1 : -1;
+          if (handler1.exceptionClass == null) {
+            return -1;
+          }
+          else if (handler0.exceptionClass.equals(handler1.exceptionClass)) {
+            return (handler0.from > handler1.from) ? -1 : 1; // invalid code
+          }
+          else {
+            if (Util.instanceOf(context, handler0.exceptionClass, handler1.exceptionClass)) {
+              return -1;
+            }
+            else {
+              return 1;
+            }
+          }
         }
+      }
+      else {
+        return (handler0.to > handler1.to) ? 1 : -1;
       }
     });
   }

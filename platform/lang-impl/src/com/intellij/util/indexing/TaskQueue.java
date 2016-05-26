@@ -46,18 +46,15 @@ class TaskQueue {
   void submit(@NotNull final Computable<Boolean> update, @NotNull final Runnable successRunnable) {
     int currentTasksCount = myUpdatesCount.incrementAndGet();
 
-    myPendingWriteRequestsQueue.add(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Boolean result = update.compute();
-          if (result == Boolean.TRUE) {
-            myTimestampUpdates.add(successRunnable);
-          }
+    myPendingWriteRequestsQueue.add(() -> {
+      try {
+        Boolean result = update.compute();
+        if (result == Boolean.TRUE) {
+          myTimestampUpdates.add(successRunnable);
         }
-        finally {
-          myUpdatesCount.decrementAndGet();
-        }
+      }
+      finally {
+        myUpdatesCount.decrementAndGet();
       }
     });
 
@@ -80,14 +77,11 @@ class TaskQueue {
   private void applyTimeStamps(final int max) {
     final Runnable runnable = myTimestampUpdates.poll();
     if (runnable == null) return;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        int updates = 0;
-        for (Runnable r = runnable; r != null; r = myTimestampUpdates.poll()) {
-          r.run();
-          if (++updates == max) break;
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      int updates = 0;
+      for (Runnable r = runnable; r != null; r = myTimestampUpdates.poll()) {
+        r.run();
+        if (++updates == max) break;
       }
     });
   }
@@ -117,24 +111,21 @@ class TaskQueue {
       if(Registry.is("idea.concurrent.scanning.files.to.index")) return;
       myDoWorkRequest.incrementAndGet();
       // we have 3 content independent indices but only one of them is heavy IO bound so there is no need in more than one thread
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            while(true) {
-              Runnable runnable = myPendingWriteRequestsQueue.poll(2000, TimeUnit.MILLISECONDS);
-              if (runnable != null) {
-                runnable.run();
-              } else {
-                // we have no work for 2s and there is no currently running updates
-                if(myDoWorkRequest.compareAndSet(1, 0)) {
-                  break;
-                }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          while(true) {
+            Runnable runnable = myPendingWriteRequestsQueue.poll(2000, TimeUnit.MILLISECONDS);
+            if (runnable != null) {
+              runnable.run();
+            } else {
+              // we have no work for 2s and there is no currently running updates
+              if(myDoWorkRequest.compareAndSet(1, 0)) {
+                break;
               }
             }
           }
-          catch (InterruptedException ignore) {}
         }
+        catch (InterruptedException ignore) {}
       });
     }
   }

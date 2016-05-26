@@ -219,7 +219,7 @@ public class BuildRunner {
           final boolean added = fileSet.add(file);
           if (added) {
             final BuildTargetType<?> targetType = descriptor.getTarget().getTargetType();
-            if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleInducedTargetType)) {
+            if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleBasedBuildTargetType)) {
               pd.fsState.markDirty(null, file, descriptor, timestamps, false);
             }
           }

@@ -37,29 +37,25 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeC
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
-  private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
-    @Override
-    @Nullable
-    public PsiType fun(GrMethodCall callExpression) {
-      GroovyResolveResult[] resolveResults;
+  private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = callExpression -> {
+    GroovyResolveResult[] resolveResults;
 
-      GrExpression invokedExpression = callExpression.getInvokedExpression();
-      if (invokedExpression instanceof GrReferenceExpression) {
-        resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
-      }
-      else {
-        resolveResults = GroovyResolveResult.EMPTY_ARRAY;
-      }
-
-      for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-          PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
-        if (res != null) {
-          return res;
-        }
-      }
-
-      return null;
+    GrExpression invokedExpression = callExpression.getInvokedExpression();
+    if (invokedExpression instanceof GrReferenceExpression) {
+      resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
     }
+    else {
+      resolveResults = GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
+        PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
+      if (res != null) {
+        return res;
+      }
+    }
+
+    return null;
   };
 
   public GrMethodCallImpl(@NotNull ASTNode node) {

@@ -90,12 +90,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     if (manager == null) {
       return;
     }
-    FileFilter filter = new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return !manager.doNotPackFile(pathname);
-      }
-    };
+    FileFilter filter = pathname -> !manager.doNotPackFile(pathname);
 
     for (VirtualFile child : baseDir.getChildren()) {
       String name = child.getName();

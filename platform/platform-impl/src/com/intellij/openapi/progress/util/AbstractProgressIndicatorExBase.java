@@ -105,12 +105,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void enterModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doEnterModality();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> doEnterModality());
     }
   }
 
@@ -130,12 +125,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void exitModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doExitModality();
-         }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> doExitModality());
     }
   }
 

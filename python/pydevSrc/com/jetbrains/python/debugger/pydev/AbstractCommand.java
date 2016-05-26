@@ -49,6 +49,7 @@ public abstract class AbstractCommand<T> {
   public static final int GET_ARRAY = 143;
   public static final int STEP_INTO_MY_CODE = 144;
   public static final int LOG_CONCURRENCY_EVENT = 145;
+  public static final int SHOW_RETURN_VALUES = 146;
 
   public static final int ERROR = 901;
 
@@ -148,22 +149,19 @@ public abstract class AbstractCommand<T> {
       return;
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ProtocolFrame frame = myDebugger.waitForResponse(sequence);
-          if (frame == null) {
-            if (!myDebugger.isConnected()) {
-              throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
-            }
-            throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        ProtocolFrame frame = myDebugger.waitForResponse(sequence);
+        if (frame == null) {
+          if (!myDebugger.isConnected()) {
+            throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
           }
-          callback.ok(processor.processResponse(frame));
+          throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
         }
-        catch (PyDebuggerException e) {
-          callback.error(e);
-        }
+        callback.ok(processor.processResponse(frame));
+      }
+      catch (PyDebuggerException e) {
+        callback.error(e);
       }
     });
   }

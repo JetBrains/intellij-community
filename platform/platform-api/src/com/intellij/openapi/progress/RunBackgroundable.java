@@ -47,14 +47,12 @@ public class RunBackgroundable {
     }
 
     final boolean finalCanceled = canceled;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (finalCanceled) {
-          task.onCancel();
-        }
-        else {
-          task.onSuccess();
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (finalCanceled) {
+        task.onCancel();
+      }
+      else {
+        task.onSuccess();
       }
     });
   }

@@ -232,12 +232,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       doOKAction();
 
       if (!initOffset.isNull()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myEditor.getCaretModel().moveToOffset(initOffset.get());
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myEditor.getCaretModel().moveToOffset(initOffset.get());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         });
       }
     }
@@ -912,13 +909,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (myBlockTreeBuilder == null) return;
     if (currentBlockNode != null) {
       myIgnoreBlockTreeSelectionMarker++;
-      myBlockTreeBuilder.select(currentBlockNode, new Runnable() {
-        @Override
-        public void run() {
-          // hope this is always called!
-          assert myIgnoreBlockTreeSelectionMarker > 0;
-          myIgnoreBlockTreeSelectionMarker--;
-        }
+      myBlockTreeBuilder.select(currentBlockNode, () -> {
+        // hope this is always called!
+        assert myIgnoreBlockTreeSelectionMarker > 0;
+        myIgnoreBlockTreeSelectionMarker--;
       });
     }
     else {

@@ -58,11 +58,8 @@ public class TestStubHierarchyAction extends InheritanceAction {
       int size = symbols.myClassAnchors.length;
       for (int i = 0; i < size; i++) {
         final int finalI = i;
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            test(classes[finalI]);
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          test(classes[finalI]);
         });
         indicator.setFraction(i * 1.0 / (double)size);
       }

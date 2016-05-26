@@ -68,12 +68,7 @@ public class GroovyPsiManager {
   public GroovyPsiManager(Project project) {
     myProject = project;
 
-    PsiManagerEx.getInstanceEx(myProject).registerRunnableToRunOnAnyChange(new Runnable() {
-      @Override
-      public void run() {
-        dropTypesCache();
-      }
-    });
+    PsiManagerEx.getInstanceEx(myProject).registerRunnableToRunOnAnyChange(() -> dropTypesCache());
   }
 
   public void dropTypesCache() {

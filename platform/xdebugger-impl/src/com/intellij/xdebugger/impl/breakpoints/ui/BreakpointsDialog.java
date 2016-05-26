@@ -420,11 +420,8 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     });
 
-    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, new Function<XBreakpointGroupingRule, String>() {
-      @Override
-      public String fun(XBreakpointGroupingRule rule) {
-        return rule.getId();
-      }
+    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> {
+      return rule.getId();
     })));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }

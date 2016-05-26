@@ -79,7 +79,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setIconTextGap(4);
         if (value instanceof ExcludeListItem) {
           ((ExcludeListItem)value).renderItem(this);
@@ -126,12 +126,7 @@ public class DetectionExcludesConfigurable implements Configurable {
         types.add(type);
       }
     }
-    Collections.sort(types, new Comparator<FrameworkType>() {
-      @Override
-      public int compare(FrameworkType o1, FrameworkType o2) {
-        return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-      }
-    });
+    Collections.sort(types, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     types.add(0, null);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>("Framework to Exclude", types) {
       @Override
@@ -153,12 +148,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @Override
       public PopupStep onChosen(final FrameworkType frameworkType, boolean finalChoice) {
         if (frameworkType == null) {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              chooseDirectoryAndAdd(null);
-            }
-          });
+          return doFinalStep(() -> chooseDirectoryAndAdd(null));
         }
         else {
           return addExcludedFramework(frameworkType);
@@ -193,12 +183,7 @@ public class DetectionExcludesConfigurable implements Configurable {
           return FINAL_CHOICE;
         }
         else {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              chooseDirectoryAndAdd(frameworkType);
-            }
-          });
+          return doFinalStep(() -> chooseDirectoryAndAdd(frameworkType));
         }
       }
     };

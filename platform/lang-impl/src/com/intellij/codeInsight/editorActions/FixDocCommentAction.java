@@ -118,12 +118,7 @@ public class FixDocCommentAction extends EditorAction {
     final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = new Runnable() {
-        @Override
-        public void run() {
-          generateComment(pair.first, editor, docProvider, commenter, project); 
-        }
-      };
+      task = () -> generateComment(pair.first, editor, docProvider, commenter, project);
     }
     else {
       final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
@@ -131,20 +126,10 @@ public class FixDocCommentAction extends EditorAction {
         return;
       }
       else {
-        task = new Runnable() {
-          @Override
-          public void run() {
-            fixer.fixComment(project, editor, pair.second);
-          }
-        };
+        task = () -> fixer.fixComment(project, editor, pair.second);
       }
     }
-    final Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(task);
-      }
-    };
+    final Runnable command = () -> ApplicationManager.getApplication().runWriteAction(task);
     CommandProcessor.getInstance().executeCommand(project, command, "Fix documentation", null);
     
   }

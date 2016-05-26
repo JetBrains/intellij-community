@@ -54,7 +54,7 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     }
     final PsiIfStatement childIfStatement = (PsiIfStatement)elseBranch;
     final PsiStatement childThenBranch = childIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch, childThenBranch);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, childThenBranch);
   }
 
   private static boolean isMergableImplicitIf(PsiElement element) {
@@ -85,6 +85,6 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     }
     final PsiIfStatement nextIfStatement = (PsiIfStatement)nextStatement;
     final PsiStatement nextThenBranch = nextIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch, nextThenBranch);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, nextThenBranch);
   }
 }

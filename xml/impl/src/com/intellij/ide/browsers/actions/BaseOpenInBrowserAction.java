@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -118,7 +119,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         if (psiFile == null) {
           psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
-        if (psiFile != null) {
+        if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
           return new OpenInBrowserRequest(psiFile) {
             private PsiElement element;
 
@@ -142,7 +143,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       }
 
-      if (psiFile != null) {
+      if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
         return OpenInBrowserRequest.create(psiFile);
       }
     }
@@ -170,12 +171,9 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl);
       if (!urls.isEmpty()) {
         chooseUrl(urls)
-          .done(new Consumer<Url>() {
-            @Override
-            public void consume(Url url) {
-              ApplicationManager.getApplication().saveAll();
-              BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
-            }
+          .done(url -> {
+            ApplicationManager.getApplication().saveAll();
+            BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
           });
       }
     }
@@ -196,7 +194,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     final JBList list = new JBList(urls);
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         // todo icons looks good, but is it really suitable for all URLs providers?
         setIcon(AllIcons.Nodes.Servlet);
         append(((Url)value).toDecodedForm());
@@ -207,16 +205,13 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Url")
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          Url value = (Url)list.getSelectedValue();
-          if (value == null) {
-            result.setError("selected value is null");
-          }
-          else {
-            result.setResult(value);
-          }
+      .setItemChoosenCallback(() -> {
+        Url value = (Url)list.getSelectedValue();
+        if (value == null) {
+          result.setError("selected value is null");
+        }
+        else {
+          result.setResult(value);
         }
       })
       .createPopup()

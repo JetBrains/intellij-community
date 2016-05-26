@@ -188,12 +188,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
     cleanup();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myCurrentScope = scope;
-        launchInspections(scope);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myCurrentScope = scope;
+      launchInspections(scope);
     }, ApplicationManager.getApplication().getDisposed());
   }
 
@@ -281,12 +278,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
       getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
       //to override current progress in order to hide useless messages/%
-      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-        @Override
-        public void run() {
-          runTools(scope, runGlobalToolsOnly, isOfflineInspections);
-        }
-      }, ProgressWrapper.wrap(myProgressIndicator));
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), ProgressWrapper.wrap(myProgressIndicator));
     }
     catch (ProcessCanceledException e) {
       cleanup();
@@ -347,11 +339,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       return tools;
     }
     Set<Tools> set = new THashSet<Tools>(tools, TOOLS_HASHING_STRATEGY);
-    set.addAll(ContainerUtil.map(dependentTools, new Function<InspectionToolWrapper, ToolsImpl>() {
-      @Override
-      public ToolsImpl fun(InspectionToolWrapper toolWrapper) {
-        return new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true);
-      }
+    set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> {
+      return new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true);
     }));
     return new ArrayList<Tools>(set);
   }
@@ -418,24 +407,21 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public static void cleanupElements(@NotNull final Project project,
                                      @Nullable final Runnable runnable,
                                      final List<SmartPsiElementPointer<PsiElement>> elements) {
-    Runnable cleanupRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
-        for (SmartPsiElementPointer<PsiElement> element : elements) {
-          PsiElement psiElement = element.getElement();
-          if (psiElement != null && psiElement.isPhysical()) {
-            psiElements.add(psiElement);
-          }
+    Runnable cleanupRunnable = () -> {
+      final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+      for (SmartPsiElementPointer<PsiElement> element : elements) {
+        PsiElement psiElement = element.getElement();
+        if (psiElement != null && psiElement.isPhysical()) {
+          psiElements.add(psiElement);
         }
-        if (psiElements.isEmpty()) {
-          return;
-        }
-        GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-        AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
-        globalContext.codeCleanup(project, analysisScope, profile, null, runnable, true);
       }
+      if (psiElements.isEmpty()) {
+        return;
+      }
+      GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+      globalContext.codeCleanup(project, analysisScope, profile, null, runnable, true);
     };
 
     Application application = ApplicationManager.getApplication();

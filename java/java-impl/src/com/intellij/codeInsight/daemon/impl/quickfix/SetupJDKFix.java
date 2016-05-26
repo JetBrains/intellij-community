@@ -67,13 +67,10 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
     Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
     if (projectJdk == null) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Module module = ModuleUtilCore.findModuleForPsiElement(file);
-        if (module != null) {
-          ModuleRootModificationUtil.setSdkInherited(module);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Module module = ModuleUtilCore.findModuleForPsiElement(file);
+      if (module != null) {
+        ModuleRootModificationUtil.setSdkInherited(module);
       }
     });
   }

@@ -74,6 +74,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
+    setRemoteConnectionCreator(config.getRemoteConnectionCreator());
   }
 
   @NotNull
@@ -249,11 +250,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
     if (forkPerModule()) {
-      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>(new Comparator<Module>() {
-        @Override
-        public int compare(Module o1, Module o2) {
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
+      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>((o1, o2) -> {
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       });
 
       for (final PsiClass psiClass : classes.keySet()) {

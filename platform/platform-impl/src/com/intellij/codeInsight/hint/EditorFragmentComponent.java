@@ -287,12 +287,7 @@ public class EditorFragmentComponent extends JPanel {
       // needed for Alt-Q multiple times
       // Q: not good?
       SwingUtilities.invokeLater(
-        new Runnable() {
-          @Override
-          public void run() {
-            MyComponentHint.super.hide();
-          }
-        }
+        () -> MyComponentHint.super.hide()
       );
     }
   }

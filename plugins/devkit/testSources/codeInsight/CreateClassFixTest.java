@@ -84,16 +84,14 @@ public class CreateClassFixTest extends UsefulTestCase{
   @After
   public void tearDown() throws Exception {
     final Ref<Exception> ex = new Ref<Exception>();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          myFixture.tearDown();
-          myFixture = null;
-          CreateClassFixTest.super.tearDown();
-        }
-        catch (Exception e) {
-          ex.set(e);
-        }
+    Runnable runnable = () -> {
+      try {
+        myFixture.tearDown();
+        myFixture = null;
+        CreateClassFixTest.super.tearDown();
+      }
+      catch (Exception e) {
+        ex.set(e);
       }
     };
     invokeTestRunnable(runnable);
@@ -118,22 +116,20 @@ public class CreateClassFixTest extends UsefulTestCase{
 
   @Test
   public void runSingle() throws Throwable {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        IntentionAction resultAction = null;
-        final String createAction = QuickFixBundle.message(myCreateClass ? "create.class.text" : "create.interface.text", myTestName);
-        final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
-        for (IntentionAction action : actions) {
-          if (Comparing.strEqual(action.getText(), createAction)) {
-            resultAction = action;
-            break;
-          }
+    Runnable runnable = () -> {
+      IntentionAction resultAction = null;
+      final String createAction = QuickFixBundle.message(myCreateClass ? "create.class.text" : "create.interface.text", myTestName);
+      final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
+      for (IntentionAction action : actions) {
+        if (Comparing.strEqual(action.getText(), createAction)) {
+          resultAction = action;
+          break;
         }
-        Assert.assertNotNull(resultAction);
-        myFixture.launchAction(resultAction);
-        final Project project = myFixture.getProject();
-        Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(myTestName, GlobalSearchScope.allScope(project)));
       }
+      Assert.assertNotNull(resultAction);
+      myFixture.launchAction(resultAction);
+      final Project project = myFixture.getProject();
+      Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(myTestName, GlobalSearchScope.allScope(project)));
     };
     invokeTestRunnable(runnable);
   }

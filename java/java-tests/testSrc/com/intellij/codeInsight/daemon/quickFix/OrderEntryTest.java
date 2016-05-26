@@ -91,11 +91,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          action.invoke(getProject(), getEditor(), getFile());
-        }
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        action.invoke(getProject(), getEditor(), getFile());
       });
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
@@ -155,22 +152,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   private void removeLibs() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-            ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-            ModifiableRootModel model = rootManager.getModifiableModel();
-            for (OrderEntry orderEntry : model.getOrderEntries()) {
-              model.removeOrderEntry(orderEntry);
-            }
-            model.commit();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+          ModifiableRootModel model = rootManager.getModifiableModel();
+          for (OrderEntry orderEntry : model.getOrderEntries()) {
+            model.removeOrderEntry(orderEntry);
           }
+          model.commit();
         }
-        catch (Throwable e) {
-          e.printStackTrace();  // when running test from within IDEA it would fail because junit.jar cache is locked by host IDEA instance
-        }
+      }
+      catch (Throwable e) {
+        e.printStackTrace();  // when running test from within IDEA it would fail because junit.jar cache is locked by host IDEA instance
       }
     });
   }

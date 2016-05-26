@@ -103,36 +103,24 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = classes[0].getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
     renderer.installSpeedSearch(builder);
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass)list.getSelectedValue();
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  doInvoke(aClass, superClassName);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-            });
-
-          }
-        }, getText(), null);
-      }
+    Runnable runnable = () -> {
+      int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final PsiClass aClass = (PsiClass)list.getSelectedValue();
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          doInvoke(aClass, superClassName);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }), getText(), null);
     };
 
     builder.

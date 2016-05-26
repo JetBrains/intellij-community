@@ -41,28 +41,25 @@ public class MantisTask extends Task {
       myComments = Comment.EMPTY_ARRAY;
     }
     else {
-      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, new Function<IssueNoteData, Comment>() {
-        @Override
-        public Comment fun(final IssueNoteData data) {
-          return new Comment() {
-            @Override
-            public String getText() {
-              return data.getText();
-            }
+      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, (Function<IssueNoteData, Comment>)data1 -> {
+        return new Comment() {
+          @Override
+          public String getText() {
+            return data1.getText();
+          }
 
-            @Nullable
-            @Override
-            public String getAuthor() {
-              return data.getReporter().getName();
-            }
+          @Nullable
+          @Override
+          public String getAuthor() {
+            return data1.getReporter().getName();
+          }
 
-            @Nullable
-            @Override
-            public Date getDate() {
-              return data.getDate_submitted().getTime();
-            }
-          };
-        }
+          @Nullable
+          @Override
+          public Date getDate() {
+            return data1.getDate_submitted().getTime();
+          }
+        };
       });
     }
   }

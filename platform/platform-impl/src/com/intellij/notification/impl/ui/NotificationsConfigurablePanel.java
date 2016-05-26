@@ -374,22 +374,19 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         }
       }
 
-      Collections.sort(rootChildren, new Comparator<DefaultMutableTreeNode>() {
-        @Override
-        public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
-          Object object1 = node1.getUserObject();
-          Object object2 = node2.getUserObject();
-          if (object1 instanceof NotificationParentGroupBean) {
-            if (object2 instanceof NotificationParentGroupBean) {
-              return object1.toString().compareTo(object2.toString());
-            }
-            return -1;
+      Collections.sort(rootChildren, (node1, node2) -> {
+        Object object1 = node1.getUserObject();
+        Object object2 = node2.getUserObject();
+        if (object1 instanceof NotificationParentGroupBean) {
+          if (object2 instanceof NotificationParentGroupBean) {
+            return object1.toString().compareTo(object2.toString());
           }
-          if (object2 instanceof SettingsWrapper) {
-            return ((SettingsWrapper)object1).getGroupId().compareTo(((SettingsWrapper)object2).getGroupId());
-          }
-          return 1;
+          return -1;
         }
+        if (object2 instanceof SettingsWrapper) {
+          return ((SettingsWrapper)object1).getGroupId().compareTo(((SettingsWrapper)object2).getGroupId());
+        }
+        return 1;
       });
 
       DefaultMutableTreeNode root = new DefaultMutableTreeNode();

@@ -92,11 +92,8 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   public boolean updateComponent(final PsiElement element, @Nullable final Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
       });
       return true;
     }
@@ -110,23 +107,20 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       myData.add(element);
     }
 
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myAlarm.cancelAllRequests();
-        if (myCanceled) return;
-        if (myPopup.isDisposed()) return;
-        ArrayList<PsiElement> data = new ArrayList<PsiElement>();
-        synchronized (lock) {
-          if (comparator != null) {
-            Collections.sort(myData, comparator);
-          }
-          data.addAll(myData);
+    myAlarm.addRequest(() -> {
+      myAlarm.cancelAllRequests();
+      if (myCanceled) return;
+      if (myPopup.isDisposed()) return;
+      ArrayList<PsiElement> data = new ArrayList<PsiElement>();
+      synchronized (lock) {
+        if (comparator != null) {
+          Collections.sort(myData, comparator);
         }
-        replaceModel(data);
-        myPopup.setCaption(getCaption(getCurrentSize()));
-        myPopup.pack(true, true);
+        data.addAll(myData);
       }
+      replaceModel(data);
+      myPopup.setCaption(getCaption(getCurrentSize()));
+      myPopup.pack(true, true);
     }, 200, ModalityState.stateForComponent(content));
     return true;
   }

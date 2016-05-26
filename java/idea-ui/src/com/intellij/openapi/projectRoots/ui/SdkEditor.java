@@ -216,11 +216,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() { // fix SCR #29193
-        @Override
-        public void run() {
-          sdkModificator.commitChanges();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        sdkModificator.commitChanges();
       });
       final AdditionalDataConfigurable configurable = getAdditionalDataConfigurable();
       if (configurable != null) {
@@ -300,12 +297,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void doSelectHomePath(){
     final SdkType sdkType = (SdkType)mySdk.getSdkType();
-    SdkConfigurationUtil.selectSdkHome(sdkType, new Consumer<String>() {
-      @Override
-      public void consume(final String path) {
-        doSetHomePath(path, sdkType);
-      }
-    });
+    SdkConfigurationUtil.selectSdkHome(sdkType, path -> doSetHomePath(path, sdkType));
 
   }
 

@@ -962,11 +962,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
         for (final Match match : duplicates) {
           if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              processor.processMatch(match);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            processor.processMatch(match);
           });
         }
       }

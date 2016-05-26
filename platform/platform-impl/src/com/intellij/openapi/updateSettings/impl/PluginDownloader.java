@@ -152,12 +152,7 @@ public class PluginDownloader {
       if (ApplicationManager.getApplication() != null) {
         final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
         final String title = IdeBundle.message("title.failed.to.download");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(text, title);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(text, title));
       }
       return false;
     }

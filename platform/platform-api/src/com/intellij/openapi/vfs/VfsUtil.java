@@ -460,12 +460,9 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    processFilesRecursively(root, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(final VirtualFile t) {
-        result.add(t);
-        return true;
-      }
+    processFilesRecursively(root, t -> {
+      result.add(t);
+      return true;
     });
     return result;
   }

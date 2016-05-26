@@ -90,16 +90,13 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       .setMovable(true)
       .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
-      .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
-        @Override
-        public boolean fun(KeyEvent event) {
-          if (AbstractPopup.isCloseRequest(event)) {
-            // Do not process a close request if the tree shows a speed search popup
-            SpeedSearchSupply supply = SpeedSearchSupply.getSupply(tree);
-            return supply != null && StringUtil.isEmpty(supply.getEnteredPrefix());
-          }
-          return false;
+      .setKeyEventHandler(event -> {
+        if (AbstractPopup.isCloseRequest(event)) {
+          // Do not process a close request if the tree shows a speed search popup
+          SpeedSearchSupply supply = SpeedSearchSupply.getSupply(tree);
+          return supply != null && StringUtil.isEmpty(supply.getEnteredPrefix());
         }
+        return false;
       })
       .addListener(new JBPopupAdapter() {
         @Override

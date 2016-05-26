@@ -29,4 +29,5 @@ public class VcsLogIcons {
 
   }
   public static final Icon ShowHideLongEdges = load("/icons/ShowHideLongEdges.png"); // 16x16
+  public static final Icon Stripes = load("/icons/stripes.png"); // 16x3
 }

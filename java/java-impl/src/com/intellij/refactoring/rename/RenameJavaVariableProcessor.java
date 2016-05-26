@@ -260,12 +260,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       methods = new PsiMethod[] {methodPrototype};
     }
     for (PsiMethod method : methods) {
-      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        public boolean process(PsiMethod psiMethod) {
-          RenameProcessor.assertNonCompileElement(psiMethod);
-          addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
-          return true;
-        }
+      OverridingMethodsSearch.search(method).forEach(psiMethod -> {
+        RenameProcessor.assertNonCompileElement(psiMethod);
+        addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
+        return true;
       });
       
       addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);

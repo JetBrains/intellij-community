@@ -107,12 +107,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   }
 
   private void checkResult(final String text) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        checkResultByText(text);
-      }
-    });
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> checkResultByText(text));
   }
 
   private static void undo() {

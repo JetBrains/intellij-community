@@ -46,6 +46,7 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -180,7 +181,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
           }
 
           DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-          OpenSourceUtil.openSourcesFrom(dataContext, false);
+          OpenSourceUtil.openSourcesFrom(dataContext, ScreenReader.isActive());
         }
         else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
@@ -205,15 +206,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      afterUpdate = new Runnable() {
-        @Override
-        public void run() {
-          if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
-            myTree.setSelectionPaths(new TreePath[0]);
-            TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
-          }
-          cb.setDone();
+      afterUpdate = () -> {
+        if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
+          myTree.setSelectionPaths(new TreePath[0]);
+          TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
         }
+        cb.setDone();
       };
     }
     else {

@@ -122,11 +122,8 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
 
 
   private void deleteTag(final int index) {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myElement.getXmlTag().getSubTags()[index].delete();
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      myElement.getXmlTag().getSubTags()[index].delete();
     });
   }
 

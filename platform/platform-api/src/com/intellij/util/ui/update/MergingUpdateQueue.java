@@ -152,11 +152,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @NotNull
   private List<Update> getAllScheduledUpdates() {
-    return ContainerUtil.concat(myScheduledUpdates.values(), new Function<Map<Update, Update>, Collection<? extends Update>>() {
-      @Override
-      public Collection<? extends Update> fun(Map<Update, Update> map) {
-        return map.keySet();
-      }
+    return ContainerUtil.concat(myScheduledUpdates.values(), map -> {
+      return map.keySet();
     });
   }
 
@@ -249,28 +246,25 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     myFlushing = true;
-    final Runnable toRun = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final List<Update> all;
+    final Runnable toRun = () -> {
+      try {
+        final List<Update> all;
 
-          synchronized (myScheduledUpdates) {
-            all = getAllScheduledUpdates();
-            myScheduledUpdates.clear();
-          }
-
-          for (Update each : all) {
-            each.setProcessed();
-          }
-
-          execute(all.toArray(new Update[all.size()]));
+        synchronized (myScheduledUpdates) {
+          all = getAllScheduledUpdates();
+          myScheduledUpdates.clear();
         }
-        finally {
-          myFlushing = false;
-          if (isEmpty()) {
-            finishActivity();
-          }
+
+        for (Update each : all) {
+          each.setProcessed();
+        }
+
+        execute(all.toArray(new Update[all.size()]));
+      }
+      finally {
+        myFlushing = false;
+        if (isEmpty()) {
+          finishActivity();
         }
       }
     };
@@ -312,11 +306,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
 
       if (each.executeInWriteAction()) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            execute(each);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          execute(each);
         });
       }
       else {

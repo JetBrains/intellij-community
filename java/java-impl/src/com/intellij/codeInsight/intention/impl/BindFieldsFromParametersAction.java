@@ -210,13 +210,8 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static ParameterClassMember[] sortByParameterIndex(@NotNull ParameterClassMember[] members, @NotNull PsiMethod method) {
     final PsiParameterList parameterList = method.getParameterList();
-    Arrays.sort(members, new Comparator<ParameterClassMember>() {
-      @Override
-      public int compare(ParameterClassMember o1, ParameterClassMember o2) {
-        return parameterList.getParameterIndex(o1.getParameter()) -
-               parameterList.getParameterIndex(o2.getParameter());
-      }
-    });
+    Arrays.sort(members, (o1, o2) -> parameterList.getParameterIndex(o1.getParameter()) -
+                                 parameterList.getParameterIndex(o2.getParameter()));
     return members;
   }
 
@@ -301,23 +296,20 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     final String fieldName = usedNames.add(name) ? name
                                                  : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, parameter, true);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          FieldFromParameterUtils.createFieldAndAddAssignment(
-            project,
-            targetClass,
-            method,
-            parameter,
-            type,
-            fieldName,
-            isMethodStatic,
-            isFinal);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        FieldFromParameterUtils.createFieldAndAddAssignment(
+          project,
+          targetClass,
+          method,
+          parameter,
+          type,
+          fieldName,
+          isMethodStatic,
+          isFinal);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

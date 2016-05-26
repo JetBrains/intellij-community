@@ -1101,11 +1101,8 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase 
 
     final PsiDocumentManager docManager = PsiDocumentManager.getInstance(ourProject);
     final Document doc = docManager.getDocument(myFile);
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        doc.insertString(part1.length(), "/**");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      doc.insertString(part1.length(), "/**");
     });
 
 

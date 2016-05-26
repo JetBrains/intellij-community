@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Comparator;
 
 class ObjectInstantiationInEqualsHashCode {
 
@@ -14,7 +15,7 @@ class ObjectInstantiationInEqualsHashCode {
     return (<warning descr="Object instantiation inside 'hashCode()'">a + ", " + b</warning>).hashCode();
   }
 }
-class X {
+class X implements Comparable<X>, Comparator<String> {
 
   Object a;
   int b;
@@ -26,5 +27,15 @@ class X {
   public int hashCode() {
     assert a != null : "check " + b;
     return a.hashCode() + b;
+  }
+
+  public int compareTo(X x) {
+    new <warning descr="Object instantiation inside 'compareTo()'">Object</warning>();
+    return 0;
+  }
+
+  public int compare(String s1, String s2) {
+    new <warning descr="Object instantiation inside 'compare()'">Object</warning>();
+    return 0;
   }
 }

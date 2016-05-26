@@ -40,21 +40,11 @@ public class MergingBackgroundExecutor<T> {
 
 
   public void queue(@NotNull final T t) {
-    myExecutorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        myConsumer.consume(t);
-      }
-    });
+    myExecutorService.execute(() -> myConsumer.consume(t));
   }
 
   @NotNull
   public static MergingBackgroundExecutor<Runnable> newRunnableExecutor(int maxThreads) {
-    return new MergingBackgroundExecutor<Runnable>(maxThreads, new Consumer<Runnable>() {
-      @Override
-      public void consume(Runnable runnable) {
-        runnable.run();
-      }
-    });
+    return new MergingBackgroundExecutor<Runnable>(maxThreads, runnable -> runnable.run());
   }
 }

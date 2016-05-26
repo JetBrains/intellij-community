@@ -40,19 +40,11 @@ import static com.intellij.util.containers.ContainerUtil.*;
 public class ResourceBundleDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
 
-  private static final Function<ResourceBundle, List<PropertiesFile>> MAPPER_RES_BUNDLE_TO_FILES = new Function<ResourceBundle, List<PropertiesFile>>() {
-    @Override
-    public List<PropertiesFile> fun(ResourceBundle resourceBundle) {
-      return resourceBundle.getPropertiesFiles();
-    }
-  };
+  private static final Function<ResourceBundle, List<PropertiesFile>> MAPPER_RES_BUNDLE_TO_FILES =
+    resourceBundle -> resourceBundle.getPropertiesFiles();
 
-  private static final Function<PropertiesFile,PsiElement> MAPPER_FILE_AS_PSI_ELEMENT = new Function<PropertiesFile, PsiElement>() {
-    @Override
-    public PsiElement fun(PropertiesFile propertiesFile) {
-      return propertiesFile.getContainingFile();
-    }
-  };
+  private static final Function<PropertiesFile,PsiElement> MAPPER_FILE_AS_PSI_ELEMENT =
+    propertiesFile -> propertiesFile.getContainingFile();
 
   public void deleteElement(@NotNull DataContext dataContext) {
     final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);

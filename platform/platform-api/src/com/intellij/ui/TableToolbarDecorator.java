@@ -124,15 +124,12 @@ class TableToolbarDecorator extends ToolbarDecorator {
 
         TableUtil.updateScroller(table);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final Component editorComponent = table.getEditorComponent();
-            if (editorComponent != null) {
-              final Rectangle bounds = editorComponent.getBounds();
-              table.scrollRectToVisible(bounds);
-              editorComponent.requestFocus();
-            }
+        SwingUtilities.invokeLater(() -> {
+          final Component editorComponent = table.getEditorComponent();
+          if (editorComponent != null) {
+            final Rectangle bounds = editorComponent.getBounds();
+            table.scrollRectToVisible(bounds);
+            editorComponent.requestFocus();
           }
         });
 

@@ -101,12 +101,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (file == null) return;
         for (final Bookmark bookmark : myBookmarks) {
           if (Comparing.equal(bookmark.getFile(), file)) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (myProject.isDisposed()) return;
-                bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
-              }
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (myProject.isDisposed()) return;
+              bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
             });
           }
         }
@@ -122,12 +119,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       public void uiSettingsChanged(UISettings source) {
         if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
           mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged();
-            }
-          });
+          EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
     }, project);
@@ -358,12 +350,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     final int index = myBookmarks.indexOf(bookmark);
     if (index > 0) {
       Collections.swap(myBookmarks, index, index - 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
-        }
+      EventQueue.invokeLater(() -> {
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
       });
     }
     return myBookmarks;
@@ -380,12 +369,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     final int index = myBookmarks.indexOf(bookmark);
     if (index < myBookmarks.size() - 1) {
       Collections.swap(myBookmarks, index, index + 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
-        }
+      EventQueue.invokeLater(() -> {
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
       });
     }
 
@@ -429,12 +415,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     }
 
     Bookmark[] bookmarks = answer.toArray(new Bookmark[answer.size()]);
-    Arrays.sort(bookmarks, new Comparator<Bookmark>() {
-      @Override
-      public int compare(final Bookmark o1, final Bookmark o2) {
-        return o1.getLine() - o2.getLine();
-      }
-    });
+    Arrays.sort(bookmarks, (o1, o2) -> o1.getLine() - o2.getLine());
     return bookmarks;
   }
 

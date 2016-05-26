@@ -137,15 +137,12 @@ public class LibraryUtil {
   @Nullable
   public static Library findLibrary(@NotNull Module module, @NotNull final String name) {
     final Ref<Library> result = Ref.create(null);
-    OrderEnumerator.orderEntries(module).forEachLibrary(new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        if (name.equals(library.getName())) {
-          result.set(library);
-          return false;
-        }
-        return true;
+    OrderEnumerator.orderEntries(module).forEachLibrary(library -> {
+      if (name.equals(library.getName())) {
+        result.set(library);
+        return false;
       }
+      return true;
     });
     return result.get();
   }

@@ -138,16 +138,13 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   private static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
-    return ContainerUtil.map(map.entrySet(), new Function<Map.Entry<String, String>, EnvironmentVariable>() {
-      @Override
-      public EnvironmentVariable fun(Map.Entry<String, String> entry) {
-        return new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
-          @Override
-          public boolean getNameIsWriteable() {
-            return !readOnly;
-          }
-        };
-      }
+    return ContainerUtil.map(map.entrySet(), entry -> {
+      return new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
+        @Override
+        public boolean getNameIsWriteable() {
+          return !readOnly;
+        }
+      };
     });
   }
 

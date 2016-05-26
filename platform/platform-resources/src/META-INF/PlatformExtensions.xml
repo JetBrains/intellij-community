@@ -296,6 +296,7 @@
     <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
     <postStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>

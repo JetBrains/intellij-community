@@ -64,24 +64,22 @@ public class ShowCoveringTestsAction extends AnAction {
     final File[] traceFiles = getTraceFiles(project);
 
     final Set<String> tests = new HashSet<String>();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        for (File traceFile : traceFiles) {
-          DataInputStream in = null;
+    Runnable runnable = () -> {
+      for (File traceFile : traceFiles) {
+        DataInputStream in = null;
+        try {
+          in = new DataInputStream(new FileInputStream(traceFile));
+          extractTests(traceFile, in, tests);
+        }
+        catch (Exception ex) {
+          LOG.error(traceFile.getName(), ex);
+        }
+        finally {
           try {
-            in = new DataInputStream(new FileInputStream(traceFile));
-            extractTests(traceFile, in, tests);
+            in.close();
           }
-          catch (Exception ex) {
-            LOG.error(traceFile.getName(), ex);
-          }
-          finally {
-            try {
-              in.close();
-            }
-            catch (IOException ex) {
-              LOG.error(ex);
-            }
+          catch (IOException ex) {
+            LOG.error(ex);
           }
         }
       }
@@ -102,13 +100,10 @@ public class ShowCoveringTestsAction extends AnAction {
         component = new ImplementationViewComponent(PsiUtilCore.toPsiElementArray(elements), 0);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false)
-          .setCouldPin(new Processor<JBPopup>() {
-            @Override
-            public boolean process(JBPopup popup) {
-              component.showInUsageView();
-              popup.cancel();
-              return false;
-            }
+          .setCouldPin(popup -> {
+            component.showInUsageView();
+            popup.cancel();
+            return false;
           });
       } else {
         component = null;

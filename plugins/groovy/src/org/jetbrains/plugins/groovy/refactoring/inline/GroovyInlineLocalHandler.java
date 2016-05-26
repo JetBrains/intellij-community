@@ -78,11 +78,8 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final GroovyInlineLocalProcessor processor = new GroovyInlineLocalProcessor(project, localVarSettings, local);
-    processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-      @Override
-      public void run() {
-        //do nothing
-      }
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+      //do nothing
     });
     processor.run();
   }

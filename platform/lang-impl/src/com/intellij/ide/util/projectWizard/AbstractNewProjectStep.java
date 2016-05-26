@@ -160,12 +160,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       final Project project = ProjectManager.getInstance().getDefaultProject();
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
       doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                  new Function<VirtualFile, Object>() {
-                                                    @Override
-                                                    public Object fun(VirtualFile file) {
-                                                      return getProjectSettings(generator);
-                                                    }
-                                                  });
+                        file -> getProjectSettings(generator));
     }
 
     @Nullable

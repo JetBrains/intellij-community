@@ -45,23 +45,20 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
   @Override
   public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
     final T data = getData();
-    DebuggerUIUtil.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (callback.isObsolete()) return;
-        final JComponent comp = createComponent(data);
-        Project project = getEvaluationContext().getProject();
-        JBPopup popup = DebuggerUIUtil.createValuePopup(project, comp, null);
-        JFrame frame = WindowManager.getInstance().getFrame(project);
-        Dimension frameSize = frame.getSize();
-        Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
-        popup.setSize(size);
-        if (comp instanceof Disposable) {
-          Disposer.register(popup, (Disposable)comp);
-        }
-        callback.evaluated("");
-        popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));
+    DebuggerUIUtil.invokeLater(() -> {
+      if (callback.isObsolete()) return;
+      final JComponent comp = createComponent(data);
+      Project project = getEvaluationContext().getProject();
+      JBPopup popup = DebuggerUIUtil.createValuePopup(project, comp, null);
+      JFrame frame = WindowManager.getInstance().getFrame(project);
+      Dimension frameSize = frame.getSize();
+      Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
+      popup.setSize(size);
+      if (comp instanceof Disposable) {
+        Disposer.register(popup, (Disposable)comp);
       }
+      callback.evaluated("");
+      popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));
     });
   }
 }

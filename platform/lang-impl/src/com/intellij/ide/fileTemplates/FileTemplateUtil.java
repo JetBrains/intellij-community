@@ -234,13 +234,8 @@ public class FileTemplateUtil{
         LOG.error(e);
       }
       LOG.info("Error evaluating template:\n" + templateContent, e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
-                                   IdeBundle.message("title.velocity.error"));
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
+                                                                                 IdeBundle.message("title.velocity.error")));
     }
     final String result = stringWriter.toString();
 
@@ -332,22 +327,14 @@ public class FileTemplateUtil{
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-      @Override
-      public void run(){
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          @Override
-          public void run(){
-            try{
-              result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
-            }
-            catch (Exception ex){
-              commandException[0] = ex;
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try{
+        result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
       }
-    }, template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
+      catch (Exception ex){
+        commandException[0] = ex;
+      }
+    }), template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
        ? IdeBundle.message("command.create.class.from.template")
        : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){

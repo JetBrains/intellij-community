@@ -80,15 +80,12 @@ public class BorderEffect {
   }
 
   public void paintHighlighters(MarkupModelEx markupModel) {
-    markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx rangeHighlighter) {
-        TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(textAttributes)) {
-          paintBorder(rangeHighlighter, textAttributes);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, rangeHighlighter -> {
+      TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
+      if (isBorder(textAttributes)) {
+        paintBorder(rangeHighlighter, textAttributes);
       }
+      return true;
     });
   }
 

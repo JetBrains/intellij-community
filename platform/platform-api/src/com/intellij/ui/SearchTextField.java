@@ -416,15 +416,13 @@ public class SearchTextField extends JPanel {
   }
 
   protected Runnable createItemChosenCallback(final JList list) {
-    return new Runnable() {
-      public void run() {
-        final String value = (String)list.getSelectedValue();
-        getTextEditor().setText(value != null ? value : "");
-        addCurrentTextToHistory();
-        if (myPopup != null) {
-          myPopup.cancel();
-          myPopup = null;
-        }
+    return () -> {
+      final String value = (String)list.getSelectedValue();
+      getTextEditor().setText(value != null ? value : "");
+      addCurrentTextToHistory();
+      if (myPopup != null) {
+        myPopup.cancel();
+        myPopup = null;
       }
     };
   }

@@ -129,14 +129,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public Callable<DiffElement<VirtualFile>> getElementChooser(final Project project) {
-    return new Callable<DiffElement<VirtualFile>>() {
-      @Nullable
-      @Override
-      public DiffElement<VirtualFile> call() throws Exception {
-        final FileChooserDescriptor descriptor = getChooserDescriptor();
-        final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
-        return result.length == 1 ? createElement(result[0]) : null;
-      }
+    return () -> {
+      final FileChooserDescriptor descriptor = getChooserDescriptor();
+      final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
+      return result.length == 1 ? createElement(result[0]) : null;
     };
   }
 

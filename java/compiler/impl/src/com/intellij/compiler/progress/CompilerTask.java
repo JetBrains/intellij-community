@@ -218,19 +218,16 @@ public class CompilerTask extends Task.Backgroundable {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = myProject;
-        if (project == null || project.isDisposed()) {
-          return;
-        }
-        synchronized (myMessageViewLock) {
-          // clear messages from the previous compilation
-          if (myErrorTreeView == null) {
-            // if message view != null, the contents has already been cleared
-            removeAllContents(project, null);
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Project project = myProject;
+      if (project == null || project.isDisposed()) {
+        return;
+      }
+      synchronized (myMessageViewLock) {
+        // clear messages from the previous compilation
+        if (myErrorTreeView == null) {
+          // if message view != null, the contents has already been cleared
+          removeAllContents(project, null);
         }
       }
     });
@@ -261,16 +258,13 @@ public class CompilerTask extends Task.Backgroundable {
 
       private void selectFirstMessage() {
         if (!isHeadlessMode()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myProject != null && myProject.isDisposed()) {
-                return;
-              }
-              synchronized (myMessageViewLock) {
-                if (myErrorTreeView != null) {
-                  myErrorTreeView.selectFirstMessage();
-                }
+          SwingUtilities.invokeLater(() -> {
+            if (myProject != null && myProject.isDisposed()) {
+              return;
+            }
+            synchronized (myMessageViewLock) {
+              if (myErrorTreeView != null) {
+                myErrorTreeView.selectFirstMessage();
               }
             }
           });
@@ -278,22 +272,19 @@ public class CompilerTask extends Task.Backgroundable {
       }
 
       private void stopAppIconProgress() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject != null && myProject.isDisposed()) {
-              return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (myProject != null && myProject.isDisposed()) {
+            return;
+          }
+          final AppIcon appIcon = AppIcon.getInstance();
+          if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
+            if (myErrorCount > 0) {
+              appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
+              appIcon.requestAttention(myProject, true);
             }
-            final AppIcon appIcon = AppIcon.getInstance();
-            if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
-              if (myErrorCount > 0) {
-                appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
-                appIcon.requestAttention(myProject, true);
-              }
-              else if (!myCompilationStartedAutomatically) {
-                appIcon.setOkBadge(myProject, true);
-                appIcon.requestAttention(myProject, false);
-              }
+            else if (!myCompilationStartedAutomatically) {
+              appIcon.setOkBadge(myProject, true);
+              appIcon.requestAttention(myProject, false);
             }
           }
         });
@@ -315,12 +306,8 @@ public class CompilerTask extends Task.Backgroundable {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         updateProgressText();
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(
+          () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true));
       }
 
       @Override
@@ -355,13 +342,10 @@ public class CompilerTask extends Task.Backgroundable {
     else {
       final Window window = getWindow();
       final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject != null && !myProject.isDisposed()) {
-            openMessageView();
-            doAddMessage(message);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject != null && !myProject.isDisposed()) {
+          openMessageView();
+          doAddMessage(message);
         }
       }, modalityState);
     }
@@ -440,9 +424,6 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void updateProgressText() {
-    if (isHeadlessMode()) {
-      return;
-    }
   }
 
   // error tree view initialization must be invoked from event dispatch thread

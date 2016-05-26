@@ -63,15 +63,12 @@ public class GrSortMapKeysIntention extends Intention {
 
     builder.append("[");
 
-    Arrays.sort(args, new Comparator<GrNamedArgument>() {
-      @Override
-      public int compare(GrNamedArgument o1, GrNamedArgument o2) {
-        final String l1 = o1.getLabelName();
-        final String l2 = o2.getLabelName();
-        assert l1 != null && l2 != null;
+    Arrays.sort(args, (o1, o2) -> {
+      final String l1 = o1.getLabelName();
+      final String l2 = o2.getLabelName();
+      assert l1 != null && l2 != null;
 
-        return l1.compareTo(l2);
-      }
+      return l1.compareTo(l2);
     });
 
     for (GrNamedArgument arg : args) {

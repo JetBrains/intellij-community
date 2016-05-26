@@ -190,11 +190,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
           return;
         }
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          save();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        save();
       });
     }
   }
@@ -245,11 +242,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void fillDocument(final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myCodeEditor.setText(text == null ? "" : text);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myCodeEditor.setText(text == null ? "" : text);
     });
   }
 
@@ -302,12 +296,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     public void actionPerformed(AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myRunner = null;
-          }
-        });
+        SwingUtilities.invokeLater(() -> myRunner = null);
       }
     }
   }
@@ -361,12 +350,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        startWhenFrameActive();
-      }
-    });
+    SwingUtilities.invokeLater(() -> startWhenFrameActive());
 
   }
 
@@ -427,17 +411,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
         final PlaybackRunner runner = myRunner;
 
-        myRunner.run().doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            if (runner == myRunner) {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  myRunner = null;
-                }
-              });
-            }
+        myRunner.run().doWhenProcessed(() -> {
+          if (runner == myRunner) {
+            SwingUtilities.invokeLater(() -> myRunner = null);
           }
         });
       }
@@ -452,25 +428,22 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
     final int depth = context != null ? context.getCurrentStageDepth() : 0;
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (!forced && (context != null && context.isDisposed())) return;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!forced && (context != null && context.isDisposed())) return;
 
-        switch (type) {
-          case message:
-            addInfo(text, currentLine, MESSAGE_COLOR, depth);
-            break;
-          case error:
-            addInfo(text, currentLine, ERROR_COLOR, depth);
-            break;
-          case code:
-            addInfo(text, currentLine, CODE_COLOR, depth);
-            break;
-          case test:
-            addInfo(text, currentLine, TEST_COLOR, depth);
-            break;
-        }
+      switch (type) {
+        case message:
+          addInfo(text, currentLine, MESSAGE_COLOR, depth);
+          break;
+        case error:
+          addInfo(text, currentLine, ERROR_COLOR, depth);
+          break;
+        case code:
+          addInfo(text, currentLine, CODE_COLOR, depth);
+          break;
+        case test:
+          addInfo(text, currentLine, TEST_COLOR, depth);
+          break;
       }
     });
   }
@@ -540,14 +513,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void scrollToLast() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myLog.getDocument().getLength() == 0) return;
+    SwingUtilities.invokeLater(() -> {
+      if (myLog.getDocument().getLength() == 0) return;
 
-        Rectangle bounds = myLog.getBounds();
-        myLog.scrollRectToVisible(new Rectangle(0, (int)bounds.getMaxY() - 1, (int)bounds.getWidth(), 1));
-      }
+      Rectangle bounds = myLog.getBounds();
+      myLog.scrollRectToVisible(new Rectangle(0, (int)bounds.getMaxY() - 1, (int)bounds.getWidth(), 1));
     });
   }
 

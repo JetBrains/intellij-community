@@ -146,22 +146,19 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       LOG.assertTrue(psiClass != null);
-      SwingUtilities.invokeLater(new Runnable() { //need to show dialog
-
-        public void run() {
-          final String testngXmlPath = new SuiteBrowser(project).showDialog();
-          if (testngXmlPath == null) return;
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(testngXmlPath);
-          LOG.assertTrue(virtualFile != null);
-          final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          LOG.assertTrue(psiFile instanceof XmlFile);
-          final XmlFile testngXML = (XmlFile)psiFile;
-          new WriteCommandAction(project, getName(), testngXML) {
-            protected void run(@NotNull final Result result) throws Throwable {
-              patchTestngXml(testngXML, psiClass);
-            }
-          }.execute();
-        }
+      SwingUtilities.invokeLater(() -> {
+        final String testngXmlPath = new SuiteBrowser(project).showDialog();
+        if (testngXmlPath == null) return;
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(testngXmlPath);
+        LOG.assertTrue(virtualFile != null);
+        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        LOG.assertTrue(psiFile instanceof XmlFile);
+        final XmlFile testngXML = (XmlFile)psiFile;
+        new WriteCommandAction(project, getName(), testngXML) {
+          protected void run(@NotNull final Result result) throws Throwable {
+            patchTestngXml(testngXML, psiClass);
+          }
+        }.execute();
       });
     }
   }
@@ -204,28 +201,26 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
-          if (file != null) {
-            final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiDirectory directory = psiManager.findDirectory(file);
-            LOG.assertTrue(directory != null);
-            new WriteCommandAction(project, getName(), null) {
-              protected void run(@NotNull final Result result) throws Throwable {
-                XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
-                  .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
-                try {
-                  testngXml = (XmlFile)directory.add(testngXml);
-                }
-                catch (IncorrectOperationException e) {
-                  //todo suggest new name
-                  return;
-                }
-                patchTestngXml(testngXml, psiClass);
+      SwingUtilities.invokeLater(() -> {
+        final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
+        if (file != null) {
+          final PsiManager psiManager = PsiManager.getInstance(project);
+          final PsiDirectory directory = psiManager.findDirectory(file);
+          LOG.assertTrue(directory != null);
+          new WriteCommandAction(project, getName(), null) {
+            protected void run(@NotNull final Result result) throws Throwable {
+              XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
+                .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
+              try {
+                testngXml = (XmlFile)directory.add(testngXml);
               }
-            }.execute();
-          }
+              catch (IncorrectOperationException e) {
+                //todo suggest new name
+                return;
+              }
+              patchTestngXml(testngXml, psiClass);
+            }
+          }.execute();
         }
       });
     }

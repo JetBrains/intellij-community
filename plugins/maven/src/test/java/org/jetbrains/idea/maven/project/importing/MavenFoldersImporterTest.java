@@ -136,14 +136,12 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     final File sourceDir = new File(myProjectRoot.getPath(), "target/src");
     sourceDir.mkdirs();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                                  getModule("project"),
-                                                                  new IdeModifiableModelsProviderImpl(myProject));
-        adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
-        adapter.getRootModel().commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                getModule("project"),
+                                                                new IdeModifiableModelsProviderImpl(myProject));
+      adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
+      adapter.getRootModel().commit();
     });
 
 
@@ -167,15 +165,13 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                                  getModule("project"),
-                                                                  new IdeModifiableModelsProviderImpl(myProject));
-        adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
-                                new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
-        adapter.getRootModel().commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                getModule("project"),
+                                                                new IdeModifiableModelsProviderImpl(myProject));
+      adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
+                              new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
+      adapter.getRootModel().commit();
     });
 
 
@@ -254,14 +250,11 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     assertGeneratedSources("project", "target/generated-sources/xxx");
 
-    ModuleRootModificationUtil.updateModel(getModule("project"), new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        for (SourceFolder folder : model.getContentEntries()[0].getSourceFolders()) {
-          JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
-          assertNotNull(properties);
-          properties.setForGeneratedSources(false);
-        }
+    ModuleRootModificationUtil.updateModel(getModule("project"), model -> {
+      for (SourceFolder folder : model.getContentEntries()[0].getSourceFolders()) {
+        JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+        assertNotNull(properties);
+        properties.setForGeneratedSources(false);
       }
     });
     assertGeneratedSources("project");

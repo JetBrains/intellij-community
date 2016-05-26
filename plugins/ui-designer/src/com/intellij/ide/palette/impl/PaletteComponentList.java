@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -92,20 +93,18 @@ public class PaletteComponentList extends JBList {
     addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         requestFocusInWindow();
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            int index = locationToIndex(new Point(x, y));
-            PaletteItem[] items = myGroup.getItems();
-            if (index >= 0 && index < items.length) {
-              if (getSelectedIndex() != index) {
-                addSelectionInterval(index, index);
-              }
-              PaletteItem item = items [index];
-              ActionGroup group = item.getPopupActionGroup();
-              if (group != null) {
-                ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-                popupMenu.getComponent().show(comp, x, y);
-              }
+        SwingUtilities.invokeLater(() -> {
+          int index = locationToIndex(new Point(x, y));
+          PaletteItem[] items = myGroup.getItems();
+          if (index >= 0 && index < items.length) {
+            if (getSelectedIndex() != index) {
+              addSelectionInterval(index, index);
+            }
+            PaletteItem item = items [index];
+            ActionGroup group1 = item.getPopupActionGroup();
+            if (group1 != null) {
+              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group1);
+              popupMenu1.getComponent().show(comp, x, y);
             }
           }
         });
@@ -264,7 +263,7 @@ public class PaletteComponentList extends JBList {
   }
 
   private static class ComponentCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
       paletteItem.customizeCellRenderer(this, selected, hasFocus);

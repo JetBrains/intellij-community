@@ -175,12 +175,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         @Override
         public void startNotified(ProcessEvent event) {
           try {
-            myWaitFor.setTerminationCallback(new Consumer<Integer>() {
-              @Override
-              public void consume(Integer integer) {
-                notifyProcessTerminated(integer);
-              }
-            });
+            myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
           }
           finally {
             removeProcessListener(this);

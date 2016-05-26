@@ -234,11 +234,8 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
 
   public void combineToResourceBundle(final @NotNull List<PropertiesFile> propertiesFiles, final String baseName) {
     myState.getCustomResourceBundles()
-      .add(new CustomResourceBundleState().addAll(ContainerUtil.map(propertiesFiles, new Function<PropertiesFile, String>() {
-        @Override
-        public String fun(PropertiesFile file) {
-          return file.getVirtualFile().getUrl();
-        }
+      .add(new CustomResourceBundleState().addAll(ContainerUtil.map(propertiesFiles, file -> {
+        return file.getVirtualFile().getUrl();
       })).setBaseName(baseName));
   }
 

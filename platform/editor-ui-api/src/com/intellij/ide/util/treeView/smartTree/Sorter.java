@@ -47,13 +47,10 @@ public interface Sorter extends TreeAction {
   Sorter ALPHA_SORTER = new Sorter() {
     @Override
     public Comparator getComparator() {
-      return new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-          String s1 = SorterUtil.getStringPresentation(o1);
-          String s2 = SorterUtil.getStringPresentation(o2);
-          return s1.compareToIgnoreCase(s2);
-        }
+      return (o1, o2) -> {
+        String s1 = SorterUtil.getStringPresentation(o1);
+        String s2 = SorterUtil.getStringPresentation(o2);
+        return s1.compareToIgnoreCase(s2);
       };
     }
 

@@ -83,11 +83,6 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
 
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myComponent.selectGroup(option);
-      }
-    };
+    return () -> myComponent.selectGroup(option);
   }
 }

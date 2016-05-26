@@ -89,12 +89,9 @@ public class CopyHandler extends EditorActionHandler {
 
     final List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
     
-    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
-        }
+    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+        transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
       }
     });
 

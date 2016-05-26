@@ -117,11 +117,9 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     if (myVisitedTabs.add(selectedTab)) {
       final JComponent preferredFocusedComponent = selectedTab.getPreferredFocusedComponent();
       if (preferredFocusedComponent != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (preferredFocusedComponent.isShowing()) {
-              preferredFocusedComponent.requestFocus();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (preferredFocusedComponent.isShowing()) {
+            preferredFocusedComponent.requestFocus();
           }
         });
       }

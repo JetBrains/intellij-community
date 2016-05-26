@@ -37,15 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
  * @author ven
  */
 public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
-  private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = new Function<ClosureSyntheticParameter, PsiType>() {
-    @Override
-    public PsiType fun(ClosureSyntheticParameter parameter) {
-      PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
-      if (typeGroovy instanceof PsiIntersectionType) {
-        return ((PsiIntersectionType)typeGroovy).getRepresentative();
-      }
-      return typeGroovy;
+  private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
+    PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
+    if (typeGroovy instanceof PsiIntersectionType) {
+      return ((PsiIntersectionType)typeGroovy).getRepresentative();
     }
+    return typeGroovy;
   };
 
   private final GrClosableBlock myClosure;

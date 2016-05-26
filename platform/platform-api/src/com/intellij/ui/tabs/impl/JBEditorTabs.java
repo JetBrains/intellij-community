@@ -53,12 +53,9 @@ public class JBEditorTabs extends JBTabsImpl {
 
       @Override
       public void afterValueChanged(RegistryValue value) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            resetTabsCache();
-            relayout(true, false);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          resetTabsCache();
+          relayout(true, false);
         });
       }
     }, parent);

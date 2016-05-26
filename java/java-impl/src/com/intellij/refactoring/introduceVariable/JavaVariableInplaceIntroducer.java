@@ -211,14 +211,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     myEditor.getCaretModel().moveToOffset(startOffset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        if (psiVariable.getInitializer() != null) {
-          appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
-        }
-        if (myConflictResolver != null && myInsertedName != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
-          myConflictResolver.apply(psiVariable.getName());
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (psiVariable.getInitializer() != null) {
+        appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
+      }
+      if (myConflictResolver != null && myInsertedName != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
+        myConflictResolver.apply(psiVariable.getName());
       }
     });
   }
@@ -387,12 +385,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
     final int varLineNumber = document.getLineNumber(modifierListOffset);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { //adjust line indent if final was inserted and then deleted
-
-      public void run() {
-        PsiDocumentManager.getInstance(psiVariable.getProject()).doPostponedOperationsAndUnblockDocument(document);
-        CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiDocumentManager.getInstance(psiVariable.getProject()).doPostponedOperationsAndUnblockDocument(document);
+      CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
     });
   }
 

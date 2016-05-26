@@ -176,11 +176,9 @@ public class SearchUtil {
                                       final JComponent component,
                                       final String option,
                                       final GlassPanel glassPanel) {
-    return new Runnable() {
-      public void run() {
-        if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
-          traverseComponentsTree(configurable, glassPanel, component, option, false);
-        }
+    return () -> {
+      if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
+        traverseComponentsTree(configurable, glassPanel, component, option, false);
       }
     };
   }
@@ -507,20 +505,16 @@ public class SearchUtil {
 
 
     if (model.size() > 0) {
-      final Runnable onChosen = new Runnable() {
-        public void run() {
-          final Object selectedValue = list.getSelectedValue();
-          if (selectedValue instanceof OptionDescription) {
-            final OptionDescription description = ((OptionDescription)selectedValue);
-            searchField.setText(description.getHit());
-            searchField.addCurrentTextToHistory();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {     //do not show look up again
-                showHintAlarm.cancelAllRequests();
-                selectConfigurable.consume(description.getConfigurableId());
-              }
-            });
-          }
+      final Runnable onChosen = () -> {
+        final Object selectedValue = list.getSelectedValue();
+        if (selectedValue instanceof OptionDescription) {
+          final OptionDescription description = ((OptionDescription)selectedValue);
+          searchField.setText(description.getHit());
+          searchField.addCurrentTextToHistory();
+          SwingUtilities.invokeLater(() -> {     //do not show look up again
+            showHintAlarm.cancelAllRequests();
+            selectConfigurable.consume(description.getConfigurableId());
+          });
         }
       };
       final JBPopup popup = JBPopupFactory.getInstance()

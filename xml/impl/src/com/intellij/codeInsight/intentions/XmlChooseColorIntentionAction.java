@@ -83,13 +83,10 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
       final String newText = "#" + ColorUtil.toHex(color);
       final PsiManager manager = literal.getManager();
       final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createAttribute("name", newText, element);
-      final Runnable replaceRunnable = new Runnable() {
-        @Override
-        public void run() {
-          final XmlAttributeValue valueElement = newAttribute.getValueElement();
-          assert valueElement != null;
-          literal.replace(valueElement);
-        }
+      final Runnable replaceRunnable = () -> {
+        final XmlAttributeValue valueElement = newAttribute.getValueElement();
+        assert valueElement != null;
+        literal.replace(valueElement);
       };
       if (startInWriteAction) {
         new WriteCommandAction(element.getProject(), caption) {

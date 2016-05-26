@@ -438,12 +438,7 @@ public class DarculaLaf extends BasicLookAndFeel {
           myMnemonicAlarm.cancelAllRequests();
           final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
           if (focusOwner != null) {
-            myMnemonicAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                repaintMnemonics(focusOwner, myAltPressed);
-              }
-            }, 10);
+            myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
           }
         }
         return false;

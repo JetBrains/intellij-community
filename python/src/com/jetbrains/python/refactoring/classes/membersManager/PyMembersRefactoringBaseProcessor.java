@@ -107,12 +107,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myFrom);
-    data.addMembers(myMembersToMove.toArray(new PyMemberInfo[myMembersToMove.size()]), new Function<PyMemberInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(PyMemberInfo info) {
-        return info.getMember();
-      }
-    });
+    data.addMembers(myMembersToMove.toArray(new PyMemberInfo[myMembersToMove.size()]), info -> info.getMember());
     return data;
   }
 

@@ -71,12 +71,9 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(ServerType.EP_NAME.getExtensions(),
-                                             new Function<ServerType, String>() {
-                      @Override
-                      public String fun(ServerType type) {
-                        return type.getPresentableName();
-                      }
-                    }, ", ");
+                                             type -> {
+                                               return type.getPresentableName();
+                                             }, ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
@@ -128,12 +125,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
-      }
-    };
+    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
   }
 
   @Override

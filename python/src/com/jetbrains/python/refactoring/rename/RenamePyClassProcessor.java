@@ -68,14 +68,11 @@ public class RenamePyClassProcessor extends RenamePyElementProcessor {
       if (initMethod != null) {
         final List<PsiReference> allRefs = Collections.synchronizedList(new ArrayList<PsiReference>());
         allRefs.addAll(super.findReferences(element));
-        ReferencesSearch.search(initMethod, GlobalSearchScope.projectScope(element.getProject())).forEach(new Processor<PsiReference>() {
-          @Override
-          public boolean process(PsiReference psiReference) {
-            if (psiReference.getCanonicalText().equals(((PyClass)element).getName())) {
-              allRefs.add(psiReference);
-            }
-            return true;
+        ReferencesSearch.search(initMethod, GlobalSearchScope.projectScope(element.getProject())).forEach(psiReference -> {
+          if (psiReference.getCanonicalText().equals(((PyClass)element).getName())) {
+            allRefs.add(psiReference);
           }
+          return true;
         });
         return allRefs;
       }

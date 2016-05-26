@@ -89,18 +89,13 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
       if (!myAddSupportPanel.validate()) return;
       if (!myAddSupportPanel.downloadLibraries(myAddSupportPanel.getMainPanel())) return;
 
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          new WriteAction() {
-            protected void run(@NotNull final Result result) {
-              ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-              myAddSupportPanel.addSupport(myModule, model);
-              model.commit();
-            }
-          }.execute();
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> new WriteAction() {
+        protected void run(@NotNull final Result result) {
+          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+          myAddSupportPanel.addSupport(myModule, model);
+          model.commit();
         }
-      });
+      }.execute());
     }
     super.doOKAction();
   }

@@ -29,6 +29,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
 
@@ -70,8 +73,29 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myAction = action;
     myPresentation = presentation;
     myPlace = place;
-    setFocusable(false);
+    // Button should be focusable if screen reader is active
+    setFocusable(ScreenReader.isActive());
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+    // Pressing the SPACE key is the same as clicking the button
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (e.getModifiers() == 0 && e.getKeyCode() == VK_SPACE) {
+          click();
+        }
+      }
+    });
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
@@ -97,8 +121,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && myPresentation.isEnabled();
+  }
+
   protected boolean isButtonEnabled() {
-    return isEnabled() && myPresentation.isEnabled();
+    return isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
@@ -322,8 +351,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
       return PUSHED;
     }
+    else if (myRollover && isButtonEnabled()) {
+      return POPPED;
+    }
+    else if (isFocusOwner()) {
+      return SELECTED;
+    }
     else {
-      return !myRollover || !isButtonEnabled() ? NORMAL : POPPED;
+      return NORMAL;
     }
   }
 

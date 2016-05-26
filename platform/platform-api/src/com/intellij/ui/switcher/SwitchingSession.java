@@ -425,12 +425,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     if (myFadingAway) {
       myManager.addFadingAway(this);
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          _dispose();
-        }
-      }, Registry.intValue("actionSystem.keyGestureDblClickTime"));
+      myAlarm.addRequest(() -> _dispose(), Registry.intValue("actionSystem.keyGestureDblClickTime"));
     } else {
       _dispose();
     }
@@ -449,11 +444,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
     final SwitchTarget selection = getSelection();
     if (selection != null) {
-      selection.switchTo(true).doWhenDone(new Runnable() {
-        public void run() {
-          myManager.disposeCurrentSession(fadeAway);
-          result.setDone(selection);
-        }
+      selection.switchTo(true).doWhenDone(() -> {
+        myManager.disposeCurrentSession(fadeAway);
+        result.setDone(selection);
       }).notifyWhenRejected(result);
     } else {
       Disposer.dispose(this);

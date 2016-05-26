@@ -86,19 +86,16 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   }
 
   protected void setToComponent(final JComponent cmp) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myCurrentComponent != null) {
-          if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
-            Disposer.dispose(myCurrentUsageView);
-          }
-          remove(myCurrentComponent);
+    SwingUtilities.invokeLater(() -> {
+      if (myCurrentComponent != null) {
+        if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
+          Disposer.dispose(myCurrentUsageView);
         }
-        myCurrentComponent = cmp;
-        add(cmp, BorderLayout.CENTER);
-        revalidate();
+        remove(myCurrentComponent);
       }
+      myCurrentComponent = cmp;
+      add(cmp, BorderLayout.CENTER);
+      revalidate();
     });
   }
 

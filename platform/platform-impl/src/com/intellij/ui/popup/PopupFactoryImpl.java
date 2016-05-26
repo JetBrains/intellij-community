@@ -359,11 +359,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(listStep, ActionPopupStep.class);
       if (actionPopupStep == null) return;
 
-      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, new Function<Object, ToggleAction>() {
-        @Override
-        public ToggleAction fun(Object o) {
-          return getActionByClass(o, actionPopupStep, ToggleAction.class);
-        }
+      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, o -> {
+        return getActionByClass(o, actionPopupStep, ToggleAction.class);
       });
 
       for (ToggleAction action : filtered) {
@@ -869,12 +866,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                    myPreselectActionCondition, false);
       }
       else {
-        myFinalRunnable = new Runnable() {
-          @Override
-          public void run() {
-            performAction(action, eventModifiers);
-          }
-        };
+        myFinalRunnable = () -> performAction(action, eventModifiers);
         return FINAL_CHOICE;
       }
     }

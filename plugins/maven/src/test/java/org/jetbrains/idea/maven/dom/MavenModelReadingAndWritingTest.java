@@ -47,22 +47,15 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
   }
 
   public void testWriting() throws Exception {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            MavenDomProjectModel model = getDomModel();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      MavenDomProjectModel model = getDomModel();
 
-            model.getGroupId().setStringValue("foo");
-            model.getArtifactId().setStringValue("bar");
-            model.getVersion().setStringValue("baz");
+      model.getGroupId().setStringValue("foo");
+      model.getArtifactId().setStringValue("bar");
+      model.getVersion().setStringValue("baz");
 
-            formatAndSaveProjectPomDocument();
-          }
-        });
-      }
-    }, null, null);
+      formatAndSaveProjectPomDocument();
+    }), null, null);
 
     assertSameLines("<?xml version=\"1.0\"?>\r\n" +
                     "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
@@ -76,23 +69,16 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
   }
 
   public void testAddingADependency() throws Exception {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            MavenDomProjectModel model = getDomModel();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      MavenDomProjectModel model = getDomModel();
 
-            MavenDomDependency d = model.getDependencies().addDependency();
-            d.getGroupId().setStringValue("group");
-            d.getArtifactId().setStringValue("artifact");
-            d.getVersion().setStringValue("version");
+      MavenDomDependency d = model.getDependencies().addDependency();
+      d.getGroupId().setStringValue("group");
+      d.getArtifactId().setStringValue("artifact");
+      d.getVersion().setStringValue("version");
 
-            formatAndSaveProjectPomDocument();
-          }
-        });
-      }
-    }, null, null);
+      formatAndSaveProjectPomDocument();
+    }), null, null);
 
     assertSameLines("<?xml version=\"1.0\"?>\r\n" +
                     "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +

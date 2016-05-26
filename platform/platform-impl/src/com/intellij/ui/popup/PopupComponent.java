@@ -164,11 +164,7 @@ public interface PopupComponent {
       myDialog.setVisible(true);
       AwtPopupWrapper.fixFlickering(myDialog, true);
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myDialog.setFocusableWindowState(true);
-        }
-      });
+      SwingUtilities.invokeLater(() -> myDialog.setFocusableWindowState(true));
     }
   }
 

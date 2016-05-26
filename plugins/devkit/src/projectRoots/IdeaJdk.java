@@ -127,12 +127,10 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   public static boolean isFromIDEAProject(String path) {
     File home = new File(path);
-    File[] openapiDir = home.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        @NonNls final String name = pathname.getName();
-        if (name.equals("openapi") && pathname.isDirectory()) return true; //todo
-        return false;
-      }
+    File[] openapiDir = home.listFiles(pathname -> {
+      @NonNls final String name = pathname.getName();
+      if (name.equals("openapi") && pathname.isDirectory()) return true; //todo
+      return false;
     });
     return openapiDir != null && openapiDir.length != 0;
   }
@@ -343,13 +341,11 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static void addSources(File file, SdkModificator sdkModificator) {
     final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
     if (!src.exists()) return;
-    File[] srcs = src.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        @NonNls final String path = pathname.getPath();
-        //noinspection SimplifiableIfStatement
-        if (path.contains("generics")) return false;
-        return path.endsWith(".jar") || path.endsWith(".zip");
-      }
+    File[] srcs = src.listFiles(pathname -> {
+      @NonNls final String path = pathname.getPath();
+      //noinspection SimplifiableIfStatement
+      if (path.contains("generics")) return false;
+      return path.endsWith(".jar") || path.endsWith(".zip");
     });
     for (int i = 0; srcs != null && i < srcs.length; i++) {
       File jarFile = srcs[i];

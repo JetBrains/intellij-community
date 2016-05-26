@@ -138,11 +138,8 @@ public class CoverageSuitesBundle {
   }
 
   public String getPresentableName() {
-    return StringUtil.join(mySuites, new Function<CoverageSuite, String>() {
-      @Override
-      public String fun(CoverageSuite coverageSuite) {
-        return coverageSuite.getPresentableName();
-      }
+    return StringUtil.join(mySuites, coverageSuite -> {
+      return coverageSuite.getPresentableName();
     }, ", ");
   }
 

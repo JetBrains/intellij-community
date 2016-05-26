@@ -225,11 +225,8 @@ public class UnscrambleDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, null, new Consumer<List<VirtualFile>>() {
-          @Override
-          public void consume(List<VirtualFile> files) {
-            myLogFile.setText(FileUtil.toSystemDependentName(files.get(files.size() - 1).getPath()));
-          }
+        FileChooser.chooseFiles(descriptor, myProject, null, files -> {
+          myLogFile.setText(FileUtil.toSystemDependentName(files.get(files.size() - 1).getPath()));
         });
       }
     });
@@ -386,13 +383,10 @@ public class UnscrambleDialog extends DialogWrapper {
         return;
       }
     }
-    DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        if (performUnscramble()) {
-          myLogFile.addCurrentTextToHistory();
-          close(OK_EXIT_CODE);
-        }
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+      if (performUnscramble()) {
+        myLogFile.addCurrentTextToHistory();
+        close(OK_EXIT_CODE);
       }
     });
   }

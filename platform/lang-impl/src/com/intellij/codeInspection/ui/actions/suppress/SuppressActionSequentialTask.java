@@ -30,8 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
@@ -71,17 +69,14 @@ public class SuppressActionSequentialTask implements SequentialTask {
       indicator.setFraction((double)myCount / myNodesToSuppress.length);
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-      @Override
-      public void run() {
-        final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
-        if (content.first != null) {
-          final PsiElement element = content.first;
-          RefEntity refEntity = node.getElement();
-          LOG.assertTrue(refEntity != null);
-          if (suppress(element, content.second, mySuppressAction, refEntity, myWrapper)) {
-            node.markAsSuppressedFromView();
-          }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+      final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
+      if (content.first != null) {
+        final PsiElement element = content.first;
+        RefEntity refEntity = node.getElement();
+        LOG.assertTrue(refEntity != null);
+        if (suppress(element, content.second, mySuppressAction, refEntity, myWrapper)) {
+          node.markAsSuppressedFromView();
         }
       }
     });
@@ -114,38 +109,32 @@ public class SuppressActionSequentialTask implements SequentialTask {
       LOG.info("local suppression fix for specific problem descriptor:  " + wrapper.getTool().getClass().getName());
     }
     final Project project = element.getProject();
-    final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        try {
-          final long startModificationCount = tracker.getModificationCount();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      try {
 
-          PsiElement container = null;
-          if (action instanceof SuppressIntentionActionFromFix) {
-            container = ((SuppressIntentionActionFromFix)action).getContainer(element);
-          }
-          if (container == null) {
-            container = element;
-          }
+        PsiElement container = null;
+        if (action instanceof SuppressIntentionActionFromFix) {
+          container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+        }
+        if (container == null) {
+          container = element;
+        }
 
-          if (action.isAvailable(project, null, element)) {
-            action.invoke(project, null, element);
-          }
-          if (startModificationCount != tracker.getModificationCount()) {
-            final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
-            for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(wrapper.getTool(), container);
-              if (descriptor != null) {
-                context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
-              }
-            }
+        if (action.isAvailable(project, null, element)) {
+          action.invoke(project, null, element);
+        }
+        final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+          ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
+        for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+          context.ignoreElement(wrapper.getTool(), container);
+          if (descriptor != null) {
+            context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
           }
         }
-        catch (IncorrectOperationException e1) {
-          LOG.error(e1);
-        }
+      }
+      catch (IncorrectOperationException e1) {
+        LOG.error(e1);
       }
     });
     return true;

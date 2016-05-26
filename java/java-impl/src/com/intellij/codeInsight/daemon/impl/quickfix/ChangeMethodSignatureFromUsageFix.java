@@ -200,18 +200,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     options.isUsages = true;
     options.isSearchForTextOccurrences = false;
     final int[] usagesFound = new int[1];
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        Processor<UsageInfo> processor = new Processor<UsageInfo>() {
-          @Override
-          public boolean process(final UsageInfo t) {
-            return ++usagesFound[0] < minUsagesNumber;
-          }
-        };
+    Runnable runnable = () -> {
+      Processor<UsageInfo> processor = t -> ++usagesFound[0] < minUsagesNumber;
 
-        handler.processElementUsages(method, processor, options);
-      }
+      handler.processElementUsages(method, processor, options);
     };
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return null;
@@ -237,11 +229,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         }
       };
       processor.run();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          UndoUtil.markPsiFileForUndo(file);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        UndoUtil.markPsiFileForUndo(file);
       });
       return Arrays.asList(newParametersInfo);
     }

@@ -162,29 +162,27 @@ public class TreeModelBuilder {
   }
 
   public TreeModel build(final Project project) {
-    Runnable buildingRunnable = new Runnable() {
-      public void run() {
-        countFiles(project);
-        myFileIndex.iterateContent(new ContentIterator() {
-          PackageDependenciesNode lastParent;
-          VirtualFile dir;
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory()) {
-              if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
-                lastParent = null;
-              }
-              lastParent = buildFileNode(fileOrDir, lastParent);
-              dir = fileOrDir.getParent();
-            } else {
+    Runnable buildingRunnable = () -> {
+      countFiles(project);
+      myFileIndex.iterateContent(new ContentIterator() {
+        PackageDependenciesNode lastParent;
+        VirtualFile dir;
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory()) {
+            if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
               lastParent = null;
             }
-            return true;
+            lastParent = buildFileNode(fileOrDir, lastParent);
+            dir = fileOrDir.getParent();
+          } else {
+            lastParent = null;
           }
-        });
-
-        for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root);
+          return true;
         }
+      });
+
+      for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
+        processFilesRecursively(root);
       }
     };
 
@@ -242,12 +240,10 @@ public class TreeModelBuilder {
       myShowFiles = true;
     }
 
-    Runnable buildingRunnable = new Runnable() {
-      public void run() {
-        for (final PsiFile file : files) {
-          if (file != null) {
-            buildFileNode(file.getVirtualFile(), null);
-          }
+    Runnable buildingRunnable = () -> {
+      for (final PsiFile file : files) {
+        if (file != null) {
+          buildFileNode(file.getVirtualFile(), null);
         }
       }
     };

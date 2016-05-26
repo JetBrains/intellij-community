@@ -222,15 +222,12 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
       URLReference.processWsdlSchemas(
         document.getRootTag(),
-        new Processor<XmlTag>() {
-          @Override
-          public boolean process(final XmlTag xmlTag) {
-            if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
-              descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
-              return false;
-            }
-            return true;
+        xmlTag -> {
+          if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
+            descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
+            return false;
           }
+          return true;
         }
       );
 

@@ -160,12 +160,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter.setFirstComponent(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        return ((Item)o).longText;
-      }
-    }));
+    mySplitter.setFirstComponent(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), o -> ((Item)o).longText));
     mySplitter.setSecondComponent(new JPanel());
     rebuildListContent();
 
@@ -176,12 +171,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            updateViewerForSelection();
-          }
-        }, 100);
+        myUpdateAlarm.addRequest(() -> updateViewerForSelection(), 100);
       }
     });
 
@@ -343,7 +333,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   
   private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setIcon(myListEntryIcon);
       if (myUseIdeaEditor) {
         int max = list.getModel().getSize();

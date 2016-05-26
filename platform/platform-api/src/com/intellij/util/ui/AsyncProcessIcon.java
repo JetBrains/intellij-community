@@ -36,7 +36,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
-  protected AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
     setUseMask(false);
   }
@@ -78,12 +78,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
       setBounds(newBounds);
       // painting problems with scrollpane
       // repaint shouldn't be called from paint method
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          container.repaint();
-        }
-      });
+      SwingUtilities.invokeLater(() -> container.repaint());
     }
   }
 

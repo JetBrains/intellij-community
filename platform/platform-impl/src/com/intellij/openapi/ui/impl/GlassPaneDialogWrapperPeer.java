@@ -604,12 +604,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       remove(getContentPane());
       repaint();
 
-      final Runnable disposer = new Runnable() {
-        @Override
-        public void run() {
-          setVisible(false);
-        }
-      };
+      final Runnable disposer = () -> setVisible(false);
 
       if (EventQueue.isDispatchThread()) {
         disposer.run();

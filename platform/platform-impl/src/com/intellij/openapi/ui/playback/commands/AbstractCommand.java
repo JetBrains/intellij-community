@@ -61,16 +61,13 @@ public abstract class AbstractCommand implements PlaybackCommand {
         dumpCommand(context);
       }
       final ActionCallback result = new ActionCallback();
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            _execute(context).notify(result);
-          }
-          catch (Throwable e) {
-            context.error(e.getMessage(), getLine());
-            result.setRejected();
-          }
+      Runnable runnable = () -> {
+        try {
+          _execute(context).notify(result);
+        }
+        catch (Throwable e) {
+          context.error(e.getMessage(), getLine());
+          result.setRejected();
         }
       };
       

@@ -66,12 +66,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateInstanceDocumentFromSchemaDialog dialog = new GenerateInstanceDocumentFromSchemaDialog(project, file);
-    dialog.setOkAction(new Runnable() {
-      @Override
-      public void run() {
-        doAction(project, dialog);
-      }
-    });
+    dialog.setOkAction(() -> doAction(project, dialog));
 
     dialog.show();
   }

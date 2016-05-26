@@ -115,33 +115,27 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
               });
               if (!isInheritor) continue;
             }
-            final Runnable runnable = new Runnable() {
-              @Override
-              public void run() {
-                if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
-                  return;
-                }
-                final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-                final PsiReferenceExpression qualified =
-                  (PsiReferenceExpression)elementFactory
-                    .createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
-                final PsiReferenceExpression newReference = (PsiReferenceExpression)referenceExpression.replace(qualified);
-                final PsiReferenceExpression qualifier = (PsiReferenceExpression)newReference.getQualifierExpression();
-                assert qualifier != null : DebugUtil.psiToString(newReference, false);
-                final PsiClass containingClass = field.getContainingClass();
-                qualifier.bindToElement(containingClass);
+            final Runnable runnable = () -> {
+              if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
+                return;
               }
+              final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+              final PsiReferenceExpression qualified =
+                (PsiReferenceExpression)elementFactory
+                  .createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
+              final PsiReferenceExpression newReference = (PsiReferenceExpression)referenceExpression.replace(qualified);
+              final PsiReferenceExpression qualifier = (PsiReferenceExpression)newReference.getQualifierExpression();
+              assert qualifier != null : DebugUtil.psiToString(newReference, false);
+              final PsiClass containingClass = field.getContainingClass();
+              qualifier.bindToElement(containingClass);
             };
             invokeWriteAction(runnable, file);
           }
         }
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory().createType(iface);
-            IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(implementingClass, classType, false);
-            fix.invoke(project, null, file);
-          }
+        final Runnable runnable = () -> {
+          PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory().createType(iface);
+          IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(implementingClass, classType, false);
+          fix.invoke(project, null, file);
         };
         invokeWriteAction(runnable, file);
       }

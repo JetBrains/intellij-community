@@ -222,16 +222,13 @@ public class MagicCompletionContributor extends CompletionContributor {
       allowed.add(value);
     }
 
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult completionResult) {
-        LookupElement element = completionResult.getLookupElement();
-        Object object = element.getObject();
-        if (object instanceof PsiElement && allowed.contains(object)) {
-          return;
-        }
-        result.passResult(completionResult);
+    result.runRemainingContributors(parameters, completionResult -> {
+      LookupElement element = completionResult.getLookupElement();
+      Object object = element.getObject();
+      if (object instanceof PsiElement && allowed.contains(object)) {
+        return;
       }
+      result.passResult(completionResult);
     });
   }
 

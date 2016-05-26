@@ -229,14 +229,11 @@ public class SelectWordUtil {
                                     final CharSequence text,
                                     final int cursorOffset,
                                     final Editor editor) {
-    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        PsiElement e = element;
-        while (e != null && !(e instanceof PsiFile)) {
-          if (processElement(e, consumer, text, cursorOffset, editor)) return;
-          e = e.getParent();
-        }
+    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(() -> {
+      PsiElement e = element;
+      while (e != null && !(e instanceof PsiFile)) {
+        if (processElement(e, consumer, text, cursorOffset, editor)) return;
+        e = e.getParent();
       }
     });
   }

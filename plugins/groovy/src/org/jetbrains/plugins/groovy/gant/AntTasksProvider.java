@@ -148,28 +148,25 @@ public class AntTasksProvider {
 
     public AntClassLoader(ArrayList<URL> urls) {
       super(build().urls(urls).allowUnescaped().noPreload());
-      myFuture = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Map<String, Class>>() {
-        @Override
-        public Map<String, Class> call() throws Exception {
-          try {
-            final ReflectedProject antProject = ReflectedProject.getProject(AntClassLoader.this);
-            final Map<String, Class> result = new HashMap<String, Class>();
-            if (antProject != null) {
-              final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
-              if (taskDefinitions != null) {
-                result.putAll(taskDefinitions);
-              }
-              final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
-              if (dataTypeDefinitions != null) {
-                result.putAll(dataTypeDefinitions);
-              }
+      myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          final ReflectedProject antProject = ReflectedProject.getProject(AntClassLoader.this);
+          final Map<String, Class> result = new HashMap<String, Class>();
+          if (antProject != null) {
+            final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+            if (taskDefinitions != null) {
+              result.putAll(taskDefinitions);
             }
-            return result;
+            final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+            if (dataTypeDefinitions != null) {
+              result.putAll(dataTypeDefinitions);
+            }
           }
-          catch (Exception e) {
-            LOG.error(e);
-            return null;
-          }
+          return result;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return null;
         }
       });
     }

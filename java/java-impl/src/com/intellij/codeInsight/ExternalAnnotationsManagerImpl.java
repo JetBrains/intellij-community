@@ -159,16 +159,9 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-              @Override
-              public void run() {
-                setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value);
-              }
-            });
-          }
+        application.invokeLater(() -> {
+          DumbService.getInstance(project).withAlternativeResolveEnabled(
+            () -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value));
         }, project.getDisposed());
       }
       break;
@@ -347,18 +340,15 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Override
   public boolean deannotate(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag annotationTag) {
-        PsiElement parent = annotationTag.getParent();
-        annotationTag.delete();
-        if (parent instanceof XmlTag) {
-          if (((XmlTag)parent).getSubTags().length == 0) {
-            parent.delete();
-          }
+    return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
+      PsiElement parent = annotationTag.getParent();
+      annotationTag.delete();
+      if (parent instanceof XmlTag) {
+        if (((XmlTag)parent).getSubTags().length == 0) {
+          parent.delete();
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -367,13 +357,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                                         @NotNull final String annotationFQN,
                                         @Nullable final PsiNameValuePair[] value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag annotationTag) {
-        annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
-          createAnnotationTag(annotationFQN, value)));
-        return true;
-      }
+    return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
+      annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
+        createAnnotationTag(annotationFQN, value)));
+      return true;
     });
   }
 
@@ -423,19 +410,16 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
 
-        CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
-            try {
-              for (XmlTag annotationTag : tagsToProcess) {
-                annotationTagProcessor.process(annotationTag);
-              }
-              commitChanges(file);
+        CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), () -> {
+          PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
+          try {
+            for (XmlTag annotationTag : tagsToProcess) {
+              annotationTagProcessor.process(annotationTag);
             }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+            commitChanges(file);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
         }, ExternalAnnotationsManagerImpl.class.getName(), null);
       }
@@ -626,14 +610,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
 
     List<XmlTag> sorted = new ArrayList<XmlTag>(itemTags);
-    Collections.sort(sorted, new Comparator<XmlTag>() {
-      @Override
-      public int compare(XmlTag item1, XmlTag item2) {
-        String externalName1 = item1.getAttributeValue("name");
-        String externalName2 = item2.getAttributeValue("name");
-        assert externalName1 != null && externalName2 != null; // null names were not added
-        return externalName1.compareTo(externalName2);
-      }
+    Collections.sort(sorted, (item1, item2) -> {
+      String externalName1 = item1.getAttributeValue("name");
+      String externalName2 = item2.getAttributeValue("name");
+      assert externalName1 != null && externalName2 != null; // null names were not added
+      return externalName1.compareTo(externalName2);
     });
     if (!sorted.equals(itemTags)) {
       for (XmlTag item : sorted) {
@@ -658,16 +639,9 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     @NonNls String text;
     if (values != null && values.length != 0) {
       text = "  <annotation name=\'" + annotationFQName + "\'>\n";
-      text += StringUtil.join(values, new Function<PsiNameValuePair, String>() {
-        @NonNls
-        @NotNull
-        @Override
-        public String fun(@NotNull PsiNameValuePair pair) {
-          return "<val" +
-                 (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
-                 " val=\"" + StringUtil.escapeXml(pair.getValue().getText()) + "\"/>";
-        }
-      }, "    \n");
+      text += StringUtil.join(values, pair -> "<val" +
+                                          (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
+                                          " val=\"" + StringUtil.escapeXml(pair.getValue().getText()) + "\"/>", "    \n");
       text += "  </annotation>";
     }
     else {

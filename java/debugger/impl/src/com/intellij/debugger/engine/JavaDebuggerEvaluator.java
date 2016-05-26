@@ -108,20 +108,17 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   @Override
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset, final boolean sideEffectsAllowed) {
     final Ref<TextRange> currentRange = Ref.create(null);
-    PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
-          if (elementAtCursor == null || !elementAtCursor.isValid()) {
-            return;
-          }
-          Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
-          if (pair != null) {
-            currentRange.set(pair.getSecond());
-          }
-        } catch (IndexNotReadyException ignored) {}
-      }
+    PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      try {
+        PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
+        if (elementAtCursor == null || !elementAtCursor.isValid()) {
+          return;
+        }
+        Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
+        if (pair != null) {
+          currentRange.set(pair.getSecond());
+        }
+      } catch (IndexNotReadyException ignored) {}
     });
     return currentRange.get();
   }

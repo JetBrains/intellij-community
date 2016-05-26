@@ -523,16 +523,13 @@ public class JavaFxPsiUtil {
         if (builderClass != null) {
           final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
           if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
-            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass aClass) {
-                PsiType returnType = null;
-                final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
-                if (method != null) {
-                  returnType = method.getReturnType();
-                }
-                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+            if (ClassInheritorsSearch.search(builderClass).forEach(aClass -> {
+              PsiType returnType = null;
+              final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+              if (method != null) {
+                returnType = method.getReturnType();
               }
+              return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
             })) {
               return Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
@@ -981,7 +978,7 @@ public class JavaFxPsiUtil {
            InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_MAP);
   }
 
-  private static boolean isObservableCollection(@Nullable PsiClass psiClass) {
+  public static boolean isObservableCollection(@Nullable PsiClass psiClass) {
     return psiClass != null &&
            (InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST) ||
             InheritanceUtil.isInheritor(psiClass, JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_SET) ||
@@ -1080,7 +1077,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiClass getFactoryProducedClass(@Nullable PsiClass psiClass, @Nullable String factoryMethodName) {
+  private static PsiClass getFactoryProducedClass(@Nullable PsiClass psiClass, @Nullable String factoryMethodName) {
     if (psiClass == null || factoryMethodName == null) return null;
     final PsiMethod[] methods = psiClass.findMethodsByName(factoryMethodName, true);
     for (PsiMethod method : methods) {
@@ -1115,6 +1112,33 @@ public class JavaFxPsiUtil {
     return propertyName != null ? propertyName : memberName;
   }
 
+  @NotNull
+  public static PsiClass getTagValueClass(@NotNull XmlTag xmlTag) {
+    return getTagValueClass(xmlTag, getTagClass(xmlTag)).getFirst();
+  }
+
+  @NotNull
+  public static Pair<PsiClass, Boolean> getTagValueClass(@NotNull XmlTag xmlTag, @Nullable PsiClass tagClass) {
+    if (tagClass != null) {
+      final XmlAttribute constAttr = xmlTag.getAttribute(FxmlConstants.FX_CONSTANT);
+      if (constAttr != null) {
+        final PsiField constField = tagClass.findFieldByName(constAttr.getValue(), true);
+        if (constField != null) {
+          final PsiType constType = constField.getType();
+          return Pair.create(PsiUtil.resolveClassInClassTypeOnly(
+            constType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)constType).getBoxedType(xmlTag) : constType), true);
+        }
+      }
+      else {
+        final XmlAttribute factoryAttr = xmlTag.getAttribute(FxmlConstants.FX_FACTORY);
+        if (factoryAttr != null) {
+          return Pair.create(getFactoryProducedClass(tagClass, factoryAttr.getValue()), true);
+        }
+      }
+    }
+    return Pair.create(tagClass, false);
+  }
+
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
     private final Project myProject;
     private final PsiFile myContainingFile;
@@ -1142,30 +1166,27 @@ public class JavaFxPsiUtil {
           };
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
                       .notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(myContainingFile.getResolveScope(), StdFileTypes.XML));
-          ReferencesSearch.search(myContainingFile, globalSearchScope).forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              final PsiElement element = reference.getElement();
-              if (element instanceof PsiLiteralExpression) {
-                final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
-                if (expression != null) {
-                  final PsiType type = expression.getType();
-                  if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
-                    final PsiElement parent = expression.getParent();
-                    if (parent instanceof PsiLocalVariable) {
-                      ReferencesSearch.search(parent).forEach(processor);
-                      final PsiClass controller = processor.getInjectedController();
-                      if (controller != null) {
-                        injectedController.set(controller);
-                        dep.set(processor.getContainingFile());
-                        return false;
-                      }
+          ReferencesSearch.search(myContainingFile, globalSearchScope).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            if (element instanceof PsiLiteralExpression) {
+              final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+              if (expression != null) {
+                final PsiType type = expression.getType();
+                if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
+                  final PsiElement parent = expression.getParent();
+                  if (parent instanceof PsiLocalVariable) {
+                    ReferencesSearch.search(parent).forEach(processor);
+                    final PsiClass controller = processor.getInjectedController();
+                    if (controller != null) {
+                      injectedController.set(controller);
+                      dep.set(processor.getContainingFile());
+                      return false;
                     }
                   }
                 }
               }
-              return true;
             }
+            return true;
           });
         }
       }

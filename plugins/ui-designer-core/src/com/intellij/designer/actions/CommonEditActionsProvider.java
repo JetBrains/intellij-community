@@ -87,21 +87,18 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public void deleteElement(final @NotNull DataContext dataContext) {
-    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        EditableArea area = getArea(dataContext);
-        List<RadComponent> selection = area.getSelection();
+    myDesigner.getToolProvider().execute(() -> {
+      EditableArea area = getArea(dataContext);
+      List<RadComponent> selection = area.getSelection();
 
-        if (selection.isEmpty()) {
-          return;
-        }
-
-        myDesigner.getToolProvider().loadDefaultTool();
-        List<RadComponent> components = RadComponent.getPureSelection(selection);
-        updateSelectionBeforeDelete(area, components.get(0), selection);
-        handleDeletion(components);
+      if (selection.isEmpty()) {
+        return;
       }
+
+      myDesigner.getToolProvider().loadDefaultTool();
+      List<RadComponent> components = RadComponent.getPureSelection(selection);
+      updateSelectionBeforeDelete(area, components.get(0), selection);
+      handleDeletion(components);
     }, DesignerBundle.message("command.delete.selection"), true);
   }
 

@@ -154,11 +154,7 @@ public class TrackCoverageAction extends ToggleModelAction {
       final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
       if (currentSuite != null) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          myUpdateCoverageAlarm.addRequest(new Runnable() {
-            public void run() {
-              selectSubCoverage();
-            }
-          }, 300);
+          myUpdateCoverageAlarm.addRequest(() -> selectSubCoverage(), 300);
         } else {
           if (coverageDataManager.isSubCoverageActive()) coverageDataManager.restoreMergedCoverage(currentSuite);
         }

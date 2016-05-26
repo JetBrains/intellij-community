@@ -174,12 +174,9 @@ public abstract class CreateClassFix {
         PsiClass template = createTemplate(factory, name);
 
         if (template == null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (editor != null && editor.getComponent().isDisplayable()) {
-                HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
-              }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (editor != null && editor.getComponent().isDisplayable()) {
+              HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
             }
           });
           return;
@@ -290,12 +287,9 @@ public abstract class CreateClassFix {
   }
 
   private static void bindRef(@NotNull final PsiClass targetClass, @NotNull final GrReferenceElement ref) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiElement newRef = ref.bindToElement(targetClass);
-        JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final PsiElement newRef = ref.bindToElement(targetClass);
+      JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);
     });
   }
 

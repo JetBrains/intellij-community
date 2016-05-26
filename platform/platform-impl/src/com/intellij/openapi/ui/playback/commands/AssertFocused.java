@@ -51,16 +51,14 @@ public class AssertFocused extends AbstractCommand {
       }
     }
 
-    IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
-      public void run() {
-        try {
-          doAssert(expected, context);
-          result.setDone();
-        }
-        catch (AssertionError error) {
-          context.error("Assertion failed: " + error.getMessage(), getLine());
-          result.setRejected();
-        }
+    IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> {
+      try {
+        doAssert(expected, context);
+        result.setDone();
+      }
+      catch (AssertionError error) {
+        context.error("Assertion failed: " + error.getMessage(), getLine());
+        result.setRejected();
       }
     });
 

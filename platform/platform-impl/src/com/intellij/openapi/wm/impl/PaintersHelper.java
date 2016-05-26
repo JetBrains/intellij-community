@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
@@ -42,6 +43,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
@@ -150,23 +153,28 @@ final class PaintersHelper implements Painter.Listener {
     }
   }
 
-  public enum FillType {
-    BG_CENTER, TILE, SCALE,
+  public enum Fill {
+    PLAIN, SCALE, TILE
+  }
+
+  public enum Place {
     CENTER, TOP_CENTER, BOTTOM_CENTER,
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
 
   public static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
-    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName);
+    ModalityState modalityState = ModalityState.stateForComponent(painters.myRootComponent);
+    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName, modalityState);
     painters.addPainter(painter, null);
   }
 
-  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName) {
+  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName, @NotNull final ModalityState modalityState) {
     return new ImagePainter() {
       Image image;
       float alpha;
       Insets insets;
-      FillType fillType;
+      Fill fillType;
+      Place place;
 
       String current;
 
@@ -178,11 +186,11 @@ final class PaintersHelper implements Painter.Listener {
       @Override
       public void executePaint(Component component, Graphics2D g) {
         if (image == null) return; // covered by needsRepaint()
-        executePaint(g, component, image, fillType, alpha, insets);
+        executePaint(g, component, image, fillType, place, alpha, insets);
       }
 
       boolean ensureImageLoaded() {
-        String value = System.getProperty(propertyName);
+        String value = getBackgroundSpec(propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
           loadImageAsync(value);
@@ -191,57 +199,56 @@ final class PaintersHelper implements Painter.Listener {
         return image != null;
       }
 
-      private void resetImage(String value, Image newImage, float newAlpha, FillType newFillType) {
+      private void resetImage(String value, Image newImage, float newAlpha, Fill newFill, Place newPlace) {
         if (!Comparing.equal(current, value)) return;
         boolean prevOk = image != null;
         clearImages(-1);
         image = newImage;
         insets = JBUI.emptyInsets();
         alpha = newAlpha;
-        fillType = newFillType;
+        fillType = newFill;
+        place = newPlace;
         boolean newOk = newImage != null;
         if (prevOk || newOk) {
-          repaintAllWindows();
+          if (modalityState.dominates(ModalityState.NON_MODAL)) {
+            UIUtil.getActiveWindow().repaint();
+          }
+          else {
+            IdeBackgroundUtil.repaintAllWindows();
+          }
         }
       }
 
       private void loadImageAsync(final String propertyValue) {
         String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
         final float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
-        final FillType newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", FillType.SCALE, FillType.class);
+        final Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", Fill.SCALE, Fill.class);
+        final Place newPlace = StringUtil.parseEnum(parts.length > 3 ? parts[3].toUpperCase(Locale.ENGLISH) : "", Place.CENTER, Place.class);
+        String filePath = parts[0];
+        if (StringUtil.isEmpty(filePath)) {
+          resetImage(propertyValue, null, newAlpha, newFillType, newPlace);
+          return;
+        }
         try {
-          String filePath = parts[0];
           URL url = filePath.contains("://") ? new URL(filePath) :
                     (FileUtil.isAbsolutePlatformIndependent(filePath)
                      ? new File(filePath)
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              final Image m = ImageLoader.loadFromUrl(url);
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  resetImage(propertyValue, m, newAlpha, newFillType);
-                }
-              });
-            }
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            final Image m = ImageLoader.loadFromUrl(url);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              resetImage(propertyValue, m, newAlpha, newFillType, newPlace);
+            }, modalityState);
           });
         }
         catch (Exception e) {
-          resetImage(propertyValue, null, newAlpha, newFillType);
+          resetImage(propertyValue, null, newAlpha, newFillType, newPlace);
         }
       }
     };
   }
 
-  private static void repaintAllWindows() {
-    for (Window window : Window.getWindows()) {
-      window.repaint();
-    }
-  }
-
-  public static AbstractPainter newImagePainter(@NotNull final Image image, final FillType fillType, final float alpha, final Insets insets) {
+  public static AbstractPainter newImagePainter(@NotNull final Image image, final Fill fillType, final Place place, final float alpha, final Insets insets) {
     return new ImagePainter() {
       @Override
       public boolean needsRepaint() {
@@ -250,7 +257,7 @@ final class PaintersHelper implements Painter.Listener {
 
       @Override
       public void executePaint(Component component, Graphics2D g) {
-        executePaint(g, component, image, fillType, alpha, insets);
+        executePaint(g, component, image, fillType, place, alpha, insets);
       }
     };
   }
@@ -270,7 +277,7 @@ final class PaintersHelper implements Painter.Listener {
 
     final Map<GraphicsConfiguration, Cached> cachedMap = ContainerUtil.newHashMap();
 
-    public void executePaint(Graphics2D g, Component component, Image image, FillType fillType, float alpha, Insets insets) {
+    public void executePaint(Graphics2D g, Component component, Image image, Fill fillType, Place place, float alpha, Insets insets) {
       int cw0 = component.getWidth();
       int ch0 = component.getHeight();
       Insets i = JBUI.insets(insets.top * ch0 / 100, insets.left * cw0 / 100, insets.bottom * ch0 / 100, insets.right * cw0 / 100);
@@ -284,9 +291,9 @@ final class PaintersHelper implements Painter.Listener {
       GraphicsConfiguration cfg = g.getDeviceConfiguration();
       Cached cached = cachedMap.get(cfg);
       VolatileImage scaled = cached == null ? null : cached.image;
-      if (fillType == FillType.SCALE || fillType == FillType.TILE) {
+      if (fillType == Fill.SCALE || fillType == Fill.TILE) {
         int sw, sh;
-        if (fillType == FillType.SCALE) {
+        if (fillType == Fill.SCALE) {
           boolean useWidth = cw * h > ch * w;
           sw = useWidth ? cw : w * ch / h;
           sh = useWidth ? h * cw / w : ch;
@@ -308,7 +315,7 @@ final class PaintersHelper implements Painter.Listener {
           }
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
-          if (fillType == FillType.SCALE) {
+          if (fillType == Fill.SCALE) {
             gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                                 RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             gg.drawImage(image, 0, 0, sw, sh, null);
@@ -343,18 +350,17 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       int x, y;
-      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER ||
-          fillType == FillType.SCALE || fillType == FillType.TILE ||
-          fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
+      if (place == Place.CENTER ||
+          place == Place.TOP_CENTER || place == Place.BOTTOM_CENTER) {
         x = i.left + (cw - w) / 2;
-        y = fillType == FillType.TOP_CENTER ? i.top :
-            fillType == FillType.BOTTOM_CENTER ? ch0 - i.bottom - h :
+        y = place == Place.TOP_CENTER ? i.top :
+            place == Place.BOTTOM_CENTER ? ch0 - i.bottom - h :
             i.top + (ch - h) / 2;
       }
-      else if (fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ||
-               fillType == FillType.BOTTOM_LEFT || fillType == FillType.BOTTOM_RIGHT) {
-        x = fillType == FillType.TOP_LEFT || fillType == FillType.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
-        y = fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
+      else if (place == Place.TOP_LEFT || place == Place.TOP_RIGHT ||
+               place == Place.BOTTOM_LEFT || place == Place.BOTTOM_RIGHT) {
+        x = place == Place.TOP_LEFT || place == Place.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
+        y = place == Place.TOP_LEFT || place == Place.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
       }
       else {
         return;
@@ -362,13 +368,6 @@ final class PaintersHelper implements Painter.Listener {
 
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(alpha);
       UIUtil.drawImage(g, scaled, x, y, w, h, null);
-      if (fillType == FillType.BG_CENTER) {
-        g.setColor(component.getBackground());
-        g.fillRect(0, 0, x, ch0);
-        g.fillRect(x, 0, w, h);
-        g.fillRect(x + w, 0, x, ch0);
-        g.fillRect(x, y + h, w, y);
-      }
 
       gc.restore();
     }

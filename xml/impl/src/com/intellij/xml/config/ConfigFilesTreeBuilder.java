@@ -115,12 +115,7 @@ public class ConfigFilesTreeBuilder {
     }
 
     List<VirtualFile> sortedJars = new ArrayList<VirtualFile>(jars.keySet());
-    Collections.sort(sortedJars, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return StringUtil.naturalCompare(o1.getName(), o2.getName());
-      }
-    });
+    Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
       final List<PsiFile> list = new ArrayList<PsiFile>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
@@ -163,12 +158,7 @@ public class ConfigFilesTreeBuilder {
     return new DefaultMutableTreeNode(file);
   }
 
-  private static final Comparator<PsiFile> FILE_COMPARATOR = new Comparator<PsiFile>() {
-    @Override
-    public int compare(final PsiFile o1, final PsiFile o2) {
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
-    }
-  };
+  private static final Comparator<PsiFile> FILE_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   public static void renderNode(Object value, boolean expanded, ColoredTreeCellRenderer renderer) {
     if (!(value instanceof DefaultMutableTreeNode)) return;

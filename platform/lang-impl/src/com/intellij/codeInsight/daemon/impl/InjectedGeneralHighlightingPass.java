@@ -183,14 +183,11 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       }
     };
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, true,
-                                                                   new Processor<PsiElement>() {
-                                                                     @Override
-                                                                     public boolean process(PsiElement element) {
-                                                                       ApplicationManager.getApplication().assertReadAccessAllowed();
-                                                                       progress.checkCanceled();
-                                                                       InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
-                                                                       return true;
-                                                                     }
+                                                                   element -> {
+                                                                     ApplicationManager.getApplication().assertReadAccessAllowed();
+                                                                     progress.checkCanceled();
+                                                                     InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
+                                                                     return true;
                                                                    })) {
       throw new ProcessCanceledException();
     }
@@ -209,12 +206,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
     return JobLauncher.getInstance()
       .invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), progress, isFailFastOnAcquireReadAction(),
-                                       new Processor<PsiFile>() {
-                                         @Override
-                                         public boolean process(final PsiFile injectedPsi) {
-                                           return addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos, progress, injectedLanguageManager);
-                                         }
-                                       });
+                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos, progress, injectedLanguageManager));
   }
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
@@ -366,13 +358,10 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     try {
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (final HighlightVisitor visitor : filtered) {
-        visitor.analyze(injectedPsi, true, holder, new Runnable() {
-          @Override
-          public void run() {
-            for (PsiElement element : elements) {
-              progress.checkCanceled();
-              visitor.visit(element);
-            }
+        visitor.analyze(injectedPsi, true, holder, () -> {
+          for (PsiElement element : elements) {
+            progress.checkCanceled();
+            visitor.visit(element);
           }
         });
       }

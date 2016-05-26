@@ -117,12 +117,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
       myOKAction = new ApplyToSettings();
       myOKAction.setEnabled(false);
-      myTabbedLanguagePanel.setOnSomethingChangedCallback(new Runnable() {
-        @Override
-        public void run() {
-          boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
-          myOKAction.setEnabled(isModified);
-        }
+      myTabbedLanguagePanel.setOnSomethingChangedCallback(() -> {
+        boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
+        myOKAction.setEnabled(isModified);
       });
 
       myEditor = editor;

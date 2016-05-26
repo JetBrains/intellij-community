@@ -148,13 +148,10 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     final StringBuilder returnTypeBuffer = new StringBuilder(qualifiedName);
     if (!myTypeParameters.isEmpty()) {
       returnTypeBuffer.append('<');
-      returnTypeBuffer.append(StringUtil.join(myTypeParameters, new Function<PsiTypeParameter, String>() {
-        @Override
-        public String fun(final PsiTypeParameter typeParameter) {
-          final String paramName = typeParameter.getName();
-          LOG.assertTrue(paramName != null);
-          return paramName;
-        }
+      returnTypeBuffer.append(StringUtil.join(myTypeParameters, typeParameter -> {
+        final String paramName = typeParameter.getName();
+        LOG.assertTrue(paramName != null);
+        return paramName;
       }, ","));
       returnTypeBuffer.append('>');
     }

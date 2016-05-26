@@ -525,7 +525,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
         }
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (!myEnabled || indicator.isCanceled()) return;
           myProgress = null;
 
@@ -566,7 +566,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         onChangeAdded(change);
       }
       if (getChangesCount() == 0 && getConflictsCount() == 0) {
-        LOG.assertTrue(getFirstUnresolvedChange(true, null) == null);
+        LOG.assertTrue(getFirstUnresolvedChange(true, ThreeSide.BASE) == null);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
 

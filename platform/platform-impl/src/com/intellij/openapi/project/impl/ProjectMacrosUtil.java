@@ -83,12 +83,7 @@ public class ProjectMacrosUtil {
 
     // there are undefined macros, need to define them before loading components
     final boolean[] result = new boolean[1];
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-      @Override
-      public void run() {
-        result[0] = showMacrosConfigurationDialog(project, usedMacros);
-      }
-    }, ModalityState.NON_MODAL);
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.NON_MODAL);
     return result[0];
   }
 

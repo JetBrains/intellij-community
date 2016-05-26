@@ -628,15 +628,11 @@ public class DynamicToolWindowWrapper {
     }
 
     private static String[] mapToUnqualified(final String[] argumentsNames) {
-      return ContainerUtil.map2Array(argumentsNames, String.class, new NullableFunction<String, String>() {
-        @Override
-        @Nullable
-        public String fun(final String s) {
-          if (s == null) return null;
-          int index = s.lastIndexOf(".");
-          if (index > 0 && index < s.length() - 1) return s.substring(index + 1);
-          return s;
-        }
+      return ContainerUtil.map2Array(argumentsNames, String.class, (NullableFunction<String, String>)s -> {
+        if (s == null) return null;
+        int index = s.lastIndexOf(".");
+        if (index > 0 && index < s.length() - 1) return s.substring(index + 1);
+        return s;
       });
     }
   }

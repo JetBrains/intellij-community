@@ -33,13 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrParameter extends PsiParameter, GrVariable, GrCondition {
   GrParameter[] EMPTY_ARRAY = new GrParameter[0];
-  ArrayFactory<GrParameter> ARRAY_FACTORY = new ArrayFactory<GrParameter>() {
-    @NotNull
-    @Override
-    public GrParameter[] create(int count) {
-      return new GrParameter[count];
-    }
-  };
+  ArrayFactory<GrParameter> ARRAY_FACTORY = count -> new GrParameter[count];
 
   @Override
   @Nullable

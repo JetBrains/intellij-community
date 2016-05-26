@@ -51,11 +51,7 @@ public class AntSupport {
       daemon.restart();
     }
     else {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          daemon.restart();
-        }
-      });
+      SwingUtilities.invokeLater(() -> daemon.restart());
     }
   }
   

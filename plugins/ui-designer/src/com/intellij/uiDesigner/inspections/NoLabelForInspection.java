@@ -121,21 +121,19 @@ public class NoLabelForInspection extends BaseFormInspection {
       if (!myEditor.ensureEditable()) {
         return;
       }
-      Runnable runnable = new Runnable() {
-        public void run() {
-          final Palette palette = Palette.getInstance(myEditor.getProject());
-          IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
-          boolean modified = false;
-          for(IntrospectedProperty prop: props) {
-            if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
-              IntroComponentProperty icp = (IntroComponentProperty) prop;
-              icp.setValueEx(myLabel, myComponent.getId());
-              modified = true;
-              break;
-            }
+      Runnable runnable = () -> {
+        final Palette palette = Palette.getInstance(myEditor.getProject());
+        IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
+        boolean modified = false;
+        for(IntrospectedProperty prop: props) {
+          if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
+            IntroComponentProperty icp = (IntroComponentProperty) prop;
+            icp.setValueEx(myLabel, myComponent.getId());
+            modified = true;
+            break;
           }
-          if (modified) myEditor.refreshAndSave(false);
         }
+        if (modified) myEditor.refreshAndSave(false);
       };
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), runnable,
                                                     UIDesignerBundle.message("inspection.no.label.for.command"), null);

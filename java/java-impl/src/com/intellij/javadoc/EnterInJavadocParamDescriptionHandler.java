@@ -61,12 +61,9 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
     if (editor.offsetToLogicalPosition(offsetAfterLastWs).column < desiredPosition.column) {
       final int lineStartOffset = document.getLineStartOffset(desiredPosition.line);
       final String toInsert = StringUtil.repeat(" ", desiredPosition.column - (offsetAfterLastWs - lineStartOffset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.insertString(caretOffset, toInsert);
-          PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        document.insertString(caretOffset, toInsert);
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       });
     } 
 

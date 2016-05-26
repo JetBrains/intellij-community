@@ -56,12 +56,9 @@ public class GenerateDomElementAction extends CodeInsightAction {
     return new CodeInsightActionHandler() {
       @Override
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            final DomElement element = myProvider.generate(project, editor, file);
-            myProvider.navigate(element);
-          }
+        final Runnable runnable = () -> {
+          final DomElement element = myProvider.generate(project, editor, file);
+          myProvider.navigate(element);
         };
         
         if (GenerateDomElementAction.this.startInWriteAction()) {

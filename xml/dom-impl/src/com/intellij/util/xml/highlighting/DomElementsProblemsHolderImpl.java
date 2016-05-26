@@ -43,12 +43,9 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
-    new Function<DomElement, List<DomElementProblemDescriptor>>() {
-      @Override
-      public List<DomElementProblemDescriptor> fun(final DomElement s) {
-        final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
-        return map != null ? ContainerUtil.concat(map.values()) : Collections.<DomElementProblemDescriptor>emptyList();
-      }
+    s -> {
+      final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
+      return map != null ? ContainerUtil.concat(map.values()) : Collections.<DomElementProblemDescriptor>emptyList();
     };
 
   private final DomFileElement myElement;

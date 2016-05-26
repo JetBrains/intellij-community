@@ -80,12 +80,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        result.set(openFileImpl3(file, focusEditor));
-      }
-    }, "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(file, focusEditor)), "", null);
     return result.get();
 
   }

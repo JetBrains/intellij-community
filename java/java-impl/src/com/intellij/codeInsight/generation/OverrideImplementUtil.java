@@ -170,12 +170,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                            final PsiMethod method,
                                                            final boolean toCopyJavaDoc,
                                                            final boolean insertOverrideIfPossible) {
-    return new Consumer<PsiMethod>() {
-      @Override
-      public void consume(PsiMethod result) {
-        decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result);
-      }
-    };
+    return result -> decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result);
   }
 
   private static PsiMethod decorateMethod(PsiClass aClass,
@@ -286,11 +281,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                                               boolean toCopyJavaDoc,
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
-    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, new Function<PsiMethodMember, CandidateInfo>() {
-      @Override
-      public CandidateInfo fun(final PsiMethodMember s) {
-        return new CandidateInfo(s.getElement(), s.getSubstitutor());
-      }
+    List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, s -> {
+      return new CandidateInfo(s.getElement(), s.getSubstitutor());
     });
     final List<PsiMethod> methods = overrideOrImplementMethodCandidates(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
     return convert2GenerationInfos(methods);
@@ -310,11 +302,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
-    return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
-      @Override
-      public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
-        return createGenerationInfo(s);
-      }
+    return ContainerUtil.map2List(methods, s -> {
+      return createGenerationInfo(s);
     });
   }
 
@@ -403,13 +392,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         m = factory.createMethodFromText(methodText, originalMethod);
       }
       catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
-                                     CodeInsightBundle.message("override.implement.broken.file.template.title"));
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
+                                       CodeInsightBundle.message("override.implement.broken.file.template.title")));
         return;
       }
       PsiCodeBlock oldBody = result.getBody();
@@ -525,12 +510,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  final CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
-                  handler.invoke(project, editor, aClass.getContainingFile());
-                }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                final CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
+                handler.invoke(project, editor, aClass.getContainingFile());
               });
             }
           }

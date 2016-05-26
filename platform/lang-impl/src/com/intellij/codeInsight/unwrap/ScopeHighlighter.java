@@ -36,13 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeHighlighter {
-  public static final NotNullFunction<PsiElement,TextRange> NATURAL_RANGER = new NotNullFunction<PsiElement, TextRange>() {
-    @NotNull
-    @Override
-    public TextRange fun(PsiElement dom) {
-      return dom.getTextRange();
-    }
-  };
+  public static final NotNullFunction<PsiElement,TextRange> NATURAL_RANGER = dom -> dom.getTextRange();
   private final Editor myEditor;
   private final List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
   private final NotNullFunction<PsiElement, TextRange> myRanger;

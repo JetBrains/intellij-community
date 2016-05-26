@@ -45,12 +45,7 @@ public class TreeViewUtil {
       final ConcurrentMap<PsiPackage, Boolean> newMap = ContainerUtil.createConcurrentWeakMap();
       map = ((UserDataHolderEx)project).putUserDataIfAbsent(SHOULD_ABBREV_PACK_KEY, newMap);
       if (map == newMap) {
-        PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnChange(new Runnable() {
-          @Override
-          public void run() {
-            newMap.clear();
-          }
-        });
+        PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnChange(() -> newMap.clear());
       }
     }
 

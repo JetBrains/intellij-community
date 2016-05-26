@@ -402,12 +402,7 @@ public class GlobalSearchScopesCore {
         VirtualFile root = myDirectories[0];
         return "Directory '" + root.getName() + "'";
       }
-      return "Directories " + StringUtil.join(myDirectories, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile file) {
-          return "'" + file.getName() + "'";
-        }
-      }, ", ");
+      return "Directories " + StringUtil.join(myDirectories, file -> "'" + file.getName() + "'", ", ");
     }
 
   }

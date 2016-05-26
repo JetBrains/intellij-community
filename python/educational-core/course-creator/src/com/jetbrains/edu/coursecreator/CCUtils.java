@@ -70,14 +70,11 @@ public class CCUtils {
           return index > threshold;
         }
       }));
-    Collections.sort(dirsToRename, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        StudyItem item1 = getStudyItem.fun(o1);
-        StudyItem item2 = getStudyItem.fun(o2);
-        //if we delete some dir we should start increasing numbers in dir names from the end
-        return (-delta) * EduUtils.INDEX_COMPARATOR.compare(item1, item2);
-      }
+    Collections.sort(dirsToRename, (o1, o2) -> {
+      StudyItem item1 = getStudyItem.fun(o1);
+      StudyItem item2 = getStudyItem.fun(o2);
+      //if we delete some dir we should start increasing numbers in dir names from the end
+      return (-delta) * EduUtils.INDEX_COMPARATOR.compare(item1, item2);
     });
 
     for (final VirtualFile dir : dirsToRename) {

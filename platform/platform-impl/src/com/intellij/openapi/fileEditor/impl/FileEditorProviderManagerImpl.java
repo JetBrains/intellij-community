@@ -151,12 +151,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     mySelectedProviders.putAll(state.mySelectedProviders);
   }
 
-  private static final Function<FileEditorProvider, String> EDITOR_PROVIDER_STRING_FUNCTION = new Function<FileEditorProvider, String>() {
-    @Override
-    public String fun(FileEditorProvider provider) {
-      return provider.getEditorTypeId();
-    }
-  };
+  private static final Function<FileEditorProvider, String> EDITOR_PROVIDER_STRING_FUNCTION = provider -> provider.getEditorTypeId();
 
   private final Map<String, String> mySelectedProviders = new HashMap<String, String>();
 

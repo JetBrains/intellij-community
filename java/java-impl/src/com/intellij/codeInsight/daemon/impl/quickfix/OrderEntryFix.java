@@ -190,14 +190,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                  @Nullable @NonNls final String className) {
     final Project project = currentModule.getProject();
     if (editor != null && reference != null && className != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-        @Override
-        public void run() {
-          GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-          if (aClass != null) {
-            new AddImportAction(project, reference, editor, aClass).execute();
-          }
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+        if (aClass != null) {
+          new AddImportAction(project, reference, editor, aClass).execute();
         }
       });
     }
@@ -217,12 +214,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public static List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
-    return ContainerUtil.map(jarPaths, new Function<String, String>() {
-        @Override
-        public String fun(String path) {
-          return refreshAndConvertToUrl(path);
-        }
-      });
+    return ContainerUtil.map(jarPaths, path -> {
+      return refreshAndConvertToUrl(path);
+    });
   }
 
   @NotNull

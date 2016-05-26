@@ -80,12 +80,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
-        return true;
-      }
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, info -> {
+      addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+      return true;
     });
     return result;
   }
@@ -301,12 +298,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile, Editor> place =
-        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
-          @Override
-          public boolean process(PsiFile psiFile, Editor editor) {
-            return ShowIntentionActionsHandler.availableFor(psiFile, editor, action);
-          }
-        });
+        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor,
+                                                                 (psiFile, editor) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action));
 
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();

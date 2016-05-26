@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -29,11 +30,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -50,6 +48,9 @@ public class TreeTable extends JBTable {
   private TreeTableTree myTree;
   private TreeTableModel myTableModel;
   private PropertyChangeListener myTreeRowHeightPropertyListener;
+  // If a screen reader is present, it is better to let the left/right cursor keys
+  // be routed to the JTable, as opposed to expand/collapse tree nodes.
+  private boolean myProcessCursorKeys = !ScreenReader.isActive();
 
   public TreeTable(TreeTableModel treeTableModel) {
     super();
@@ -168,6 +169,11 @@ public class TreeTable extends JBTable {
   }
 
   protected void processKeyEvent(KeyEvent e){
+    if (!myProcessCursorKeys) {
+      super.processKeyEvent(e);
+      return;
+    }
+
     int keyCode = e.getKeyCode();
     final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
     boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
@@ -196,6 +202,16 @@ public class TreeTable extends JBTable {
     if (rowToSelect > -1) {
       getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
     }
+  }
+
+  /**
+   * Enable or disable processing of left/right cursor keys to expand/collapse
+   * nodes in the tree column. Disabling these keys can be useful to improve
+   * accessibility support when the left/right cursor keys are better suited to
+   * navigate to the previous/next cell of a given row.
+   */
+  public void setProcessCursorKeys(boolean processCursorKeys) {
+    myProcessCursorKeys = processCursorKeys;
   }
 
   /**
@@ -357,7 +373,7 @@ public class TreeTable extends JBTable {
     return editResult;
   }
 
-  private boolean isTreeColumn(int column) {
+  protected boolean isTreeColumn(int column) {
     return TreeTableModel.class.isAssignableFrom(getColumnClass(column));
   }
 

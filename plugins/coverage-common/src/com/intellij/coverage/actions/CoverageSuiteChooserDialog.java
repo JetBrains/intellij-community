@@ -154,12 +154,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
     final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
     final List<CoverageRunner> runners = new ArrayList<CoverageRunner>(grouped.keySet());
-    Collections.sort(runners, new Comparator<CoverageRunner>() {
-      @Override
-      public int compare(CoverageRunner o1, CoverageRunner o2) {
-        return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-      }
-    });
+    Collections.sort(runners, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
       final Map<String, List<CoverageSuite>> providers = grouped.get(runner);
@@ -172,12 +167,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           runnerNode.add(remoteNode);
         }
         final List<CoverageSuite> suites = providers.get(providersKey);
-        Collections.sort(suites, new Comparator<CoverageSuite>() {
-          @Override
-          public int compare(CoverageSuite o1, CoverageSuite o2) {
-            return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-          }
-        });
+        Collections.sort(suites, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
         for (CoverageSuite suite : suites) {
           final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
           treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
@@ -311,20 +301,17 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         final CheckedTreeNode suiteNode = new CheckedTreeNode(coverageSuite);
         suiteNode.setChecked(true);
         node.add(suiteNode);
-        TreeUtil.sort(node, new Comparator() {
-          @Override
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof CheckedTreeNode && o2 instanceof CheckedTreeNode) {
-              final Object userObject1 = ((CheckedTreeNode)o1).getUserObject();
-              final Object userObject2 = ((CheckedTreeNode)o2).getUserObject();
-              if (userObject1 instanceof CoverageSuite && userObject2 instanceof CoverageSuite) {
-                final String presentableName1 = ((CoverageSuite)userObject1).getPresentableName();
-                final String presentableName2 = ((CoverageSuite)userObject2).getPresentableName();
-                return presentableName1.compareToIgnoreCase(presentableName2);
-              }
+        TreeUtil.sort(node, (o1, o2) -> {
+          if (o1 instanceof CheckedTreeNode && o2 instanceof CheckedTreeNode) {
+            final Object userObject1 = ((CheckedTreeNode)o1).getUserObject();
+            final Object userObject2 = ((CheckedTreeNode)o2).getUserObject();
+            if (userObject1 instanceof CoverageSuite && userObject2 instanceof CoverageSuite) {
+              final String presentableName1 = ((CoverageSuite)userObject1).getPresentableName();
+              final String presentableName2 = ((CoverageSuite)userObject2).getPresentableName();
+              return presentableName1.compareToIgnoreCase(presentableName2);
             }
-            return 0;
           }
+          return 0;
         });
         updateTree();
         TreeUtil.selectNode(mySuitesTree, suiteNode);

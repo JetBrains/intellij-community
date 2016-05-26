@@ -50,15 +50,12 @@ public class LibraryDefinitionsGeneratorFactory {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     for (Module module : modules) {
-      ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(new Processor<Library>() {
-        @Override
-        public boolean process(Library library) {
-          final String name = library.getName();
-          if (name != null) {
-            myUsedLibraries.add(name);
-          }
-          return true;
+      ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(library -> {
+        final String name = library.getName();
+        if (name != null) {
+          myUsedLibraries.add(name);
         }
+        return true;
       });
     }
   }

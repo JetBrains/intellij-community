@@ -243,13 +243,10 @@ public class SeverityEditorDialog extends DialogWrapper {
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
-      settings.select(javaPage).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          final Runnable runnable = javaPage.enableSearch(toConfigure);
-          if (runnable != null) {
-            SwingUtilities.invokeLater(runnable);
-          }
+      settings.select(javaPage).doWhenDone(() -> {
+        final Runnable runnable = javaPage.enableSearch(toConfigure);
+        if (runnable != null) {
+          SwingUtilities.invokeLater(runnable);
         }
       });
     }
@@ -275,13 +272,8 @@ public class SeverityEditorDialog extends DialogWrapper {
     model.removeAllElements();
     final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
     infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
-    Collections.sort(infoTypes, new Comparator<SeverityBasedTextAttributes>() {
-      @Override
-      public int compare(SeverityBasedTextAttributes attributes1,
-                         SeverityBasedTextAttributes attributes2) {
-        return -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
-      }
-    });
+    Collections.sort(infoTypes,
+                     (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
       model.addElement(type);

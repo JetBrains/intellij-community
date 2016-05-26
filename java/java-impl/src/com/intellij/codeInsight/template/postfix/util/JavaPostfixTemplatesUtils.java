@@ -244,12 +244,9 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @NotNull
   public static Function<PsiElement, String> getRenderer() {
-    return new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        assert element instanceof PsiExpression;
-        return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
-      }
+    return element -> {
+      assert element instanceof PsiExpression;
+      return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
     };
   }
 

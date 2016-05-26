@@ -17,6 +17,9 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,6 +127,16 @@ class DetailsPanel extends JPanel {
       }
     };
     myLoadingPanel.add(myScrollPane);
+
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        for (int i = 0; i < mySelection.size(); i++) {
+          CommitPanel commitPanel = getCommitPanel(i);
+          commitPanel.update();
+        }
+      }
+    }, parent);
 
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);

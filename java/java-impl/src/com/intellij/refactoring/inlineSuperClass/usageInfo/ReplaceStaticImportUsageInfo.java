@@ -47,10 +47,8 @@ public class ReplaceStaticImportUsageInfo extends FixableUsageInfo {
   @Override
   public String getConflictMessage() {
     if (myTargetClasses.length != 1) {
-      return "Static import can be replaced with any of " + StringUtil.join(myTargetClasses, new Function<PsiClass, String>() {
-        public String fun(final PsiClass psiClass) {
-          return psiClass.getQualifiedName();
-        }
+      return "Static import can be replaced with any of " + StringUtil.join(myTargetClasses, psiClass -> {
+        return psiClass.getQualifiedName();
       }, ", ");
     }
     return super.getConflictMessage();

@@ -66,6 +66,16 @@ public final class IdeMouseEventDispatcher {
   @JdkConstants.InputEventMask
   private int myModifiersEx;
 
+  private static boolean myForceTouchIsAllowed = true;
+
+  public static void forbidForceTouch () {
+    myForceTouchIsAllowed = false;
+  }
+
+  public static boolean isForceTouchAllowed () {
+    return myForceTouchIsAllowed;
+  }
+
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
   // theirs ids to properly use method blockNextEvents(MouseEvent)
@@ -183,6 +193,7 @@ public final class IdeMouseEventDispatcher {
       myModifiersEx = modifiersEx;
     }
     else if (e.getID() == MOUSE_RELEASED) {
+      myForceTouchIsAllowed = true;
       if (myPressedModifiersStored) {
         myPressedModifiersStored = false;
         modifiers = myModifiers;

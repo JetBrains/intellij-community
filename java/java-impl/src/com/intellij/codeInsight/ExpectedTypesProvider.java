@@ -1099,17 +1099,14 @@ public class ExpectedTypesProvider {
         return function.fun(containingClass);
       }
       final PsiType[] type = {null};
-      DeepestSuperMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        @Override
-        public boolean process(@NotNull PsiMethod psiMethod) {
-          final PsiClass rootClass = psiMethod.getContainingClass();
-          assert rootClass != null;
-          if (className.equals(rootClass.getQualifiedName())) {
-            type[0] = function.fun(rootClass);
-            return false;
-          }
-          return true;
+      DeepestSuperMethodsSearch.search(method).forEach(psiMethod -> {
+        final PsiClass rootClass = psiMethod.getContainingClass();
+        assert rootClass != null;
+        if (className.equals(rootClass.getQualifiedName())) {
+          type[0] = function.fun(rootClass);
+          return false;
         }
+        return true;
       });
       return type[0];
     }
@@ -1122,43 +1119,32 @@ public class ExpectedTypesProvider {
 
       @NonNls final String name = method.getName();
       if ("contains".equals(name) || "remove".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_COLLECTION, new NullableFunction<PsiClass, PsiType>() {
-          @Override
-          public PsiType fun(@NotNull final PsiClass psiClass) {
-            return getTypeParameterValue(psiClass, containingClass, substitutor, 0);
-          }
-        });
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_COLLECTION,
+                                         psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, 0));
         if (type != null) return type;
       }
       if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP, new NullableFunction<PsiClass, PsiType>() {
-          @Override
-          public PsiType fun(@NotNull final PsiClass psiClass) {
-            return getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0);
-          }
-        });
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP,
+                                         psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0));
         if (type != null) return type;
       }
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       if ("equals".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
-          @Override
-          public PsiType fun(final PsiClass psiClass) {
-            final PsiElement parent = argument.getParent().getParent();
-            if (parent instanceof PsiMethodCallExpression) {
-              final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
-              final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
-              if (qualifierExpression != null) {
-                return qualifierExpression.getType();
-              }
-              final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
-              if (aClass != null) {
-                return factory.createType(aClass);
-              }
+        final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, psiClass -> {
+          final PsiElement parent = argument.getParent().getParent();
+          if (parent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
+            final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+            if (qualifierExpression != null) {
+              return qualifierExpression.getType();
             }
-            return null;
+            final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
+            if (aClass != null) {
+              return factory.createType(aClass);
+            }
           }
+          return null;
         });
         if (type != null) return type;
       }

@@ -142,12 +142,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       synchronized (myData) {
         Set<Entry> entries = myData.get(Pair.create(file, line));
         if (entries == null) return null;
-        return ContainerUtil.map(entries, new Function<Entry, XValueNodeImpl>() {
-          @Override
-          public XValueNodeImpl fun(Entry entry) {
-            return entry.myNode;
-          }
-        });
+        return ContainerUtil.map(entries, entry -> entry.myNode);
       }
     }
 

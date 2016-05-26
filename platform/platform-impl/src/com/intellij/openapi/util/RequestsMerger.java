@@ -114,11 +114,8 @@ public class RequestsMerger {
       LOG.debug("doAction: oldState: " + oldState.name() + ", newState: " + myState.name());
 
       if (LOG.isDebugEnabled() && exitActions != null) {
-        final String debugExitActions = StringUtil.join(exitActions, new Function<MyExitAction, String>() {
-          @Override
-          public String fun(MyExitAction exitAction) {
-            return exitAction.name();
-          }
+        final String debugExitActions = StringUtil.join(exitActions, exitAction -> {
+          return exitAction.name();
         }, " ");
         LOG.debug("exit actions: " + debugExitActions);
       }

@@ -144,20 +144,17 @@ public class FileTreeModelBuilder {
   }
 
   public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
-    final Runnable buildingRunnable = new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.setText(SCANNING_PACKAGES_MESSAGE);
-          indicator.setIndeterminate(true);
-        }
-        countFiles(project);
-        if (indicator != null) {
-          indicator.setIndeterminate(false);
-        }
-        myFileIndex.iterateContent(new MyContentIterator());
+    final Runnable buildingRunnable = () -> {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText(SCANNING_PACKAGES_MESSAGE);
+        indicator.setIndeterminate(true);
       }
+      countFiles(project);
+      if (indicator != null) {
+        indicator.setIndeterminate(false);
+      }
+      myFileIndex.iterateContent(new MyContentIterator());
     };
     final TreeModel treeModel = new TreeModel(myRoot);
     if (showProgress) {
@@ -213,13 +210,10 @@ public class FileTreeModelBuilder {
       myShowFiles = true;
     }
 
-    Runnable buildingRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (final PsiFile file : files) {
-          if (file != null) {
-            buildFileNode(file.getVirtualFile(), null);
-          }
+    Runnable buildingRunnable = () -> {
+      for (final PsiFile file : files) {
+        if (file != null) {
+          buildFileNode(file.getVirtualFile(), null);
         }
       }
     };
@@ -475,12 +469,7 @@ public class FileTreeModelBuilder {
           parentWrapper.add(nestedNode);
           nestedNode.removeUpReference();
           if (myTree != null && expand) {
-            final Runnable expandRunnable = new Runnable() {
-              @Override
-              public void run() {
-                myTree.expandPath(new TreePath(nestedNode.getPath()));
-              }
-            };
+            final Runnable expandRunnable = () -> myTree.expandPath(new TreePath(nestedNode.getPath()));
             SwingUtilities.invokeLater(expandRunnable);
           }
           return parentWrapper;

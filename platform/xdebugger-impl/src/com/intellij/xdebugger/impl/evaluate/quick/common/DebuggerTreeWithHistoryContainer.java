@@ -161,12 +161,9 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
           @Override
           public void onSuccess(final D value) {
             if (value != null) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  addToHistory(value);
-                  updateTree(value);
-                }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                addToHistory(value);
+                updateTree(value);
               });
             }
           }

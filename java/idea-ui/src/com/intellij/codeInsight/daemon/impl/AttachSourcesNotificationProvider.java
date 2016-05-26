@@ -128,12 +128,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           }
         }
 
-        Collections.sort(actions, new Comparator<AttachSourcesProvider.AttachSourcesAction>() {
-          @Override
-          public int compare(AttachSourcesProvider.AttachSourcesAction o1, AttachSourcesProvider.AttachSourcesAction o2) {
-            return o1.getName().compareToIgnoreCase(o2.getName());
-          }
-        });
+        Collections.sort(actions, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
         AttachSourcesProvider.AttachSourcesAction defaultAction;
         if (findSourceFileInSameJar(file) != null) {
@@ -145,30 +140,24 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         actions.add(defaultAction);
 
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
-          panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), new Runnable() {
-            @Override
-            public void run() {
-              List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file);
-              if (!Comparing.equal(libraries, entries)) {
-                Messages.showErrorDialog(myProject, "Can't find library for " + file.getName(), "Error");
-                return;
-              }
-
-              panel.setText(action.getBusyText());
-
-              action.perform(entries);
+          panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
+            List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file);
+            if (!Comparing.equal(libraries, entries)) {
+              Messages.showErrorDialog(myProject, "Can't find library for " + file.getName(), "Error");
+              return;
             }
+
+            panel.setText(action.getBusyText());
+
+            action.perform(entries);
           });
         }
       }
     }
     else {
-      panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), new Runnable() {
-        @Override
-        public void run() {
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
-          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
-        }
+      panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
+        FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
       });
     }
 
@@ -349,15 +338,12 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
 
     private static void appendSources(final Library library, final VirtualFile[] files) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Library.ModifiableModel model = library.getModifiableModel();
-          for (VirtualFile virtualFile : files) {
-            model.addRoot(virtualFile, OrderRootType.SOURCES);
-          }
-          model.commit();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Library.ModifiableModel model = library.getModifiableModel();
+        for (VirtualFile virtualFile : files) {
+          model.addRoot(virtualFile, OrderRootType.SOURCES);
         }
+        model.commit();
       });
     }
   }

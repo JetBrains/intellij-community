@@ -688,6 +688,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     panel.selectInspectionTool(selectedToolShortName);
   }
 
+  @Override
+  public void selectInspectionGroup(String[] groupPath) {
+    getProfilePanel(getSelectedObject()).selectInspectionGroup(groupPath);
+  }
+
   protected SingleInspectionProfilePanel getSelectedPanel() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     return getProfilePanel(inspectionProfile);

@@ -52,23 +52,17 @@ public abstract class CodeInsightAction extends AnAction {
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        final CodeInsightActionHandler handler = getHandler();
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-            handler.invoke(project, editor, psiFile);
-          }
-        };
-        if (handler.startInWriteAction()) {
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
-        else {
-          action.run();
-        }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      final CodeInsightActionHandler handler = getHandler();
+      final Runnable action = () -> {
+        if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+        handler.invoke(project, editor, psiFile);
+      };
+      if (handler.startInWriteAction()) {
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+      else {
+        action.run();
       }
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
   }

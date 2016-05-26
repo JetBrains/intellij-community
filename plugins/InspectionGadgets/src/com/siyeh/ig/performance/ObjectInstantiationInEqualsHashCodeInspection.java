@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
@@ -42,9 +41,8 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
   @Override
   protected String buildErrorString(Object... infos) {
     final PsiMethod method = PsiTreeUtil.getParentOfType((PsiElement)infos[0], PsiMethod.class);
-    return InspectionGadgetsBundle.message(MethodUtils.isEquals(method)
-                                           ? "object.instantiation.inside.equals.problem.descriptor"
-                                           : "object.instantiation.inside.hashcode.problem.descriptor");
+    assert method != null;
+    return InspectionGadgetsBundle.message("object.instantiation.inside.equals.or.hashcode.problem.descriptor", method.getName());
   }
 
   @Override
@@ -82,7 +80,8 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
       if (method == null) {
         return false;
       }
-      return MethodUtils.isEquals(method) || MethodUtils.isHashCode(method);
+      return MethodUtils.isEquals(method) || MethodUtils.isHashCode(method) ||
+             MethodUtils.isCompareTo(method) || MethodUtils.isComparatorCompare(method);
     }
   }
 }

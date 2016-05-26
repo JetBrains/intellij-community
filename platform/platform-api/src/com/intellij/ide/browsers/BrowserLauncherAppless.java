@@ -197,12 +197,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     Runnable launchTask = null;
     if (browserPath == null && browser != null) {
       browserPath = PathUtil.toSystemDependentName(browser.getPath());
-      launchTask = new Runnable() {
-        @Override
-        public void run() {
-          browseUsingPath(url, null, browser, project, additionalParameters);
-        }
-      };
+      launchTask = () -> browseUsingPath(url, null, browser, project, additionalParameters);
     }
     return doLaunch(url, browserPath, browser, project, additionalParameters, launchTask);
   }

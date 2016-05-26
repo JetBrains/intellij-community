@@ -17,7 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.*;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -26,7 +26,6 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -130,11 +129,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
     // TODO: add notification, that file is decompiled ?
     if (file.isDirectory()) return null;
-    Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(file);
-      }
+    Document document = ReadAction.compute(() -> {
+      return FileDocumentManager.getInstance().getDocument(file);
     });
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);

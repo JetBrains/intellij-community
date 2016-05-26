@@ -238,7 +238,19 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
     except:
         pass
-    xml = '<var name="%s" type="%s" qualifier="%s"' % (make_valid_xml_value(name), make_valid_xml_value(typeName), make_valid_xml_value(type_qualifier))
+
+    if name.startswith(RETURN_VALUES_PREFIX):
+        name = name.split(RETURN_VALUES_PREFIX)[1]
+        xmlRetVal = ' isRetVal="True"'
+    else:
+        xmlRetVal = ''
+
+    xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
+
+    if type_qualifier:
+        xmlQualifier = ' qualifier="%s" ' % make_valid_xml_value(type_qualifier)
+    else:
+        xmlQualifier = ''
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -269,5 +281,5 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         else:
             xmlCont = ''
 
-    return ''.join((xml, xmlValue, xmlCont, additionalInXml, ' />\n'))
+    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, xmlRetVal, additionalInXml, ' />\n'))
 

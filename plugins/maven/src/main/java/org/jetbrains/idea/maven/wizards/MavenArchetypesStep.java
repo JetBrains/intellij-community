@@ -175,16 +175,14 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
     List<MavenArchetype> list = new ArrayList<MavenArchetype>(archetypes);
 
-    Collections.sort(list, new Comparator<MavenArchetype>() {
-      public int compare(MavenArchetype o1, MavenArchetype o2) {
-        String key1 = o1.groupId + ":" + o1.artifactId;
-        String key2 = o2.groupId + ":" + o2.artifactId;
+    Collections.sort(list, (o1, o2) -> {
+      String key1 = o1.groupId + ":" + o1.artifactId;
+      String key2 = o2.groupId + ":" + o2.artifactId;
 
-        int result = key1.compareToIgnoreCase(key2);
-        if (result != 0) return result;
+      int result = key1.compareToIgnoreCase(key2);
+      if (result != 0) return result;
 
-        return o2.version.compareToIgnoreCase(o1.version);
-      }
+      return o2.version.compareToIgnoreCase(o1.version);
     });
 
     Map<String, List<MavenArchetype>> map = new TreeMap<String, List<MavenArchetype>>();
@@ -234,33 +232,29 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     final Object currentUpdaterMarker = new Object();
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
 
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
 
-            ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
+        ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
-            TreeNode root = groupAndSortArchetypes(archetypes);
-            TreeModel model = new DefaultTreeModel(root);
-            myArchetypesTree.setModel(model);
+        TreeNode root = groupAndSortArchetypes(archetypes);
+        TreeModel model = new DefaultTreeModel(root);
+        myArchetypesTree.setModel(model);
 
-            if (selected != null) {
-              TreePath path = findNodePath(selected, model, model.getRoot());
-              if (path != null) {
-                myArchetypesTree.expandPath(path.getParentPath());
-                TreeUtil.selectPath(myArchetypesTree, path, true);
-              }
-            }
-
-            updateArchetypeDescription();
+        if (selected != null) {
+          TreePath path = findNodePath(selected, model, model.getRoot());
+          if (path != null) {
+            myArchetypesTree.expandPath(path.getParentPath());
+            TreeUtil.selectPath(myArchetypesTree, path, true);
           }
-        });
-      }
+        }
+
+        updateArchetypeDescription();
+      });
     });
   }
 

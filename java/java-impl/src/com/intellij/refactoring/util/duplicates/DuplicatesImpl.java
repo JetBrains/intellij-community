@@ -178,12 +178,10 @@ public class DuplicatesImpl {
       }
     }
     if (anyCollapsed) {
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        public void run() {
-          for (final FoldRegion foldRegion : foldRegions) {
-            if (!foldRegion.isExpanded()) {
-              foldRegion.setExpanded(true);
-            }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (final FoldRegion foldRegion : foldRegions) {
+          if (!foldRegion.isExpanded()) {
+            foldRegion.setExpanded(true);
           }
         }
       });

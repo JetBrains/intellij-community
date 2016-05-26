@@ -59,12 +59,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
                                                         @NotNull final AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<PsiClass> processor) {
     final Set<String> names = new THashSet<String>(10000);
-    processClassNames(parameters.getProject(), scope, new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        if (parameters.nameMatches(s)) {
-          names.add(s);
-        }
+    processClassNames(parameters.getProject(), scope, s -> {
+      if (parameters.nameMatches(s)) {
+        names.add(s);
       }
     });
 
@@ -155,11 +152,8 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         super.visitClass(aClass);
       }
     };
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        scopeRoot.accept(visitor);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      scopeRoot.accept(visitor);
     });
 
     return !stopped[0];

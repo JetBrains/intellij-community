@@ -58,11 +58,8 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
 
   static void removeBreakPoint(final XBreakpointManagerImpl breakpointManager,
                                final XBreakpoint<?> breakpoint) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        breakpointManager.removeBreakpoint(breakpoint);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      breakpointManager.removeBreakpoint(breakpoint);
     });
   }
 

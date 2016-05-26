@@ -23,15 +23,17 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -78,6 +80,10 @@ public class LinkLabel<T> extends JLabel {
                    @Nullable String aVisitedLinksKey) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
+    // Note: Ideally, we should be focusable by default in all cases, however,
+    // to preserve backward compatibility with existing behavior, we make
+    // ourselves focusable only when a screen reader is active.
+    setFocusable(ScreenReader.isActive());
 
     setListener(aListener, aLinkData);
     myInactiveIcon = getIcon();
@@ -85,6 +91,29 @@ public class LinkLabel<T> extends JLabel {
     MyMouseHandler mouseHandler = new MyMouseHandler();
     addMouseListener(mouseHandler);
     addMouseMotionListener(mouseHandler);
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        super.keyReleased(e);
+        if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
+          e.consume();
+          doClick();
+        }
+      }
+    });
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myUnderline = true;
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        myUnderline = false;
+        repaint();
+      }
+    });
 
     myVisitedLinksKey = aVisitedLinksKey;
   }
@@ -137,6 +166,18 @@ public class LinkLabel<T> extends JLabel {
         Rectangle bounds = getTextBounds();
         int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
+      }
+
+      if (isFocusOwner()){
+        g.setColor(UIUtil.getTreeSelectionBorderColor());
+        Rectangle bounds = getTextBounds();
+        // JLabel draws the text relative to the baseline. So, we must ensure
+        // we draw the dotted rectangle relative to that same baseline.
+        FontMetrics fm = getFontMetrics(getFont());
+        int baseLine = getUI().getBaseline(this, getWidth(), getHeight());
+        int textY = baseLine - fm.getLeading() - fm.getAscent();
+        int textHeight = fm.getHeight();
+        UIUtil.drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
       }
     }
   }
@@ -308,5 +349,45 @@ public class LinkLabel<T> extends JLabel {
 
   public void doClick(InputEvent e) {
     doClick();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleLinkLabel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleLinkLabel extends AccessibleJLabel implements AccessibleAction {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.HYPERLINK;
+    }
+
+    @Override
+    public int getAccessibleActionCount() {
+      return 1;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i) {
+      if (i == 0) {
+        return UIManager.getString("AbstractButton.clickText");
+      }
+      else {
+        return null;
+      }
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      if (i == 0) {
+        doClick();
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 }

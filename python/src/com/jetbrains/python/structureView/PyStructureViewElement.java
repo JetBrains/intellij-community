@@ -176,13 +176,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         }
         names.add(name);
       }
-      final Comparator<PyElement> comparator = new Comparator<PyElement>() {
-        @Override
-        public int compare(PyElement e1, PyElement e2) {
-          final String n1 = e1.getName();
-          final String n2 = e2.getName();
-          return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
-        }
+      final Comparator<PyElement> comparator = (e1, e2) -> {
+        final String n1 = e1.getName();
+        final String n2 = e2.getName();
+        return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
       };
       Collections.sort(filtered, comparator);
       children.addAll(filtered);

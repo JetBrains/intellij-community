@@ -22,13 +22,10 @@ import java.util.*;
  * @author Irina.Chernushina on 2/2/2016.
  */
 public class JsonSchemaMappingsConfigurationBase implements PersistentStateComponent<JsonSchemaMappingsConfigurationBase> {
-  private final static Comparator<Item> COMPARATOR = new Comparator<Item>() {
-    @Override
-    public int compare(Item o1, Item o2) {
-      if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
-      if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
-      return o1.getPath().compareToIgnoreCase(o2.getPath());
-    }
+  private final static Comparator<Item> COMPARATOR = (o1, o2) -> {
+    if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
+    if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
+    return o1.getPath().compareToIgnoreCase(o2.getPath());
   };
   @Tag("state") @AbstractCollection(surroundWithTag = false)
   protected final Map<String, SchemaInfo> myState = new TreeMap<String, SchemaInfo>();

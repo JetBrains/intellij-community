@@ -54,19 +54,15 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase");
 
   static {
-    GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
-      @Override
-      @NotNull
-      public Collection<EncapsulatableClassMember> fun(PsiClass s) {
-        if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
-        final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
-        for (PsiField field : s.getFields()) {
-          if (!(field instanceof PsiEnumConstant)) {
-            result.add(new PsiFieldMember(field));
-          }
+    GenerateAccessorProviderRegistrar.registerProvider(s -> {
+      if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
+      final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+      for (PsiField field : s.getFields()) {
+        if (!(field instanceof PsiEnumConstant)) {
+          result.add(new PsiFieldMember(field));
         }
-        return result;
       }
+      return result;
     });
   }
 

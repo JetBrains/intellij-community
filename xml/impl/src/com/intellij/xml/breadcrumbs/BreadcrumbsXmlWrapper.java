@@ -316,12 +316,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
                                                          final BreadcrumbsInfoProvider defaultInfoProvider) {
     if (file == null || !file.isValid()) return null;
 
-    PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, new Comparator<PsiElement>() {
-      @Override
-      public int compare(final PsiElement o1, final PsiElement o2) {
-        return o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset();
-      }
-    });
+    PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, (o1, o2) -> o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset());
     FileViewProvider viewProvider = findViewProvider(file, project);
     if (viewProvider == null) return null;
 

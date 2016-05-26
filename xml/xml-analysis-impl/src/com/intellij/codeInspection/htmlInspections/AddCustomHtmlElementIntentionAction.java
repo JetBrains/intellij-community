@@ -55,11 +55,6 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    profile.modifyToolSettings(myInspectionKey, element, new Consumer<HtmlUnknownElementInspection>() {
-      @Override
-      public void consume(HtmlUnknownElementInspection tool) {
-        tool.addEntry(myName);
-      }
-    });
+    profile.modifyToolSettings(myInspectionKey, element, tool -> tool.addEntry(myName));
   }
 }

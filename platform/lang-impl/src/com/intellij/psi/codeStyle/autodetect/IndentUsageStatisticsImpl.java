@@ -25,12 +25,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
-  private static final Comparator<IndentUsageInfo> DECREASING_ORDER = new Comparator<IndentUsageInfo>() {
-    @Override
-    public int compare(@NotNull IndentUsageInfo o1, @NotNull IndentUsageInfo o2) {
-      return o1.getTimesUsed() < o2.getTimesUsed() ? 1 : o1.getTimesUsed() == o2.getTimesUsed() ? 0 : -1;
-    }
-  };
+  private static final Comparator<IndentUsageInfo> DECREASING_ORDER =
+    (o1, o2) -> o1.getTimesUsed() < o2.getTimesUsed() ? 1 : o1.getTimesUsed() == o2.getTimesUsed() ? 0 : -1;
 
   private List<LineIndentInfo> myLineInfos;
 

@@ -89,14 +89,12 @@ public class PathMacroListEditor {
   }
 
   public void commit() throws ConfigurationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myPathMacroTable.commit();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myPathMacroTable.commit();
 
-        final Collection<String> ignored = parseIgnoredVariables();
-        final PathMacros instance = PathMacros.getInstance();
-        instance.setIgnoredMacroNames(ignored);
-      }
+      final Collection<String> ignored = parseIgnoredVariables();
+      final PathMacros instance = PathMacros.getInstance();
+      instance.setIgnoredMacroNames(ignored);
     });
   }
 

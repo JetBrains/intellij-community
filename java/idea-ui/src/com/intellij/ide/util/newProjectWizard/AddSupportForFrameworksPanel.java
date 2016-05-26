@@ -311,12 +311,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
       createNode(provider, nodes, groups, roots, providers, associated, associatedNodes);
     }
 
-    FrameworkSupportNodeBase.sortByName(roots, new Comparator<FrameworkSupportNodeBase>() {
-      @Override
-      public int compare(FrameworkSupportNodeBase o1, FrameworkSupportNodeBase o2) {
-        return Comparing.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId()));
-      }
-    });
+    FrameworkSupportNodeBase.sortByName(roots,
+                                        (o1, o2) -> Comparing.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
     myRoots = roots;
     return associatedNodes.values();
   }
@@ -407,16 +403,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
     final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        applyLibraryOptionsForSelected();
-        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-        for (LibraryCompositionSettings compositionSettings : list) {
-          if (!compositionSettings.downloadFiles(parentComponent)) {
-            result.set(false);
-            return;
-          }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
+      applyLibraryOptionsForSelected();
+      List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+      for (LibraryCompositionSettings compositionSettings : list) {
+        if (!compositionSettings.downloadFiles(parentComponent)) {
+          result.set(false);
+          return;
         }
       }
     });
@@ -490,10 +483,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
-    Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
-      public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
-        return comparator.compare(o1.getUserObject(), o2.getUserObject());
-      }
-    });
+    Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 }

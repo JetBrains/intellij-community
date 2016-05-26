@@ -669,42 +669,33 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < 100000; i++) {
-          for (MinusculeMatcher matcher : matching) {
-            Assert.assertTrue(matcher.toString(), matcher.matches(longName));
-            matcher.matchingDegree(longName);
-          }
-          for (MinusculeMatcher matcher : nonMatching) {
-            Assert.assertFalse(matcher.toString(), matcher.matches(longName));
-          }
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, () -> {
+      for (int i = 0; i < 100000; i++) {
+        for (MinusculeMatcher matcher : matching) {
+          Assert.assertTrue(matcher.toString(), matcher.matches(longName));
+          matcher.matchingDegree(longName);
+        }
+        for (MinusculeMatcher matcher : nonMatching) {
+          Assert.assertFalse(matcher.toString(), matcher.matches(longName));
         }
       }
     }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        String small = StringUtil.repeat("_", 50);
-        String big = StringUtil.repeat("_", small.length() + 1);
-        assertMatches("*" + small, big);
-        assertDoesntMatch("*" + big, small);
-      }
+    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
+      String small = StringUtil.repeat("_", 50);
+      String big = StringUtil.repeat("_", small.length() + 1);
+      assertMatches("*" + small, big);
+      assertDoesntMatch("*" + big, small);
     }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testRepeatedLetterPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        String big = StringUtil.repeat("Aaaaaa", 50);
-        assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
-        assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
-      }
+    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
+      String big = StringUtil.repeat("Aaaaaa", 50);
+      assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
+      assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
     }).cpuBound().useLegacyScaling().assertTiming();
   }
 

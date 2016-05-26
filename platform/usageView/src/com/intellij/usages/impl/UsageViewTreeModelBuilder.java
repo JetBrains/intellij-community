@@ -71,12 +71,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       myTargetsNode.add(targetNode);
       myTargetNodes[i] = targetNode;
     }
-    myRootNode.addNode(myTargetsNode, new Consumer<Runnable>() {
-      @Override
-      public void consume(Runnable runnable) {
-        UIUtil.invokeLaterIfNeeded(runnable);
-      }
-    });
+    myRootNode.addNode(myTargetsNode, runnable -> UIUtil.invokeLaterIfNeeded(runnable));
   }
 
   public UsageNode getFirstUsageNode() {

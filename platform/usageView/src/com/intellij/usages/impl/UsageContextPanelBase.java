@@ -58,12 +58,9 @@ public abstract class UsageContextPanelBase extends JPanel implements UsageConte
 
   @Override
   public final void updateLayout(@Nullable final List<UsageInfo> infos) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed || myProject.isDisposed()) return;
-        updateLayoutLater(infos);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isDisposed || myProject.isDisposed()) return;
+      updateLayoutLater(infos);
     });
   }
 

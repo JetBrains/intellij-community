@@ -119,6 +119,10 @@ class CommitPanel extends JBPanel {
     revalidate();
   }
 
+  public void update() {
+    myDataPanel.update();
+  }
+
   public void updateBranches() {
     if (myCommit != null) {
       myDataPanel

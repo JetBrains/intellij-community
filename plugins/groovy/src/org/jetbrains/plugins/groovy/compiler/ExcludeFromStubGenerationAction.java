@@ -47,11 +47,8 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
     final Project project = file.getProject();
 
     final GroovyCompilerConfigurable configurable = new GroovyCompilerConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project));
-      }
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project));
     });
   }
 

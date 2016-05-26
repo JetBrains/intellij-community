@@ -1149,29 +1149,26 @@ public class GeneratedParserUtilBase {
     final LinkedList<Pair<PsiBuilder.Marker, Integer>> siblingList = new LinkedList<Pair<PsiBuilder.Marker, Integer>>();
     PsiBuilder.Marker marker = null;
 
-    final Runnable checkSiblingsRunnable = new Runnable() {
-      @Override
-      public void run() {
-        main:
-        while (!siblingList.isEmpty()) {
-          final Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parenList.peek();
-          final int rating = siblingList.getFirst().second;
-          int count = 0;
-          for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
-            if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
-            if (++count >= MAX_CHILDREN_IN_TREE) {
-              PsiBuilder.Marker parentMarker = pair.first.precede();
-              parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
-              while (count-- > 0) {
-                siblingList.removeFirst();
-              }
-              parentMarker.done(chunkType);
-              siblingList.addFirst(Pair.create(parentMarker, rating + 1));
-              continue main;
+    final Runnable checkSiblingsRunnable = () -> {
+      main:
+      while (!siblingList.isEmpty()) {
+        final Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parenList.peek();
+        final int rating = siblingList.getFirst().second;
+        int count = 0;
+        for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
+          if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
+          if (++count >= MAX_CHILDREN_IN_TREE) {
+            PsiBuilder.Marker parentMarker = pair.first.precede();
+            parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
+            while (count-- > 0) {
+              siblingList.removeFirst();
             }
+            parentMarker.done(chunkType);
+            siblingList.addFirst(Pair.create(parentMarker, rating + 1));
+            continue main;
           }
-          break;
         }
+        break;
       }
     };
     boolean checkParens = state.braces != null && checkBraces;

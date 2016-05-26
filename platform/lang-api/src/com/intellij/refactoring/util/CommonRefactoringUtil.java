@@ -57,14 +57,12 @@ public class CommonRefactoringUtil {
 
   // order of usages across different files is irrelevant
   public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
-    Arrays.sort(usages, new Comparator<UsageInfo>() {
-      public int compare(final UsageInfo usage1, final UsageInfo usage2) {
-        PsiElement element1 = usage1.getElement(), element2 = usage2.getElement();
-        if (element1 == element2) return 0;
-        if (element1 == null) return 1;
-        if (element2 == null) return -1;
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      }
+    Arrays.sort(usages, (usage1, usage2) -> {
+      PsiElement element1 = usage1.getElement(), element2 = usage2.getElement();
+      if (element1 == element2) return 0;
+      if (element1 == null) return 1;
+      if (element2 == null) return -1;
+      return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
     });
   }
 
@@ -84,15 +82,12 @@ public class CommonRefactoringUtil {
                                    @Nullable final String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (editor == null || editor.getComponent().getRootPane() == null) {
-          showErrorMessage(title, message, helpId, project);
-        }
-        else {
-          HintManager.getInstance().showErrorHint(editor, message);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (editor == null || editor.getComponent().getRootPane() == null) {
+        showErrorMessage(title, message, helpId, project);
+      }
+      else {
+        HintManager.getInstance().showErrorHint(editor, message);
       }
     });
   }

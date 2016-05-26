@@ -90,14 +90,12 @@ public abstract class TestErrorViewAction extends AnAction{
   }
 
   private void addMessage(final ErrorTreeView view, final String[] message, final int type) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final long start = System.currentTimeMillis();
-        view.addMessage(type, message, null, -1, -1, null);
-        final long duration = System.currentTimeMillis() - start;
-        myMillis += duration;
-        incMessageCount();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final long start = System.currentTimeMillis();
+      view.addMessage(type, message, null, -1, -1, null);
+      final long duration = System.currentTimeMillis() - start;
+      myMillis += duration;
+      incMessageCount();
     }, ModalityState.NON_MODAL);
   }
 

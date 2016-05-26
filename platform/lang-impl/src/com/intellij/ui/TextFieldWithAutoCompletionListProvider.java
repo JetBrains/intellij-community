@@ -99,17 +99,12 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     final ProgressIndicator indicator = mainIndicator != null ? new SensitiveProgressWrapper(mainIndicator) : new EmptyProgressIndicator();
     Future<Collection<T>>
       future =
-      ApplicationManager.getApplication().executeOnPooledThread(new Callable<Collection<T>>() {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> progressManager.runProcess(new Computable<Collection<T>>() {
         @Override
-        public Collection<T> call() {
-          return progressManager.runProcess(new Computable<Collection<T>>() {
-            @Override
-            public Collection<T> compute() {
-              return getItems(prefix, false, parameters);
-            }
-          }, indicator);
+        public Collection<T> compute() {
+          return getItems(prefix, false, parameters);
         }
-      });
+      }, indicator));
 
     while (true) {
       try {

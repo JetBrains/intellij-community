@@ -96,12 +96,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         }
 
         // print selected content
-        SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-          @Override
-          public void run() {
-            getPrinter().updateOnTestSelected(selectedTestProxy);
-          }
-        }, ModalityState.NON_MODAL);
+        SMRunnerUtil.runInEventDispatchThread(() -> getPrinter().updateOnTestSelected(selectedTestProxy), ModalityState.NON_MODAL);
       }
     });
   }

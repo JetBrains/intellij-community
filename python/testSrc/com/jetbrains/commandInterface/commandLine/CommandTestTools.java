@@ -86,11 +86,8 @@ final class CommandTestTools {
    * Hack to register file type (not registered for some reason?)
    */
   static void initFileType() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileTypeManager.getInstance().associateExtension(CommandLineFileType.INSTANCE, CommandLineFileType.EXTENSION);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      FileTypeManager.getInstance().associateExtension(CommandLineFileType.INSTANCE, CommandLineFileType.EXTENSION);
     });
   }
 

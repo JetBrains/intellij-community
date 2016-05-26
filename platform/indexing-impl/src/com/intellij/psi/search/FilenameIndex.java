@@ -165,14 +165,11 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                                                     @Nullable final IdFilter idFilter) {
     final Set<String> keys = new THashSet<String>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.processAllKeys(NAME, new Processor<String>() {
-      @Override
-      public boolean process(String value) {
-        if (name.equalsIgnoreCase(value)) {
-          keys.add(value);
-        }
-        return true;
+    index.processAllKeys(NAME, value -> {
+      if (name.equalsIgnoreCase(value)) {
+        keys.add(value);
       }
+      return true;
     }, scope, idFilter);
 
     // values accessed outside of provessAllKeys 

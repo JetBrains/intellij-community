@@ -97,55 +97,48 @@ class LanguageResolvingUtil {
 
   private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context,
                                                                   final Collection<PsiClass> allLanguages) {
-    return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), new NullableFunction<Language, LanguageDefinition>() {
-      @Override
-      public LanguageDefinition fun(Language language) {
-        if (language.getID().isEmpty() || language instanceof DependentLanguage) {
-          return null;
-        }
-        final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
-        if (psiClass == null || !allLanguages.contains(psiClass)) {
-          return null;
-        }
-        final LanguageFileType type = language.getAssociatedFileType();
-        final Icon icon = type != null ? type.getIcon() : null;
-        return new LanguageDefinition(language.getID(), psiClass, icon, language.getDisplayName());
+    return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), (NullableFunction<Language, LanguageDefinition>)language -> {
+      if (language.getID().isEmpty() || language instanceof DependentLanguage) {
+        return null;
       }
+      final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
+      if (psiClass == null || !allLanguages.contains(psiClass)) {
+        return null;
+      }
+      final LanguageFileType type = language.getAssociatedFileType();
+      final Icon icon = type != null ? type.getIcon() : null;
+      return new LanguageDefinition(language.getID(), psiClass, icon, language.getDisplayName());
     });
   }
 
   private static List<LanguageDefinition> collectProjectLanguages(final Collection<PsiClass> projectLanguages,
                                                                   final List<LanguageDefinition> libraryLanguages) {
-    return ContainerUtil.mapNotNull(projectLanguages, new NullableFunction<PsiClass, LanguageDefinition>() {
-      @Nullable
-      @Override
-      public LanguageDefinition fun(final PsiClass language) {
-        if (language.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          return null;
-        }
-
-        if (ContainerUtil.exists(libraryLanguages, new Condition<LanguageDefinition>() {
-          @Override
-          public boolean value(LanguageDefinition definition) {
-            return definition.clazz.equals(language);
-          }
-        })) {
-          return null;
-        }
-
-        String id = computeConstantSuperCtorCallParameter(language, 0);
-        if (id == null) {
-          id = computeConstantSuperCtorCallParameter(language, 1);
-        }
-        if (id == null) {
-          id = computeConstantReturnValue(language, "getID");
-        }
-        if (StringUtil.isEmpty(id)) {
-          return null;
-        }
-
-        return new LanguageDefinition(id, language, null, computeConstantReturnValue(language, "getDisplayName"));
+    return ContainerUtil.mapNotNull(projectLanguages, (NullableFunction<PsiClass, LanguageDefinition>)language -> {
+      if (language.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return null;
       }
+
+      if (ContainerUtil.exists(libraryLanguages, new Condition<LanguageDefinition>() {
+        @Override
+        public boolean value(LanguageDefinition definition) {
+          return definition.clazz.equals(language);
+        }
+      })) {
+        return null;
+      }
+
+      String id = computeConstantSuperCtorCallParameter(language, 0);
+      if (id == null) {
+        id = computeConstantSuperCtorCallParameter(language, 1);
+      }
+      if (id == null) {
+        id = computeConstantReturnValue(language, "getID");
+      }
+      if (StringUtil.isEmpty(id)) {
+        return null;
+      }
+
+      return new LanguageDefinition(id, language, null, computeConstantReturnValue(language, "getDisplayName"));
     });
   }
 

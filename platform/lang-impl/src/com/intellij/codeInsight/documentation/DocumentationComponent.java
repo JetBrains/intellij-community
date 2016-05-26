@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
@@ -43,7 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -56,14 +54,18 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -75,6 +77,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -113,7 +116,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (element == null) return null;
       URL url = (URL)key;
       Image inMemory = myManager.getElementImage(element, url.toExternalForm());
-      return inMemory != null ? inMemory : Toolkit.getDefaultToolkit().createImage(url);
+      if (inMemory != null) {
+        return inMemory;
+      }
+
+      Url parsedUrl = Urls.parseEncoded(url.toExternalForm());
+      BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+      if (parsedUrl != null && builtInServerManager.isOnBuiltInWebServer(parsedUrl)) {
+        try {
+          url = new URL(builtInServerManager.addAuthToken(parsedUrl).toExternalForm());
+        }
+        catch (MalformedURLException e) {
+          LOGGER.warn(e);
+        }
+      }
+      return Toolkit.getDefaultToolkit().createImage(url);
     }
   };
 
@@ -149,13 +166,23 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @Override
   public boolean requestFocusInWindow() {
-    return myScrollPane.requestFocusInWindow();
+    // With a screen reader active, set the focus directly to the editor because
+    // it makes it easier for users to read/navigate the documentation contents.
+    if (ScreenReader.isActive())
+      return myEditorPane.requestFocusInWindow();
+    else
+      return myScrollPane.requestFocusInWindow();
   }
 
 
   @Override
   public void requestFocus() {
-    myScrollPane.requestFocus();
+    // With a screen reader active, set the focus directly to the editor because
+    // it makes it easier for users to read/navigate the documentation contents.
+    if (ScreenReader.isActive())
+      myEditorPane.requestFocus();
+    else
+      myScrollPane.requestFocus();
   }
 
   public DocumentationComponent(final DocumentationManager manager, final AnAction[] additionalActions) {
@@ -224,6 +251,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
+    if (ScreenReader.isActive()) {
+      // Note: Making the caret visible is merely for convenience
+      myEditorPane.getCaret().setVisible(true);
+    }
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit(false));
     myScrollPane = new JBScrollPane(myEditorPane) {
@@ -349,9 +380,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     actions.add(edit);
 
     try {
-      CustomShortcutSet backShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString("LEFT"),
+      String backKey = ScreenReader.isActive() ? "alt LEFT" : "LEFT";
+      CustomShortcutSet backShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString(backKey),
                                                                 KeymapUtil.parseMouseShortcut("button4"));
-      CustomShortcutSet forwardShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString("RIGHT"),
+
+      String forwardKey = ScreenReader.isActive() ? "alt RIGHT" : "RIGHT";
+      CustomShortcutSet forwardShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString(forwardKey),
                                                                    KeymapUtil.parseMouseShortcut("button5"));
       back.registerCustomShortcutSet(backShortcutSet, this);
       forward.registerCustomShortcutSet(forwardShortcutSet, this);
@@ -597,7 +631,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myEditorPane.setText(text);
     applyFontSize();
-    
+
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       myManager.showHint(myHint);
       myIsShown = true;
@@ -606,15 +640,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myText = text;
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
-        if (ref != null) {
-          myEditorPane.scrollToReference(ref);
-        }
-      }
-    });
+    SwingUtilities.invokeLater(() -> {
+      myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
+      if (ref != null) {
+        myEditorPane.scrollToReference(ref);
+      } else if (ScreenReader.isActive()) {
+        myEditorPane.setCaretPosition(0);
+      }});
   }
 
   private void applyFontSize() {
@@ -632,12 +664,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false));
   }
 
   private void goBack() {
@@ -784,97 +812,101 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myExternalDocAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
-        value = Math.max(value, 0);
-        scrollBar.setValue(value);
-      }
-    });
+    // With screen readers, we want the default keyboard behavior inside
+    // the document text editor, i.e. the caret moves with cursor keys, etc.
+    if (!ScreenReader.isActive()) {
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
+          value = Math.max(value, 0);
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
-        value = Math.min(value, scrollBar.getMaximum());
-        scrollBar.setValue(value);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
+          value = Math.min(value, scrollBar.getMaximum());
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-        int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
-        value = Math.max(value, 0);
-        scrollBar.setValue(value);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+          int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
+          value = Math.max(value, 0);
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-        int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
-        value = Math.min(value, scrollBar.getMaximum());
-        scrollBar.setValue(value);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+          int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
+          value = Math.min(value, scrollBar.getMaximum());
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        int value = scrollBar.getValue() - scrollBar.getBlockIncrement(-1);
-        value = Math.max(value, 0);
-        scrollBar.setValue(value);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          int value = scrollBar.getValue() - scrollBar.getBlockIncrement(-1);
+          value = Math.max(value, 0);
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        int value = scrollBar.getValue() + scrollBar.getBlockIncrement(+1);
-        value = Math.min(value, scrollBar.getMaximum());
-        scrollBar.setValue(value);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          int value = scrollBar.getValue() + scrollBar.getBlockIncrement(+1);
+          value = Math.min(value, scrollBar.getMaximum());
+          scrollBar.setValue(value);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-        scrollBar.setValue(0);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+          scrollBar.setValue(0);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-        scrollBar.setValue(scrollBar.getMaximum());
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+          scrollBar.setValue(scrollBar.getMaximum());
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_MASK), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        scrollBar.setValue(0);
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_MASK), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          scrollBar.setValue(0);
+        }
+      });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.CTRL_MASK), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-        scrollBar.setValue(scrollBar.getMaximum());
-      }
-    });
+      myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.CTRL_MASK), new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+          scrollBar.setValue(scrollBar.getMaximum());
+        }
+      });
+    }
   }
 
   public String getText() {

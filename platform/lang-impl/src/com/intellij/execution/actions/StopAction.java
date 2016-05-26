@@ -162,18 +162,10 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(true)
         .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
-        .setFilteringEnabled(new Function<Object, String>() {
-          @Override
-          public String fun(Object o) {
-            return ((HandlerItem)o).displayName;
-          }
-        })
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            HandlerItem item = (HandlerItem)list.getSelectedValue();
-            if (item != null) item.stop();
-          }
+        .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
+        .setItemChoosenCallback(() -> {
+          HandlerItem item = (HandlerItem)list.getSelectedValue();
+          if (item != null) item.stop();
         })
         .setRequestFocus(true)
         .createPopup();

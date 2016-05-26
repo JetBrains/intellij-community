@@ -258,14 +258,11 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
           hashMaskSet = new TIntHashSet(1000);
           final TIntHashSet finalHashMaskSet = hashMaskSet;
-          myKeyHashToVirtualFileMapping.iterateData(new Processor<int[]>() {
-            @Override
-            public boolean process(int[] key) {
-              if (!idFilter.containsFileId(key[1])) return true;
-              finalHashMaskSet.add(key[0]);
-              ProgressManager.checkCanceled();
-              return true;
-            }
+          myKeyHashToVirtualFileMapping.iterateData(key -> {
+            if (!idFilter.containsFileId(key[1])) return true;
+            finalHashMaskSet.add(key[0]);
+            ProgressManager.checkCanceled();
+            return true;
           });
 
           if (useCachedHashIds) {
@@ -277,12 +274,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           LOG.debug("Scanned keyHashToVirtualFileMapping of " + myBaseStorageFile + " for " + (System.currentTimeMillis() - l));
         }
         final TIntHashSet finalHashMaskSet = hashMaskSet;
-        return myMap.processKeys(new Processor<Key>() {
-          @Override
-          public boolean process(Key key) {
-            if (!finalHashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
-            return processor.process(key);
-          }
+        return myMap.processKeys(key -> {
+          if (!finalHashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+          return processor.process(key);
         });
       }
       return myMap.processKeys(processor);

@@ -57,12 +57,7 @@ public class WrapInAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        myArea.select(myProvider.wrapIn(myParent, myComponents, myTarget));
-      }
-    }, "Run Wrap In action", true);
+    myDesigner.getToolProvider().execute(() -> myArea.select(myProvider.wrapIn(myParent, myComponents, myTarget)), "Run Wrap In action", true);
   }
 
   public static void fill(DesignerEditorPanel designer, DefaultActionGroup group, EditableArea area) {

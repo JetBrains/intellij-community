@@ -557,11 +557,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected Comparator<MyNode> getNodeComparator() {
-    return new Comparator<MyNode>() {
-      public int compare(final MyNode o1, final MyNode o2) {
-        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-      }
-    };
+    return (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
   }
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
@@ -830,11 +826,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
       if (selectionPath != null) {
-        Object[] nodes = ContainerUtil.map2Array(selectionPath, new Function<TreePath, Object>() {
-          @Override
-          public Object fun(TreePath treePath) {
-            return treePath.getLastPathComponent();
-          }
+        Object[] nodes = ContainerUtil.map2Array(selectionPath, treePath -> {
+          return treePath.getLastPathComponent();
         });
         if (!myCondition.value(nodes)) return;
         presentation.setEnabled(true);

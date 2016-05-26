@@ -59,9 +59,8 @@ import java.util.List;
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR = new NullableFunction<GrNewExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrNewExpressionImpl newExpression) {
+  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR =
+    (NullableFunction<GrNewExpressionImpl, PsiType>)newExpression -> {
       final GrAnonymousClassDefinition anonymous = newExpression.getAnonymousClassDefinition();
       if (anonymous != null) {
         return new GrAnonymousClassType(LanguageLevel.JDK_1_5, anonymous.getResolveScope(),
@@ -85,8 +84,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       }
 
       return null;
-    }
-  };
+    };
 
   private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
     @NotNull

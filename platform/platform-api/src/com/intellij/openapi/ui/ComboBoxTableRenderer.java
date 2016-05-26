@@ -88,11 +88,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
-    return new Runnable() {
-      public void run() {
-        stopCellEditing(value);
-      }
-    };
+    return () -> stopCellEditing(value);
   }
 
   @Override
@@ -120,11 +116,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     customizeComponent(t, table, true);
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        showPopup(t, row);
-      }
-    });
+    SwingUtilities.invokeLater(() -> showPopup(t, row));
 
     return this;
   }

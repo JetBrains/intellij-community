@@ -113,8 +113,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
+    ProgressStripe progressStripe =
+      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
+      @Override
+      public void progressStarted() {
+        progressStripe.startLoading();
+      }
+
+      @Override
+      public void progressStopped() {
+        progressStripe.stopLoading();
+      }
+    }, this);
+
     myChangesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
-    myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+    myChangesBrowserSplitter.setFirstComponent(progressStripe);
     myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
     setLayout(new BorderLayout());
@@ -203,10 +217,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     settings.setReservePlaceAutoPopupIcon(false);
     settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[center]0[right]", "center"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
-    panel.add(new ToolbarProgressIcon());
     panel.add(settings.getComponent());
     return panel;
   }
@@ -316,45 +329,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
-  }
-
-  private class ToolbarProgressIcon extends AsyncProcessIcon implements VcsLogProgress.ProgressListener {
-    public ToolbarProgressIcon() {
-      super("Updating Log");
-      suspend();
-      myLogData.getProgress().addProgressIndicatorListener(this, this);
-      Disposer.register(MainFrame.this, this);
-    }
-
-    @Override
-    public void progressStarted() {
-      if (!myLogData.getProgress().showProgressInLog()) return;
-      resume();
-      myToolbar.revalidate();
-    }
-
-    @Override
-    public void progressStopped() {
-      suspend();
-      myToolbar.revalidate();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      if (!isRunning() || !myLogData.getProgress().showProgressInLog()) return new Dimension(0, 0);
-      return super.getPreferredSize();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      g.translate(-1, -1);
-      try {
-        super.paint(g);
-      }
-      finally {
-        g.translate(1, 1);
-      }
-    }
   }
 
   private class CommitSelectionListenerForDiff extends CommitSelectionListener {

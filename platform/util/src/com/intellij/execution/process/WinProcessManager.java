@@ -60,8 +60,19 @@ public class WinProcessManager {
    * @param tree true to also kill all subprocesses
    */
   public static boolean kill(Process process, boolean tree) {
+    return kill(-1, process, tree);
+  }
+
+  public static boolean kill(int pid, boolean tree) {
+    return kill(pid, null, tree);
+  }
+
+  private static boolean kill(int pid, Process process, boolean tree) {
+    LOG.assertTrue(pid > 0 || process != null);
     try {
-      int pid = getProcessPid(process);
+      if (process != null) {
+        pid = getProcessPid(process);
+      }
       String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
       if (LOG.isDebugEnabled()) {
         LOG.debug(StringUtil.join(cmdArray, " "));
@@ -70,7 +81,7 @@ public class WinProcessManager {
       String output = FileUtil.loadTextAndClose(p.getInputStream());
       int res = p.waitFor();
 
-      if (res != 0 && isAlive(process)) {
+      if (res != 0 && (process == null || isAlive(process))) {
         LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
         return false;
       }

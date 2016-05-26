@@ -91,20 +91,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public void refresh() {
     LOG.debug("Refreshing SDK roots and packages cache");
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Sdk sdk = getSdk();
-        application.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-            VfsUtil.markDirtyAndRefresh(true, true, true, files);
-          }
-        });
-        PythonSdkType.getInstance().setupSdkPaths(sdk);
-        clearCaches();
-      }
+    application.invokeLater(() -> {
+      final Sdk sdk = getSdk();
+      application.runWriteAction(() -> {
+        final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+        VfsUtil.markDirtyAndRefresh(true, true, true, files);
+      });
+      PythonSdkType.getInstance().setupSdkPaths(sdk);
+      clearCaches();
     });
   }
 

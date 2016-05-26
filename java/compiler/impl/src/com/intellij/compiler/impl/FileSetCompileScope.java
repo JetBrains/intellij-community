@@ -41,12 +41,10 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
   public FileSetCompileScope(final Collection<VirtualFile> files, Module[] modules) {
     myAffectedModules = modules;
     ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        public void run() {
-          for (VirtualFile file : files) {
-            assert file != null;
-            addFile(file);
-          }
+      () -> {
+        for (VirtualFile file : files) {
+          assert file != null;
+          addFile(file);
         }
       }
     );

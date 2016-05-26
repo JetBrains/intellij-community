@@ -76,7 +76,7 @@ public class ChooseCheckoutMode extends WizardStep {
     super("###", wizard);
     myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)value;
         append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
         setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);

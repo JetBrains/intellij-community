@@ -330,12 +330,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     public void setSelected(final AnActionEvent event, final boolean flag) {
       enableConsole(!flag);
       setStoredState(!flag);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          update(event);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> update(event));
     }
 
     @Override

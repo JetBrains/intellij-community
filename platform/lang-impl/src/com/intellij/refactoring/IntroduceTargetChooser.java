@@ -29,6 +29,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -76,6 +77,8 @@ public class IntroduceTargetChooser {
       model.addElement(SmartPointerManager.getInstance(expr.getProject()).createSmartPsiElementPointer(expr));
     }
     final JList list = new JBList(model);
+    // Set the accessible name so that screen readers announce the list tile (e.g. "Expression Types list").
+    AccessibleContextUtil.setName(list, title);
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     if (selection > -1) list.setSelectedIndex(selection);
     list.setCellRenderer(new DefaultListCellRenderer() {
@@ -123,14 +126,11 @@ public class IntroduceTargetChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
-          T expr = value != null ? value.getElement() : null;
-          if (expr != null) {
-            callback.pass(expr);
-          }
+      .setItemChoosenCallback(() -> {
+        SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
+        T expr = value != null ? value.getElement() : null;
+        if (expr != null) {
+          callback.pass(expr);
         }
       })
       .addListener(new JBPopupAdapter() {

@@ -43,13 +43,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.*;
 
 public class RootIndex {
-  public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
-    @Override
-    public int compare(OrderEntry o1, OrderEntry o2) {
-      String name1 = o1.getOwnerModule().getName();
-      String name2 = o2.getOwnerModule().getName();
-      return name1.compareTo(name2);
-    }
+  public static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
+    String name1 = o1.getOwnerModule().getName();
+    String name2 = o2.getOwnerModule().getName();
+    return name1.compareTo(name2);
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");

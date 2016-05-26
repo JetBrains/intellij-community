@@ -44,6 +44,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
@@ -72,6 +73,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
+  private static final AtomicFieldUpdater<XmlDocumentImpl, XmlProlog>
+    MY_PROLOG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlProlog.class);
+  private static final AtomicFieldUpdater<XmlDocumentImpl, XmlTag>
+    MY_ROOT_TAG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlTag.class);
+
   private volatile XmlProlog myProlog;
   private volatile XmlTag myRootTag;
   private volatile long myExtResourcesModCount = -1;
@@ -115,12 +121,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (prolog == null) {
       prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
-      synchronized (PsiLock.LOCK) {
-        if (myProlog == null) {
-          myProlog = prolog;
-        } else {
-          prolog = myProlog;
-        }
+
+      if(!MY_PROLOG_UPDATER.compareAndSet(this, null, prolog)) {
+        prolog = MY_PROLOG_UPDATER.get(this);
       }
     }
 
@@ -133,12 +136,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (rootTag == null) {
       rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
-      synchronized (PsiLock.LOCK) {
-        if (myRootTag == null) {
-          myRootTag = rootTag;
-        } else {
-          rootTag = myRootTag;
-        }
+
+      if (!MY_ROOT_TAG_UPDATER.compareAndSet(this, null, rootTag)) {
+        rootTag = MY_ROOT_TAG_UPDATER.get(this);
       }
     }
 
@@ -161,10 +161,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
-    synchronized (PsiLock.LOCK) {
-      myProlog = null;
-      myRootTag = null;
-    }
+    MY_ROOT_TAG_UPDATER.set(this, null);
+    MY_PROLOG_UPDATER.set(this, null);
     super.clearCaches();
   }
 

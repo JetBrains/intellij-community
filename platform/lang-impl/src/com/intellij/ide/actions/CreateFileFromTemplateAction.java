@@ -47,12 +47,8 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
 
   protected PsiFile createFileFromTemplate(final String name, final FileTemplate template, final PsiDirectory dir) {
     final PsiFile[] file = new PsiFile[1];
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        file[0] = createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                            () -> file[0] = createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true));
     return file[0];
   }
 

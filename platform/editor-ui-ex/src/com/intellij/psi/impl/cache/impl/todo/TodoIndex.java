@@ -136,12 +136,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   public int getVersion() {
     int version = 9;
     FileType[] types = myFileTypeManager.getRegisteredFileTypes();
-    Arrays.sort(types, new Comparator<FileType>() {
-      @Override
-      public int compare(FileType o1, FileType o2) {
-        return Comparing.compare(o1.getName(), o2.getName());
-      }
-    });
+    Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
     for(FileType fileType:types) {
       DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);

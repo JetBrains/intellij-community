@@ -165,14 +165,11 @@ public final class DebuggerContextImpl implements DebuggerContext {
     }
 
     if (myFrameProxy != null) {
-      PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (mySourcePosition == null) {
-            mySourcePosition = ContextUtil.getSourcePosition(DebuggerContextImpl.this);
-          }
-          myContextElement = ContextUtil.getContextElement(mySourcePosition);
+      PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(() -> {
+        if (mySourcePosition == null) {
+          mySourcePosition = ContextUtil.getSourcePosition(DebuggerContextImpl.this);
         }
+        myContextElement = ContextUtil.getContextElement(mySourcePosition);
       });
     }
   }

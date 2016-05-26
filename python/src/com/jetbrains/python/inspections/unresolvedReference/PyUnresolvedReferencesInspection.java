@@ -1010,11 +1010,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {
       for (PyUnresolvedReferenceQuickFixProvider provider : Extensions.getExtensions(PyUnresolvedReferenceQuickFixProvider.EP_NAME)) {
-        provider.registerQuickFixes(reference, new Consumer<LocalQuickFix>() {
-          public void consume(LocalQuickFix localQuickFix) {
-            actions.add(localQuickFix);
-          }
-        });
+        provider.registerQuickFixes(reference, localQuickFix -> actions.add(localQuickFix));
       }
     }
 

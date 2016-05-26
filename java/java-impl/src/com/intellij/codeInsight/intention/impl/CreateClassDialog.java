@@ -240,28 +240,25 @@ public class CreateClassDialog extends DialogWrapper {
     final String packageName = getPackageName();
 
     final String[] errorString = new String[1];
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
-          final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
-          if (destination == null) return;
-          myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-            @Override
-            public PsiDirectory compute() {
-              return destination.getTargetDirectory(getBaseDir(packageName));
-            }
-          });
-          if (myTargetDirectory == null) {
-            errorString[0] = ""; // message already reported by PackageUtil
-            return;
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
+        final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
+        if (destination == null) return;
+        myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return destination.getTargetDirectory(getBaseDir(packageName));
           }
-          errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+        });
+        if (myTargetDirectory == null) {
+          errorString[0] = ""; // message already reported by PackageUtil
+          return;
         }
-        catch (IncorrectOperationException e) {
-          errorString[0] = e.getMessage();
-        }
+        errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+      }
+      catch (IncorrectOperationException e) {
+        errorString[0] = e.getMessage();
       }
     }, CodeInsightBundle.message("create.directory.command"), null);
 

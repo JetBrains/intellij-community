@@ -324,13 +324,10 @@ public class ToolEditorDialog extends DialogWrapper {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
           PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
 
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = !files.isEmpty() ? files.get(0) : null;
-              if (file != null) {
-                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
-              }
+          chooser.choose(null, files -> {
+            VirtualFile file = !files.isEmpty() ? files.get(0) : null;
+            if (file != null) {
+              myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
             }
           });
         }
@@ -345,18 +342,15 @@ public class ToolEditorDialog extends DialogWrapper {
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
           PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = !files.isEmpty() ? files.get(0) : null;
-              if (file != null) {
-                myTfCommand.setText(file.getPresentableUrl());
-                String workingDirectory = myTfCommandWorkingDirectory.getText();
-                if (workingDirectory == null || workingDirectory.isEmpty()) {
-                  VirtualFile parent = file.getParent();
-                  if (parent != null && parent.isDirectory()) {
-                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
-                  }
+          chooser.choose(null, files -> {
+            VirtualFile file = !files.isEmpty() ? files.get(0) : null;
+            if (file != null) {
+              myTfCommand.setText(file.getPresentableUrl());
+              String workingDirectory = myTfCommandWorkingDirectory.getText();
+              if (workingDirectory == null || workingDirectory.isEmpty()) {
+                VirtualFile parent = file.getParent();
+                if (parent != null && parent.isDirectory()) {
+                  myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
                 }
               }
             }

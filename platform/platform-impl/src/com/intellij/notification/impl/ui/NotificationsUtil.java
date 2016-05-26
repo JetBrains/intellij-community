@@ -129,13 +129,19 @@ public class NotificationsUtil {
   }
 
   @Nullable
-  public static String getFontName() {
+  public static Pair<String, Integer> getFontData() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
-      return uiSettings.FONT_FACE;
+      return Pair.create(uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-    return systemFontData == null ? null : systemFontData.first;
+    return systemFontData == null ? null : systemFontData;
+  }
+
+  @Nullable
+  public static String getFontName() {
+    Pair<String, Integer> data = getFontData();
+    return data == null ? null : data.first;
   }
 
   @Nullable

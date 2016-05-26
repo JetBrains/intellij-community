@@ -54,32 +54,21 @@ public class ProjectPlaybackCall {
     listener.set(new ProjectManagerAdapter() {
       @Override
       public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          @Override
-          public void run() {
-            pm.removeProjectManagerListener(listener.get());
-            DumbService.getInstance(project).runWhenSmart(new Runnable() {
-              @Override
-              public void run() {
-                result.setDone("Opened successfully: " + project.getPresentableUrl());
-              }
-            });
-          }
+        StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+          pm.removeProjectManagerListener(listener.get());
+          DumbService.getInstance(project).runWhenSmart(() -> result.setDone("Opened successfully: " + project.getPresentableUrl()));
         });
       }
     });
     pm.addProjectManagerListener(listener.get());
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          pm.loadAndOpenProject(path);
-        }
-        catch (Exception e) {
-          context.error(e.getMessage(), context.getCurrentLine());
-          result.setRejected();
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      try {
+        pm.loadAndOpenProject(path);
+      }
+      catch (Exception e) {
+        context.error(e.getMessage(), context.getCurrentLine());
+        result.setRejected();
       }
     });
 

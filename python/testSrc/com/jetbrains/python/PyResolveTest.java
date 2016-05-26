@@ -512,30 +512,17 @@ public class PyResolveTest extends PyResolveTestCase {
   
   // PY-9795
   public void testGoogleDocstringParamType() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        assertResolvesTo(PyClass.class, "datetime");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyClass.class, "datetime"));
   }
   
   // PY-9795
   public void testGoogleDocstringReturnType() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        assertResolvesTo(PyClass.class, "MyClass");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyClass.class, "MyClass"));
   }
 
   // PY-16906
   public void testGoogleDocstringModuleAttribute() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        assertResolvesTo(PyTargetExpression.class, "module_level_variable1");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
   }
 
   // PY-7541

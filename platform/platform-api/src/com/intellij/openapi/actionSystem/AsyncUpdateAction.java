@@ -40,22 +40,16 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
     final Presentation originalPresentation = e.getPresentation();
     if (!forceSyncUpdate(e) && isDumbAware()) {
       final Presentation realPresentation = originalPresentation.clone();
-      ourUpdaterService.submit(new Runnable() {
-        @Override
-        public void run() {
-          performUpdate(realPresentation, data);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (originalPresentation.isVisible() != realPresentation.isVisible()) {
-                LOG.error("Async update is not supported for actions that change their visibility." +
-                          "Either stop extending AsyncUpdateAction or override forceSyncUpdate() to return true." +
-                          "Action class is: " + AsyncUpdateAction.this.getClass().getName());
-              }
-              originalPresentation.copyFrom(realPresentation);
-            }
-          });
-        }
+      ourUpdaterService.submit(() -> {
+        performUpdate(realPresentation, data);
+        SwingUtilities.invokeLater(() -> {
+          if (originalPresentation.isVisible() != realPresentation.isVisible()) {
+            LOG.error("Async update is not supported for actions that change their visibility." +
+                      "Either stop extending AsyncUpdateAction or override forceSyncUpdate() to return true." +
+                      "Action class is: " + AsyncUpdateAction.this.getClass().getName());
+          }
+          originalPresentation.copyFrom(realPresentation);
+        });
       });
 
       originalPresentation.setVisible(true);

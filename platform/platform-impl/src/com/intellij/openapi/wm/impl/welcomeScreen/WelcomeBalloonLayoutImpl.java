@@ -112,12 +112,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
         new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
-      myPopupBalloon.setHideListener(new Runnable() {
-        @Override
-        public void run() {
-          myPopupBalloon.getComponent().setVisible(false);
-        }
-      });
+      myPopupBalloon.setHideListener(() -> myPopupBalloon.getComponent().setVisible(false));
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 

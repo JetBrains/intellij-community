@@ -188,11 +188,8 @@ public final class ExecutionHandler {
       handler = JUnitProcessHandler.runCommandLine(commandLine);
     }
     catch (final ExecutionException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project));
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       return null;
     }

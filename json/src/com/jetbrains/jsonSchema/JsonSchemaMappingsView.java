@@ -93,16 +93,13 @@ public class JsonSchemaMappingsView implements Disposable {
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
-    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        final BalloonBuilder builder = JBPopupFactory.getInstance().
-          createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
-        builder.setDisposable(JsonSchemaMappingsView.this);
-        builder.setHideOnClickOutside(true);
-        builder.setCloseButtonEnabled(true);
-        builder.createBalloon().showInCenterOf(myError);
-      }
+    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, s -> {
+      final BalloonBuilder builder = JBPopupFactory.getInstance().
+        createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
+      builder.setDisposable(JsonSchemaMappingsView.this);
+      builder.setHideOnClickOutside(true);
+      builder.setCloseButtonEnabled(true);
+      builder.createBalloon().showInCenterOf(myError);
     });
 
     final FormBuilder builder = FormBuilder.createFormBuilder();

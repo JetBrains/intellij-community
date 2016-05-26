@@ -133,14 +133,12 @@ public class ImportCollector {
   private List<String> packImports() {
     List<Entry<String, String>> lst = new ArrayList<Entry<String, String>>(mapSimpleNames.entrySet());
 
-    Collections.sort(lst, new Comparator<Entry<String, String>>() {
-      public int compare(Entry<String, String> par0, Entry<String, String> par1) {
-        int res = par0.getValue().compareTo(par1.getValue());
-        if (res == 0) {
-          res = par0.getKey().compareTo(par1.getKey());
-        }
-        return res;
+    Collections.sort(lst, (par0, par1) -> {
+      int res = par0.getValue().compareTo(par1.getValue());
+      if (res == 0) {
+        res = par0.getKey().compareTo(par1.getKey());
       }
+      return res;
     });
 
     List<String> res = new ArrayList<String>();

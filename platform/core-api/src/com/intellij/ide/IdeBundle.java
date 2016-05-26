@@ -27,7 +27,7 @@ public class IdeBundle extends AbstractBundle {
     return INSTANCE.getMessage(key, params);
   }
 
-  private static final String BUNDLE = "messages.IdeBundle";
+  public static final String BUNDLE = "messages.IdeBundle";
   private static final IdeBundle INSTANCE = new IdeBundle();
 
   private IdeBundle() {

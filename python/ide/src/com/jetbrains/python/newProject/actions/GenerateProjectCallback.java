@@ -95,12 +95,7 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
                                          @NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     return AbstractNewProjectStep.doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                    new Function<VirtualFile, Object>() {
-                                                         @Override
-                                                         public Object fun(VirtualFile file) {
-                                                           return computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings);
-                                                         }
-                                                       });
+                                                    file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 
   public static Object computeProjectSettings(DirectoryProjectGenerator generator, ProjectSpecificSettingsStep settings) {

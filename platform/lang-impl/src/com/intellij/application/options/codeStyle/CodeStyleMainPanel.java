@@ -137,27 +137,19 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   public void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
-    final Runnable replaceLayout = new Runnable() {
-      @Override
-      public void run() {
-        if (!myIsDisposed) {
-          ensureCurrentPanel().onSomethingChanged();
-          String schemeName = myModel.getSelectedScheme().getName();
-          updateSetFrom();
-          myLayout.show(mySettingsPanel, schemeName);
-        }
+    final Runnable replaceLayout = () -> {
+      if (!myIsDisposed) {
+        ensureCurrentPanel().onSomethingChanged();
+        String schemeName = myModel.getSelectedScheme().getName();
+        updateSetFrom();
+        myLayout.show(mySettingsPanel, schemeName);
       }
     };
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       replaceLayout.run();
     } else {
       myAlarm.cancelAllRequests();
-      final Runnable request = new Runnable() {
-        @Override
-        public void run() {
-          SwingUtilities.invokeLater(replaceLayout);
-        }
-      };
+      final Runnable request = () -> SwingUtilities.invokeLater(replaceLayout);
       myAlarm.addRequest(request, 200);
     }
   }

@@ -180,20 +180,18 @@ public class TestIntegrationUtils {
       adapter = new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-              PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-              PsiElement el = PsiTreeUtil.findElementOfClassAtOffset(psi, editor.getCaretModel().getOffset() - 1, PsiMethod.class, false);
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+            PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            PsiElement el = PsiTreeUtil.findElementOfClassAtOffset(psi, editor.getCaretModel().getOffset() - 1, PsiMethod.class, false);
 
-              if (el != null) {
-                PsiMethod method = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
-                if (method != null) {
-                  if (method.findDeepestSuperMethods().length > 0) {
-                    GenerateMembersUtil.setupGeneratedMethod(method);
-                  }
-                  CreateFromUsageUtils.setupEditor(method, editor);
+            if (el != null) {
+              PsiMethod method1 = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
+              if (method1 != null) {
+                if (method1.findDeepestSuperMethods().length > 0) {
+                  GenerateMembersUtil.setupGeneratedMethod(method1);
                 }
+                CreateFromUsageUtils.setupEditor(method1, editor);
               }
             }
           });

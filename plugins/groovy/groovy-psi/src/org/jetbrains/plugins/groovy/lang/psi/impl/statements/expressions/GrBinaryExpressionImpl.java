@@ -86,12 +86,8 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     }
   };
 
-  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrBinaryExpressionImpl expression) {
-      return GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade()).fun(expression.getFacade());
-    }
-  };
+  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR =
+    expression -> GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade()).fun(expression.getFacade());
 
   private final GrBinaryFacade myFacade = new GrBinaryFacade() {
     @NotNull

@@ -460,52 +460,40 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (SwingUtilities.isEventDispatchThread()) {
       commitAllDocuments();
       runnable.run();
+      return;
     }
-    else {
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-        LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
-      }
 
-      final Semaphore s1 = new Semaphore();
-      final Semaphore s2 = new Semaphore();
-      final boolean[] committed = {false};
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
+    }
 
-      application.runReadAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (myUncommittedDocuments.isEmpty()) {
-              runnable.run();
-              committed[0] = true;
-            }
-            else {
-              s1.down();
-              s2.down();
-              TransactionGuard.submitTransaction(myProject, new Runnable() {
-                @Override
-                public void run() {
-                  commitAllDocuments();
-                  s1.up();
-                  s2.waitFor();
-                }
-              });
-            }
+    while (true) {
+      boolean executed = application.runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (myUncommittedDocuments.isEmpty()) {
+            runnable.run();
+            return true;
           }
+          return false;
         }
-      );
+      });
+      if (executed) break;
 
-      if (!committed[0]) {
-        s1.waitFor();
-        application.runReadAction(
-          new Runnable() {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          performWhenAllCommitted(new Runnable() {
             @Override
             public void run() {
-              s2.up();
-              runnable.run();
+              semaphore.up();
             }
-          }
-        );
-      }
+          });
+        }
+      }, ModalityState.any());
+      semaphore.waitFor();
     }
   }
 

@@ -671,6 +671,7 @@
     <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
     <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
+    <pyClassMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyClassMembersProvider"/>
 
     <!-- PyDocstring -->
     <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>

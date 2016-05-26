@@ -305,11 +305,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              onModuleInitialized(module);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            onModuleInitialized(module);
           });
         }
       });

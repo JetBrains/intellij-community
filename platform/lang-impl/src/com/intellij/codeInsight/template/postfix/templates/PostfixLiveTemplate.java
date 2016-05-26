@@ -220,15 +220,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
-          public void run() {
-            template.expand(context, editor);
-          }
-        }, "Expand postfix template", POSTFIX_TEMPLATE_ID);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(context.getProject(), () -> template.expand(context, editor), "Expand postfix template", POSTFIX_TEMPLATE_ID);
     });
   }
 
@@ -238,18 +231,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final int currentOffset = editor.getCaretModel().getOffset();
     final int newOffset = currentOffset - key.length();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            Document document = editor.getDocument();
-            document.deleteString(newOffset, currentOffset);
-            editor.getCaretModel().moveToOffset(newOffset);
-            PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-          }
-        });
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+        Document document = editor.getDocument();
+        document.deleteString(newOffset, currentOffset);
+        editor.getCaretModel().moveToOffset(newOffset);
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+      });
     });
     return newOffset;
   }

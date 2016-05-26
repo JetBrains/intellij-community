@@ -42,51 +42,46 @@ public class SameSourceRootInTwoModulesTest extends PsiTestCase {
     super.setUp();
 
     final File root = createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VirtualFile rootVFile =
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        VirtualFile rootVFile =
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
-          myPrjDir1 = createChildDirectory(rootVFile, "prj1");
-          mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
+        myPrjDir1 = createChildDirectory(rootVFile, "prj1");
+        mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
 
-          myPackDir = createChildDirectory(mySrcDir1, "p");
-          VirtualFile file1 = createChildData(myPackDir, "A.java");
-          setFileText(file1, "package p; public class A{ public void foo(); }");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        myPackDir = createChildDirectory(mySrcDir1, "p");
+        VirtualFile file1 = createChildData(myPackDir, "A.java");
+        setFileText(file1, "package p; public class A{ public void foo(); }");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-          PsiTestUtil.addContentRoot(myModule, myPrjDir1);
-          PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+        PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }
 
   public void testBug() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass = myJavaFacade.findClass("p.A");
-        assertEquals("p.A", psiClass.getQualifiedName());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiClass psiClass = myJavaFacade.findClass("p.A");
+      assertEquals("p.A", psiClass.getQualifiedName());
 
-        final PsiFile psiFile = myPsiManager.findFile(myPackDir.findChild("A.java"));
-        psiFile.getChildren();
-        assertEquals(psiFile, psiClass.getContainingFile());
+      final PsiFile psiFile = myPsiManager.findFile(myPackDir.findChild("A.java"));
+      psiFile.getChildren();
+      assertEquals(psiFile, psiClass.getContainingFile());
 
-        VirtualFile file = psiFile.getVirtualFile();
-        assertEquals(myModule, ModuleUtil.findModuleForFile(file, myProject));
+      VirtualFile file = psiFile.getVirtualFile();
+      assertEquals(myModule, ModuleUtil.findModuleForFile(file, myProject));
 
-        Module anotherModule = createModule("another");
-        myFilesToDelete.add(new File(anotherModule.getModuleFilePath()));
+      Module anotherModule = createModule("another");
+      myFilesToDelete.add(new File(anotherModule.getModuleFilePath()));
 
-        PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
+      PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
 
-        assertEquals(anotherModule, ModuleUtil.findModuleForFile(file, myProject));
-      }
+      assertEquals(anotherModule, ModuleUtil.findModuleForFile(file, myProject));
     });
   }
 }

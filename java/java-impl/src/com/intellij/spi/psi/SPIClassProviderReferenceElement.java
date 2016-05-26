@@ -48,17 +48,14 @@ public class SPIClassProviderReferenceElement extends SPIPackageOrClassReference
     final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
     if (superProvider != null) {
       final List<Object> result = new ArrayList<Object>();
-      ClassInheritorsSearch.search(superProvider).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass psiClass) {
-          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
-            if (jvmClassName != null) {
-              result.add(LookupElementBuilder.create(psiClass, jvmClassName));
-            }
+      ClassInheritorsSearch.search(superProvider).forEach(psiClass -> {
+        if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
+          if (jvmClassName != null) {
+            result.add(LookupElementBuilder.create(psiClass, jvmClassName));
           }
-          return true;
         }
+        return true;
       });
       return ArrayUtil.toObjectArray(result);
     }

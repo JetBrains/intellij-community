@@ -64,12 +64,9 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     DomElementAnnotationsManager.getInstance(domElement.getManager().getProject()).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
       @Override
       public void highlightingFinished(@NotNull final DomFileElement element) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (getComponent().isShowing() && element.isValid()) {
-              updateHighlighting();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (getComponent().isShowing() && element.isValid()) {
+            updateHighlighting();
           }
         });
       }

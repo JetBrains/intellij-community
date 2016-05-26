@@ -143,12 +143,7 @@ public class TestSuiteStack {
       return EMPTY;
     }
 
-    return StringUtil.join(names, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return "[" + s + "]";
-      }
-    }, "->");
+    return StringUtil.join(names, s -> "[" + s + "]", "->");
   }
 
   public void clear() {

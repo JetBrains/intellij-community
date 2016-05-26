@@ -105,12 +105,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           incErrorCount(highlighter, -1);
         }
       });
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
-            incErrorCount(rangeHighlighter, 1);
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
+          incErrorCount(rangeHighlighter, 1);
         }
       });
     }

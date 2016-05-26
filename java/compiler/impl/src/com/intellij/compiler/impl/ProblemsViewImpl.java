@@ -65,36 +65,30 @@ public class ProblemsViewImpl extends ProblemsView{
         Disposer.dispose(myPanel);
       }
     });
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanel, "", false);
-        // todo: setup content?
-        tw.getContentManager().addContent(content);
-        Disposer.register(project, new Disposable() {
-          @Override
-          public void dispose() {
-            tw.getContentManager().removeAllContents(true);
-          }
-        });
-        updateIcon();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (project.isDisposed()) {
+        return;
       }
+      final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanel, "", false);
+      // todo: setup content?
+      tw.getContentManager().addContent(content);
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          tw.getContentManager().removeAllContents(true);
+        }
+      });
+      updateIcon();
     });
   }
 
   @Override
   public void clearOldMessages(@Nullable final CompileScope scope, @NotNull final UUID currentSessionId) {
-    myViewUpdater.execute(new Runnable() {
-      @Override
-      public void run() {
-        cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
-        updateIcon();
-        myPanel.reload();
-      }
+    myViewUpdater.execute(() -> {
+      cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
+      updateIcon();
+      myPanel.reload();
     });
   }
 
@@ -130,35 +124,29 @@ public class ProblemsViewImpl extends ProblemsView{
                          @Nullable final Navigatable navigatable,
                          @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final UUID sessionId) {
 
-    myViewUpdater.execute(new Runnable() {
-      @Override
-      public void run() {
-        final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-        final GroupingElement group = structure.lookupGroupingElement(groupName);
-        if (group != null && sessionId != null && !sessionId.equals(group.getData())) {
-          structure.removeElement(group);
-        }
-        if (navigatable != null) {
-          myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
-        }
-        else {
-          myPanel.addMessage(type, text, null, -1, -1, sessionId);
-        }
-        updateIcon();
+    myViewUpdater.execute(() -> {
+      final ErrorViewStructure structure = myPanel.getErrorViewStructure();
+      final GroupingElement group = structure.lookupGroupingElement(groupName);
+      if (group != null && sessionId != null && !sessionId.equals(group.getData())) {
+        structure.removeElement(group);
       }
+      if (navigatable != null) {
+        myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+      }
+      else {
+        myPanel.addMessage(type, text, null, -1, -1, sessionId);
+      }
+      updateIcon();
     });
   }
 
   private void updateIcon() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed()) {
-          final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
-          if (tw != null) {
-            final boolean active = myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
-            tw.setIcon(active ? myActiveIcon : myPassiveIcon);
-          }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!myProject.isDisposed()) {
+        final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
+        if (tw != null) {
+          final boolean active = myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
+          tw.setIcon(active ? myActiveIcon : myPassiveIcon);
         }
       }
     });

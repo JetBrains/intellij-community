@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -54,11 +53,8 @@ public class DfaUtil {
     ValuableInstructionVisitor.PlaceResult placeResult = value.get(context);
     final Collection<FList<PsiExpression>> concatenations = placeResult == null ? null : placeResult.myValues.get(variable);
     if (concatenations != null) {
-      return ContainerUtil.map(concatenations, new Function<FList<PsiExpression>, PsiExpression>() {
-        @Override
-        public PsiExpression fun(FList<PsiExpression> expressions) {
-          return concatenateExpressions(expressions);
-        }
+      return ContainerUtil.map(concatenations, expressions -> {
+        return concatenateExpressions(expressions);
       });
     }
     return Collections.emptyList();
@@ -116,7 +112,7 @@ public class DfaUtil {
   @Nullable
   static PsiElement getClosureInside(Instruction instruction) {
     if (instruction instanceof MethodCallInstruction) {
-      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
+      PsiCall anchor = ((MethodCallInstruction)instruction).getCallExpression();
       if (anchor instanceof PsiNewExpression) {
         return ((PsiNewExpression)anchor).getAnonymousClass();
       }
@@ -260,11 +256,8 @@ public class DfaUtil {
       return concatenation.getHead();
     }
     String text = StringUtil
-      .join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), new Function<PsiExpression, String>() {
-        @Override
-        public String fun(PsiExpression expression) {
-          return expression.getText();
-        }
+      .join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), expression -> {
+        return expression.getText();
       }, "+");
     try {
       return JavaPsiFacade.getElementFactory(concatenation.getHead().getProject()).createExpressionFromText(text, concatenation.getHead());

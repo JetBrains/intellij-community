@@ -87,17 +87,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final ProcessOutput result;
-    if (indicator != null) {
-      result = handler.runProcessWithProgressIndicator(indicator);
-    }
-    else {
-      result = handler.runProcess();
-    }
-    if (result.isCancelled()) {
-      throw new RunCanceledByUserException();
-    }
+    final ProcessOutput result = handler.runProcess();
     final int exitCode = result.getExitCode();
     if (exitCode != 0) {
       final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?

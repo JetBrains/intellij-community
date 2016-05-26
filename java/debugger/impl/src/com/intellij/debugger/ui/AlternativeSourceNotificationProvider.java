@@ -119,11 +119,8 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
       ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
                                                              ComboBoxClassElement.class,
-                                                             new Function<PsiClass, ComboBoxClassElement>() {
-                                                               @Override
-                                                               public ComboBoxClassElement fun(PsiClass psiClass) {
-                                                                 return new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement());
-                                                               }
+                                                             psiClass -> {
+                                                               return new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement());
                                                              });
 
       return new AlternativeSourceNotificationPanel(elems, baseClass, myProject, file);
@@ -180,12 +177,9 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
                 if (location != null) {
                   DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
                 }
-                DebuggerUIUtil.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    FileEditorManager.getInstance(project).closeFile(file);
-                    session.refresh(true);
-                  }
+                DebuggerUIUtil.invokeLater(() -> {
+                  FileEditorManager.getInstance(project).closeFile(file);
+                  session.refresh(true);
                 });
               }
             });
@@ -197,16 +191,13 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
         }
       });
       myLinksPanel.add(switcher);
-      createActionLabel(DebuggerBundle.message("action.disable.text"), new Runnable() {
-        @Override
-        public void run() {
-          DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
-          FILE_PROCESSED_KEY.set(file, null);
-          FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-          FileEditor editor = fileEditorManager.getSelectedEditor(file);
-          if (editor != null) {
-            fileEditorManager.removeTopComponent(editor, AlternativeSourceNotificationPanel.this);
-          }
+      createActionLabel(DebuggerBundle.message("action.disable.text"), () -> {
+        DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
+        FILE_PROCESSED_KEY.set(file, null);
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+        FileEditor editor = fileEditorManager.getSelectedEditor(file);
+        if (editor != null) {
+          fileEditorManager.removeTopComponent(editor, AlternativeSourceNotificationPanel.this);
         }
       });
     }

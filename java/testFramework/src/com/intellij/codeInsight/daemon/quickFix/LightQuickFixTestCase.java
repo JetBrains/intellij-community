@@ -69,36 +69,32 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final String relativePath = notNull(quickFixTestCase.getBasePath(), "") + "/" + BEFORE_PREFIX + testName;
     final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
     final File testFile = new File(testFullPath);
-    CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), new Runnable() {
-      @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "CallToPrintStackTrace"})
-      @Override
-      public void run() {
+    CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), () -> {
+      try {
+        String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
+        quickFixTestCase.configureFromFileText(testFile.getName(), contents);
+        quickFixTestCase.bringRealEditorBack();
+        final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
+        final String text = pair.getFirst();
+        final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+
+        quickFixTestCase.beforeActionStarted(testName, contents);
+
         try {
-          String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
-          quickFixTestCase.configureFromFileText(testFile.getName(), contents);
-          quickFixTestCase.bringRealEditorBack();
-          final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
-          final String text = pair.getFirst();
-          final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
-
-          quickFixTestCase.beforeActionStarted(testName, contents);
-
-          try {
-            myWrapper = quickFixTestCase;
-            quickFixTestCase.doAction(text, actionShouldBeAvailable, testFullPath, testName);
-          }
-          finally {
-            myWrapper = null;
-            quickFixTestCase.afterActionCompleted(testName, contents);
-          }
+          myWrapper = quickFixTestCase;
+          quickFixTestCase.doAction(text, actionShouldBeAvailable, testFullPath, testName);
         }
-        catch (FileComparisonFailure e){
-          throw e;
+        finally {
+          myWrapper = null;
+          quickFixTestCase.afterActionCompleted(testName, contents);
         }
-        catch (Throwable e) {
-          e.printStackTrace();
-          fail(testName);
-        }
+      }
+      catch (FileComparisonFailure e){
+        throw e;
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+        fail(testName);
       }
     }, "", "");
   }
@@ -224,11 +220,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
     File testDir = new File(testDirPath);
-    final File[] files = testDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, @NonNls String name) {
-        return name.startsWith(BEFORE_PREFIX);
-      }
+    final File[] files = testDir.listFiles((dir, name) -> {
+      return name.startsWith(BEFORE_PREFIX);
     });
 
     if (files == null || files.length == 0) {

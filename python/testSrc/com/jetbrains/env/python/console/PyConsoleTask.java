@@ -296,12 +296,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     private int myLen = 0;
 
     public void start() {
-      myThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          doJob();
-        }
-      },"py console printer");
+      myThread = new Thread(() -> {
+        doJob();
+      }, "py console printer");
       myThread.setDaemon(true);
       myThread.start();
     }
@@ -388,12 +385,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected void execNoWait(final String command) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleView.executeCode(command, null);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myConsoleView.executeCode(command, null));
   }
 
   protected void interrupt() {

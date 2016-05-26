@@ -123,42 +123,36 @@ public class InstallPluginAction extends AnAction implements DumbAware {
       }
 
       try {
-        Runnable onInstallRunnable = new Runnable() {
-          @Override
-          public void run() {
+        Runnable onInstallRunnable = () -> {
+          for (PluginNode node : list) {
+            installedModel.appendOrUpdateDescriptor(node);
+          }
+          if (!myInstalled.isDisposed()) {
+            getPluginTable().updateUI();
+            myInstalled.setRequireShutdown(true);
+          }
+          else {
+            boolean needToRestart = false;
             for (PluginNode node : list) {
-              installedModel.appendOrUpdateDescriptor(node);
-            }
-            if (!myInstalled.isDisposed()) {
-              getPluginTable().updateUI();
-              myInstalled.setRequireShutdown(true);
-            }
-            else {
-              boolean needToRestart = false;
-              for (PluginNode node : list) {
-                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
-                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
-                  needToRestart = true;
-                  break;
-                }
+              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+              if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                needToRestart = true;
+                break;
               }
+            }
 
-              if (needToRestart) {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-            }
-            if (onSuccess != null) {
-              onSuccess.run();
+            if (needToRestart) {
+              PluginManagerMain.notifyPluginsUpdated(null);
             }
           }
+          if (onSuccess != null) {
+            onSuccess.run();
+          }
         };
-        Runnable cleanupRunnable = new Runnable() {
-          @Override
-          public void run() {
-            ourInstallingNodes.removeAll(list);
-            if (cleanup != null) {
-              cleanup.run();
-            }
+        Runnable cleanupRunnable = () -> {
+          ourInstallingNodes.removeAll(list);
+          if (cleanup != null) {
+            cleanup.run();
           }
         };
         final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
@@ -168,12 +162,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
         ourInstallingNodes.removeAll(list);
         PluginManagerMain.LOG.error(e1);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
-          }
-        });
+        SwingUtilities.invokeLater(() -> IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed")));
       }
     }
   }

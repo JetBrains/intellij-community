@@ -392,6 +392,7 @@ public class PyNames {
     .put("__bool__", _only_self_descr)
     .put("__bytes__", _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
+    .put("__prepare__", new BuiltinDescription("(metacls, name, bases)"))
     .put("__round__", new BuiltinDescription("(self, n=None)"))
     .put(DUNDER_NEXT, _only_self_descr)
     .build();

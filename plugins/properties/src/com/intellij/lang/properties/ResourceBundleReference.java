@@ -41,12 +41,7 @@ import java.util.Set;
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   implements PsiPolyVariantReference, BundleNameEvaluator, ResolvingHint {
   private static final Function<PropertiesFile, PsiElement> PROPERTIES_FILE_PSI_ELEMENT_FUNCTION =
-    new Function<PropertiesFile, PsiElement>() {
-      @Override
-      public PsiElement fun(PropertiesFile propertiesFile) {
-        return propertiesFile.getContainingFile();
-      }
-    };
+    propertiesFile -> propertiesFile.getContainingFile();
   private final String myBundleName;
 
   public ResourceBundleReference(final PsiElement element) {

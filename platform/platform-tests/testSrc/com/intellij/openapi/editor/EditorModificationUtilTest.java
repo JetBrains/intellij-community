@@ -21,11 +21,8 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 public class EditorModificationUtilTest extends LightPlatformCodeInsightTestCase {
   public void testInsertStringAtCaretNotMovingCaret() throws Exception {
     configureFromFileText(getTestName(false) + ".txt", "text <caret>");
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorModificationUtil.insertStringAtCaret(myEditor, " ", false, false);
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      EditorModificationUtil.insertStringAtCaret(myEditor, " ", false, false);
     });
 
     checkResultByText("text <caret> ");

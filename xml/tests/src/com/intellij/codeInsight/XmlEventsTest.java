@@ -39,11 +39,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
   public void test1() throws Exception{
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        tagFromText.setAttribute("a", "b");
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      tagFromText.setAttribute("a", "b");
     });
 
     assertEquals("(Attribute \"a\" for tag \"a\" set to \"b\")\n", listener.getEventString());
@@ -61,11 +58,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlTag otherTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-        xmlText.insertAtOffset(otherTag, 2);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      xmlText.insertAtOffset(otherTag, 2);
     });
 
     assertEquals("(text changed to 'aa' was: 'aaa'), (child added to a child: XmlText), (child added to a child: XmlTag:a)\n", listener.getEventString());
@@ -75,11 +69,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-        xmlText.insertText("bb", 2);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      xmlText.insertText("bb", 2);
     });
 
     assertEquals("(text changed to 'aabba' was: 'aaa')\n", listener.getEventString());
@@ -89,13 +80,10 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = addPomListener();
     configureFromFileText("x.xml", "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>");
     final XmlTag x = ((XmlFile)getFile()).getRootTag().findSubTags("x")[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        TextRange range = x.getTextRange();
-        getEditor().getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1); // plus \n
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      TextRange range = x.getTextRange();
+      getEditor().getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1); // plus \n
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
     assertEquals("(child removed from a child: XmlTag:x), (child removed from a child: XmlText)\n", listener.getEventString());
@@ -105,13 +93,10 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = addPomListener();
     configureFromFileText("x.xml", "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>");
     final XmlTag x = ((XmlFile)getFile()).getRootTag().findSubTags("x")[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        TextRange range = x.getTextRange();
-        getEditor().getDocument().insertString(range.getEndOffset() + 1, "<z>zxzz</z>\n"); // plus \n
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      TextRange range = x.getTextRange();
+      getEditor().getDocument().insertString(range.getEndOffset() + 1, "<z>zxzz</z>\n"); // plus \n
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
     assertEquals("(child added to a child: XmlText), (child added to a child: XmlTag:z)\n", listener.getEventString());
@@ -120,11 +105,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
   public void test4() throws Exception{
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>a </a>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-        tagFromText.addAfter(tagFromText.getValue().getTextElements()[0], tagFromText.getValue().getTextElements()[0]);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      tagFromText.addAfter(tagFromText.getValue().getTextElements()[0], tagFromText.getValue().getTextElements()[0]);
     });
 
     assertEquals("(text changed to 'a a ' was: 'a ')\n", listener.getEventString());
@@ -133,11 +115,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
   public void test5() throws Exception{
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        tagFromText.delete();
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      tagFromText.delete();
     });
 
     assertEquals("(Xml document changed)\n", listener.getEventString());
@@ -191,11 +170,8 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText(text);
     final XmlAttribute attribute = tag.getAttribute("name", null);
     assert attribute != null;
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-        attribute.setValue("new");
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      attribute.setValue("new");
     });
 
 
@@ -210,12 +186,9 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final PsiFileImpl containingFile = (PsiFileImpl)tagFromText.getContainingFile();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     final Document document = documentManager.getDocument(containingFile);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-            document.insertString(positionToInsert, stringToInsert);
-            documentManager.commitDocument(document);
-          }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+          document.insertString(positionToInsert, stringToInsert);
+          documentManager.commitDocument(document);
         });
 
     assertEquals(events, listener.getEventString());
@@ -278,22 +251,14 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final TestListener listener = new TestListener();
     PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
 
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            int positionToInsert = xml.indexOf(" <LinearLayout\n" +
-                                               "        android:id=\"@+id/noteArea\"\n");
-            assertFalse(positionToInsert == -1);
-            String stringToInsert = "<Button android:id=\"@+id/newid\" />\n";
-            document.insertString(positionToInsert, stringToInsert);
-            documentManager.commitDocument(document);
-          }
-        });
-      }
-    }, "", null);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      int positionToInsert = xml.indexOf(" <LinearLayout\n" +
+                                         "        android:id=\"@+id/noteArea\"\n");
+      assertFalse(positionToInsert == -1);
+      String stringToInsert = "<Button android:id=\"@+id/newid\" />\n";
+      document.insertString(positionToInsert, stringToInsert);
+      documentManager.commitDocument(document);
+    }), "", null);
 
     PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
   }

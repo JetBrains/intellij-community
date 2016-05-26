@@ -212,14 +212,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
       if (start > offset) {
         LOG.error("file: " + myFile +
                   " container: " + myContainerElement +
-                  " markers: " + StringUtil.join(myElements, new Function<RangeMarker, String>() {
-                                    @Override
-                                    public String fun(RangeMarker rangeMarker) {
-                                      final String docString =
-                                        myDocument.getText(new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
-                                      return "[[" + docString + "]" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
-                                    }
-                                  }, ", "));
+                  " markers: " + StringUtil.join(myElements, rangeMarker -> {
+                    final String docString =
+                      myDocument.getText(new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+                    return "[[" + docString + "]" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
+                  }, ", "));
       }
       template.addTextSegment(text.substring(start, offset));
 

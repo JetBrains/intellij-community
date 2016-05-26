@@ -43,11 +43,8 @@ public class NonBundledPluginsUsagesCollector extends UsagesCollector {
       }
     });
 
-    return ContainerUtil.map2Set(nonBundledEnabledPlugins, new Function<IdeaPluginDescriptor, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(IdeaPluginDescriptor descriptor) {
-        return new UsageDescriptor(descriptor.getPluginId().getIdString(), 1);
-      }
+    return ContainerUtil.map2Set(nonBundledEnabledPlugins, descriptor -> {
+      return new UsageDescriptor(descriptor.getPluginId().getIdString(), 1);
     });
   }
 

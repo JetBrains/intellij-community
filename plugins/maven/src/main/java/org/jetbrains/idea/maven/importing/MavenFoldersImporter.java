@@ -117,12 +117,7 @@ public class MavenFoldersImporter {
     roots.putValues(JavaSourceRootType.TEST_SOURCE, myMavenProject.getTestSources());
 
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
-      each.collectSourceRoots(myMavenProject, new PairConsumer<String, JpsModuleSourceRootType<?>>() {
-        @Override
-        public void consume(String s, JpsModuleSourceRootType<?> type) {
-          roots.putValue(type, s);
-        }
-      });
+      each.collectSourceRoots(myMavenProject, (s, type) -> roots.putValue(type, s));
     }
 
     for (MavenResource each : myMavenProject.getResources()) {

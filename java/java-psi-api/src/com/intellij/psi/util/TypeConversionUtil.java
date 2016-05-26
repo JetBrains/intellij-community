@@ -1367,10 +1367,8 @@ public class TypeConversionUtil {
   public static Object computeCastTo(final Object operand, final PsiType castType) {
     if (operand == null || castType == null) return null;
     Object value;
-    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING)) {
-      value = operand;
-    }
-    else if (operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
+    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING) ||
+        operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
       value = operand;
     }
     else {

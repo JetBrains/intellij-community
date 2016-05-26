@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,14 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   public static Collection<Url> getDebuggableUrls(@Nullable PsiElement context) {
     try {
       OpenInBrowserRequest request = context == null ? null : OpenInBrowserRequest.create(context);
-      return request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE ? Collections.<Url>emptyList() : getUrls(getProvider(request), request);
+      if (request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE) {
+        return Collections.<Url>emptyList();
+      }
+      else {
+        // it is client responsibility to set token
+        request.setAppendAccessToken(false);
+        return getUrls(getProvider(request), request);
+      }
     }
     catch (WebBrowserUrlProvider.BrowserException ignored) {
       return Collections.emptyList();

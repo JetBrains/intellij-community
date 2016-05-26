@@ -59,12 +59,7 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
     mySubmitNameComponent = new ValidatedTextField(mySaveListener);
     myComboBoxPanel.add(mySubmitNameComponent, EDIT_CARD);
 
-    myComboModel = new SortedComboBoxModel<InspectionProfileImpl>(new Comparator<InspectionProfileImpl>() {
-      @Override
-      public int compare(final InspectionProfileImpl p1, final InspectionProfileImpl p2) {
-        return ProfilesConfigurableComboBox.this.compare(p1, p2);
-      }
-    });
+    myComboModel = new SortedComboBoxModel<InspectionProfileImpl>((p1, p2) -> ProfilesConfigurableComboBox.this.compare(p1, p2));
     myProfilesComboBox.setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
     myProfilesComboBox.setRenderer(new ListCellRenderer<Object>() {
@@ -129,12 +124,7 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
     mySaveListener.setDelegate(inputValidator);
     mySubmitNameComponent.setText(initialValue);
     myCardLayout.show(myComboBoxPanel, EDIT_CARD);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        mySubmitNameComponent.requestFocus();
-      }
-    });
+    SwingUtilities.invokeLater(() -> mySubmitNameComponent.requestFocus());
   }
 
   void reset(final Collection<InspectionProfileImpl> profiles) {

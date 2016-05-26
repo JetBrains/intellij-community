@@ -177,12 +177,8 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
                                      boolean ignoreAccessScope,
                                      @NotNull SearchRequestCollector collector,
                                      @NotNull final Processor<PsiReference> processor) {
-    searchOptimized(element, searchScope, ignoreAccessScope, collector, false, new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
-        return processor.process(psiReference);
-      }
-    });
+    searchOptimized(element, searchScope, ignoreAccessScope, collector, false,
+                    (psiReference, collector1) -> processor.process(psiReference));
   }
 
   public static void searchOptimized(@NotNull PsiElement element,

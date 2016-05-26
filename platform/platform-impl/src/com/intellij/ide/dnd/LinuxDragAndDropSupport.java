@@ -84,11 +84,8 @@ public class LinuxDragAndDropSupport {
 
   @NotNull
   public static String toUriList(@NotNull final List<File> files) {
-    return StringUtil.join(files, new Function<File, String>() {
-      @Override
-      public String fun(final File file) {
-        return file.toURI().toString();
-      }
+    return StringUtil.join(files, file -> {
+      return file.toURI().toString();
     }, "\n");
   }
 

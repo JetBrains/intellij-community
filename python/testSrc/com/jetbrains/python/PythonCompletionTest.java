@@ -416,117 +416,81 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-16877
   public void testSectionNamesInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "Args", "Keyword Args", "Returns");
-        assertDoesntContain(variants, "Parameters", "Return", "Yield");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "Args", "Keyword Args", "Returns");
+      assertDoesntContain(variants, "Parameters", "Return", "Yield");
     });
   }
 
   // PY-17023
   public void testSectionNamesInNumpyDocstrings() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
-        assertDoesntContain(variants, "Args", "Return", "Yield");
-      }
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
+      assertDoesntContain(variants, "Args", "Return", "Yield");
     });
   }
 
   // PY-16991
   public void testSecondSectionNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doTest());
   }
 
   // PY-16877
   public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doTest());
   }
 
   // PY-16870
   public void testParamNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param1", "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param1", "param2");
     });
   }
 
   // PY-16870
   public void testOverrideParamNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param2");
     });
   }
 
   // PY-16870
   public void testOverrideParamNameInRestDocstring() {
-    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param2");
     });
   }
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doTest());
   }
 
   // PY-17002
   public void testParamTypeInGoogleDocstringWithoutClosingParenthesis() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "str", "basestring");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "str", "basestring");
     });
   }
 
   // PY-17635
   public void testParamNameInTypeDeclarationInRestDocstring() {
-    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "foo");
-      }
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "foo");
     });
   }
 
@@ -635,15 +599,12 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testRelativeImportExcludeToplevel() {  // PY-6304
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.copyDirectoryToProject("relativeImportExcludeToplevel", "");
-        myFixture.configureByFile("pack/subpack/modX.py");
-        myFixture.completeBasic();
-        assertNull(myFixture.getLookupElementStrings());
-        myFixture.checkResult("from ...subpack import");
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.copyDirectoryToProject("relativeImportExcludeToplevel", "");
+      myFixture.configureByFile("pack/subpack/modX.py");
+      myFixture.completeBasic();
+      assertNull(myFixture.getLookupElementStrings());
+      myFixture.checkResult("from ...subpack import");
     });
   }
 
@@ -753,18 +714,15 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-4073
   public void testFunctionSpecialAttributes() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-        assertNotNull(suggested);
-        assertContainsElements(suggested, PyNames.LEGACY_FUNCTION_SPECIAL_ATTRIBUTES);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, PyNames.LEGACY_FUNCTION_SPECIAL_ATTRIBUTES);
 
-        suggested = doTestByText("def func(): pass; func.__<caret>");
-        assertNotNull(suggested);
-        assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
-        assertDoesntContain(suggested, PyNames.PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES);
-      }
+      suggested = doTestByText("def func(): pass; func.__<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+      assertDoesntContain(suggested, PyNames.PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES);
     });
   }
 
@@ -794,18 +752,8 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-9342
   public void testUnboundMethodSpecialAttributes() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertUnderscoredMethodSpecialAttributesSuggested();
-      }
-    });
-    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
-      @Override
-      public void run() {
-        assertUnderscoredFunctionAttributesSuggested();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> assertUnderscoredMethodSpecialAttributesSuggested());
+    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> assertUnderscoredFunctionAttributesSuggested());
   }
 
   // PY-9342

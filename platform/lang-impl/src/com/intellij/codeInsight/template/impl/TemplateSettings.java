@@ -482,7 +482,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
 
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template = readTemplateFromElement(groupName, child, classLoader);
+      TemplateImpl template;
+      try {
+        template = readTemplateFromElement(groupName, child, classLoader);
+      }
+      catch (Exception e) {
+        LOG.info("failed to load template " + element.getAttributeValue(NAME), e);
+        continue;
+      }
+
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }

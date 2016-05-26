@@ -130,11 +130,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     }
 
     final List<DomExtensionImpl> customs = registrar.getCustoms();
-    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, new Function<DomExtensionImpl, CustomDomChildrenDescriptionImpl>() {
-      @Override
-      public CustomDomChildrenDescriptionImpl fun(DomExtensionImpl extension) {
-        return new CustomDomChildrenDescriptionImpl(extension);
-      }
+    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, extension -> {
+      return new CustomDomChildrenDescriptionImpl(extension);
     });
   }
 
@@ -275,12 +272,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @Override
   public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
     final Set<AttributeChildDescriptionImpl> visited = new THashSet<AttributeChildDescriptionImpl>();
-    if (!myStaticGenericInfo.processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
-      @Override
-      public boolean process(AttributeChildDescriptionImpl attributeChildDescription) {
-        visited.add(attributeChildDescription);
-        return processor.process(attributeChildDescription);
-      }
+    if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
+      visited.add(attributeChildDescription);
+      return processor.process(attributeChildDescription);
     })) {
       return false;
     }

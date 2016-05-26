@@ -303,35 +303,29 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       return;
     }
     final Project project = getProject();
-    DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-      @Override
-      public void run() {
-        if (!isValid()) {
-          return;
-        }
+    DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+      if (!isValid()) {
+        return;
+      }
 
-        DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
-        final DebugProcessImpl debugProcess = context.getDebugProcess();
-        if (debugProcess == null || !debugProcess.isAttached()) {
-          updateCaches(null);
-          updateGutter();
-        }
-        else {
-          debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
-            @Override
-            protected void action() throws Exception {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  if (!project.isDisposed()) {
-                    updateCaches(debugProcess);
-                  }
-                }
-              });
-              DebuggerInvocationUtil.swingInvokeLater(project, BreakpointWithHighlighter.this::updateGutter);
-            }
-          });
-        }
+      DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
+      final DebugProcessImpl debugProcess = context.getDebugProcess();
+      if (debugProcess == null || !debugProcess.isAttached()) {
+        updateCaches(null);
+        updateGutter();
+      }
+      else {
+        debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              if (!project.isDisposed()) {
+                updateCaches(debugProcess);
+              }
+            });
+            DebuggerInvocationUtil.swingInvokeLater(project, BreakpointWithHighlighter.this::updateGutter);
+          }
+        });
       }
     });
   }

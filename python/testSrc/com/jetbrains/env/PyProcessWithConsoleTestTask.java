@@ -108,18 +108,15 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     };
 
     // Invoke runner
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runner.runProcess(sdkHome, getProject(), processListener);
-        }
-        catch (final Throwable e) {
-          final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
-          failed.set(true);
-          processFinishedSemaphore.up();
-          throw exception;
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        runner.runProcess(sdkHome, getProject(), processListener);
+      }
+      catch (final Throwable e) {
+        final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
+        failed.set(true);
+        processFinishedSemaphore.up();
+        throw exception;
       }
     }, ModalityState.NON_MODAL);
 

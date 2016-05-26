@@ -40,12 +40,7 @@ public class PyMoveSymbolProcessor {
     myMovedElement = element;
     myDestinationFile = destination;
     myAllMovedElements = otherElements;
-    myUsages = ContainerUtil.sorted(usages, new Comparator<UsageInfo>() {
-      @Override
-      public int compare(UsageInfo u1, UsageInfo u2) {
-        return PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement());
-      }
-    });
+    myUsages = ContainerUtil.sorted(usages, (u1, u2) -> PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement()));
   }
 
   public final void moveElement() {
@@ -96,25 +91,17 @@ public class PyMoveSymbolProcessor {
 
   @Nullable
   private PsiElement findFirstTopLevelWithUsageAtDestination() {
-    final List<PsiElement> topLevelAtDestination = ContainerUtil.mapNotNull(myUsages, new Function<UsageInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(UsageInfo usage) {
-        final PsiElement element = usage.getElement();
-        if (element != null && ScopeUtil.getScopeOwner(element) == myDestinationFile && getImportStatementByElement(element) == null) {
-          return findTopLevelParent(element);
-        }
-        return null;
+    final List<PsiElement> topLevelAtDestination = ContainerUtil.mapNotNull(myUsages, usage -> {
+      final PsiElement element = usage.getElement();
+      if (element != null && ScopeUtil.getScopeOwner(element) == myDestinationFile && getImportStatementByElement(element) == null) {
+        return findTopLevelParent(element);
       }
+      return null;
     });
     if (topLevelAtDestination.isEmpty()) {
       return null;
     }
-    return Collections.min(topLevelAtDestination, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement e1, PsiElement e2) {
-        return PsiUtilCore.compareElementsByPosition(e1, e2);
-      }
-    });
+    return Collections.min(topLevelAtDestination, (e1, e2) -> PsiUtilCore.compareElementsByPosition(e1, e2));
   }
 
   @Nullable

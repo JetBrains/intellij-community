@@ -59,6 +59,12 @@ public class CommonTest extends IncrementalTestCase {
     doTestBuild(2);
   }
 
+  public void testDontMarkDependentsAfterCompileErrors() throws Exception {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
+
   public void testDeleteClassPackageDoesntMatchRoot() throws Exception {
     doTest();
   }

@@ -727,11 +727,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
     
     // Simulate addition of the new import that modifies existing fold region.
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
     });
 
     final FoldingModel foldingModel = myEditor.getFoldingModel();
@@ -764,11 +761,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
 
     int modificationOffset = text.indexOf("java.util.Set");
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
     });
 
     // Used to get StackOverflowError here, hence, no additional checking is performed.
@@ -846,11 +840,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     final EditorSettings settings = getEditor().getSettings();
     settings.setUseSoftWraps(false);
     int startOffset = text.indexOf("\t third") - 1;
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        getEditor().getDocument().deleteString(startOffset, text.length());
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      getEditor().getDocument().deleteString(startOffset, text.length());
     });
 
 
@@ -1063,11 +1054,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(4, 8, "...");
     addCollapsedFoldRegion(13, 15, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(10, "C");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myEditor.getDocument().insertString(10, "C");
     });
 
 
@@ -1145,11 +1133,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     configureSoftWraps(100);
     addCollapsedFoldRegion(0, 4, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
     });
 
 

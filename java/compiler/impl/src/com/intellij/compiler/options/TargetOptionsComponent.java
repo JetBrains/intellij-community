@@ -132,12 +132,7 @@ public class TargetOptionsComponent extends JPanel {
         it.remove();
       }
     }
-    Collections.sort(items, new Comparator<Module>() {
-      @Override
-      public int compare(Module o1, Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(items, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     final ChooseModulesDialog chooser = new ChooseModulesDialog(this, items, "Choose module");
     chooser.show();
     final List<Module> elements = chooser.getChosenElements();
@@ -230,12 +225,7 @@ public class TargetOptionsComponent extends JPanel {
     }
 
     private void sorItems() {
-      Collections.sort(myItems, new Comparator<Item>() {
-        @Override
-        public int compare(Item o1, Item o2) {
-          return o1.module.getName().compareTo(o2.module.getName());
-        }
-      });
+      Collections.sort(myItems, (o1, o2) -> o1.module.getName().compareTo(o2.module.getName()));
     }
 
     public List<Item> getItems() {

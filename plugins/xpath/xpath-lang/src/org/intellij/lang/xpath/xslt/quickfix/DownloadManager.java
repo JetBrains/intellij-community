@@ -81,11 +81,8 @@ public abstract class DownloadManager {
             resourceManager.addResource(location, file.getAbsolutePath());
           }
           else {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem");
-              }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem");
             }, myProject.getDisposed());
           }
         }

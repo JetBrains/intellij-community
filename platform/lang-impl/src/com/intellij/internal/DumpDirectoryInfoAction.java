@@ -43,23 +43,20 @@ public class DumpDirectoryInfoAction extends AnAction {
     final DirectoryIndex index = DirectoryIndex.getInstance(project);
     if (project != null) {
       final VirtualFile root = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final ContentIterator contentIterator = new ContentIterator() {
-            @Override
-            public boolean processFile(VirtualFile fileOrDir) {
-              LOG.info(fileOrDir.getPath());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final ContentIterator contentIterator = new ContentIterator() {
+          @Override
+          public boolean processFile(VirtualFile fileOrDir) {
+            LOG.info(fileOrDir.getPath());
 
-              LOG.info(index.getInfoForFile(fileOrDir).toString());
-              return true;
-            }
-          };
-          if (root != null) {
-            ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(root, contentIterator);
-          } else {
-            ProjectRootManager.getInstance(project).getFileIndex().iterateContent(contentIterator);
+            LOG.info(index.getInfoForFile(fileOrDir).toString());
+            return true;
           }
+        };
+        if (root != null) {
+          ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(root, contentIterator);
+        } else {
+          ProjectRootManager.getInstance(project).getFileIndex().iterateContent(contentIterator);
         }
       }, "Dumping directory index", true, project);
     }

@@ -45,6 +45,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -286,13 +288,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      @Override
-      public void run() {
-        LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-        Point p = getHintPosition(hint, editor, pos, constraint);
-        showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
-      }});
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
+      Point p = getHintPosition(hint, editor, pos, constraint);
+      showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
+    });
   }
 
   /**
@@ -345,6 +345,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     Component component = hint.getComponent();
 
+    // Set focus to control so that screen readers will announce the tooltip contents.
+    // Users can press "ESC" to return to the editor.
+    if (ScreenReader.isActive()) {
+      hintInfo.setRequestFocus(true);
+    }
     doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
@@ -726,6 +731,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
+    // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
+    // when the tooltip gets the focus.
+    AccessibleContextUtil.setName(component, "Hint");
     showInformationHint(editor, component, true);
   }
 

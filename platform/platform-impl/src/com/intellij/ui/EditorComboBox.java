@@ -177,19 +177,13 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   public void setText(final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            myDocument.replaceString(0, myDocument.getTextLength(), text);
-            if (myEditorField != null && myEditorField.getEditor() != null) {
-              myEditorField.getCaretModel().moveToOffset(myDocument.getTextLength());
-            }
-          }
-        }, null, myDocument);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        myDocument.replaceString(0, myDocument.getTextLength(), text);
+        if (myEditorField != null && myEditorField.getEditor() != null) {
+          myEditorField.getCaretModel().moveToOffset(myDocument.getTextLength());
+        }
+      }, null, myDocument);
     });
   }
 

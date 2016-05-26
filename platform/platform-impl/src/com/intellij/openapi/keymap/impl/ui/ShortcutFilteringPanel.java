@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -67,11 +68,20 @@ final class ShortcutFilteringPanel extends JPanel {
       if (ShortcutFilteringPanel.this == event.getSource()) {
         if (value instanceof KeyboardShortcut) {
           KeyboardShortcut shortcut = (KeyboardShortcut)value;
-          myMousePanel.setShortcut(null);
+          myMousePanel.setShortcut((MouseShortcut)null);
           myKeyboardPanel.setShortcut(shortcut);
           if (null != shortcut.getSecondKeyStroke()) {
             myKeyboardPanel.mySecondStrokeEnable.setSelected(true);
           }
+        }
+        else if (value instanceof PressureShortcut) {
+          String text = "Power Touch";
+          MouseShortcut shortcut = (PressureShortcut)value;
+          myMousePanel.setShortcut(shortcut);
+          myKeyboardPanel.setShortcut(null);
+          myKeyboardPanel.myFirstStroke.setText(text);
+          myKeyboardPanel.mySecondStroke.setText(null);
+          myKeyboardPanel.mySecondStroke.setEnabled(false);
         }
         else {
           MouseShortcut shortcut = value instanceof MouseShortcut ? (MouseShortcut)value : null;

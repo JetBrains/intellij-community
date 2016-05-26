@@ -219,13 +219,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   private static void unfoldCurrentLine(@NotNull final Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     final TextRange range = getRangeToUnfoldOnNavigation(editor);
-    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        for (FoldRegion region : allRegions) {
-          if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
-            region.setExpanded(true);
-          }
+    editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      for (FoldRegion region : allRegions) {
+        if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
+          region.setExpanded(true);
         }
       }
     });

@@ -70,12 +70,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       fireNotifications();
     }
     else if (first) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          fireNotifications();
-        }
-      });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> fireNotifications());
     }
   }
 

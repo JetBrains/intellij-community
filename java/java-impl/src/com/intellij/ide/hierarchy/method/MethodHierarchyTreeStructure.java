@@ -174,12 +174,9 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
     final PsiMethod existingMethod = ((MethodHierarchyNodeDescriptor)descriptor).getMethod(psiClass, false);
     if (existingMethod != null) {
-      FunctionalExpressionSearch.search(existingMethod).forEach(new Processor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(PsiFunctionalExpression expression) {
-          descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
-          return true;
-        }
+      FunctionalExpressionSearch.search(existingMethod).forEach(expression -> {
+        descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
+        return true;
       });
     }
 

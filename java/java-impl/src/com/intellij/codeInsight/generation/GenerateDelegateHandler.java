@@ -69,33 +69,30 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (candidates == null || candidates.length == 0) return;
 
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          int offset = editor.getCaretModel().getOffset();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        int offset = editor.getCaretModel().getOffset();
 
-          List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
-          for (PsiMethodMember candidate : candidates) {
-            prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
-          }
-
-          List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
-
-          if (!results.isEmpty()) {
-            PsiMethod firstMethod = results.get(0).getPsiMember();
-            final PsiCodeBlock block = firstMethod.getBody();
-            assert block != null;
-            final PsiElement first = block.getFirstBodyElement();
-            assert first != null;
-            editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            editor.getSelectionModel().removeSelection();
-          }
+        List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
+        for (PsiMethodMember candidate : candidates) {
+          prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
+
+        if (!results.isEmpty()) {
+          PsiMethod firstMethod = results.get(0).getPsiMember();
+          final PsiCodeBlock block = firstMethod.getBody();
+          assert block != null;
+          final PsiElement first = block.getFirstBodyElement();
+          assert first != null;
+          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getSelectionModel().removeSelection();
         }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

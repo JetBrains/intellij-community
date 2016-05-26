@@ -110,12 +110,7 @@ public class CacheUpdateRunner {
       }
     };
     final Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        application.addApplicationListener(canceller);
-      }
-    }, ModalityState.any());
+    application.invokeAndWait(() -> application.addApplicationListener(canceller), ModalityState.any());
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {
@@ -214,42 +209,36 @@ public class CacheUpdateRunner {
             return;
           }
 
-          final Runnable action = new Runnable() {
-            @Override
-            public void run() {
-              myInnerIndicator.checkCanceled();
-              if (!myProject.isDisposed()) {
-                final VirtualFile file = fileContent.getVirtualFile();
-                try {
-                  myProgressUpdater.consume(file);
-                  if (!file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
-                    myProcessor.consume(fileContent);
-                  }
+          final Runnable action = () -> {
+            myInnerIndicator.checkCanceled();
+            if (!myProject.isDisposed()) {
+              final VirtualFile file = fileContent.getVirtualFile();
+              try {
+                myProgressUpdater.consume(file);
+                if (!file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
+                  myProcessor.consume(fileContent);
                 }
-                catch (ProcessCanceledException e) {
-                  throw e;
-                }
-                catch (Throwable e) {
-                  LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
-                  file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
-                }
+              }
+              catch (ProcessCanceledException e) {
+                throw e;
+              }
+              catch (Throwable e) {
+                LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
+                file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
               }
             }
           };
           try {
             ProgressManager.getInstance().runProcess(
-              new Runnable() {
-                @Override
-                public void run() {
-                  if (myProcessInReadAction) {
-                    // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
-                    if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
-                      throw new ProcessCanceledException();
-                    }
+              () -> {
+                if (myProcessInReadAction) {
+                  // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
+                  if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
+                    throw new ProcessCanceledException();
                   }
-                  else {
-                    action.run();
-                  }
+                }
+                else {
+                  action.run();
                 }
               },
               ProgressWrapper.wrap(myInnerIndicator)

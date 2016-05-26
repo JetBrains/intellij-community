@@ -129,11 +129,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);
         if (psiField != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(psiField);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(psiField);
           });
           newEditor.getCaretModel().moveToOffset(psiField.getTextRange().getEndOffset() - 1);
         }

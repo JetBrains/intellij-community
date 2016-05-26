@@ -77,7 +77,7 @@ public interface RegExpTT {
     IElementType ESC_CTRL_CHARACTER = new RegExpElementType("ESC_CTRL_CHARACTER");
     // "\\" ("." | "|" | "$" | "^" | "?" | "*" | "+" | "[" | "{" | "(" | ")")
     IElementType ESC_CHARACTER = new RegExpElementType("ESC_CHARACTER");
-    // "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H")
+    // "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H" | "X" | "R")
     IElementType CHAR_CLASS = new RegExpElementType("CHAR_CLASS");
     // "\\u" XXXX
     IElementType UNICODE_CHAR = new RegExpElementType("UNICODE_CHAR");

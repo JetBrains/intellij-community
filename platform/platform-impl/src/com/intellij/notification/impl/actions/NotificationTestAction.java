@@ -128,12 +128,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           notification.expire();
         }
       });
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification));
     }
 
     private void newNotification(String text) {
@@ -192,12 +187,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         }
       }
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          for (NotificationInfo info : notifications) {
-            myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (NotificationInfo info : notifications) {
+          myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
         }
       });
     }

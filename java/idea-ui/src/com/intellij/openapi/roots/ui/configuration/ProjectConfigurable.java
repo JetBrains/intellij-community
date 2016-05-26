@@ -224,38 +224,35 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       throw new ConfigurationException("Please, specify project name!");
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // set the output path first so that handlers of RootsChanged event sent after JDK is set
-        // would see the updated path
-        String canonicalPath = myProjectCompilerOutput.getText();
-        if (canonicalPath != null && canonicalPath.length() > 0) {
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
-          }
-          catch (IOException e) {
-            //file doesn't exist yet
-          }
-          canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-          compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // set the output path first so that handlers of RootsChanged event sent after JDK is set
+      // would see the updated path
+      String canonicalPath = myProjectCompilerOutput.getText();
+      if (canonicalPath != null && canonicalPath.length() > 0) {
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
         }
-        else {
-          compilerProjectExtension.setCompilerOutputPointer(null);
+        catch (IOException e) {
+          //file doesn't exist yet
         }
+        canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+        compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+      }
+      else {
+        compilerProjectExtension.setCompilerOutputPointer(null);
+      }
 
-        LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-        LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
-        if (level != null) {
-          extension.setLanguageLevel(level);
-        }
-        extension.setDefault(myLanguageLevelCombo.isDefault());
-        myProjectJdkConfigurable.apply();
+      LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+      LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
+      if (level != null) {
+        extension.setLanguageLevel(level);
+      }
+      extension.setDefault(myLanguageLevelCombo.isDefault());
+      myProjectJdkConfigurable.apply();
 
-        if (myProjectName != null) {
-          ((ProjectEx)myProject).setProjectName(getProjectName());
-          if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
-        }
+      if (myProjectName != null) {
+        ((ProjectEx)myProject).setProjectName(getProjectName());
+        if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
       }
     });
   }

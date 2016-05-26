@@ -154,11 +154,8 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, new Function<Library, String>() {
-      @Override
-      public String fun(Library library) {
-        return getSDKLibVersion(library);
-      }
+    return ContainerUtil.map2List(libraries, library -> {
+      return getSDKLibVersion(library);
     });
   }
 }

@@ -369,15 +369,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private void updateFileIconLater(VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
     myIconUpdaterAlarm.cancelAllRequests();
-    myIconUpdaterAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myManager.getProject().isDisposed()) return;
-        for (VirtualFile file : myFilesToUpdateIconsFor) {
-          updateFileIconImmediately(file);
-        }
-        myFilesToUpdateIconsFor.clear();
+    myIconUpdaterAlarm.addRequest(() -> {
+      if (myManager.getProject().isDisposed()) return;
+      for (VirtualFile file1 : myFilesToUpdateIconsFor) {
+        updateFileIconImmediately(file1);
       }
+      myFilesToUpdateIconsFor.clear();
     }, 200, ModalityState.stateForComponent(this));
   }
 
@@ -621,12 +618,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
-    Runnable fireRunnable = new Runnable() {
-      @Override
-      public void run() {
-        getManager().fireSelectionChanged(newEditor);
-      }
-    };
+    Runnable fireRunnable = () -> getManager().fireSelectionChanged(newEditor);
 
     setCurrentWindow(window);
 

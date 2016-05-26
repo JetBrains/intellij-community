@@ -143,13 +143,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {
     LOG.error(message, e);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
-        if (doc != null) {
-          FileDocumentManager.getInstance().saveDocument(doc);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (doc != null) {
+        FileDocumentManager.getInstance().saveDocument(doc);
       }
     }, ModalityState.NON_MODAL);
 

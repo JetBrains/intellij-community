@@ -43,12 +43,9 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
       final THashSet<String> names = new THashSet<String>(1000);
       IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
-      processNames(new Processor<String>() {
-        @Override
-        public boolean process(String s) {
-          names.add(s);
-          return true;
-        }
+      processNames(s -> {
+        names.add(s);
+        return true;
       }, FindSymbolParameters.searchScopeFor(project, includeNonProjectItems), filter);
       if (IdFilter.LOG.isDebugEnabled()) {
         IdFilter.LOG.debug("All names retrieved2:" + names.size());
@@ -72,12 +69,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @Override
   public void processNames(@NotNull final Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     long started = System.currentTimeMillis();
-    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        return processor.process(s);
-      }
-    }, scope, filter);
+    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, s -> processor.process(s), scope, filter);
     if (IdFilter.LOG.isDebugEnabled()) {
       IdFilter.LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
     }
@@ -88,14 +80,11 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
                                       @NotNull final Processor<NavigationItem> _processor,
                                       @NotNull FindSymbolParameters parameters) {
     final boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
-    final Processor<PsiFileSystemItem> processor = new Processor<PsiFileSystemItem>() {
-      @Override
-      public boolean process(PsiFileSystemItem item) {
-        if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
-          return true;
-        }
-        return _processor.process(item);
+    final Processor<PsiFileSystemItem> processor = item -> {
+      if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
+        return true;
       }
+      return _processor.process(item);
     };
     
     String completePattern = parameters.getCompletePattern();

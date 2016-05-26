@@ -120,6 +120,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     this.project = project;
   }
 
+  @Nullable
+  public RemoteConnectionCreator getRemoteConnectionCreator() {
+    return null;
+  }
+
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return new TestNGRunnableState(env, this);
   }
@@ -260,7 +265,8 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
+                    new TestNGConfigurationEditor<TestNGConfiguration>(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<TestNGConfiguration>());
     return group;

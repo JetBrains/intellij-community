@@ -79,22 +79,18 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
 
   @Override
   public void undeploy(final @NotNull UndeploymentTaskCallback callback) {
-    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
-
-      @Override
-      public void run() throws Exception {
-        try {
-          if (!confirmUndeploy()) {
-            throw new ServerRuntimeException("Undeploy cancelled");
-          }
-
-          undeploy();
-
-          callback.succeeded();
+    getTaskExecutor().submit(() -> {
+      try {
+        if (!confirmUndeploy()) {
+          throw new ServerRuntimeException("Undeploy cancelled");
         }
-        catch (ServerRuntimeException e) {
-          callback.errorOccurred(e.getMessage());
-        }
+
+        undeploy();
+
+        callback.succeeded();
+      }
+      catch (ServerRuntimeException e) {
+        callback.errorOccurred(e.getMessage());
       }
     }, callback);
   }
@@ -113,22 +109,18 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
 
   private boolean confirmUndeploy() {
     final Ref<Boolean> confirmed = new Ref<Boolean>(false);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-
-      @Override
-      public void run() {
-        String title = CloudBundle.getText("cloud.undeploy.confirm.title");
-        while (true) {
-          String password = Messages.showPasswordDialog(CloudBundle.getText("cloud.undeploy.confirm.message", getApplicationName()), title);
-          if (password == null) {
-            return;
-          }
-          if (password.equals(getServerRuntime().getConfiguration().getPassword())) {
-            confirmed.set(true);
-            return;
-          }
-          Messages.showErrorDialog(CloudBundle.getText("cloud.undeploy.confirm.password.incorrect"), title);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String title = CloudBundle.getText("cloud.undeploy.confirm.title");
+      while (true) {
+        String password = Messages.showPasswordDialog(CloudBundle.getText("cloud.undeploy.confirm.message", getApplicationName()), title);
+        if (password == null) {
+          return;
         }
+        if (password.equals(getServerRuntime().getConfiguration().getPassword())) {
+          confirmed.set(true);
+          return;
+        }
+        Messages.showErrorDialog(CloudBundle.getText("cloud.undeploy.confirm.password.incorrect"), title);
       }
     }, ModalityState.defaultModalityState());
     return confirmed.get();

@@ -232,22 +232,19 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     final List<String> groupOrder = getGroupOrder(options);
     List<BooleanOptionKey> result = new ArrayList<BooleanOptionKey>(options.size());
     result.addAll(options);
-    Collections.sort(result, new Comparator<BooleanOptionKey>(){
-      @Override
-      public int compare(BooleanOptionKey key1, BooleanOptionKey key2) {
-        String group1 = key1.groupName;
-        String group2 = key2.groupName;
-        if (group1 == null) {
-          return group2 == null ? 0 : 1;
-        }
-        if (group2 == null) {
-          return -1;
-        }
-        Integer index1 = groupOrder.indexOf(group1);
-        Integer index2 = groupOrder.indexOf(group2);
-        if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
-        return index1.compareTo(index2);
+    Collections.sort(result, (key1, key2) -> {
+      String group1 = key1.groupName;
+      String group2 = key2.groupName;
+      if (group1 == null) {
+        return group2 == null ? 0 : 1;
       }
+      if (group2 == null) {
+        return -1;
+      }
+      Integer index1 = groupOrder.indexOf(group1);
+      Integer index2 = groupOrder.indexOf(group2);
+      if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
+      return index1.compareTo(index2);
     });
     return result;
   }

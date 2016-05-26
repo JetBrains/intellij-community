@@ -121,18 +121,15 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, new Function<Charset, String>() {
-         @Override
-         public String fun(Charset charset) {
-           assert myFile.isDirectory() || text != null : charset;
-           EncodingUtil.Magic8 safeToReload = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
-           boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
-           if (!enabled) {
-             EncodingUtil.Magic8 safeToConvert = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
-             enabled = safeToConvert != EncodingUtil.Magic8.NO_WAY;
-           }
-           return enabled ? "Change encoding to '"+charset.displayName()+"'" : null;
+       return createCharsetsActionGroup(clearItemText, null, charset -> {
+         assert myFile.isDirectory() || text != null : charset;
+         EncodingUtil.Magic8 safeToReload = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
+         boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
+         if (!enabled) {
+           EncodingUtil.Magic8 safeToConvert = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
+           enabled = safeToConvert != EncodingUtil.Magic8.NO_WAY;
          }
+         return enabled ? "Change encoding to '"+charset.displayName()+"'" : null;
        }); // no 'clear'
      }
 
@@ -164,49 +161,19 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
 
     if (isSafeToConvert == EncodingUtil.Magic8.ABSOLUTELY && isSafeToReload == EncodingUtil.Magic8.ABSOLUTELY) {
       //change and forget
-      undo = new Runnable() {
-        @Override
-        public void run() {
-          EncodingManager.getInstance().setEncoding(virtualFile, oldCharset);
-        }
-      };
-      redo = new Runnable() {
-        @Override
-        public void run() {
-          EncodingManager.getInstance().setEncoding(virtualFile, charset);
-        }
-      };
+      undo = () -> EncodingManager.getInstance().setEncoding(virtualFile, oldCharset);
+      redo = () -> EncodingManager.getInstance().setEncoding(virtualFile, charset);
     }
     else {
       IncompatibleEncodingDialog dialog = new IncompatibleEncodingDialog(virtualFile, charset, isSafeToReload, isSafeToConvert);
       dialog.show();
       if (dialog.getExitCode() == IncompatibleEncodingDialog.RELOAD_EXIT_CODE) {
-        undo = new Runnable() {
-          @Override
-          public void run() {
-            EncodingUtil.reloadIn(virtualFile, oldCharset);
-          }
-        };
-        redo = new Runnable() {
-          @Override
-          public void run() {
-            EncodingUtil.reloadIn(virtualFile, charset);
-          }
-        };
+        undo = () -> EncodingUtil.reloadIn(virtualFile, oldCharset);
+        redo = () -> EncodingUtil.reloadIn(virtualFile, charset);
       }
       else if (dialog.getExitCode() == IncompatibleEncodingDialog.CONVERT_EXIT_CODE) {
-        undo = new Runnable() {
-          @Override
-          public void run() {
-            EncodingUtil.saveIn(document, editor, virtualFile, oldCharset);
-          }
-        };
-        redo = new Runnable() {
-          @Override
-          public void run() {
-            EncodingUtil.saveIn(document, editor, virtualFile, charset);
-          }
-        };
+        undo = () -> EncodingUtil.saveIn(document, editor, virtualFile, oldCharset);
+        redo = () -> EncodingUtil.saveIn(document, editor, virtualFile, charset);
       }
       else {
         return false;
@@ -230,12 +197,9 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     };
 
     redo.run();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
-        undoManager.undoableActionPerformed(action);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
+      undoManager.undoableActionPerformed(action);
     }, "Change encoding for '" + virtualFile.getName() + "'", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     return true;

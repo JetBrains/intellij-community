@@ -45,12 +45,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
 
   // PY-1408
   public void testUnboundExceptAs() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-1434
@@ -90,12 +85,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
 
   // PY-3603
   public void testUnboundNonLocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-3671

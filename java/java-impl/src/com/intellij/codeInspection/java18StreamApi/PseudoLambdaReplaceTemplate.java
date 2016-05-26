@@ -95,11 +95,8 @@ public class PseudoLambdaReplaceTemplate {
   public ValidationInfo validate(final PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiType[] parameterTypes =
-      ContainerUtil.map2Array(Arrays.asList(parameters), new PsiType[parameters.length], new Function<PsiParameter, PsiType>() {
-        @Override
-        public PsiType fun(PsiParameter parameter) {
-          return parameter.getType();
-        }
+      ContainerUtil.map2Array(Arrays.asList(parameters), new PsiType[parameters.length], parameter -> {
+        return parameter.getType();
       });
     final PsiType returnType = method.getReturnType();
 

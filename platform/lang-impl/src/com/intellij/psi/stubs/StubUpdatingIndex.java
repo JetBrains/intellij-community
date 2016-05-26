@@ -205,44 +205,41 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           }
         };
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
-            if (rootStub == null) return;
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
+          if (rootStub == null) return;
 
-            VirtualFile file = inputData.getFile();
-            int contentLength;
-            if (file.getFileType().isBinary()) {
-              contentLength = -1;
-            }
-            else {
-              contentLength = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex().getTextLength();
-            }
-            rememberIndexingStamp(file, contentLength);
+          VirtualFile file = inputData.getFile();
+          int contentLength;
+          if (file.getFileType().isBinary()) {
+            contentLength = -1;
+          }
+          else {
+            contentLength = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex().getTextLength();
+          }
+          rememberIndexingStamp(file, contentLength);
 
-            final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-            SerializationManagerEx.getInstanceEx().serialize(rootStub, bytes);
+          final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+          SerializationManagerEx.getInstanceEx().serialize(rootStub, bytes);
 
-            if (DebugAssertions.DEBUG) {
-              try {
-                Stub deserialized =
-                  SerializationManagerEx.getInstanceEx().deserialize(new ByteArrayInputStream(bytes.getInternalBuffer(), 0, bytes.size()));
-                check(deserialized, rootStub);
-              } catch(ProcessCanceledException pce) {
-                throw pce;
-              } catch (Throwable t) {
-                LOG.error("Error indexing:" + file, t);
-              }
-            }
-            final int key = Math.abs(FileBasedIndex.getFileId(file));
-            SerializedStubTree serializedStubTree = new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
-            result.put(key, serializedStubTree);
+          if (DebugAssertions.DEBUG) {
             try {
-              ((StubUpdatingIndexKeys)result.keySet()).myStubIndicesValueMap = calcStubIndicesValueMap(serializedStubTree, key);
-            } catch (StorageException ex) {
-              throw new RuntimeException(ex);
+              Stub deserialized =
+                SerializationManagerEx.getInstanceEx().deserialize(new ByteArrayInputStream(bytes.getInternalBuffer(), 0, bytes.size()));
+              check(deserialized, rootStub);
+            } catch(ProcessCanceledException pce) {
+              throw pce;
+            } catch (Throwable t) {
+              LOG.error("Error indexing:" + file, t);
             }
+          }
+          final int key = Math.abs(FileBasedIndex.getFileId(file));
+          SerializedStubTree serializedStubTree = new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
+          result.put(key, serializedStubTree);
+          try {
+            ((StubUpdatingIndexKeys)result.keySet()).myStubIndicesValueMap = calcStubIndicesValueMap(serializedStubTree, key);
+          } catch (StorageException ex) {
+            throw new RuntimeException(ex);
           }
         });
 

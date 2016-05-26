@@ -47,12 +47,9 @@ public class TextOccurrencesUtil {
                                        @NotNull GlobalSearchScope searchScope,
                                        @NotNull final Collection<UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
-      @Override
-      public boolean process(UsageInfo t) {
-        results.add(t);
-        return true;
-      }
+    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, t -> {
+      results.add(t);
+      return true;
     }, factory);
   }
 
@@ -83,12 +80,7 @@ public class TextOccurrencesUtil {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
     SearchScope scope = helper.getUseScope(element);
     scope = GlobalSearchScope.projectScope(element.getProject()).intersectWith(scope);
-    Processor<PsiElement> commentOrLiteralProcessor = new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement literal) {
-        return processTextIn(literal, stringToSearch, ignoreReferences, processor);
-      }
-    };
+    Processor<PsiElement> commentOrLiteralProcessor = literal -> processTextIn(literal, stringToSearch, ignoreReferences, processor);
     return processStringLiteralsContainingIdentifier(stringToSearch, scope, helper, commentOrLiteralProcessor) &&
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
   }
@@ -98,17 +90,14 @@ public class TextOccurrencesUtil {
                                                    @NotNull final Collection<UsageInfo> results,
                                                    @NotNull final UsageInfoFactory factory) {
     final Object lock = new Object();
-    processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
-      @Override
-      public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
-        UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
-        if (usageInfo != null) {
-          synchronized (lock) {
-            results.add(usageInfo);
-          }
+    processUsagesInStringsAndComments(element, stringToSearch, false, (commentOrLiteral, textRange) -> {
+      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
+      if (usageInfo != null) {
+        synchronized (lock) {
+          results.add(usageInfo);
         }
-        return true;
       }
+      return true;
     });
   }
 

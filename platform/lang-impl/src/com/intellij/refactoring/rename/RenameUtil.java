@@ -194,16 +194,13 @@ public class RenameUtil {
       //LOG.error(e);
       //return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
-        String message = e.getMessage();
-        if (StringUtil.isEmpty(message)) {
-          message = RefactoringBundle.message("rename.not.supported");
-        }
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, helpID, project);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
+      String message = e.getMessage();
+      if (StringUtil.isEmpty(message)) {
+        message = RefactoringBundle.message("rename.not.supported");
       }
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, helpID, project);
     });
   }
 

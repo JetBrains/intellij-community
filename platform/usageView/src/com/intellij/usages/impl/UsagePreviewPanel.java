@@ -107,7 +107,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
-      revalidate();
+      invalidate();
+      validate();
     }
 
     highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);

@@ -147,22 +147,20 @@ public abstract class TestNGTestObject {
                                            final GlobalSearchScope searchScope,
                                            final Set<PsiMember> membersToCheckNow,
                                            final PsiClass... classes) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final Project project = classes[0].getProject();
-        final PsiClass testAnnotation = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
-        if (testAnnotation == null) {
-          return;
-        }
-        for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
-          final PsiClass containingClass = psiMember.getContainingClass();
-          if (containingClass == null) continue;
-          if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, annotationFqn);
-          if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groups)) {
-            if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
-              membersToCheckNow.add(psiMember);
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final Project project = classes[0].getProject();
+      final PsiClass testAnnotation = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
+      if (testAnnotation == null) {
+        return;
+      }
+      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
+        final PsiClass containingClass = psiMember.getContainingClass();
+        if (containingClass == null) continue;
+        if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, annotationFqn);
+        if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groups)) {
+          if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
+            membersToCheckNow.add(psiMember);
           }
         }
       }
@@ -195,21 +193,19 @@ public abstract class TestNGTestObject {
       valuesMap.put("dependsOnMethods", testMethodDependencies);
       TestNGUtil.collectAnnotationValues(valuesMap, methods, containingClass);
       if (!testMethodDependencies.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Project project = containingClass.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            for (String dependency : testMethodDependencies) {
-              final String className = StringUtil.getPackageName(dependency);
-              final String methodName = StringUtil.getShortName(dependency);
-              if (StringUtil.isEmpty(className)) {
-                checkClassMethods(methodName, containingClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
-              }
-              else {
-                final PsiClass aClass = psiFacade.findClass(className, containingClass.getResolveScope());
-                if (aClass != null) {
-                  checkClassMethods(methodName, aClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final Project project = containingClass.getProject();
+          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+          for (String dependency : testMethodDependencies) {
+            final String className = StringUtil.getPackageName(dependency);
+            final String methodName = StringUtil.getShortName(dependency);
+            if (StringUtil.isEmpty(className)) {
+              checkClassMethods(methodName, containingClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
+            }
+            else {
+              final PsiClass aClass = psiFacade.findClass(className, containingClass.getResolveScope());
+              if (aClass != null) {
+                checkClassMethods(methodName, aClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
               }
             }
           }

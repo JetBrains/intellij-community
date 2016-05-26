@@ -60,6 +60,7 @@
     <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
     <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
+    <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
   </extensions>
 
   <actions>

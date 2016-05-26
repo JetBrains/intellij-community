@@ -370,11 +370,7 @@ public class SingleRowLayout extends TabLayout {
         public void mousePressed(final MouseEvent e) {
           if (JBTabsImpl.isSelectionClick(e, true) && myInfo != null) {
             myRowDropPolicy = before;
-            myTabs.select(myInfo, true).doWhenDone(new Runnable() {
-              public void run() {
-                myRowDropPolicy = after;
-              }
-            });
+            myTabs.select(myInfo, true).doWhenDone(() -> myRowDropPolicy = after);
           } else {
             MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myTabs);
             myTabs.processMouseEvent(event);

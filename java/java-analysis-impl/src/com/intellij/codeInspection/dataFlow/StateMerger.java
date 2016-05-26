@@ -65,16 +65,13 @@ class StateMerger {
         final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
         
         final Set<DfaVariableValue> unknowns = getAllUnknownVariables(group);
-        replacements.stripAndMerge(group, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
-          @Override
-          public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
-            DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
-            fact.removeFromState(copy);
-            if (fact.myType == FactType.equality) {
-              restoreOtherInequalities(fact, group, copy);
-            }
-            return copy;
+        replacements.stripAndMerge(group, original -> {
+          DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
+          fact.removeFromState(copy);
+          if (fact.myType == FactType.equality) {
+            restoreOtherInequalities(fact, group, copy);
           }
+          return copy;
         });
       }
 
@@ -227,12 +224,7 @@ class StateMerger {
     final Set<DfaVariableValue> toFlush = getAllUnknownVariables(complementary);
     if (toFlush.isEmpty()) return false;
 
-    return replacements.stripAndMerge(complementary, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
-      @Override
-      public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
-        return withUnknownVariables(original, toFlush);
-      }
-    });
+    return replacements.stripAndMerge(complementary, original -> withUnknownVariables(original, toFlush));
   }
 
   private boolean areEquivalentModuloVar(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {

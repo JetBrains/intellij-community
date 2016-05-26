@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -512,20 +512,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return true;
       }
       if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
-        if (ourScopeOwner != theirScopeOwner) {
-          boolean shadowsName = false;
-          ScopeOwner owner = ourScopeOwner;
-          while(owner != theirScopeOwner && owner != null) {
-            if (ControlFlowCache.getScope(owner).containsDeclaration(elementName)) {
-              shadowsName = true;
-              break;
-            }
-            owner = ScopeUtil.getScopeOwner(owner);
-          }
-          if (!shadowsName) {
-            return true;
-          }
+        if (ourContainer instanceof PyComprehensionElement && containsDeclaration((PyComprehensionElement)ourContainer, elementName)) {
+            return false;
         }
+
+        ScopeOwner owner = ourScopeOwner;
+        while (owner != theirScopeOwner && owner != null) {
+          if (ControlFlowCache.getScope(owner).containsDeclaration(elementName)) {
+            return false;
+          }
+          owner = ScopeUtil.getScopeOwner(owner);
+        }
+
+        return true;
       }
     }
     return false;
@@ -538,6 +537,25 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       return findContainer(parent);
     }
     return parent;
+  }
+
+  private static boolean containsDeclaration(@NotNull PyComprehensionElement comprehensionElement, @NotNull String variableName) {
+    for (ComprhForComponent forComponent : comprehensionElement.getForComponents()) {
+      final PyExpression iteratorVariable = forComponent.getIteratorVariable();
+
+      if (iteratorVariable instanceof PyTupleExpression) {
+        for (PyExpression variable : (PyTupleExpression)iteratorVariable) {
+          if (variable instanceof PyTargetExpression && variableName.equals(variable.getName())) {
+            return true;
+          }
+        }
+      }
+      else if (iteratorVariable instanceof PyTargetExpression && variableName.equals(iteratorVariable.getName())) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,

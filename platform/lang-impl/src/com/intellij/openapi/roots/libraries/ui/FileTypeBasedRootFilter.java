@@ -61,16 +61,13 @@ public class FileTypeBasedRootFilter extends RootFilter {
   }
 
   private boolean containsFileOfType(VirtualFile rootCandidate, final ProgressIndicator progressIndicator) {
-    return !VfsUtil.processFilesRecursively(rootCandidate, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        progressIndicator.checkCanceled();
-        if (virtualFile.isDirectory()) {
-          progressIndicator.setText2(virtualFile.getPath());
-          return true;
-        }
-        return !isFileAccepted(virtualFile);
+    return !VfsUtil.processFilesRecursively(rootCandidate, virtualFile -> {
+      progressIndicator.checkCanceled();
+      if (virtualFile.isDirectory()) {
+        progressIndicator.setText2(virtualFile.getPath());
+        return true;
       }
+      return !isFileAccepted(virtualFile);
     });
   }
 

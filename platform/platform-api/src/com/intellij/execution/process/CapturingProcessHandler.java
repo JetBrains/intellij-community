@@ -67,12 +67,20 @@ public class CapturingProcessHandler extends OSProcessHandler {
   public ProcessOutput runProcess() {
     startNotify();
     if (waitFor()) {
-      myOutput.setExitCode(getProcess().exitValue());
+      setErrorCodeIfNotYetSet();
     }
     else {
       LOG.info("runProcess: exit value unavailable");
     }
     return myOutput;
+  }
+
+  private void setErrorCodeIfNotYetSet() {
+    // if exit code was set on processTerminated, no need to rewrite it
+    // WinPtyProcess returns -2 if pty is already closed
+    if (myOutput.hasErrorExitCode()) {
+      myOutput.setExitCode(getProcess().exitValue());
+    }
   }
 
   /**
@@ -97,7 +105,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
     else {
       startNotify();
       if (waitFor(timeoutInMilliseconds)) {
-        myOutput.setExitCode(getProcess().exitValue());
+        setErrorCodeIfNotYetSet();
       }
       else {
         if (destroyOnTimeout) {
@@ -156,7 +164,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
     }
     if (setExitCode) {
       if (waitFor()) {
-        myOutput.setExitCode(getProcess().exitValue());
+        setErrorCodeIfNotYetSet();
       }
       else {
         LOG.info("runProcess: exit value unavailable");

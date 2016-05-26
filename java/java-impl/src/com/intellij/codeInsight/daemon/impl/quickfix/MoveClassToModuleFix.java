@@ -135,13 +135,10 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof PsiClass) {
-              moveClass(project, editor, file, (PsiClass)value);
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof PsiClass) {
+            moveClass(project, editor, file, (PsiClass)value);
           }
         }).createPopup().showInBestPositionFor(editor);
     }

@@ -61,12 +61,10 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
           vm.suspend();
           try {
             final List<ThreadState> threads = buildThreadStates(vm);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                XDebugSession xSession = session.getXDebugSession();
-                if (xSession != null) {
-                  DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session);
-                }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              XDebugSession xSession = session.getXDebugSession();
+              if (xSession != null) {
+                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session);
               }
             }, ModalityState.NON_MODAL);
           }

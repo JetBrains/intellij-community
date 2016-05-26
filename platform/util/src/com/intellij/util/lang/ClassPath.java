@@ -192,13 +192,11 @@ public class ClassPath {
       }
     }
 
-    Loader loader = null;
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      loader = createLoader(url, index, new File(path), true);
-    }
-
-    if (loader != null) {
-      initLoader(url, lastOne, loader);
+      Loader loader = createLoader(url, index, new File(path), true);
+      if (loader != null) {
+        initLoader(url, lastOne, loader);
+      }
     }
   }
 
@@ -209,22 +207,20 @@ public class ClassPath {
     else if (file.isFile()) {
       Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);
       if (processRecursively) {
-        final String[] referencedJars = loadManifestClasspath(file);
+        String[] referencedJars = loadManifestClasspath(file);
         if (referencedJars != null) {
           for (String referencedJar : referencedJars) {
-            final URI uri;
-            final File referencedFile;
             try {
-              uri = new URI(referencedJar);
-              referencedFile = new File(uri);
+              URI uri = new URI(referencedJar);
+              File referencedFile = new File(uri);
+              URL referencedUrl = uri.toURL();
+              Loader referencedLoader = createLoader(referencedUrl, index++, referencedFile, false);
+              if (referencedLoader != null) {
+                initLoader(referencedUrl, false, referencedLoader);
+              }
             }
             catch (Exception e) {
-              continue;
-            }
-            final URL referencedUrl = uri.toURL();
-            Loader referencedLoader = createLoader(referencedUrl, index++, referencedFile, false);
-            if (referencedLoader != null) {
-              initLoader(referencedUrl, false, referencedLoader);
+              Logger.getInstance(ClassPath.class).info("url: " + url + " / " + referencedJar, e);
             }
           }
         }
@@ -244,7 +240,7 @@ public class ClassPath {
         }
       }
       myCache.applyLoaderData(data, loader);
-    
+
       if (lastOne) {
         myCache.nameSymbolsLoaded();
         myAllUrlsWereProcessed = true;

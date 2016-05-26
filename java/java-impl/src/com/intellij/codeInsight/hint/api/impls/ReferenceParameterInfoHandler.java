@@ -106,11 +106,8 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     buffer.append(" extends ");
     buffer.append(StringUtil.join(
       Arrays.asList(typeParameter.getSuperTypes()),
-      new Function<PsiClassType, String>() {
-        @Override
-        public String fun(final PsiClassType t) {
-          return t.getPresentableText();
-        }
+      t -> {
+        return t.getPresentableText();
       }, ", "));
 
     context.setupUIComponentPresentation(buffer.toString(), 0, highlightEndOffset, false, false, false,

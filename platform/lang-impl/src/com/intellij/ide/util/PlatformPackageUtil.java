@@ -120,12 +120,8 @@ public class PlatformPackageUtil {
         final GlobalSearchScope scope_ = scope;
         List<PsiDirectory> dirs =
           ContainerUtil
-            .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(), new Function<VirtualFile, PsiDirectory>() {
-              @Override
-              public PsiDirectory fun(VirtualFile virtualFile) {
-                return scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null;
-              }
-            });
+            .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(),
+                        virtualFile -> scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null);
         psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
                                                             File.separatorChar + packageName.replace('.', File.separatorChar));
         if (psiDirectory == null) return null;
@@ -211,11 +207,8 @@ public class PlatformPackageUtil {
       }
     });
 
-    List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), new Function<VirtualFile, PsiDirectory>() {
-      @Override
-      public PsiDirectory fun(VirtualFile virtualFile) {
-        return manager.findDirectory(virtualFile);
-      }
+    List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), virtualFile -> {
+      return manager.findDirectory(virtualFile);
     });
     return directories.toArray(new PsiDirectory[directories.size()]);
   }

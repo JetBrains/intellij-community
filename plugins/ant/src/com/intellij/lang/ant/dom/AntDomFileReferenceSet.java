@@ -76,6 +76,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     return new AntDomFileReference(this, range, index, text);
   }
 
+  @NotNull
   @Override
   public XmlAttributeValue getElement() {
     return (XmlAttributeValue)super.getElement();

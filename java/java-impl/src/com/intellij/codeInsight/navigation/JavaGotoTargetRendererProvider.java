@@ -33,7 +33,7 @@ public class JavaGotoTargetRendererProvider implements GotoTargetRendererProvide
       return new MethodCellRenderer(gotoData.hasDifferentNames());
     }
     else if (element instanceof PsiClass) {
-      return new PsiClassListCellRenderer();
+      return PsiClassListCellRenderer.INSTANCE;
     }
     return null;
   }

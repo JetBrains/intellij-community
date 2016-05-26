@@ -329,12 +329,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
-  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new NullableFunction<GrClosableBlock, PsiType>() {
-    @Override
-    public PsiType fun(GrClosableBlock block) {
-      return GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
-    }
-  };
+  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator =
+    (NullableFunction<GrClosableBlock, PsiType>)block -> GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
 
   @Override
   @Nullable

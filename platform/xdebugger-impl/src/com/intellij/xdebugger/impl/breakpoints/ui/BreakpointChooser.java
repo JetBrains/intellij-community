@@ -121,7 +121,7 @@ public class BreakpointChooser {
     });
     myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         super.customizeCellRenderer(list, value, index, selected, hasFocus);
         if (selected) {
           if (hackedSelection.get() != value) {

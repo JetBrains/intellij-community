@@ -51,21 +51,17 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-    final Callable<Object> taskCallable = new Callable<Object>() {
-
-      @Override
-      public Object call() {
-        try {
-          return method.invoke(myTarget, args);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-          return null;
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-          return null;
-        }
+    final Callable<Object> taskCallable = () -> {
+      try {
+        return method.invoke(myTarget, args);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+        return null;
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+        return null;
       }
     };
 
@@ -103,16 +99,12 @@ public class ThreadInvocationHandler implements InvocationHandler {
       boolean asyncCall = method.getAnnotation(AsyncCall.class) != null;
 
       if (asyncCall) {
-        myTaskExecutor.submit(new Runnable() {
-
-          @Override
-          public void run() {
-            try {
-              taskCallable.call();
-            }
-            catch (Exception e) {
-              LOG.error(e); // should never happen
-            }
+        myTaskExecutor.submit(() -> {
+          try {
+            taskCallable.call();
+          }
+          catch (Exception e) {
+            LOG.error(e); // should never happen
           }
         });
         return null;

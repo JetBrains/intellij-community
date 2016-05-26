@@ -603,23 +603,20 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
 
   @NotNull
   private static List<XLocalAttachDebugger> createDebuggers(String... names) {
-    return ContainerUtil.map(names, new Function<String, XLocalAttachDebugger>() {
-      @Override
-      public XLocalAttachDebugger fun(final String s) {
-        return new XLocalAttachDebugger() {
-          @NotNull
-          @Override
-          public String getDebuggerDisplayName() {
-            return s;
-          }
+    return ContainerUtil.map(names, s -> {
+      return new XLocalAttachDebugger() {
+        @NotNull
+        @Override
+        public String getDebuggerDisplayName() {
+          return s;
+        }
 
-          @NotNull
-          @Override
-          public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
-            return null;
-          }
-        };
-      }
+        @NotNull
+        @Override
+        public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+          return null;
+        }
+      };
     });
   }
 

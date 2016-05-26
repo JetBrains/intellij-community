@@ -147,12 +147,7 @@ public class JavaColorProvider implements ElementColorProvider {
     final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
 
     if (isIntLiteralInsideNewJBColorExpression(element)) {
-      command = new Runnable() {
-        @Override
-        public void run() {
-          replaceInt((PsiExpression)element, color.getRGB(), true, color.getAlpha() != 255);
-        }
-      };
+      command = () -> replaceInt((PsiExpression)element, color.getRGB(), true, color.getAlpha() != 255);
     } else {
       PsiExpressionList argumentList = ((PsiNewExpression)element).getArgumentList();
       assert argumentList != null;
@@ -161,39 +156,36 @@ public class JavaColorProvider implements ElementColorProvider {
       ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
 
       assert type != null;
-      command = new Runnable() {
-        @Override
-        public void run() {
-          switch (type) {
-            case INT:
-            case INT_BOOL:
-              replaceInt(expr[0], color.getRGB(), true);
-              return;
-            case INT_x3:
-            case INT_x4:
-              replaceInt(expr[0], color.getRed());
-              replaceInt(expr[1], color.getGreen());
-              replaceInt(expr[2], color.getBlue());
-              if (type == ColorConstructors.INT_x4) {
-                replaceInt(expr[3], color.getAlpha());
-              }
-              else if (color.getAlpha() != 255) {
-                //todo add alpha
-              }
-              return;
-            case FLOAT_x3:
-            case FLOAT_x4:
-              float[] rgba = color.getColorComponents(null);
-              replaceFloat(expr[0], rgba[0]);
-              replaceFloat(expr[1], rgba[1]);
-              replaceFloat(expr[2], rgba[2]);
-              if (type == ColorConstructors.FLOAT_x4) {
-                replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
-              }
-              else if (color.getAlpha() != 255) {
-                //todo add alpha
-              }
-          }
+      command = () -> {
+        switch (type) {
+          case INT:
+          case INT_BOOL:
+            replaceInt(expr[0], color.getRGB(), true);
+            return;
+          case INT_x3:
+          case INT_x4:
+            replaceInt(expr[0], color.getRed());
+            replaceInt(expr[1], color.getGreen());
+            replaceInt(expr[2], color.getBlue());
+            if (type == ColorConstructors.INT_x4) {
+              replaceInt(expr[3], color.getAlpha());
+            }
+            else if (color.getAlpha() != 255) {
+              //todo add alpha
+            }
+            return;
+          case FLOAT_x3:
+          case FLOAT_x4:
+            float[] rgba = color.getColorComponents(null);
+            replaceFloat(expr[0], rgba[0]);
+            replaceFloat(expr[1], rgba[1]);
+            replaceFloat(expr[2], rgba[2]);
+            if (type == ColorConstructors.FLOAT_x4) {
+              replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
+            }
+            else if (color.getAlpha() != 255) {
+              //todo add alpha
+            }
         }
       };
     }

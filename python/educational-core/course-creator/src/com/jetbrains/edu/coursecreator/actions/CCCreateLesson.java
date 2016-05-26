@@ -38,14 +38,11 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
 
   @Override
   protected Function<VirtualFile, ? extends StudyItem> getStudyOrderable(@NotNull final StudyItem item) {
-    return new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        if (item instanceof Lesson) {
-          return ((Lesson)item).getCourse().getLesson(file.getName());
-        }
-        return null;
+    return (Function<VirtualFile, StudyItem>)file -> {
+      if (item instanceof Lesson) {
+        return ((Lesson)item).getCourse().getLesson(file.getName());
       }
+      return null;
     };
   }
 
@@ -55,11 +52,8 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
                                     @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                                     @NotNull final Course course) {
     final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + item.getIndex(), parentDirectory, "\\/");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + item.getIndex(), parentDirectory, "\\/");
     });
     if (lessonDirectory[0] != null) {
       if (view != null) {

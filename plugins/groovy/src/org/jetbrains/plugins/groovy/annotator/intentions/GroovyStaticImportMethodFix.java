@@ -159,25 +159,22 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   private void doImport(final PsiMethod toImport) {
-    CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AccessToken accessToken = WriteAction.start();
+    CommandProcessor.getInstance().executeCommand(toImport.getProject(), () -> {
+      AccessToken accessToken = WriteAction.start();
 
+      try {
         try {
-          try {
-            GrMethodCall element = myMethodCall.getElement();
-            if (element != null) {
-              getMethodExpression(element).bindToElementViaStaticImport(toImport);
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
+          GrMethodCall element = myMethodCall.getElement();
+          if (element != null) {
+            getMethodExpression(element).bindToElementViaStaticImport(toImport);
           }
         }
-        finally {
-          accessToken.finish();
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
+      }
+      finally {
+        accessToken.finish();
       }
     }, getText(), this);
 
@@ -189,14 +186,11 @@ public class GroovyStaticImportMethodFix extends Intention {
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
-          if (selectedValue == null) return;
-          LOG.assertTrue(selectedValue.isValid());
-          doImport(selectedValue);
-        }
+      setItemChoosenCallback(() -> {
+        PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
+        if (selectedValue == null) return;
+        LOG.assertTrue(selectedValue.isValid());
+        doImport(selectedValue);
       }).createPopup().
       showInBestPositionFor(editor);
   }

@@ -59,30 +59,27 @@ public class PsiEventsTest extends PsiTestCase {
     root.mkdir();
     myFilesToDelete.add(root);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
 
-        myPrjDir1 = createChildDirectory(rootVFile, "prj1");
-        mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
-        mySrcDir2 = createChildDirectory(myPrjDir1, "src2");
+      myPrjDir1 = createChildDirectory(rootVFile, "prj1");
+      mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
+      mySrcDir2 = createChildDirectory(myPrjDir1, "src2");
 
-        myPrjDir2 = createChildDirectory(rootVFile, "prj2");
-        mySrcDir3 = myPrjDir2;
+      myPrjDir2 = createChildDirectory(rootVFile, "prj2");
+      mySrcDir3 = myPrjDir2;
 
 
-        myClsDir1 = createChildDirectory(myPrjDir1, "cls1");
+      myClsDir1 = createChildDirectory(myPrjDir1, "cls1");
 
-        myIgnoredDir = createChildDirectory(mySrcDir1, "CVS");
+      myIgnoredDir = createChildDirectory(mySrcDir1, "CVS");
 
-        PsiTestUtil.addContentRoot(myModule, myPrjDir1);
-        PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
-        PsiTestUtil.addSourceRoot(myModule, mySrcDir2);
-        PsiTestUtil.addContentRoot(myModule, myPrjDir2);
-        ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
-        PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
-      }
+      PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+      PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+      PsiTestUtil.addSourceRoot(myModule, mySrcDir2);
+      PsiTestUtil.addContentRoot(myModule, myPrjDir2);
+      ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
+      PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
     });
   }
 
@@ -181,12 +178,7 @@ public class PsiEventsTest extends PsiTestCase {
 
 
     if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
-      Processor<PsiDirectory> isReallyLeak = new Processor<PsiDirectory>() {
-        @Override
-        public boolean process(PsiDirectory directory) {
-          return directory.getVirtualFile().equals(myPrjDir1);
-        }
-      };
+      Processor<PsiDirectory> isReallyLeak = directory -> directory.getVirtualFile().equals(myPrjDir1);
       LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class, isReallyLeak);
 
       String dumpPath = FileUtil.createTempFile(
@@ -563,12 +555,9 @@ public class PsiEventsTest extends PsiTestCase {
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ((FileTypeManagerEx)FileTypeManager.getInstance()).fireBeforeFileTypesChanged();
-        ((FileTypeManagerEx)FileTypeManager.getInstance()).fireFileTypesChanged();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ((FileTypeManagerEx)FileTypeManager.getInstance()).fireBeforeFileTypesChanged();
+      ((FileTypeManagerEx)FileTypeManager.getInstance()).fireFileTypesChanged();
     });
 
 
@@ -707,20 +696,14 @@ public class PsiEventsTest extends PsiTestCase {
       this.newText = newText;
       original = getFile().getText();
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.setText(newText);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        document.setText(newText);
       });
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.setText(original);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        document.setText(original);
       });
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -804,11 +787,8 @@ public class PsiEventsTest extends PsiTestCase {
     Document document = documentManager.getDocument(getFile());
     assertTrue(documentManager.isCommitted(document));
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        document.setText("");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      document.setText("");
     });
 
     documentManager.commitAllDocuments();

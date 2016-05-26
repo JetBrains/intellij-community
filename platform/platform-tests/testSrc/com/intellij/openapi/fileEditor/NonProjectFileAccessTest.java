@@ -341,13 +341,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     Editor editor = getEditor(file);
 
     NullableFunction<List<VirtualFile>, NonProjectFileWritingAccessProvider.UnlockOption> unlocker =
-      new NullableFunction<List<VirtualFile>, NonProjectFileWritingAccessProvider.UnlockOption>() {
-        @Nullable
-        @Override
-        public NonProjectFileWritingAccessProvider.UnlockOption fun(List<VirtualFile> files) {
-          return option;
-        }
-      };
+      files -> option;
     NonProjectFileWritingAccessProvider.setCustomUnlocker(unlocker);
 
     String before = editor.getDocument().getText();

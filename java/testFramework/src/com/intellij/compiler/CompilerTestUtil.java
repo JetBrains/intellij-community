@@ -101,29 +101,26 @@ public class CompilerTestUtil {
       @Override
       public void run() throws Throwable {
         final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Sdk internalJdk = table.getInternalJdk();
-            List<Module> modulesToRestore = new SmartList<Module>();
-            for (Module module : ModuleManager.getInstance(project).getModules()) {
-              Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-              if (sdk != null && sdk.equals(internalJdk)) {
-                modulesToRestore.add(module);
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          Sdk internalJdk = table.getInternalJdk();
+          List<Module> modulesToRestore = new SmartList<Module>();
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+            if (sdk != null && sdk.equals(internalJdk)) {
+              modulesToRestore.add(module);
             }
-            table.removeJdk(internalJdk);
-            for (Module module : modulesToRestore) {
-              ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
-            }
-            BuildManager.getInstance().clearState(project);
-            Future<?> future = BuildManager.getInstance().stopListening();
-            try {
-              future.get(100, TimeUnit.SECONDS);
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
+          }
+          table.removeJdk(internalJdk);
+          for (Module module : modulesToRestore) {
+            ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
+          }
+          BuildManager.getInstance().clearState(project);
+          Future<?> future = BuildManager.getInstance().stopListening();
+          try {
+            future.get(100, TimeUnit.SECONDS);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
           }
         });
       }

@@ -55,19 +55,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
-  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = new NotNullFunction<UsageInfo, Usage>() {
-    @Override
-    @NotNull
-    public Usage fun(UsageInfo usageInfo) {
-      return new UsageInfo2UsageAdapter(usageInfo);
-    }
-  };
-  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = new Comparator<UsageInfo>() {
-    @Override
-    public int compare(UsageInfo o1, UsageInfo o2) {
-      return o1.getNavigationOffset() - o2.getNavigationOffset();
-    }
-  };
+  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = usageInfo -> new UsageInfo2UsageAdapter(usageInfo);
+  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = (o1, o2) -> o1.getNavigationOffset() - o2.getNavigationOffset();
 
   private final UsageInfo myUsageInfo;
   @NotNull

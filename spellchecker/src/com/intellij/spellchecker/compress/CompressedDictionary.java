@@ -38,12 +38,7 @@ public final class CompressedDictionary implements Dictionary {
   private final String name;
 
   private TIntObjectHashMap<SortedSet<byte[]>> rawData = new TIntObjectHashMap<SortedSet<byte[]>>();
-  private static final Comparator<byte[]> COMPARATOR = new Comparator<byte[]>() {
-    @Override
-    public int compare(byte[] o1, byte[] o2) {
-      return compareArrays(o1, o2);
-    }
-  };
+  private static final Comparator<byte[]> COMPARATOR = (o1, o2) -> compareArrays(o1, o2);
 
   private CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Encoder encoder, @NotNull String name) {
     this.alphabet = alphabet;
@@ -180,15 +175,12 @@ public final class CompressedDictionary implements Dictionary {
     final Encoder encoder = new Encoder(alphabet);
     final CompressedDictionary dictionary = new CompressedDictionary(alphabet, encoder, loader.getName());
     final List<UnitBitSet> bss = new ArrayList<UnitBitSet>();
-    loader.load(new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        String transformed = transform.transform(s);
-        if (transformed != null) {
-          UnitBitSet bs = encoder.encode(transformed, true);
-          if (bs == null) return;
-          bss.add(bs);
-        }
+    loader.load(s -> {
+      String transformed = transform.transform(s);
+      if (transformed != null) {
+        UnitBitSet bs = encoder.encode(transformed, true);
+        if (bs == null) return;
+        bss.add(bs);
       }
     });
     for (UnitBitSet bs : bss) {

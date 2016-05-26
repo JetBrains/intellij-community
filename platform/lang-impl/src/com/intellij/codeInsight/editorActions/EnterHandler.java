@@ -76,12 +76,8 @@ public class EnterHandler extends BaseEnterHandler {
   public void executeWriteAction(final Editor editor, final Caret caret, final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && !project.isDefault()) {
-      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
-        @Override
-        public void run() {
-          executeWriteActionInner(editor, caret, getExtendedContext(dataContext, project, caret), project);
-        }
-      });
+      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
+        () -> executeWriteActionInner(editor, caret, getExtendedContext(dataContext, project, caret), project));
     }
     else {
       executeWriteActionInner(editor, caret, dataContext, project);
@@ -484,7 +480,7 @@ public class EnterHandler extends BaseEnterHandler {
     private int adjustLineIndent(CharSequence docChars) {
       int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
       int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, myDocument, myOffset);
+      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, myOffset);
       if (newIndent == null) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);

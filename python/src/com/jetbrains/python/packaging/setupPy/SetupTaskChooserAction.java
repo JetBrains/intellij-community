@@ -64,10 +64,8 @@ public class SetupTaskChooserAction extends AnAction {
       public void elementChosen(Object element) {
         if (element != null) {
           final SetupTask task = (SetupTask) element;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              runSetupTask(task.getName(), module);
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            runSetupTask(task.getName(), module);
           }, ModalityState.NON_MODAL);
         }
       }
@@ -99,12 +97,7 @@ public class SetupTaskChooserAction extends AnAction {
       task.setRunnerScript(virtualFile.getPath());
       task.setWorkingDirectory(virtualFile.getParent().getPath());
       task.setParameters(parameters);
-      task.setAfterCompletion(new Runnable() {
-        @Override
-        public void run() {
-          LocalFileSystem.getInstance().refresh(true);
-        }
-      });
+      task.setAfterCompletion(() -> LocalFileSystem.getInstance().refresh(true));
       task.run(null, null);
     }
     catch (ExecutionException ee) {

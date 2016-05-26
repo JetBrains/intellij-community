@@ -105,11 +105,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     final int rangeEnd = myTextRangeMarker.getEndOffset();
     CharSequence textBefore = myDocument.getCharsSequence();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManager.getInstance(myProject).reformatText(myFile, rangeStart, rangeEnd);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CodeStyleManager.getInstance(myProject).reformatText(myFile, rangeStart, rangeEnd);
     });
 
     if (rangeStart != myTextRangeMarker.getStartOffset() || rangeEnd != myTextRangeMarker.getEndOffset()) {

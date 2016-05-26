@@ -45,12 +45,7 @@ import java.util.regex.Pattern;
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
-  private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
-    @Override
-    public int compare(final LogFilter o1, final LogFilter o2) {
-      return -1;
-    }
-  });
+  private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>((o1, o2) -> -1);
   @NonNls private static final String FILTER = "filter";
   @NonNls private static final String IS_ACTIVE = "is_active";
 

@@ -139,16 +139,13 @@ public abstract class EditorComposite implements Disposable {
         final VirtualFile oldFile = event.getOldFile();
         final VirtualFile newFile = event.getNewFile();
         if (Comparing.equal(oldFile, newFile) && Comparing.equal(getFile(), newFile)) {
-          Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              final FileEditor oldEditor = event.getOldEditor();
-              if (oldEditor != null) oldEditor.deselectNotify();
-              final FileEditor newEditor = event.getNewEditor();
-              if (newEditor != null) newEditor.selectNotify();
-              ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
-              ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
-            }
+          Runnable runnable = () -> {
+            final FileEditor oldEditor = event.getOldEditor();
+            if (oldEditor != null) oldEditor.deselectNotify();
+            final FileEditor newEditor = event.getNewEditor();
+            if (newEditor != null) newEditor.selectNotify();
+            ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
+            ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
           };
           if (ApplicationManager.getApplication().isDispatchThread()) {
             CommandProcessor.getInstance().executeCommand(myFileEditorManager.getProject(), runnable, "Switch Active Editor", null);
@@ -221,13 +218,10 @@ public abstract class EditorComposite implements Disposable {
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
     if ((!EventQueue.isDispatchThread() || !myFileEditorManager.isInsideChange()) && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
-      myFileEditorManager.notifyPublisher(new Runnable() {
-        @Override
-        public void run() {
-          final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
-          final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-          publisher.selectionChanged(event);
-        }
+      myFileEditorManager.notifyPublisher(() -> {
+        final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
+        final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+        publisher.selectionChanged(event);
       });
       final JComponent component = newSelectedEditor.getComponent();
       final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);

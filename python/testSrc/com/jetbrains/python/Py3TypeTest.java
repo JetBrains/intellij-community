@@ -38,161 +38,111 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-6702
   public void testYieldFromType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest("Union[str, int, float]",
-               "def subgen():\n" +
-               "    for i in [1, 2, 3]:\n" +
-               "        yield i\n" +
-               "\n" +
-               "def gen():\n" +
-               "    yield 'foo'\n" +
-               "    yield from subgen()\n" +
-               "    yield 3.14\n" +
-               "\n" +
-               "for expr in gen():\n" +
-               "    pass\n");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("Union[str, int, float]",
+           "def subgen():\n" +
+           "    for i in [1, 2, 3]:\n" +
+           "        yield i\n" +
+           "\n" +
+           "def gen():\n" +
+           "    yield 'foo'\n" +
+           "    yield from subgen()\n" +
+           "    yield 3.14\n" +
+           "\n" +
+           "for expr in gen():\n" +
+           "    pass\n"));
   }
 
   public void testAwaitAwaitable() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int",
-               "class C:\n" +
-               "    def __await__(self):\n" +
-               "        yield 'foo'\n" +
-               "        return 0\n" +
-               "\n" +
-               "async def foo():\n" +
-               "    c = C()\n" +
-               "    expr = await c\n");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+           "class C:\n" +
+           "    def __await__(self):\n" +
+           "        yield 'foo'\n" +
+           "        return 0\n" +
+           "\n" +
+           "async def foo():\n" +
+           "    c = C()\n" +
+           "    expr = await c\n"));
   }
 
   public void testAsyncDefReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest("__coroutine[int]",
-               "async def foo(x):\n" +
-               "    await x\n" +
-               "    return 0\n" +
-               "\n" +
-               "def bar(y):\n" +
-               "    expr = foo(y)\n");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("__coroutine[int]",
+           "async def foo(x):\n" +
+           "    await x\n" +
+           "    return 0\n" +
+           "\n" +
+           "def bar(y):\n" +
+           "    expr = foo(y)\n"));
   }
 
   public void testAwaitCoroutine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int",
-               "async def foo(x):\n" +
-               "    await x\n" +
-               "    return 0\n" +
-               "\n" +
-               "async def bar(y):\n" +
-               "    expr = await foo(y)\n");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+           "async def foo(x):\n" +
+           "    await x\n" +
+           "    return 0\n" +
+           "\n" +
+           "async def bar(y):\n" +
+           "    expr = await foo(y)\n"));
   }
 
   // Not in PEP 484 as for now, see https://github.com/ambv/typehinting/issues/119
   public void testCoroutineReturnTypeAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int",
-               "async def foo() -> int: ...\n" +
-               "\n" +
-               "async def bar():\n" +
-               "    expr = await foo()\n");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+           "async def foo() -> int: ...\n" +
+           "\n" +
+           "async def bar():\n" +
+           "    expr = await foo()\n"));
   }
   
   // PY-16987
   public void testNoTypeInGoogleDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int", "def f(x: int):\n" +
-                      "    \"\"\"\n" +
-                      "    Args:\n" +
-                      "        x: foo\n" +
-                      "    \"\"\"    \n" +
-                      "    expr = x");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    Args:\n" +
+                                                                 "        x: foo\n" +
+                                                                 "    \"\"\"    \n" +
+                                                                 "    expr = x"));
   }
   
   // PY-16987
   public void testUnfilledTypeInGoogleDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int", "def f(x: int):\n" +
-                      "    \"\"\"\n" +
-                      "    Args:\n" +
-                      "        x (): foo\n" +
-                      "    \"\"\"    \n" +
-                      "    expr = x");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    Args:\n" +
+                                                                 "        x (): foo\n" +
+                                                                 "    \"\"\"    \n" +
+                                                                 "    expr = x"));
   }
   
   // PY-16987
   public void testNoTypeInNumpyDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int", "def f(x: int):\n" +
-                      "    \"\"\"\n" +
-                      "    Parameters\n" +
-                      "    ----------\n" +
-                      "    x\n" +
-                      "        foo\n" +
-                      "    \"\"\"\n" +
-                      "    expr = x");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    Parameters\n" +
+                                                                 "    ----------\n" +
+                                                                 "    x\n" +
+                                                                 "        foo\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    expr = x"));
   }
   
   // PY-17010
   public void testAnnotatedReturnTypePrecedesDocstring() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int", "def func() -> int:\n" +
-                      "    \"\"\"\n" +
-                      "    Returns:\n" +
-                      "        str\n" +
-                      "    \"\"\"\n" +
-                      "expr = func()");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def func() -> int:\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    Returns:\n" +
+                                                                 "        str\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "expr = func()"));
   }
 
   // PY-17010
   public void testAnnotatedParamTypePrecedesDocstring() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest("int", "def func(x: int):\n" +
-                      "    \"\"\"\n" +
-                      "    Args:\n" +
-                      "        x (str):\n" +
-                      "    \"\"\"\n" +
-                      "    expr = x");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def func(x: int):\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    Args:\n" +
+                                                                 "        x (str):\n" +
+                                                                 "    \"\"\"\n" +
+                                                                 "    expr = x"));
   }
 
   public void testOpenDefault() {

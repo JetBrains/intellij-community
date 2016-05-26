@@ -101,11 +101,7 @@ public class EditSourceAction extends DebuggerAction{
         public void threadAction() {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
           if (position == null) {
-            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-              public void run() {
-                presentation.setEnabled(false);
-              }
-            });
+            DebuggerInvocationUtil.swingInvokeLater(project, () -> presentation.setEnabled(false));
           }
         }
       });

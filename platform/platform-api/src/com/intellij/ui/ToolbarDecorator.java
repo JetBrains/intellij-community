@@ -169,19 +169,16 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   
   public ToolbarDecorator setButtonComparator(String...actionNames) {
     final List<String> names = Arrays.asList(actionNames);
-    myButtonComparator = new Comparator<AnActionButton>() {
-      @Override
-      public int compare(AnActionButton o1, AnActionButton o2) {
-        final String t1 = o1.getTemplatePresentation().getText();
-        final String t2 = o2.getTemplatePresentation().getText();
-        if (t1 == null || t2 == null) return 0;
-        
-        final int ind1 = names.indexOf(t1);
-        final int ind2 = names.indexOf(t2);
-        if (ind1 == -1 && ind2 >= 0) return 1;
-        if (ind2 == -1 && ind1 >= 0) return -1;
-        return ind1 - ind2;
-      }
+    myButtonComparator = (o1, o2) -> {
+      final String t1 = o1.getTemplatePresentation().getText();
+      final String t2 = o2.getTemplatePresentation().getText();
+      if (t1 == null || t2 == null) return 0;
+
+      final int ind1 = names.indexOf(t1);
+      final int ind2 = names.indexOf(t2);
+      if (ind1 == -1 && ind2 >= 0) return 1;
+      if (ind2 == -1 && ind1 >= 0) return -1;
+      return ind1 - ind2;
     };
     return this;
   }

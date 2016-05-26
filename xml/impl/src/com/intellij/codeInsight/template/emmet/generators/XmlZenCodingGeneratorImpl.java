@@ -131,12 +131,9 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
           if (file != null) {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-                documentManager.commitDocument(document);
-              }
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+              documentManager.commitDocument(document);
             });
           }
         }

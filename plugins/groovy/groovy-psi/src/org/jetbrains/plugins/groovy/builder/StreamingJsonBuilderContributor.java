@@ -104,6 +104,6 @@ public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
   protected void addClosureParameter(GrLightMethodBuilder method) {
     GrLightParameter closureParam = method.addAndGetParameter("closure", GROOVY_LANG_CLOSURE);
     closureParam.putUserData(DELEGATES_TO_KEY, getDelegateClassName());
-    closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST);
+    closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST);
   }
 }

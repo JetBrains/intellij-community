@@ -130,12 +130,7 @@ public class CloudAccountSelectionEditor {
 
     if (!new SingleConfigurableEditor(myMainPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
       {
-        errorConsumerRef.set(new Consumer<String>() {
-          @Override
-          public void consume(String s) {
-            setErrorText(s);
-          }
-        });
+        errorConsumerRef.set(s -> setErrorText(s));
       }
     }.showAndGet()) {
       return;

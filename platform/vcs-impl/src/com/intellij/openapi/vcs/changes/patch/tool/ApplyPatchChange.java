@@ -249,7 +249,7 @@ class ApplyPatchChange {
       case ALREADY_APPLIED:
         return JBColor.YELLOW.darker();
       case EXACTLY_APPLIED:
-        return JBColor.BLUE.darker();
+        return new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
       case NOT_APPLIED:
         return JBColor.RED.darker();
       default:

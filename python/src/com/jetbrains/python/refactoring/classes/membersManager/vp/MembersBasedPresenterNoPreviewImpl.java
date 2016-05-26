@@ -55,12 +55,8 @@ public abstract class MembersBasedPresenterNoPreviewImpl<T extends MembersBasedV
 
   @Override
   void doRefactor() {
-    CommandProcessor.getInstance().executeCommand(myClassUnderRefactoring.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new MyRunnableRefactoring());
-      }
-    }, getCommandName(), null);
+    CommandProcessor.getInstance().executeCommand(myClassUnderRefactoring.getProject(),
+                                                  () -> ApplicationManager.getApplication().runWriteAction(new MyRunnableRefactoring()), getCommandName(), null);
     myView.close();
   }
 

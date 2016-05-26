@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
     final RegExpLanguageHost host = findRegExpHost(quantifier);
     return host == null || host.supportsPossessiveQuantifiers();
+  }
+
+  public boolean supportsSimpleClass(@Nullable final RegExpSimpleClass simpleClass) {
+    final RegExpLanguageHost host = findRegExpHost(simpleClass);
+    return host == null || host.supportsSimpleClass(simpleClass);
   }
 
   public boolean isValidCategory(@NotNull final PsiElement element, @NotNull String category) {

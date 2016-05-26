@@ -41,14 +41,13 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer, MatcherHolder {
-
-  private Matcher myMatcher;
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
@@ -66,7 +65,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
-    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
+    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
@@ -89,11 +88,6 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       add(spacer, BorderLayout.CENTER);
     }
     return this;
-  }
-
-  @Override
-  public void setPatternMatcher(final Matcher matcher) {
-    myMatcher = matcher;
   }
 
   protected static Color getBackgroundColor(@Nullable Object value) {
@@ -124,7 +118,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
     @Override
     protected void customizeCellRenderer(
-      JList list,
+      @NotNull JList list,
       Object value,
       int index,
       boolean selected,

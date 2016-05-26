@@ -35,12 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class CompoundRunConfiguration extends RunConfigurationBase implements WithoutOwnBeforeRunSteps, Cloneable {
-  static final Comparator<RunConfiguration> COMPARATOR = new Comparator<RunConfiguration>() {
-    @Override
-    public int compare(RunConfiguration o1, RunConfiguration o2) {
-      int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
-      return (i != 0) ? i : o1.getName().compareTo(o2.getName());
-    }
+  static final Comparator<RunConfiguration> COMPARATOR = (o1, o2) -> {
+    int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
+    return (i != 0) ? i : o1.getName().compareTo(o2.getName());
   };
   private Set<Pair<String, String>> myPairs = new HashSet<Pair<String, String>>();
   private Set<RunConfiguration> mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
@@ -92,17 +89,14 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
       @Nullable
       @Override
       public ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
-            for (RunConfiguration configuration : getSetToRun()) {
-              RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(manager, configuration, false);
-              ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
-              if (builder != null) {
-                ExecutionManager.getInstance(getProject())
-                  .restartRunProfile(builder.activeTarget().dataContext(null).build());
-              }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
+          for (RunConfiguration configuration : getSetToRun()) {
+            RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(manager, configuration, false);
+            ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+            if (builder != null) {
+              ExecutionManager.getInstance(getProject())
+                .restartRunProfile(builder.activeTarget().dataContext(null).build());
             }
           }
         });

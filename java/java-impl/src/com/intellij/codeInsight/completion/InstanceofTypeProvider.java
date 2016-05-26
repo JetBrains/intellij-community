@@ -58,17 +58,14 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
     }
 
     JavaInheritorsGetter
-      .processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
-        @Override
-        public void consume(PsiType type) {
-          final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-          if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
+      .processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), type -> {
+        final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+        if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
 
-          //noinspection SuspiciousMethodCalls
-          if (expectedClassTypes.contains(type)) return;
+        //noinspection SuspiciousMethodCalls
+        if (expectedClassTypes.contains(type)) return;
 
-          result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));
-        }
+        result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));
       });
   }
 

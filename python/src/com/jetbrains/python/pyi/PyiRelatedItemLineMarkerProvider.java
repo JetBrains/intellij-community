@@ -51,12 +51,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
       final List<GotoRelatedItem> relatedItems = GotoRelatedItem.createItems(Collections.singletonList(pythonStub));
       result.add(new RelatedItemLineMarkerInfo<PsiElement>(
         element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDDEN_MARKERS,
-        new Function<PsiElement, String>() {
-          @Override
-          public String fun(PsiElement element) {
-            return "Has stub item in " + pythonStub.getContainingFile().getName();
-          }
-        }, new GutterIconNavigationHandler<PsiElement>() {
+        element1 -> "Has stub item in " + pythonStub.getContainingFile().getName(), new GutterIconNavigationHandler<PsiElement>() {
           @Override
           public void navigate(MouseEvent e, PsiElement elt) {
             final PsiElement pythonStub = getPythonStub(elt);

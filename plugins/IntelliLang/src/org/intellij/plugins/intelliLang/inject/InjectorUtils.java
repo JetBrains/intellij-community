@@ -55,11 +55,9 @@ import java.util.regex.Pattern;
  * @author Gregory.Shrago
  */
 public class InjectorUtils {
-  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    public int compare(final TextRange o1, final TextRange o2) {
-      if (o1.intersects(o2)) return 0;
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
+  public static final Comparator<TextRange> RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.intersects(o2)) return 0;
+    return o1.getStartOffset() - o2.getStartOffset();
   };
 
   private InjectorUtils() {

@@ -186,11 +186,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     catch (Exception ex) {
       LOG.error(ex);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(project, "Can't save project as template", "Internal Error");
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, "Can't save project as template", "Internal Error"));
     }
     finally {
       StreamUtil.closeStream(stream);
@@ -221,14 +217,12 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public static Map<String, String> computeParameters(final Project project, boolean replaceParameters) {
     final Map<String, String> parameters = new HashMap<String, String>();
     if (replaceParameters) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
-          for (ProjectTemplateParameterFactory extension : extensions) {
-            String value = extension.detectParameterValue(project);
-            if (value != null) {
-              parameters.put(value, extension.getParameterId());
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
+        for (ProjectTemplateParameterFactory extension : extensions) {
+          String value = extension.detectParameterValue(project);
+          if (value != null) {
+            parameters.put(value, extension.getParameterId());
           }
         }
       });

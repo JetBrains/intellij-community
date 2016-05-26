@@ -129,17 +129,15 @@ public class RefactoringHierarchyUtil {
 
     if (sortAlphabetically) {
       Collections.sort(
-          basesList, new Comparator<PsiClass>() {
-            public int compare(PsiClass c1, PsiClass c2) {
-              final String fqn1 = c1.getQualifiedName();
-              final String fqn2 = c2.getQualifiedName();
-              if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
-              if (fqn1 == null && fqn2 == null) {
-                return Comparing.compare(c1.getName(), c2.getName());
-              }
-              return fqn1 == null ? 1 : -1;
-            }
+        basesList, (c1, c2) -> {
+          final String fqn1 = c1.getQualifiedName();
+          final String fqn2 = c2.getQualifiedName();
+          if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
+          if (fqn1 == null && fqn2 == null) {
+            return Comparing.compare(c1.getName(), c2.getName());
           }
+          return fqn1 == null ? 1 : -1;
+        }
       );
     }
 

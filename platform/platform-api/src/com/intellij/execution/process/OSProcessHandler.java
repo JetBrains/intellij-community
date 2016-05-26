@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.BaseOutputReader;
@@ -47,6 +48,14 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     setHasPty(commandLine instanceof PtyCommandLine);
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
+    if (myHasPty && SystemInfo.isWindows) { // explicitly destroy pty on process termination, see IDEA-156065
+      addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          getProcess().destroy();
+        }
+      });
+    }
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
@@ -128,12 +137,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       killProcessTreeSync(process);
     }
     else {
-      executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          killProcessTreeSync(process);
-        }
-      });
+      executeOnPooledThread(() -> killProcessTreeSync(process));
     }
   }
 
@@ -141,23 +145,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessManager.getInstance().killProcessTree(process);
     if (!destroyed) {
-      if (isTerminated(process)) {
+      if (!process.isAlive()) {
         LOG.warn("Process has been already terminated: " + myCommandLine);
       }
       else {
         LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
         process.destroy();
       }
-    }
-  }
-
-  private static boolean isTerminated(@NotNull Process process) {
-    try {
-      process.exitValue();
-      return true;
-    }
-    catch (IllegalThreadStateException e) {
-      return false;
     }
   }
 

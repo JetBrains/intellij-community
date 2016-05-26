@@ -158,12 +158,9 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     component.showIntentionHintImpl(!showExpanded, position);
     Disposer.register(project, component);
     if (showExpanded) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!editor.isDisposed() && editor.getComponent().isShowing()) {
-            component.showPopup(false);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+          component.showPopup(false);
         }
       }, project.getDisposed());
     }
@@ -571,12 +568,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       myVisible = true;
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            showImpl(parentComponent, x, y, focusBackComponent);
-          }
-        }, DELAY);
+        myAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), DELAY);
       }
       else {
         showImpl(parentComponent, x, y, focusBackComponent);
@@ -650,16 +642,8 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       final IntentionSettingsConfigurable configurable = new IntentionSettingsConfigurable();
-      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-        @Override
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              configurable.selectIntention(myFamilyName);
-            }
-          });
-        }
+      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+        SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName));
       });
     }
   }

@@ -99,13 +99,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
                                 mySplitterDefaultProportion,
                                 splitVertically);
     if (mySplitter instanceof OnePixelSplitter) {
-      ((OnePixelSplitter)mySplitter).setBlindZone(new Producer<Insets>() {
-        @Nullable
-        @Override
-        public Insets produce() {
-          return new Insets(myToolbarPanel.getHeight(), 0, 0, 0);
-        }
-      });
+      ((OnePixelSplitter)mySplitter).setBlindZone(() -> new Insets(myToolbarPanel.getHeight(), 0, 0, 0));
     }
     Disposer.register(this, new Disposable(){
       @Override

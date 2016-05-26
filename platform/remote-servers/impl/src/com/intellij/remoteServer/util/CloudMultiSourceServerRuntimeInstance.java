@@ -108,24 +108,12 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   public void deploy(@NotNull final DeploymentTask<DC> task,
                      @NotNull final DeploymentLogManager logManager,
                      @NotNull final ServerRuntimeInstance.DeploymentOperationCallback callback) {
-    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
-
-      @Override
-      public void run() throws Exception {
-        createDeploymentRuntime(task, logManager).deploy(callback);
-      }
-    }, callback);
+    getTaskExecutor().submit(() -> createDeploymentRuntime(task, logManager).deploy(callback), callback);
   }
 
   @Override
   public void disconnect() {
-    getTaskExecutor().submit(new Runnable() {
-
-      @Override
-      public void run() {
-        getAgent().disconnect();
-      }
-    });
+    getTaskExecutor().submit(() -> getAgent().disconnect());
   }
 
   public CloudDeploymentRuntime createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)

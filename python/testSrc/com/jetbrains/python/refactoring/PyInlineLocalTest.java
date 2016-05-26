@@ -151,11 +151,8 @@ public class PyInlineLocalTest extends PyTestCase {
 
   private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) throws Exception {
     myFixture.configureByFile("/refactoring/inlinelocal/operatorPrecedence/template.py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getDocument().insertString(0, firstLine + "\n");
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      myFixture.getEditor().getDocument().insertString(0, firstLine + "\n");
     });
     performRefactoring(null);
     myFixture.checkResultByFile("/refactoring/inlinelocal/operatorPrecedence/" + resultPrefix + ".after.py");

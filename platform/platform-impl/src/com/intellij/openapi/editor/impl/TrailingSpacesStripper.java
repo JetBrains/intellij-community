@@ -95,15 +95,12 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
         ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
           @Override
           public void run() {
-            CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-              @Override
-              public void run() {
-                if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip) {
-                  document.deleteString(start, end);
-                }
-                else {
-                  document.insertString(end, "\n");
-                }
+            CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+              if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip) {
+                document.deleteString(start, end);
+              }
+              else {
+                document.insertString(end, "\n");
               }
             });
           }
@@ -187,14 +184,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
                                                    inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
 
     if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
-      activeEditor.getCaretModel().runBatchCaretOperation(new Runnable() {
-        @Override
-        public void run() {
-          for (int i = 0; i < carets.size(); i++) {
-            Caret caret = carets.get(i);
-            if (caret.isValid()) {
-              caret.moveToVisualPosition(visualCarets.get(i));
-            }
+      activeEditor.getCaretModel().runBatchCaretOperation(() -> {
+        for (int i = 0; i < carets.size(); i++) {
+          Caret caret = carets.get(i);
+          if (caret.isValid()) {
+            caret.moveToVisualPosition(visualCarets.get(i));
           }
         }
       });

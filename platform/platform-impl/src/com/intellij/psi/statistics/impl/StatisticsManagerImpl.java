@@ -116,11 +116,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
     synchronized (LOCK) {
       strings = getUnit(getUnitNumber(context)).getKeys2(context);
     }
-    return ContainerUtil.map2Array(strings, StatisticsInfo.class, new NotNullFunction<String, StatisticsInfo>() {
-      @NotNull
-      public StatisticsInfo fun(final String s) {
-        return new StatisticsInfo(context, s);
-      }
+    return ContainerUtil.map2Array(strings, StatisticsInfo.class, (NotNullFunction<String, StatisticsInfo>)s -> {
+      return new StatisticsInfo(context, s);
     });
   }
 

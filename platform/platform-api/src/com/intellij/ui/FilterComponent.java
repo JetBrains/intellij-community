@@ -47,12 +47,9 @@ public abstract class FilterComponent extends JPanel {
       @Override
       protected Runnable createItemChosenCallback(JList list) {
         final Runnable callback = super.createItemChosenCallback(list);
-        return new Runnable() {
-          @Override
-          public void run() {
-            callback.run();
-            filter();
-          }
+        return () -> {
+          callback.run();
+          filter();
         };
       }
 
@@ -109,11 +106,7 @@ public abstract class FilterComponent extends JPanel {
   private void onChange() {
     if (myOnTheFly) {
       myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(new Runnable(){
-        public void run() {
-          onlineFilter();
-        }
-      }, 100, ModalityState.stateForComponent(myFilter));
+      myUpdateAlarm.addRequest(() -> onlineFilter(), 100, ModalityState.stateForComponent(myFilter));
     }
   }
 

@@ -48,23 +48,20 @@ public class FormatterBasedLineIndentInfoBuilder {
   public List<LineIndentInfo> build() {
     List<Block> newLineBlocks = getBlocksStartingNewLine();
     
-    return ContainerUtil.map(newLineBlocks, new Function<Block, LineIndentInfo>() {
-      @Override
-      public LineIndentInfo fun(Block newLineBlock) {
-        int blockStartOffset = newLineBlock.getTextRange().getStartOffset();
-        int line = myDocument.getLineNumber(blockStartOffset);
-        int lineStartOffset = myDocument.getLineStartOffset(line);
+    return ContainerUtil.map(newLineBlocks, newLineBlock -> {
+      int blockStartOffset = newLineBlock.getTextRange().getStartOffset();
+      int line = myDocument.getLineNumber(blockStartOffset);
+      int lineStartOffset = myDocument.getLineStartOffset(line);
 
-        if (rangeHasTabs(lineStartOffset, blockStartOffset)) {
-          return LineIndentInfo.LINE_WITH_TABS;
-        }
-        
-        if (hasNormalIndent(newLineBlock)) {
-          return LineIndentInfo.newNormalIndent(blockStartOffset - lineStartOffset);
-        }
-        else {
-          return LineIndentInfo.LINE_WITH_NOT_COUNTABLE_INDENT; 
-        }
+      if (rangeHasTabs(lineStartOffset, blockStartOffset)) {
+        return LineIndentInfo.LINE_WITH_TABS;
+      }
+
+      if (hasNormalIndent(newLineBlock)) {
+        return LineIndentInfo.newNormalIndent(blockStartOffset - lineStartOffset);
+      }
+      else {
+        return LineIndentInfo.LINE_WITH_NOT_COUNTABLE_INDENT;
       }
     });
   }

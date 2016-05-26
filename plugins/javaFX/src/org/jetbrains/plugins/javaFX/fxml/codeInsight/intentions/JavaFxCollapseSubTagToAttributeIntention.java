@@ -47,15 +47,12 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
       value = tag.getValue().getText().trim();
     }
     else {
-      value = StringUtil.join(tag.getSubTags(), new Function<XmlTag, String>() {
-        @Override
-        public String fun(XmlTag childTag) {
-          final XmlAttribute valueAttr = childTag.getAttribute(FxmlConstants.FX_VALUE);
-          if (valueAttr != null) {
-            return valueAttr.getValue();
-          }
-          return "";
+      value = StringUtil.join(tag.getSubTags(), childTag -> {
+        final XmlAttribute valueAttr = childTag.getAttribute(FxmlConstants.FX_VALUE);
+        if (valueAttr != null) {
+          return valueAttr.getValue();
         }
+        return "";
       }, ", ");
     }
     final XmlAttribute attribute = XmlElementFactory.getInstance(project).createXmlAttribute(tag.getName(), value);

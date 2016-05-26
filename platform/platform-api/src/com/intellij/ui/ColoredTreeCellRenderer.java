@@ -21,6 +21,7 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
@@ -179,4 +180,15 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                              boolean leaf,
                                              int row,
                                              boolean hasFocus);
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleColoredTreeCellRenderer();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleColoredTreeCellRenderer extends AccessibleSimpleColoredComponent {
+  }
 }

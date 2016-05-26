@@ -208,12 +208,9 @@ public class MergeRequestImpl extends MergeRequest {
       }
 
       configureAction(builder, builder.getOkAction(), myOkButtonPresentation);
-      builder.setOkOperation(new Runnable() {
-        @Override
-        public void run() {
-          if (preOkHook != null && !preOkHook.convert(builder.getDialogWrapper())) return;
-          myOkButtonPresentation.run(builder.getDialogWrapper());
-        }
+      builder.setOkOperation(() -> {
+        if (preOkHook != null && !preOkHook.convert(builder.getDialogWrapper())) return;
+        myOkButtonPresentation.run(builder.getDialogWrapper());
       });
     }
 
@@ -223,12 +220,7 @@ public class MergeRequestImpl extends MergeRequest {
       }
 
       configureAction(builder, builder.getCancelAction(), myCancelButtonPresentation);
-      builder.setCancelOperation(new Runnable() {
-        @Override
-        public void run() {
-          myCancelButtonPresentation.run(builder.getDialogWrapper());
-        }
-      });
+      builder.setCancelOperation(() -> myCancelButtonPresentation.run(builder.getDialogWrapper()));
     }
 
     if (getMergeContent() != null && mergePanel.getMergeList() != null) {

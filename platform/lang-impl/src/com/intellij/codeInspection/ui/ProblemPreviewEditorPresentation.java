@@ -19,13 +19,13 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -45,7 +45,7 @@ public class ProblemPreviewEditorPresentation {
   private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
-  private final Project myProject;
+  private final InspectionResultsView myView;
   private final Set<CommonProblemDescriptor> myDescriptors = new HashSet<>();
   private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(new Comparator<PreviewEditorFoldingRegion>() {
     @Override
@@ -58,9 +58,9 @@ public class ProblemPreviewEditorPresentation {
   });
   private final DocumentEx myDocument;
 
-  public ProblemPreviewEditorPresentation(EditorEx editor, Project project, CommonProblemDescriptor[] descriptors) {
+  public ProblemPreviewEditorPresentation(EditorEx editor, InspectionResultsView view, CommonProblemDescriptor[] descriptors) {
     myEditor = editor;
-    myProject = project;
+    myView = view;
     myDocument = editor.getDocument();
     myFoldedRegions.add(new PreviewEditorFoldingRegion(0, myDocument.getLineCount()));
     appendFoldings(descriptors);
@@ -83,15 +83,21 @@ public class ProblemPreviewEditorPresentation {
     if (isUpdated[0]) {
       updateFoldings();
     }
-    UsagePreviewPanel.highlight(elements, myEditor, myProject, false, HighlighterLayer.SELECTION);
-    if (elements.size() == 1) {
-      final PsiElement element = elements.get(0).getElement();
-      LOG.assertTrue(element != null);
-      final int offset = element.getTextOffset();
-      myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
-    } else {
-      myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
-    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myView.invalidate();
+      myView.validate();
+      UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
+      if (elements.size() == 1) {
+        final PsiElement element = elements.get(0).getElement();
+        LOG.assertTrue(element != null);
+        final int offset = element.getTextOffset();
+        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
+      } else {
+        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+      }
+    });
+
   }
 
   /**

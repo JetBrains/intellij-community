@@ -82,6 +82,8 @@ public interface ProcessDebugger {
 
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
+  void setShowReturnValues(boolean isShowReturnValues);
+
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 
   List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix);

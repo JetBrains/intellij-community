@@ -167,11 +167,8 @@ public class NavBarModel {
 
     final List<Object> updatedModel = new ArrayList<Object>();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        traverseToRoot(psiElement, roots, updatedModel);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      traverseToRoot(psiElement, roots, updatedModel);
     });
 
     setModel(ContainerUtil.reverse(updatedModel));
@@ -300,12 +297,9 @@ public class NavBarModel {
 
   protected List<Object> getChildren(final Object object) {
     final List<Object> result = ContainerUtil.newArrayList();
-    Processor<Object> processor = new Processor<Object>() {
-      @Override
-      public boolean process(Object o) {
-        ContainerUtil.addIfNotNull(result, o instanceof PsiElement ? normalize((PsiElement)o) : o);
-        return true;
-      }
+    Processor<Object> processor = o -> {
+      ContainerUtil.addIfNotNull(result, o instanceof PsiElement ? normalize((PsiElement)o) : o);
+      return true;
     };
 
     processChildren(object, processor);

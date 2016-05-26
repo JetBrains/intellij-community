@@ -55,13 +55,10 @@ public class PyImportOptimizer implements ImportOptimizer {
         node.accept(visitor);
       }
     });
-    return new Runnable() {
-      @Override
-      public void run() {
-        visitor.optimizeImports();
-        if (file instanceof PyFile) {
-          new ImportSorter((PyFile)file).run();
-        }
+    return () -> {
+      visitor.optimizeImports();
+      if (file instanceof PyFile) {
+        new ImportSorter((PyFile)file).run();
       }
     };
   }

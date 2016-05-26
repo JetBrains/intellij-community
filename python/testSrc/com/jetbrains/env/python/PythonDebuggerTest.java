@@ -18,6 +18,7 @@ import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
@@ -73,7 +74,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_python/test_debugger.py");
+    unittests("tests_pydevd_python/test_debugger.py");
+  }
+
+  @Test
+  @Staging
+  public void testPydevMonkey() {
+    unittests("tests_pydevd_python/test_pydev_monkey.py");
   }
 
   private void unittests(final String script) {
@@ -102,8 +109,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testDebug() { //TODO: merge it into pydev tests
-    unittests("test_debug.py");
+    unittests("tests_pydevd/test_egg_zip_exist.py");
   }
 
   @Test
@@ -897,6 +905,36 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         stepInto();
         waitForPause();
         eval("stopped_in_user_file").hasValue("True");
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testReturnValues() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 7);
+        toggleBreakpoint(getScriptPath(), 11);
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.WATCH_RETURN_VALUES = true;
+      }
+
+      @Override
+      public void doFinally() {
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.WATCH_RETURN_VALUES = false;
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval(PyDebugValue.RETURN_VALUES_PREFIX + "bar[0]").hasValue("1");
+        resume();
+        waitForPause();
+        eval(PyDebugValue.RETURN_VALUES_PREFIX + "foo").hasValue("33");
+        resume();
       }
     });
   }

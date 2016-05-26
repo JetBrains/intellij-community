@@ -322,12 +322,7 @@ public class FormatterImpl extends FormatterEx
     }
     else {
       progressTask.setTask(task);
-      Runnable callback = new Runnable() {
-        @Override
-        public void run() {
-          enableFormatting();
-        }
-      };
+      Runnable callback = () -> enableFormatting();
       for (FormattingProgressCallback.EventType eventType : FormattingProgressCallback.EventType.values()) {
         progressTask.addCallback(eventType, callback);
       }

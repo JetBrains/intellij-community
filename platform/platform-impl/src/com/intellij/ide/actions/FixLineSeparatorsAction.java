@@ -38,11 +38,9 @@ public class FixLineSeparatorsAction extends AnAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || vFiles == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        for (VirtualFile vFile : vFiles) {
-          fixSeparators(vFile);
-        }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      for (VirtualFile vFile : vFiles) {
+        fixSeparators(vFile);
       }
     }, "fixing line separators", null);
   }
@@ -73,15 +71,13 @@ public class FixLineSeparatorsAction extends AnAction {
   }
 
   private static void fixSeparators(final Document document) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        int i = 1;
-        while(i < document.getLineCount()) {
-          final int start = document.getLineEndOffset(i);
-          final int end = document.getLineEndOffset(i) + document.getLineSeparatorLength(i);
-          document.deleteString(start, end);
-          i++;
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      int i = 1;
+      while(i < document.getLineCount()) {
+        final int start = document.getLineEndOffset(i);
+        final int end = document.getLineEndOffset(i) + document.getLineSeparatorLength(i);
+        document.deleteString(start, end);
+        i++;
       }
     });
   }

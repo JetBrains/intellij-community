@@ -184,14 +184,11 @@ public class SheetController {
   }
 
   void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        if (myFocusedComponent != null) {
-          myFocusedComponent.requestFocus();
-        } else {
-          LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
-        }
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      if (myFocusedComponent != null) {
+        myFocusedComponent.requestFocus();
+      } else {
+        LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
       }
     });
   }

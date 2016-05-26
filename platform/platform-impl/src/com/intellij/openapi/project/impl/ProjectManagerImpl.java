@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
@@ -33,7 +32,6 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -41,11 +39,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
@@ -279,16 +274,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myDefaultProject = createProject(null, "", true);
-            initProject(myDefaultProject, null);
-          }
-          catch (Throwable t) {
-            PluginManager.processException(t);
-          }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        try {
+          myDefaultProject = createProject(null, "", true);
+          initProject(myDefaultProject, null);
+        }
+        catch (Throwable t) {
+          PluginManager.processException(t);
         }
       });
     }
@@ -326,49 +318,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
-      DumbService.getInstance(project).queueTask(new DumbModeTask() {
-        @Override
-        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          waitForFileWatcher(indicator);
-        }
+    Runnable process = () -> {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
-        @Override
-        public String toString() {
-          return "wait for file watcher";
-        }
-      })
-    );
+      StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+      startupManager.runStartupActivities();
 
-    Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+      // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
+      // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
+      // Post-startup activities should not ever see unindexed and at the same time non-dumb state
+      TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
 
-        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-        startupManager.runStartupActivities();
+      startupManager.runPostStartupActivitiesFromExtensions();
 
-        // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
-        // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
-        // Post-startup activities should not ever see unindexed and at the same time non-dumb state
-        TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (!project.isDisposed()) {
+          startupManager.runPostStartupActivities();
 
-        startupManager.runPostStartupActivitiesFromExtensions();
-
-        GuiUtils.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              startupManager.runPostStartupActivities();
-
-              Application application = ApplicationManager.getApplication();
-              if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-                StorageUtil.checkUnknownMacros(project, true);
-              }
-            }
+          Application application = ApplicationManager.getApplication();
+          if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+            StorageUtil.checkUnknownMacros(project, true);
           }
-        }, ModalityState.NON_MODAL);
-      }
+        }
+      }, ModalityState.NON_MODAL);
     };
     if (myProgressManager.getProgressIndicator() != null) {
       process.run();
@@ -411,25 +383,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return !(indicator instanceof NonCancelableSection);
   }
 
-  private static void waitForFileWatcher(@NotNull ProgressIndicator indicator) {
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!(fs instanceof LocalFileSystemImpl)) return;
-
-    final FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational() || !watcher.isSettingRoots()) return;
-
-    LOG.info("FW/roots waiting started");
-    indicator.setIndeterminate(true);
-    indicator.setText(ProjectBundle.message("project.load.waiting.watcher"));
-    if (indicator instanceof ProgressWindow) {
-      ((ProgressWindow)indicator).setCancelButtonText(CommonBundle.message("button.skip"));
-    }
-    while (watcher.isSettingRoots() && !indicator.isCanceled()) {
-      TimeoutUtil.sleep(10);
-    }
-    LOG.info("FW/roots waiting finished");
-  }
-
   @Override
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
     Project project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
@@ -450,11 +403,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     if (!project.isOpen()) {
       WelcomeFrame.showIfNoProjectOpened();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(project);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Disposer.dispose(project);
       });
     }
     return project;
@@ -489,12 +439,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     if (!conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          conversionResult.postStartupActivity(project);
-        }
-      });
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
@@ -560,26 +505,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public static void doReloadProject(@NotNull Project project) {
     final Ref<Project> projectRef = Ref.create(project);
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("Reloading project.");
-        Project project = projectRef.get();
-        // Let it go
-        projectRef.set(null);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LOG.debug("Reloading project.");
+      Project project1 = projectRef.get();
+      // Let it go
+      projectRef.set(null);
 
-        if (project.isDisposed()) {
-          return;
-        }
-
-        // must compute here, before project dispose
-        String presentableUrl = project.getPresentableUrl();
-        if (!ProjectUtil.closeAndDispose(project)) {
-          return;
-        }
-
-        ProjectUtil.openProject(presentableUrl, null, true);
+      if (project1.isDisposed()) {
+        return;
       }
+
+      // must compute here, before project dispose
+      String presentableUrl = project1.getPresentableUrl();
+      if (!ProjectUtil.closeAndDispose(project1)) {
+        return;
+      }
+
+      ProjectUtil.openProject(presentableUrl, null, true);
     }, ModalityState.NON_MODAL);
   }
 
@@ -616,16 +558,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          removeFromOpened(project);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        removeFromOpened(project);
 
-          fireProjectClosed(project);
+        fireProjectClosed(project);
 
-          if (dispose) {
-            Disposer.dispose(project);
-          }
+        if (dispose) {
+          Disposer.dispose(project);
         }
       });
     }

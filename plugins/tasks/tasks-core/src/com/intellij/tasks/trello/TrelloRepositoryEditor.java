@@ -148,11 +148,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
     installListener(myAllCardsCheckBox);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        initialize();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> initialize());
   }
 
   private void initialize() {

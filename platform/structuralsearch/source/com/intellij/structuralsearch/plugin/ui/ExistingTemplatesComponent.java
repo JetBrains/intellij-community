@@ -242,7 +242,7 @@ public class ExistingTemplatesComponent {
     }
 
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean focus) {
       if (!(value instanceof Configuration)) {
         return;
       }

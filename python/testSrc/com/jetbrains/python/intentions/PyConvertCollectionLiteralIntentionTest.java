@@ -52,11 +52,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableWithoutSetLiterals() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      public void run() {
-        doNegativeTest(CONVERT_TUPLE_TO_SET);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doNegativeTest(CONVERT_TUPLE_TO_SET));
   }
 
   // PY-9419

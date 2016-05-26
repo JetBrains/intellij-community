@@ -280,69 +280,66 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
 
   @Override
   public void readExternal(final Element element) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        clear();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      clear();
 
-        if (!myFile.isValid()) return;
+      if (!myFile.isValid()) return;
 
-        final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-        if (document == null) return;
+      final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+      if (document == null) return;
 
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
 
-        String date = null;
-        boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile);
-        for (final Object o : element.getChildren()) {
-          Element e = (Element)o;
-          Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
-          if (ELEMENT_TAG.equals(e.getName())) {
-            String signature = e.getAttributeValue(SIGNATURE_ATT);
-            if (signature == null) {
-              continue;
-            }
-            FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
-            if (canRestoreElement) {
-              PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
-              if (restoredElement != null && restoredElement.isValid()) {
-                myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
-                restoredElement.putUserData(FOLDING_INFO_KEY, fi);
-              }
-            }
-            else {
-              // Postponed initialization
-              mySerializedElements.add(new SerializedPsiElement(signature, fi));
-            }
+      String date = null;
+      boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile);
+      for (final Object o : element.getChildren()) {
+        Element e = (Element)o;
+        Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
+        if (ELEMENT_TAG.equals(e.getName())) {
+          String signature = e.getAttributeValue(SIGNATURE_ATT);
+          if (signature == null) {
+            continue;
           }
-          else if (MARKER_TAG.equals(e.getName())) {
-            if (date == null) {
-              date = getTimeStamp();
-            }
-            if (date.isEmpty()) continue;
-
-            if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
-            StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
-            try {
-              int start = Integer.valueOf(tokenizer.nextToken()).intValue();
-              int end = Integer.valueOf(tokenizer.nextToken()).intValue();
-              if (start < 0 || end >= document.getTextLength() || start > end) continue;
-              RangeMarker marker = document.createRangeMarker(start, end);
-              myRangeMarkers.add(marker);
-              String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
-              String placeHolderText = placeholderAttributeValue == null ? DEFAULT_PLACEHOLDER
-                                                                         : XmlStringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
-              FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
-              marker.putUserData(FOLDING_INFO_KEY, fi);
-            }
-            catch (NoSuchElementException exc) {
-              LOG.error(exc);
+          FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
+          if (canRestoreElement) {
+            PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
+            if (restoredElement != null && restoredElement.isValid()) {
+              myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
+              restoredElement.putUserData(FOLDING_INFO_KEY, fi);
             }
           }
           else {
-            throw new IllegalStateException("unknown tag: " + e.getName());
+            // Postponed initialization
+            mySerializedElements.add(new SerializedPsiElement(signature, fi));
           }
+        }
+        else if (MARKER_TAG.equals(e.getName())) {
+          if (date == null) {
+            date = getTimeStamp();
+          }
+          if (date.isEmpty()) continue;
+
+          if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
+          StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
+          try {
+            int start = Integer.valueOf(tokenizer.nextToken()).intValue();
+            int end = Integer.valueOf(tokenizer.nextToken()).intValue();
+            if (start < 0 || end >= document.getTextLength() || start > end) continue;
+            RangeMarker marker = document.createRangeMarker(start, end);
+            myRangeMarkers.add(marker);
+            String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
+            String placeHolderText = placeholderAttributeValue == null ? DEFAULT_PLACEHOLDER
+                                                                       : XmlStringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
+            FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
+            marker.putUserData(FOLDING_INFO_KEY, fi);
+          }
+          catch (NoSuchElementException exc) {
+            LOG.error(exc);
+          }
+        }
+        else {
+          throw new IllegalStateException("unknown tag: " + e.getName());
         }
       }
     });

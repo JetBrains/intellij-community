@@ -356,7 +356,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
-    CodeEditUtil.removeChild(getNode(), child);
+    ((CompositeElement)getNode()).deleteChildInternal(child);
   }
 
   @Override

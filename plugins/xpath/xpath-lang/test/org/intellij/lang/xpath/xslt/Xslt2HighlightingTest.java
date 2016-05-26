@@ -31,11 +31,9 @@ public class Xslt2HighlightingTest extends TestBase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(XsltStuffProvider.INSPECTION_CLASSES);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
-        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("nsx");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
+      ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("nsx");
     });
   }
 

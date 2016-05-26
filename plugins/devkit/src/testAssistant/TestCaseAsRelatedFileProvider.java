@@ -46,11 +46,8 @@ public class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
       return Collections.emptyList();
     }
     
-    return ContainerUtil.map(locations, new Function<Location, GotoRelatedItem>() {
-      @Override
-      public GotoRelatedItem fun(Location location) {
-        return new GotoRelatedItem(location.getPsiElement());
-      }
+    return ContainerUtil.map(locations, location -> {
+      return new GotoRelatedItem(location.getPsiElement());
     });
   }
 }

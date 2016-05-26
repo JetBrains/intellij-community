@@ -63,12 +63,7 @@ public class UsageLimitUtil {
   private static int runOrInvokeAndWait(@NotNull final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          answer[0] = f.compute();
-        }
-      });
+      GuiUtils.runOrInvokeAndWait(() -> answer[0] = f.compute());
     }
     catch (Exception e) {
       answer[0] = 0;

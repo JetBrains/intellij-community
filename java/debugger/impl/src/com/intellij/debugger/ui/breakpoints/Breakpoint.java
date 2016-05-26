@@ -435,12 +435,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       private void removeBreakpoint() {
-        AppUIUtil.invokeOnEdt(new Runnable() {
-          @Override
-          public void run() {
-            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
-          }
-        });
+        AppUIUtil.invokeOnEdt(() -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this));
         debugProcess.removeDebugProcessListener(this);
       }
     });

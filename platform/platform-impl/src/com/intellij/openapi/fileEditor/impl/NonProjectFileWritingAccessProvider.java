@@ -48,13 +48,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
   private static final Key<Boolean> ALL_ACCESS_ALLOWED = Key.create("NON_PROJECT_FILE_ALL_ACCESS_STATUS");
   private static final NotNullLazyKey<Map<VirtualFile, AccessStatus>, Project> ACCESS_STATUS
-    = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS_STATUS", new NotNullFunction<Project, Map<VirtualFile, AccessStatus>>() {
-    @NotNull
-    @Override
-    public Map<VirtualFile, AccessStatus> fun(Project project) {
-      return new HashMap<VirtualFile, AccessStatus>();
-    }
-  });
+    = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS_STATUS", project -> new HashMap<VirtualFile, AccessStatus>());
 
   @NotNull private final Project myProject;
   @Nullable private static NullableFunction<List<VirtualFile>, UnlockOption> ourCustomUnlocker;

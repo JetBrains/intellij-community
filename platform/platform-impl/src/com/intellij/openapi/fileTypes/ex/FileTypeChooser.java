@@ -163,11 +163,8 @@ public class FileTypeChooser extends DialogWrapper {
     final FileType type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem());
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem());
     });
 
     return type;

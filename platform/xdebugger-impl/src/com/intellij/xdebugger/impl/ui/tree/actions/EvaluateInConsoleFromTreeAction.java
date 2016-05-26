@@ -51,12 +51,9 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesAction {
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     final ConsoleExecuteAction action = getConsoleExecuteAction(e);
     if (action != null) {
-      node.getValueContainer().calculateEvaluationExpression().done(new Consumer<XExpression>() {
-        @Override
-        public void consume(XExpression expression) {
-          if (expression != null) {
-            action.execute(null, expression.getExpression(), null);
-          }
+      node.getValueContainer().calculateEvaluationExpression().done(expression -> {
+        if (expression != null) {
+          action.execute(null, expression.getExpression(), null);
         }
       });
     }

@@ -41,31 +41,26 @@ public class DependenciesToolWindow {
 
   public DependenciesToolWindow(final Project project) {
     myProject = project;
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager == null) return;
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
-                                                                     true,
-                                                                     ToolWindowAnchor.BOTTOM,
-                                                                     project);
-        toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
-        myContentManager = toolWindow.getContentManager();
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      if (toolWindowManager == null) return;
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
+                                                                   true,
+                                                                   ToolWindowAnchor.BOTTOM,
+                                                                   project);
+      toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      myContentManager = toolWindow.getContentManager();
 
-        toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
-        new ContentManagerWatcher(toolWindow, myContentManager);
-      }
+      toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
+      new ContentManagerWatcher(toolWindow, myContentManager);
     });
   }
 
   public void addContent(final Content content) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        myContentManager.addContent(content);
-        myContentManager.setSelectedContent(content);
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
-      }
+    final Runnable runnable = () -> {
+      myContentManager.addContent(content);
+      myContentManager.setSelectedContent(content);
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
     };
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
   }

@@ -28,5 +28,6 @@ public interface PsiNameValuePairStub extends StubElement<PsiNameValuePair> {
   String getName();
 
   @Nullable
+  @Deprecated
   String getValue();
 }

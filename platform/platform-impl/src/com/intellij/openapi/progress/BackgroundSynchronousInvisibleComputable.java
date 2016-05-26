@@ -32,15 +32,12 @@ public abstract class BackgroundSynchronousInvisibleComputable<T> {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final AtomicReference<T> reference = new AtomicReference<T>();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          reference.set(runImpl());
-        }
-        finally {
-          semaphore.up();
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        reference.set(runImpl());
+      }
+      finally {
+        semaphore.up();
       }
     });
     semaphore.waitFor();

@@ -234,24 +234,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myQueuedComponent = tooltip.getComponent();
     myQueuedTooltip = tooltip;
 
-    myShowRequest = new Runnable() {
-      @Override
-      public void run() {
-        if (myShowRequest == null) {
-          return;
-        }
+    myShowRequest = () -> {
+      if (myShowRequest == null) {
+        return;
+      }
 
-        if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
-          hideCurrent(null, tooltip, null, null, animationEnabled);
-          return;
-        }
+      if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
+        hideCurrent(null, tooltip, null, null, animationEnabled);
+        return;
+      }
 
-        if (tooltip.beforeShow()) {
-          show(tooltip, null, animationEnabled);
-        }
-        else {
-          hideCurrent(null, tooltip, null, null, animationEnabled);
-        }
+      if (tooltip.beforeShow()) {
+        show(tooltip, null, animationEnabled);
+      }
+      else {
+        hideCurrent(null, tooltip, null, null, animationEnabled);
       }
     };
 
@@ -346,12 +343,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     });
 
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
-          hideCurrent(null, null, null);
-        }
+    myAlarm.addRequest(() -> {
+      if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
+        hideCurrent(null, null, null);
       }
     }, tooltip.getDismissDelay());
   }
@@ -448,13 +442,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
 
-    myHideRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (myHideRunnable != null) {
-          hideCurrentNow(animationEnabled);
-          myHideRunnable = null;
-        }
+    myHideRunnable = () -> {
+      if (myHideRunnable != null) {
+        hideCurrentNow(animationEnabled);
+        myHideRunnable = null;
       }
     };
 
@@ -475,12 +466,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       myCurrentTipUi.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myShowDelay = true;
-        }
-      }, Registry.intValue("ide.tooltip.reshowDelay"));
+      myAlarm.addRequest(() -> myShowDelay = true, Registry.intValue("ide.tooltip.reshowDelay"));
     }
 
     myShowRequest = null;

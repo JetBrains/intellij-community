@@ -138,12 +138,8 @@ public class OldReferenceResolver {
 
             final PsiType parameterType = parameter.getType();
             if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
-              final String varargsJoin = StringUtil.join(ContainerUtil.map2Array(myActualArgs, String.class, new Function<PsiExpression, String>() {
-                  @Override
-                  public String fun(PsiExpression expression) {
-                    return expression != null ? expression.getText() : "null";
-                  }
-                }), index + 1, myActualArgs.length, ",");
+              final String varargsJoin = StringUtil.join(ContainerUtil.map2Array(myActualArgs, String.class,
+                                                                                 expression -> expression != null ? expression.getText() : "null"), index + 1, myActualArgs.length, ",");
               String newArrayInitializer = "new " + ((PsiEllipsisType)parameterType).toArrayType().getCanonicalText() + " {" + varargsJoin + "}";
               initializer = replaceInitializerWithVarargSubstitution(factory, parameter, initializer, newArrayInitializer);
             }

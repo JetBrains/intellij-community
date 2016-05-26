@@ -253,20 +253,14 @@ public class RepositoryLibraryPropertiesEditor {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        initVersionsPanel();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      initVersionsPanel();
     }, ModalityState.any());
   }
 
   private void versionsFailedToLoad() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        setState(State.FailedToLoad);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      setState(State.FailedToLoad);
     }, ModalityState.any());
   }
 

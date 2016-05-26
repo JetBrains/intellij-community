@@ -227,12 +227,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     westPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
-        Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
-          }
-        };
+        Runnable runnable =
+          () -> ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(runnable);
       }

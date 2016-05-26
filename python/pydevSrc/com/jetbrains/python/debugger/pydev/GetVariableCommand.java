@@ -50,7 +50,8 @@ public class GetVariableCommand extends GetFrameCommand {
 
   @Override
   protected PyDebugValue extend(final PyDebugValue value) {
-    return new PyDebugValue(value.getName(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isErrorOnEval(), myParent,
+    return new PyDebugValue(value.getName(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(),
+                            value.isReturnedVal(), value.isErrorOnEval(), myParent,
                             myDebugProcess);
   }
 }

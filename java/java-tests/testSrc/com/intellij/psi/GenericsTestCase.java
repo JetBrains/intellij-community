@@ -39,11 +39,8 @@ public abstract class GenericsTestCase extends PsiTestCase {
   protected void setupGenericSampleClasses() {
     final String commonPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/src";
     final VirtualFile[] commonRoot = { null };
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        commonRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(commonPath);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      commonRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(commonPath);
     });
 
     PsiTestUtil.addSourceRoot(myModule, commonRoot[0]);

@@ -118,15 +118,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         variable,
         refsSet,
         delete,
-        new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
-          @NotNull
-          @Override
-          public PsiElement fun(PsiDeclarationStatement declaration) {
-            if (!mayBeFinal(firstElement, references)) {
-              PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-            }
-            return anchor.replace(declaration);
+        declaration -> {
+          if (!mayBeFinal(firstElement, references)) {
+            PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
           }
+          return anchor.replace(declaration);
         }
       );
     }
@@ -138,13 +134,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable,
       references,
       delete,
-      new NotNullFunction<PsiDeclarationStatement, PsiElement>() {
-        @NotNull
-        @Override
-        public PsiElement fun(PsiDeclarationStatement declaration) {
-          return anchorBlock.addBefore(declaration, anchor);
-        }
-      }
+      declaration -> anchorBlock.addBefore(declaration, anchor)
     );
   }
 

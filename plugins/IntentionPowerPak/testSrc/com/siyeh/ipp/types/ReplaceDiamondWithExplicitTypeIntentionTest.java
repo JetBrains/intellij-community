@@ -35,6 +35,10 @@ public class ReplaceDiamondWithExplicitTypeIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testFailedInference() throws Exception {
+    assertIntentionNotAvailable();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.diamond.with.explicit.type.arguments.intention.name");

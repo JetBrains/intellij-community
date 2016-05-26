@@ -67,12 +67,9 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
         return getLibraryEditor();
       }
     });
-    myLibraryEditorComponent.addListener(new Runnable() {
-      @Override
-      public void run() {
-        myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
-        updateName();
-      }
+    myLibraryEditorComponent.addListener(() -> {
+      myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
+      updateName();
     });
     return myLibraryEditorComponent.getComponent();
   }

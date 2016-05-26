@@ -54,7 +54,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps();
+    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
     Editor editor = getEditor(e);
     return editor != null && editor.getSettings().isUseSoftWraps();
   }

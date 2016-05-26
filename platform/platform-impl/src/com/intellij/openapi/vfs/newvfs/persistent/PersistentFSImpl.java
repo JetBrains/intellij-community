@@ -64,22 +64,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   @SuppressWarnings({"FieldCanBeLocal", "unused"})
-  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      clearIdCache();
-    }
-  });
+  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(() -> clearIdCache());
   private volatile int myStructureModificationCount;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     myEventBus = bus;
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        performShutdown();
-      }
-    });
+    ShutDownTracker.getInstance().registerShutdownTask(() -> performShutdown());
   }
 
   @Override
@@ -136,11 +126,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (!areChildrenLoaded(id)) {
       nameIds  = persistAllChildren(file, id, nameIds);
     }
-    return ContainerUtil.map2Array(nameIds, String.class, new Function<FSRecords.NameId, String>() {
-      @Override
-      public String fun(FSRecords.NameId id) {
-        return id.name.toString();
-      }
+    return ContainerUtil.map2Array(nameIds, String.class, id1 -> {
+      return id1.name.toString();
     });
   }
 
@@ -693,12 +680,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  @NotNull private static final Comparator<EventWrapper> DEPTH_COMPARATOR = new Comparator<EventWrapper>() {
-    @Override
-    public int compare(@NotNull final EventWrapper o1, @NotNull final EventWrapper o2) {
-      return o1.event.getFileDepth() - o2.event.getFileDepth();
-    }
-  };
+  @NotNull private static final Comparator<EventWrapper> DEPTH_COMPARATOR = (o1, o2) -> o1.event.getFileDepth() - o2.event.getFileDepth();
 
   @NotNull
   private static List<VFileEvent> validateEvents(@NotNull List<VFileEvent> events) {

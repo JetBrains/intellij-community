@@ -1072,12 +1072,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public Comparator<String> getRegistrationOrderComparator() {
-    return new Comparator<String>() {
-      @Override
-      public int compare(String id1, String id2) {
-        return myId2Index.get(id1) - myId2Index.get(id2);
-      }
-    };
+    return (id1, id2) -> myId2Index.get(id1) - myId2Index.get(id2);
   }
 
   @NotNull
@@ -1275,12 +1270,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     assert app.isDispatchThread();
 
     final ActionCallback result = new ActionCallback();
-    final Runnable doRunnable = new Runnable() {
-      @Override
-      public void run() {
-        tryToExecuteNow(action, inputEvent, contextComponent, place, result);
-      }
-    };
+    final Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
 
     if (now) {
       doRunnable.run();

@@ -252,21 +252,11 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   private static void pollDeployments(final ServerConnection connection) {
-    connection.computeDeployments(new Runnable() {
-
-      @Override
-      public void run() {
-        new Alarm().addRequest(new Runnable() {
-
-          @Override
-          public void run() {
-            if (connection == ServerConnectionManager.getInstance().getConnection(connection.getServer())) {
-              pollDeployments(connection);
-            }
-          }
-        }, POLL_DEPLOYMENTS_DELAY, ModalityState.any());
+    connection.computeDeployments(() -> new Alarm().addRequest(() -> {
+      if (connection == ServerConnectionManager.getInstance().getConnection(connection.getServer())) {
+        pollDeployments(connection);
       }
-    });
+    }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
   }
 
   private JComponent createToolbar() {
@@ -319,28 +309,20 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
       @Override
-      public void run() {
-        myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
-          @Override
-          public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
-            return isDeploymentNodeMatch(node, connection, deploymentName);
-          }
-        }, null, false);
+      public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
+        return isDeploymentNodeMatch(node, connection, deploymentName);
       }
-    });
+    }, null, false));
   }
 
   public void select(@NotNull final ServerConnection<?> connection,
                      @NotNull final String deploymentName,
                      @NotNull final String logName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
-        myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
-      }
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> {
+      TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
+      myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
     });
   }
 

@@ -91,11 +91,7 @@ public class ActionsTreeUtil {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
-    Collections.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
-      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(plugins, (o1, o2) -> o1.getName().compareTo(o2.getName()));
 
     List<PluginId> collected = new ArrayList<PluginId>();
     for (IdeaPluginDescriptor plugin : plugins) {
@@ -111,11 +107,7 @@ public class ActionsTreeUtil {
       if (pluginActions == null || pluginActions.length == 0) {
         continue;
       }
-      Arrays.sort(pluginActions, new Comparator<String>() {
-        public int compare(String o1, String o2) {
-          return getTextToCompare(o1).compareTo(getTextToCompare(o2));
-        }
-      });
+      Arrays.sort(pluginActions, (o1, o2) -> getTextToCompare(o1).compareTo(getTextToCompare(o2)));
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
         final AnAction anAction = managerEx.getActionOrStub(pluginAction);
@@ -354,11 +346,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createQuickListsGroup(final Condition<AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
-    Arrays.sort(quickLists, new Comparator<QuickList>() {
-      public int compare(QuickList l1, QuickList l2) {
-        return l1.getActionId().compareTo(l2.getActionId());
-      }
-    });
+    Arrays.sort(quickLists, (l1, l2) -> l1.getActionId().compareTo(l2.getActionId()));
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
     for (QuickList quickList : quickLists) {
@@ -412,11 +400,7 @@ public class ActionsTreeUtil {
 
     filterOtherActionsGroup(result);
 
-    ContainerUtil.quickSort(result, new Comparator<String>() {
-      public int compare(String id1, String id2) {
-        return getTextToCompare(id1).compareToIgnoreCase(getTextToCompare(id2));
-      }
-    });
+    ContainerUtil.quickSort(result, (id1, id2) -> getTextToCompare(id1).compareToIgnoreCase(getTextToCompare(id2)));
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther);
     for (String id : result) {

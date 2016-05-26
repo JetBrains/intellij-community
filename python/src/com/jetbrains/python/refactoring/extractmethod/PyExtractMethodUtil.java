@@ -108,87 +108,81 @@ public class PyExtractMethodUtil {
 
     final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, fragment.getOutputVariables(), variableData);
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final RefactoringEventData beforeData = new RefactoringEventData();
-            beforeData.addElements(new PsiElement[]{statement1, statement2});
-            project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-              .refactoringStarted(getRefactoringId(), beforeData);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final RefactoringEventData beforeData = new RefactoringEventData();
+      beforeData.addElements(new PsiElement[]{statement1, statement2});
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringStarted(getRefactoringId(), beforeData);
 
-            final StringBuilder builder = new StringBuilder();
-            final boolean isAsync = fragment.isAsync();
-            if (isAsync) {
-              builder.append("async ");
-            }
-            builder.append("def f():\n    ");
-            final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
-            final boolean hasOutputVariables = !fragment.getOutputVariables().isEmpty();
-
-            final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-            final LanguageLevel languageLevel = LanguageLevel.forElement(statement1);
-            if (hasOutputVariables) {
-              // Generate return modified variables statements
-              final String outputVariables = StringUtil.join(fragment.getOutputVariables(), ", ");
-              String newMethodText = builder + "return " + outputVariables;
-              builder.append(outputVariables);
-
-              final PyFunction function = generator.createFromText(languageLevel, PyFunction.class, newMethodText);
-              final PsiElement returnStatement = function.getStatementList().getStatements()[0];
-              newMethodElements.add(returnStatement);
-            }
-
-            // Generate method
-            PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags, isAsync);
-            generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
-
-            // Process parameters
-            final PsiElement firstElement = elementsRange.get(0);
-            final boolean isMethod = PyPsiUtils.isMethodContext(firstElement);
-            processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
-            processGlobalWrites(generatedMethod, fragment);
-            processNonlocalWrites(generatedMethod, fragment);
-
-            // Generate call element
-            if (hasOutputVariables) {
-              builder.append(" = ");
-            }
-            else if (fragment.isReturnInstructionInside()) {
-              builder.append("return ");
-            }
-            if (isAsync) {
-              builder.append("await ");
-            }
-            else if (fragment.isYieldInside()) {
-              builder.append("yield from ");
-            }
-            if (isMethod) {
-              appendSelf(firstElement, builder, isStaticMethod);
-            }
-            builder.append(methodName).append("(");
-            builder.append(createCallArgsString(variableData)).append(")");
-            final PyFunction function = generator.createFromText(languageLevel, PyFunction.class, builder.toString());
-            PsiElement callElement = function.getStatementList().getStatements()[0];
-
-            // replace statements with call
-            callElement = replaceElements(elementsRange, callElement);
-            callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
-            if (callElement != null) {
-              processDuplicates(callElement, generatedMethod, finder, editor);
-            }
-
-            // Set editor
-            setSelectionAndCaret(editor, callElement);
-
-            final RefactoringEventData afterData = new RefactoringEventData();
-            afterData.addElement(generatedMethod);
-            project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-              .refactoringDone(getRefactoringId(), afterData);
-          }
-        });
+      final StringBuilder builder = new StringBuilder();
+      final boolean isAsync = fragment.isAsync();
+      if (isAsync) {
+        builder.append("async ");
       }
-    }, PyBundle.message("refactoring.extract.method"), null);
+      builder.append("def f():\n    ");
+      final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
+      final boolean hasOutputVariables = !fragment.getOutputVariables().isEmpty();
+
+      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(statement1);
+      if (hasOutputVariables) {
+        // Generate return modified variables statements
+        final String outputVariables = StringUtil.join(fragment.getOutputVariables(), ", ");
+        String newMethodText = builder + "return " + outputVariables;
+        builder.append(outputVariables);
+
+        final PyFunction function1 = generator.createFromText(languageLevel, PyFunction.class, newMethodText);
+        final PsiElement returnStatement = function1.getStatementList().getStatements()[0];
+        newMethodElements.add(returnStatement);
+      }
+
+      // Generate method
+      PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags, isAsync);
+      generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
+
+      // Process parameters
+      final PsiElement firstElement = elementsRange.get(0);
+      final boolean isMethod = PyPsiUtils.isMethodContext(firstElement);
+      processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
+      processGlobalWrites(generatedMethod, fragment);
+      processNonlocalWrites(generatedMethod, fragment);
+
+      // Generate call element
+      if (hasOutputVariables) {
+        builder.append(" = ");
+      }
+      else if (fragment.isReturnInstructionInside()) {
+        builder.append("return ");
+      }
+      if (isAsync) {
+        builder.append("await ");
+      }
+      else if (fragment.isYieldInside()) {
+        builder.append("yield from ");
+      }
+      if (isMethod) {
+        appendSelf(firstElement, builder, isStaticMethod);
+      }
+      builder.append(methodName).append("(");
+      builder.append(createCallArgsString(variableData)).append(")");
+      final PyFunction function1 = generator.createFromText(languageLevel, PyFunction.class, builder.toString());
+      PsiElement callElement = function1.getStatementList().getStatements()[0];
+
+      // replace statements with call
+      callElement = replaceElements(elementsRange, callElement);
+      callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
+      if (callElement != null) {
+        processDuplicates(callElement, generatedMethod, finder, editor);
+      }
+
+      // Set editor
+      setSelectionAndCaret(editor, callElement);
+
+      final RefactoringEventData afterData = new RefactoringEventData();
+      afterData.addElement(generatedMethod);
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringDone(getRefactoringId(), afterData);
+    }), PyBundle.message("refactoring.extract.method"), null);
   }
 
   private static void processDuplicates(@NotNull final PsiElement callElement,
@@ -210,12 +204,7 @@ public class PyExtractMethodUtil {
       }
     }
     ExtractMethodHelper.processDuplicates(callElement, generatedMethod, scope, finder, editor,
-                                          new Consumer<Pair<SimpleMatch, PsiElement>>() {
-                                            @Override
-                                            public void consume(@NotNull Pair<SimpleMatch, PsiElement> pair) {
-                                              replaceElements(pair.first, pair.second.copy());
-                                            }
-                                          }
+                                          pair -> replaceElements(pair.first, pair.second.copy())
     );
   }
 
@@ -303,66 +292,58 @@ public class PyExtractMethodUtil {
 
     final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(expression, expression, fragment.getOutputVariables(), variableData);
     if (fragment.getOutputVariables().isEmpty()) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              // Generate method
-              final boolean isAsync = fragment.isAsync();
-              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags, isAsync);
-              generatedMethod = insertGeneratedMethod(expression, generatedMethod);
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        // Generate method
+        final boolean isAsync = fragment.isAsync();
+        PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags, isAsync);
+        generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
-              // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(expression);
-              processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
+        // Process parameters
+        final boolean isMethod = PyPsiUtils.isMethodContext(expression);
+        processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
 
-              // Generating call element
-              final StringBuilder builder = new StringBuilder();
-              if (isAsync) {
-                builder.append("async ");
-              }
-              builder.append("def f():\n    ");
-              if (isAsync) {
-                builder.append("await ");
-              }
-              else if (fragment.isYieldInside()) {
-                builder.append("yield from ");
-              }
-              else {
-                builder.append("return ");
-              }
-              if (isMethod) {
-                appendSelf(expression, builder, isStaticMethod);
-              }
-              builder.append(methodName);
-              builder.append("(").append(createCallArgsString(variableData)).append(")");
-              final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-              final PyFunction function = generator.createFromText(LanguageLevel.forElement(expression), PyFunction.class,
-                                                                   builder.toString());
-              final PyElement generated = function.getStatementList().getStatements()[0];
-              PsiElement callElement = null;
-              if (generated instanceof PyReturnStatement) {
-                callElement = ((PyReturnStatement)generated).getExpression();
-              }
-              else if (generated instanceof PyExpressionStatement) {
-                callElement = ((PyExpressionStatement)generated).getExpression();
-              }
-
-              // replace statements with call
-              if (callElement != null) {
-                callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
-              }
-              if (callElement != null) {
-                processDuplicates(callElement, generatedMethod, finder, editor);
-              }
-              // Set editor
-              setSelectionAndCaret(editor, callElement);
-            }
-          });
+        // Generating call element
+        final StringBuilder builder = new StringBuilder();
+        if (isAsync) {
+          builder.append("async ");
         }
-      }, PyBundle.message("refactoring.extract.method"), null);
+        builder.append("def f():\n    ");
+        if (isAsync) {
+          builder.append("await ");
+        }
+        else if (fragment.isYieldInside()) {
+          builder.append("yield from ");
+        }
+        else {
+          builder.append("return ");
+        }
+        if (isMethod) {
+          appendSelf(expression, builder, isStaticMethod);
+        }
+        builder.append(methodName);
+        builder.append("(").append(createCallArgsString(variableData)).append(")");
+        final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+        final PyFunction function1 = generator.createFromText(LanguageLevel.forElement(expression), PyFunction.class,
+                                                              builder.toString());
+        final PyElement generated = function1.getStatementList().getStatements()[0];
+        PsiElement callElement = null;
+        if (generated instanceof PyReturnStatement) {
+          callElement = ((PyReturnStatement)generated).getExpression();
+        }
+        else if (generated instanceof PyExpressionStatement) {
+          callElement = ((PyExpressionStatement)generated).getExpression();
+        }
+
+        // replace statements with call
+        if (callElement != null) {
+          callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
+        }
+        if (callElement != null) {
+          processDuplicates(callElement, generatedMethod, finder, editor);
+        }
+        // Set editor
+        setSelectionAndCaret(editor, callElement);
+      }), PyBundle.message("refactoring.extract.method"), null);
     }
   }
 
@@ -423,12 +404,7 @@ public class PyExtractMethodUtil {
   // Creates string for call
   @NotNull
   private static String createCallArgsString(@NotNull final AbstractVariableData[] variableDatas) {
-    return StringUtil.join(ContainerUtil.mapNotNull(variableDatas, new Function<AbstractVariableData, String>() {
-      @Override
-      public String fun(AbstractVariableData data) {
-        return data.isPassAsParameter() ? data.getOriginalName() : null;
-      }
-    }), ",");
+    return StringUtil.join(ContainerUtil.mapNotNull(variableDatas, data -> data.isPassAsParameter() ? data.getOriginalName() : null), ",");
   }
 
   private static void processParameters(@NotNull final Project project,
@@ -681,25 +657,21 @@ public class PyExtractMethodUtil {
       myElement = element;
       myProject = project;
       final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
-      myFunction = new Function<String, Boolean>() {
-        @NotNull
-        @Override
-        public Boolean fun(String s) {
-          ScopeOwner owner = parent;
-          while (owner != null) {
-            if (owner instanceof PyClass) {
-              if (((PyClass)owner).findMethodByName(s, true, null) != null) {
-                return false;
-              }
-            }
-            final Scope scope = ControlFlowCache.getScope(owner);
-            if (scope.containsDeclaration(s)) {
+      myFunction = s -> {
+        ScopeOwner owner = parent;
+        while (owner != null) {
+          if (owner instanceof PyClass) {
+            if (((PyClass)owner).findMethodByName(s, true, null) != null) {
               return false;
             }
-            owner = ScopeUtil.getScopeOwner(owner);
           }
-          return true;
+          final Scope scope = ControlFlowCache.getScope(owner);
+          if (scope.containsDeclaration(s)) {
+            return false;
+          }
+          owner = ScopeUtil.getScopeOwner(owner);
         }
+        return true;
       };
     }
 

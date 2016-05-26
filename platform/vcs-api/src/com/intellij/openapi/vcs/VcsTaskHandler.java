@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -83,7 +84,7 @@ public abstract class VcsTaskHandler {
 
   public abstract TaskInfo startNewTask(@NotNull String taskName);
 
-  public abstract void switchToTask(TaskInfo taskInfo, Runnable invokeAfter);
+  public abstract void switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
 
   public abstract void closeTask(@NotNull TaskInfo taskInfo, @NotNull TaskInfo original);
 

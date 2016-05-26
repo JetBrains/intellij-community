@@ -268,12 +268,7 @@ public class ExtractSuperClassUtil {
   public static RefactoringEventData createBeforeData(final PsiClass subclassClass, final MemberInfo[] members) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(subclassClass);
-    data.addMembers(members, new Function<MemberInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfo info) {
-        return info.getMember();
-      }
-    });
+    data.addMembers(members, info -> info.getMember());
     return data;
   }
 

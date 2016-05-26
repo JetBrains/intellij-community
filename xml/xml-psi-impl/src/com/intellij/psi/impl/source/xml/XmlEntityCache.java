@@ -27,10 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class XmlEntityCache {
+  static final Object LOCK = new Object();
   private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
 
   public static void cacheParticularEntity(PsiFile file, XmlEntityDecl decl) {
-    synchronized(PsiLock.LOCK) {
+    synchronized(LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       final String name = decl.getName();
       if (cachingMap.containsKey(name)) return;
@@ -62,7 +63,7 @@ public class XmlEntityCache {
   }
 
   public static void copyEntityCaches(final PsiFile file, final PsiFile context) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       for(Map.Entry<String,CachedValue<XmlEntityDecl>> entry:getCachingMap(context).entrySet()) {
         cachingMap.put(entry.getKey(), entry.getValue());
@@ -73,7 +74,7 @@ public class XmlEntityCache {
 
   public static XmlEntityDecl getCachedEntity(PsiFile file, String name) {
     CachedValue<XmlEntityDecl> cachedValue;
-    synchronized(PsiLock.LOCK) {
+    synchronized(LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       cachedValue = cachingMap.get(name);
     }

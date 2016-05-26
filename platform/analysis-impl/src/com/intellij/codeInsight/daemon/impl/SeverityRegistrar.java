@@ -218,12 +218,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     for (Object o : orderMap.keys()) {
       list.add((HighlightSeverity)o);
     }
-    Collections.sort(list, new Comparator<HighlightSeverity>() {
-      @Override
-      public int compare(HighlightSeverity o1, HighlightSeverity o2) {
-        return SeverityRegistrar.compare(o1, o2, orderMap);
-      }
-    });
+    Collections.sort(list, (o1, o2) -> compare(o1, o2, orderMap));
     return list;
   }
 

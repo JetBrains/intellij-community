@@ -98,12 +98,7 @@ public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
       }
     });
     final VirtualFile[] lessonDirs = project.getBaseDir().getChildren();
-    final Function<VirtualFile, StudyItem> getStudyItem = new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        return course.getLesson(file.getName());
-      }
-    };
+    final Function<VirtualFile, StudyItem> getStudyItem = file -> course.getLesson(file.getName());
 
     int sourceLessonIndex = sourceLesson.getIndex();
     sourceLesson.setIndex(-1);

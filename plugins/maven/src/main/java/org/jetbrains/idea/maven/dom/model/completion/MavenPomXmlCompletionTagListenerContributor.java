@@ -46,50 +46,47 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
 
     if (!(description instanceof MavenDomProjectModelDescription)) return;
 
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult r) {
-        final LookupElement lookupElement = r.getLookupElement();
+    result.runRemainingContributors(parameters, r -> {
+      final LookupElement lookupElement = r.getLookupElement();
 
-        if (myHandledTags.contains(lookupElement.getLookupString())) {
-          LookupElement decorator =
-            LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
-              @Override
-              public void handleInsert(final InsertionContext context, LookupElementDecorator<LookupElement> item) {
-                lookupElement.handleInsert(context);
+      if (myHandledTags.contains(lookupElement.getLookupString())) {
+        LookupElement decorator =
+          LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+            @Override
+            public void handleInsert(final InsertionContext context, LookupElementDecorator<LookupElement> item) {
+              lookupElement.handleInsert(context);
 
-                Object object = lookupElement.getObject();
-                if ("dependency".equals(lookupElement.getLookupString()) && object instanceof XmlTag
-                    && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {
-                  context.commitDocument();
+              Object object = lookupElement.getObject();
+              if ("dependency".equals(lookupElement.getLookupString()) && object instanceof XmlTag
+                  && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {
+                context.commitDocument();
 
-                  CaretModel caretModel = context.getEditor().getCaretModel();
+                CaretModel caretModel = context.getEditor().getCaretModel();
 
-                  PsiElement psiElement = context.getFile().findElementAt(caretModel.getOffset());
-                  XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
-                  if (xmlTag != null) {
-                    DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(xmlTag);
-                    if (domElement instanceof MavenDomDependency) {
-                      String s = "\n<groupId></groupId>\n<artifactId></artifactId>\n";
-                      context.getDocument().insertString(caretModel.getOffset(), s);
-                      caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</artifactId>\n".length());
+                PsiElement psiElement = context.getFile().findElementAt(caretModel.getOffset());
+                XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
+                if (xmlTag != null) {
+                  DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(xmlTag);
+                  if (domElement instanceof MavenDomDependency) {
+                    String s = "\n<groupId></groupId>\n<artifactId></artifactId>\n";
+                    context.getDocument().insertString(caretModel.getOffset(), s);
+                    caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</artifactId>\n".length());
 
-                      context.commitDocument();
+                    context.commitDocument();
 
-                      new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), false).run();
+                    new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), false).run();
 
-                      MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
-                    }
+                    MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
                   }
                 }
               }
-            });
+            }
+          });
 
-          r = r.withLookupElement(decorator);
-        }
-
-        result.passResult(r);
+        r = r.withLookupElement(decorator);
       }
+
+      result.passResult(r);
     });
   }
 

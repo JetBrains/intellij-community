@@ -90,18 +90,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setDimensionServiceKey(DIMENSION_SERVICE_KEY).
       setAddDetailViewToEast(true).
       setActionsGroup(actions).
-      setPopupTuner(new Consumer<PopupChooserBuilder>() {
-        @Override
-        public void consume(PopupChooserBuilder builder) {
-          builder.setCloseOnEnter(false).setCancelOnClickOutside(false);
-        }
-      }).
-      setDoneRunnable(new Runnable() {
-        @Override
-        public void run() {
-          myPopup.cancel();
-        }
-      }).
+      setPopupTuner(builder -> builder.setCloseOnEnter(false).setCancelOnClickOutside(false)).
+      setDoneRunnable(() -> myPopup.cancel()).
       createMasterDetailPopup();
 
     new AnAction() {
@@ -179,12 +169,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          bookmark.navigate(true);
-        }
-      });
+      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
     }
   }
 

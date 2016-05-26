@@ -136,11 +136,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       ImportCandidateHolder.getQualifiedName(myInitialName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = new ImportFromExistingAction(element, myImports, myInitialName, myUseQualifiedImport, false);
-    action.onDone(new Runnable() {
-      public void run() {
-        myExpended = true;
-      }
-    });
+    action.onDone(() -> myExpended = true);
     HintManager.getInstance().showQuestionHint(
       editor, message,
       element.getTextOffset(),

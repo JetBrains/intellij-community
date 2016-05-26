@@ -35,19 +35,16 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
 
   @Override
   public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<V> consumer) {
-    myFuture.addListener(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final V result = myFuture.get();
-          consumer.onSuccess(result);
-        }
-        catch (ExecutionException e) {
-          consumer.onFailure(e.getCause());
-        }
-        catch (Throwable throwable) {
-          consumer.onFailure(throwable);
-        }
+    myFuture.addListener(() -> {
+      try {
+        final V result = myFuture.get();
+        consumer.onSuccess(result);
+      }
+      catch (ExecutionException e) {
+        consumer.onFailure(e.getCause());
+      }
+      catch (Throwable throwable) {
+        consumer.onFailure(throwable);
       }
     }, executor);
   }

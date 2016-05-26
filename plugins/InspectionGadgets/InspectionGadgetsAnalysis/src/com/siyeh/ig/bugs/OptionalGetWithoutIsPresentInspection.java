@@ -253,7 +253,7 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           return false;
         }
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-        hasIsPresentCall = !negate && EquivalenceChecker.expressionsAreEquivalent(referenceExpression, this.referenceExpression);
+        hasIsPresentCall = !negate && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(referenceExpression, this.referenceExpression);
       }
       else if (expression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;

@@ -97,40 +97,15 @@ public class TreeTraverserTest extends TestCase {
     };
   }
 
-  public static final Function<Integer, List<Integer>> WRAP_TO_LIST = new Function<Integer, List<Integer>>() {
-    @Override
-    public List<Integer> fun(Integer integer) {
-      return ContainerUtil.newArrayList(integer);
-    }
-  };
+  public static final Function<Integer, List<Integer>> WRAP_TO_LIST = integer -> ContainerUtil.newArrayList(integer);
 
-  public static final Function<Integer, Integer> DIV_2 = new Function<Integer, Integer>() {
-    @Override
-    public Integer fun(Integer k) {
-      return k / 2;
-    }
-  };
+  public static final Function<Integer, Integer> DIV_2 = k -> k / 2;
 
-  private static final Function<Integer, Integer> INCREMENT = new Function<Integer, Integer>() {
-    @Override
-    public Integer fun(Integer k) {
-      return k + 1;
-    }
-  };
+  private static final Function<Integer, Integer> INCREMENT = k -> k + 1;
 
-  private static final Function<Integer, Integer> SQUARE = new Function<Integer, Integer>() {
-    @Override
-    public Integer fun(Integer k) {
-      return k * k;
-    }
-  };
+  private static final Function<Integer, Integer> SQUARE = k -> k * k;
 
-  private static final PairFunction<Integer, Integer, Integer> FIBONACCI = new PairFunction<Integer, Integer, Integer>() {
-    @Override
-    public Integer fun(Integer k1, Integer k2) {
-      return k2 + k1;
-    }
-  };
+  private static final PairFunction<Integer, Integer, Integer> FIBONACCI = (k1, k2) -> k2 + k1;
 
   private static final Function<Integer, Integer> FIBONACCI2 = new JBIterable.StatefulTransform<Integer, Integer>() {
     int k0;
@@ -371,12 +346,7 @@ public class TreeTraverserTest extends TestCase {
           //return it.append(JBIterable.generate(integer, Functions.id()));
         }
       });
-    JBIterable<Integer> counts = JBIterable.generate(1, INCREMENT).transform(new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer integer) {
-        return traversal.fun(1).takeWhile(UP_TO(integer)).size();
-      }
-    });
+    JBIterable<Integer> counts = JBIterable.generate(1, INCREMENT).transform(integer -> traversal.fun(1).takeWhile(UP_TO(integer)).size());
     // 1: no repeat
     assertEquals(Arrays.asList(1, 4, 13, 39, 117, 359, 1134, 3686, 12276, 41708), counts.take(10).toList());
     // 2: repeat all seq
@@ -468,12 +438,7 @@ public class TreeTraverserTest extends TestCase {
       Integer cur = it.current().get(0);
       result.add(cur);
       assertEquals(JBIterable.generate(cur, DIV_2).takeWhile(IS_POSITIVE).toList(), it.backtrace().transform(
-        new Function<List<Integer>, Integer>() {
-          @Override
-          public Integer fun(List<Integer> integers) {
-            return integers.get(0);
-          }
-        }
+        integers -> integers.get(0)
       ).toList());
       if (cur > 4) continue;
       it.current().add(cur*2);
@@ -489,18 +454,15 @@ public class TreeTraverserTest extends TestCase {
     return new Function.Mono<TreeTraversal.GuidedIt<Integer>>() {
       @Override
       public TreeTraversal.GuidedIt<Integer> fun(TreeTraversal.GuidedIt<Integer> it) {
-        return it.setGuide(new Consumer<TreeTraversal.GuidedIt<Integer>>() {
-          @Override
-          public void consume(TreeTraversal.GuidedIt<Integer> it) {
-            if (traversal == TreeTraversal.PRE_ORDER_DFS) {
-              it.queueNext(it.curChild).result(it.curChild);
-            }
-            else if (traversal == TreeTraversal.POST_ORDER_DFS) {
-              it.queueNext(it.curChild).result(it.curChild == null ? it.curParent : null);
-            }
-            else if (traversal == TreeTraversal.PLAIN_BFS) {
-              it.queueLast(it.curChild).result(it.curChild);
-            }
+        return it.setGuide(it1 -> {
+          if (traversal == TreeTraversal.PRE_ORDER_DFS) {
+            it1.queueNext(it1.curChild).result(it1.curChild);
+          }
+          else if (traversal == TreeTraversal.POST_ORDER_DFS) {
+            it1.queueNext(it1.curChild).result(it1.curChild == null ? it1.curParent : null);
+          }
+          else if (traversal == TreeTraversal.PLAIN_BFS) {
+            it1.queueLast(it1.curChild).result(it1.curChild);
           }
         });
       }

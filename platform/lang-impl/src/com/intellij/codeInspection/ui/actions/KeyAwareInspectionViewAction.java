@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
@@ -65,6 +66,15 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
   public static class DisableInspection extends KeyAwareInspectionViewAction {
     public DisableInspection() {
       super(DisableInspectionToolAction.NAME);
+    }
+
+    @Override
+    protected boolean isEnabled(@NotNull InspectionResultsView view) {
+      final boolean enabled = super.isEnabled(view);
+      if (!enabled) return false;
+      final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper().getShortName());
+      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getProjectProfileImpl();
+      return profile.isToolEnabled(key);
     }
 
     @Override

@@ -54,12 +54,10 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
     }
 
     final long startTime = System.nanoTime();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final long endTime = System.nanoTime();
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-          System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
-        }
+    SwingUtilities.invokeLater(() -> {
+      final long endTime = System.nanoTime();
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
       }
     });
     ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));

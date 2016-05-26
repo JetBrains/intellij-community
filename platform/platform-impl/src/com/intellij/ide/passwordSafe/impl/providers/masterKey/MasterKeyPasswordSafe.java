@@ -231,12 +231,9 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     synchronized (ourEDTLock) {
       if (indicator != null && indicator.isModal()) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!runnable.isExpired()) {
-              runnable.run();
-            }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!runnable.isExpired()) {
+            runnable.run();
           }
         });
       }

@@ -110,7 +110,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         protected ListCellRenderer getListElementRenderer() {
           return new ColoredListCellRenderer<XExpression>() {
             @Override
-            protected void customizeCellRenderer(JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
+            protected void customizeCellRenderer(@NotNull JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
               append(value.getExpression());
             }
           };

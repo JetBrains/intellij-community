@@ -192,30 +192,27 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myMoveToAnotherClassCb.isSelected();
     if (myMoveToAnotherClassCb.isSelected()) {
       myEditor.putUserData(INTRODUCE_RESTART, true);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
-          try {
-            final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
-            final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
-            if (localVariable != null) {
-              constantHandler.invokeImpl(myProject, localVariable, myEditor);
-            }
-            else {
-              constantHandler.invokeImpl(myProject, myExpr, myEditor);
-            }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
+        try {
+          final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
+          final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
+          if (localVariable != null) {
+            constantHandler.invokeImpl(myProject, localVariable, myEditor);
           }
-          finally {
-            myEditor.putUserData(INTRODUCE_RESTART, false);
-            myEditor.putUserData(ACTIVE_INTRODUCE, null);
-            releaseResources();
-            if (myLocalMarker != null) {
-              myLocalMarker.dispose();
-            }
-            if (myExprMarker != null) {
-              myExprMarker.dispose();
-            }
+          else {
+            constantHandler.invokeImpl(myProject, myExpr, myEditor);
+          }
+        }
+        finally {
+          myEditor.putUserData(INTRODUCE_RESTART, false);
+          myEditor.putUserData(ACTIVE_INTRODUCE, null);
+          releaseResources();
+          if (myLocalMarker != null) {
+            myLocalMarker.dispose();
+          }
+          if (myExprMarker != null) {
+            myExprMarker.dispose();
           }
         }
       });

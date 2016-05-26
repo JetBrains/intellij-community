@@ -50,17 +50,14 @@ public class CheckBoxListModelEditor<T> {
 
   @NotNull
   public CheckBoxListModelEditor<T> editAction(final @NotNull Function<T, T> consumer) {
-    final Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        T item = getSelectedItem();
-        if (item != null) {
-          T newItem = consumer.fun(item);
-          if (newItem != null) {
-            list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
-          }
-          list.requestFocus();
+    final Runnable action = () -> {
+      T item = getSelectedItem();
+      if (item != null) {
+        T newItem = consumer.fun(item);
+        if (newItem != null) {
+          list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
         }
+        list.requestFocus();
       }
     };
     toolbarDecorator.setEditAction(new AnActionButtonRunnable() {

@@ -109,12 +109,7 @@ public class IntentionDescriptionPanel {
       showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPanel.revalidate();
-        }
-      });
+      SwingUtilities.invokeLater(() -> myPanel.revalidate());
 
     }
     catch (IOException e) {
@@ -138,11 +133,8 @@ public class IntentionDescriptionPanel {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           final Project project = ProjectManager.getInstance().getDefaultProject();
-          util.editConfigurable(project, pluginConfigurable, new Runnable(){
-            @Override
-            public void run() {
-              pluginConfigurable.select(pluginDescriptor);
-            }
+          util.editConfigurable(project, pluginConfigurable, () -> {
+            pluginConfigurable.select(pluginDescriptor);
           });
         }
       });
@@ -164,12 +156,7 @@ public class IntentionDescriptionPanel {
       URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(afterURL)});
 
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPanel.revalidate();
-        }
-      });
+      SwingUtilities.invokeLater(() -> myPanel.revalidate());
     }
     catch (IOException e) {
       LOG.error(e);

@@ -75,14 +75,11 @@ public abstract class SplitterWithSecondHideable {
         mySplitter.setSecondComponent(myDetailsComponent.getPanel());
         mySuperDivider.setResizeEnabled(true);
 
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            mySplitter.fixFirst(proportion);
-            mySplitter.invalidate();
-            mySplitter.validate();
-            mySplitter.repaint();
-          }
+        SwingUtilities.invokeLater(() -> {
+          mySplitter.fixFirst(proportion);
+          mySplitter.invalidate();
+          mySplitter.validate();
+          mySplitter.repaint();
         });
       }
 

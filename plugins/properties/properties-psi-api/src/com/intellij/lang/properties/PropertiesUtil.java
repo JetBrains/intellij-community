@@ -51,19 +51,17 @@ public class PropertiesUtil {
     @Override
     protected Set<String> compute() {
       final HashSet<String> locales =
-        new HashSet<String>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(), new Function<Locale, List<String>>() {
-          @Override
-          public List<String> fun(Locale locale) {
-            final ArrayList<String> languages = ContainerUtil.newArrayList(locale.getLanguage());
-            try {
-              languages.add(locale.getISO3Language());
-            }
-            catch (MissingResourceException ignored) {
-              // if ISO3 language is not found for existed locale then exception is thrown anyway
-            }
-            return languages;
-          }
-        })));
+        new HashSet<String>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
+                                                                    (Function<Locale, List<String>>)locale -> {
+                                                                      final ArrayList<String> languages = ContainerUtil.newArrayList(locale.getLanguage());
+                                                                      try {
+                                                                        languages.add(locale.getISO3Language());
+                                                                      }
+                                                                      catch (MissingResourceException ignored) {
+                                                                        // if ISO3 language is not found for existed locale then exception is thrown anyway
+                                                                      }
+                                                                      return languages;
+                                                                    })));
       locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
       return locales;
     }

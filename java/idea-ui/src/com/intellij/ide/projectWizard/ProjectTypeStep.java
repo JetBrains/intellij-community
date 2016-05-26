@@ -90,12 +90,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         return o.getId();
       }
     };
-  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = new Function<FrameworkSupportNode, String>() {
-    @Override
-    public String fun(FrameworkSupportNode node) {
-      return node.getId();
-    }
-  };
+  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = node -> node.getId();
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
@@ -341,22 +336,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       ModuleType type = getModuleType(group);
       moduleTypes.putValue(type, group);
     }
-    Collections.sort(groups, new Comparator<TemplatesGroup>() {
-      @Override
-      public int compare(TemplatesGroup o1, TemplatesGroup o2) {
-        int i = o2.getWeight() - o1.getWeight();
-        if (i != 0) return i;
-        int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
-        if (i1 != 0) return i1;
-        return o1.compareTo(o2);
-      }
+    Collections.sort(groups, (o1, o2) -> {
+      int i = o2.getWeight() - o1.getWeight();
+      if (i != 0) return i;
+      int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
+      if (i1 != 0) return i1;
+      return o1.compareTo(o2);
     });
 
-    Set<String> groupNames = ContainerUtil.map2Set(groups, new Function<TemplatesGroup, String>() {
-      @Override
-      public String fun(TemplatesGroup group) {
-        return group.getParentGroup();
-      }
+    Set<String> groupNames = ContainerUtil.map2Set(groups, group -> {
+      return group.getParentGroup();
     });
 
     // move subgroups

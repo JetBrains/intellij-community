@@ -413,12 +413,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }
-              return doFinalStep(new Runnable() {
-                @Override
-                public void run() {
-                  selectedValue.execute();
-                }
-              });
+              return doFinalStep(() -> selectedValue.execute());
             }
 
             @Override

@@ -283,12 +283,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         myBusyIcon.suspend();
         myBusyIcon.setToolTipText(null);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myBusyIcon != null) {
+            repaint();
           }
         });
       }

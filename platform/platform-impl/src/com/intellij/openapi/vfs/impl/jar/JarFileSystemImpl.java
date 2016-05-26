@@ -110,11 +110,8 @@ public class JarFileSystemImpl extends JarFileSystem {
   @NotNull
   @Override
   protected JarHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(this, entryFile, new Function<String, JarHandler>() {
-      @Override
-      public JarHandler fun(String localPath) {
-        return new JarHandler(localPath);
-      }
+    return VfsImplUtil.getHandler(this, entryFile, localPath -> {
+      return new JarHandler(localPath);
     });
   }
 

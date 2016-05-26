@@ -94,12 +94,9 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          // outside of read action
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // outside of read action
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
       });
     }
   }

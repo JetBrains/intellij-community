@@ -206,44 +206,36 @@ public class SearchResults implements DocumentListener {
       final FutureResult<int[]> endsRef = new FutureResult<int[]>();
       getSelection(editor, startsRef, endsRef);
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          Project project = getProject();
-          if (myDisposed || project != null && project.isDisposed()) return;
-          int[] starts = new int[0];
-          int[] ends = new int[0];
-          try {
-            starts = startsRef.get();
-            ends = endsRef.get();
-          }
-          catch (InterruptedException ignore) {
-          }
-          catch (ExecutionException ignore) {
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Project project = getProject();
+        if (myDisposed || project != null && project.isDisposed()) return;
+        int[] starts = new int[0];
+        int[] ends = new int[0];
+        try {
+          starts = startsRef.get();
+          ends = endsRef.get();
+        }
+        catch (InterruptedException ignore) {
+        }
+        catch (ExecutionException ignore) {
+        }
 
-          if (starts.length == 0 || findModel.isGlobal()) {
-            findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+        if (starts.length == 0 || findModel.isGlobal()) {
+          findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+        }
+        else {
+          for (int i = 0; i < starts.length; ++i) {
+            findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
           }
-          else {
-            for (int i = 0; i < starts.length; ++i) {
-              findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
-            }
-          }
+        }
 
-          final Runnable searchCompletedRunnable = new Runnable() {
-            @Override
-            public void run() {
-              searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-            }
-          };
+        final Runnable searchCompletedRunnable = () -> searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
 
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
-          }
-          else {
-            searchCompletedRunnable.run();
-          }
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
+        }
+        else {
+          searchCompletedRunnable.run();
         }
       });
     }
@@ -267,13 +259,10 @@ public class SearchResults implements DocumentListener {
       ends.set(selection.getBlockSelectionEnds());
     } else {
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            SelectionModel selection = editor.getSelectionModel();
-            starts.set(selection.getBlockSelectionStarts());
-            ends.set(selection.getBlockSelectionEnds());
-          }
+        SwingUtilities.invokeAndWait(() -> {
+          SelectionModel selection = editor.getSelectionModel();
+          starts.set(selection.getBlockSelectionStarts());
+          ends.set(selection.getBlockSelectionEnds());
         });
       }
       catch (InterruptedException ignore) {
@@ -335,12 +324,7 @@ public class SearchResults implements DocumentListener {
     }
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
-    Collections.sort(myOccurrences, new Comparator<FindResult>() {
-      @Override
-      public int compare(FindResult findResult, FindResult findResult1) {
-        return findResult.getStartOffset() - findResult1.getStartOffset();
-      }
-    });
+    Collections.sort(myOccurrences, (findResult, findResult1) -> findResult.getStartOffset() - findResult1.getStartOffset());
 
     myFindModel = findModel;
     updateCursor(oldCursorRange, next);

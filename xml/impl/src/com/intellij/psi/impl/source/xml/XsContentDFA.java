@@ -204,12 +204,7 @@ class XsContentDFA extends XmlContentDFA {
     }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
 
-    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
-      @Override
-      public XSGrammar fun(Grammar grammar) {
-        return (XSGrammar)grammar;
-      }
-    }, new XSGrammar[0]));
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, grammar -> (XSGrammar)grammar, new XSGrammar[0]));
   }
 
   private static class MyXSElementDeclHelper implements XSElementDeclHelper {

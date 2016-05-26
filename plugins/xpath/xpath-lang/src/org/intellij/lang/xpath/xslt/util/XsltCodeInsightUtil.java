@@ -45,11 +45,7 @@ public class XsltCodeInsightUtil {
             return element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
         }
     };
-    public static final Comparator<PsiElement> POSITION_COMPARATOR = new Comparator<PsiElement>() {
-        public int compare(PsiElement o1, PsiElement o2) {
-            return o1.getTextOffset() - o2.getTextOffset();
-        }
-    };
+    public static final Comparator<PsiElement> POSITION_COMPARATOR = (o1, o2) -> o1.getTextOffset() - o2.getTextOffset();
 
     private XsltCodeInsightUtil() {
     }

@@ -42,12 +42,7 @@ public class IconDeferrerImpl extends IconDeferrer {
   };
   private long myLastClearTimestamp;
   @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      clear();
-    }
-  });
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(() -> clear());
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();

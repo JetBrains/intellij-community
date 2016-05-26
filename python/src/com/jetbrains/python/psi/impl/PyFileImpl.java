@@ -82,37 +82,34 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
 
-      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub()), new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement element) {
-          if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
-            final PsiNamedElement namedElement = (PsiNamedElement)element;
-            final String name = namedElement.getName();
-            if (!myNamedElements.containsKey(name)) {
-              myNamedElements.put(name, Lists.<PsiNamedElement>newArrayList());
-            }
-            final List<PsiNamedElement> elements = myNamedElements.get(name);
-            elements.add(namedElement);
+      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub()), element -> {
+        if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
+          final PsiNamedElement namedElement = (PsiNamedElement)element;
+          final String name = namedElement.getName();
+          if (!myNamedElements.containsKey(name)) {
+            myNamedElements.put(name, Lists.<PsiNamedElement>newArrayList());
           }
-          if (element instanceof PyImportedNameDefiner) {
-            myImportedNameDefiners.add((PyImportedNameDefiner)element);
-          }
-          if (element instanceof PyFromImportStatement) {
-            final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
-            final PyStarImportElement starImportElement = fromImportStatement.getStarImportElement();
-            if (starImportElement != null) {
-              myImportedNameDefiners.add(starImportElement);
-            }
-            else {
-              Collections.addAll(myImportedNameDefiners, fromImportStatement.getImportElements());
-            }
-          }
-          else if (element instanceof PyImportStatement) {
-            final PyImportStatement importStatement = (PyImportStatement)element;
-            Collections.addAll(myImportedNameDefiners, importStatement.getImportElements());
-          }
-          return true;
+          final List<PsiNamedElement> elements = myNamedElements.get(name);
+          elements.add(namedElement);
         }
+        if (element instanceof PyImportedNameDefiner) {
+          myImportedNameDefiners.add((PyImportedNameDefiner)element);
+        }
+        if (element instanceof PyFromImportStatement) {
+          final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+          final PyStarImportElement starImportElement = fromImportStatement.getStarImportElement();
+          if (starImportElement != null) {
+            myImportedNameDefiners.add(starImportElement);
+          }
+          else {
+            Collections.addAll(myImportedNameDefiners, fromImportStatement.getImportElements());
+          }
+        }
+        else if (element instanceof PyImportStatement) {
+          final PyImportStatement importStatement = (PyImportStatement)element;
+          Collections.addAll(myImportedNameDefiners, importStatement.getImportElements());
+        }
+        return true;
       });
       for (List<PsiNamedElement> elements : myNamedElements.values()) {
         Collections.reverse(elements);

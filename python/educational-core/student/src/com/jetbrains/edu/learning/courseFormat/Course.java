@@ -77,11 +77,8 @@ public class Course {
   }
 
   public static String getAuthorsString(@NotNull List<CourseInfo.Author> authors) {
-    return StringUtil.join(authors, new Function<CourseInfo.Author, String>() {
-      @Override
-      public String fun(CourseInfo.Author author) {
-        return author.getName();
-      }
+    return StringUtil.join(authors, author -> {
+      return author.getName();
     }, ", ");
   }
 

@@ -44,14 +44,11 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiFile psi =
-              PsiDocumentManager.getInstance(getProject())
-                .getPsiFile(getConsoleView().getConsoleEditor().getDocument());
-            Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          PsiFile psi =
+            PsiDocumentManager.getInstance(getProject())
+              .getPsiFile(getConsoleView().getConsoleEditor().getDocument());
+          Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
         });
       }
     });
@@ -78,14 +75,11 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiFile psi =
-              PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getConsoleEditor().getDocument());
-            //TreeUtil.ensureParsed(psi.getNode());
-            assertTrue(PsiTreeUtil.hasErrorElements(psi));
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          PsiFile psi =
+            PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getConsoleEditor().getDocument());
+          //TreeUtil.ensureParsed(psi.getNode());
+          assertTrue(PsiTreeUtil.hasErrorElements(psi));
         });
       }
 

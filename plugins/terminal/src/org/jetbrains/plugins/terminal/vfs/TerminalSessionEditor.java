@@ -76,12 +76,7 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
       .setTerminationCallback(new Predicate<Integer>() {
         @Override
         public boolean apply(Integer integer) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile));
 
           return true;
         }

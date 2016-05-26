@@ -96,11 +96,7 @@ public class PackageFileAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     final List<VirtualFile> files = getFilesToPackage(event, project);
     Artifact[] allArtifacts = ArtifactManager.getInstance(project).getArtifacts();
-    PackageFileWorker.startPackagingFiles(project, files, allArtifacts, new Runnable() {
-      public void run() {
-        setStatusText(project, files);
-      }
-    });
+    PackageFileWorker.startPackagingFiles(project, files, allArtifacts, () -> setStatusText(project, files));
   }
 
   private static void setStatusText(Project project, List<VirtualFile> files) {

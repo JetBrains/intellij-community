@@ -44,26 +44,18 @@ public class PyPackagesUpdater implements StartupActivity {
     }
     final PyPackageService service = PyPackageService.getInstance();
     if (checkNeeded(project, service)) {
-      application.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-            service.LAST_TIME_CHECKED = System.currentTimeMillis();
-          }
-          catch (IOException e) {
-            LOG.warn(e.getMessage());
-          }
+      application.executeOnPooledThread(() -> {
+        try {
+          PyPIPackageUtil.INSTANCE.updatePyPICache(service);
+          service.LAST_TIME_CHECKED = System.currentTimeMillis();
+        }
+        catch (IOException e) {
+          LOG.warn(e.getMessage());
         }
       });
     }
     if (checkCondaUpdateNeeded(project)) {
-      application.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          PyCondaPackageService.getInstance().updatePackagesCache();
-        }
-      });
+      application.executeOnPooledThread(() -> PyCondaPackageService.getInstance().updatePackagesCache());
     }
   }
 

@@ -255,12 +255,8 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
     }
 
     private List<MavenProject> selectScheduledProjects(final boolean forUpdate) {
-      return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(), new Function<Map.Entry<MavenProject, Boolean>, MavenProject>() {
-        @Override
-        public MavenProject fun(Map.Entry<MavenProject, Boolean> eachEntry) {
-          return forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null;
-        }
-      });
+      return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(),
+                                      eachEntry -> forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null);
     }
   }
 }

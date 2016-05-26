@@ -66,11 +66,8 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
     }
     PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
 
-    List<Pair<PsiExpression,PsiType>> args = ContainerUtil.map(types, new Function<String, Pair<PsiExpression, PsiType>>() {
-      @Override
-      public Pair<PsiExpression, PsiType> fun(String s) {
-        return new Pair<PsiExpression, PsiType>(null, PsiType.getTypeByName(s, project, GlobalSearchScope.allScope(project)));
-      }
+    List<Pair<PsiExpression,PsiType>> args = ContainerUtil.map(types, s -> {
+      return new Pair<PsiExpression, PsiType>(null, PsiType.getTypeByName(s, project, GlobalSearchScope.allScope(project)));
     });
     CreateMethodFromUsageFix.doCreate(targetClass, method, false,
                                       args,

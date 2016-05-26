@@ -68,12 +68,7 @@ class RegisterInspectionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public void consume(DomFileElement<IdeaPlugin> element) {
-        doFix(element, project, file);
-      }
-    });
+    PluginDescriptorChooser.show(project, editor, file, element -> doFix(element, project, file));
   }
 
   private void doFix(final DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {

@@ -99,11 +99,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
           final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
           final Collection<Object> variants = resolvingConverter.getVariants(context);
           final List<Pair<String, Icon>> all =
-            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
-              @Override
-              public Pair<String, Icon> fun(final Object s) {
-                return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-              }
+            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, s -> {
+              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
             }));
           all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
             @Override
@@ -296,39 +293,36 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     final JComboBox comboBox = getComponent();
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isOpen()) return;
-        if (!getDomWrapper().isValid()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!project.isOpen()) return;
+      if (!getDomWrapper().isValid()) return;
 
-        final DomElement domElement = getDomElement();
-        if (domElement == null || !domElement.isValid()) return;
+      final DomElement domElement1 = getDomElement();
+      if (domElement1 == null || !domElement1.isValid()) return;
 
-        final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
-        final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
-        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
-        final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement, true, HighlightSeverity.WARNING);
+      final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
+      final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
+      final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
+      final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement1, true, HighlightSeverity.WARNING);
 
-        Color background = getDefaultBackground();
-        comboBox.setToolTipText(null);
+      Color background = getDefaultBackground();
+      comboBox.setToolTipText(null);
 
-        if (errorProblems.size() > 0) {
-          background = getErrorBackground();
-          comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
-        }
-        else if (warningProblems.size() > 0) {
-          background = getWarningBackground();
-          comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
-        }
-
-            final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
-            final String s = pair == null ? null : pair.first;
-            background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
-
-        comboBox.setBackground(background);
-        comboBox.getEditor().getEditorComponent().setBackground(background);
+      if (errorProblems.size() > 0) {
+        background = getErrorBackground();
+        comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
       }
+      else if (warningProblems.size() > 0) {
+        background = getWarningBackground();
+        comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
+      }
+
+          final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
+          final String s = pair == null ? null : pair.first;
+          background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
+
+      comboBox.setBackground(background);
+      comboBox.getEditor().getEditorComponent().setBackground(background);
     });
 
   }

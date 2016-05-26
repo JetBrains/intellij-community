@@ -426,12 +426,9 @@ public abstract class InplaceRefactoring {
 
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
-        restoreSelection();
-      }
+    Runnable runnable = () -> {
+      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
+      restoreSelection();
     };
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
@@ -493,15 +490,12 @@ public abstract class InplaceRefactoring {
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
     final StartMarkAction[] markAction = new StartMarkAction[1];
     final StartMarkAction.AlreadyStartedException[] ex = new StartMarkAction.AlreadyStartedException[1];
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          markAction[0] = StartMarkAction.start(myEditor, myProject, getCommandName());
-        }
-        catch (StartMarkAction.AlreadyStartedException e) {
-          ex[0] = e;
-        }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        markAction[0] = StartMarkAction.start(myEditor, myProject, getCommandName());
+      }
+      catch (StartMarkAction.AlreadyStartedException e) {
+        ex[0] = e;
       }
     }, getCommandName(), null);
     if (ex[0] != null) throw ex[0];
@@ -587,26 +581,20 @@ public abstract class InplaceRefactoring {
 
   protected void revertState() {
     if (myOldName == null) return;
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
-            assert state != null;
-            final int segmentsCount = state.getSegmentsCount();
-            final Document document = topLevelEditor.getDocument();
-            for (int i = 0; i < segmentsCount; i++) {
-              final TextRange segmentRange = state.getSegmentRange(i);
-              document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
-            }
-          }
-        });
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
+        assert state != null;
+        final int segmentsCount = state.getSegmentsCount();
+        final Document document = topLevelEditor.getDocument();
+        for (int i = 0; i < segmentsCount; i++) {
+          final TextRange segmentRange = state.getSegmentRange(i);
+          document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
         }
+      });
+      if (!myProject.isDisposed() && myProject.isOpen()) {
+        PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
       }
     }, getCommandName(), null);
   }

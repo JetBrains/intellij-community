@@ -85,13 +85,8 @@ public class StaticGenericInfo extends DomGenericInfoEx {
         addAdders(description, builder.collectionClassAdders.get(name));
       }
 
-      final NotNullFunction<String, CollectionChildDescriptionImpl> mapper = new NotNullFunction<String, CollectionChildDescriptionImpl>() {
-        @Override
-        @NotNull
-        public CollectionChildDescriptionImpl fun(final String xmlName) {
-          return ObjectUtils.assertNotNull(myCollections.findDescription(xmlName));
-        }
-      };
+      final NotNullFunction<String, CollectionChildDescriptionImpl> mapper =
+        xmlName -> ObjectUtils.assertNotNull(myCollections.findDescription(xmlName));
       final Map<JavaMethodSignature, String[]> getters = builder.getCompositeCollectionGetters();
       for (final JavaMethodSignature signature : getters.keySet()) {
         myCompositeChildrenMethods.put(signature, ContainerUtil.map2Set(getters.get(signature), mapper));
@@ -179,20 +174,10 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
-      return new Function<Object[], Type>() {
-        @Override
-        public Type fun(final Object[] s) {
-          return (Type)s[1];
-        }
-      };
+      return s -> (Type)s[1];
     }
 
-    return new Function<Object[], Type>() {
-      @Override
-      public Type fun(final Object[] s) {
-        return method.getGenericReturnType();
-      }
-    };
+    return s -> method.getGenericReturnType();
   }
 
 
@@ -203,12 +188,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
-      return new Function<Object[], Integer>() {
-        @Override
-        public Integer fun(final Object[] s) {
-          return (Integer)s[1];
-        }
-      };
+      return s -> (Integer)s[1];
     }
 
     return new ConstantFunction<Object[], Integer>(Integer.MAX_VALUE);

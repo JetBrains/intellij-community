@@ -61,15 +61,12 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   @Override
   protected void runTest() throws Throwable {
     final Throwable[] throwable = {null};
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        try {
-          doRunTest();
-        }
-        catch (Throwable t) {
-          throwable[0] = t;
-        }
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      try {
+        doRunTest();
+      }
+      catch (Throwable t) {
+        throwable[0] = t;
       }
     }, "", null);
     if (throwable[0] != null) {

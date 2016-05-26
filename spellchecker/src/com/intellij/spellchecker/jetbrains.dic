@@ -570,7 +570,9 @@ stacktrace
 startup
 stateful
 stdarg
+stderr
 stdlib
+stdout
 stepic
 stmt
 strictfp

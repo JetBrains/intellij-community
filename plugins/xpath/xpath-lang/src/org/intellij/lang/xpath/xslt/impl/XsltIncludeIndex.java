@@ -78,10 +78,8 @@ public class XsltIncludeIndex {
 
   private static boolean _process(VirtualFile[] files, Project project, Processor<XmlFile> processor) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, new NullableFunction<VirtualFile, PsiFile>() {
-      public PsiFile fun(VirtualFile file) {
-        return psiManager.findFile(file);
-      }
+    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, (NullableFunction<VirtualFile, PsiFile>)file -> {
+      return psiManager.findFile(file);
     });
     for (final PsiFile psiFile : psiFiles) {
       if (XsltSupport.isXsltFile(psiFile)) {

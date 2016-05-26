@@ -110,12 +110,9 @@ public class TerminalView {
     myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
       @Override
       public void tabClosed(JediTermWidget terminal) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myTerminalWidget != null) {
-              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
-            }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (myTerminalWidget != null) {
+            hideIfNoActiveSessions(toolWindow, myTerminalWidget);
           }
         });
       }
@@ -171,11 +168,8 @@ public class TerminalView {
       terminalRunner.openSession(myTerminalWidget);
     }
 
-    toolWindow.activate(new Runnable() {
-      @Override
-      public void run() {
+    toolWindow.activate(() -> {
 
-      }
     }, true);
   }
 
@@ -200,12 +194,7 @@ public class TerminalView {
   public void createNewSession(Project project, final AbstractTerminalRunner terminalRunner) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
 
-    toolWindow.activate(new Runnable() {
-      @Override
-      public void run() {
-        openSession(toolWindow, terminalRunner);
-      }
-    }, true);
+    toolWindow.activate(() -> openSession(toolWindow, terminalRunner), true);
   }
 
   private static void hideIfNoActiveSessions(@NotNull final ToolWindow toolWindow, @NotNull JBTabbedTerminalWidget terminal) {

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.builder
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsMethodImpl
+import com.intellij.psi.impl.light.LightElement
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 @CompileStatic
 class StreamingJsonBuilderTest extends LightGroovyTestCase {
@@ -132,10 +134,11 @@ builder.root<warning>([], new Object(), {})</warning>
         "doubleArg(new Object[0], {<caret>$innerCallText})",
         "varArg(new Object(), [], {<caret>$innerCallText}, a: 1, 2d, [:], '')",
       ].each { callText ->
-        ["builder.root {$callText}",
-         "builder.root(a: 1, b: 2) {$callText}",
-         "builder.root([1, 2, 3, 4]) {$callText}",
-         "builder.root([] as Integer[], {$callText})",
+        [
+          "builder.root {$callText}",
+          "builder.root(a: 1, b: 2) {$callText}",
+          "builder.root([1, 2, 3, 4]) {$callText}",
+          "builder.root([] as Integer[], {$callText})",
         ].each { text ->
           doTest(text)
         }
@@ -143,11 +146,23 @@ builder.root<warning>([], new Object(), {})</warning>
     }
   }
 
+  void 'test owner first'() {
+    myFixture.configureByText 'a.groovy', '''\
+def foo(String s) {}
+new groovy.json.StreamingJsonBuilder().root {
+  fo<caret>o ""
+}
+'''
+    def resolved = myFixture.file.findReferenceAt(myFixture.caretOffset)?.resolve()
+    assert resolved instanceof GrMethod
+    assert !(resolved instanceof LightElement)
+    assert resolved.physical
+  }
+
   private void doTest(text) {
     fixture.configureByText 'a.groovy', "def builder = new groovy.json.StreamingJsonBuilder(); $text"
     def reference = fixture.getReferenceAtCaretPosition() as GrReferenceExpression
-    assert reference.resolve() instanceof PsiMethod
-    assert reference.type.canonicalText == 'java.lang.Object'
+    assert reference.resolve() instanceof PsiMethod && reference.type.canonicalText == 'java.lang.Object' : text
   }
 
   void 'test do not override existing methods'() {

@@ -236,11 +236,8 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final StringBuilder builder = new StringBuilder();
     builder.append("{");
     final PyKeyValueExpression[] elements = dict.getElements();
-    builder.append(StringUtil.join(elements, new Function<PyKeyValueExpression, String>() {
-      @Override
-      public String fun(PyKeyValueExpression expression) {
-        return expression.getText();
-      }
+    builder.append(StringUtil.join(elements, expression -> {
+      return expression.getText();
     }, ","));
     if (elements.length > 0) {
       builder.append(",");

@@ -59,17 +59,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();
   @NotNull private final VirtualFileManager myVirtualFileManager;
   @NotNull private final MessageBus myBus;
-  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
-    @Override
-    public int compare(@NotNull String url1, @NotNull String url2) {
-      return url1.compareTo(url2);
-    }
-  } : new Comparator<String>() {
-    @Override
-    public int compare(@NotNull String url1, @NotNull String url2) {
-      return url1.compareToIgnoreCase(url2);
-    }
-  };
+  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? (Comparator<String>)(url1, url2) -> url1.compareTo(url2)
+                                                                                                : (Comparator<String>)(url1, url2) -> url1.compareToIgnoreCase(url2);
 
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,

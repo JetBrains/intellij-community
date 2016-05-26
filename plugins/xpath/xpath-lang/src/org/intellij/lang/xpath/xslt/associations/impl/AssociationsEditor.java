@@ -80,22 +80,14 @@ class AssociationsEditor {
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
     new TreeSpeedSearch(myTree);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (oldState == null) {
-              expandTree(treeModel);
-            }
-            else {
-              oldState.applyTo(myTree);
-            }
-          }
-        });
+    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (oldState == null) {
+        expandTree(treeModel);
       }
-    });
+      else {
+        oldState.applyTo(myTree);
+      }
+    }));
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {
@@ -202,12 +194,7 @@ class AssociationsEditor {
   }
 
   public void select(final PsiFile file) {
-    myBuilder.getReady(this).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myBuilder.select(file, file.getVirtualFile(), true);
-      }
-    });
+    myBuilder.getReady(this).doWhenDone(() -> myBuilder.select(file, file.getVirtualFile(), true));
   }
 
   class AddAssociationActionWrapper extends AddAssociationAction {

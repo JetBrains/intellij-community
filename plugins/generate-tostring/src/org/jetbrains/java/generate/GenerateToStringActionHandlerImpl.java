@@ -237,10 +237,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                         }
                     };
 
-                    ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, new Runnable() {
-                        public void run() {
-                            ui.selectItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
-                        }
+                    ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, () -> {
+                        ui.selectItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
                     });
                   Disposer.dispose(disposable);
                 }

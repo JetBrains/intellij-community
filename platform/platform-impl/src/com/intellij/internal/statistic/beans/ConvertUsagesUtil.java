@@ -149,11 +149,9 @@ public class ConvertUsagesUtil {
   //@NotNull
   public static <T extends UsageDescriptor> Map<GroupDescriptor, Set<T>> sortDescriptorsByPriority(Map<GroupDescriptor, Set<T>> descriptors) {
     assert descriptors != null;
-    final SortedMap<GroupDescriptor, Set<T>> map = new TreeMap<GroupDescriptor, Set<T>>(new Comparator<GroupDescriptor>() {
-      public int compare(GroupDescriptor g1, GroupDescriptor g2) {
-        final int priority = (int)(g2.getPriority() - g1.getPriority());
-        return priority == 0 ? g1.getId().compareTo(g2.getId()) : priority;
-      }
+    final SortedMap<GroupDescriptor, Set<T>> map = new TreeMap<GroupDescriptor, Set<T>>((g1, g2) -> {
+      final int priority = (int)(g2.getPriority() - g1.getPriority());
+      return priority == 0 ? g1.getId().compareTo(g2.getId()) : priority;
     });
 
     map.putAll(descriptors);

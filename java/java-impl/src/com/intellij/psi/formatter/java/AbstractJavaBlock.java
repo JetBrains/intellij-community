@@ -428,9 +428,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
     }
-    if (nodeType == JavaElementType.CLASS || nodeType == JavaElementType.METHOD) {
-      return null;
-    }
     return null;
   }
 

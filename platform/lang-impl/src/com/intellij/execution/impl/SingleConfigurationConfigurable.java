@@ -175,13 +175,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         Runnable resultQuickFix;
         if (quickFix != null && snapshot != null) {
           final RunnerAndConfigurationSettings fixedSettings = snapshot;
-          resultQuickFix = new Runnable() {
-
-            @Override
-            public void run() {
-              quickFix.run();
-              getEditor().resetFrom(fixedSettings);
-            }
+          resultQuickFix = () -> {
+            quickFix.run();
+            getEditor().resetFrom(fixedSettings);
           };
         }
         else {

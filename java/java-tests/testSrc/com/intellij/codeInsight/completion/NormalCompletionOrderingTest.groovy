@@ -300,6 +300,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
   }
 
+  public void testPreferReturnInSingleStatementPlace() {
+    checkPreferredItems 0, "return", "registerKeyboardAction"
+  }
+
+  public void testPreferContinueInsideLoops() {
+    checkPreferredItems 0, "continue", "color", "computeVisibleRect"
+  }
+
   public void testPreferModifiers() {
     checkPreferredItems(0, "private", "protected", "public");
   }

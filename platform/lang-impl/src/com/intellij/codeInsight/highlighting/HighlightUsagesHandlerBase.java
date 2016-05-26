@@ -56,12 +56,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     if (targets == null) {
       return;
     }
-    selectTargets(targets, new Consumer<List<T>>() {
-      @Override
-      public void consume(final List<T> targets) {
-        computeUsages(targets);
-        performHighlighting();
-      }
+    selectTargets(targets, targets1 -> {
+      computeUsages(targets1);
+      performHighlighting();
     });
   }
 

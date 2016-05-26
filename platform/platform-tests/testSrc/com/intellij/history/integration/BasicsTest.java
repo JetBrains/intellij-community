@@ -38,18 +38,15 @@ public class BasicsTest extends IntegrationTestCase {
   public void testProcessingCommands() throws Exception {
     final VirtualFile[] f = new VirtualFile[1];
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
-          @Override
-          public void doRun() throws IOException {
-            f[0] = createChildData(myRoot, "f1.txt");
-            f[0].setBinaryContent(new byte[]{1});
-            f[0].setBinaryContent(new byte[]{2});
-          }
-        }, "name", null);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
+        @Override
+        public void doRun() throws IOException {
+          f[0] = createChildData(myRoot, "f1.txt");
+          f[0].setBinaryContent(new byte[]{1});
+          f[0].setBinaryContent(new byte[]{2});
+        }
+      }, "name", null);
     });
 
 

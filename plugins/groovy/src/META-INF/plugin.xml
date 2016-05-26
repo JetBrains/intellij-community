@@ -591,6 +591,7 @@
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 

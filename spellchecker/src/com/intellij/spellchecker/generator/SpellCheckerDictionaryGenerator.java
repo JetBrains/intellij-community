@@ -71,25 +71,22 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   public void generate() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        // let's do result a bit more predictable
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      // let's do result a bit more predictable
 
-        // ruby dictionary
-        generate(myDefaultDictName, progressIndicator);
+      // ruby dictionary
+      generate(myDefaultDictName, progressIndicator);
 
-        // other gem-related dictionaries in alphabet order
-        final List<String> dictionaries = new ArrayList<String>(myDict2FolderMap.keySet());
-        Collections.sort(dictionaries);
+      // other gem-related dictionaries in alphabet order
+      final List<String> dictionaries = new ArrayList<String>(myDict2FolderMap.keySet());
+      Collections.sort(dictionaries);
 
-        for (String dict : dictionaries) {
-          if (myDefaultDictName.equals(dict)) {
-            continue;
-          }
-          generate(dict, progressIndicator);
+      for (String dict : dictionaries) {
+        if (myDefaultDictName.equals(dict)) {
+          continue;
         }
+        generate(dict, progressIndicator);
       }
     }, "Generating Dictionaries", false, myProject);
   }
@@ -187,12 +184,9 @@ public abstract class SpellCheckerDictionaryGenerator {
     SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
       @Override
       public void consumeToken(PsiElement element, final String text, boolean useRename, int offset, TextRange rangeToCheck, Splitter splitter) {
-        splitter.split(text, rangeToCheck, new Consumer<TextRange>() {
-          @Override
-          public void consume(TextRange textRange) {
-            final String word = textRange.substring(text);
-            addSeenWord(seenNames, word, language);
-          }
+        splitter.split(text, rangeToCheck, textRange -> {
+          final String word = textRange.substring(text);
+          addSeenWord(seenNames, word, language);
         });
       }
     });

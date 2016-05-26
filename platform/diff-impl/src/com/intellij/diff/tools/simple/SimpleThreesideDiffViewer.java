@@ -35,21 +35,19 @@ import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
@@ -121,45 +119,34 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     try {
       indicator.checkCanceled();
 
-      List<DiffContent> contents = myRequest.getContents();
-      final Document[] documents = new Document[3];
-      documents[0] = ((DocumentContent)contents.get(0)).getDocument();
-      documents[1] = ((DocumentContent)contents.get(1)).getDocument();
-      documents[2] = ((DocumentContent)contents.get(2)).getDocument();
+      final List<DiffContent> contents = myRequest.getContents();
+      final List<Document> documents = ContainerUtil.map(contents, content -> ((DocumentContent)content).getDocument());
 
-      CharSequence[] sequences = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
-        @Override
-        public CharSequence[] compute() {
-          CharSequence[] sequences = new CharSequence[3];
-          sequences[0] = documents[0].getImmutableCharSequence();
-          sequences[1] = documents[1].getImmutableCharSequence();
-          sequences[2] = documents[2].getImmutableCharSequence();
-          return sequences;
-        }
+      final List<CharSequence> sequences = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        return ContainerUtil.map(documents, Document::getImmutableCharSequence);
       });
 
       final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences[0], sequences[1], sequences[2],
+      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                     comparisonPolicy, indicator);
 
       if (getHighlightPolicy().isFineFragments()) {
         List<MergeLineFragment> fineLineFragments = new ArrayList<>(lineFragments.size());
 
         for (final MergeLineFragment fragment : lineFragments) {
-          CharSequence[] chunks = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
-            @Override
-            public CharSequence[] compute() {
-              indicator.checkCanceled();
-              CharSequence[] chunks = new CharSequence[3];
-              chunks[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
-              chunks[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
-              chunks[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
+          CharSequence[] chunks = ReadAction.compute(() -> {
+            indicator.checkCanceled();
 
-              ConflictType type = ThreesideDiffChangeBase.calcType(fragment, Arrays.asList(documents), comparisonPolicy);
-              if (!type.isChange(Side.LEFT)) chunks[0] = null;
-              if (!type.isChange(Side.RIGHT)) chunks[2] = null;
-              return chunks;
-            }
+            CharSequence[] result = new CharSequence[3];
+            result[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
+            result[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
+            result[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
+
+            ConflictType type = ThreesideDiffChangeBase.calcType(fragment, documents, comparisonPolicy);
+            if (!type.isChange(Side.LEFT)) result[0] = null;
+            if (!type.isChange(Side.RIGHT)) result[2] = null;
+            return result;
           });
 
           List<MergeWordFragment> wordFragments = DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator);
@@ -184,7 +171,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @Nullable
-  private static CharSequence getChunkContent(@NotNull MergeLineFragment fragment, @NotNull Document[] documents, @NotNull ThreeSide side) {
+  private static CharSequence getChunkContent(@NotNull MergeLineFragment fragment,
+                                              @NotNull List<Document> documents,
+                                              @NotNull ThreeSide side) {
     int startLine = fragment.getStartLine(side);
     int endLine = fragment.getEndLine(side);
     return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;

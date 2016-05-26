@@ -600,27 +600,24 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
       if (element.getNode() != null && isBrace) {
         final int finalLBraceOffset = lBraceOffset;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run(){
-            try{
-              int newOffset;
-              if (finalLBraceOffset != -1) {
-                RangeMarker marker = document.createRangeMarker(offset, offset + 1);
-                CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
-                newOffset = marker.getStartOffset();
-                marker.dispose();
-              } else {
-                newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try{
+            int newOffset;
+            if (finalLBraceOffset != -1) {
+              RangeMarker marker = document.createRangeMarker(offset, offset + 1);
+              CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
+              newOffset = marker.getStartOffset();
+              marker.dispose();
+            } else {
+              newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+            }
 
-              editor.getCaretModel().moveToOffset(newOffset + 1);
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              editor.getSelectionModel().removeSelection();
-            }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
+            editor.getCaretModel().moveToOffset(newOffset + 1);
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            editor.getSelectionModel().removeSelection();
+          }
+          catch(IncorrectOperationException e){
+            LOG.error(e);
           }
         });
       }

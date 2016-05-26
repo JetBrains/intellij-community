@@ -72,16 +72,13 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
         return new AnAction("Edit Template") {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            chooseAndPerform(editor, frameworks, new Consumer<TestFramework>() {
-              @Override
-              public void consume(TestFramework framework) {
-                final FileTemplateDescriptor descriptor = methodKind.getFileTemplateDescriptor(framework);
-                if (descriptor != null) {
-                  final String fileName = descriptor.getFileName();
-                  AllFileTemplatesConfigurable.editCodeTemplate(FileUtil.getNameWithoutExtension(fileName), project);
-                } else {
-                  HintManager.getInstance().showErrorHint(editor, "No template found for " + framework.getName() + ":" + BaseGenerateTestSupportMethodAction.this.getTemplatePresentation().getText());
-                }
+            chooseAndPerform(editor, frameworks, framework -> {
+              final FileTemplateDescriptor descriptor = methodKind.getFileTemplateDescriptor(framework);
+              if (descriptor != null) {
+                final String fileName = descriptor.getFileName();
+                AllFileTemplatesConfigurable.editCodeTemplate(FileUtil.getNameWithoutExtension(fileName), project);
+              } else {
+                HintManager.getInstance().showErrorHint(editor, "No template found for " + framework.getName() + ":" + BaseGenerateTestSupportMethodAction.this.getTemplatePresentation().getText());
               }
             });
           }
@@ -152,21 +149,11 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
 
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        return ((TestFramework)o).getName();
-      }
-    });
+    builder.setFilteringEnabled(o -> ((TestFramework)o).getName());
 
     builder
       .setTitle("Choose Framework")
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          consumer.consume((TestFramework)list.getSelectedValue());
-        }
-      })
+      .setItemChoosenCallback(() -> consumer.consume((TestFramework)list.getSelectedValue()))
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);
   }
@@ -187,12 +174,9 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
         }
       }
       if (frameworks.isEmpty()) return;
-      final Consumer<TestFramework> consumer = new Consumer<TestFramework>() {
-        @Override
-        public void consume(TestFramework framework) {
-          if (framework == null) return;
-          doGenerate(editor, file, targetClass, framework);
-        }
+      final Consumer<TestFramework> consumer = framework -> {
+        if (framework == null) return;
+        doGenerate(editor, file, targetClass, framework);
       };
 
       chooseAndPerform(editor, frameworks, consumer);
@@ -222,20 +206,17 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) return;
 
-      WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          try {
-            PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-            PsiMethod method = generateDummyMethod(editor, file);
-            if (method == null) return;
+      WriteCommandAction.runWriteCommandAction(file.getProject(), () -> {
+        try {
+          PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+          PsiMethod method = generateDummyMethod(editor, file);
+          if (method == null) return;
 
-            TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false, null);
-          }
-          catch (IncorrectOperationException e) {
-            HintManager.getInstance().showErrorHint(editor, "Cannot generate method: " + e.getMessage());
-            LOG.warn(e);
-          }
+          TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false, null);
+        }
+        catch (IncorrectOperationException e) {
+          HintManager.getInstance().showErrorHint(editor, "Cannot generate method: " + e.getMessage());
+          LOG.warn(e);
         }
       });
     }

@@ -52,13 +52,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         catch (final Exception e) {
           LOG.warn("Error running terminal", e);
 
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-            @Override
-            public void run() {
-              Messages.showErrorDialog(AbstractTerminalRunner.this.getProject(), e.getMessage(), getTitle());
-            }
-          });
+          UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(AbstractTerminalRunner.this.getProject(), e.getMessage(), getTitle()));
         }
       }
     });
@@ -69,12 +63,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     try {
       final T process = createProcess(null);
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          initConsoleUI(process);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
     }
     catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
@@ -164,11 +153,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
     // Request focus
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
-    window.activate(new Runnable() {
-      public void run() {
-        IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
-      }
-    });
+    window.activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
   }
 
   @NotNull

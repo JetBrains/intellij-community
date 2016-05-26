@@ -282,20 +282,17 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
       else {
         RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
         final PsiClass[] targetClass = new PsiClass[]{null};
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            try {
-              targetClass[0] = findOrCreateTargetClass(manager, fqName);
-            }
-            catch (IncorrectOperationException e) {
-              CommonRefactoringUtil.showErrorMessage(
-                MoveMembersImpl.REFACTORING_NAME,
-                e.getMessage(),
-                HelpID.MOVE_MEMBERS,
-                myProject);
-            }
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          try {
+            targetClass[0] = findOrCreateTargetClass(manager, fqName);
           }
-
+          catch (IncorrectOperationException e) {
+            CommonRefactoringUtil.showErrorMessage(
+              MoveMembersImpl.REFACTORING_NAME,
+              e.getMessage(),
+              HelpID.MOVE_MEMBERS,
+              myProject);
+          }
         }, RefactoringBundle.message("create.class.command", fqName), null);
 
         if (targetClass[0] == null) {

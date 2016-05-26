@@ -41,14 +41,9 @@ public class ShowDelayedMessageInternalAction extends AnAction implements DumbAw
         TimeoutUtil.sleep(3000);
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            MessageDialogBuilder.yesNo("Nothing happens after that", "Some message goes here").yesText(
-              ApplicationBundle.message("command.exit")).noText(
-              CommonBundle.message("button.cancel")).show();
-          }
-        });
+        SwingUtilities.invokeLater(() -> MessageDialogBuilder.yesNo("Nothing happens after that", "Some message goes here").yesText(
+          ApplicationBundle.message("command.exit")).noText(
+          CommonBundle.message("button.cancel")).show());
       }
     }.start();
 

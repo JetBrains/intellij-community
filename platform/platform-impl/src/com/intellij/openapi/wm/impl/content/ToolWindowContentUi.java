@@ -585,11 +585,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {
-      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(new Runnable() {
-        public void run() {
-          popup.handleSelect(true);
-        }
-      }, 30);
+      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(true), 30);
     }
   }
 

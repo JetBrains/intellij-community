@@ -56,24 +56,18 @@ public abstract class InterruptibleActivity {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    application.executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          start();
-        }
-        finally {
-          semaphore.up();
-        }
+    application.executeOnPooledThread(() -> {
+      try {
+        start();
+      }
+      finally {
+        semaphore.up();
       }
     });
 
     final int rc = waitForSemaphore(semaphore);
     if (rc != 0) {
-      application.executeOnPooledThread(new Runnable() {
-        public void run() {
-          interrupt();
-        }
-      });
+      application.executeOnPooledThread(() -> interrupt());
     }
 
     return rc;
@@ -107,11 +101,7 @@ public abstract class InterruptibleActivity {
     final int[] retcode = new int[1];
 
     try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        public void run() {
-          retcode[0] = processTimeout();
-        }
-      });
+      GuiUtils.runOrInvokeAndWait(() -> retcode[0] = processTimeout());
     }
     catch (Exception e) {
       throw new RuntimeException(e);

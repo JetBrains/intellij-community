@@ -36,17 +36,8 @@ import java.util.concurrent.TimeUnit;
 public class AnimatorTestAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            TimeoutUtil.sleep(30);
-          }
-        });
-      }
-    }, 0, 123, TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
+      () -> SwingUtilities.invokeLater(() -> TimeoutUtil.sleep(30)), 0, 123, TimeUnit.MILLISECONDS);
 
     try {
       new DialogWrapper(e.getProject()) {

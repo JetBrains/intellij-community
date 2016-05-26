@@ -244,22 +244,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   public void setText(@Nullable final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
-            if (myEditor != null) {
-              final CaretModel caretModel = myEditor.getCaretModel();
-              if (caretModel.getOffset() >= myDocument.getTextLength()) {
-                caretModel.moveToOffset(myDocument.getTextLength());
-              }
-            }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
+        if (myEditor != null) {
+          final CaretModel caretModel = myEditor.getCaretModel();
+          if (caretModel.getOffset() >= myDocument.getTextLength()) {
+            caretModel.moveToOffset(myDocument.getTextLength());
           }
-        }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
-      }
+        }
+      }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
     });
   }
 
@@ -342,12 +336,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.getContentComponent().removeFocusListener(this);
 
     final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!editor.isDisposed()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
+    final Runnable runnable = () -> {
+      if (!editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
       }
     };
 
@@ -406,12 +397,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // removeNotify(), so we need to let swing complete its removeNotify() chain
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        releaseEditor(editor);
-      }
-    });
+    SwingUtilities.invokeLater(() -> releaseEditor(editor));
   }
 
   @Override

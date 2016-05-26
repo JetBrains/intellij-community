@@ -303,19 +303,9 @@ public class JarHandler extends ZipHandler {
 
       assert info != null;
       ourCachedLibraryInfo = info;
-      FlushingDaemon.everyFiveSeconds(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      FlushingDaemon.everyFiveSeconds(() -> flushCachedLibraryInfos());
 
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> flushCachedLibraryInfos());
     }
 
     @NotNull

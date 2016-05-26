@@ -1117,11 +1117,7 @@ public class EclipseXMLOutputter implements Cloneable {
         for (Object attribute : attributes) {
           atts.add((Attribute)((Attribute)attribute).clone());
         }
-        Collections.sort(atts, new Comparator<Attribute>() {
-          public int compare(Attribute o1, Attribute o2) {
-            return o1.getName().compareTo(o2.getName());
-          }
-        });
+        Collections.sort(atts, (o1, o2) -> o1.getName().compareTo(o2.getName()));
         for (int i = 0; i < atts.size(); i++) {
             Attribute attribute = (Attribute) atts.get(i);
             Namespace ns = attribute.getNamespace();

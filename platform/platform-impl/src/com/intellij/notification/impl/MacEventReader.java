@@ -70,18 +70,15 @@ class MacEventReader {
 
     if (!message.isEmpty()) {
       final String copy = message;
-      getService().submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            Runtime.getRuntime().exec("say " + copy).waitFor();
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
-          catch (InterruptedException e) {
-            LOG.warn(e);
-          }
+      getService().submit(() -> {
+        try {
+          Runtime.getRuntime().exec("say " + copy).waitFor();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+        catch (InterruptedException e) {
+          LOG.warn(e);
         }
       });
     }

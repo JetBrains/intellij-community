@@ -144,31 +144,28 @@ public class ExternalResourceConfigurable extends BaseConfigurable
 
   @Override
   public void apply() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
-        if (myProject == null) {
-          manager.clearAllResources();
+      if (myProject == null) {
+        manager.clearAllResources();
+      }
+      else {
+        manager.clearAllResources(myProject);
+      }
+      for (NameLocationPair pair : myPairs) {
+        String s = FileUtil.toSystemIndependentName(StringUtil.notNullize(pair.myLocation));
+        if (myProject == null || pair.myShared) {
+          manager.addResource(pair.myName, s);
         }
         else {
-          manager.clearAllResources(myProject);
+          manager.addResource(pair.myName, s, myProject);
         }
-        for (NameLocationPair pair : myPairs) {
-          String s = FileUtil.toSystemIndependentName(StringUtil.notNullize(pair.myLocation));
-          if (myProject == null || pair.myShared) {
-            manager.addResource(pair.myName, s);
-          }
-          else {
-            manager.addResource(pair.myName, s, myProject);
-          }
-        }
+      }
 
-        for (Object myIgnoredUrl : myIgnoredUrls) {
-          String url = (String)myIgnoredUrl;
-          manager.addIgnoredResource(url);
-        }
+      for (Object myIgnoredUrl : myIgnoredUrls) {
+        String url = (String)myIgnoredUrl;
+        manager.addIgnoredResource(url);
       }
     });
 

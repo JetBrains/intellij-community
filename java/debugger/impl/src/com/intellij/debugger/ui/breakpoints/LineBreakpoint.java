@@ -486,40 +486,37 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     final boolean[] canAdd = new boolean[]{false};
-    XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement element) {
-        if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
-          return true;
-        }
-        PsiElement child = element;
-        while(element != null) {
+    XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, element -> {
+      if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
+        return true;
+      }
+      PsiElement child = element;
+      while(element != null) {
 
-          final int offset = element.getTextOffset();
-          if (offset >= 0) {
-            if (document.getLineNumber(offset) != lineIndex) {
-              break;
-            }
+        final int offset = element.getTextOffset();
+        if (offset >= 0) {
+          if (document.getLineNumber(offset) != lineIndex) {
+            break;
           }
-          child = element;
-          element = element.getParent();
         }
+        child = element;
+        element = element.getParent();
+      }
 
-        if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
-          PsiCodeBlock body = ((PsiMethod)child).getBody();
-          if(body == null) {
-            canAdd[0] = false;
-          }
-          else {
-            PsiStatement[] statements = body.getStatements();
-            canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
-          }
+      if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+        PsiCodeBlock body = ((PsiMethod)child).getBody();
+        if(body == null) {
+          canAdd[0] = false;
         }
         else {
-          canAdd[0] = true;
+          PsiStatement[] statements = body.getStatements();
+          canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
         }
-        return false;
       }
+      else {
+        canAdd[0] = true;
+      }
+      return false;
     });
 
     return canAdd[0];

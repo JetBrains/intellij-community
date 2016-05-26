@@ -125,15 +125,12 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
     final boolean isFinal = isFinalToCalc;
     final String fieldName = fieldNameToCalc;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

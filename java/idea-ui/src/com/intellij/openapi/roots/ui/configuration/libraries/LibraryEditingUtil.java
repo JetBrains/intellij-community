@@ -187,12 +187,7 @@ public class LibraryEditingUtil {
 
           @Override
           public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(new Runnable() {
-              @Override
-              public void run() {
-                action.run(selectedValue);
-              }
-            });
+            return doFinalStep(() -> action.run(selectedValue));
           }
         };
   }

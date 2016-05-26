@@ -119,11 +119,8 @@ public class JavaAnalysisScope extends AnalysisScope {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
       final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
       });
       for (PsiDirectory dir : dirs) {
         if (!accept(dir, processor)) return false;

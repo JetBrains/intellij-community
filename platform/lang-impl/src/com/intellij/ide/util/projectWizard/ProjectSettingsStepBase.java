@@ -124,12 +124,8 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-            @Override
-            public void run() {
-              myCallback.consume(ProjectSettingsStepBase.this);
-            }
-          });
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                                  () -> myCallback.consume(ProjectSettingsStepBase.this));
         }
       }
     };

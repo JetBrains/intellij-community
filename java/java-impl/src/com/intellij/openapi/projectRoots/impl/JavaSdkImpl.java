@@ -266,18 +266,12 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static void scanFolder(File javasFolder, ArrayList<String> result) {
-    File[] candidates = javasFolder.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return JdkUtil.checkForJdk(pathname);
-      }
+    File[] candidates = javasFolder.listFiles(pathname -> {
+      return JdkUtil.checkForJdk(pathname);
     });
     if (candidates != null) {
-      result.addAll(ContainerUtil.map2List(candidates, new Function<File, String>() {
-        @Override
-        public String fun(File file) {
-          return file.getAbsolutePath();
-        }
+      result.addAll(ContainerUtil.map2List(candidates, file -> {
+        return file.getAbsolutePath();
       }));
     }
   }
@@ -553,12 +547,7 @@ public class JavaSdkImpl extends JavaSdk {
         result.add(vFile);
       }
     }
-    Collections.sort(result, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
     return result;
   }
 

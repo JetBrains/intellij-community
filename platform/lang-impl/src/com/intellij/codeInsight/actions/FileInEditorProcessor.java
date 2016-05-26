@@ -96,24 +96,21 @@ class FileInEditorProcessor {
 
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
-      myProcessor.setPostRunnable(new Runnable() {
-        @Override
-        public void run() {
-          String message = prepareMessage();
-          if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
-            HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
-              @Override
-              protected void hyperlinkActivated(HyperlinkEvent e) {
-                AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
-                DataManager manager = DataManager.getInstance();
-                if (manager != null) {
-                  DataContext context = manager.getDataContext(myEditor.getContentComponent());
-                  action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-                }
+      myProcessor.setPostRunnable(() -> {
+        String message = prepareMessage();
+        if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+          HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(HyperlinkEvent e) {
+              AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+              DataManager manager = DataManager.getInstance();
+              if (manager != null) {
+                DataContext context = manager.getDataContext(myEditor.getContentComponent());
+                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
               }
-            };
-            showHint(myEditor, message, hyperlinkListener);
-          }
+            }
+          };
+          showHint(myEditor, message, hyperlinkListener);
         }
       });
     }

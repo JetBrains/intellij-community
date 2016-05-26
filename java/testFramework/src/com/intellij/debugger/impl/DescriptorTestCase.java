@@ -181,41 +181,38 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
                            final Set<Value> alreadyExpanded,
                            final NodeFilter filter,
                            final SuspendContextImpl context) {
-    invokeRatherLater(context, new Runnable() {
-      @Override
-      public void run() {
-        boolean anyCollapsed = false;
-        for(int i = 0; i < tree.getRowCount(); i++) {
-          final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
-          if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
-            NodeDescriptor nodeDescriptor = null;
-            if (treeNode instanceof DebuggerTreeNodeImpl) {
-              nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
-            }
-            boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
-            if (shouldExpand) {
-              // additional checks to prevent infinite expand
-              if (nodeDescriptor instanceof ValueDescriptor) {
-                final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
-                shouldExpand = !alreadyExpanded.contains(value);
-                if (shouldExpand) {
-                  alreadyExpanded.add(value);
-                }
+    invokeRatherLater(context, () -> {
+      boolean anyCollapsed = false;
+      for(int i = 0; i < tree.getRowCount(); i++) {
+        final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
+        if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
+          NodeDescriptor nodeDescriptor = null;
+          if (treeNode instanceof DebuggerTreeNodeImpl) {
+            nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
+          }
+          boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
+          if (shouldExpand) {
+            // additional checks to prevent infinite expand
+            if (nodeDescriptor instanceof ValueDescriptor) {
+              final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
+              shouldExpand = !alreadyExpanded.contains(value);
+              if (shouldExpand) {
+                alreadyExpanded.add(value);
               }
             }
-            if (shouldExpand) {
-              anyCollapsed = true;
-              tree.expandRow(i);
-            }
+          }
+          if (shouldExpand) {
+            anyCollapsed = true;
+            tree.expandRow(i);
           }
         }
+      }
 
-        if (anyCollapsed) {
-          expandAll(tree, runnable, alreadyExpanded, filter, context);
-        }
-        else {
-          runnable.run();
-        }
+      if (anyCollapsed) {
+        expandAll(tree, runnable, alreadyExpanded, filter, context);
+      }
+      else {
+        runnable.run();
       }
     });
   }

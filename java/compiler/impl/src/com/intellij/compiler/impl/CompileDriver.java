@@ -130,30 +130,28 @@ public class CompileDriver {
 
     final Ref<ExitStatus> result = new Ref<ExitStatus>();
 
-    task.start(new Runnable() {
-      public void run() {
-        final ProgressIndicator indicator = compileContext.getProgressIndicator();
-        if (indicator.isCanceled() || myProject.isDisposed()) {
-          return;
-        }
-        try {
-          final TaskFuture future = compileInExternalProcess(compileContext, true);
-          if (future != null) {
-            while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-              if (indicator.isCanceled()) {
-                future.cancel(false);
-              }
+    task.start(() -> {
+      final ProgressIndicator indicator = compileContext.getProgressIndicator();
+      if (indicator.isCanceled() || myProject.isDisposed()) {
+        return;
+      }
+      try {
+        final TaskFuture future = compileInExternalProcess(compileContext, true);
+        if (future != null) {
+          while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
+            if (indicator.isCanceled()) {
+              future.cancel(false);
             }
           }
         }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        finally {
-          result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-          if (!myProject.isDisposed()) {
-            CompilerCacheManager.getInstance(myProject).flushCaches();
-          }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      finally {
+        result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        if (!myProject.isDisposed()) {
+          CompilerCacheManager.getInstance(myProject).flushCaches();
         }
       }
     }, null);
@@ -383,86 +381,78 @@ public class CompileDriver {
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
 
-    final Runnable compileWork = new Runnable() {
-      public void run() {
-        final ProgressIndicator indicator = compileContext.getProgressIndicator();
-        if (indicator.isCanceled() || myProject.isDisposed()) {
-          if (callback != null) {
-            callback.finished(true, 0, 0, compileContext);
-          }
+    final Runnable compileWork = () -> {
+      final ProgressIndicator indicator = compileContext.getProgressIndicator();
+      if (indicator.isCanceled() || myProject.isDisposed()) {
+        if (callback != null) {
+          callback.finished(true, 0, 0, compileContext);
+        }
+        return;
+      }
+      try {
+        LOG.info("COMPILATION STARTED (BUILD PROCESS)");
+        if (message != null) {
+          compileContext.addMessage(message);
+        }
+        if (isRebuild) {
+          CompilerUtil.runInContext(compileContext, "Clearing build system data...",
+                                    (ThrowableRunnable<Throwable>)() -> CompilerCacheManager.getInstance(myProject).clearCaches(compileContext));
+        }
+        final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
+
+        final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+        if (!beforeTasksOk || errorCount > 0) {
+          COMPILE_SERVER_BUILD_STATUS.set(compileContext, errorCount > 0 ? ExitStatus.ERRORS : ExitStatus.CANCELLED);
           return;
         }
-        try {
-          LOG.info("COMPILATION STARTED (BUILD PROCESS)");
-          if (message != null) {
-            compileContext.addMessage(message);
-          }
-          if (isRebuild) {
-            CompilerUtil.runInContext(compileContext, "Clearing build system data...", new ThrowableRunnable<Throwable>() {
-              @Override
-              public void run() throws Throwable {
-                CompilerCacheManager.getInstance(myProject).clearCaches(compileContext);
-              }
-            });
-          }
-          final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
-          final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
-          if (!beforeTasksOk || errorCount > 0) {
-            COMPILE_SERVER_BUILD_STATUS.set(compileContext, errorCount > 0 ? ExitStatus.ERRORS : ExitStatus.CANCELLED);
-            return;
-          }
-
-          final TaskFuture future = compileInExternalProcess(compileContext, false);
-          if (future != null) {
-            while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-              if (indicator.isCanceled()) {
-                future.cancel(false);
-              }
-            }
-            if (!executeCompileTasks(compileContext, false)) {
-              COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
-            }
-            if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-              COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
+        final TaskFuture future = compileInExternalProcess(compileContext, false);
+        if (future != null) {
+          while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
+            if (indicator.isCanceled()) {
+              future.cancel(false);
             }
           }
+          if (!executeCompileTasks(compileContext, false)) {
+            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
+          }
+          if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
+          }
         }
-        catch (ProcessCanceledException ignored) {
-          compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
-        }
-        catch (Throwable e) {
-          LOG.error(e); // todo
-        }
-        finally {
-          CompilerCacheManager.getInstance(myProject).flushCaches();
+      }
+      catch (ProcessCanceledException ignored) {
+        compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
+      }
+      catch (Throwable e) {
+        LOG.error(e); // todo
+      }
+      finally {
+        CompilerCacheManager.getInstance(myProject).flushCaches();
 
-          final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-          CompilerUtil.logDuration(
-            "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
-              compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-              "; warnings: " +
-              compileContext.getMessageCount(CompilerMessageCategory.WARNING),
-            duration
-          );
-        }
+        final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        CompilerUtil.logDuration(
+          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
+            compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+            "; warnings: " +
+            compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+          duration
+        );
       }
     };
 
-    compileTask.start(compileWork, new Runnable() {
-      public void run() {
-        if (isRebuild) {
-          final int rv = Messages.showOkCancelDialog(
-              myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
-              "Make", "Rebuild", Messages.getQuestionIcon()
-          );
-          if (rv == Messages.OK /*yes, please, do run make*/) {
-            startup(scope, false, false, callback, null);
-            return;
-          }
+    compileTask.start(compileWork, () -> {
+      if (isRebuild) {
+        final int rv = Messages.showOkCancelDialog(
+            myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
+            "Make", "Rebuild", Messages.getQuestionIcon()
+        );
+        if (rv == Messages.OK /*yes, please, do run make*/) {
+          startup(scope, false, false, callback, null);
+          return;
         }
-        startup(scope, isRebuild, forceCompile, callback, message);
       }
+      startup(scope, isRebuild, forceCompile, callback, message);
     });
   }
 
@@ -492,48 +482,41 @@ public class CompileDriver {
         }
       }
     }
-    SwingUtilities.invokeLater(new Runnable() {                                                                 
-      public void run() {
-        int errorCount = 0;
-        int warningCount = 0;
-        try {
-          errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
-          warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
-        }
-        finally {
-          if (callback != null) {
-            callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
-          }
-        }
-
-        if (!myProject.isDisposed()) {
-          final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
-          final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
-          if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
-            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
-          }
-
-          final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
-          final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
-            "", wrappedMessage,
-            messageType.toNotificationType(),
-            new MessagesActivationListener(compileContext)
-          ).setImportant(false);
-          compileContext.getBuildSession().registerCloseAction(new Runnable() {
-            @Override
-            public void run() {
-              notification.expire();
-            }
-          });
-          notification.notify(myProject);
-
-          if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
-            final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
-            compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
-          }
-        }
-
+    SwingUtilities.invokeLater(() -> {
+      int errorCount = 0;
+      int warningCount = 0;
+      try {
+        errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+        warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
       }
+      finally {
+        if (callback != null) {
+          callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
+        }
+      }
+
+      if (!myProject.isDisposed()) {
+        final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
+        final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+        if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
+          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
+        }
+
+        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
+          "", wrappedMessage,
+          messageType.toNotificationType(),
+          new MessagesActivationListener(compileContext)
+        ).setImportant(false);
+        compileContext.getBuildSession().registerCloseAction(() -> notification.expire());
+        notification.notify(myProject);
+
+        if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
+          final String msg = DateFormatUtil.formatDateTime(new Date()) + " - " + statusMessage;
+          compileContext.addMessage(CompilerMessageCategory.INFORMATION, msg, null, -1, -1);
+        }
+      }
+
     });
     return duration;
   }
@@ -589,18 +572,16 @@ public class CompileDriver {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    progressManagerTask.start(new Runnable() {
-      public void run() {
-        try {
-          task.execute(compileContext);
-        }
-        catch (ProcessCanceledException ex) {
-          // suppressed
-        }
-        finally {
-          if (onTaskFinished != null) {
-            onTaskFinished.run();
-          }
+    progressManagerTask.start(() -> {
+      try {
+        task.execute(compileContext);
+      }
+      catch (ProcessCanceledException ex) {
+        // suppressed
+      }
+      finally {
+        if (onTaskFinished != null) {
+          onTaskFinished.run();
         }
       }
     }, null);
@@ -633,11 +614,7 @@ public class CompileDriver {
         statusBar.setInfo("");
       }
       if (progressIndicator instanceof CompilerTask) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            ((CompilerTask)progressIndicator).showCompilerContent();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> ((CompilerTask)progressIndicator).showCompilerContent());
       }
     }
     return true;

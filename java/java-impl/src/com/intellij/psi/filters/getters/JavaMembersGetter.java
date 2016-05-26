@@ -64,13 +64,10 @@ public class JavaMembersGetter extends MembersGetter {
       ContainerUtil.addIfNotNull(classes, field.getContainingClass());
     }
     for (PsiClass aClass : classes) {
-      processMembers(new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          //noinspection SuspiciousMethodCalls
-          if (!fields.contains(element.getObject())) {
-            results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
-          }
+      processMembers(element -> {
+        //noinspection SuspiciousMethodCalls
+        if (!fields.contains(element.getObject())) {
+          results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
         }
       }, aClass, true, false);
     }

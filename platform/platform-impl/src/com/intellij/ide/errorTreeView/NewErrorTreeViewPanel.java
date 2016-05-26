@@ -197,12 +197,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void performCopy(@NotNull DataContext dataContext) {
     List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
     if (!descriptors.isEmpty()) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, new Function<ErrorTreeNodeDescriptor, String>() {
-        @Override
-        public String fun(ErrorTreeNodeDescriptor descriptor) {
-          ErrorTreeElement element = descriptor.getElement();
-          return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
-        }
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, descriptor -> {
+        ErrorTreeElement element = descriptor.getElement();
+        return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
       }, "\n")));
     }
   }
@@ -249,12 +246,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void selectFirstMessage() {
     final ErrorTreeElement firstError = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.ERROR);
     if (firstError != null) {
-      selectElement(firstError, new Runnable() {
-        @Override
-        public void run() {
-          if (shouldShowFirstErrorInEditor()) {
-            navigateToSource(false);
-          }
+      selectElement(firstError, () -> {
+        if (shouldShowFirstErrorInEditor()) {
+          navigateToSource(false);
         }
       });
     }
@@ -471,17 +465,14 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return;
     }
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final float fraction = myFraction;
-        final String text = myProgressText;
-        if (fraction > 0.0f) {
-          myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
-        }
-        else {
-          myProgressLabel.setText(text);
-        }
+    myUpdateAlarm.addRequest(() -> {
+      final float fraction = myFraction;
+      final String text = myProgressText;
+      if (fraction > 0.0f) {
+        myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
+      }
+      else {
+        myProgressLabel.setText(text);
       }
     }, 50, ModalityState.NON_MODAL);
 

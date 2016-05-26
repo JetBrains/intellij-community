@@ -359,30 +359,24 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private static List<SmartPsiElementPointer> getSortedIDs(final Map<SmartPsiElementPointer, ?> requests) {
     final List<SmartPsiElementPointer> result = new ArrayList<SmartPsiElementPointer>();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (SmartPsiElementPointer id : requests.keySet()) {
-          if (id != null) {
-            final PsiElement psi = id.getElement();
-            if (psi != null) {
-              result.add(id);
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (SmartPsiElementPointer id : requests.keySet()) {
+        if (id != null) {
+          final PsiElement psi = id.getElement();
+          if (psi != null) {
+            result.add(id);
           }
         }
-        Collections.sort(result, new Comparator<SmartPsiElementPointer>() {
-          @Override
-          public int compare(final SmartPsiElementPointer o1, final SmartPsiElementPointer o2) {
-            PsiElement p1 = o1.getElement();
-            PsiElement p2 = o2.getElement();
-            final PsiFile psiFile1 = p1 != null ? p1.getContainingFile() : null;
-            LOG.assertTrue(psiFile1 != null);
-            final PsiFile psiFile2 = p2 != null ? p2.getContainingFile() : null;
-            LOG.assertTrue(psiFile2 != null);
-            return psiFile1.getName().compareTo(psiFile2.getName());
-          }
-        });
       }
+      Collections.sort(result, (o1, o2) -> {
+        PsiElement p1 = o1.getElement();
+        PsiElement p2 = o2.getElement();
+        final PsiFile psiFile1 = p1 != null ? p1.getContainingFile() : null;
+        LOG.assertTrue(psiFile1 != null);
+        final PsiFile psiFile2 = p2 != null ? p2.getContainingFile() : null;
+        LOG.assertTrue(psiFile2 != null);
+        return psiFile1.getName().compareTo(psiFile2.getName());
+      });
     });
 
     return result;

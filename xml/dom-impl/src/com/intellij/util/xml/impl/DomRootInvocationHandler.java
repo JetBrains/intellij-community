@@ -135,19 +135,16 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   @Override
   protected XmlTag setEmptyXmlTag() {
     final XmlTag[] result = new XmlTag[]{null};
-    getManager().runChange(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final String namespace = getXmlElementNamespace();
-          @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
-          final XmlFile xmlFile = getFile();
-          final XmlTag tag = XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
-          result[0] = ((XmlDocument)xmlFile.getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    getManager().runChange(() -> {
+      try {
+        final String namespace = getXmlElementNamespace();
+        @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
+        final XmlFile xmlFile = getFile();
+        final XmlTag tag = XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
+        result[0] = ((XmlDocument)xmlFile.getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
     return result[0];

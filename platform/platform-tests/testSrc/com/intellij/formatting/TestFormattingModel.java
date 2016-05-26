@@ -65,11 +65,8 @@ public class TestFormattingModel implements FormattingModel, FormattingDocumentM
                                 final String whiteSpace
   ) {
     if (ApplicationManager.getApplication() != null) {
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);
-        }
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);
       });
     } else {
       myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);

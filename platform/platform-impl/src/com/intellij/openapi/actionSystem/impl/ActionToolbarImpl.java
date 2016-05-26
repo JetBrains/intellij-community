@@ -1023,12 +1023,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       return;
     }
     if (myAutoPopupRec != null && myAutoPopupRec.contains(e.getPoint())) {
-      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          showAutoPopup();
-        }
-      });
+      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(() -> showAutoPopup());
     }
   }
 

@@ -57,14 +57,15 @@ import java.util.regex.Pattern
  */
 class DependencyResolverImpl implements DependencyResolver {
 
-  private static isArtifactResolutionQuerySupported = GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0
-  private static isDependencySubstitutionsSupported = GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0
+  private static isArtifactResolutionQuerySupported = GradleVersion.current() >= GradleVersion.version("2.0")
+  private static isDependencySubstitutionsSupported = GradleVersion.current() >= GradleVersion.version("2.5")
 
   @NotNull
   private final Project myProject
   private final boolean myIsPreview
   private final boolean myDownloadJavadoc
   private final boolean myDownloadSources
+  private final SourceSetCachedFinder mySourceSetFinder
 
   @SuppressWarnings("GroovyUnusedDeclaration")
   DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
@@ -72,13 +73,20 @@ class DependencyResolverImpl implements DependencyResolver {
     myIsPreview = isPreview
     myDownloadJavadoc = false
     myDownloadSources = false
+    mySourceSetFinder = new SourceSetCachedFinder(project)
   }
 
-  DependencyResolverImpl(@NotNull Project project, boolean isPreview, boolean downloadJavadoc, boolean downloadSources) {
+  DependencyResolverImpl(
+    @NotNull Project project,
+    boolean isPreview,
+    boolean downloadJavadoc,
+    boolean downloadSources,
+    SourceSetCachedFinder sourceSetFinder) {
     myProject = project
     myIsPreview = isPreview
     myDownloadJavadoc = downloadJavadoc
     myDownloadSources = downloadSources
+    mySourceSetFinder = sourceSetFinder
   }
 
   @Override
@@ -176,7 +184,9 @@ class DependencyResolverImpl implements DependencyResolver {
 
     // resolve compile dependencies
     def compileConfigurationName = sourceSet.compileConfigurationName
-    def compileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
+    def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileConfiguration = compileClasspathConfiguration ?: originCompileConfiguration
 
     def compileScope = 'COMPILE'
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
@@ -190,7 +200,18 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedScope = 'PROVIDED'
 
     Multimap<Object, ExternalDependency> resolvedMap = ArrayListMultimap.create()
-    new DependencyTraverser(compileDependencies).each { resolvedMap.put(resolve(it), it) }
+
+    boolean checkCompileOnlyDeps = compileClasspathConfiguration && !originCompileConfiguration.resolvedConfiguration.hasError()
+    new DependencyTraverser(compileDependencies).each {
+      def resolvedObj = resolve(it)
+      resolvedMap.put(resolvedObj, it)
+
+      if (checkCompileOnlyDeps &&
+          (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
+           !originCompileConfiguration.contains(resolvedObj))) {
+        ((AbstractExternalDependency)it).scope = providedScope
+      }
+    }
 
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it));
@@ -282,7 +303,7 @@ class DependencyResolverImpl implements DependencyResolver {
         //noinspection GrUnresolvedAccess
         if (project.hasProperty("sourceSets") && (project.sourceSets instanceof SourceSetContainer) && project.sourceSets.main) {
           //noinspection GrUnresolvedAccess
-          addSourceSetOutputDirsAsSingleEntryLibraries(result, project.sourceSets.main, runtimeClasspathOrder, runtimeScope)
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, project.sourceSets.main, runtimeClasspathOrder, scope)
         }
       }
       else if (dependency instanceof ExternalLibraryDependency) {
@@ -359,6 +380,12 @@ class DependencyResolverImpl implements DependencyResolver {
         compileClasspathFilesDependency.classpathOrder = order
       }
       result.add(compileClasspathFilesDependency)
+      for (File file : compileClasspathFiles) {
+        def outputDirSourceSet = mySourceSetFinder.findByArtifact(file.path)
+        if(outputDirSourceSet) {
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, compileClasspathOrder, compileScope)
+        }
+      }
     }
 
     if (!runtimeClasspathFiles.isEmpty()) {
@@ -376,6 +403,13 @@ class DependencyResolverImpl implements DependencyResolver {
 
       runtimeClasspathFilesDependency.classpathOrder = order
       result.add(runtimeClasspathFilesDependency)
+
+      for (File file : runtimeClasspathFiles) {
+        def outputDirSourceSet = mySourceSetFinder.findByArtifact(file.path)
+        if(outputDirSourceSet) {
+          addSourceSetOutputDirsAsSingleEntryLibraries(result, outputDirSourceSet, runtimeClasspathOrder, runtimeScope)
+        }
+      }
     }
 
     addSourceSetOutputDirsAsSingleEntryLibraries(result, sourceSet, runtimeClasspathOrder, runtimeScope)

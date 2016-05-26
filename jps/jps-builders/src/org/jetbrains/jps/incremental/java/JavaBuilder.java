@@ -246,6 +246,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     // begin compilation round
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, JavaBuilderUtil.getDependenciesRegistrar(context), chunk.getPresentableShortName());
+    Collection<File> filesWithErrors = null;
     try {
       if (hasSourcesToCompile) {
         final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
@@ -290,7 +291,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
           finally {
             // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
-            for (File file : diagnosticSink.getFilesWithErrors()) {
+            filesWithErrors = diagnosticSink.getFilesWithErrors();
+            for (File file : filesWithErrors) {
               if (!file.exists()) {
                 FSOperations.markDeleted(context, file);
               }
@@ -315,6 +317,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     finally {
       JavaBuilderUtil.registerFilesToCompile(context, files);
+      if (filesWithErrors != null) {
+        JavaBuilderUtil.registerFilesWithErrors(context, filesWithErrors);
+      }
       JavaBuilderUtil.registerSuccessfullyCompiled(context, outputSink.getSuccessfullyCompiled());
     }
 
@@ -677,24 +682,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     addCrossCompilationOptions(compilerSdkVersion, options, context, chunk);
 
-    if (profile != null && profile.isEnabled()) {
-      // configuring annotation processing
-      if (!profile.isObtainProcessorsFromClasspath()) {
-        final String processorsPath = profile.getProcessorPath();
-        options.add("-processorpath");
-        options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
-      }
-
-      final Set<String> processors = profile.getProcessors();
-      if (!processors.isEmpty()) {
-        options.add("-processor");
-        options.add(StringUtil.join(processors, ","));
-      }
-
-      for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
-        options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
-      }
-
+    if (addAnnotationProcessingOptions(options, profile)) {
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
@@ -704,10 +692,38 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(srcOutput.getPath());
       }
     }
-    else {
-      options.add("-proc:none");
-    }
   }
+
+  /**
+   * @param options
+   * @param profile
+   * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
+   */
+  public static boolean addAnnotationProcessingOptions(List<String> options, @Nullable AnnotationProcessingConfiguration profile) {
+    if (profile == null || !profile.isEnabled()) {
+      options.add("-proc:none");
+      return false;
+    }
+
+    // configuring annotation processing
+    if (!profile.isObtainProcessorsFromClasspath()) {
+      final String processorsPath = profile.getProcessorPath();
+      options.add("-processorpath");
+      options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
+    }
+
+    final Set<String> processors = profile.getProcessors();
+    if (!processors.isEmpty()) {
+      options.add("-processor");
+      options.add(StringUtil.join(processors, ","));
+    }
+
+    for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
+      options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
+    }
+    return true;
+  }
+
 
   private static void addCrossCompilationOptions(final int compilerSdkVersion, final List<String> options, final CompileContext context, final ModuleChunk chunk) {
     final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
@@ -938,7 +954,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private final CompileContext myContext;
     private volatile int myErrorCount;
     private volatile int myWarningCount;
-    private final Set<File> myFilesWithErrors = new HashSet<File>();
+    private final Set<File> myFilesWithErrors = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     private DiagnosticSink(CompileContext context) {
       myContext = context;
@@ -1025,7 +1041,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
       final String srcPath;
       if (sourceFile != null) {
-        myFilesWithErrors.add(sourceFile);
+        if (kind == BuildMessage.Kind.ERROR) {
+          myFilesWithErrors.add(sourceFile);
+        }
         srcPath = FileUtil.toSystemIndependentName(sourceFile.getPath());
       }
       else {
@@ -1054,6 +1072,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return myWarningCount;
     }
 
+    @NotNull
     public Collection<File> getFilesWithErrors() {
       return myFilesWithErrors;
     }

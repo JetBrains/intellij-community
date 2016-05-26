@@ -103,26 +103,15 @@ public class CreateParameterForFieldIntention extends Intention {
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final Object[] selectedValues = list.getSelectedValues();
-          Arrays.sort(selectedValues, new Comparator<Object>() {
-            @Override
-            public int compare(Object o1, Object o2) {
-              return ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount();
-            }
-          });
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              for (Object selectedValue : selectedValues) {
-                LOG.assertTrue(((GrMethod)selectedValue).isValid());
-                addParameter(field, ((GrMethod)selectedValue), project);
-              }
-            }
-          }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
-        }
+      setItemChoosenCallback(() -> {
+        final Object[] selectedValues = list.getSelectedValues();
+        Arrays.sort(selectedValues, (o1, o2) -> ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount());
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (Object selectedValue : selectedValues) {
+            LOG.assertTrue(((GrMethod)selectedValue).isValid());
+            addParameter(field, ((GrMethod)selectedValue), project);
+          }
+        }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
       }).createPopup().showInBestPositionFor(editor);
   }
 
@@ -140,20 +129,14 @@ public class CreateParameterForFieldIntention extends Intention {
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final Object[] selectedValues = list.getSelectedValues();
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              for (Object selectedValue : selectedValues) {
-                LOG.assertTrue(((GrField)selectedValue).isValid());
-                addParameter(((GrField)selectedValue), constructor, project);
-              }
-            }
-          }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
-        }
+      setItemChoosenCallback(() -> {
+        final Object[] selectedValues = list.getSelectedValues();
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (Object selectedValue : selectedValues) {
+            LOG.assertTrue(((GrField)selectedValue).isValid());
+            addParameter(((GrField)selectedValue), constructor, project);
+          }
+        }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
       }).createPopup().showInBestPositionFor(editor);
   }
 

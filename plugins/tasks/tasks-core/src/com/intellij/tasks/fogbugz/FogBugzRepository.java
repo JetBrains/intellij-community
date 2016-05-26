@@ -92,12 +92,8 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     }
     final XPath commentPath = XPath.newInstance("events/event");
     final List<Element> nodes = (List<Element>)XPath.newInstance("/response/cases/case").selectNodes(document);
-    final List<Task> tasks = ContainerUtil.mapNotNull(nodes, new NotNullFunction<Element, Task>() {
-      @NotNull
-      @Override
-      public Task fun(Element element) {
-        return createCase(element, commentPath);
-      }
+    final List<Task> tasks = ContainerUtil.mapNotNull(nodes, (NotNullFunction<Element, Task>)element -> {
+      return createCase(element, commentPath);
     });
     return tasks.toArray(new Task[tasks.size()]);
   }

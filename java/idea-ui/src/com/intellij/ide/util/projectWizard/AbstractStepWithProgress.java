@@ -157,34 +157,22 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       return;
     }
 
-    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
-      @Override
-      public void run() {
-
-        new SwingWorker() {
-          public Object construct() {
-            final Ref<Result> result = Ref.create(null);
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              public void run() {
-                result.set(calculate());
-              }
-            }, progress);
-            return result.get();
-          }
-
-          public void finished() {
-            myProgressIndicator = null;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                final Result result = (Result)get();
-                onFinished(result, progress.isCanceled());
-                showCard(RESULTS_PANEL);
-              }
-            });
-          }
-        }.start();
+    UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker() {
+      public Object construct() {
+        final Ref<Result> result = Ref.create(null);
+        ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
+        return result.get();
       }
-    });
+
+      public void finished() {
+        myProgressIndicator = null;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final Result result = (Result)get();
+          onFinished(result, progress.isCanceled());
+          showCard(RESULTS_PANEL);
+        });
+      }
+    }.start());
   }
 
   private void showCard(final String id) {
@@ -222,11 +210,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
 
     private void updateLabel(final JLabel label, final String text) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          label.setText(text);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }
 }

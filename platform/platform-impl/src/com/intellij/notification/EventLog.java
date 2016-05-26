@@ -149,6 +149,8 @@ public class EventLog {
         afterTitle = logDoc.createRangeMarker(logDoc.getTextLength() - 2, logDoc.getTextLength());
       }
     }
+    int titleLength = logDoc.getTextLength();
+
     hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
 
     List<AnAction> actions = notification.getActions();
@@ -173,7 +175,7 @@ public class EventLog {
       hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators);
     }
 
-    String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
+    String status = getStatusText(logDoc, showMore, lineSeparators, indent, hasHtml);
 
     indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
@@ -196,7 +198,7 @@ public class EventLog {
                                                   new ShowBalloon(notification)));
     }
 
-    return new LogEntry(logDoc.getText(), status, list);
+    return new LogEntry(logDoc.getText(), status, list, titleLength);
   }
 
   @NotNull
@@ -259,7 +261,11 @@ public class EventLog {
     }
   }
 
-  private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
+  private static String getStatusText(DocumentImpl logDoc,
+                                      AtomicBoolean showMore,
+                                      List<RangeMarker> lineSeparators,
+                                      String indent,
+                                      boolean hasHtml) {
     DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
@@ -267,7 +273,7 @@ public class EventLog {
         statusSeparators.add(statusDoc.createRangeMarker(separator.getStartOffset(), separator.getEndOffset()));
       }
     }
-    removeJavaNewLines(statusDoc, statusSeparators, hasHtml);
+    removeJavaNewLines(statusDoc, statusSeparators, indent, hasHtml);
     insertNewLineSubstitutors(statusDoc, showMore, statusSeparators);
 
     return statusDoc.getText();
@@ -383,13 +389,17 @@ public class EventLog {
     }
   }
 
-  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, boolean hasHtml) {
+  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, String indent, boolean hasHtml) {
     CharSequence text = document.getCharsSequence();
     int i = 0;
     while (true) {
       i = StringUtil.indexOf(text, '\n', i);
       if (i < 0) break;
-      document.deleteString(i, i + 1);
+      int j = i + 1;
+      if (StringUtil.startsWith(text, j, indent)) {
+        j += indent.length();
+      }
+      document.deleteString(i, j);
       if (!hasHtml) {
         lineSeparators.add(document.createRangeMarker(TextRange.from(i, 0)));
       }
@@ -408,11 +418,13 @@ public class EventLog {
     public final String message;
     public final String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
+    public final int titleLength;
 
-    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links) {
+    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
       this.message = message;
       this.status = status;
       this.links = links;
+      this.titleLength = titleLength;
     }
   }
 
@@ -434,18 +446,15 @@ public class EventLog {
   }
 
   private static void activate(@NotNull ToolWindow eventLog, @Nullable final String groupId, @Nullable final Runnable r) {
-    eventLog.activate(new Runnable() {
-      @Override
-      public void run() {
-        if (groupId == null) return;
-        String contentName = getContentName(groupId);
-        Content content = eventLog.getContentManager().findContent(contentName);
-        if (content != null) {
-          eventLog.getContentManager().setSelectedContent(content);
-        }
-        if (r != null) {
-          r.run();
-        }
+    eventLog.activate(() -> {
+      if (groupId == null) return;
+      String contentName = getContentName(groupId);
+      Content content = eventLog.getContentManager().findContent(contentName);
+      if (content != null) {
+        eventLog.getContentManager().setSelectedContent(content);
+      }
+      if (r != null) {
+        r.run();
       }
     }, true);
   }
@@ -511,10 +520,8 @@ public class EventLog {
         @Override
         public void run() {
           if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                console.doPrintNotification(notification);
-              }
+            ApplicationManager.getApplication().runReadAction(() -> {
+              console.doPrintNotification(notification);
             });
           }
         }
@@ -524,13 +531,10 @@ public class EventLog {
     private void showNotification(@NotNull final String groupId, @NotNull final List<String> ids) {
       ToolWindow eventLog = getEventLog(myProject);
       if (eventLog != null) {
-        activate(eventLog, groupId, new Runnable() {
-          @Override
-          public void run() {
-            EventLogConsole console = getConsole(groupId);
-            if (console != null) {
-              console.showNotification(ids);
-            }
+        activate(eventLog, groupId, () -> {
+          EventLogConsole console = getConsole(groupId);
+          if (console != null) {
+            console.showNotification(ids);
           }
         });
       }

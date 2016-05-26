@@ -275,12 +275,9 @@ public class EditorTracker extends AbstractProjectComponent {
       };
       contentComponent.addFocusListener(focusListener);
 
-      myExecuteOnEditorRelease.put(event.getEditor(), new Runnable() {
-        @Override
-        public void run() {
-          component.removeHierarchyListener(hierarchyListener);
-          contentComponent.removeFocusListener(focusListener);
-        }
+      myExecuteOnEditorRelease.put(event.getEditor(), () -> {
+        component.removeHierarchyListener(hierarchyListener);
+        contentComponent.removeFocusListener(focusListener);
       });
     }
 

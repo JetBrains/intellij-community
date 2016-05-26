@@ -127,11 +127,8 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
     CreateMethodFromUsageFix.doCreate(targetClass, method, false,
-                                      ContainerUtil.map2List(interfaceMethod.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
-                                        @Override
-                                        public Pair<PsiExpression, PsiType> fun(PsiParameter parameter) {
-                                          return Pair.create(null, substitutor.substitute(parameter.getType()));
-                                        }
+                                      ContainerUtil.map2List(interfaceMethod.getParameterList().getParameters(), parameter -> {
+                                        return Pair.create(null, substitutor.substitute(parameter.getType()));
                                       }),
                                       PsiSubstitutor.EMPTY,
                                       expectedTypes, context);

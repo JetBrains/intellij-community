@@ -446,11 +446,8 @@ public class JavaDocInfoGenerator {
           buffer.append("<html><body></body></html>");
         }
         String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                              StringUtil.join(docURLs, new Function<String, String>() {
-                                @Override
-                                public String fun(String url) {
-                                  return XmlStringUtil.escapeString(url);
-                                }
+                              StringUtil.join(docURLs, url -> {
+                                return XmlStringUtil.escapeString(url);
                               }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
                               "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
                               "<a href=\"open://Project Settings\">Project Settings.</a></p>";

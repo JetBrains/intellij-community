@@ -135,39 +135,25 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
 
 
       final TreeSet<String> suffixesToIgnore = new TreeSet<String>(ContainerUtil.map(allFilesWithoutTranslation,
-                                                                             new Function<PropertiesFile, String>() {
-                                                                               @Override
-                                                                               public String fun(PropertiesFile file) {
-                                                                                 return PropertiesUtil.getSuffix(file);
-                                                                               }
-                                                                             }));
+                                                                                     file -> {
+                                                                                       return PropertiesUtil.getSuffix(file);
+                                                                                     }));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
-        DisableInspectionToolAction.modifyAndCommitProjectProfile(new Consumer<ModifiableModel>() {
-          @Override
-          public void consume(ModifiableModel modifiableModel) {
-            ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore);
-          }
-        }, project);
+        DisableInspectionToolAction.modifyAndCommitProjectProfile(
+          modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);
       }
     }
   }
 
   public boolean isPropertyComplete(final String key, final ResourceBundle resourceBundle) {
-    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), new Function<PropertiesFile, IProperty>() {
-      @Override
-      public IProperty fun(PropertiesFile file) {
-        return file.findPropertyByKey(key);
-      }
+    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), file -> {
+      return file.findPropertyByKey(key);
     }), resourceBundle);
   }
 
   private boolean isPropertyComplete(final List<IProperty> properties, final ResourceBundle resourceBundle) {
-    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, new Function<IProperty, PropertiesFile>() {
-
-      @Override
-      public PropertiesFile fun(IProperty property) {
-        return property.getPropertiesFile();
-      }
+    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, property -> {
+      return property.getPropertiesFile();
     });
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!existed.contains(file) && !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(file))) {

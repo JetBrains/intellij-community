@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.intellij.platform.templates;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.openapi.components.ExportableComponent;
+import org.jetbrains.annotations.NotNull;
 
-public class XmlRpcHandlerBean extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<XmlRpcHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.xmlRpcHandler");
+import java.io.File;
 
-  @Attribute("name")
-  public String name;
+public class ProjectTemplateExportable implements ExportableComponent {
 
-  @Attribute("implementation")
-  public String implementation;
+  @NotNull
+  @Override
+  public File[] getExportFiles() {
+    return new File[]{new File(ArchivedTemplatesFactory.getCustomTemplatesPath())};
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Project templates";
+  }
 }

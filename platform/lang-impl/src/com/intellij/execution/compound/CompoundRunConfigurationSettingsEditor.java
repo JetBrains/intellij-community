@@ -59,7 +59,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     myList = new JBList(myModel);
     myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         RunConfiguration configuration = myModel.get(index);
         setIcon(configuration.getType().getIcon());
         append(configuration.getType().getDisplayName() + " '" + configuration.getName() + "'");

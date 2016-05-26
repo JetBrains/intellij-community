@@ -19,7 +19,7 @@ public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
 
   private static JsonSchemaFileProvider provider;
 
-  public JsonSchemaTestServiceImpl(@Nullable Project project) {
+  public JsonSchemaTestServiceImpl(@NotNull Project project) {
     super(project);
   }
 

@@ -55,12 +55,9 @@ public class MoveModuleToGroup extends ActionGroup {
     if (e == null) return EMPTY_ARRAY;
 
     List<ModuleGroup> children = new ArrayList<ModuleGroup>(myModuleGroup.childGroups(e.getDataContext()));
-    Collections.sort ( children, new Comparator<ModuleGroup>() {
-      @Override
-      public int compare(final ModuleGroup moduleGroup1, final ModuleGroup moduleGroup2) {
-        assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
-        return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
-      }
+    Collections.sort (children, (moduleGroup1, moduleGroup2) -> {
+      assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
+      return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
     });
 
     List<AnAction> result = new ArrayList<AnAction>();

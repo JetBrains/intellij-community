@@ -36,11 +36,7 @@ public class CopyElementAction extends AnAction {
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }}, "", null
+    CommandProcessor.getInstance().executeCommand(project, () -> PsiDocumentManager.getInstance(project).commitAllDocuments(), "", null
     );
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;

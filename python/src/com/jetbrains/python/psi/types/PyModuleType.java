@@ -389,18 +389,15 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
     final List<PsiElement> elements = collectImportedSubmodules(pyPackage, location);
     return elements != null ? ContainerUtil.mapNotNull(elements,
-                                    new Function<PsiElement, LookupElement>() {
-                                      @Override
-                                      public LookupElement fun(PsiElement element) {
-                                        if (element instanceof PsiFileSystemItem) {
-                                          return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
-                                        }
-                                        else if (element instanceof PsiNamedElement) {
-                                          return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
-                                        }
-                                        return null;
-                                      }
-                                    }) : Collections.<LookupElement>emptyList();
+                                                       (Function<PsiElement, LookupElement>)element -> {
+                                                         if (element instanceof PsiFileSystemItem) {
+                                                           return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
+                                                         }
+                                                         else if (element instanceof PsiNamedElement) {
+                                                           return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
+                                                         }
+                                                         return null;
+                                                       }) : Collections.<LookupElement>emptyList();
   }
 
   @Nullable
