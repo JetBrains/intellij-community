@@ -151,16 +151,24 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     final Sdk sdk = getSdk();
 
+    if (sdk == null) {
+      setErrorText("No Python interpreter selected");
+      return false;
+    }
+    else if (PythonSdkType.isInvalid(sdk)){
+      setErrorText("Choose valid python interpreter");
+      return false;
+    }
     final List<String> warningList = new ArrayList<>();
-    final boolean isPy3k = sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
-    if (sdk != null && PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
+    final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
+    if (PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
       setErrorText("Please choose a local interpreter");
       return false;
     }
     else if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
       PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
       String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
-      if (sdk != null && !isFrameworkInstalled(sdk)) {
+      if (!isFrameworkInstalled(sdk)) {
         if (PyPackageUtil.packageManagementEnabled(sdk)) {
           warningList.add(frameworkName + " will be installed on the selected interpreter");
           myInstallFramework = true;
@@ -193,10 +201,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
         setErrorText(frameworkName + " is not supported for the selected interpreter");
         return false;
       }
-    }
-    if (sdk == null) {
-      setErrorText("No Python interpreter selected");
-      return false;
     }
     return true;
   }
