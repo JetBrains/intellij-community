@@ -81,7 +81,6 @@ public abstract class ProgressStripeIcon implements Icon {
     private static final JBColor BG_COLOR = new JBColor(Gray._165, Gray._88);
     private static final JBColor FG_COLOR = new JBColor(Gray._255, Gray._128);
     private static final int WIDTH = 16;
-    private static final int START = 4;
 
     private StripeIcon(@NotNull JComponent component, int shift) {
       super(component, shift);
@@ -100,12 +99,15 @@ public abstract class ProgressStripeIcon implements Icon {
       g2.setColor(FG_COLOR);
 
       Path2D.Double path = new Path2D.Double();
-      float incline = JBUI.scale(HEIGHT) / 2.0f;
-      path.moveTo(x + shift + JBUI.scale(START), y + JBUI.scale(HEIGHT));
-      path.lineTo(x + shift + JBUI.scale(START) + incline, y);
-      path.lineTo(x + shift + JBUI.scale(HEIGHT) - JBUI.scale(START), y);
-      path.lineTo(x + shift + JBUI.scale(HEIGHT) - JBUI.scale(START) - incline, y + JBUI.scale(HEIGHT));
-      path.lineTo(x + shift + JBUI.scale(START), y + JBUI.scale(HEIGHT));
+      int height = JBUI.scale(HEIGHT);
+      float incline = height / 2.0f;
+      float length = JBUI.scale(WIDTH) / 2.0f;
+      float start = length / 2.0f;
+      path.moveTo(x + shift + start, y + height);
+      path.lineTo(x + shift + start + incline, y);
+      path.lineTo(x + shift + start + incline + length, y);
+      path.lineTo(x + shift + start + length, y + height);
+      path.lineTo(x + shift + start, y + height);
       path.closePath();
 
       g2.fill(new Area(path));
