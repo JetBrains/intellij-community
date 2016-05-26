@@ -93,13 +93,13 @@ class RegistryPropertiesAnnotator : Annotator {
   companion object {
 
     @NonNls
-    private val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
+    const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
 
     @NonNls
-    private val DESCRIPTION_SUFFIX = ".description"
+    const val DESCRIPTION_SUFFIX = ".description"
 
     @NonNls
-    private val RESTART_REQUIRED_SUFFIX = ".restartRequired"
+    const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
 
     @JvmStatic fun isImplicitUsageKey(keyName: String): Boolean {
       return StringUtil.endsWith(keyName, DESCRIPTION_SUFFIX) || StringUtil.endsWith(keyName, RESTART_REQUIRED_SUFFIX)
