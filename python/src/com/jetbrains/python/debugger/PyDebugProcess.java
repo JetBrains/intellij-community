@@ -501,9 +501,38 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void suspendAllOtherThreads(PyThreadInfo thread) {
-    if (thread.getStopReason() == AbstractCommand.SET_BREAKPOINT) { // add check for breakpoint setting
-      myDebugger.suspendOtherThreads(thread);
+    myDebugger.suspendOtherThreads(thread);
+  }
+
+  /**
+   * Check if there is the thread suspended on the breakpoint with "Suspend all" policy
+   *
+   * @return true if this thread exists
+   */
+  @Override
+  public boolean isSuspendedOnAllThreadsPolicy() {
+    if (getSession().isSuspended()) {
+      for (PyThreadInfo threadInfo : getThreads()) {
+        final List<PyStackFrameInfo> frames = threadInfo.getFrames();
+        if ((threadInfo.getState() == PyThreadInfo.State.SUSPENDED) && (frames != null)) {
+          XBreakpoint<?> breakpoint = null;
+          if (threadInfo.isStopOnBreakpoint()) {
+            final PySourcePosition position = frames.get(0).getPosition();
+            breakpoint = myRegisteredBreakpoints.get(position);
+          }
+          else if (threadInfo.isExceptionBreak()) {
+            String exceptionName = threadInfo.getMessage();
+            if (exceptionName != null) {
+              breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
+            }
+          }
+          if ((breakpoint != null) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
+            return true;
+          }
+        }
+      }
     }
+    return false;
   }
 
   private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {

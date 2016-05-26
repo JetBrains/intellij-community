@@ -35,5 +35,7 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void suspendAllOtherThreads(PyThreadInfo thread);
 
+  boolean isSuspendedOnAllThreadsPolicy();
+
   XDebugSession getSession();
 }
