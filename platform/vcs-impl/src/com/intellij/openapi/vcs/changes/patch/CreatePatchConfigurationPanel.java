@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ public class CreatePatchConfigurationPanel {
   private ComboBox<Charset> myEncoding;
   private JLabel myWarningLabel;
   private final Project myProject;
+  @Nullable private File myCommonParentPath;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
@@ -87,12 +89,17 @@ public class CreatePatchConfigurationPanel {
         VirtualFile chosenFile = FileChooser
           .chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myBasePathField, project, project.getBaseDir());
         if (chosenFile != null) {
-          myBasePathField.setText(chosenFile.getPath());
+          selectBasePath(chosenFile.getPath());
         }
       }
     });
     myWarningLabel.setForeground(JBColor.RED);
+    selectBasePath(ObjectUtils.assertNotNull(myProject.getBasePath()));
     initEncodingCombo();
+  }
+
+  public void selectBasePath(@NotNull String text) {
+    myBasePathField.setText(text);
   }
 
   private void initEncodingCombo() {
@@ -121,6 +128,10 @@ public class CreatePatchConfigurationPanel {
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
       .addComponent(myWarningLabel)
       .getPanel();
+  }
+
+  public void setCommonParentPath(@Nullable File commonParentPath) {
+    myCommonParentPath = commonParentPath;
   }
 
   private void checkExist() {
@@ -162,9 +173,12 @@ public class CreatePatchConfigurationPanel {
     if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
     File baseFile = new File(baseDirName);
     if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
+    if (myCommonParentPath != null && !FileUtil.isAncestor(baseFile, myCommonParentPath, false)) {
+      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentPath.getPath()),
+                                myBasePathField);
+    }
     return null;
   }
-
 
   @Nullable
   public ValidationInfo validateFields() {

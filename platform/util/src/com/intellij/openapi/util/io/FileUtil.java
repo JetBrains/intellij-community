@@ -213,6 +213,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
+  public static File findAncestor(@NotNull File f1, @NotNull File f2) {
+    File ancestor = f1;
+    while (ancestor != null && !isAncestor(ancestor, f2, false)) {
+      ancestor = ancestor.getParentFile();
+    }
+    return ancestor;
+  }
+
+  @Nullable
   public static File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }

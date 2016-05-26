@@ -466,4 +466,19 @@ public class ChangesUtil {
   public static String getDefaultChangeListName() {
     return VcsBundle.message("changes.default.changelist.name");
   }
+
+  @Nullable
+  public static File findCommonAncestor(@NotNull Collection<Change> changes) {
+    File ancestor = null;
+    for (Change change : changes) {
+      if (ancestor == null) {
+        ancestor = getFilePath(change).getIOFile();
+      }
+      else {
+        ancestor = FileUtil.findAncestor(ancestor, getFilePath(change).getIOFile());
+        if (ancestor == null) return null;
+      }
+    }
+    return ancestor;
+  }
 }
