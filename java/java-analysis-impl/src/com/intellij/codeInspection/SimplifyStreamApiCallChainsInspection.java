@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Pavel.Dolgov
  */
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
 
-  public static final String FOR_EACH_METHOD = "forEach";
-  public static final String STREAM_METHOD = "stream";
-  public static final String AS_LIST_METHOD = "asList";
-  public static final String OF_METHOD = "of";
+  private static final String FOR_EACH_METHOD = "forEach";
+  private static final String STREAM_METHOD = "stream";
+  private static final String AS_LIST_METHOD = "asList";
+  private static final String OF_METHOD = "of";
 
   @Override
   public boolean isEnabledByDefault() {
@@ -134,7 +135,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
           if (qualifierExpression != null) {
             final String text = createExpressionText(expression, previousExpression, qualifierExpression);
-            final PsiExpression newElement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, null);
+            final PsiExpression newElement;
+            try {
+              newElement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, null);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.info("Failed to parse expression '" + text + "'", e);
+              return;
+            }
             final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
             element.replace(shortenedElement);
           }
