@@ -54,10 +54,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -822,8 +819,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
         }
         if (breakpoint != null) {
-          // add check for breakpoint type
-          suspendAllOtherThreads(threadInfo);
+          if (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL) {
+            suspendAllOtherThreads(threadInfo);
+          }
         }
 
         if (updateSourcePosition) {
