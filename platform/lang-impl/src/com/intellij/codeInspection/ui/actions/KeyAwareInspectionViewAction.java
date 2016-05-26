@@ -165,7 +165,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       switch (files.size()) {
         case 0:
           context = null;
-          scope = new AnalysisScope(view.getProject());
+          scope = view.getScope();
           break;
         case 1:
           final PsiFile theFile = ContainerUtil.getFirstItem(files);
