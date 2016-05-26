@@ -114,7 +114,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
           final SequentialModalProgressTask progressTask =
             new SequentialModalProgressTask(project, templatePresentationText, true);
           progressTask.setMinIterationTime(200);
-          progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper, progressTask));
+          progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper, view.getGlobalInspectionContext()));
           ProgressManager.getInstance().run(progressTask);
         }, templatePresentationText, null);
 

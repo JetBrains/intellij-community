@@ -617,7 +617,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
-  Set<Object> getSuppressedNodes() {
+  public Set<Object> getSuppressedNodes() {
     return mySuppressedNodes;
   }
 

@@ -73,7 +73,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>(TObjectHashingStrategy.IDENTITY));
   private DescriptorComposer myComposer;
   private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(new THashMap<RefEntity, Set<QuickFix>>(TObjectHashingStrategy.IDENTITY));
-  private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>(TObjectHashingStrategy.IDENTITY));
+  private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>(TObjectHashingStrategy.IDENTITY) {
+
+
+
+  });
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private volatile boolean isDisposed;
@@ -733,7 +737,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @NotNull
-  private Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements() {
+  @Override
+  public Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements() {
     return myIgnoredElements;
   }
 

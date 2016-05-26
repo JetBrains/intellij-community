@@ -39,6 +39,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   InspectionToolWrapper getToolWrapper();
 
   @NotNull
+  Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements();
+
+  @NotNull
   InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                 @NotNull InspectionNode node,
                                 @NotNull InspectionRVContentProvider provider,
