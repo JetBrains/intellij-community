@@ -155,7 +155,7 @@ public class QuickDocOnMouseOverManager {
   }
   
   private void processMouseMove(@NotNull EditorMouseEvent e) {
-    if (!myApplicationActive || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+    if (!myApplicationActive || !myEnabled || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
       // Skip if the mouse is not at the editing area.
       closeQuickDocIfPossible();
       return;
