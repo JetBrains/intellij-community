@@ -103,6 +103,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   public QualifiedNameResolver fromModule(@NotNull Module module) {
+    PyPsiUtils.assertValid(module);
     checkAccess();
     myContext.setFromModule(module);
     return this;
@@ -451,7 +452,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (file == null) {
       return null;
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PyPsiUtils.assertValid(file);
+    }
     for (final T element : PsiTreeUtil.getChildrenOfTypeAsList(file, aClass)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        PyPsiUtils.assertValid(element);
+      }
       if (memberName.equals(element.getName())) {
         return element;
       }

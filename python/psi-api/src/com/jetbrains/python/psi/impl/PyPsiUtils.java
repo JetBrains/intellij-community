@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -601,6 +603,10 @@ public class PyPsiUtils {
       return;
     }
     PsiUtilCore.ensureValid(element);
+  }
+
+  public static void assertValid(@NotNull final Module module) {
+    Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
