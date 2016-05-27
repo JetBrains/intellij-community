@@ -317,16 +317,46 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
     else if (task.isModal()) {
-      runProcessWithProgressSynchronously(task.asModal(), null);
+      runSynchronously(task.asModal());
     }
     else {
       final Task.Backgroundable backgroundable = task.asBackgroundable();
       if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
-        runProcessWithProgressSynchronously(task, null);
+        runSynchronously(task);
       }
       else {
-        runProcessWithProgressAsynchronously(backgroundable);
+        runAsynchronously(backgroundable);
       }
+    }
+  }
+
+  private void runSynchronously(@NotNull final Task task) {
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        runProcessWithProgressSynchronously(task, null);
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
+    }
+  }
+
+  private void runAsynchronously(@NotNull final Task.Backgroundable task) {
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        runProcessWithProgressAsynchronously(task);
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
     }
   }
 
