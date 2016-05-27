@@ -11,7 +11,7 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
-CRLF= \n | \r | \r\n
+CRLF=\R
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
 VALUE_CHARACTER=[^\n\r\f\\] | "\\"{CRLF} | "\\".
 END_OF_LINE_COMMENT=("#"|"!")[^\r\n]*

@@ -125,7 +125,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          insertByIndex(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), elemNode);
+          elemNode.insertByOrder(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }

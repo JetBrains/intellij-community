@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -37,12 +36,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   @NotNull private final Collection<FilePath> myFiles;
 
   public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
-    this(ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
-      @Override
-      public FilePath fun(VirtualFile file) {
-        return VcsUtil.getFilePath(file);
-      }
-    }));
+    this(ContainerUtil.map(files, file -> VcsUtil.getFilePath(file)));
   }
 
   public VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {

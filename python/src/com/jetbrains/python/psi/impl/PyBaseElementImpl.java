@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -70,6 +71,10 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Good check, but too slow for production
+      PyPsiUtils.assertValid(this);
+    }
     if (visitor instanceof PyElementVisitor) {
       acceptPyVisitor(((PyElementVisitor)visitor));
     }

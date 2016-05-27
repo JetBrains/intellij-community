@@ -234,15 +234,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @Override
   public void removeEntryPoint(@NotNull RefElement anEntryPoint) {
-    if (anEntryPoint instanceof RefClass) {
-      RefClass refClass = (RefClass)anEntryPoint;
-      if (!refClass.isInterface()) {
-        anEntryPoint = refClass.getDefaultConstructor();
-      }
-    }
-
-    if (anEntryPoint == null) return;
-
     myTemporaryEntryPoints.remove(anEntryPoint);
 
     Set<Map.Entry<String, SmartRefElementPointer>> set = myPersistentEntryPoints.entrySet();

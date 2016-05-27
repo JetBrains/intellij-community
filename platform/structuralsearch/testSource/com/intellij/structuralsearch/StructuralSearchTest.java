@@ -3453,7 +3453,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    final int var3;" +
                     "  }" +
                     "}";
-    assertEquals("parameters and local variables are not package local", 1, findMatchesCount(source, "@Modifier(\"packageLocal\") '_T '_a;"));
+    assertEquals("parameters and local variables are not package-private", 1, findMatchesCount(source, "@Modifier(\"packageLocal\") '_T '_a;"));
     assertEquals("any variable can be final", 3, findMatchesCount(source, "@Modifier(\"final\") '_T '_a;"));
     assertEquals("parameters and local variables are not instance fields", 1, findMatchesCount(source, "@Modifier(\"Instance\") '_T '_a;"));
   }

@@ -42,6 +42,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -70,12 +71,14 @@ public class PyQualifiedReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
+    PyPsiUtils.assertValid(myElement);
     ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
     final PyExpression qualifier = myElement.getQualifier();
+    PyPsiUtils.assertValid(qualifier);
     if (qualifier == null) {
       return ret;
     }

@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -254,21 +255,38 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert ApplicationManager.getApplication().isDispatchThread();
+    Application app = ApplicationManager.getApplication();
+    assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert app.isDispatchThread();
 
-    final AtomicBoolean invoked = new AtomicBoolean();
+    final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    alarm.addRequest(() -> ApplicationManager.getApplication().invokeLater(() -> alarm.addRequest(() -> invoked.set(true), delay)), delay);
+
+    alarm.addRequest(() -> {
+      alarmInvoked1.set(true);
+      app.invokeLater(() -> {
+        runnableInvoked.set(true);
+        alarm.addRequest(() -> alarmInvoked2.set(true), delay);
+      });
+    }, delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
+    long start = System.currentTimeMillis();
     boolean sleptAlready = false;
-    while (!invoked.get()) {
+    while (!alarmInvoked2.get()) {
       UIUtil.dispatchAllInvocationEvents();
       //noinspection BusyWait
       Thread.sleep(sleptAlready ? 10 : delay);
       sleptAlready = true;
+      if (System.currentTimeMillis() - start > 100 * 1000) {
+        throw new AssertionError("Couldn't await alarm" +
+                                 "; alarm1 passed=" + alarmInvoked1.get() +
+                                 "; invokeLater passed=" + runnableInvoked.get() +
+                                 "; app.disposed=" + app.isDisposed());
+      }
     }
     UIUtil.dispatchAllInvocationEvents();
   }

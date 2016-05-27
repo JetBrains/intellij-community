@@ -302,9 +302,6 @@ public class InjectedLanguageUtil {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
-    if (injectedManager == null) {
-      return null; //for tests
-    }
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
     nextParent:

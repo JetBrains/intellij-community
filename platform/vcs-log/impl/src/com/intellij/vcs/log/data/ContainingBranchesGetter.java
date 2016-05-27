@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.*;
@@ -53,31 +52,22 @@ public class ContainingBranchesGetter {
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
-    myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
-      @Override
-      public void consume(final Task task) throws Throwable {
-        final List<String> branches = task.getContainingBranches(myLogData);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            // if cache is cleared (because of log refresh) during this task execution,
-            // this will put obsolete value into the old instance we don't care anymore
-            task.cache.put(new CommitId(task.hash, task.root), branches);
-            notifyListeners();
-          }
-        });
-      }
+    myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, task -> {
+      final List<String> branches = task.getContainingBranches(myLogData);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // if cache is cleared (because of log refresh) during this task execution,
+        // this will put obsolete value into the old instance we don't care anymore
+        task.cache.put(new CommitId(task.hash, task.root), branches);
+        notifyListeners();
+      });
     });
-    myLogData.addDataPackChangeListener(new DataPackChangeListener() {
-      @Override
-      public void onDataPackChange(@NotNull DataPack dataPack) {
-        Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
-        int checksum = currentBranches.hashCode();
-        if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
-          clearCache();
-        }
-        myCurrentBranchesChecksum = checksum;
+    myLogData.addDataPackChangeListener(dataPack -> {
+      Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
+      int checksum = currentBranches.hashCode();
+      if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+        clearCache();
       }
+      myCurrentBranchesChecksum = checksum;
     });
   }
 
@@ -90,12 +80,7 @@ public class ContainingBranchesGetter {
       c.dispose();
     }
     // re-request containing branches information for the commit user (possibly) currently stays on
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        notifyListeners();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> notifyListeners());
   }
 
   /**
@@ -149,12 +134,8 @@ public class ContainingBranchesGetter {
     PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
     VcsLogRefs refs = dataPack.getRefsModel();
 
-    VcsRef branchRef = ContainerUtil.find(refs.getBranches(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef vcsRef) {
-        return vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName);
-      }
-    });
+    VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
+                                          vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
     if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {

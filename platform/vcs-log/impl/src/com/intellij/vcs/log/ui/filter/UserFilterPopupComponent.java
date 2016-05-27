@@ -18,11 +18,8 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
-import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -94,14 +91,11 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myLogData.getAllUsers(), new Function<VcsUser, String>() {
-      @Override
-      public String fun(VcsUser user) {
-        String shortPresentation = VcsUserUtil.getShortPresentation(user);
-        Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
-        if (firstAndLastName == null) return shortPresentation;
-        return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
-      }
+    return ContainerUtil.map(myLogData.getAllUsers(), user -> {
+      String shortPresentation = VcsUserUtil.getShortPresentation(user);
+      Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
+      if (firstAndLastName == null) return shortPresentation;
+      return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
     });
   }
 

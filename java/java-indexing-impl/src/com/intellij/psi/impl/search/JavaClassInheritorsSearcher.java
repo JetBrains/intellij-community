@@ -17,7 +17,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -261,9 +260,18 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         currentlyProcessingClasses.down(); // tell other threads we are going to process something
         boolean added;
         try {
-          PsiClass candidate = ReadAction.compute(() -> (PsiClass)next.retrieve());
+          PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+            @Override
+            public PsiClass compute() {
+              PsiClass nextClass = (PsiClass)next.retrieve();
+              if (nextClass instanceof PsiAnonymousClass || nextClass != null && nextClass.hasModifierProperty(PsiModifier.FINAL)) {
+                return null;
+              }
+              return nextClass;
+            }
+          });
 
-          if (candidate == null || candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
+          if (candidate == null) {
             added = false;
           }
           else {

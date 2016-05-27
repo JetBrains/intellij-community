@@ -121,8 +121,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public Icon getIcon(int flags) {
-    if (isValid()) {
-      final Property property = getProperty();
+    PyPsiUtils.assertValid(this);
+    final Property property = getProperty();
       if (property != null) {
         if (property.getGetter().valueOrNull() == this) {
           return PythonIcons.Python.PropertyGetter;
@@ -138,7 +138,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (getContainingClass() != null) {
         return PlatformIcons.METHOD_ICON;
       }
-    }
     return PythonIcons.Python.Function;
   }
 

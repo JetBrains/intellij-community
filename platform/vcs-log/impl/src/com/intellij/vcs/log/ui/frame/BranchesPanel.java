@@ -97,12 +97,7 @@ public class BranchesPanel extends JPanel {
     List<RefGroup> groups = ContainerUtil.newArrayList();
     for (RefGroup group : refGroups) {
       if (group.isExpanded() || group.getRefs().size() == 1) {
-        groups.addAll(ContainerUtil.map(group.getRefs(), new Function<VcsRef, RefGroup>() {
-          @Override
-          public RefGroup fun(VcsRef ref) {
-            return new SingletonRefGroup(ref);
-          }
-        }));
+        groups.addAll(ContainerUtil.map(group.getRefs(), (Function<VcsRef, RefGroup>)ref -> new SingletonRefGroup(ref)));
       }
       else {
         groups.add(group);

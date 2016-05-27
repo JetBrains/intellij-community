@@ -48,13 +48,10 @@ class ReferencePopupBuilder {
     myUi = ui;
 
     myRendererComponent = new SingleReferenceComponent(new VcsRefPainter(ui.getColorManager(), false));
-    myCellRenderer = new ListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        myRendererComponent.setReference((VcsRef)value);
-        myRendererComponent.setSelected(isSelected);
-        return myRendererComponent;
-      }
+    myCellRenderer = (list, value, index, isSelected, cellHasFocus) -> {
+      myRendererComponent.setReference((VcsRef)value);
+      myRendererComponent.setSelected(isSelected);
+      return myRendererComponent;
     };
 
     myList = createList(group);

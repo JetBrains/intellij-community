@@ -60,12 +60,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(new JLabel(AllIcons.Ide.Statusbar_arrows));
 
-    installChangeListener(new Runnable() {
-      @Override
-      public void run() {
-        myValueLabel.revalidate();
-        myValueLabel.repaint();
-      }
+    installChangeListener(() -> {
+      myValueLabel.revalidate();
+      myValueLabel.repaint();
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();

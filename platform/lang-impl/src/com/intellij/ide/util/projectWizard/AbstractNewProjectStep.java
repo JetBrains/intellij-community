@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -187,7 +188,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
     }
-    baseDir.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
       String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.getAbsolutePath());

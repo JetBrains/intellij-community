@@ -74,6 +74,7 @@ public class RepositoryLibraryPropertiesEditor {
     this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     repositoryLibraryDescription = description;
+    mavenCoordinates.setCopyable(true);
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -84,7 +85,7 @@ public class RepositoryLibraryPropertiesEditor {
       @Override
       public void onChange(RepositoryLibraryPropertiesEditor editor) {
         onChangeListener.onChange(editor);
-        mavenCoordinates.setText("Maven: " + repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
+        mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
     };
     reloadVersionsAsync();
@@ -253,7 +254,7 @@ public class RepositoryLibraryPropertiesEditor {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> initVersionsPanel(), ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(this::initVersionsPanel, ModalityState.any());
   }
 
   private void versionsFailedToLoad() {

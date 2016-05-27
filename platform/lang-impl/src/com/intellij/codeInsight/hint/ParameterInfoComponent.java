@@ -55,7 +55,8 @@ public class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border BACKGROUND_BORDER = BorderFactory.createLineBorder(BACKGROUND_COLOR);
+  private static final Border LAST_ITEM_BORDER = BorderFactory.createEmptyBorder();
+  private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
 
   protected int myWidthLimit = 500;
 
@@ -166,14 +167,14 @@ public class ParameterInfoComponent extends JPanel {
                                                Color background) {
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 

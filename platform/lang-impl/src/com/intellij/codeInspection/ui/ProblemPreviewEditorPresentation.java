@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  * @author Dmitry Batkovich
  */
 public class ProblemPreviewEditorPresentation {
+  private final static int VIEW_ADDITIONAL_OFFSET = 4;
   private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
@@ -70,8 +71,9 @@ public class ProblemPreviewEditorPresentation {
     final boolean[] isUpdated = new boolean[]{false};
     final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
-      .filter(d -> d instanceof ProblemDescriptorBase)
-      .map(d -> ((ProblemDescriptorBase)d).getPsiElement())
+      .filter(ProblemDescriptorBase.class::isInstance)
+      .map(ProblemDescriptorBase.class::cast)
+      .map(ProblemDescriptorBase::getPsiElement)
       .filter(e -> e != null && e.isValid())
       .map(ProblemPreviewEditorPresentation::getWholeElement)
       .map((e) -> {
@@ -85,16 +87,20 @@ public class ProblemPreviewEditorPresentation {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      myView.invalidate();
-      myView.validate();
-      UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
-      if (elements.size() == 1) {
-        final PsiElement element = elements.get(0).getElement();
-        LOG.assertTrue(element != null);
-        final int offset = element.getTextOffset();
-        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
-      } else {
-        myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+      if (!myEditor.isDisposed()) {
+        myView.invalidate();
+        myView.validate();
+        UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
+        if (elements.size() == 1) {
+          final PsiElement element = elements.get(0).getElement();
+          LOG.assertTrue(element != null);
+          final DocumentEx document = myEditor.getDocument();
+          final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+                                      document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
+        } else {
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+        }
       }
     });
 

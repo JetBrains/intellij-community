@@ -210,6 +210,8 @@ public class LazyParseableElement extends CompositeElement {
           super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
         }
 
+        AstPath.cacheNodePaths(this);
+
         myText = new SoftReference<CharSequence>(text);
       }
     }

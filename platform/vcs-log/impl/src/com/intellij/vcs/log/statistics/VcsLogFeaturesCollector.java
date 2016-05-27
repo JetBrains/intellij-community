@@ -46,21 +46,23 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
       VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.branches.panel.visible", ui.isBranchesPanelVisible()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details.visible", ui.isShowDetails()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges.visible", ui.areLongEdgesVisible()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.branches.panel", ui.isBranchesPanelVisible()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.isShowDetails()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.areLongEdgesVisible()));
 
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.linear.bek", ui.getBekType().equals(PermanentGraph.SortType.LinearBek)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getBekType().equals(PermanentGraph.SortType.Bek)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getBekType().equals(PermanentGraph.SortType.Normal)));
 
         if (ui.isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots.visible", ui.isShowRootNames()));
+          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.isShowRootNames()));
         }
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
-            .ensureProperKey(factory.getId()) + ".enabled", ui.isHighlighterEnabled(factory.getId())));
+          if (factory.showMenuItem()) {
+            usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
+              .ensureProperKey(factory.getId()), ui.isHighlighterEnabled(factory.getId())));
+          }
         }
 
         return usages;

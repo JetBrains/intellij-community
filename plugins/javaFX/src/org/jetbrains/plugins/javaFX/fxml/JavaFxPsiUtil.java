@@ -768,20 +768,22 @@ public class JavaFxPsiUtil {
   public static Map<String, XmlAttributeValue> collectFileIds(@Nullable final XmlTag currentTag) {
     if (currentTag == null) return Collections.emptyMap();
     final PsiFile containingFile = currentTag.getContainingFile();
-    if (!(containingFile instanceof XmlFile)) return Collections.emptyMap();
-    final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
+    final XmlAttribute currentIdAttribute = currentTag.getAttribute(FxmlConstants.FX_ID);
+    return collectFileIds(containingFile, currentIdAttribute != null ? currentIdAttribute.getValue() : null);
+  }
+
+  @NotNull
+  public static Map<String, XmlAttributeValue> collectFileIds(@Nullable PsiFile psiFile, @Nullable String skipFxId) {
+    if (!(psiFile instanceof XmlFile)) return Collections.emptyMap();
+    final XmlTag rootTag = ((XmlFile)psiFile).getRootTag();
     if (rootTag == null) return Collections.emptyMap();
 
     final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager
       .getCachedValue(rootTag, () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT));
-    final XmlAttribute currentIdAttribute = currentTag.getAttribute(FxmlConstants.FX_ID);
-    if (currentIdAttribute != null) {
-      final String currentId = currentIdAttribute.getValue();
-      if (cachedIds.containsKey(currentId)) {
-        final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
-        filteredIds.remove(currentId);
-        return filteredIds;
-      }
+    if (skipFxId != null && cachedIds.containsKey(skipFxId)) {
+      final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
+      filteredIds.remove(skipFxId);
+      return filteredIds;
     }
     return cachedIds;
   }
@@ -1112,7 +1114,7 @@ public class JavaFxPsiUtil {
     return propertyName != null ? propertyName : memberName;
   }
 
-  @NotNull
+  @Nullable
   public static PsiClass getTagValueClass(@NotNull XmlTag xmlTag) {
     return getTagValueClass(xmlTag, getTagClass(xmlTag)).getFirst();
   }

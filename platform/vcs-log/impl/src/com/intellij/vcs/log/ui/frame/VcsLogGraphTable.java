@@ -937,11 +937,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mousePressed(convertMouseEvent(e));
     }
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseReleased(convertMouseEvent(e));
     }
 
@@ -955,12 +957,18 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseDragged(convertMouseEvent(e));
     }
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseMoved(convertMouseEvent(e));
+    }
+
+    public boolean isOnBorder(@NotNull MouseEvent e) {
+      return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUI.scale(3);
     }
   }
 

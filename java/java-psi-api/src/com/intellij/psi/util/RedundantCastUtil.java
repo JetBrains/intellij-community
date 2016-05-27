@@ -663,6 +663,10 @@ public class RedundantCastUtil {
             return;
           }
         }
+
+        if (operand instanceof PsiFunctionalExpression && !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+          return;
+        }
       }
 
       if (arrayAccessAtTheLeftSideOfAssignment(parent, typeCast)) {

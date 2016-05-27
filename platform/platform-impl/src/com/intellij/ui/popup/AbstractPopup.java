@@ -445,7 +445,7 @@ public class AbstractPopup implements JBPopup {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     }
 
-    if (window != null) {
+    if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
   }
@@ -1128,6 +1128,7 @@ public class AbstractPopup implements JBPopup {
     Disposer.register(this, focusWatcher);
 
     mySpeedSearchPatternField = new JTextField();
+    mySpeedSearchPatternField.setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }

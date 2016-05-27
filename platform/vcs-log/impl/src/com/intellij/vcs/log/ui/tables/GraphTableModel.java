@@ -78,12 +78,8 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
-    CommitId commitId = myLogData.getHashMap().findCommitId(new Condition<CommitId>() {
-      @Override
-      public boolean value(CommitId commitId) {
-        return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
-      }
-    });
+    CommitId commitId = myLogData.getHashMap().findCommitId(
+      commitId1 -> hashByString.value(commitId1) && getRowOfCommit(commitId1.getHash(), commitId1.getRoot()) != -1);
     return commitId != null ? getRowOfCommit(commitId.getHash(), commitId.getRoot()) : -1;
   }
 
@@ -188,42 +184,30 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
-    return new Iterable<Integer>() {
-      @NotNull
+    return () -> new Iterator<Integer>() {
+      private int myRowIndex = Math.max(0, row - above);
+
       @Override
-      public Iterator<Integer> iterator() {
-        return new Iterator<Integer>() {
-          private int myRowIndex = Math.max(0, row - above);
+      public boolean hasNext() {
+        return myRowIndex < row + below && myRowIndex < maxRows;
+      }
 
-          @Override
-          public boolean hasNext() {
-            return myRowIndex < row + below && myRowIndex < maxRows;
-          }
+      @Override
+      public Integer next() {
+        int nextRow = myRowIndex;
+        myRowIndex++;
+        return getIdAtRow(nextRow);
+      }
 
-          @Override
-          public Integer next() {
-            int nextRow = myRowIndex;
-            myRowIndex++;
-            return getIdAtRow(nextRow);
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException("Removing elements is not supported.");
-          }
-        };
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException("Removing elements is not supported.");
       }
     };
   }
 
   @NotNull
   public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
-    return ContainerUtil.map(rows, new NotNullFunction<Integer, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Integer row) {
-        return getIdAtRow(row);
-      }
-    });
+    return ContainerUtil.map(rows, (NotNullFunction<Integer, Integer>)row -> getIdAtRow(row));
   }
 }

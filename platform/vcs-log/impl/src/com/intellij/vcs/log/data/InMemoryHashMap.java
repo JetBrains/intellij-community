@@ -22,7 +22,6 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,15 +47,12 @@ public class InMemoryHashMap implements VcsLogHashMap {
   @Override
   public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
     final CommitId[] result = new CommitId[]{null};
-    myEnumerator.forEachValue(new TObjectProcedure<CommitId>() {
-      @Override
-      public boolean execute(CommitId commitId) {
-        if (condition.value(commitId)) {
-          result[0] = commitId;
-          return false;
-        }
-        return true;
+    myEnumerator.forEachValue(commitId -> {
+      if (condition.value(commitId)) {
+        result[0] = commitId;
+        return false;
       }
+      return true;
     });
     return result[0];
   }

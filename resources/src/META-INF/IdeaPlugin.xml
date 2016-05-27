@@ -786,6 +786,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionsApiInspection"
                      displayName="Collection usages can be replaced with single method"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
+                     displayName="Simplify stream API call chains"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
@@ -1078,6 +1083,8 @@
                              implementationClass="com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor"/>
     <lang.surroundDescriptor language="JAVA"
                              implementationClass="com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction$Template"/>
+    <codeInsight.surroundWithRangeAdjuster
+        implementation="com.intellij.codeInsight.generation.surroundWith.JavaSurroundWithStatementRangeAdjuster"/>
 
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
 
@@ -1313,6 +1320,7 @@
                              implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
 
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaBackspaceHandler"/>
+    <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
 
     <usageTargetProvider implementation="com.intellij.find.findUsages.ThrowsUsageTargetProvider"/>
 

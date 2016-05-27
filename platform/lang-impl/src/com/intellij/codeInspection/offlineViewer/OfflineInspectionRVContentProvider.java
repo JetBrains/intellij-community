@@ -171,7 +171,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       final OfflineProblemDescriptorNode child =
         OfflineProblemDescriptorNode.create(((OfflineProblemDescriptorContainer)container).getUserObject(),
                                             (LocalInspectionToolWrapper)toolWrapper, presentation);
-      insertByIndex(child, elemNode);
+      elemNode.insertByOrder(child);
     }
   }
 

@@ -18,7 +18,6 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,12 +60,8 @@ public class StopWatch {
   public void report() {
     String message = myOperation + " took " + (System.currentTimeMillis() - myStartTime) + " ms";
     if (myDurationPerRoot.size() > 1) {
-      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(), new Function<Map.Entry<VirtualFile, Long>, String>() {
-        @Override
-        public String fun(Map.Entry<VirtualFile, Long> entry) {
-          return "    " + entry.getKey().getName() + ": " + entry.getValue() + " ms";
-        }
-      }, "\n");
+      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),
+                                        entry -> "    " + entry.getKey().getName() + ": " + entry.getValue() + " ms", "\n");
     }
     LOG.debug(message);
   }

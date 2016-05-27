@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -188,12 +187,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private static List<VcsRef> getBranches(Collection<VcsRef> refs) {
-    return ContainerUtil.filter(refs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getType().isBranch();
-      }
-    });
+    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
   }
 
   private static class PaintInfo {

@@ -7,12 +7,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -20,7 +18,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,12 +62,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myCache = cache;
     Disposer.register(parentDisposable, this);
     myLoader =
-      new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS, new ThrowableConsumer<TaskDescriptor, VcsException>() {
-        @Override
-        public void consume(final TaskDescriptor task) throws VcsException {
-          preLoadCommitData(task.myCommits);
-          notifyLoaded();
-        }
+      new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS, task -> {
+        preLoadCommitData(task.myCommits);
+        notifyLoaded();
       });
   }
 
@@ -166,13 +160,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private void sortCommitsByRow(@NotNull List<T> result, @NotNull final TIntIntHashMap rowsForCommits) {
-    ContainerUtil.sort(result, new Comparator<T>() {
-      @Override
-      public int compare(T details1, T details2) {
-        int row1 = rowsForCommits.get(myHashMap.getCommitIndex(details1.getId(), details1.getRoot()));
-        int row2 = rowsForCommits.get(myHashMap.getCommitIndex(details2.getId(), details2.getRoot()));
-        return Comparing.compare(row1, row2);
-      }
+    ContainerUtil.sort(result, (details1, details2) -> {
+      int row1 = rowsForCommits.get(myHashMap.getCommitIndex(details1.getId(), details1.getRoot()));
+      int row2 = rowsForCommits.get(myHashMap.getCommitIndex(details2.getId(), details2.getRoot()));
+      return Comparing.compare(row1, row2);
     });
   }
 
@@ -221,13 +212,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (!myCache.isKeyCached(commitId)) {
-      myCache.put(commitId, (T)new LoadingDetails(new Computable<CommitId>() {
-
-        @Override
-        public CommitId compute() {
-          return myHashMap.getCommitId(commitId);
-        }
-      }, taskNumber));
+      myCache.put(commitId, (T)new LoadingDetails(() -> myHashMap.getCommitId(commitId), taskNumber));
     }
   }
 
@@ -245,15 +230,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private Set<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
     Set<T> result = ContainerUtil.newHashSet();
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
-    commits.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int commit) {
-        CommitId commitId = myHashMap.getCommitId(commit);
-        if (commitId != null) {
-          rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
-        }
-        return true;
+    commits.forEach(commit -> {
+      CommitId commitId = myHashMap.getCommitId(commit);
+      if (commitId != null) {
+        rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
       }
+      return true;
     });
 
     for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {

@@ -493,7 +493,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (address == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-        // negative port number means the caller leaves to debugger to decide at which port to listen
+        // zero port number means the caller leaves to debugger to decide at which port to listen
         //noinspection HardCodedStringLiteral
         final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
         if (portArg != null) {
@@ -504,7 +504,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
         }
-        connector.startListening(myArguments);
+        String listeningAddress = connector.startListening(myArguments);
+        String port = StringUtil.substringAfter(listeningAddress, ":");
+        if (port != null) {
+          listeningAddress = port;
+        }
+        myConnection.setAddress(listeningAddress);
+
         myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
           return connector.accept(myArguments);

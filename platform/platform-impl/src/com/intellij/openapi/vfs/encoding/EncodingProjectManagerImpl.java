@@ -33,8 +33,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -67,9 +70,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
 
-  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
+  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager, ProjectManager projectManager) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
+    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+      @Override
+      public void projectOpened(Project project) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
+      }
+    });
   }
 
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
@@ -143,6 +152,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     if (!myProject.isDefault()) {
       myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
       myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
+    }
+  }
+
+  private void reloadAlreadyLoadedDocuments() {
+    for (VirtualFile file : myMapping.keySet()) {
+      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (cachedDocument != null) {
+        reload(file); // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
+      }
     }
   }
 

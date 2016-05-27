@@ -57,13 +57,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   // returns true if only one user commits to this repository
   private boolean isSingleUser() {
-    NotNullFunction<VcsUser, String> nameToString = new NotNullFunction<VcsUser, String>() {
-      @NotNull
-      @Override
-      public String fun(VcsUser user) {
-        return VcsUserUtil.getNameInStandardForm(VcsUserUtil.getShortPresentation(user));
-      }
-    };
+    NotNullFunction<VcsUser, String> nameToString = user -> VcsUserUtil.getNameInStandardForm(VcsUserUtil.getShortPresentation(user));
     Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myLogData.getAllUsers(), nameToString));
     Set<String> currentUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myLogData.getCurrentUser().values(), nameToString));
     return allUserNames.size() == currentUserNames.size() && currentUserNames.containsAll(allUserNames);

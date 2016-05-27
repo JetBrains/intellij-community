@@ -435,6 +435,7 @@ public abstract class GitHandler {
         }
       }
       setUpLocale();
+      unsetGitTrace();
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
       // start process
@@ -455,6 +456,10 @@ public abstract class GitHandler {
 
   private void setUpLocale() {
     myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+  }
+
+  private void unsetGitTrace() {
+    myEnv.put("GIT_TRACE", "0");
   }
 
   private void setupHttpAuthenticator() throws IOException {

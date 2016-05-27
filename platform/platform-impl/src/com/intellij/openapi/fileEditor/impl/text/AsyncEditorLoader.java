@@ -91,7 +91,9 @@ public class AsyncEditorLoader {
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        scheduleBackgroundLoading(false);
+        if (!Disposer.isDisposed(myTextEditor) && !myProject.isDisposed()) {
+          scheduleBackgroundLoading(false);
+        }
       }
     };
 

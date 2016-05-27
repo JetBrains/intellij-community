@@ -51,6 +51,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,7 +181,16 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    myIncludingFile = file;
+    try {
+      myIncludingFile = file;
+      doInvoke(project, editor, file);
+    }
+    finally {
+      myIncludingFile = null;
+    }
+  }
+
+  protected void doInvoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
@@ -250,6 +260,8 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return extractFileType.getDefaultExtension();
   }
 
+  @Deprecated
+  @TestOnly
   public boolean isValidRange(final T firstToExtract, final T lastToExtract) {
     return verifyChildRange(firstToExtract, lastToExtract);
   }

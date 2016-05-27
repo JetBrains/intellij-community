@@ -39,15 +39,16 @@ import javax.swing.*;
 
 public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
   /**
-   * @noinspection PublicField
+   * @noinspection PublicField, WeakerAccess
    */
-  public boolean m_ignoreImmediatelyReturnedVariables = false;
+  public boolean m_ignoreImmediatelyReturnedVariables;
 
-  @Deprecated
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreAnnotatedVariables = false;
+  @Deprecated
+  public boolean m_ignoreAnnotatedVariables;
+  @SuppressWarnings("WeakerAccess")
   public boolean m_ignoreAnnotatedVariablesNew = true;
 
   @Override
@@ -90,7 +91,7 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
 
   private class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
 
-    @SuppressWarnings({"IfStatementWithIdenticalBranches"})
+    @SuppressWarnings("IfStatementWithIdenticalBranches")
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);

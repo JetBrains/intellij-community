@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
@@ -96,12 +95,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @NotNull
   private static List<List<String>> getRecentGroup(Deque<UserGroup> stateField) {
-    return ContainerUtil.map2List(stateField, new Function<UserGroup, List<String>>() {
-      @Override
-      public List<String> fun(UserGroup group) {
-        return group.users;
-      }
-    });
+    return ContainerUtil.map2List(stateField, group -> group.users);
   }
 
   @Override

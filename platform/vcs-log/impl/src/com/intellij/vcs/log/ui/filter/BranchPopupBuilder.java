@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -79,12 +78,7 @@ public abstract class BranchPopupBuilder {
         if (recentItem.size() == 1) {
           final String item = ContainerUtil.getFirstItem(recentItem);
           if (filteredGroups.singletonGroups.contains(item) ||
-              ContainerUtil.find(filteredGroups.expandedGroups.values(), new Condition<TreeSet<String>>() {
-                @Override
-                public boolean value(TreeSet<String> strings) {
-                  return strings.contains(item);
-                }
-              }) != null) {
+              ContainerUtil.find(filteredGroups.expandedGroups.values(), strings -> strings.contains(item)) != null) {
             continue;
           }
         }

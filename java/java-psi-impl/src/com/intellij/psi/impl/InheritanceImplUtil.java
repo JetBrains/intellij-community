@@ -41,7 +41,7 @@ public class InheritanceImplUtil {
     return JavaClassSupers.getInstance().getSuperClassSubstitutor(baseClass, candidateClass, scope, PsiSubstitutor.EMPTY) != null;
   }
 
-  public static boolean hasObjectQualifiedName(@NotNull PsiClass candidateClass) {
+  static boolean hasObjectQualifiedName(@NotNull PsiClass candidateClass) {
     if (!CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(candidateClass.getName())) {
       return false;
     }
@@ -58,16 +58,6 @@ public class InheritanceImplUtil {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
       return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
     }
-    /* //TODO fix classhashprovider so it doesn't use class qnames only
-    final ClassHashProvider provider = getHashProvider((PsiManagerImpl) manager);
-    if (checkDeep && provider != null) {
-      try {
-        return provider.isInheritor(baseClass, candidateClass);
-      }
-      catch (ClassHashProvider.OutOfRangeException e) {
-      }
-    }
-    */
     if(checkDeep && LOG.isDebugEnabled()){
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);
     }
@@ -83,9 +73,6 @@ public class InheritanceImplUtil {
     }
 
     if (!checkDeep) {
-      final boolean cInt = candidateClass.isInterface();
-      final boolean bInt = baseClass.isInterface();
-
       if (candidateClass instanceof PsiCompiledElement) {
         String baseQName = baseClass.getQualifiedName();
         if (baseQName == null) return false;
@@ -103,27 +90,20 @@ public class InheritanceImplUtil {
           return true;
         }
 
-        if (cInt == bInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), scope, facade)) return true;
-        return bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), scope, facade);
+        boolean isCandidateInterface = candidateClass.isInterface();
+        boolean isBaseInterface = baseClass.isInterface();
+
+        if (isCandidateInterface == isBaseInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), scope, facade)) return true;
+        return isBaseInterface && !isCandidateInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), scope, facade);
       }
+      boolean isCandidateInterface = candidateClass.isInterface();
+      boolean isBaseInterface = baseClass.isInterface();
       String baseName = baseClass.getName();
-      if (cInt == bInt) {
-        for (PsiClassType type : candidateClass.getExtendsListTypes()) {
-          if (Comparing.equal(type.getClassName(), baseName)) {
-            if (manager.areElementsEquivalent(baseClass, type.resolve())) {
-              return true;
-            }
-          }
-        }
+      if (isCandidateInterface == isBaseInterface) {
+        return PsiClassImplUtil.isInExtendsList(candidateClass, baseClass, baseName, manager);
       }
-      else if (!cInt) {
-        for (PsiClassType type : candidateClass.getImplementsListTypes()) {
-          if (Comparing.equal(type.getClassName(), baseName)) {
-            if (manager.areElementsEquivalent(baseClass, type.resolve())) {
-              return true;
-            }
-          }
-        }
+      if (!isCandidateInterface) {
+        return PsiClassImplUtil.isInReferenceList(candidateClass.getImplementsList(), baseClass, baseName, manager);
       }
 
       return false;

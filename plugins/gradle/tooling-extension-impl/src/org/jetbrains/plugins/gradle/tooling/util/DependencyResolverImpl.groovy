@@ -58,7 +58,7 @@ import java.util.regex.Pattern
 class DependencyResolverImpl implements DependencyResolver {
 
   private static isArtifactResolutionQuerySupported = GradleVersion.current() >= GradleVersion.version("2.0")
-  private static isDependencySubstitutionsSupported = GradleVersion.current() >= GradleVersion.version("2.5")
+  private static isDependencySubstitutionsSupported = GradleVersion.current() > GradleVersion.version("2.5")
 
   @NotNull
   private final Project myProject
@@ -143,10 +143,15 @@ class DependencyResolverImpl implements DependencyResolver {
         Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap = [:];
         componentResults.each { componentResultsMap.put(it.id, it) }
 
-        Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies = ArrayListMultimap.create()
-        configuration.incoming.dependencies.findAll { it instanceof ProjectDependency }.each {
-          configurationProjectDependencies.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
+        def projectDeps
+        projectDeps = { Configuration conf, map = ArrayListMultimap.create() ->
+          conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
+            map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
+            projectDeps((it as ProjectDependency).projectConfiguration, map)
+          }
+          map
         }
+        Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies = projectDeps(configuration)
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
         if(!configuration.resolvedConfiguration.hasError()) {

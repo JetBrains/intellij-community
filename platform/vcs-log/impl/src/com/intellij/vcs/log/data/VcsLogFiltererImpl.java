@@ -22,9 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -58,24 +56,18 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
-    myTaskController = new SingleTaskController<Request, VisiblePack>(new Consumer<VisiblePack>() {
-      @Override
-      public void consume(@NotNull VisiblePack visiblePack) {
-        myVisiblePack = visiblePack;
-        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
-          listener.onVisiblePackChange(visiblePack);
-        }
+    myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePack -> {
+      myVisiblePack = visiblePack;
+      for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
+        listener.onVisiblePackChange(visiblePack);
       }
     }) {
       @Override
       protected void startNewBackgroundTask() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            MyTask task = new MyTask(project, "Applying filters...");
-            ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
-                                                                               myLogData.getProgress().createProgressIndicator(task));
-          }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          MyTask task = new MyTask(project, "Applying filters...");
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
+                                                                             myLogData.getProgress().createProgressIndicator(task));
         });
       }
     };
@@ -150,12 +142,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
         myRequestsToRun = ContainerUtil.newArrayList();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            for (MoreCommitsRequest request : requestsToRun) {
-              request.onLoaded.run();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          for (MoreCommitsRequest request : requestsToRun) {
+            request.onLoaded.run();
           }
         });
       }
@@ -205,12 +194,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           return new FakeVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
         }
 
-        Request nonValidateRequest = ContainerUtil.find(requests, new Condition<Request>() {
-          @Override
-          public boolean value(Request request) {
-            return !(request instanceof ValidateRequest);
-          }
-        });
+        Request nonValidateRequest = ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest));
 
         if (nonValidateRequest != null) {
           // only doing something if there are some other requests

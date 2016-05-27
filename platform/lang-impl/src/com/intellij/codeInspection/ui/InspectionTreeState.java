@@ -50,7 +50,7 @@ public class InspectionTreeState {
 
   private boolean needRestore(@NotNull InspectionTreeNode node) {
     for (Object o : mySelectionPath.myPath) {
-      if (InspectionResultsViewComparator.getInstance().areEqual(o, node)) {
+      if (InspectionResultsViewComparator.getInstance().areEqual((InspectionTreeNode)o, node)) {
         return true;
       }
     }

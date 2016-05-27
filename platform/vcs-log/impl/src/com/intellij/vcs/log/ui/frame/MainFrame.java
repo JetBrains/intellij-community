@@ -18,9 +18,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -114,7 +112,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
     ProgressStripe progressStripe =
-      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (myDecorator != null && myLogData.getProgress().isRunning()) startLoadingImmediately();
+        }
+      };
     myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
       public void progressStarted() {
@@ -259,35 +263,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil
-        .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
-          @Override
-          public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
-            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(),
-                                                      VcsUserUtil.getShortPresentation(details.getCommitter()),
-                                                      new Date(details.getCommitTime()), details.getChanges(),
-                                                      convertToRevisionNumber(details.getId()));
-          }
-        });
+        .map2Array(details, CommittedChangeListForRevision.class,
+                   details1 -> new CommittedChangeListForRevision(details1.getSubject(), details1.getFullMessage(),
+                                                                  VcsUserUtil.getShortPresentation(details1.getCommitter()),
+                                                                  new Date(details1.getCommitTime()), details1.getChanges(),
+                                                                  convertToRevisionNumber(details1.getId())));
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myLog.getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
-        @Override
-        public VcsRevisionNumber fun(CommitId commitId) {
-          return convertToRevisionNumber(commitId.getHash());
-        }
-      }), VcsRevisionNumber.class);
+      return ArrayUtil
+        .toObjectArray(ContainerUtil.map(hashes, commitId -> convertToRevisionNumber(commitId.getHash())), VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       int[] selectedRows = myGraphTable.getSelectedRows();
       if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), new Function<Integer, VirtualFile>() {
-        @Override
-        public VirtualFile fun(@NotNull Integer row) {
-          return myGraphTable.getModel().getRoot(row);
-        }
-      });
+      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
       if (roots.size() == 1) {
         return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }

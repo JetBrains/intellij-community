@@ -17,14 +17,18 @@ package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -50,7 +54,7 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
 
     myCardLayout = new CardLayout();
     myComboBoxPanel.setLayout(myCardLayout);
-    setBorder(IdeBorderFactory.createEmptyBorder(new Insets(4, 0, 6, 0)));
+    setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0)));
 
     myProfilesComboBox = new JComboBox();
     myComboBoxPanel.add(myProfilesComboBox, COMBO_CARD);
@@ -59,7 +63,7 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
     mySubmitNameComponent = new ValidatedTextField(mySaveListener);
     myComboBoxPanel.add(mySubmitNameComponent, EDIT_CARD);
 
-    myComboModel = new SortedComboBoxModel<InspectionProfileImpl>((p1, p2) -> ProfilesConfigurableComboBox.this.compare(p1, p2));
+    myComboModel = new SortedComboBoxModel<InspectionProfileImpl>(this::compare);
     myProfilesComboBox.setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
     myProfilesComboBox.setRenderer(new ListCellRenderer<Object>() {
@@ -132,8 +136,8 @@ abstract class ProfilesConfigurableComboBox extends JPanel {
     for (InspectionProfileImpl profile : profiles) {
       myComboModel.add(profile);
     }
-    myProfilesComboBox.setSelectedIndex(0);
     findFirstGlobalProfile();
+    myProfilesComboBox.setSelectedIndex(0);
   }
 
   void addProfile(InspectionProfileImpl inspectionProfile) {

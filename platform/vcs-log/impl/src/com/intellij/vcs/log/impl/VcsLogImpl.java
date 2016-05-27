@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,12 +105,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
-    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().startsWith(reference);
-      }
-    });
+    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, ref -> ref.getName().startsWith(reference));
     if (matchingRefs.isEmpty()) {
       return myUi.jumpToCommitByPartOfHash(reference);
     }

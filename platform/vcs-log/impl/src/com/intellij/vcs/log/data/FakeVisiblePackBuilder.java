@@ -15,9 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogHashMap;
@@ -58,12 +56,8 @@ public class FakeVisiblePackBuilder {
                             @NotNull VisibleGraphImpl<Integer> oldGraph,
                             @NotNull VcsLogFilterCollection filters) {
     final PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo();
-    Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(), new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer integer) {
-        return info.getPermanentCommitsInfo().getCommitId(integer);
-      }
-    });
+    Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(),
+                                               integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
     RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
@@ -85,18 +79,15 @@ public class FakeVisiblePackBuilder {
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull final Set<Integer> heads,
                                     @NotNull final VisibleGraph<Integer> visibleGraph) {
-    Collection<VcsRef> branchesAndHeads = ContainerUtil.filter(refsModel.getAllRefs(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        int commitIndex = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-        if (ref.getType().isBranch() || heads.contains(commitIndex)) {
-          Integer row = visibleGraph.getVisibleRowIndex(commitIndex);
-          if (row != null && row >= 0) {
-            return true;
-          }
+    Collection<VcsRef> branchesAndHeads = ContainerUtil.filter(refsModel.getAllRefs(), ref -> {
+      int commitIndex = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+      if (ref.getType().isBranch() || heads.contains(commitIndex)) {
+        Integer row = visibleGraph.getVisibleRowIndex(commitIndex);
+        if (row != null && row >= 0) {
+          return true;
         }
-        return false;
       }
+      return false;
     });
     return new RefsModel(VcsLogUtil.groupRefsByRoot(branchesAndHeads), heads, myHashMap);
   }

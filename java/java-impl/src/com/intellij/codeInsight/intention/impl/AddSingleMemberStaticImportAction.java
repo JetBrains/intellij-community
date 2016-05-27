@@ -180,7 +180,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   public static void bindAllClassRefs(final PsiFile file,
-                                      final PsiElement resolved,
+                                      @NotNull final PsiElement resolved,
                                       final String referenceName,
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -197,7 +197,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
       }
     });
 
-    if (resolved != null && findExistingImport(file, resolvedClass, referenceName) == null) {
+    if (findExistingImport(file, resolvedClass, referenceName) == null) {
       if (resolved instanceof PsiClass) {
         ((PsiImportHolder) file).importClass((PsiClass) resolved);
       } else {
@@ -235,7 +235,8 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                 }
               }
               reference.putUserData(TEMP_REFERENT_USER_DATA, null);
-            } else {
+            }
+            else if (referent == null || referent instanceof PsiMember && ((PsiMember)referent).hasModifierProperty(PsiModifier.STATIC)) {
               if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
                 PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
                 if (aClass instanceof PsiVariable) {

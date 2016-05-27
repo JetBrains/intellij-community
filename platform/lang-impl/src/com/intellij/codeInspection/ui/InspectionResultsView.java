@@ -88,8 +88,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.codeInspection.ex.InspectionRVContentProvider.insertByIndex;
-
 /**
  * @author max
  */
@@ -166,18 +164,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          final TreePath[] paths = myTree.getSelectionPaths();
-          LOG.assertTrue(paths != null);
           InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
-          InspectionTreeNode toSelect = null;
           synchronized (myTreeStructureUpdateLock) {
-            if (paths.length == 1) {
-              toSelect = (InspectionTreeNode)node.getNextNode();
-            }
             parent.remove(node);
             ((DefaultTreeModel)myTree.getModel()).reload(parent);
           }
-          TreeUtil.selectInTree(toSelect == null ? parent : toSelect, true, myTree);
         }
       }
 
@@ -570,6 +561,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     else if (selectedEntity == null) {
       return Pair.create(new InspectionNodeInfo(myTree, myProject), null);
     }
+    else if (selectedEntity.isValid()) {
+      return Pair.create(InspectionResultsViewUtil.getPreviewIsNotAvailable(selectedEntity), null);
+    }
     return Pair.create(InspectionResultsViewUtil.getInvalidEntityLabel(selectedEntity), null);
   }
 
@@ -616,7 +610,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
-  Set<Object> getSuppressedNodes() {
+  public Set<Object> getSuppressedNodes() {
     return mySuppressedNodes;
   }
 
@@ -751,7 +745,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
       if (!myDisposed) {
-        insertByIndex(group, getRelativeRootNode(groupedBySeverity, errorLevel));
+        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group);
       }
     }
     return group;
@@ -766,7 +760,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
-          insertByIndex(severityGroupNode, root);
+          root.insertByOrder(severityGroupNode);
         }
       }
       return severityGroupNode;

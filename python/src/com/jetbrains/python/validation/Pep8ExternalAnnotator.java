@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -50,7 +49,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
@@ -220,10 +218,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
     if (annotationResult == null) return;
-    if (!file.isValid()) {
-      LOG.info("Trying to apply diagnostics to invalid PsiFile, skipped");
-      return;
-    }
+    PyPsiUtils.assertValid(file);
     final String text = file.getText();
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);

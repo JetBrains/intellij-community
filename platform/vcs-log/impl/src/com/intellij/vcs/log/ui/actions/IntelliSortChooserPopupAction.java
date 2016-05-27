@@ -42,12 +42,9 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     final VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
 
     ActionGroup settingsGroup =
-      new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(), new Function<PermanentGraph.SortType, AnAction>() {
-        @Override
-        public AnAction fun(PermanentGraph.SortType sortType) {
-          return new SelectIntelliSortTypeAction(logUI, sortType);
-        }
-      }));
+      new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
+                                               (Function<PermanentGraph.SortType, AnAction>)sortType -> new SelectIntelliSortTypeAction(
+                                                 logUI, sortType)));
 
 
     ListPopup popup = JBPopupFactory.getInstance()

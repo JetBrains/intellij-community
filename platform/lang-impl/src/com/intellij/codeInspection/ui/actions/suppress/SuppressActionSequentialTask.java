@@ -19,11 +19,13 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -31,11 +33,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,24 +50,24 @@ public class SuppressActionSequentialTask implements SequentialTask {
   private SuppressableInspectionTreeNode[] myNodesToSuppress;
   @NotNull private final SuppressIntentionAction mySuppressAction;
   @NotNull private final InspectionToolWrapper myWrapper;
-  @NotNull private final SequentialModalProgressTask myTask;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   private int myCount = 0;
 
   public SuppressActionSequentialTask(@NotNull SuppressableInspectionTreeNode[] nodesToSuppress,
                                       @NotNull SuppressIntentionAction suppressAction,
                                       @NotNull InspectionToolWrapper wrapper,
-                                      @NotNull SequentialModalProgressTask task) {
+                                      @NotNull GlobalInspectionContextImpl context) {
     myNodesToSuppress = nodesToSuppress;
     mySuppressAction = suppressAction;
     myWrapper = wrapper;
-    myTask = task;
+    myContext = context;
   }
 
 
   @Override
   public boolean iteration() {
     final SuppressableInspectionTreeNode node = myNodesToSuppress[myCount++];
-    final ProgressIndicator indicator = myTask.getIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setFraction((double)myCount / myNodesToSuppress.length);
     }
@@ -75,9 +78,7 @@ public class SuppressActionSequentialTask implements SequentialTask {
         final PsiElement element = content.first;
         RefEntity refEntity = node.getElement();
         LOG.assertTrue(refEntity != null);
-        if (suppress(element, content.second, mySuppressAction, refEntity, myWrapper)) {
-          node.markAsSuppressedFromView();
-        }
+        suppress(element, content.second, mySuppressAction, refEntity, myWrapper, node);
       }
     });
 
@@ -95,19 +96,21 @@ public class SuppressActionSequentialTask implements SequentialTask {
 
   @Override
   public void prepare() {
-    final ProgressIndicator indicator = myTask.getIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(InspectionsBundle.message("inspection.action.suppress", myWrapper.getDisplayName()));
     }
   }
 
-  private static boolean suppress(@NotNull final PsiElement element,
+  private void suppress(@NotNull final PsiElement element,
                                   @Nullable final CommonProblemDescriptor descriptor,
                                   @NotNull final SuppressIntentionAction action,
-                                  @NotNull final RefEntity refEntity, InspectionToolWrapper wrapper) {
+                                  @NotNull final RefEntity refEntity, InspectionToolWrapper wrapper,
+                                  @NotNull final SuppressableInspectionTreeNode node) {
     if (action instanceof SuppressIntentionActionFromFix && !(descriptor instanceof ProblemDescriptor)) {
       LOG.info("local suppression fix for specific problem descriptor:  " + wrapper.getTool().getClass().getName());
     }
+
     final Project project = element.getProject();
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -132,11 +135,32 @@ public class SuppressActionSequentialTask implements SequentialTask {
             context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
           }
         }
+
+        final RefElement containerRef = refEntity.getRefManager().getReference(container);
+        if (containerRef != null) {
+          Queue<RefEntity> toIgnoreInView = new Queue<RefEntity>(1);
+          toIgnoreInView.addLast(containerRef);
+          while (!toIgnoreInView.isEmpty()) {
+            final RefEntity entity = toIgnoreInView.pullFirst();
+            final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
+            if (descriptors != null) {
+              for (CommonProblemDescriptor problemDescriptor : descriptors) {
+                myContext.getView().getSuppressedNodes().add(problemDescriptor);
+              }
+            }
+            final List<RefEntity> children = entity.getChildren();
+            if (children != null) {
+              for (RefEntity child : children) {
+                toIgnoreInView.addLast(child);
+              }
+            }
+          }
+        }
+        myContext.getView().getSuppressedNodes().add(descriptor);
       }
       catch (IncorrectOperationException e1) {
         LOG.error(e1);
       }
     });
-    return true;
   }
 }

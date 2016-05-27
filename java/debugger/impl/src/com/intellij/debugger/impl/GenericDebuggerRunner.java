@@ -73,8 +73,12 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
         isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
       }
       if (connection == null) {
-        connection =
-          DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
+        int transport = DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+        connection = DebuggerManagerImpl.createDebugParameters(parameters,
+                                                               true,
+                                                               transport,
+                                                               transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "",
+                                                               false);
         isPollConnection = true;
       }
       return attachVirtualMachine(state, environment, connection, isPollConnection);

@@ -63,6 +63,11 @@ public class InspectionResultsViewUtil {
     return createLabelForText("\'" + name + "\' is no longer valid.");
   }
 
+  public static JComponent getPreviewIsNotAvailable(@NotNull RefEntity entity) {
+    final String name = entity.getQualifiedName();
+    return createLabelForText("Preview is not available for \'" + name + "\'.");
+  }
+
   @NotNull
   static JComponent getApplyingFixLabel(@NotNull InspectionToolWrapper wrapper) {
     return createLabelForText("Applying quick fix for \'" + wrapper.getDisplayName() + "\'...");

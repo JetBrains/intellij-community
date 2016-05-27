@@ -55,8 +55,6 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
@@ -78,36 +76,23 @@ public class IdeEventQueue extends EventQueue {
   private final Object myLock = new Object();
 
   private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   private final Alarm myIdleRequestsAlarm = new Alarm();
-
   private final Alarm myIdleTimeCounterAlarm = new Alarm();
-
   private long myIdleTime;
-
-  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
+  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<>();
   // IdleListener -> MyFireIdleRequest
-
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
-
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
-
   private final IdePopupManager myPopupManager = new IdePopupManager();
-
-
   private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
-
   private boolean mySuspendMode;
-
   /**
    * We exit from suspend mode when focus owner changes and no more WindowEvent.WINDOW_OPENED events
    * <p/>
    * in the queue. If WINDOW_OPENED event does exists in the queues then we restart the alarm.
    */
   private Component myFocusOwner;
-
   private final Runnable myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
 
   /**
@@ -123,22 +108,16 @@ public class IdeEventQueue extends EventQueue {
    * Swing event.
    */
   private int myEventCount;
-
   private boolean myIsInInputEvent;
-
   private AWTEvent myCurrentEvent;
-
   private long myLastActiveTime;
-
   private WindowManagerEx myWindowManager;
-
-  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
-  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<EventDispatcher>();
+  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<>();
+  private final Set<EventDispatcher> myPostProcessors = new LinkedHashSet<>();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
-
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
-
+  private boolean myWinMetaPressed;
   private int myInputMethodLock;
 
   private static class IdeEventQueueHolder {
@@ -156,21 +135,17 @@ public class IdeEventQueue extends EventQueue {
     addIdleTimeCounterRequest();
 
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
-
-      @Override
-      public void propertyChange(@NotNull final PropertyChangeEvent e) {
-        final Application application = ApplicationManager.getApplication();
-        if (application == null) {
-          // We can get focus event before application is initialized
-          return;
-        }
-        application.assertIsDispatchThread();
-        final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
-        final Component focusOwner = keyboardFocusManager.getFocusOwner();
-        if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
-          exitSuspendMode();
-        }
+    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
+      final Application application = ApplicationManager.getApplication();
+      if (application == null) {
+        // We can get focus event before application is initialized
+        return;
+      }
+      application.assertIsDispatchThread();
+      final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
+      final Component focusOwner = keyboardFocusManager.getFocusOwner();
+      if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
+        exitSuspendMode();
       }
     });
 
@@ -301,12 +276,7 @@ public class IdeEventQueue extends EventQueue {
   private static void _addProcessor(final EventDispatcher dispatcher, Disposable parent, final Set<EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
-      Disposer.register(parent, new Disposable() {
-        @Override
-        public void dispose() {
-          set.remove(dispatcher);
-        }
-      });
+      Disposer.register(parent, () -> set.remove(dispatcher));
     }
   }
 
@@ -370,6 +340,9 @@ public class IdeEventQueue extends EventQueue {
     e = fixNonEnglishKeyboardLayouts(e);
 
     e = mapEvent(e);
+    if (Registry.is("keymap.windows.as.meta")) {
+      e = mapMetaState(e);
+    }
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
@@ -530,6 +503,38 @@ public class IdeEventQueue extends EventQueue {
     return e;
   }
 
+  private AWTEvent mapMetaState(AWTEvent e) {
+    if (myWinMetaPressed) {
+      Application app = ApplicationManager.getApplication();
+      if (app == null || !app.isActive()) {
+        myWinMetaPressed = false;
+        return e;
+      }
+    }
+
+    if (e instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)e;
+      if (ke.getKeyCode() == KeyEvent.VK_WINDOWS) {
+        if (ke.getID() == KeyEvent.KEY_PRESSED) myWinMetaPressed = true;
+        if (ke.getID() == KeyEvent.KEY_RELEASED) myWinMetaPressed = false;
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx(), KeyEvent.VK_META, ke.getKeyChar(),
+                            ke.getKeyLocation());
+      }
+      if (myWinMetaPressed) {
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | InputEvent.META_MASK, ke.getKeyCode(),
+                            ke.getKeyChar(), ke.getKeyLocation());
+      }
+    }
+
+    if (myWinMetaPressed && e instanceof MouseEvent && ((MouseEvent)e).getButton() != 0) {
+      MouseEvent me = (MouseEvent)e;
+      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers() | me.getModifiersEx() | InputEvent.META_MASK, me.getX(), me.getY(),
+                            me.getClickCount(), me.isPopupTrigger(), me.getButton());
+    }
+
+    return e;
+  }
+
   public void _dispatchEvent(@NotNull AWTEvent e, boolean typeAheadFlushing) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
@@ -659,9 +664,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
-    Window showingWindow = wnd;
-
     if (wnd != null && !wnd.isShowing()) {
+      Window showingWindow = wnd;
       while (showingWindow != null) {
         if (showingWindow.isShowing()) break;
         showingWindow = (Window)showingWindow.getParent();
@@ -917,11 +921,10 @@ public class IdeEventQueue extends EventQueue {
     while (!exitCondition.value(event));
   }
 
-
+  @FunctionalInterface
   public interface EventDispatcher {
     boolean dispatch(AWTEvent e);
   }
-
 
   private final class MyFireIdleRequest implements Runnable {
     private final Runnable myRunnable;
@@ -1104,19 +1107,18 @@ public class IdeEventQueue extends EventQueue {
 
   public void disableInputMethods(Disposable parentDisposable) {
     myInputMethodLock++;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myInputMethodLock--;
-      }
-    });
+    Disposer.register(parentDisposable, () -> myInputMethodLock--);
   }
 
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
-  public void postEvent(@NotNull AWTEvent theEvent) {
-    myFrequentEventDetector.eventHappened(theEvent);
-    super.postEvent(theEvent);
+  public void postEvent(@NotNull AWTEvent event) {
+    myFrequentEventDetector.eventHappened(event);
+    super.postEvent(event);
+  }
+
+  private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
+    return event instanceof KeyEvent && (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED || event.getID() == KeyEvent.KEY_TYPED);
   }
 
   @Override

@@ -144,9 +144,6 @@ class WinInstallerBuilder {
       replacefilter(token: "__BUILD_NUMBER__", value: buildNumber)
       replacefilter(token: "__VERSION_MAJOR__", value: applicationInfo.majorVersion)
       replacefilter(token: "__VERSION_MINOR__", value: applicationInfo.minorVersion)
-      replacefilter(token: "__MIN_UPGRADE_BUILD__", value: applicationInfo.installOver.minBuild)
-      replacefilter(token: "__MAX_UPGRADE_BUILD__", value: applicationInfo.installOver.maxBuild)
-      replacefilter(token: "__UPGRADE_VERSION__", value: applicationInfo.installOver.version)
       replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: systemSelector)
     }
 

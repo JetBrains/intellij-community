@@ -23,6 +23,8 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
@@ -63,5 +65,10 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
 
   public Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;
+  }
+
+  @Override
+  public boolean isMarkInnerSupportedFor(JpsModuleSourceRootType type) {
+    return type == JavaSourceRootType.SOURCE;
   }
 }

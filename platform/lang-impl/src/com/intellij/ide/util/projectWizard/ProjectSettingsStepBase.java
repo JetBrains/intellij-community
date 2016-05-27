@@ -260,7 +260,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("Note: " + text + "  ");
+    myErrorLabel.setText("<html>Note: " + text + "  </html>");
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
   }
 
@@ -289,7 +289,12 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
     myProjectDirectory = findSequentNonExistingUntitled();
-    myLocationField.setText(myProjectDirectory.toString());
+    final String projectLocation = myProjectDirectory.toString();
+    myLocationField.setText(projectLocation);
+    final int index = projectLocation.lastIndexOf(File.separator);
+    if (index > 0) {
+      myLocationField.getTextField().select(index + 1, projectLocation.length());
+    }
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",

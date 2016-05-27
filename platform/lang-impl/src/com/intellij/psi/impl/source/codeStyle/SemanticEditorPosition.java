@@ -56,8 +56,53 @@ public abstract class SemanticEditorPosition {
     return this;
   }
   
+  public SemanticEditorPosition after() {
+    if (!myIterator.atEnd()) {
+      myIterator.advance();
+    }
+    return this;
+  }
+  
+  public SemanticEditorPosition beforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+    int parenLevel = 0;
+    while (!myIterator.atEnd()) {
+      SyntaxElement currElement = map(myIterator.getTokenType());
+      myIterator.retreat();
+      if (rightParenthesis.equals(currElement)) {
+        parenLevel++;
+      }
+      else if (leftParenthesis.equals(currElement)) {
+        parenLevel--;
+        if (parenLevel < 1) {
+          break;
+        }
+      }
+    }
+    return this;
+  }
+  
+  public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
+    myIterator.retreat();
+    while (!myIterator.atEnd() && !isAtMultiline()) {
+      SyntaxElement currElement = map(myIterator.getTokenType());
+      for (SyntaxElement element : syntaxElements) {
+        if (element.equals(currElement)) return true;
+      }
+      myIterator.retreat();
+    }
+    return false;
+  }
+  
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
+  }
+  
+  public boolean isAtEnd() {
+    return myIterator.atEnd();
+  }
+  
+  public int getStartOffset() {
+    return myIterator.getStart();
   }
   
   @SuppressWarnings("unused")

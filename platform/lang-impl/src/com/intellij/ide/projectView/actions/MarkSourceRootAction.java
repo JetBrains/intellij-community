@@ -53,8 +53,9 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-    if (!ModuleType.get(module).isSupportedRootType(myRootType) || selection.myHaveSelectedFilesUnderSourceRoots
-        || ModuleSourceRootEditHandler.getEditHandler(myRootType) == null) {
+    final ModuleType moduleType = ModuleType.get(module);
+    if (!moduleType.isSupportedRootType(myRootType) || ModuleSourceRootEditHandler.getEditHandler(myRootType) == null
+        || (selection.myHaveSelectedFilesUnderSourceRoots && !moduleType.isMarkInnerSupportedFor(myRootType))) {
       return false;
     }
 

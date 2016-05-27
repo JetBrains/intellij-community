@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.psi
+
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -23,6 +24,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.GCUtil
 
 import java.util.concurrent.CountDownLatch
 /**
@@ -135,5 +137,23 @@ class B {
     assert !file.contentsLoaded
 
     assert bClass == override.containingClass.superClass
+  }
+
+  public void "test AST can be gc-ed and recreated"() {
+    def psiClass = myFixture.addClass("class Foo {}")
+    def file = psiClass.containingFile as PsiFileImpl
+    assert file.stub
+
+    assert psiClass.nameIdentifier
+    assert !file.stub
+    assert file.treeElement
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.stub
+    assert !file.treeElement
+
+    assert psiClass.nameIdentifier
+    assert !file.stub
+    assert file.treeElement
   }
 }

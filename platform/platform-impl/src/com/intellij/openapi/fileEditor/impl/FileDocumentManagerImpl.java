@@ -65,9 +65,7 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -640,6 +638,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           documentEx.setReadOnly(false);
           LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
           file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+          file.setCharset(null);
           if (!isBinaryWithoutDecompiler(file)) {
             documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
             documentEx.setReadOnly(!wasWritable);

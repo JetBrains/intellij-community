@@ -64,6 +64,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -454,13 +455,17 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     toolbar.setLayout(new GridBagLayout());
     final JLabel headerTitleLabel = new JLabel(HEADER_TITLE);
     headerTitleLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
-    toolbar.add(headerTitleLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    toolbar.add(headerTitleLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                         JBUI.emptyInsets(), 0, 0));
 
-    toolbar.add(myProfiles, new GridBagConstraints(1, 0, 1, 1, 0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(0, 6, 0, 0), 0, 0));
+    toolbar.add(myProfiles, new GridBagConstraints(1, 0, 1, 1, 0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
+                                                   JBUI.insetsLeft(6), 0, 0));
 
-    toolbar.add(withBorderOnTop(manageButton), new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(0, 10, 0, 0), 0, 0));
+    toolbar.add(withBorderOnTop(manageButton), new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
+                                                                      JBUI.insetsLeft(10), 0, 0));
 
-    toolbar.add(myAuxiliaryRightPanel, new GridBagConstraints(3, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 15, 0, 0), 0, 0));
+    toolbar.add(myAuxiliaryRightPanel, new GridBagConstraints(3, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                                              JBUI.insetsLeft(15), 0, 0));
 
     myPanel.setLayout(myLayout);
     return wholePanel;

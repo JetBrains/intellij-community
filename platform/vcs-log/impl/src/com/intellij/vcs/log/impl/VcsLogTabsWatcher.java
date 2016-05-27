@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -121,12 +120,8 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     private void selectionChanged(String tabName) {
-      VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(), new Condition<VcsLogWindow>() {
-        @Override
-        public boolean value(VcsLogWindow window) {
-          return window instanceof VcsLogTab && ((VcsLogTab)window).myTabName.equals(tabName);
-        }
-      });
+      VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
+                                                  window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabName.equals(tabName));
       if (logWindow != null) {
         myRefresher.filtererActivated(logWindow.getFilterer(), false);
       }

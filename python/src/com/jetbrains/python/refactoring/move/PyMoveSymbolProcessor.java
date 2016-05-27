@@ -150,6 +150,7 @@ public class PyMoveSymbolProcessor {
           PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, newElement);
         }
       }
+      // TODO: usage is not valid after insertImportFromAndReplaceReference, to be fixed by east825
       if (resolvesToLocalStarImport(usage)) {
         PyClassRefactoringUtil.insertImport(usage, newElement);
         myOptimizeImportTargets.add(usageFile);

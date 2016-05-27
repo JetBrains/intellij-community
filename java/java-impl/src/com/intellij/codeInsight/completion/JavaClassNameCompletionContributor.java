@@ -195,7 +195,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     GlobalSearchScope scope = context.getResolveScope();
     PsiClass annotation = JavaPsiFacade.getInstance(context.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
     if (annotation != null) {
-      DirectClassInheritorsSearch.search(annotation, scope, false, false).forEach(psiClass -> {
+      DirectClassInheritorsSearch.search(annotation, scope, false).forEach(psiClass -> {
         if (!psiClass.isAnnotationType() || psiClass.getQualifiedName() == null) return true;
 
         String name = ObjectUtils.assertNotNull(psiClass.getName());
