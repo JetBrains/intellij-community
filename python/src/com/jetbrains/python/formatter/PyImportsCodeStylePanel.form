@@ -22,14 +22,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Optimize Imports"/>
+        <border type="none" title-resource-bundle="com/jetbrains/python/PyBundle" title-key="formatter.imports.panel.optimize.imports"/>
         <children>
           <component id="e4d2f" class="com.intellij.ui.components.JBCheckBox" binding="mySortImportsAlphabetically" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Sort import statements alphabetically"/>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.alphabetically"/>
             </properties>
           </component>
           <component id="fdf9d" class="com.intellij.ui.components.JBCheckBox" binding="mySortNamesInFromImports" default-binding="true">
@@ -37,7 +37,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Sort names in &quot;from ... import ...&quot; imports"/>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.names.in.from.imports"/>
             </properties>
           </component>
           <component id="a7a3a" class="com.intellij.ui.components.JBCheckBox" binding="myJoinFromImportsWithSameSource" default-binding="true">
@@ -45,7 +45,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Join &quot;from ... import ...&quot; from the same source"/>
+              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.join.from.imports.with.same.source"/>
             </properties>
           </component>
         </children>

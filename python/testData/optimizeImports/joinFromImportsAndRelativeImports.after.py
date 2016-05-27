@@ -1,11 +1,7 @@
-from .module import b
-from ..module import a
-from ..module import c
-from .module import d
-from . import module1
-from . import module2
-from .. import pkg1
-from .. import pkg2
+from . import module1, module2
+from .module import b, d
+from .. import pkg1, pkg2
+from ..module import a, c
 
 print(a, b, c, d, module1, module2, pkg1, pkg2)
 
