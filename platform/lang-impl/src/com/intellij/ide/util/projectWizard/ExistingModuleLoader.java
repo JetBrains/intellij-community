@@ -99,9 +99,8 @@ public class ExistingModuleLoader extends ModuleBuilder {
         }
         final Element root = JDOMUtil.load(file);
         final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
-        final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
-        usedMacros.removeAll(definedMacros);
+        usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
         if (usedMacros.size() > 0) {
           final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, usedMacros);
