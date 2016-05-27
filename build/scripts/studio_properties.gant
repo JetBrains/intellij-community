@@ -261,6 +261,18 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("test-recorder") {
+            dir("lib") {
+              jar("test-recorder.jar") {
+                module("test-recorder")
+              }
+              fileset(dir: "${home}/../studio/google/cloud/testing/test-recorder/lib") {
+                include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
+              }
+            }
+          }
+
           dir("ndk-workspace") {
             dir("lib") {
               jar("ndk-workspace.jar") {
