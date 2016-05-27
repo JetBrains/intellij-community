@@ -25,6 +25,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessBridgeUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model, final TableColumnModel columnModel) {
     super(model, columnModel);
+    // By default, tables only allow Ctrl-TAB/Ctrl-Shift-TAB to navigate to the
+    // next/previous component, while TAB/Shift-TAB is used to navigate through
+    // cells. This behavior is somewhat counter-intuitive, as visually impaired
+    // users are used to use TAB to navigate between components. By resetting
+    // the default traversal keys, we add TAB/Shift-TAB as focus navigation keys.
+    // Notes:
+    // * Navigating through cells can still be done using the cursor keys
+    // * One could argue that resetting to the default behavior should be
+    //   done in all case, i.e. not only when a screen reader is active,
+    //   but we leave it as is to favor backward compatibility.
+    if (ScreenReader.isActive()) {
+      resetDefaultFocusTraversalKeys();
+    }
 
     setSurrendersFocusOnKeystroke(true);
 
