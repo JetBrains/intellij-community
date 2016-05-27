@@ -213,33 +213,19 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
 
       final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
-        @Override
-        public boolean isToBeShown() {
-          return true;
-        }
+      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
+        new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(boolean isSelected, int exitCode) {
+            deleteChoice.set(isSelected);
+          }
 
-        @Override
-        public void setToBeShown(boolean value, int exitCode) {
-          deleteChoice.set(!value);
-        }
-
-        @Override
-        public boolean canBeHidden() {
-          return true;
-        }
-
-        @Override
-        public boolean shouldSaveOptionsOnCancel() {
-          return false;
-        }
-
-        @NotNull
-        @Override
-        public String getDoNotShowMessage() {
-          return checkboxMessage;
-        }
-      }).show() == Messages.YES;
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return checkboxMessage;
+          }
+        }).show() == Messages.YES;
       deleteTracking = deleteChoice.get();
     }
     return new DeleteRemoteBranchDecision(delete, deleteTracking);
