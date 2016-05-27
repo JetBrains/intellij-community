@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected String getTabTitle() {
-    return "Imports";
+    return PyBundle.message("formatter.imports.panel.title");
   }
 
   @NotNull
