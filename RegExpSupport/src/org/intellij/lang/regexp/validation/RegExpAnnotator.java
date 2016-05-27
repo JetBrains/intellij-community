@@ -117,15 +117,29 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
-    final HashSet<Character> seen = new HashSet<Character>();
-    for (RegExpClassElement element : regExpClass.getElements()) {
-      if (!(element instanceof RegExpChar)) {
-        continue;
-      }
+    if (!(regExpClass.getParent() instanceof RegExpClass)) {
+      checkForDuplicates(regExpClass, new HashSet<Character>());
+    }
+  }
+
+  private void checkForDuplicates(RegExpClassElement element, Set<Character> seen) {
+    if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
       final Character value = regExpChar.getValue();
       if (value != null && !seen.add(value)) {
         myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
+      }
+    }
+    else if (element instanceof RegExpClass) {
+      final RegExpClass regExpClass = (RegExpClass)element;
+      for (RegExpClassElement classElement : regExpClass.getElements()) {
+        checkForDuplicates(classElement, seen);
+      }
+    }
+    else if (element instanceof RegExpUnion) {
+      final RegExpUnion union = (RegExpUnion)element;
+      for (RegExpClassElement classElement : union.getElements()) {
+        checkForDuplicates(classElement, seen);
       }
     }
   }

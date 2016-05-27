@@ -248,23 +248,33 @@ public class RegExpParser implements PsiParser {
   }
 
   private boolean parseClassdef(PsiBuilder builder, boolean mayBeEmpty) {
-    final IElementType token = builder.getTokenType();
-    if (token == RegExpTT.CLASS_BEGIN) {
-      parseClass(builder);
+    final PsiBuilder.Marker marker = builder.mark();
+    int count = 0;
+    while (true) {
+      final IElementType token = builder.getTokenType();
+      if (token == RegExpTT.CLASS_BEGIN) {
+        parseClass(builder);
+      }
+      else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
+        parseBracketExpression(builder);
+      }
+      else if (RegExpTT.CHARACTERS2.contains(token)) {
+        parseSimpleClassdef(builder);
+      }
+      else if (token == RegExpTT.PROPERTY) {
+        parseProperty(builder);
+      }
+      else {
+        if (count > 1) {
+          marker.done(RegExpElementTypes.UNION);
+        }
+        else {
+          marker.drop();
+        }
+        return mayBeEmpty || count > 0;
+      }
+      count++;
     }
-    else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
-      parseBracketExpression(builder);
-    }
-    else if (RegExpTT.CHARACTERS2.contains(token)) {
-      parseSimpleClassdef(builder);
-    }
-    else if (token == RegExpTT.PROPERTY) {
-      parseProperty(builder);
-    }
-    else {
-      return mayBeEmpty;
-    }
-    return true;
   }
 
   private static void parseBracketExpression(PsiBuilder builder) {
