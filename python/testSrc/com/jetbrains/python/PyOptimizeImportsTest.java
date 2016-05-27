@@ -182,6 +182,15 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19674
+  public void testUnresolvedRelativeImportsShouldBeInProjectGroup() {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("pkg/main.py");
+    OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+    myFixture.checkResultByFile(testName + "/pkg/main.after.py");
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));

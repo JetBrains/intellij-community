@@ -12,12 +12,13 @@ from alphabet import D
 from b import func
 from
 import foo # broken
-from . import m1
 import # broken
 from alphabet import *
-from .. import m2
 from alphabet import C
 from alphabet import B, A
+
+from . import m1
+from .. import m2
 from .pkg import m3
 from . import m4, m5
 
