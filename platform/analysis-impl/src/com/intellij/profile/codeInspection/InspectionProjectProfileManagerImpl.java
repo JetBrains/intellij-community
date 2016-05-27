@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -77,21 +78,16 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   }
 
   @NotNull
-  public synchronized InspectionProfileWrapper getProfileWrapper(){
-    final InspectionProfile profile = getInspectionProfile();
-    final String profileName = profile.getName();
-    if (profile.getProfileManager() == this) {
-      if (!myName2Profile.containsKey(profileName)){
-        initProfileWrapper(profile);
-      }
-      return myName2Profile.get(profileName);
+  public InspectionProfileWrapper getProfileWrapper(){
+    InspectionProfile profile = getInspectionProfile();
+    String profileName = profile.getName();
+    Map<String, InspectionProfileWrapper> nameToProfile = profile.getProfileManager() == this ? myName2Profile : myAppName2Profile;
+    InspectionProfileWrapper wrapper = nameToProfile.get(profileName);
+    if (wrapper == null) {
+      initProfileWrapper(profile);
+      return nameToProfile.get(profileName);
     }
-    else {
-      if (!myAppName2Profile.containsKey(profileName)) {
-        initProfileWrapper(profile);
-      }
-      return myAppName2Profile.get(profileName);
-    }
+    return wrapper;
   }
 
   @Override
@@ -157,12 +153,14 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void initProfileWrapper(@NotNull Profile profile) {
     InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
-    String profileName = profile.getName();
+    if (profile instanceof InspectionProfileImpl) {
+      ((InspectionProfileImpl)profile).initInspectionTools(myProject);
+    }
     if (profile.getProfileManager() == this) {
-      myName2Profile.put(profileName, wrapper);
+      myName2Profile.put(profile.getName(), wrapper);
     }
     else {
-      myAppName2Profile.put(profileName, wrapper);
+      myAppName2Profile.put(profile.getName(), wrapper);
     }
   }
 

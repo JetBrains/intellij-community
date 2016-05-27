@@ -70,7 +70,6 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
   additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
-
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<Profile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -104,7 +103,12 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       @NotNull
       @Override
       public SchemeState getState(@NotNull Profile scheme) {
-        return !(scheme instanceof InspectionProfileImpl) || scheme.isProjectLevel() ? SchemeState.NON_PERSISTENT : ((InspectionProfileImpl)scheme).wasInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+        if (!(scheme instanceof InspectionProfileImpl) || scheme.isProjectLevel()) {
+          return SchemeState.NON_PERSISTENT;
+        }
+        else {
+          return ((InspectionProfileImpl)scheme).wasInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+        }
       }
 
       @NotNull
