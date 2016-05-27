@@ -19,10 +19,10 @@ import com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.SuppressQuickFix
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
+import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool
 import com.intellij.psi.PsiElement
 
-class JavadocHtmlLintInspection : LocalInspectionTool(), UnfairLocalInspectionTool {
+class JavadocHtmlLintInspection : LocalInspectionTool(), PairedUnfairLocalInspectionTool {
   companion object {
     val SHORT_NAME = "JavadocHtmlLint"
   }
@@ -32,4 +32,6 @@ class JavadocHtmlLintInspection : LocalInspectionTool(), UnfairLocalInspectionTo
   override fun buildVisitor(holder: ProblemsHolder, onTheFly: Boolean) = ExternalAnnotatorInspectionVisitor(holder, annotator.value, onTheFly)
 
   override fun getBatchSuppressActions(element: PsiElement?) = SuppressQuickFix.EMPTY_ARRAY
+
+  override fun getInspectionForBatchShortName() = SHORT_NAME
 }
