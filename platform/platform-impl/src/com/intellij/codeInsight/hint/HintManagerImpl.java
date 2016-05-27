@@ -544,17 +544,17 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     }
-    else {
+    else if (dominantArea != null) {
       return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
     }
 
     return getHintPosition(hint, editor, pos, constraint);
   }
 
-  private static Point getHintPositionRelativeTo(final LightweightHint hint,
-                                                 final Editor editor,
+  private static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
+                                                 @NotNull final Editor editor,
                                                  @PositionFlags  short constraint,
-                                                 final Rectangle lookupBounds,
+                                                 @NotNull final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
     JComponent externalComponent = getExternalComponent(editor);
