@@ -193,18 +193,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public String getBaseProfileName() {
-    if (myBaseProfile == null) return null;
-    return myBaseProfile.getName();
-  }
-
-  @Override
-  @Deprecated // use corresponding constructor instead
-  public void setBaseProfile(InspectionProfile profile) {
-    throw new IncorrectOperationException();
-  }
-
-  @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isChanged() {
     if (mySource != null && mySource.myLockedProfile != myLockedProfile) return true;
@@ -659,7 +647,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private List<InspectionToolWrapper> createTools(Project project) {
     if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), state -> state.getTool());
+      return ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
     }
     return myRegistrar.createTools();
   }
@@ -717,7 +705,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     for (final ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
         for (InspectionToolWrapper toolWrapper : toolList.getAllTools()) {
-          toolWrapper.projectClosed(project);
           toolWrapper.cleanup(project);
         }
       }

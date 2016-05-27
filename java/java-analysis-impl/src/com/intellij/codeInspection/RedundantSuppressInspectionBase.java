@@ -19,7 +19,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
@@ -308,10 +311,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
-    ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel();
-    InspectionProfile profile = (InspectionProfile)model;
-    InspectionProfileWrapper.init(profile, manager.getProject());
-    return profile.getInspectionTools(psiElement);
+    return InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel()
+      .getInspectionTools(psiElement);
   }
 
   @Override

@@ -60,10 +60,10 @@ public class InspectionProfileWrapper {
   public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
     if (alreadyChecked) return;
     alreadyChecked = true;
-    Set<InspectionProfileEntry> uniqTools = new THashSet<InspectionProfileEntry>(toolWrappers.length);
+    Set<InspectionProfileEntry> uniqueTools = new THashSet<InspectionProfileEntry>(toolWrappers.length);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
-      if (!uniqTools.add(toolWrapper.getTool())) {
+      if (!uniqueTools.add(toolWrapper.getTool())) {
         LOG.error("Inspection " + toolWrapper.getDisplayName() + " (" + toolWrapper.getTool().getClass() + ") already registered");
       }
     }
@@ -79,14 +79,6 @@ public class InspectionProfileWrapper {
 
   public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
-  }
-
-  public static void init(@NotNull InspectionProfile profile, @NotNull Project project) {
-    for (Tools profileEntry : profile.getAllEnabledInspectionTools(project)) {
-      for (ScopeToolState toolState : profileEntry.getTools()) {
-        toolState.getTool().projectOpened(project);
-      }
-    }
   }
 
   public void cleanup(@NotNull Project project){

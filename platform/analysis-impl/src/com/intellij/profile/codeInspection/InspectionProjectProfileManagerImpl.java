@@ -157,7 +157,6 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void initProfileWrapper(@NotNull Profile profile) {
     InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
-    InspectionProfileWrapper.init(wrapper.getInspectionProfile(), myProject);
     String profileName = profile.getName();
     if (profile.getProfileManager() == this) {
       myName2Profile.put(profileName, wrapper);
