@@ -227,8 +227,11 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   /**
    * Does nothing as ChangesTreeList is currently not wrapped in JScrollPane by default.
    * Left not to break API (used in several plugins).
+   *
+   * @deprecated to remove in 2017.
    */
-  @SuppressWarnings("UnusedParameters")
+  @SuppressWarnings("unused")
+  @Deprecated
   public void setScrollPaneBorder(Border border) {
   }
 

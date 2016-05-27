@@ -193,6 +193,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     return myViewer;
   }
 
+  @NotNull
+  public JScrollPane getViewerScrollPane() {
+    return myViewerScrollPane;
+  }
+
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
