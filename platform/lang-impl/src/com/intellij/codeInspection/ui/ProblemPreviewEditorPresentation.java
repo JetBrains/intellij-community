@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
@@ -27,6 +26,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -86,7 +86,7 @@ public class ProblemPreviewEditorPresentation {
       updateFoldings();
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
+    PsiDocumentManager.getInstance(myView.getProject()).performLaterWhenAllCommitted(() -> {
       if (!myEditor.isDisposed()) {
         myView.invalidate();
         myView.validate();
