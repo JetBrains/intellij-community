@@ -187,7 +187,7 @@ public abstract class InspectionRVContentProvider {
         }
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
-            moduleNode.insertByOrder(packageNode);
+            moduleNode.insertByOrder(packageNode, false);
             for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
               appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
             }
@@ -289,7 +289,7 @@ public abstract class InspectionRVContentProvider {
                 return false;
               }
               else {
-                refElementNode.insertByOrder(finalPrevNode);
+                refElementNode.insertByOrder(finalPrevNode, false);
                 result.set(nodeToBeAdded);
                 return false;
               }
@@ -301,11 +301,11 @@ public abstract class InspectionRVContentProvider {
       if(!result.isNull()) return result.get();
 
       if (!firstLevel.get()) {
-        currentNode.insertByOrder(prevNode);
+        currentNode.insertByOrder(prevNode, false);
       }
       final UserObjectContainer owner = container.getOwner();
       if (owner == null) {
-        parentNode.insertByOrder(currentNode);
+        parentNode.insertByOrder(currentNode, false);
         return nodeToBeAdded;
       }
       container = owner;
@@ -349,7 +349,7 @@ public abstract class InspectionRVContentProvider {
         }
       }
     }
-    parent.insertByOrder(child);
+    parent.insertByOrder(child, false);
   }
 
   private static void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {

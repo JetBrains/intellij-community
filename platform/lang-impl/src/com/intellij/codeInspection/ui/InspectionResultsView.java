@@ -745,7 +745,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
       if (!myDisposed) {
-        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group);
+        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group, false);
       }
     }
     return group;
@@ -760,7 +760,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
-          root.insertByOrder(severityGroupNode);
+          root.insertByOrder(severityGroupNode, false);
         }
       }
       return severityGroupNode;
