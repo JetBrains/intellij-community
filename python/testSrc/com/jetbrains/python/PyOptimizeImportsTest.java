@@ -23,7 +23,11 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -189,6 +193,20 @@ public class PyOptimizeImportsTest extends PyTestCase {
     myFixture.configureByFile("pkg/main.py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
     myFixture.checkResultByFile(testName + "/pkg/main.after.py");
+  }
+
+  public void testExtractImportBlockWithIntermediateComments() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    final PyFileImpl file = assertInstanceOf(myFixture.getFile(), PyFileImpl.class);
+    final List<PyImportStatementBase> block = file.getImportBlock();
+    assertSize(2, block);
+  }
+
+  public void testExtractImportBlockNoWhitespaceAtEnd() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    final PyFileImpl file = assertInstanceOf(myFixture.getFile(), PyFileImpl.class);
+    final List<PyImportStatementBase> block = file.getImportBlock();
+    assertSize(2, block);
   }
 
   private void doTest() {
