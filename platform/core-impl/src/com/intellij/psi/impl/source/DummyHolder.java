@@ -125,6 +125,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
+  @NotNull
   public FileElement getTreeElement() {
     FileElement fileElement = myFileElement;
     if (fileElement != null) return fileElement;
@@ -169,5 +170,10 @@ public class DummyHolder extends PsiFileImpl {
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
+  }
+
+  @Override
+  public boolean useStrongRefs() {
+    return true;
   }
 }

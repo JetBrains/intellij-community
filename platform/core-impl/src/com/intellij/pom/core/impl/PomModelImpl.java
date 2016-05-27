@@ -332,6 +332,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     if (containingFileByTree != null) {
       ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(containingFileByTree.getViewProvider().getVirtualFile());
+      if (containingFileByTree instanceof PsiFileImpl) {
+        ((PsiFileImpl)containingFileByTree).beforeAstChange();
+      }
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
