@@ -923,8 +923,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
-    processDoNotAskOnCancel();
-
     if (getCancelAction().isEnabled()) {
       close(CANCEL_EXIT_CODE);
     }
@@ -966,8 +964,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
-    processDoNotAskOnOk(OK_EXIT_CODE);
-
     if (getOKAction().isEnabled()) {
       close(OK_EXIT_CODE);
     }
