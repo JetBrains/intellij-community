@@ -37,9 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -51,8 +49,9 @@ import java.util.concurrent.ConcurrentHashMap;
   storages = @Storage(value = "inspectionProfiles", stateSplitter = DefaultProjectProfileManager.ProfileStateSplitter.class)
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
-  private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
-  private final Map<String, InspectionProfileWrapper>  myAppName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
+  private final Map<String, InspectionProfileWrapper> myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
+  private final Map<String, InspectionProfileWrapper> myAppName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
+
   private final SeverityRegistrar mySeverityRegistrar;
   private final NamedScopeManager myLocalScopesHolder;
   private NamedScopesHolder.ScopeListener myScopeListener;
@@ -95,10 +94,6 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     }
   }
 
-  public InspectionProfileWrapper getProfileWrapper(final String profileName){
-    return myName2Profile.get(profileName);
-  }
-
   @Override
   public void updateProfile(@NotNull Profile profile) {
     super.updateProfile(profile);
@@ -123,20 +118,17 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
-        final Set<Profile> profiles = new HashSet<Profile>();
-        profiles.add(getProjectProfileImpl());
-        profiles.addAll(getProfiles());
-        profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
+        Profile profile = getProjectProfileImpl();
         final Application app = ApplicationManager.getApplication();
         Runnable initInspectionProfilesRunnable = () -> {
-          for (Profile profile : profiles) {
-            initProfileWrapper(profile);
-          }
+          initProfileWrapper(profile);
           fireProfilesInitialized();
         };
         if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
           initInspectionProfilesRunnable.run();
-          UIUtil.dispatchAllInvocationEvents(); //do not restart daemon in the middle of the test
+          //do not restart daemon in the middle of the test
+          //noinspection TestOnlyProblems
+          UIUtil.dispatchAllInvocationEvents();
         }
         else {
           app.executeOnPooledThread(initInspectionProfilesRunnable);
@@ -164,8 +156,8 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
 
   @Override
   public void initProfileWrapper(@NotNull Profile profile) {
-    final InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
-    wrapper.init(myProject);
+    InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
+    InspectionProfileWrapper.init(wrapper.getInspectionProfile(), myProject);
     String profileName = profile.getName();
     if (profile.getProfileManager() == this) {
       myName2Profile.put(profileName, wrapper);

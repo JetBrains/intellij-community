@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.util.NotNullFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -53,7 +52,7 @@ public class InspectionProfileWrapper {
 
   @NotNull
   public InspectionToolWrapper[] getInspectionTools(PsiElement element){
-     return myProfile.getInspectionTools(element);
+   return myProfile.getInspectionTools(element);
   }
 
   // check whether some inspection got registered twice by accident. 've bit once.
@@ -82,9 +81,8 @@ public class InspectionProfileWrapper {
     return myProfile.getInspectionTool(shortName, element);
   }
 
-  public void init(@NotNull Project project) {
-    final List<Tools> profileEntries = myProfile.getAllEnabledInspectionTools(project);
-    for (Tools profileEntry : profileEntries) {
+  public static void init(@NotNull InspectionProfile profile, @NotNull Project project) {
+    for (Tools profileEntry : profile.getAllEnabledInspectionTools(project)) {
       for (ScopeToolState toolState : profileEntry.getTools()) {
         toolState.getTool().projectOpened(project);
       }

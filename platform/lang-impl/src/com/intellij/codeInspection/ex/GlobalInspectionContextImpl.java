@@ -724,17 +724,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private ProblemDescriptionsProcessor getProblemDescriptionProcessor(@NotNull final GlobalInspectionToolWrapper toolWrapper,
                                                                       @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     return new ProblemDescriptionsProcessor() {
-      @Nullable
-      @Override
-      public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-        return new CommonProblemDescriptor[0];
-      }
-
-      @Override
-      public void ignoreElement(@NotNull RefEntity refEntity) {
-
-      }
-
       @Override
       public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
@@ -749,11 +738,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             toolPresentation.addProblemElement(refEntity, problemDescriptor);
           }
         }
-      }
-
-      @Override
-      public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
-        return null;
       }
     };
   }
