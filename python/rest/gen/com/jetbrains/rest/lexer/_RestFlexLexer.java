@@ -54,28 +54,30 @@ public class _RestFlexLexer implements FlexLexer, RestTokenTypes {
 
   /** 
    * Translates characters to character classes
+   * Chosen bits are [9, 6, 6]
+   * Total runtime size is 1952 bytes
    */
-  private static final String ZZ_CMAP_PACKED = 
-    "\11\0\1\4\1\2\1\1\1\1\1\3\22\0\1\23\1\0\1\13"+
-    "\1\21\3\0\1\12\1\66\1\24\1\17\1\20\1\24\1\6\1\11"+
-    "\1\56\12\64\1\10\2\0\1\5\1\22\2\0\1\25\1\46\1\33"+
-    "\1\35\1\27\1\44\1\36\1\40\1\60\1\57\1\62\1\47\1\41"+
-    "\1\30\1\32\1\42\1\50\1\37\1\61\1\26\1\34\1\51\1\43"+
-    "\1\52\2\57\1\63\1\54\1\65\1\15\1\16\1\7\1\25\1\46"+
-    "\1\33\1\35\1\27\1\44\1\36\1\40\1\60\1\57\1\62\1\47"+
-    "\1\41\1\30\1\32\1\42\1\50\1\37\1\61\1\26\1\34\1\51"+
-    "\1\43\1\52\2\57\1\66\1\55\1\24\1\14\6\0\1\1\252\0"+
-    "\2\31\115\0\1\45\u1ea8\0\1\1\1\1\u0100\0\1\53\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\udee5\0";
+  public static int ZZ_CMAP(int ch) {
+    return ZZ_CMAP_A[(ZZ_CMAP_Y[ZZ_CMAP_Z[ch>>12]|((ch>>6)&0x3f)]<<6)|(ch&0x3f)];
+  }
 
-  /** 
-   * Translates characters to character classes
-   */
-  private static final int ZZ_SX = 0x0700;
-  private static final int ZZ_MX = 0x10000;
-  private static final int ZZ_LX = 0x110000;
-  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
-  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
-  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
+  /* The ZZ_CMAP_Z table has 272 entries */
+  static final char ZZ_CMAP_Z[] = zzUnpackCMap(
+    "\1\0\1\100\1\200\u010d\100");
+
+  /* The ZZ_CMAP_Y table has 192 entries */
+  static final char ZZ_CMAP_Y[] = zzUnpackCMap(
+    "\1\0\1\1\1\2\1\3\1\4\1\5\172\3\1\6\3\3\1\7\73\3");
+
+  /* The ZZ_CMAP_A table has 512 entries */
+  static final char ZZ_CMAP_A[] = zzUnpackCMap(
+    "\11\0\1\4\1\2\2\1\1\3\22\0\1\23\1\0\1\13\1\21\3\0\1\12\1\66\1\24\1\17\1\20"+
+    "\1\24\1\6\1\11\1\56\12\64\1\10\2\0\1\5\1\22\2\0\1\25\1\46\1\33\1\35\1\27\1"+
+    "\44\1\36\1\40\1\60\1\57\1\62\1\47\1\41\1\30\1\32\1\42\1\50\1\37\1\61\1\26"+
+    "\1\34\1\51\1\43\1\52\2\57\1\63\1\54\1\65\1\15\1\16\1\7\1\25\1\46\1\33\1\35"+
+    "\1\27\1\44\1\36\1\40\1\60\1\57\1\62\1\47\1\41\1\30\1\32\1\42\1\50\1\37\1\61"+
+    "\1\26\1\34\1\51\1\43\1\52\2\57\1\66\1\55\1\24\1\14\6\0\1\1\252\0\2\31\115"+
+    "\0\1\45\50\0\2\1\100\0\1\53\25\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -16707,14 +16709,18 @@ public class _RestFlexLexer implements FlexLexer, RestTokenTypes {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed, int limit) {
-    char [] map = new char[limit];
+  private static char [] zzUnpackCMap(String packed) {
+    int size = 0;
+    for (int i = 0, length = packed.length(); i < length; i += 2) {
+      size += packed.charAt(i);
+    }
+    char[] map = new char[size];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 230 && j < limit) {
+    while (i < packed.length()) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0 && j < limit);
+      do map[j++] = value; while (--count > 0);
     }
     return map;
   }
@@ -16857,7 +16863,6 @@ public class _RestFlexLexer implements FlexLexer, RestTokenTypes {
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
     CharSequence zzBufferL = zzBuffer;
-    char [] zzCMapL = ZZ_CMAP;
 
     int [] zzTransL = ZZ_TRANS;
     int [] zzRowMapL = ZZ_ROWMAP;
@@ -16942,8 +16947,7 @@ public class _RestFlexLexer implements FlexLexer, RestTokenTypes {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
-          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
-          int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
+          int zzNext = zzTransL[ zzRowMapL[zzState] + ZZ_CMAP(zzInput) ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;
 
