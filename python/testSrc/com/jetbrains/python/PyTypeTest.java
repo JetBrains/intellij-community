@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -370,48 +371,49 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGenericVarargsOneArg() {
-    PyExpression expr = parseExpr("def f(*args):\n" +
-                                  "    '''\n" +
-                                  "    :type args: tuple[T]\n" +
-                                  "    :rtype: T\n" +
-                                  "    '''\n" +
-                                  "    return args[0]\n" +
-                                  "\n" +
-                                  "expr = f(1)\n");
-    TypeEvalContext context = getTypeEvalContext(expr);
-    PyType actual = context.getType(expr);
-    assertNotNull(actual);
-    assertEquals("int", actual.getName());
+    doTest("int", "def f(*args):\n" +
+                  "    '''\n" +
+                  "    :type args: T\n" +
+                  "    :rtype: T\n" +
+                  "    '''\n" +
+                  "    return args[0]\n" +
+                  "\n" +
+                  "expr = f(1)\n");
   }
 
   public void testGenericVarargsTwoArgs() {
-    PyExpression expr = parseExpr("def f(*args):\n" +
-                                  "    '''\n" +
-                                  "    :type args: tuple[T]\n" +
-                                  "    :rtype: T\n" +
-                                  "    '''\n" +
-                                  "    return args[0]\n" +
-                                  "\n" +
-                                  "expr = f(1, 2)\n");
-    TypeEvalContext context = getTypeEvalContext(expr);
-    PyType actual = context.getType(expr);
-    assertNotNull(actual);
-    assertEquals("int", actual.getName());
+    doTest("int", "def f(*args):\n" +
+                  "    '''\n" +
+                  "    :type args: T\n" +
+                  "    :rtype: T\n" +
+                  "    '''\n" +
+                  "    return args[0]\n" +
+                  "\n" +
+                  "expr = f(1, 2)\n");
   }
 
   public void testGenericKwargs() {
-    PyExpression expr = parseExpr("def f(**kwargs):\n" +
-                                  "    '''\n" +
-                                  "    :type kwargs: dict[str, T]\n" +
-                                  "    :rtype: T\n" +
-                                  "    '''\n" +
-                                  "    return args[0]\n" +
-                                  "\n" +
-                                  "expr = f(arg=1, arg2=2)\n");
-    TypeEvalContext context = getTypeEvalContext(expr);
-    PyType actual = context.getType(expr);
-    assertNotNull(actual);
-    assertEquals("int", actual.getName());
+    doTest("int", "def f(**kwargs):\n" +
+                  "    '''\n" +
+                  "    :type kwargs: T\n" +
+                  "    :rtype: T\n" +
+                  "    '''\n" +
+                  "    return args['arg']\n" +
+                  "\n" +
+                  "expr = f(arg=1, arg2=2)\n");
+
+  }
+
+  public void testGenericVarargsAndKwargs() {
+    doTest("tuple[int, str]", "def f(*args, **kwargs):\n" +
+                              "    '''\n" +
+                              "    :type args: T\n" +
+                              "    :type kwargs: V\n" +
+                              "    :rtype: tuple[T, V]\n" +
+                              "    '''\n" +
+                              "    return args[0], kwargs['foo']\n" +
+                              "\n" +
+                              "expr = f(1, foo='bar')\n");
   }
 
   // PY-5831
