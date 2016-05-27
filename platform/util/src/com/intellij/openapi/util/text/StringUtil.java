@@ -3272,64 +3272,6 @@ public class StringUtil extends StringUtilRt {
     return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
   }
 
-  @Contract(pure = true)
-  public static String getShortened(@NotNull String s, int maxWidth) {
-    int length = s.length();
-    if (isEmpty(s) || length <= maxWidth) return s;
-    ArrayList<String> words = new ArrayList<String>();
-
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < length; i++) {
-      char ch = s.charAt(i);
-
-      if (i == length - 1) {
-        builder.append(ch);
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-        continue;
-      }
-
-      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || ch == '-' || Character.isUpperCase(ch))) {
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-      }
-      builder.append(ch);
-    }
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
-      if (i < words.size() - 1 && word.length() == 1) {
-        words.remove(i);
-        words.set(i, word + words.get(i));
-      }
-    }
-
-    int removedLength = 0;
-
-    String toPaste = "...";
-    int index;
-    while (true) {
-      index = max(0, (words.size() - 1) / 2);
-      String aWord = words.get(index);
-      words.remove(index);
-      int toCut = length - removedLength - maxWidth + 3;
-      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
-        int pos = (aWord.length() - toCut) / 2;
-        toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
-        break;
-      }
-      removedLength += aWord.length();
-      if (length - removedLength <= maxWidth - 3) {
-        break;
-      }
-    }
-    for (int i = 0; i < max(1, words.size()); i++) {
-      String word = words.isEmpty() ? "" : words.get(i);
-      if (i == index || words.size() == 1) builder.append(toPaste);
-      builder.append(word);
-    }
-    return builder.toString().replaceAll("\\.{4,}", "...");
-  }
-
   /**
      * Does the string have an uppercase character?
      * @param s  the string to test.

@@ -287,28 +287,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testShortened() {
-    @SuppressWarnings("SpellCheckingInspection") String[] names = {
-      "AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java",
-      "SomeJAVAClassName.java", "qwertyuiopasdghjklzxcvbnm1234567890"};
-    for (String name : names) {
-      for (int i = name.length() + 1; i > 15; i--) {
-        String shortened = StringUtil.getShortened(name, i);
-        assertTrue(shortened.length() <= i);
-        assertTrue(!shortened.contains("...."));
-        int pos = shortened.indexOf("...");
-        if (pos != -1) {
-          assertTrue(name.startsWith(shortened.substring(0, pos)));
-          assertTrue(name.endsWith(shortened.substring(pos + 3)));
-        }
-        else {
-          assertEquals(shortened,  name);
-        }
-      }
-    }
-  }
-
-  @Test
   public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
     String newS = "/tmp";
     assertSame(StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS), newS);
