@@ -40,9 +40,11 @@ class InternalUrlProvider: UrlProvider() {
 }
 
 
-class PluginDirectoryFilePathProvider() : UniqueFilesProvider("chunk", getPluginDirPath())
+class PluginDirectoryFilePathProvider() : UniqueFilesProvider("chunk", { getPluginDir() })
 
-open class UniqueFilesProvider(private val baseName: String, private val rootDirectory: File) : FilePathProvider() {
+open class UniqueFilesProvider(private val baseName: String, private val rootDirectoryComputer: () -> File) : FilePathProvider() {
+    
+    constructor(baseName: String, rootDir: File) : this(baseName, { rootDir })
     
     override fun getUniqueFile(): File {
         val dir = getStatsDataDirectory()
@@ -70,7 +72,7 @@ open class UniqueFilesProvider(private val baseName: String, private val rootDir
     }
 
     override fun getStatsDataDirectory(): File {
-        val dir = File(rootDirectory, "completion-stats-data")
+        val dir = File(rootDirectoryComputer(), "completion-stats-data")
         if (!dir.exists()) {
             dir.mkdir()
         }
@@ -91,7 +93,7 @@ open class UniqueFilesProvider(private val baseName: String, private val rootDir
 }
 
 
-fun getPluginDirPath(): File {
+fun getPluginDir(): File {
     val id = PluginManager.getPluginByClassName(CompletionLoggerProvider::class.java.name)
     val descriptor = PluginManager.getPlugin(id)
     return descriptor!!.path.parentFile

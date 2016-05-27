@@ -49,11 +49,13 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     }
 }
 
-class StatisticSender(val urlProvider: UrlProvider, val requestService: RequestService) {
+class StatisticSender(val urlProvider: UrlProvider, 
+                      val requestService: RequestService,
+                      val filePathProvider: FilePathProvider) {
     
     fun sendStatsData(uid: String) {
         assertNotEDT()
-        val filesToSend = FilePathProvider.getInstance().getDataFiles()
+        val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
             if (it.length() > 0) {
                 val url = urlProvider.statsServerPostUrl

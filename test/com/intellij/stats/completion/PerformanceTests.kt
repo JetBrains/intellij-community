@@ -81,7 +81,10 @@ class Test {
         val file = File(path)
         file.writeText("Some existing data to send")
 
-        val sender = StatisticSender(urlProvider, requestService)
+
+        val filePathProvider = mock(FilePathProvider::class.java)
+
+        val sender = StatisticSender(urlProvider, requestService, filePathProvider)
         
         ApplicationManager.getApplication().executeOnPooledThread { 
             sender.sendStatsData("unique-installation-id")
