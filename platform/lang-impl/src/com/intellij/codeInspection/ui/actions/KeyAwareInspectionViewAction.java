@@ -60,14 +60,14 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
   @Override
   protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
     return wrapper != null && HighlightDisplayKey.find(wrapper.getShortName()) != null;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionResultsView view = getView(e);
-    final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper().getShortName());
+    final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
     actionPerformed(view, key);
   }
 
@@ -82,7 +82,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
       final boolean enabled = super.isEnabled(view, e);
       if (!enabled) return false;
-      final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper().getShortName());
+      final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
       final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getProjectProfileImpl();
       return profile.isToolEnabled(key);
     }

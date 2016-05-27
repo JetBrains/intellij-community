@@ -93,7 +93,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     e.getPresentation().setEnabled(false);
 
     final InspectionTree tree = view.getTree();
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
     if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
       return;
     }

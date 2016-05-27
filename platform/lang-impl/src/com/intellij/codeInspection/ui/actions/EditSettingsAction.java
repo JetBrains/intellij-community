@@ -46,7 +46,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
   public void actionPerformed(AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(view.getProject());
-    final InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper();
+    final InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
     InspectionProfile inspectionProfile = view.getCurrentProfile();
     final boolean profileIsDefined = view.isProfileDefined();
     if (!profileIsDefined) {

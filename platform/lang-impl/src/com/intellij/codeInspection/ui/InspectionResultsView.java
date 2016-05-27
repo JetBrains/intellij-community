@@ -413,12 +413,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       myLoadingProgressPreview = null;
     }
     if (myApplyingFix) {
-      final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper();
+      final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper(true);
       LOG.assertTrue(wrapper != null);
       mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
     } else {
       if (myTree.getSelectionModel().getSelectionCount() != 1) {
-        if (myTree.getSelectedToolWrapper() == null) {
+        if (myTree.getSelectedToolWrapper(true) == null) {
           mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
         }
         else {
@@ -478,7 +478,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       editorPanel.setLayout(new BorderLayout());
       final int problemCount = myTree.getSelectedProblemCount();
       JComponent previewPanel = null;
-      final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
+      final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
       if (tool != null && refEntity != null && refEntity.isValid()) {
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
@@ -939,7 +939,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean isSingleToolInSelection() {
-    return myTree != null && myTree.getSelectedToolWrapper() != null;
+    return myTree != null && myTree.getSelectedToolWrapper(true) != null;
   }
 
   public boolean isRerun() {

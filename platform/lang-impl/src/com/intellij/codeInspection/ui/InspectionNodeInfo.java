@@ -51,7 +51,7 @@ public class InspectionNodeInfo extends JPanel {
                             @NotNull final Project project) {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile =
       (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
