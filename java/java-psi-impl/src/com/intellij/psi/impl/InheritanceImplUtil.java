@@ -58,16 +58,6 @@ public class InheritanceImplUtil {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
       return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
     }
-    /* //TODO fix classhashprovider so it doesn't use class qnames only
-    final ClassHashProvider provider = getHashProvider((PsiManagerImpl) manager);
-    if (checkDeep && provider != null) {
-      try {
-        return provider.isInheritor(baseClass, candidateClass);
-      }
-      catch (ClassHashProvider.OutOfRangeException e) {
-      }
-    }
-    */
     if(checkDeep && LOG.isDebugEnabled()){
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);
     }
@@ -83,9 +73,6 @@ public class InheritanceImplUtil {
     }
 
     if (!checkDeep) {
-      final boolean isCandidateInterface = candidateClass.isInterface();
-      final boolean isBaseInterface = baseClass.isInterface();
-
       if (candidateClass instanceof PsiCompiledElement) {
         String baseQName = baseClass.getQualifiedName();
         if (baseQName == null) return false;
@@ -103,9 +90,14 @@ public class InheritanceImplUtil {
           return true;
         }
 
+        boolean isCandidateInterface = candidateClass.isInterface();
+        boolean isBaseInterface = baseClass.isInterface();
+
         if (isCandidateInterface == isBaseInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), scope, facade)) return true;
         return isBaseInterface && !isCandidateInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), scope, facade);
       }
+      boolean isCandidateInterface = candidateClass.isInterface();
+      boolean isBaseInterface = baseClass.isInterface();
       String baseName = baseClass.getName();
       if (isCandidateInterface == isBaseInterface) {
         return PsiClassImplUtil.isInExtendsList(candidateClass, baseClass, baseName, manager);
