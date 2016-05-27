@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.formatting.Indent.Type;
 import static com.intellij.formatting.Indent.Type.*;
+import static com.intellij.psi.impl.source.codeStyle.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 /**
  * A base class Java-like language line indent provider. If JavaLikeLangLineIndentProvider is unable to calculate
@@ -41,14 +42,17 @@ import static com.intellij.formatting.Indent.Type.*;
  */
 public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineIndentProvider {
   
-  protected enum JavaLikeElement implements SyntaxElement {
+  public enum JavaLikeElement implements SyntaxElement {
     Whitespace,
     Semicolon,
     BlockOpeningBrace,
     BlockClosingBrace,
     ArrayOpeningBracket,
     RightParenthesis,
-    LeftParenthesis
+    LeftParenthesis,
+    Colon,
+    SwitchCase,
+    SwitchDefault
   }
   
   @Nullable
@@ -66,25 +70,30 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     if (offset > 0) {
       offset--;
       if (getPosition(editor, offset).matchesRule(
-        position -> position.isAt(JavaLikeElement.Whitespace) &&
+        position -> position.isAt(Whitespace) &&
                     position.isAtMultiline())) {
         if (getPosition(editor, offset).matchesRule(
           position -> position
             .before()
-            .beforeOptional(JavaLikeElement.Semicolon)
-            .beforeOptional(JavaLikeElement.Whitespace)
-            .isAt(JavaLikeElement.BlockClosingBrace))) {
-          return createIndentData(getBlockIndentType(project, language), JavaLikeElement.BlockClosingBrace);
+            .beforeOptional(Semicolon)
+            .beforeOptional(Whitespace)
+            .isAt(BlockClosingBrace))) {
+          return createIndentData(getBlockIndentType(project, language), BlockClosingBrace);
         }
         else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(JavaLikeElement.ArrayOpeningBracket)
+          position -> position.before().isAt(ArrayOpeningBracket)
         )) {
-          return createIndentData(CONTINUATION, JavaLikeElement.ArrayOpeningBracket);
+          return createIndentData(CONTINUATION, ArrayOpeningBracket);
         }
         else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(JavaLikeElement.BlockOpeningBrace)
+          position -> position.before().isAt(BlockOpeningBrace)
         )) {
-          return createIndentData(getIndentTypeInBlock(project, language), JavaLikeElement.BlockOpeningBrace);
+          return createIndentData(getIndentTypeInBlock(project, language), BlockOpeningBrace);
+        }
+        else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
+        )) {
+          return createIndentData(NORMAL, SwitchCase);
         }
       }
     }
@@ -152,7 +161,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
                                         @NotNull CharSequence docChars,
                                         @NotNull SyntaxElement afterElement,
                                         int offset) {
-    if (JavaLikeElement.BlockOpeningBrace.equals(afterElement) &&  !isOnSeparateLine(editor, afterElement, offset)) {
+    if (BlockOpeningBrace.equals(afterElement) && !isOnSeparateLine(editor, afterElement, offset)) {
       return findStatementStart(editor, afterElement, offset);
     }
     return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
@@ -161,10 +170,10 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   private boolean isOnSeparateLine(@NotNull Editor editor, @NotNull SyntaxElement element, int offset) {
     SemanticEditorPosition position = getPosition(editor, offset);
-    position.beforeOptional(JavaLikeElement.Whitespace);
+    position.beforeOptional(Whitespace);
     if (position.isAt(element)) {
       position.before();
-      if (position.isAtEnd() || position.isAt(JavaLikeElement.Whitespace) && position.isAtMultiline()) return true;
+      if (position.isAtEnd() || position.isAt(Whitespace) && position.isAtMultiline()) return true;
     }
     return false;
   }
@@ -173,14 +182,14 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   private int findStatementStart(@NotNull Editor editor, @NotNull SyntaxElement afterElement, int offset) {
     SemanticEditorPosition position = getPosition(editor, offset);
     position
-      .beforeOptional(JavaLikeElement.Whitespace)
+      .beforeOptional(Whitespace)
       .beforeOptional(afterElement)
-      .beforeOptional(JavaLikeElement.Whitespace);
-    if (position.isAt(JavaLikeElement.RightParenthesis)) {
-      position.beforeParentheses(JavaLikeElement.LeftParenthesis, JavaLikeElement.RightParenthesis);
+      .beforeOptional(Whitespace);
+    if (position.isAt(RightParenthesis)) {
+      position.beforeParentheses(LeftParenthesis, RightParenthesis);
     }
     while (!position.isAtEnd()) {
-      if (position.isAt(JavaLikeElement.Whitespace) && position.isAtMultiline()) {
+      if (position.isAt(Whitespace) && position.isAtMultiline()) {
         return position.after().getStartOffset();
       }
       position.before();

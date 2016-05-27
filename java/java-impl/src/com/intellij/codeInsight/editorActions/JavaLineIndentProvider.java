@@ -26,19 +26,24 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.impl.source.codeStyle.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
+
 /**
  * @author Rustam Vishnyakov
  */
 public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   private final static HashMap<IElementType, SemanticEditorPosition.SyntaxElement> SYNTAX_MAP = new HashMap<>();
   static {
-    SYNTAX_MAP.put(TokenType.WHITE_SPACE, JavaLikeElement.Whitespace);
-    SYNTAX_MAP.put(JavaTokenType.SEMICOLON, JavaLikeElement.Semicolon);
-    SYNTAX_MAP.put(JavaTokenType.LBRACE, JavaLikeElement.BlockOpeningBrace);
-    SYNTAX_MAP.put(JavaTokenType.RBRACE, JavaLikeElement.BlockClosingBrace);
-    SYNTAX_MAP.put(JavaTokenType.LBRACKET, JavaLikeElement.ArrayOpeningBracket);
-    SYNTAX_MAP.put(JavaTokenType.RPARENTH, JavaLikeElement.RightParenthesis);
-    SYNTAX_MAP.put(JavaTokenType.LPARENTH, JavaLikeElement.LeftParenthesis);
+    SYNTAX_MAP.put(TokenType.WHITE_SPACE, Whitespace);
+    SYNTAX_MAP.put(JavaTokenType.SEMICOLON, Semicolon);
+    SYNTAX_MAP.put(JavaTokenType.LBRACE, BlockOpeningBrace);
+    SYNTAX_MAP.put(JavaTokenType.RBRACE, BlockClosingBrace);
+    SYNTAX_MAP.put(JavaTokenType.LBRACKET, ArrayOpeningBracket);
+    SYNTAX_MAP.put(JavaTokenType.RPARENTH, RightParenthesis);
+    SYNTAX_MAP.put(JavaTokenType.LPARENTH, LeftParenthesis);
+    SYNTAX_MAP.put(JavaTokenType.COLON, Colon);
+    SYNTAX_MAP.put(JavaTokenType.CASE_KEYWORD, SwitchCase);
+    SYNTAX_MAP.put(JavaTokenType.DEFAULT_KEYWORD, SwitchDefault);
   }
   
   @Nullable

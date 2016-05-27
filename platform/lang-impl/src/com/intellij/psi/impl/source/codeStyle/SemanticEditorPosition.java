@@ -81,6 +81,18 @@ public abstract class SemanticEditorPosition {
     return this;
   }
   
+  public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
+    myIterator.retreat();
+    while (!myIterator.atEnd() && !isAtMultiline()) {
+      SyntaxElement currElement = map(myIterator.getTokenType());
+      for (SyntaxElement element : syntaxElements) {
+        if (element.equals(currElement)) return true;
+      }
+      myIterator.retreat();
+    }
+    return false;
+  }
+  
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
   }
