@@ -60,6 +60,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1392,7 +1393,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     public MyComponent() {
       setOpaque(true);
-      setFocusCycleRoot(true);
+      setFocusCycleRoot(!ScreenReader.isActive());
       setBorder(new ToolWindow.Border(false, false, false, false));
     }
 
