@@ -25,6 +25,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -592,14 +593,14 @@ public class PyPsiUtils {
     return QualifiedName.fromComponents(componentNames);
   }
 
+  /**
+   * Wrapper for {@link PsiUtilCore#ensureValid(PsiElement)} that skips nulls
+   */
   public static void assertValid(@Nullable final PsiElement element) {
     if (element == null) {
       return;
     }
-    if (! element.isValid()) {
-      throw new PsiInvalidElementAccessException(element, "Element is invalid. You should never work with invalid elements. " +
-                                                          "See _possible_ (and not guaranteed) reason before this message ");
-    }
+    PsiUtilCore.ensureValid(element);
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
