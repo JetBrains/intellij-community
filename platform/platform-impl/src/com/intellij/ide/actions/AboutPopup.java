@@ -195,7 +195,7 @@ public class AboutPopup {
 
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
             if (COPY_URL.equals(myActiveLink.myUrl)) {
