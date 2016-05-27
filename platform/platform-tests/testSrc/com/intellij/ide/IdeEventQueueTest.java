@@ -26,12 +26,10 @@ public class IdeEventQueueTest extends PlatformTestCase {
   public void testManyEvents() {
     int N = 100000;
     PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
-      AtomicInteger count = new AtomicInteger();
       UIUtil.dispatchAllInvocationEvents();
-      for (int i=0;i<N;i++) {
-        SwingUtilities.invokeLater(() -> {
-          count.incrementAndGet();
-        });
+      AtomicInteger count = new AtomicInteger();
+      for (int i = 0; i < N; i++) {
+        SwingUtilities.invokeLater(count::incrementAndGet);
       }
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(N, count.get());

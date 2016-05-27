@@ -564,7 +564,7 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = myKeyboardEventsInTheQueue.get() != 0;
+    myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsInTheQueue.get() != 0;
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
