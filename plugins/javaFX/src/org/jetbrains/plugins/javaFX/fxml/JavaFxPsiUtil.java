@@ -1114,7 +1114,7 @@ public class JavaFxPsiUtil {
     return propertyName != null ? propertyName : memberName;
   }
 
-  @NotNull
+  @Nullable
   public static PsiClass getTagValueClass(@NotNull XmlTag xmlTag) {
     return getTagValueClass(xmlTag, getTagClass(xmlTag)).getFirst();
   }
