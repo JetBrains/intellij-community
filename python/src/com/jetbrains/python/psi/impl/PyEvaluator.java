@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -57,6 +58,9 @@ public class PyEvaluator {
   public Object evaluate(@Nullable PyExpression expr) {
     if (expr == null || myVisited.contains(expr)) {
       return null;
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PyPsiUtils.assertValid(expr);
     }
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
