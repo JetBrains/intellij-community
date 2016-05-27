@@ -1220,4 +1220,121 @@ class Foo {
     myFixture.checkResult("<noframes><caret><p></p></noframes>")
     assertNull(templateManager.getActiveTemplate(myFixture.editor))
   }
+
+  public void "test escape with selection"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  {
+      soutv<caret>
+  }
+}
+"""
+    myFixture.type('\tfoo')
+    myFixture.editor.selectionModel.setSelection(myFixture.caretOffset - 3, myFixture.caretOffset)
+    assert myFixture.editor.selectionModel.hasSelection()
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !myFixture.editor.selectionModel.hasSelection()
+    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.checkResult """
+class Foo {
+  {
+      System.out.println("foo = " + foo<caret>);
+  }
+}
+"""
+  }
+
+  public void "test escape with lookup"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  {
+      int foo_1, foo_2;
+      soutv<caret>
+  }
+}
+"""
+    myFixture.type('\t')
+    assert myFixture.lookup
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !myFixture.lookup
+    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.checkResult """
+class Foo {
+  {
+      int foo_1, foo_2;
+      System.out.println("foo_1 = " + foo_1);
+  }
+}
+"""
+  }
+
+  public void "test escape with lookup and selection"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  {
+      int foo_1, foo_2;
+      soutv<caret>
+  }
+}
+"""
+    myFixture.type('\tfoo')
+    myFixture.editor.selectionModel.setSelection(myFixture.caretOffset - 3, myFixture.caretOffset)
+    myFixture.completeBasic()
+    assert myFixture.editor.selectionModel.hasSelection()
+    assert myFixture.lookup
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !myFixture.editor.selectionModel.hasSelection()
+    assert !myFixture.lookup
+    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.checkResult """
+class Foo {
+  {
+      int foo_1, foo_2;
+      System.out.println("foo = " + foo<caret>);
+  }
+}
+"""
+  }
+
+  public void "test escape with empty lookup"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  {
+      int foo_1, foo_2;
+      soutv<caret>
+  }
+}
+"""
+    myFixture.type('\tfoobar')
+    assert myFixture.lookup
+    assert !myFixture.lookup.currentItem
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    assert !myFixture.lookup
+    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+
+    myFixture.checkResult """
+class Foo {
+  {
+      int foo_1, foo_2;
+      System.out.println("foobar = " + foobar);
+  }
+}
+"""
+  }
 }
