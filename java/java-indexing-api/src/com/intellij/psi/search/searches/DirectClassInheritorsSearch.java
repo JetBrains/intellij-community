@@ -71,7 +71,8 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     }
   }
 
-  private DirectClassInheritorsSearch() {}
+  private DirectClassInheritorsSearch() {
+  }
 
   @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {
@@ -85,14 +86,18 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
 
   @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
-    return search(aClass, scope, includeAnonymous, true);
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, true));
   }
 
+  /**
+   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
+   */
   @NotNull
+  @Deprecated
   public static Query<PsiClass> search(@NotNull PsiClass aClass,
                                        @NotNull SearchScope scope,
                                        boolean includeAnonymous,
                                        final boolean checkInheritance) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, checkInheritance));
+    return search(aClass, scope, includeAnonymous);
   }
 }

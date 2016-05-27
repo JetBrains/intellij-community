@@ -54,6 +54,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass baseClass = parameters.getClassToProcess();
+    assert parameters.isCheckInheritance();
 
     final SearchScope useScope = ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)baseClass::getUseScope);
 
