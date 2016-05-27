@@ -20,7 +20,7 @@
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider" serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
     </applicationService>
-    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider">
+    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider" testServiceImplementation="com.intellij.stats.completion.TestFilePathProvider">
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.LogFileManager" serviceImplementation="com.intellij.stats.completion.LogFileManagerImpl">
     </applicationService>
