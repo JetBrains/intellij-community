@@ -140,7 +140,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void onMouseClicked(final Component component) {
-    myAutoScrollAlarm.cancelAllRequests();
+    cancelAllRequests();
     if (isAutoScrollMode()){
       ApplicationManager.getApplication().invokeLater(() -> scrollToSource(component));
     }
