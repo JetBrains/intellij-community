@@ -88,11 +88,17 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
     mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new LazySchemeProcessor<Profile, InspectionProfileImpl>() {
       @NotNull
+      @Override
+      public String getName(@NotNull Function<String, String> attributeProvider) {
+        return ObjectUtils.chooseNotNull(attributeProvider.apply(InspectionProfileLoadUtil.PROFILE_NAME_TAG), "unnamed");
+      }
+
+      @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder dataHolder,
+                                                @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
-        String profileName = ObjectUtils.chooseNotNull(attributeProvider.apply(InspectionProfileLoadUtil.PROFILE_NAME_TAG), "unnamed");
-        return new InspectionProfileImpl(profileName, myRegistrar, InspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
+        return new InspectionProfileImpl(name, myRegistrar, InspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
       }
 
       @NotNull

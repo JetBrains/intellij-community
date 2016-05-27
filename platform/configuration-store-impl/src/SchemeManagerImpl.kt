@@ -411,13 +411,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       read@ do {
         when (eventType) {
           XmlPullParser.START_TAG -> {
-            val schemeName = parser.getAttributeValue(null, "name")
+            val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+            val schemeName = processor.getName(attributeProvider)
             if (!checkExisting(schemeName)) {
               return null
             }
 
             val externalInfo = createInfo(schemeName, null)
-            scheme = processor.createScheme(SchemeDataHolderImpl(bytes, externalInfo), Function { parser.getAttributeValue(null, it) }, duringLoad)
+            scheme = processor.createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider, duringLoad)
             schemeToInfo.put(scheme, externalInfo)
             break@read
           }

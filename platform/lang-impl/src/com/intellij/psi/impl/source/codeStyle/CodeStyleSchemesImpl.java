@@ -38,7 +38,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
       @NotNull
       @Override
-      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
+      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull String name, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }
 

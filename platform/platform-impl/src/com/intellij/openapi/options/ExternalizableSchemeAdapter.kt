@@ -30,7 +30,11 @@ interface SchemeDataHolder {
 }
 
 abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  abstract fun createScheme(dataHolder: SchemeDataHolder, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
+  open fun getName(attributeProvider: Function<String, String?>): String {
+    return attributeProvider.apply("name") ?: throw IllegalStateException("name is missed in the scheme data")
+  }
+
+  abstract fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
 }
 
 abstract class BaseSchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>(), SchemeExtensionProvider {
