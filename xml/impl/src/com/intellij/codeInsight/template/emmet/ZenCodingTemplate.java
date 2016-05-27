@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
@@ -380,13 +379,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
       if (templatePrefix != null) {
         List<TemplateImpl> regularTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
-        boolean regularTemplateWithSamePrefixExists = !ContainerUtil.filter(regularTemplates, new Condition<TemplateImpl>() {
-          @Override
-          public boolean value(TemplateImpl template) {
-            return templatePrefix.equals(template.getKey());
-          }
-        }).isEmpty();
-        
+        boolean regularTemplateWithSamePrefixExists = !ContainerUtil.filter(regularTemplates,
+                                                                            template -> templatePrefix.equals(template.getKey())).isEmpty();
         result = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
         result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
         if (!regularTemplateWithSamePrefixExists) {
