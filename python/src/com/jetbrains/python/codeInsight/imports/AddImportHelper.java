@@ -225,6 +225,9 @@ public class AddImportHelper {
       if (fromImportStatement.isFromFuture()) {
         return ImportPriority.FUTURE;
       }
+      if (fromImportStatement.getRelativeLevel() > 0) {
+        return ImportPriority.PROJECT;
+      }
       resolved = fromImportStatement.resolveImportSource();
     }
     else {
