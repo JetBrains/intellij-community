@@ -349,7 +349,7 @@ public class PsiClassImplUtil {
     private final PsiClass myPsiClass;
     private final GlobalSearchScope myResolveScope;
 
-    public MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
+    MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
       myPsiClass = psiClass;
       myResolveScope = scope;
     }
@@ -430,11 +430,11 @@ public class PsiClassImplUtil {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
-      if ((nameHint == null || VALUES_METHOD.equals(nameHint.getName(state)))) {
+      if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
         PsiMethod method = innerStuffCache.getValuesMethod();
         if (method != null && !processor.execute(method, ResolveState.initial())) return false;
       }
-      if ((nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state)))) {
+      if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
         PsiMethod method = innerStuffCache.getValueOfMethod();
         if (method != null && !processor.execute(method, ResolveState.initial())) return false;
       }
@@ -759,8 +759,7 @@ public class PsiClassImplUtil {
   public static PsiClass getSuperClass(@NotNull PsiClass psiClass) {
 
     if (psiClass.isInterface()) {
-      String className = CommonClassNames.JAVA_LANG_OBJECT;
-      return findSpecialSuperClass(psiClass, className);
+      return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
     }
     if (psiClass.isEnum()) {
       return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_ENUM);
@@ -1008,7 +1007,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
-    PsiType upperBound = psiClass.getUserData(InferenceSession.UPPER_BOUND);
+    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1022,7 +1021,7 @@ public class PsiClassImplUtil {
       }
       return result.toArray(new PsiClassType[result.size()]);
     }
-    else if (upperBound instanceof PsiClassType) {
+    if (upperBound instanceof PsiClassType) {
       return new PsiClassType[] {(PsiClassType)upperBound};
     }
     final PsiReferenceList extendsList = psiClass.getExtendsList();

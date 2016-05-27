@@ -43,8 +43,8 @@ import java.util.*;
  */
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
-  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
-  public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
+  private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
+  private static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
@@ -150,6 +150,13 @@ public class InferenceSession {
     myPolicy = policy;
 
     initBounds(typeParams);
+  }
+
+  public static PsiType getUpperBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(UPPER_BOUND);
+  }
+  public static PsiType getLowerBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(LOWER_BOUND);
   }
 
   public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent, PsiMethod method) {
