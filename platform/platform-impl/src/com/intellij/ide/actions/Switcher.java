@@ -713,12 +713,6 @@ public class Switcher extends AnAction implements DumbAware {
         case VK_ESCAPE:
           cancel();
           break;
-        case VK_UP:
-        case VK_DOWN:
-          if (e.isControlDown()) {
-            go(e.getKeyCode() == VK_DOWN);
-          }
-          break;
       }
     }
 
