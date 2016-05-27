@@ -52,7 +52,9 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     LeftParenthesis,
     Colon,
     SwitchCase,
-    SwitchDefault
+    SwitchDefault,
+    ElseKeyword,
+    IfKeyword
   }
   
   @Nullable
@@ -94,6 +96,23 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
         )) {
           return createIndentData(NORMAL, SwitchCase);
+        }
+        else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(ElseKeyword)
+        )) {
+          return createIndentData(NORMAL, ElseKeyword);
+        }
+        else {
+          SemanticEditorPosition position = getPosition(editor, offset);
+          if (position.before().isAt(RightParenthesis)) {
+            position.beforeParentheses(LeftParenthesis, RightParenthesis);
+            if (!position.isAtEnd()) {
+              position.beforeOptional(Whitespace);
+              if (position.isAt(IfKeyword)) {
+                return createIndentData(NORMAL, IfKeyword);
+              }
+            }
+          }
         }
       }
     }
@@ -164,6 +183,9 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     if (BlockOpeningBrace.equals(afterElement) && !isOnSeparateLine(editor, afterElement, offset)) {
       return findStatementStart(editor, afterElement, offset);
     }
+    else if (IfKeyword.equals(afterElement)) {
+      return findStatementStart(editor, null, offset);
+    }
     return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
   }
   
@@ -179,12 +201,12 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   
-  private int findStatementStart(@NotNull Editor editor, @NotNull SyntaxElement afterElement, int offset) {
+  private int findStatementStart(@NotNull Editor editor, @Nullable SyntaxElement afterElement, int offset) {
     SemanticEditorPosition position = getPosition(editor, offset);
-    position
-      .beforeOptional(Whitespace)
-      .beforeOptional(afterElement)
-      .beforeOptional(Whitespace);
+    position.beforeOptional(Whitespace);
+    if (afterElement != null) {
+        position.beforeOptional(afterElement).beforeOptional(Whitespace);
+    }
     if (position.isAt(RightParenthesis)) {
       position.beforeParentheses(LeftParenthesis, RightParenthesis);
     }
