@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends PlatformTestCase {
   public void testManyEvents() {
-    int N = 100000;
+    int N = 100/*000*/;
     PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
       UIUtil.dispatchAllInvocationEvents();
       AtomicInteger count = new AtomicInteger();

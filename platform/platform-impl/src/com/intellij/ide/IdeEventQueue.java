@@ -61,7 +61,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Vladimir Kondratyev
@@ -109,7 +108,6 @@ public class IdeEventQueue extends EventQueue {
    * Swing event.
    */
   private int myEventCount;
-  private final AtomicInteger myKeyboardEventsInTheQueue = new AtomicInteger();
   private boolean myIsInInputEvent;
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
@@ -327,57 +325,50 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-    try {
-      if (!appIsLoaded()) {
-        try {
-          super.dispatchEvent(e);
-        }
-        catch (Throwable t) {
-          processException(t);
-        }
-        return;
-      }
-
-      e = InertialMouseRouter.changeSourceIfNeeded(e);
-
-      e = fixNonEnglishKeyboardLayouts(e);
-
-      e = mapEvent(e);
-      if (Registry.is("keymap.windows.as.meta")) {
-        e = mapMetaState(e);
-      }
-
-      boolean wasInputEvent = myIsInInputEvent;
-      myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
-      if (myIsInInputEvent) {
-        HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-      }
-      AWTEvent oldEvent = myCurrentEvent;
-      myCurrentEvent = e;
-
-      boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
-      try (AccessToken ignored = startActivity(userActivity)) {
-        _dispatchEvent(e, false);
+    if (!appIsLoaded()) {
+      try {
+        super.dispatchEvent(e);
       }
       catch (Throwable t) {
         processException(t);
       }
-      finally {
-        myIsInInputEvent = wasInputEvent;
-        myCurrentEvent = oldEvent;
+      return;
+    }
 
-        for (EventDispatcher each : myPostProcessors) {
-          each.dispatch(e);
-        }
+    e = InertialMouseRouter.changeSourceIfNeeded(e);
 
-        if (e instanceof KeyEvent) {
-          maybeReady();
-        }
-      }
+    e = fixNonEnglishKeyboardLayouts(e);
+
+    e = mapEvent(e);
+    if (Registry.is("keymap.windows.as.meta")) {
+      e = mapMetaState(e);
+    }
+
+    boolean wasInputEvent = myIsInInputEvent;
+    myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+    if (myIsInInputEvent) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    }
+    AWTEvent oldEvent = myCurrentEvent;
+    myCurrentEvent = e;
+
+    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
+    try (AccessToken ignored = startActivity(userActivity)) {
+      _dispatchEvent(e, false);
+    }
+    catch (Throwable t) {
+      processException(t);
     }
     finally {
-      if (isKeyboardEvent(e)) {
-        myKeyboardEventsInTheQueue.decrementAndGet();
+      myIsInInputEvent = wasInputEvent;
+      myCurrentEvent = oldEvent;
+
+      for (EventDispatcher each : myPostProcessors) {
+        each.dispatch(e);
+      }
+
+      if (e instanceof KeyEvent) {
+        maybeReady();
       }
     }
   }
@@ -564,7 +555,10 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsInTheQueue.get() != 0;
+    myKeyboardBusy = e instanceof KeyEvent ||
+                     peekEvent(KeyEvent.KEY_PRESSED) != null ||
+                     peekEvent(KeyEvent.KEY_RELEASED) != null ||
+                     peekEvent(KeyEvent.KEY_TYPED) != null;
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -1120,9 +1114,6 @@ public class IdeEventQueue extends EventQueue {
   @Override
   public void postEvent(@NotNull AWTEvent event) {
     myFrequentEventDetector.eventHappened(event);
-    if (isKeyboardEvent(event)) {
-      myKeyboardEventsInTheQueue.incrementAndGet();
-    }
     super.postEvent(event);
   }
 
