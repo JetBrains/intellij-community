@@ -175,7 +175,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   private boolean isFiltered(Type t) {
     if (t instanceof ReferenceType) {
       for (ClassFilter classFilter : myClassFilters) {
-        if (classFilter.isEnabled() && DebuggerUtils.getSuperType(t, classFilter.getPattern()) != null) {
+        if (classFilter.isEnabled() && DebuggerUtils.instanceOf(t, classFilter.getPattern())) {
           return true;
         }
       }
