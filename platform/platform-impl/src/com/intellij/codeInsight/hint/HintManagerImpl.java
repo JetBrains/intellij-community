@@ -499,8 +499,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
     final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    if (dominantArea != null) {
+      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
+    }
+
     JRootPane rootPane = editor.getComponent().getRootPane();
-    if (dominantArea == null && rootPane != null) {
+    if (rootPane != null) {
       JLayeredPane lp = rootPane.getLayeredPane();
       for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
@@ -544,16 +548,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     }
-    else if (dominantArea != null) {
-      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
-    }
 
     return getHintPosition(hint, editor, pos, constraint);
   }
 
   private static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
                                                  @NotNull final Editor editor,
-                                                 @PositionFlags  short constraint,
+                                                 @PositionFlags short constraint,
                                                  @NotNull final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
