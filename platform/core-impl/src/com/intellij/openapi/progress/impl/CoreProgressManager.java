@@ -313,7 +313,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         runProcessWithProgressSynchronously(task, null);
       }
       else {
-        new TaskRunnable(task, new EmptyProgressIndicator()).run();
+        runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.NON_MODAL);
       }
     }
     else if (task.isModal()) {
@@ -406,6 +406,43 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
     finishTask(task, !result, exceptionRef.get());
     return result;
+  }
+
+  public void runProcessWithProgressInCurrentThread(@NotNull final Task task,
+                                                    @NotNull final ProgressIndicator progressIndicator,
+                                                    @NotNull final ModalityState modalityState) {
+    if (progressIndicator instanceof Disposable) {
+      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
+    }
+
+    final Runnable process = new TaskRunnable(task, progressIndicator);
+
+    boolean processCanceled = false;
+    Exception exception = null;
+    try {
+      runProcess(process, progressIndicator);
+    }
+    catch (ProcessCanceledException e) {
+      processCanceled = true;
+    }
+    catch (Exception e) {
+      exception = e;
+    }
+
+    final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+    final Exception finalException = exception;
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      finishTask(task, finalCanceled, finalException);
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          finishTask(task, finalCanceled, finalException);
+        }
+      }, modalityState);
+    }
   }
 
   static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {
