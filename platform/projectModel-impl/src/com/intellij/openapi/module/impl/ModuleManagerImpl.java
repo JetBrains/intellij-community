@@ -744,7 +744,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       String path = moduleFile.getPath();
       ModuleEx module = getModuleByFilePath(path);
       if (module == null) {
-        ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false), ModalityState.any());
+        ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false), ModalityState.defaultModalityState());
         module = createAndLoadModule(path);
         initModule(module, path, null);
       }
