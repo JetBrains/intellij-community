@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       return;
     }
     try {
-      expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
+      expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
     }
     catch (EmmetException e) {
       CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
@@ -157,14 +157,11 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     while (node instanceof FilterNode) {
       FilterNode filterNode = (FilterNode)node;
       String filterSuffix = filterNode.getFilter();
-      boolean filterFound = false;
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
-          filterFound = true;
           result.add(filter);
         }
       }
-      assert filterFound;
       node = filterNode.getNode();
     }
 
