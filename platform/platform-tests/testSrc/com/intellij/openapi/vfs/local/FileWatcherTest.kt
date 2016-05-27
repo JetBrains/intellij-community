@@ -494,7 +494,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     refresh(file1)
     refresh(file2)
 
-    var request = watch(root1)
+    val request = watch(root1)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("data") } }, mapOf(file1 to 'U'))
     fs.replaceWatchedRoot(request, root2.path, true)
     wait { watcher.isSettingRoots }
