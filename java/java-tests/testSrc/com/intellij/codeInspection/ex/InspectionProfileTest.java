@@ -57,10 +57,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    InspectionProfileImpl.INIT_INSPECTIONS = false;
-    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
+    try {
+      //noinspection SuperTearDownInFinally
+      super.tearDown();
+    }
+    finally {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+      InspectionProfileManager.getInstance().deleteProfile(PROFILE);
+    }
   }
 
   public void testCopyProjectProfile() throws Exception {
@@ -375,7 +380,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
-  private void checkMergedNoChanges(String initialText) throws Exception {
+  private static void checkMergedNoChanges(String initialText) throws Exception {
     final Element element = JDOMUtil.loadDocument(initialText).getRootElement();
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(element);
