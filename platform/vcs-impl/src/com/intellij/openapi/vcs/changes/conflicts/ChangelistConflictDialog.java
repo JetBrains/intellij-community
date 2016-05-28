@@ -18,11 +18,13 @@ package com.intellij.openapi.vcs.changes.conflicts;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
   private JRadioButton myMoveChangesToActiveRadioButton;
   private JRadioButton mySwitchToChangelistRadioButton;
   private JRadioButton myIgnoreRadioButton;
+  private JLabel myListTitle;
   private JList myFileList;
 
   private final Project myProject;
@@ -51,6 +54,10 @@ public class ChangelistConflictDialog extends DialogWrapper {
     myProject = project;
 
     setTitle("Resolve Changelist Conflict");
+    
+    myListTitle.setText(StringUtil.capitalize(ReadOnlyStatusDialog.getTheseFilesMessage(conflicts))
+                        + " " + (conflicts.size() > 1 ? "do" : "does")
+                        + " not belong to the active changelist:");
 
     myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel(conflicts));
