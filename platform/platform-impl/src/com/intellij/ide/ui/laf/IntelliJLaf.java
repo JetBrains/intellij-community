@@ -40,7 +40,7 @@ public class IntelliJLaf extends DarculaLaf {
 
   @Override
   protected String getPrefix() {
-    return "intellijlaf";
+    return isWindowsNativeLook() ? "intellijlaf_native" : "intellijlaf";
   }
 
   @Override
@@ -114,6 +114,6 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   public static boolean isWindowsNativeLook() {
-    return Registry.is("ide.intellij.laf.win10.ui");
+    return SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui");
   }
 }
