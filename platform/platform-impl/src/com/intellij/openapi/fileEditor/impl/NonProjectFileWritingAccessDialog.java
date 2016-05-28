@@ -49,6 +49,8 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     super(project);
     setTitle(filesType + " Protection");
 
+    myFileList.setPreferredSize(ReadOnlyStatusDialog.getDialogPreferredSize());
+    
     myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel<VirtualFile>(nonProjectFiles));
 

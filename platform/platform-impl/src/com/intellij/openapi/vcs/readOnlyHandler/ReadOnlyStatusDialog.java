@@ -30,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -57,8 +58,9 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     super(project);
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
+    myFileList.setPreferredSize(getDialogPreferredSize());
     initFileList();
-
+                       
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -187,6 +189,10 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   public JComponent getPreferredFocusedComponent() {
     final JRootPane pane = getRootPane();
     return pane != null ? pane.getDefaultButton() : null;
+  }
+  
+  public static Dimension getDialogPreferredSize() {
+    return new Dimension(500, 400);
   }
 
   @NotNull
