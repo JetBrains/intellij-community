@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -29,7 +30,14 @@ import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   private static class ProgressManagerHolder {
-    private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
+    private static final ProgressManager ourInstance;
+
+    static {
+      ourInstance = ServiceManager.getService(ProgressManager.class);
+      if (ourInstance == null) {
+        throw new AssertionError("ProgressManager is null; app.disposed=" + ApplicationManager.getApplication().isDisposed());
+      }
+    }
   }
 
   @NotNull
