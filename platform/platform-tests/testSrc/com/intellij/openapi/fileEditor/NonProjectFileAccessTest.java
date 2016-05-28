@@ -253,7 +253,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, true);
   }
   
-  public void testCheckingExtensions() throws Exception {
+  public void testCheckingExtensionsForWritableFiles() throws Exception {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
 
@@ -261,7 +261,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
     
     List<VirtualFile> allowed = new ArrayList<VirtualFile>();
-    registerAccessCheckExtension(allowed);
+    registerAccessCheckExtension(allowed, Collections.emptyList());
 
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
@@ -278,6 +278,33 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     allowed.clear();
     typeAndCheck(nonProjectFile1, false);
     typeAndCheck(nonProjectFile2, false);
+  }
+  
+  public void testCheckingExtensionsForNonWritableFiles() throws Exception {
+    VirtualFile nonProjectFile1 = createProjectFile();
+    VirtualFile nonProjectFile2 = createProjectFile();
+
+    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile2, true);
+    
+    List<VirtualFile> denied = new ArrayList<VirtualFile>();
+    registerAccessCheckExtension(Collections.emptyList(), denied);
+
+    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile2, true);
+
+    denied.add(nonProjectFile1);
+    typeAndCheck(nonProjectFile1, false);
+    typeAndCheck(nonProjectFile2, true);
+
+    denied.clear();
+    denied.add(nonProjectFile2);
+    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile2, false);
+
+    denied.clear();
+    typeAndCheck(nonProjectFile1, true);
+    typeAndCheck(nonProjectFile2, true);
   }
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
@@ -300,12 +327,17 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     return requested;
   }
 
-  private void registerAccessCheckExtension(final Collection<VirtualFile> filesToAllow) {
+  private void registerAccessCheckExtension(Collection<VirtualFile> filesToAllow, Collection<VirtualFile> filesToDeny) {
     PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), NonProjectFileWritingAccessExtension.EP_NAME,
                                        new NonProjectFileWritingAccessExtension() {
                                          @Override
                                          public boolean isWritable(@NotNull VirtualFile file) {
                                            return filesToAllow.contains(file);
+                                         }
+
+                                         @Override
+                                         public boolean isNotWritable(@NotNull VirtualFile file) {
+                                           return filesToDeny.contains(file);
                                          }
                                        },
                                        myTestRootDisposable);

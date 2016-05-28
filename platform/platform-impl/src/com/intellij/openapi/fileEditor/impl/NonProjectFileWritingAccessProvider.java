@@ -145,6 +145,11 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   private static boolean isProjectFile(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
+        if(each.isWritable(file)) return true;
+        if(each.isNotWritable(file)) return false;
+      }
+
       ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
       if (fileIndex.isInContent(file)) return true;
       if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
@@ -166,10 +171,6 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
             return true;
           }
         }
-      }
-  
-      for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
-        if(each.isWritable(file)) return true;
       }
     }
     return false;
