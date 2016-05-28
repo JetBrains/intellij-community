@@ -446,7 +446,7 @@ public abstract class DialogWrapper {
     Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if ((UIUtil.isUnderAquaBasedLookAndFeel())
+    if ((UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))
         && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
@@ -594,7 +594,7 @@ public abstract class DialogWrapper {
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
       JButton helpButton = null;
       for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
         if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
