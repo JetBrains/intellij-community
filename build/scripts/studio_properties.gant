@@ -312,7 +312,6 @@ def getProperties(String home, String buildNumber) {
       ant.copy(file: "${home}/../../prebuilts/tools/common/m2/repository/tightvnc/NOTICE",
                tofile: "$targetDirectory/plugins/firebase-testing/lib/licenses/tightvnc.jar-NOTICE")
       ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-bin.zip", dest: "${targetDirectory}/gradle")
-      ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
     }
 
     def customWinLayout(targetDirectory) {
