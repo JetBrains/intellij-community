@@ -280,53 +280,54 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
     stubs.next(); // Skip file stub;
-    final List<Pair<StubBasedPsiElementBase, AstPath>> result = ContainerUtil.newArrayList();
+    final List<Pair<StubElement, AstPath>> result = ContainerUtil.newArrayList();
     final IStubFileElementType elementType = getElementTypeForStubBuilder();
     assert elementType != null;
     final StubBuilder builder = elementType.getBuilder();
 
-    LazyParseableElement.setSuppressEagerPsiCreation(true);
-    try {
-      root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-        @Override
-        protected void visitNode(TreeElement node) {
-          CompositeElement parent = node.getTreeParent();
-          if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
-            return;
-          }
-
-
-          IElementType type = node.getElementType();
-          if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-            if (!stubs.hasNext()) {
-              reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
-            }
-
-            final StubElement stub = stubs.next();
-            if (stub.getStubType() != node.getElementType()) {
-              reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                                    node.getElementType() + "; " + node, stubTree, cachedDocument);
-            }
-
-            PsiElement psi = stub.getPsi();
-            assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
-
-            AstPath path = AstPath.getNodePath((CompositeElement)node);
-            assert path != null;
-            result.add(Pair.create((StubBasedPsiElementBase)psi, path));
-          }
-
-          super.visitNode(node);
+    root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement node) {
+        CompositeElement parent = node.getTreeParent();
+        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
+          return;
         }
-      });
-    }
-    finally {
-      LazyParseableElement.setSuppressEagerPsiCreation(false);
-    }
+
+
+        IElementType type = node.getElementType();
+        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+          if (!stubs.hasNext()) {
+            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
+          }
+
+          final StubElement stub = stubs.next();
+          if (stub.getStubType() != node.getElementType()) {
+            reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
+                                  node.getElementType() + "; " + node, stubTree, cachedDocument);
+          }
+
+          AstPath path = AstPath.getNodePath((CompositeElement)node);
+          assert path != null;
+          result.add(Pair.create(stub, path));
+        }
+
+        super.visitNode(node);
+      }
+    });
     if (stubs.hasNext()) {
       reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
     }
-    return result;
+    synchronized (PsiLock.LOCK) {
+      return ContainerUtil.map(result, new Function<Pair<StubElement, AstPath>, Pair<StubBasedPsiElementBase, AstPath>>() {
+        @Override
+        public Pair<StubBasedPsiElementBase, AstPath> fun(Pair<StubElement, AstPath> pair) {
+          StubElement stub = pair.first;
+          PsiElement psi = stub.getPsi();
+          assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
+          return Pair.create((StubBasedPsiElementBase)psi, pair.second);
+        }
+      });
+    }
   }
 
   @Nullable
