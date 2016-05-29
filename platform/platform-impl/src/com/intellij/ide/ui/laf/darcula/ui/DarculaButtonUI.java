@@ -170,7 +170,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
   
   public static boolean isHelpButton(JComponent button) {
-    return SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))
+    return (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))
            && button instanceof JButton 
            && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
