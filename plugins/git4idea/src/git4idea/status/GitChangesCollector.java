@@ -130,7 +130,7 @@ abstract class GitChangesCollector {
     Iterator<String> it = allPaths.iterator();
     while (it.hasNext()) {
       String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath)) {      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
         it.remove();
       }
       else {
