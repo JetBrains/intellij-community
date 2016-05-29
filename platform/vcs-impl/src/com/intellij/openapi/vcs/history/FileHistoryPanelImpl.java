@@ -973,14 +973,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           try {
             revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
           }
-          catch (final IOException e) {
-            LOG.info(e);
-            ApplicationManager.getApplication().invokeLater(
-              () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                             VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
-            return;
-          }
-          catch (final VcsException e) {
+          catch (final IOException | VcsException e) {
             LOG.info(e);
             ApplicationManager.getApplication().invokeLater(
               () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
