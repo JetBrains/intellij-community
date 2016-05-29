@@ -1546,9 +1546,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       myBaseColumn.setName(s);
     }
 
-    public MyColumnWrapper(ColumnInfo<VcsFileRevision, T> additionalColunm) {
-      super(additionalColunm.getName());
-      myBaseColumn = additionalColunm;
+    public MyColumnWrapper(ColumnInfo<VcsFileRevision, T> additionalColumn) {
+      super(additionalColumn.getName());
+      myBaseColumn = additionalColumn;
     }
 
     public boolean shouldBeShownIsTheTree() {
