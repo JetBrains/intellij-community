@@ -128,7 +128,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
-  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
+  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<>();
 
   private boolean myIsStaticAndEmbedded;
 
@@ -391,7 +391,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myComments.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
-    myRevisionsOrder = new HashMap<VcsRevisionNumber, Integer>();
+    myRevisionsOrder = new HashMap<>();
     refreshRevisionsOrder();
 
     replaceTransferable();
@@ -535,7 +535,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myAdditionalDetails = components.getDetailsComponent();
     myListener = components.getRevisionListener();
 
-    ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
+    ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
     columns.add(new RevisionColumnInfo(myRevisionsInOrderComparator));
     if (!provider.isDateOmittable()) columns.add(new DateColumnInfo());
     columns.add(new AuthorColumnInfo());
@@ -545,7 +545,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   private Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColumns) {
-    ArrayList<DualViewColumnInfo> result = new ArrayList<DualViewColumnInfo>();
+    ArrayList<DualViewColumnInfo> result = new ArrayList<>();
     if (additionalColumns != null) {
       for (ColumnInfo additionalColumn : additionalColumns) {
         result.add(new MyColumnWrapper(additionalColumn));
@@ -555,9 +555,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   private static List<TreeItem<VcsFileRevision>> wrapWithTreeElements(List<VcsFileRevision> revisions) {
-    ArrayList<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
+    ArrayList<TreeItem<VcsFileRevision>> result = new ArrayList<>();
     for (final VcsFileRevision revision : revisions) {
-      result.add(new TreeItem<VcsFileRevision>(revision));
+      result.add(new TreeItem<>(revision));
     }
     return result;
   }
@@ -1704,7 +1704,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         helper.showError(null, "Can not load changelist contents");
       }
       else {
-        CreatePatchFromChangesAction.createPatch(myProject, myList.getComment(), new ArrayList<Change>(myList.getChanges()));
+        CreatePatchFromChangesAction.createPatch(myProject, myList.getComment(), new ArrayList<>(myList.getChanges()));
       }
     }
   }
