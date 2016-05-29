@@ -865,9 +865,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       int selectionSize = sel.size();
       if (selectionSize > 1) {
         List<VcsFileRevision> selectedRevisions =
-          ContainerUtil.sorted(ContainerUtil.map(sel, treeNode -> {
-            return treeNode.getRevision();
-          }), myRevisionsInOrderComparator);
+          ContainerUtil.sorted(ContainerUtil.map(sel, TreeNodeOnVcsRevision::getRevision), myRevisionsInOrderComparator);
         VcsFileRevision olderRevision = selectedRevisions.get(0);
         VcsFileRevision newestRevision = selectedRevisions.get(sel.size() - 1);
         myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);
@@ -950,7 +948,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         final LocalHistoryAction action = startLocalHistoryAction(revision);
         final VirtualFile vp = getVirtualParent();
         if (vp != null) {
-          refresh = () -> vp.refresh(false, true, () -> action.finish());
+          refresh = () -> vp.refresh(false, true, action::finish);
         }
       }
       else {
