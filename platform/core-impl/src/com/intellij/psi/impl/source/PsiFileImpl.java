@@ -1140,8 +1140,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  void removePsi(@NotNull AstPath key) {
-    myRefToPsi.removePsi(key);
+  final AstPathPsiMap getRefToPsi() {
+    return myRefToPsi;
   }
 
   public boolean useStrongRefs() {
