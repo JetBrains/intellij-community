@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -181,8 +182,7 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
   }
 
   public void testStaticPropertyFromLibrary() throws Exception {
-    doTestErrorHint("Foo", "Cannot perform refactoring.\n" +
-                           "Selected method is not located inside the project");
+    doTestErrorHint("Foo", RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed")));
   }
 
   public void testControllerMethod() throws Exception {
