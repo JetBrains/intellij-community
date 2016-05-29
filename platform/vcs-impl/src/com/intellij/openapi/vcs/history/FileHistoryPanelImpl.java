@@ -346,7 +346,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
                               final boolean isStaticEmbedded) {
     this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
   }
-  
+
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               @NotNull FilePath filePath,
                               @Nullable VcsRevisionNumber startingRevision,
@@ -672,19 +672,24 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return;
     }
     boolean addRevisionInfo = selection.size() > 1;
-    StringBuilder sb = new StringBuilder();
+    StringBuilder original = new StringBuilder();
+    StringBuilder html = new StringBuilder();
     for (TreeNodeOnVcsRevision revision : selection) {
       String message = revision.getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
-      if (sb.length() > 0) sb.append("\n\n");
-      if (addRevisionInfo) {
-        sb.append(RevisionColumnInfo.toString(revision, true)).append(" ")
-          .append(AuthorColumnInfo.toString(revision)).append(" on ")
-          .append(DateColumnInfo.toString(revision)).append("\n");
+      if (original.length() > 0) {
+        original.append("\n\n");
+        html.append("<br/><br/>");
       }
-      sb.append(message);
+      if (addRevisionInfo) {
+        String revisionInfo = getRevisionInfo(revision);
+        html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">").append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
+        original.append(revisionInfo).append("\n");
+      }
+      original.append(message);
+      html.append(getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)));
     }
-    myOriginalComment = sb.toString();
+    myOriginalComment = original.toString();
     if (StringUtil.isEmpty(myOriginalComment)) {
       myComments.setText("");
     }
@@ -692,7 +697,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       myComments.setText("<html><head>" +
                          UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
                          "</head><body>" +
-                         getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), myOriginalComment)) +
+                         html.toString() +
                          "</body></html>");
       myComments.setCaretPosition(0);
     }
@@ -701,6 +706,32 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
+  private static String getRevisionInfo(@NotNull TreeNodeOnVcsRevision revision) {
+    StringBuilder sb = new StringBuilder();
+    // revision
+    sb.append(RevisionColumnInfo.toString(revision, true)).append(" ");
+
+    // author
+    VcsFileRevision vcsFileRevision = revision.getRevision();
+    sb.append(vcsFileRevision.getAuthor()).append(" ");
+
+    // date
+    sb.append(formatDateTime(revision.getRevisionDate().getTime()));
+
+    // committed by
+    if (vcsFileRevision instanceof VcsFileRevisionEx) {
+      if (!Comparing.equal(vcsFileRevision.getAuthor(), ((VcsFileRevisionEx)vcsFileRevision).getCommitterName())) {
+        sb.append(" (committed by ").append(((VcsFileRevisionEx)vcsFileRevision).getCommitterName()).append(")");
+      }
+    }
+
+    return sb.toString();
+  }
+
+  @NotNull
+  private static String formatDateTime(long time) {
+    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
+  }
 
   protected JComponent createCenterPanel() {
     mySplitter = new OnePixelSplitter(true, getSplitterProportion());
