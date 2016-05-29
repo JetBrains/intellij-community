@@ -205,12 +205,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        refreshImpl(canUseLastRevision);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> refreshImpl(canUseLastRevision));
   }
 
   @Nullable
@@ -617,11 +612,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     PopupHandler.installPopupHandler(myDualView.getFlatView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
     myDualView.requestFocus();
 
-    myDualView.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateMessage();
-      }
-    });
+    myDualView.addListSelectionListener(e -> updateMessage());
 
     myDualView.setRootVisible(false);
 
@@ -629,11 +620,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     final TreeCellRenderer defaultCellRenderer = myDualView.getTree().getCellRenderer();
 
-    final Getter<VcsHistorySession> sessionGetter = new Getter<VcsHistorySession>() {
-      public VcsHistorySession get() {
-        return myHistorySession;
-      }
-    };
+    final Getter<VcsHistorySession> sessionGetter = () -> myHistorySession;
     myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, sessionGetter));
 
     myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
@@ -740,11 +727,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     mySplitter = new OnePixelSplitter(true, getSplitterProportion());
     mySplitter.setFirstComponent(myDualView);
 
-    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          setSplitterProportionTo((Float)evt.getNewValue());
-        }
+    mySplitter.addPropertyChangeListener(evt -> {
+      if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
+        setSplitterProportionTo((Float)evt.getNewValue());
       }
     });
 
@@ -810,11 +795,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     result.add(new MyCreatePatch());
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
-    AnAction[] additionalActions = myProvider.getAdditionalActions(new Runnable() {
-      public void run() {
-        refreshImpl(true);
-      }
-    });
+    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshImpl(true));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -884,11 +865,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       int selectionSize = sel.size();
       if (selectionSize > 1) {
         List<VcsFileRevision> selectedRevisions =
-          ContainerUtil.sorted(ContainerUtil.map(sel, new Function<TreeNodeOnVcsRevision, VcsFileRevision>() {
-            @Override
-            public VcsFileRevision fun(TreeNodeOnVcsRevision treeNode) {
-              return treeNode.getRevision();
-            }
+          ContainerUtil.sorted(ContainerUtil.map(sel, treeNode -> {
+            return treeNode.getRevision();
           }), myRevisionsInOrderComparator);
         VcsFileRevision olderRevision = selectedRevisions.get(0);
         VcsFileRevision newestRevision = selectedRevisions.get(sel.size() - 1);
@@ -972,23 +950,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         final LocalHistoryAction action = startLocalHistoryAction(revision);
         final VirtualFile vp = getVirtualParent();
         if (vp != null) {
-          refresh = new Runnable() {
-            public void run() {
-              vp.refresh(false, true, new Runnable() {
-                public void run() {
-                  action.finish();
-                }
-              });
-            }
-          };
+          refresh = () -> vp.refresh(false, true, () -> action.finish());
         }
       }
       else {
-        refresh = new Runnable() {
-          public void run() {
-            vf.refresh(false, false);
-          }
-        };
+        refresh = () -> vf.refresh(false, false);
       }
       if (refresh != null) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(refresh, "Refreshing Files...", false, myVcs.getProject());
@@ -1009,59 +975,48 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           }
           catch (final IOException e) {
             LOG.info(e);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                             VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
             return;
           }
           catch (final VcsException e) {
             LOG.info(e);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                             VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
             return;
           }
           catch (ProcessCanceledException ex) {
             return;
           }
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                new WriteCommandAction.Simple(project) {
-                  @Override
-                  protected void run() throws Throwable {
-                    if (file != null &&
-                        !file.isWritable() &&
-                        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
-                      return;
-                    }
-
-                    try {
-                      write(revisionContent);
-                    }
-                    catch (IOException e) {
-                      Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                                 VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-                    }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+              new WriteCommandAction.Simple(project) {
+                @Override
+                protected void run() throws Throwable {
+                  if (file != null &&
+                      !file.isWritable() &&
+                      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
+                    return;
                   }
-                }.execute();
-                if (file != null) {
-                  VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+
+                  try {
+                    write(revisionContent);
+                  }
+                  catch (IOException e) {
+                    Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                               VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
+                  }
                 }
+              }.execute();
+              if (file != null) {
+                VcsDirtyScopeManager.getInstance(project).fileDirty(file);
               }
-              finally {
-                action.finish();
-              }
+            }
+            finally {
+              action.finish();
             }
           });
         }
@@ -1102,11 +1057,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
       final String content = StringUtil.convertLineSeparators(new String(revisionContent, myFilePath.getCharset().name()));
 
-      CommandProcessor.getInstance().executeCommand(myVcs.getProject(), new Runnable() {
-        public void run() {
-          document.replaceString(0, document.getTextLength(), content);
-        }
-      }, VcsBundle.message("message.title.get.version"), null);
+      CommandProcessor.getInstance().executeCommand(myVcs.getProject(), () -> document.replaceString(0, document.getTextLength(), content), VcsBundle.message("message.title.get.version"), null);
     }
   }
 
@@ -1196,12 +1147,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return getSelectedRevisions();
     }
     else if (VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.is(dataId)) {
-      return new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          myDualView.rebuild();
-        }
-      };
+      return (Consumer<String>)s -> myDualView.rebuild();
     }
     else if (VcsDataKeys.CHANGES.is(dataId)) {
       return getChanges();
@@ -1239,11 +1185,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final VcsFileRevision[] revisions = getSelectedRevisions();
 
     if (revisions.length > 0) {
-      Arrays.sort(revisions, new Comparator<VcsFileRevision>() {
-        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-          return o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-      });
+      Arrays.sort(revisions, (o1, o2) -> o1.getRevisionNumber().compareTo(o2.getRevisionNumber()));
 
       for (VcsFileRevision revision : revisions) {
         if (!myHistorySession.isContentAvailable(revision)) {
@@ -1490,16 +1432,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public Comparator<TreeNodeOnVcsRevision> getComparator() {
       final Comparator comparator = myBaseColumn.getComparator();
       if (comparator == null) return null;
-      return new Comparator<TreeNodeOnVcsRevision>() {
-        public int compare(TreeNodeOnVcsRevision o1, TreeNodeOnVcsRevision o2) {
-          if (o1 == null) return -1;
-          if (o2 == null) return 1;
-          VcsFileRevision revision1 = o1.myRevision;
-          VcsFileRevision revision2 = o2.myRevision;
-          if (revision1 == null) return -1;
-          if (revision2 == null) return 1;
-          return comparator.compare(revision1, revision2);
-        }
+      return (o1, o2) -> {
+        if (o1 == null) return -1;
+        if (o2 == null) return 1;
+        VcsFileRevision revision1 = o1.myRevision;
+        VcsFileRevision revision2 = o2.myRevision;
+        if (revision1 == null) return -1;
+        if (revision2 == null) return 1;
+        return comparator.compare(revision1, revision2);
       };
     }
 
