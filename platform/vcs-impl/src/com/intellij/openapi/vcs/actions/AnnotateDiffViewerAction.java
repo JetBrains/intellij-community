@@ -42,7 +42,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -61,7 +60,6 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -182,47 +180,41 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     annotator.getBackgroundableLock().lock();
     if (diffContext != null) diffContext.showProgressBar(true);
 
-    BackgroundTaskUtil.executeOnPooledThread(new Consumer<ProgressIndicator>() {
-      @Override
-      public void consume(ProgressIndicator indicator) {
-        try {
-          loader.run();
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (diffContext != null) diffContext.showProgressBar(false);
-              annotator.getBackgroundableLock().unlock();
+    BackgroundTaskUtil.executeOnPooledThread(indicator -> {
+      try {
+        loader.run();
+      }
+      finally {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (diffContext != null) diffContext.showProgressBar(false);
+          annotator.getBackgroundableLock().unlock();
 
-              VcsException exception = loader.getException();
-              if (exception != null) {
-                Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
-                  .createNotification("Can't Load Annotations", exception.getMessage(), NotificationType.ERROR, null);
-                showNotification(viewer, notification);
-                LOG.warn(exception);
-                return;
-              }
+          VcsException exception = loader.getException();
+          if (exception != null) {
+            Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+              .createNotification("Can't Load Annotations", exception.getMessage(), NotificationType.ERROR, null);
+            showNotification(viewer, notification);
+            LOG.warn(exception);
+            return;
+          }
 
-              if (loader.getResult() == null) return;
-              if (loader.shouldCache()) {
-                // data race is possible here, but we expect AnnotationData to be immutable, so this is not an issue
-                annotator.putDataToCache(loader.getResult());
-              }
+          if (loader.getResult() == null) return;
+          if (loader.shouldCache()) {
+            // data race is possible here, but we expect AnnotationData to be immutable, so this is not an issue
+            annotator.putDataToCache(loader.getResult());
+          }
 
-              if (viewer.isDisposed()) return;
-              annotator.showAnnotation(loader.getResult());
-            }
-          }, indicator.getModalityState());
-        }
+          if (viewer.isDisposed()) return;
+          annotator.showAnnotation(loader.getResult());
+        }, indicator.getModalityState());
       }
     }, viewer);
   }
 
   @Nullable
-  private static FileAnnotationLoader createAnnotationsLoader(@NotNull Project project,
-                                                              @NotNull DiffRequest request,
-                                                              @NotNull Side side) {
+  private static FileAnnotationLoader createTwosideAnnotationsLoader(@NotNull Project project,
+                                                                     @NotNull DiffRequest request,
+                                                                     @NotNull Side side) {
     Change change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY);
     if (change != null) {
       ContentRevision revision = side.select(change.getBeforeRevision(), change.getAfterRevision());
@@ -305,24 +297,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     };
   }
 
-  private static void putDataToCache(@NotNull DiffRequest request, @NotNull Side side, @NotNull AnnotationData data) {
-    AnnotationData[] cache = request.getUserData(CACHE_KEY);
-    if (cache == null || cache.length != 2) {
-      cache = new AnnotationData[2];
-      request.putUserData(CACHE_KEY, cache);
-    }
-    cache[side.getIndex()] = data;
-  }
-
-  @Nullable
-  private static AnnotationData getDataFromCache(@NotNull DiffRequest request, @NotNull Side side) {
-    AnnotationData[] cache = request.getUserData(CACHE_KEY);
-    if (cache != null && cache.length == 2) {
-      return side.select(cache);
-    }
-    return null;
-  }
-
   public static class MyDiffExtension extends DiffExtension {
     @Override
     public void onViewerCreated(@NotNull DiffViewer diffViewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -383,7 +357,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     balloon.show(point, Balloon.Position.above);
   }
 
-  private static class TwosideAnnotatorFactory extends ViewerAnnotatorFactoryBase<TwosideTextDiffViewer> {
+  private static class TwosideAnnotatorFactory extends TwosideViewerAnnotatorFactory<TwosideTextDiffViewer> {
     @Override
     @NotNull
     public Class<TwosideTextDiffViewer> getViewerClass() {
@@ -416,7 +390,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     }
   }
 
-  private static class OnesideAnnotatorFactory extends ViewerAnnotatorFactoryBase<OnesideTextDiffViewer> {
+  private static class OnesideAnnotatorFactory extends TwosideViewerAnnotatorFactory<OnesideTextDiffViewer> {
     @Override
     @NotNull
     public Class<OnesideTextDiffViewer> getViewerClass() {
@@ -449,7 +423,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     }
   }
 
-  private static class UnifiedAnnotatorFactory extends ViewerAnnotatorFactoryBase<UnifiedDiffViewer> {
+  private static class UnifiedAnnotatorFactory extends TwosideViewerAnnotatorFactory<UnifiedDiffViewer> {
     @Override
     @NotNull
     public Class<UnifiedDiffViewer> getViewerClass() {
@@ -518,7 +492,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     }
   }
 
-  private static abstract class ViewerAnnotatorFactoryBase<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
+  private static abstract class TwosideViewerAnnotatorFactory<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
     @Nullable
     public abstract Side getCurrentSide(@NotNull T viewer, @NotNull Editor editor);
 
@@ -561,7 +535,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
     @Nullable
     public ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Side side) {
-      ViewerAnnotatorFactoryBase<T> factory = this;
+      TwosideViewerAnnotatorFactory<T> factory = this;
       Project project = viewer.getProject();
       assert project != null;
 
@@ -590,23 +564,33 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
         @Nullable
         @Override
         public FileAnnotationLoader createAnnotationsLoader() {
-          return AnnotateDiffViewerAction.createAnnotationsLoader(project, viewer.getRequest(), side);
+          return createTwosideAnnotationsLoader(project, viewer.getRequest(), side);
         }
 
         @NotNull
         public BackgroundableActionLock getBackgroundableLock() {
-          return AnnotateDiffViewerAction.getBackgroundableLock(viewer, side);
+          return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
         }
 
         @Nullable
         @Override
         public AnnotationData getDataFromCache() {
-          return AnnotateDiffViewerAction.getDataFromCache(viewer.getRequest(), side);
+          AnnotationData[] cache = viewer.getRequest().getUserData(CACHE_KEY);
+          if (cache != null && cache.length == 2) {
+            return side.select(cache);
+          }
+          return null;
         }
 
         @Override
         public void putDataToCache(@NotNull AnnotationData data) {
-          AnnotateDiffViewerAction.putDataToCache(viewer.getRequest(), side, data);
+          DiffRequest request = viewer.getRequest();
+          AnnotationData[] cache = request.getUserData(CACHE_KEY);
+          if (cache == null || cache.length != 2) {
+            cache = new AnnotationData[2];
+            request.putUserData(CACHE_KEY, cache);
+          }
+          cache[side.getIndex()] = data;
         }
       };
     }
@@ -692,11 +676,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       this.vcs = vcs;
       this.annotation = annotation;
     }
-  }
-
-  @NotNull
-  private static BackgroundableActionLock getBackgroundableLock(@NotNull DiffViewerBase viewer, @NotNull Side side) {
-    return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
   }
 
   private static class EventData {
