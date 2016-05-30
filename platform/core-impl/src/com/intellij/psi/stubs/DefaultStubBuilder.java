@@ -33,46 +33,13 @@ public class DefaultStubBuilder implements StubBuilder {
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    return buildStubTreeFor(file, createStubForFile(file));
+    return buildStubTreeFor(file.getNode(), createStubForFile(file));
   }
 
   @NotNull
   protected StubElement createStubForFile(@NotNull PsiFile file) {
     @SuppressWarnings("unchecked") PsiFileStubImpl stub = new PsiFileStubImpl(file);
     return stub;
-  }
-
-  @NotNull
-  private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
-    Stack<StubElement> parentStubs = new Stack<StubElement>();
-    Stack<ASTNode> parentElements = new Stack<ASTNode>();
-    parentElements.push(root.getNode());
-    parentStubs.push(parentStub);
-
-    while (!parentElements.isEmpty()) {
-      StubElement stub = parentStubs.pop();
-      ASTNode node = parentElements.pop();
-
-      IElementType type = node.getElementType();
-      if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-        PsiElement elt = node.getPsi();
-        if (elt instanceof StubBasedPsiElement) {
-          //noinspection unchecked
-          stub = ((IStubElementType)type).createStub(elt, stub);
-        }
-        else {
-          LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
-        }
-      }
-
-      for (ASTNode child = node.getLastChildNode(); child != null; child = child.getTreePrev()) {
-        if (!skipChildProcessingWhenBuildingStubs(node, child)) {
-          parentStubs.push(stub);
-          parentElements.push(child);
-        }
-      }
-    }
-    return parentStub;
   }
 
   /**
