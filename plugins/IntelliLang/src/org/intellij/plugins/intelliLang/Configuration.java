@@ -410,7 +410,12 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
     main: for (BaseInjection other : importingInjections) {
-      final Set<BaseInjection> matchingInjections = JBIterable.of(other.getInjectionPlaces())
+      InjectionPlace[] places = other.getInjectionPlaces();
+      if (places.length == 0) {
+        if (!existingInjections.contains(other)) newInjections.add(other);
+        continue;
+      }
+      final Set<BaseInjection> matchingInjections = JBIterable.of(places)
         .flatten(o -> JBIterable.from(placeMap.get(o))).toSet();
       if (matchingInjections.isEmpty()) {
         newInjections.add(other);
