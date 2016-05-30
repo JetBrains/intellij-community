@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceTy
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -32,6 +33,7 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
   private String myName;
   private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> mySources;
   private Collection<ExternalDependency> myDependencies;
+  private Collection<File> myArtifacts;
   private String mySourceCompatibility;
   private String myTargetCompatibility;
 
@@ -52,12 +54,22 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
     for (ExternalDependency dependency : sourceSet.getDependencies()) {
       myDependencies.add(ModelFactory.createCopy(dependency));
     }
+    myArtifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>() : new ArrayList<File>(sourceSet.getArtifacts());
   }
 
   @NotNull
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public Collection<File> getArtifacts() {
+    return myArtifacts;
+  }
+
+  public void setArtifacts(Collection<File> artifacts) {
+    myArtifacts = artifacts;
   }
 
   @Nullable
