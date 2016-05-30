@@ -20,8 +20,6 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.actionSystem.IdeActions
@@ -82,7 +80,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
-    manager.startTemplate(editor, (char)'\t');
+    writeCommand { manager.startTemplate(editor, (char)'\t') }
     UIUtil.dispatchAllInvocationEvents()
     checkResultByText(expected);
   }
@@ -370,8 +368,8 @@ class Outer {
   public void testIter() throws Throwable {
     configure();
     startTemplate("iter", "iterations")
-    state.nextTab();
-    ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
+    writeCommand { state.nextTab() }
+    myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR)
     checkResult();
   }
 
@@ -422,7 +420,7 @@ class Outer {
   public void testIter1() throws Throwable {
     configure();
     startTemplate("iter", "iterations")
-    state.nextTab();
+    myFixture.performEditorAction("NextTemplateVariable")
     checkResult();
   }
 
@@ -588,22 +586,6 @@ class Outer {
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     configureFromFileText("a.java", text);
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst);
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
-                 "test do replace macro value with empty result",
-                 "test do not replace macro value with null result",
-                 "test escape string characters in soutv",
-                 "test escape shouldn't move caret to the end marker",
-                 "test finish template on moving caret by completion insert handler",
-                 "test do not replace macro value with empty result"]) {
-      runnable.run();
-      return;
-    }
-
-    writeCommand(runnable)
   }
 
   private static writeCommand(Runnable runnable) {
@@ -1087,7 +1069,7 @@ class Foo {{
     myFixture.type '\n'
     myFixture.checkResult """
 class Foo {{
-    System.out.println("true = " + abc);
+    System.out.println("abc = " + abc);
     <caret>
 }}
 """
@@ -1100,11 +1082,11 @@ class Foo {{
 }}
 """
     myFixture.type 'soutv\tabc'
-    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
+    myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false)
     myFixture.type '\t'
     myFixture.checkResult """
 class Foo {{
-    System.out.println("true = " + abc);    <caret>
+    System.out.println("abc = " + abc); <caret>
 }}
 """
   }
