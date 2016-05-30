@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +27,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -592,14 +595,18 @@ public class PyPsiUtils {
     return QualifiedName.fromComponents(componentNames);
   }
 
+  /**
+   * Wrapper for {@link PsiUtilCore#ensureValid(PsiElement)} that skips nulls
+   */
   public static void assertValid(@Nullable final PsiElement element) {
     if (element == null) {
       return;
     }
-    if (! element.isValid()) {
-      throw new PsiInvalidElementAccessException(element, "Element is invalid. You should never work with invalid elements. " +
-                                                          "See _possible_ (and not guaranteed) reason before this message ");
-    }
+    PsiUtilCore.ensureValid(element);
+  }
+
+  public static void assertValid(@NotNull final Module module) {
+    Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

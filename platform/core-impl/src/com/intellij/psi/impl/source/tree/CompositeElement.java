@@ -40,13 +40,12 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -59,6 +58,9 @@ public class CompositeElement extends TreeElement {
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
+
+  private static final AtomicFieldUpdater<CompositeElement, PsiElement> ourPsiUpdater =
+    AtomicFieldUpdater.forFieldOfType(CompositeElement.class, PsiElement.class);
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
@@ -787,12 +789,8 @@ public class CompositeElement extends TreeElement {
     wrapper = obtainStubBasedPsi();
     if (wrapper != null) return wrapper;
 
-    synchronized (PsiLock.LOCK) {
-      wrapper = myWrapper;
-      if (wrapper != null) return wrapper;
-
-      return createAndStorePsi();
-    }
+    wrapper = createPsiNoLock();
+    return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : ObjectUtils.assertNotNull(myWrapper);
   }
 
   /**
@@ -818,12 +816,6 @@ public class CompositeElement extends TreeElement {
   @Override
   public <T extends PsiElement> T getPsi(@NotNull Class<T> clazz) {
     return LeafElement.getPsi(clazz, getPsi(), LOG);
-  }
-
-  private PsiElement createAndStorePsi() {
-    PsiElement psi = createPsiNoLock();
-    myWrapper = psi;
-    return psi;
   }
 
   protected PsiElement createPsiNoLock() {
@@ -883,43 +875,6 @@ public class CompositeElement extends TreeElement {
     TreeElement first = getFirstChildNode();
     if (first != null) {
       first.rawRemoveUpToLast();
-    }
-  }
-
-  // creates PSI and stores to the 'myWrapper', if not created already
-  void createAllChildrenPsiIfNecessary() {
-    final List<CompositeElement> nodes = ContainerUtil.newArrayList();
-    final List<PsiElement> psiElements = ContainerUtil.newArrayList();
-    RecursiveTreeElementWalkingVisitor visitor = new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      public void visitLeaf(LeafElement leaf) {
-      }
-
-      @Override
-      public void visitComposite(CompositeElement composite) {
-        ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
-        if (composite.myWrapper == null) {
-          PsiElement stubPsi = composite.obtainStubBasedPsi();
-          if (stubPsi == null) {
-            nodes.add(composite);
-            psiElements.add(composite.createPsiNoLock());
-          }
-        }
-
-        super.visitComposite(composite);
-      }
-    };
-
-    for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      child.acceptTree(visitor);
-    }
-    synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
-      for (int i = 0; i < psiElements.size(); i++) {
-        CompositeElement node = nodes.get(i);
-        if (node.myWrapper == null) {
-          node.myWrapper = psiElements.get(i);
-        }
-      }
     }
   }
 

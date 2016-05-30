@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -90,6 +91,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
       final Module moduleToSave = dialog.getModuleToSave();
       final File file = dialog.getTemplateFile();
       final String description = dialog.getDescription();
+
+      FileDocumentManager.getInstance().saveAllDocuments();
 
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Saving Project as Template", true, PerformInBackgroundOption.DEAF) {
         @Override

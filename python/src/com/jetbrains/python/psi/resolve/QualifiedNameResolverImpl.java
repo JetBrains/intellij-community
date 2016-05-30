@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -88,6 +89,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
+    checkAccess();
     myContext.setFromElement(foothold);
     if (PydevConsoleRunner.isInPydevConsole(foothold) || PyUtil.isInScratchFile(foothold)) {
       withAllModules();
@@ -101,6 +103,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   public QualifiedNameResolver fromModule(@NotNull Module module) {
+    PyPsiUtils.assertValid(module);
+    checkAccess();
     myContext.setFromModule(module);
     return this;
   }
@@ -190,6 +194,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
+    checkAccess();
     if (!root.isValid()) {
       return true;
     }
@@ -223,6 +228,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @NotNull
   public List<PsiElement> resultsAsList() {
+    checkAccess();
     if (!myContext.isValid()) {
       return Collections.emptyList();
     }
@@ -348,6 +354,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @Nullable
   public PsiElement firstResult() {
+    checkAccess();
     final List<PsiElement> results = resultsAsList();
     return results.size() > 0 ? results.get(0) : null;
   }
@@ -355,6 +362,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
+    checkAccess();
     List<T> result = new ArrayList<T>();
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
@@ -368,6 +376,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @Nullable
   public <T extends PsiElement> T firstResultOfType(Class<T> clazz) {
+    checkAccess();
     final List<T> list = resultsOfType(clazz);
     return list.size() > 0 ? list.get(0) : null;
   }
@@ -410,6 +419,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Nullable
   public PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
     // prerequisites
+    checkAccess();
     PyPsiUtils.assertValid(directory);
     if (directory == null || !directory.isValid()) return null;
 
@@ -431,6 +441,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Nullable
   @Override
   public <T extends PsiNamedElement> T resolveTopLevelMember(@NotNull final Class<T> aClass) {
+    checkAccess();
     Preconditions.checkState(getModule() != null, "Module is not set");
     final String memberName = myQualifiedName.getLastComponent();
     if (memberName == null) {
@@ -441,11 +452,21 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (file == null) {
       return null;
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PyPsiUtils.assertValid(file);
+    }
     for (final T element : PsiTreeUtil.getChildrenOfTypeAsList(file, aClass)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        PyPsiUtils.assertValid(element);
+      }
       if (memberName.equals(element.getName())) {
         return element;
       }
     }
     return null;
+  }
+
+  private static void checkAccess() {
+    Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed(), "This method requires read access");
   }
 }

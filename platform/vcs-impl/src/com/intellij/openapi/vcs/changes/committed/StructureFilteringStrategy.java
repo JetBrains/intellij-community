@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +45,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -143,7 +147,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
           final TreePath[] selectionPaths = myStructureTree.getSelectionPaths();
           if (selectionPaths != null) {
             for (TreePath selectionPath : selectionPaths) {
-              Collections.addAll(mySelection, ((ChangesBrowserNode)selectionPath.getLastPathComponent()).getFilePathsUnder());
+              mySelection.addAll(getFilePathsUnder((ChangesBrowserNode<?>)selectionPath.getLastPathComponent()));
             }
           }
 
@@ -156,6 +160,23 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       });
       myScrollPane = ScrollPaneFactory.createScrollPane(myStructureTree);
       myBuilder = new TreeModelBuilder(myProject, false);
+    }
+
+    @NotNull
+    private List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
+      List<FilePath> result = Collections.emptyList();
+      Object userObject = node.getUserObject();
+
+      if (userObject instanceof FilePath) {
+        result = ContainerUtil.list(((FilePath)userObject));
+      }
+      else if (userObject instanceof Module) {
+        result = Arrays.stream(ModuleRootManager.getInstance((Module)userObject).getContentRoots())
+          .map(VcsUtil::getFilePath)
+          .collect(Collectors.toList());
+      }
+
+      return result;
     }
 
     public void initRenderer() {

@@ -807,4 +807,25 @@ foo {
 }
 ''', 'java.util.Date'
   }
+
+  void 'test @DelegateTo in trait method'() {
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(String) Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  toUpp<caret>erCase()
+}
+''', 'java.lang.String'
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(type = 'List<String>') Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  get(0).toUpp<caret>erCase()
+}
+''', 'java.lang.String'
+  }
 }

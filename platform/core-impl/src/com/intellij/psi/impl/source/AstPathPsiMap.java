@@ -82,12 +82,8 @@ class AstPathPsiMap {
       if (reference == null) break;
 
       AstPath key = reference.pathRef;
-      key.getContainingFile().removePsi(key);
+      key.getContainingFile().getRefToPsi().myMap.remove(key, reference);
     }
-  }
-
-  void removePsi(@NotNull AstPath key) {
-    myMap.remove(key);
   }
 
   private static class MyReference extends WeakReference<StubBasedPsiElementBase<?>> {

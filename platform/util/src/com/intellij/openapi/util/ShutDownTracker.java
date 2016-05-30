@@ -134,6 +134,8 @@ public class ShutDownTracker implements Runnable {
     return list.isEmpty() ? null : list.removeLast();
   }
 
+  /** @deprecated to be removed in IDEA 2018 */
+  @SuppressWarnings("unused")
   public static void invokeAndWait(boolean returnOnTimeout, boolean runInEdt, @NotNull final Runnable runnable) {
     if (!runInEdt) {
       if (returnOnTimeout) {

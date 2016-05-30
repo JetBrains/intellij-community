@@ -15,23 +15,30 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author max
  */
 public class FlexAdapter extends LexerBase {
-  private FlexLexer myFlex = null;
-  private IElementType myTokenType = null;
+
+  private static final Logger LOG = Logger.getInstance(FlexAdapter.class);
+
+  private final FlexLexer myFlex;
+
+  private IElementType myTokenType;
   private CharSequence myText;
 
-  private int myEnd;
+  private int myTokenStart;
+  private int myTokenEnd;
+
+  private int myBufferEnd;
   private int myState;
 
-  public FlexAdapter(final FlexLexer flex) {
+  public FlexAdapter(@NotNull FlexLexer flex) {
     myFlex = flex;
   }
 
@@ -42,38 +49,39 @@ public class FlexAdapter extends LexerBase {
   @Override
   public void start(@NotNull final CharSequence buffer, int startOffset, int endOffset, final int initialState) {
     myText = buffer;
-    myEnd = endOffset;
+    myTokenStart = myTokenEnd = startOffset;
+    myBufferEnd = endOffset;
     myFlex.reset(myText, startOffset, endOffset, initialState);    
     myTokenType = null;
   }
 
   @Override
   public int getState() {
-    if (myTokenType == null) locateToken();
+    locateToken();
     return myState;
   }
 
   @Override
   public IElementType getTokenType() {
-    if (myTokenType == null) locateToken();
+    locateToken();
     return myTokenType;
   }
 
   @Override
   public int getTokenStart() {
-    if (myTokenType == null) locateToken();
-    return myFlex.getTokenStart();
+    locateToken();
+    return myTokenStart;
   }
 
   @Override
   public int getTokenEnd() {
-    if (myTokenType == null) locateToken();
-    return myFlex.getTokenEnd();
+    locateToken();
+    return myTokenEnd;
   }
 
   @Override
   public void advance() {
-    if (myTokenType == null) locateToken();
+    locateToken();
     myTokenType = null;
   }
 
@@ -85,21 +93,27 @@ public class FlexAdapter extends LexerBase {
 
   @Override
   public int getBufferEnd() {
-    return myEnd;
+    return myBufferEnd;
   }
 
   protected void locateToken() {
     if (myTokenType != null) return;
+
     try {
+      myTokenStart = myFlex.getTokenEnd();
       myState = myFlex.yystate();
       myTokenType = myFlex.advance();
+      myTokenEnd = myFlex.getTokenEnd();
     }
-    catch (IOException e) { /*Can't happen*/ }
+    catch (Exception e) {
+      LOG.error(myFlex.getClass().getName(), e);
+      myTokenType = TokenType.WHITE_SPACE;
+      myTokenEnd = myBufferEnd;
+    }
     catch (Error e) {
-      // add lexer class name to the error
-      final Error error = new Error(myFlex.getClass().getName() + ": " + e.getMessage());
-      error.setStackTrace(e.getStackTrace());
-      throw error;
+      LOG.error(myFlex.getClass().getName(), e);
+      myTokenType = TokenType.WHITE_SPACE;
+      myTokenEnd = myBufferEnd;
     }
   }
 }

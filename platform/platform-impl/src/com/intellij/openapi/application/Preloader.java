@@ -61,6 +61,7 @@ public class Preloader implements ApplicationComponent {
       return;
     }
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (final PreloadingActivity activity : PreloadingActivity.EP_NAME.getExtensions()) {
       myExecutor.execute(() -> {
         if (myIndicator.isCanceled()) return;
@@ -68,7 +69,7 @@ public class Preloader implements ApplicationComponent {
         checkHeavyProcessRunning();
         if (myIndicator.isCanceled()) return;
 
-        ProgressManager.getInstance().runProcess(() -> {
+        progressManager.runProcess(() -> {
           try {
             activity.preload(myWrappingIndicator);
           }

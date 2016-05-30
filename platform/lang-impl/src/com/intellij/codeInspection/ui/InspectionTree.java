@@ -126,7 +126,7 @@ public class InspectionTree extends Tree {
   }
 
   @Nullable
-  public InspectionToolWrapper getSelectedToolWrapper() {
+  public InspectionToolWrapper getSelectedToolWrapper(boolean allowDummy) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
     InspectionToolWrapper toolWrapper = null;
@@ -139,6 +139,9 @@ public class InspectionTree extends Tree {
         }
         if (node instanceof InspectionNode) {
           InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
+          if (!allowDummy && getContext().getPresentation(wrapper).isDummy()) {
+            continue;
+          }
           if (toolWrapper == null) {
             toolWrapper = wrapper;
           }
@@ -187,7 +190,7 @@ public class InspectionTree extends Tree {
   public RefEntity[] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
-      InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+      InspectionToolWrapper toolWrapper = getSelectedToolWrapper(true);
       if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
       Set<RefEntity> result = new LinkedHashSet<RefEntity>();

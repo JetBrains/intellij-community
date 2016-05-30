@@ -45,7 +45,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
-  private volatile TreeElement myMirror;
+  private volatile PsiElement myMirror;
 
   @Override
   @NotNull
@@ -155,12 +155,12 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @Override
   public PsiElement getMirror() {
-    TreeElement mirror = myMirror;
+    PsiElement mirror = myMirror;
     if (mirror == null) {
       ((ClsFileImpl)getContainingFile()).getMirror();
       mirror = myMirror;
     }
-    return SourceTreeToPsiMap.treeElementToPsi(mirror);
+    return mirror;
   }
 
   @Override
@@ -299,8 +299,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       throw new InvalidMirrorException(element.getElementType() + " != " + type);
     }
 
-    element.getPsi().putUserData(COMPILED_ELEMENT, this);
-    myMirror = element;
+    PsiElement psi = element.getPsi();
+    psi.putUserData(COMPILED_ELEMENT, this);
+    myMirror = psi;
   }
 
   protected static <T extends  PsiElement> void setMirror(@Nullable T stub, @Nullable T mirror) throws InvalidMirrorException {

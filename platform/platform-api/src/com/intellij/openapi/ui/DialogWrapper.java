@@ -18,7 +18,6 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -447,7 +446,7 @@ public abstract class DialogWrapper {
     Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if ((UIUtil.isUnderAquaBasedLookAndFeel())
+    if ((UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))
         && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
@@ -595,7 +594,7 @@ public abstract class DialogWrapper {
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
       JButton helpButton = null;
       for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
         if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
@@ -699,7 +698,7 @@ public abstract class DialogWrapper {
           final char mnemonic = (char)eachInfo.getMnemonic();
           JRootPane rootPane = getPeer().getRootPane();
           if (rootPane != null) {
-            new DumbAwareAction() {
+            new NoTransactionAction() {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 final JBOptionButton buttonToActivate = eachInfo.getButton();
@@ -924,8 +923,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
-    processDoNotAskOnCancel();
-
     if (getCancelAction().isEnabled()) {
       close(CANCEL_EXIT_CODE);
     }
@@ -967,8 +964,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
-    processDoNotAskOnOk(OK_EXIT_CODE);
-
     if (getOKAction().isEnabled()) {
       close(OK_EXIT_CODE);
     }
@@ -1231,7 +1226,7 @@ public abstract class DialogWrapper {
     myPeer.setContentPane(root);
 
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
-    final AnAction toggleShowOptions = new DumbAwareAction() {
+    final AnAction toggleShowOptions = new NoTransactionAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
@@ -1287,7 +1282,7 @@ public abstract class DialogWrapper {
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
-    new DumbAwareAction() {
+    new NoTransactionAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -1996,9 +1991,60 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @see PropertyDoNotAskOption
+   * @see Adapter
    */
   public interface DoNotAskOption {
+
+    abstract class Adapter implements DoNotAskOption {
+
+      /**
+       * Save the state of the checkbox in the settings, or perform some other related action.
+       * This method is called right after the dialog is {@link #close(int) closed}.
+       * <br/>
+       * Note that this method won't be called in the case when the dialog is closed by {@link #CANCEL_EXIT_CODE Cancel}
+       * if {@link #shouldSaveOptionsOnCancel() saving the choice on cancel is disabled} (which is by default).
+       *
+       * @param isSelected true if user selected "don't show again".
+       * @param exitCode   the {@link #getExitCode() exit code} of the dialog.
+       * @see #shouldSaveOptionsOnCancel()
+       */
+      public abstract void rememberChoice(boolean isSelected, int exitCode);
+
+      /**
+       * Tells whether the checkbox should be selected by default or not.
+       *
+       * @return true if the checkbox should be selected by default.
+       */
+      public boolean isSelectedByDefault() {
+        return false;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.ask");
+      }
+
+      @Override
+      public final boolean isToBeShown() {
+        return !isSelectedByDefault();
+      }
+
+      @Override
+      public final void setToBeShown(boolean toBeShown, int exitCode) {
+        rememberChoice(!toBeShown, exitCode);
+      }
+
+      @Override
+      public final boolean canBeHidden() {
+        return true;
+      }
+    }
 
     /**
      * @return default selection state of checkbox (false -> checkbox selected)
@@ -2020,41 +2066,6 @@ public abstract class DialogWrapper {
 
     @NotNull
     String getDoNotShowMessage();
-  }
-
-  public static class PropertyDoNotAskOption implements DoNotAskOption {
-    @NotNull
-    private final String myProperty;
-
-    public PropertyDoNotAskOption(@NotNull String property) {
-      myProperty = property;
-    }
-
-    @Override
-    public boolean isToBeShown() {
-      return PropertiesComponent.getInstance().getBoolean(myProperty);
-    }
-
-    @Override
-    public void setToBeShown(boolean value, int exitCode) {
-      PropertiesComponent.getInstance().setValue(myProperty, value);
-    }
-
-    @Override
-    public boolean canBeHidden() {
-      return false;
-    }
-
-    @Override
-    public boolean shouldSaveOptionsOnCancel() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDoNotShowMessage() {
-      return CommonBundle.message("dialog.options.do.not.ask");
-    }
   }
 
   @NotNull
@@ -2105,4 +2116,11 @@ public abstract class DialogWrapper {
   private enum ErrorPaintingType {DOT, SIGN, LINE}
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  private static abstract class NoTransactionAction extends DumbAwareAction {
+    @Override
+    public boolean startInTransaction() {
+      return false;
+    }
+  }
 }

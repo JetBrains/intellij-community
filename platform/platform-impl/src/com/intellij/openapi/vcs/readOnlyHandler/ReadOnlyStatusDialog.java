@@ -21,17 +21,20 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Function;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,8 +58,9 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     super(project);
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
+    myFileList.setPreferredSize(getDialogPreferredSize());
     initFileList();
-
+                       
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -185,5 +189,24 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   public JComponent getPreferredFocusedComponent() {
     final JRootPane pane = getRootPane();
     return pane != null ? pane.getDefaultButton() : null;
+  }
+  
+  public static Dimension getDialogPreferredSize() {
+    return new Dimension(500, 400);
+  }
+
+  @NotNull
+  public static String getTheseFilesMessage(Collection<VirtualFile> files) {
+    boolean dirsOnly = true;
+    for (VirtualFile each : files) {
+      if (!each.isDirectory()) {
+        dirsOnly = false;
+        break;
+        
+      }
+    }
+    
+    int size = files.size();
+    return StringUtil.pluralize("this", size) + " " + StringUtil.pluralize((dirsOnly ? "directory" : "file"), size);
   }
 }

@@ -37,9 +37,15 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
+  private final boolean myCheckCompletionChar;
 
-  protected BaseCompleteMacro(@NonNls String name) {
+  protected BaseCompleteMacro(@NonNls final String name) {
+    this(name, true);
+  }
+
+  protected BaseCompleteMacro(@NonNls final String name, final boolean checkCompletionChar) {
     myName = name;
+    myCheckCompletionChar = checkCompletionChar;
   }
 
   @Override
@@ -84,7 +90,7 @@ public abstract class BaseCompleteMacro extends Macro {
         Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
         if (lookup != null) {
-          lookup.addLookupListener(new MyLookupListener(context));
+          lookup.addLookupListener(new MyLookupListener(context, myCheckCompletionChar));
         }
       }, "", null);
     };
@@ -111,9 +117,11 @@ public abstract class BaseCompleteMacro extends Macro {
 
   private static class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;
+    private final boolean myCheckCompletionChar;
 
-    public MyLookupListener(@NotNull ExpressionContext context) {
+    public MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
+      myCheckCompletionChar = checkCompletionChar;
     }
 
     @Override
@@ -122,7 +130,7 @@ public abstract class BaseCompleteMacro extends Macro {
       if (item == null) return;
 
       char c = event.getCompletionChar();
-      if (!LookupEvent.isSpecialCompletionChar(c)) {
+      if (myCheckCompletionChar && !LookupEvent.isSpecialCompletionChar(c)) {
         return;
       }
 

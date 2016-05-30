@@ -335,21 +335,26 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
+  private VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+    return VcsCommitStyleFactory
+      .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+  }
+
+  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
+    VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, text, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
     if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
       LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
-      return VcsCommitStyleFactory
-        .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+      return baseStyle;
     }
 
     RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
 
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
-      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
-                   dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(), baseStyle.getBackground(),
+                   VcsLogHighlighter.TextStyle.NORMAL);
 
     final VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
     if (details == null || details instanceof LoadingDetails) return defaultStyle;
@@ -692,15 +697,22 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Override
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
-    g.setColor(getStyle(getRowCount() - 1, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
-    g.fillRect(x, y, width, height);
-    if (myUi.isMultipleRoots()) {
-      g.setColor(getRootBackgroundColor(getModel().getRoot(getRowCount() - 1), myUi.getColorManager()));
+    int lastRow = getRowCount() - 1;
+    if (lastRow >= 0) {
+      g.setColor(getStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.fillRect(x, y, width, height);
+      if (myUi.isMultipleRoots()) {
+        g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
 
-      int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
-      if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
+        int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
+        if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
 
-      g.fillRect(x, y, rootWidth, height);
+        g.fillRect(x, y, rootWidth, height);
+      }
+    }
+    else {
+      g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.fillRect(x, y, width, height);
     }
   }
 

@@ -45,32 +45,28 @@ public class DefaultStubBuilder implements StubBuilder {
   @NotNull
   private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
     Stack<StubElement> parentStubs = new Stack<StubElement>();
-    Stack<PsiElement> parentElements = new Stack<PsiElement>();
-    parentElements.push(root);
+    Stack<ASTNode> parentElements = new Stack<ASTNode>();
+    parentElements.push(root.getNode());
     parentStubs.push(parentStub);
 
     while (!parentElements.isEmpty()) {
       StubElement stub = parentStubs.pop();
-      PsiElement elt = parentElements.pop();
+      ASTNode node = parentElements.pop();
 
-      if (elt instanceof StubBasedPsiElement) {
-        final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
-
-        if (type.shouldCreateStub(elt.getNode())) {
-          @SuppressWarnings("unchecked") StubElement s = type.createStub(elt, stub);
-          stub = s;
+      IElementType type = node.getElementType();
+      if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        PsiElement elt = node.getPsi();
+        if (elt instanceof StubBasedPsiElement) {
+          //noinspection unchecked
+          stub = ((IStubElementType)type).createStub(elt, stub);
         }
-      }
-      else {
-        final ASTNode node = elt.getNode();
-        final IElementType type = node == null? null : node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        else {
           LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
         }
       }
 
-      for (PsiElement child = elt.getLastChild(); child != null; child = child.getPrevSibling()) {
-        if (!skipChildProcessingWhenBuildingStubs(elt, child)) {
+      for (ASTNode child = node.getLastChildNode(); child != null; child = child.getTreePrev()) {
+        if (!skipChildProcessingWhenBuildingStubs(node, child)) {
           parentStubs.push(stub);
           parentElements.push(child);
         }
@@ -80,6 +76,7 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   /**
+   * @deprecated override and invoke {@link #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
    */
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {

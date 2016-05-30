@@ -196,7 +196,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
     if (isShowUnversioned()) {
-      builder.setUnversioned(ChangesViewManager.getUnversionedFilesInfo(manager));
+      builder.setUnversioned(manager.getUnversionedFiles(), manager.getUnversionedFilesSize());
     }
 
     return builder.build();
@@ -248,12 +248,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     int result = 0;
 
     if (isShowUnversioned()) {
-      ChangesBrowserNode<?> node = findUnversionedFilesNode();
+      ChangesBrowserUnversionedFilesNode node = findUnversionedFilesNode();
 
       if (node != null) {
-        result = node instanceof ChangesBrowserManyUnversionedFilesNode
-                 ? ((ChangesBrowserManyUnversionedFilesNode)node).getUnversionedSize()
-                 : node.getAllFilesUnder().size();
+        result = node.getUnversionedSize();
       }
     }
 
@@ -261,16 +259,11 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   }
 
   @Nullable
-  private ChangesBrowserNode<?> findUnversionedFilesNode() {
+  private ChangesBrowserUnversionedFilesNode findUnversionedFilesNode() {
     //noinspection unchecked
     Enumeration<ChangesBrowserNode> nodes = myViewer.getRoot().breadthFirstEnumeration();
 
-    return ContainerUtil.find(ContainerUtil.iterate(nodes), new Condition<ChangesBrowserNode>() {
-      @Override
-      public boolean value(@NotNull ChangesBrowserNode node) {
-        return node.getUserObject() == ChangesBrowserNode.UNVERSIONED_FILES_TAG;
-      }
-    });
+    return ContainerUtil.findInstance(ContainerUtil.iterate(nodes), ChangesBrowserUnversionedFilesNode.class);
   }
 
   @NotNull

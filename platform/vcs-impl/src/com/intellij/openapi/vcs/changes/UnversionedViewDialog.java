@@ -58,7 +58,7 @@ public class UnversionedViewDialog extends DialogWrapper {
   private final Project myProject;
   private AnAction myDeleteActionWithCustomShortcut;
 
-  public UnversionedViewDialog(final Project project) {
+  public UnversionedViewDialog(@NotNull Project project) {
     super(project, true);
     setTitle("Unversioned Files");
     myProject = project;

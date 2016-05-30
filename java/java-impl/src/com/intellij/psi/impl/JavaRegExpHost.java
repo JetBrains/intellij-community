@@ -128,9 +128,12 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     }
     final Sdk sdk = ProjectRootManager.getInstance(element.getProject()).getProjectSdk();
     if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-      return JavaSdk.getInstance().getVersion(sdk);
+      final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      if (version != null) {
+        return version;
+      }
     }
-    return null;
+    return JavaSdkVersion.JDK_1_9;
   }
 
   @Override

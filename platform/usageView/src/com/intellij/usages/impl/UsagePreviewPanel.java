@@ -126,7 +126,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
                                @NotNull final Project project,
                                boolean highlightOnlyNameElements,
                                int highlightLayer) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
 
     MarkupModel markupModel = editor.getMarkupModel();
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {

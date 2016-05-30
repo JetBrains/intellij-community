@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -84,7 +85,7 @@ public class MoveChangesDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myTreeList, BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(myTreeList), BorderLayout.CENTER);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);

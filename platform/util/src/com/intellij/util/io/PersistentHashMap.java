@@ -127,7 +127,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize);
+    this(file, keyDescriptor, valueExternalizer, initialSize, 0);
+  }
+
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize, int version) throws IOException {
+    super(checkDataFiles(file), keyDescriptor, initialSize, null, version);
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;

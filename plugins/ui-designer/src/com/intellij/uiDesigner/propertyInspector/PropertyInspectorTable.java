@@ -1328,7 +1328,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(editor != null){
         editor.updateUI();
       }
-      final Property[] children = getPropChildren(property);
+      final Property[] children = property.getChildren(null);
       for (int i = children.length - 1; i >= 0; i--) {
         final Property child = children[i];
         if(!(child instanceof IntrospectedProperty)){

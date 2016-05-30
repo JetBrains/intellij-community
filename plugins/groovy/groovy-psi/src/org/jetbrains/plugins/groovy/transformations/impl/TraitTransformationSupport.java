@@ -24,21 +24,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.ABSTRACT_MASK;
 
 public class TraitTransformationSupport implements AstTransformationSupport {
 
@@ -65,7 +60,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
         if (trait instanceof GrTypeDefinition) {
           for (PsiMethod method : trait.getMethods()) {
             if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
-              context.addMethods(getExpandingMethods(method, substitutor));
+              context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
             }
           }
           for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
@@ -74,7 +69,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
         }
         else if (trait instanceof ClsClassImpl) {
           for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
-            context.addMethods(getExpandingMethods(method, substitutor));
+            context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
           }
           for (GrField field : GrTraitUtil.getCompiledTraitFields((ClsClassImpl)trait)) {
             context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
@@ -114,11 +109,14 @@ public class TraitTransformationSupport implements AstTransformationSupport {
   }
 
   @NotNull
-  private static List<GrMethod> getExpandingMethods(PsiMethod method, PsiSubstitutor substitutor) {
-    GrLightMethodBuilder implementation = GrTraitMethod.create(method, substitutor);
-    implementation.getModifierList().removeModifier(ABSTRACT_MASK);
-    GrReflectedMethod[] reflectedMethods = implementation.getReflectedMethods();
-    return reflectedMethods.length > 0 ? Arrays.asList(reflectedMethods) : Collections.singletonList(implementation);
+  private static List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
+                                                     @NotNull PsiMethod method,
+                                                     @NotNull PsiSubstitutor substitutor) {
+    List<PsiMethod> result = ContainerUtil.newSmartList();
+    for (PsiMethod expanded : GrClassImplUtil.expandReflectedMethods(method)) {
+      result.add(new GrTraitMethod(containingClass, expanded, substitutor));
+    }
+    return result;
   }
 }
 

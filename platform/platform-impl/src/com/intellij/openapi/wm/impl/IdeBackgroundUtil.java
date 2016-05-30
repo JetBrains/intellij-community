@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PairFunction;
@@ -90,6 +91,7 @@ public class IdeBackgroundUtil {
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
            component instanceof EditorGutterComponentEx ? "editor" :
+           component instanceof JBLoadingPanel ? "loading" :
            component instanceof JBTabs ? "tabs" :
            component instanceof ToolWindowHeader ? "title" :
            component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
