@@ -315,7 +315,7 @@ public class XFramesView extends XDebugView {
     }
   }
 
-  private class StackFramesListBuilder implements XExecutionStack.XStackFrameContainer {
+  private class StackFramesListBuilder implements XStackFrameContainerEx {
     private XExecutionStack myExecutionStack;
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
