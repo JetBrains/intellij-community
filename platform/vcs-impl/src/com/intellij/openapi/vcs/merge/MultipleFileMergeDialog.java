@@ -22,6 +22,7 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -376,6 +377,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         else {
           request = requestFactory.createMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
         }
+
+        MergeUtil.putRevisionInfos(request, mergeData);
       }
       catch (InvalidDiffRequestException e) {
         LOG.error(e);
