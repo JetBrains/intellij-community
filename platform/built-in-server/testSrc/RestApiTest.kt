@@ -14,7 +14,7 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
-public class RestApiTest {
+private class RestApiTest {
   private val fixtureManager = FixtureRule()
   private val manager = TestManager(fixtureManager.projectFixture)
 
