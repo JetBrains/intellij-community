@@ -457,6 +457,19 @@ public class JBScrollPane extends JScrollPane {
             return ltr ? LEFT : RIGHT;
           }
         }
+        // assume alignment for a scroll bar,
+        // which is not contained in a scroll pane
+        if (component instanceof JScrollBar) {
+          JScrollBar bar = (JScrollBar)component;
+          switch (bar.getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return bar.getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
+          }
+        }
       }
       return null;
     }
