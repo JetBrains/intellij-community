@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,8 +70,8 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myToolWrapper = new LocalInspectionToolWrapper(new DefUseInspection());
     myView = ViewOfflineResultsAction.showOfflineView(getProject(), parse(), new InspectionProfileImpl("test") {
       @Override
-      public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
-        return Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
+      public boolean isToolEnabled(@Nullable final HighlightDisplayKey key, PsiElement element) {
+        return key != null && Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
       }
 
       @Override
@@ -90,8 +91,8 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
           }
 
           @Override
-          public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
-            return Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
+          public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
+            return key != null && Comparing.strEqual(key.toString(), DefUseInspectionBase.SHORT_NAME);
           }
         };
       }
@@ -103,7 +104,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
   private Map<String, Map<String, Set<OfflineProblemDescriptor>>> parse() throws IOException {
     final String moduleName = getModule().getName();
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
+    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     final File res = new File(PathManagerEx.getTestDataPath(), getTestPath() + File.separator + "res");
     final File[] files = res.listFiles();
     assert files != null;
@@ -123,10 +124,14 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myView);
-    myView = null;
-    myToolWrapper = null;
-    super.tearDown();
+    try {
+      Disposer.dispose(myView);
+      myView = null;
+      myToolWrapper = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testOfflineView() throws Exception {

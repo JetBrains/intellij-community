@@ -75,9 +75,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static Map<String, InspectionElementsMerger> ourMergers;
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
-  private final Map<String, Element> myUninstalledInspectionsSettings = new TreeMap<String, Element>();
+  private final Map<String, Element> myUninstalledInspectionsSettings = new TreeMap<>();
   protected InspectionProfileImpl mySource;
-  private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
+  private Map<String, ToolsImpl> myTools = new THashMap<>();
   private volatile Map<String, Boolean> myDisplayLevelMap;
   @Attribute("is_locked")
   private boolean myLockedProfile;
@@ -127,7 +127,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private static synchronized Map<String, InspectionElementsMerger> getMergers() {
     if (ourMergers == null) {
-      ourMergers = new LinkedHashMap<String, InspectionElementsMerger>();
+      ourMergers = new LinkedHashMap<>();
       for (InspectionElementsMerger merger : Extensions.getExtensions(InspectionElementsMerger.EP_NAME)) {
         ourMergers.put(merger.getMergedToolName(), merger);
       }
@@ -265,7 +265,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
     LOG.assertTrue(myInitialized);
-    final Set<HighlightSeverity> result = new HashSet<HighlightSeverity>();
+    final Set<HighlightSeverity> result = new HashSet<>();
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
         result.add(state.getLevel().getSeverity());
@@ -292,7 +292,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     Map<String, Boolean> diffMap = getDisplayLevelMap();
     if (diffMap != null) {
-      diffMap = new TreeMap<String, Boolean>(diffMap);
+      diffMap = new TreeMap<>(diffMap);
       for (String toolName : myUninstalledInspectionsSettings.keySet()) {
         diffMap.put(toolName, false);
       }
@@ -430,7 +430,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final InspectionToolWrapper tool = toolList.getInspectionTool(element);
       if (id.equals(tool.getID())) {
         if (result == null) {
-          result = new ArrayList<InspectionToolWrapper>();
+          result = new ArrayList<>();
         }
         result.add(tool);
       }
@@ -483,7 +483,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools(element == null ? null : element.getProject());
-    List<InspectionToolWrapper> result = new ArrayList<InspectionToolWrapper>();
+    List<InspectionToolWrapper> result = new ArrayList<>();
     for (Tools toolList : myTools.values()) {
       result.add(toolList.getInspectionTool(element));
     }
@@ -494,7 +494,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<Tools> getAllEnabledInspectionTools(Project project) {
     initInspectionTools(project);
-    List<Tools> result = new ArrayList<Tools>();
+    List<Tools> result = new ArrayList<>();
     for (final ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
         result.add(toolList);
@@ -561,7 +561,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return false;
     }
 
-    final Map<String, List<String>> dependencies = new HashMap<String, List<String>>();
+    final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
     }
@@ -577,7 +577,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }));
 
-    DFSTBuilder<String> builder = new DFSTBuilder<String>(graphGenerator);
+    DFSTBuilder<String> builder = new DFSTBuilder<>(graphGenerator);
     if (builder.isAcyclic()) {
       final List<String> scopes = builder.getSortedNodes();
       myScopesOrder = ArrayUtil.toStringArray(scopes);
@@ -604,7 +604,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }
 
-    LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
+    if (key == null) {
+      LOG.error(shortName + " ; number of initialized tools: " + myTools.size());
+      return;
+    }
+
     HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getTools(shortName, project) != null
                                    ? myBaseProfile.getErrorLevel(key, project)
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
@@ -756,7 +760,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
+  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
     if (key == null) {
       return false;
     }
@@ -765,7 +769,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  public boolean isToolEnabled(HighlightDisplayKey key) {
+  public boolean isToolEnabled(@Nullable HighlightDisplayKey key) {
     return isToolEnabled(key, null);
   }
 
@@ -866,7 +870,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<ScopeToolState> getAllTools(Project project) {
     initInspectionTools(project);
-    final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+    final List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {
       result.addAll(tools.getTools());
     }
@@ -876,7 +880,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<ScopeToolState> getDefaultStates(Project project) {
     initInspectionTools(project);
-    final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+    final List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {
       result.add(tools.getDefaultState());
     }
@@ -885,7 +889,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @NotNull
   public List<ScopeToolState> getNonDefaultTools(@NotNull String shortName, Project project) {
-    final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+    final List<ScopeToolState> result = new ArrayList<>();
     final List<ScopeToolState> nonDefaultTools = getTools(shortName, project).getNonDefaultTools();
     if (nonDefaultTools != null) {
       result.addAll(nonDefaultTools);
@@ -918,7 +922,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       synchronized (myLock) {
         if (myDisplayLevelMap == null) {
           initInspectionTools(null);
-          TreeMap<String,Boolean> map = new TreeMap<String, Boolean>();
+          TreeMap<String,Boolean> map = new TreeMap<>();
           for (String toolId : myTools.keySet()) {
             map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
           }
@@ -960,7 +964,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  public ToolsImpl getTools(@NotNull String toolId, Project project) {
+  public ToolsImpl getTools(@NotNull String toolId, @Nullable Project project) {
     initInspectionTools(project);
     return myTools.get(toolId);
   }

@@ -24,6 +24,7 @@ import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -45,7 +46,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  boolean isToolEnabled(HighlightDisplayKey key, PsiElement element);
+  boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
   void commit() throws IOException;
 

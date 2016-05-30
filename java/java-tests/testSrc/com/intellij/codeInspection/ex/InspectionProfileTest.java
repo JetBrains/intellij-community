@@ -390,7 +390,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testLockProfile() throws Exception {
-    final List<InspectionToolWrapper> list = new ArrayList<InspectionToolWrapper>();
+    final List<InspectionToolWrapper> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
     InspectionToolRegistrar registrar = new InspectionToolRegistrar() {
@@ -452,7 +452,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return JDOMUtil.writeElement(element);
   }
 
-  private static InspectionProfileImpl createProfile(InspectionToolRegistrar registrar) {
+  private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
     InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance());
     return new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance(), base, null);
   }
@@ -464,7 +464,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
-    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }
 
   public void testInspectionsInitialization() throws Exception {
@@ -554,7 +554,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   @NotNull
   public static List<InspectionToolWrapper> getInitializedTools(@NotNull Profile foo) {
-    List<InspectionToolWrapper> initialized = new ArrayList<InspectionToolWrapper>();
+    List<InspectionToolWrapper> initialized = new ArrayList<>();
     List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools(getProject());
     for (ScopeToolState tool : tools) {
       InspectionToolWrapper toolWrapper = tool.getTool();
