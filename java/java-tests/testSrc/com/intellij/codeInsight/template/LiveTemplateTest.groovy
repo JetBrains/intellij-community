@@ -583,6 +583,19 @@ class Outer {
     assert write.children.size() == 3 : JDOMUtil.writeElement(write)
   }
 
+  public void "test use default context when empty"() {
+    def context = new TemplateContext()
+    context.readTemplateContext(new Element("context"))
+
+    def defContext = new TemplateContext()
+    def commentContext = TemplateContextType.EP_NAME.findExtension(JavaCommentContextType)
+    defContext.putValue(commentContext, true)
+
+    context.setDefaultContext(defContext)
+    assert context.isEnabled(commentContext)
+    assert !context.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+  }
+
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     configureFromFileText("a.java", text);
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst);
@@ -1057,7 +1070,7 @@ class Foo {{
 }}
 """
   }
-  
+
   public void "test add new line on enter outside editing variable"() {
     myFixture.configureByText 'a.java', """
 class Foo {{
@@ -1074,7 +1087,7 @@ class Foo {{
 }}
 """
   }
-  
+
   public void "test type tab character on tab outside editing variable"() {
     myFixture.configureByText 'a.java', """
 class Foo {{

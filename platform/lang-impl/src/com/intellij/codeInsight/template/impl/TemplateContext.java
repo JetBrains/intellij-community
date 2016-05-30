@@ -82,7 +82,8 @@ public class TemplateContext {
   }
 
   // used during initialization => no sync
-  void setDefaultContext(@NotNull TemplateContext defContext) {
+  @VisibleForTesting
+  public void setDefaultContext(@NotNull TemplateContext defContext) {
     HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
@@ -100,14 +101,30 @@ public class TemplateContext {
       }
     }
 
+    myContextStates.putAll(makeInheritanceExplicit());
+  }
+
+  /**
+   * Mark contexts explicitly as excluded which are excluded because some of their bases is explicitly marked as excluded.
+   * Otherwise that `excluded` status will be forgotten if the base context is enabled.
+   */
+  @NotNull
+  private Map<String, Boolean> makeInheritanceExplicit() {
     Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
-    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      if (getOwnValue(type) == null) {
-        Iterable<TemplateContextType> bases = JBIterable.generate(type, TemplateContextType::getBaseContextType);
-        explicitStates.put(type.getContextId(), ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(bases, this::getOwnValue), false));
-      }
+    for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
+      explicitStates.put(type.getContextId(), false);
     }
-    myContextStates.putAll(explicitStates);
+    return explicitStates;
+  }
+
+  private boolean isDisabledByInheritance(TemplateContextType type) {
+    return !hasOwnValue(type) &&
+           !isEnabled(type) &&
+           JBIterable.generate(type, TemplateContextType::getBaseContextType).filter(this::hasOwnValue).first() != null;
+  }
+
+  private boolean hasOwnValue(TemplateContextType t) {
+    return getOwnValue(t) != null;
   }
 
   @VisibleForTesting
