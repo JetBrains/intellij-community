@@ -121,7 +121,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }, ModalityState.NON_MODAL);
 
 
-    processFinishedSemaphore.waitFor(60000);
+    assert processFinishedSemaphore.waitFor(60000): "Timeout waiting semaphore";
     XDebuggerTestUtil.waitForSwing();
     if (failed.get()) {
       Assert.fail("Failed to run test, see logs for exceptions");
