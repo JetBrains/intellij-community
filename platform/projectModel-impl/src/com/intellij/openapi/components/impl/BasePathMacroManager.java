@@ -103,20 +103,20 @@ public class BasePathMacroManager extends PathMacroManager {
   @NotNull
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
+    getPathMacros().addMacroExpands(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroExpand(entry.getKey(), entry.getValue());
     }
-    getPathMacros().addMacroExpands(result);
     return result;
   }
 
   @NotNull
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
+    getPathMacros().addMacroReplacements(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
-    getPathMacros().addMacroReplacements(result);
     return result;
   }
 
