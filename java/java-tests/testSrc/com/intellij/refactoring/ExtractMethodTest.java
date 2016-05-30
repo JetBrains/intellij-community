@@ -350,6 +350,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testStopFoldingForArrayWriteAccessInConsequentUsages() throws Exception {
+    doTest();
+  }
+
   public void testStopFoldingPostfixInside() throws Exception {
     doTest();
   }
