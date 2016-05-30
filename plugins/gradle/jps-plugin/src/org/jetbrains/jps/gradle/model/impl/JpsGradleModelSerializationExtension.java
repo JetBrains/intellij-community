@@ -32,7 +32,7 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     if ("GRADLE".equals(rootElement.getAttributeValue("external.system.id"))) {
-      JpsGradleExtensionService.getInstance().getOrCreateExtension(module);
+      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement);
     }
   }
 
