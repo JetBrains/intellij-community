@@ -33,7 +33,7 @@ public class ComplexTextFragmentTest {
   @Test
   public void testSimpleText() {
     assertCaretPositionsForGlyphVector(
-      glyph(0, 10).glyph(10, 10).glyph(20, 10),
+      glyph(0, 10).glyph(10, 20).glyph(20, 30),
       10, 20, 30
     );
   }
@@ -41,7 +41,7 @@ public class ComplexTextFragmentTest {
   @Test
   public void testSimpleRtlText() {
     assertCaretPositionsForGlyphVector(
-      rtl().glyph(0, 10).glyph(10, 10).glyph(20, 10),
+      rtl().glyph(0, 10).glyph(10, 20).glyph(20, 30),
       10, 20, 30
     );
   }
@@ -49,7 +49,7 @@ public class ComplexTextFragmentTest {
   @Test
   public void testLigature() {
     assertCaretPositionsForGlyphVector(
-      glyph(0, 12).glyph(12, 0).glyph(12, 0),
+      glyph(0, 12).glyph(12, 12).glyph(12, 12),
       4, 8, 12
     );
   }
@@ -92,8 +92,8 @@ public class ComplexTextFragmentTest {
     return new MyGlyphVector(true, new int[0], new int[0]);
   }
   
-  private static MyGlyphVector glyph(int position, int width) {
-    return new MyGlyphVector(false, new int[]{position}, new int[]{width});
+  private static MyGlyphVector glyph(int xStart, int xEnd) {
+    return new MyGlyphVector(false, new int[]{xStart}, new int[]{xEnd - xStart});
   }
   
   private static class MyGlyphVector extends AbstractMockGlyphVector {
@@ -108,8 +108,8 @@ public class ComplexTextFragmentTest {
       myGlyphWidths = glyphWidths;
     }
 
-    private MyGlyphVector glyph(int position, int width) {
-      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, position), ArrayUtil.append(myGlyphWidths, width));
+    private MyGlyphVector glyph(int xStart, int xEnd) {
+      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, xStart), ArrayUtil.append(myGlyphWidths, xEnd - xStart));
     }
 
     @Override
