@@ -453,7 +453,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance());
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance(), null, null);
     return new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance(), base, null);
   }
 
