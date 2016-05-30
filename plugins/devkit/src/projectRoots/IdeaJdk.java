@@ -63,6 +63,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String PLUGINS_DIR = "plugins";
+  public static final String OUT_CLASSES = "/out/classes/production";
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -307,8 +308,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     //roots for openapi and other libs
     if (isFromIDEAProject(sdkHome)) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-      for (String prefix : new String[]{"community", ""}) {
-        for (String path : new String[]{"lib", "build/kotlinc/lib/kotlin-runtime.jar"}) {
+      for (String prefix : Arrays.asList("community", "")) {
+        for (String path : Arrays.asList("lib", "build/kotlinc/lib/kotlin-runtime.jar", "xml/relaxng/lib")) {
           File libDir = new File(sdkHome, FileUtil.toSystemDependentName(prefix + "/" + path));
           if (!libDir.exists()) continue;
           for (File file : JBIterable.of(libDir.listFiles()).append(libDir)) {
@@ -322,7 +323,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         }
       }
       LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-      VirtualFile out = localFileSystem.refreshAndFindFileByPath(sdkHome + "/out/classes/production");
+      VirtualFile out = localFileSystem.refreshAndFindFileByPath(sdkHome + OUT_CLASSES);
       if (out != null) {
         for (VirtualFile dir : out.getChildren()) {
           if (!dir.isDirectory()) continue;
