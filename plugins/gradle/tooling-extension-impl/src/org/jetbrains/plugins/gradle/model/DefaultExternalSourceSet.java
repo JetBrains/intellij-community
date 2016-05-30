@@ -40,6 +40,7 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
   public DefaultExternalSourceSet() {
     mySources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
     myDependencies = new LinkedHashSet<ExternalDependency>();
+    myArtifacts = new ArrayList<File>();
   }
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
