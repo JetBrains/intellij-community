@@ -41,7 +41,7 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
   @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     final SphinxTasksModel model = new SphinxTasksModel();
-    if (!model.contains("pdf")) {
+    if (!model.contains("pdf") && getSdk() != null) {
       try {
         final PyPackage rst2pdf = PyPackageManager.getInstance(getSdk()).findPackage("rst2pdf");
         if (rst2pdf != null) {
