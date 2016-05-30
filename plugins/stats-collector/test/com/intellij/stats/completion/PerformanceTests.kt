@@ -87,7 +87,7 @@ class Test {
         val sender = StatisticSender(urlProvider, requestService, filePathProvider)
         
         ApplicationManager.getApplication().executeOnPooledThread { 
-            sender.sendStatsData("unique-installation-id")
+            sender.sendStatsData()
         }
         Thread.sleep(300)
         
