@@ -66,8 +66,36 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   
   public void testIncompatibleTypesNewStyleFormat() {
     doTest();
-  }  
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionListArg() {
+    doTest();
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionFuncArgs() {
+    doTest();
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionRefArgs() {
+    doTest();
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionDictArg() {
+    doTest();
+  }
 
+  public void testNewStyleMappingKeyWithSubscriptionRefDictArg() {
+    doTest();
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionFuncDictArg() {
+    doTest();
+  }
+  
+  public void testNewStyleMappingKeyWithSubscriptionParenArg() {
+    doTest();
+  }
+  
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyStringFormatInspection.class);

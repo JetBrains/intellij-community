@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
@@ -257,6 +258,36 @@ public class PyStringFormatInspection extends PyInspection {
         return -1;
       }
 
+      private int inspectCallExpression(@NotNull PyCallExpression callExpression, @NotNull PyResolveContext resolveContext) {
+        final PyReturnStatement[] returnStatements = getFunctionReturnValues(callExpression, resolveContext);
+        int expressionsSize = -1;
+        for (PyReturnStatement returnStatement : returnStatements) {
+          if (returnStatement.getExpression() instanceof PyCallExpression) {
+            return -1;
+          }
+          final int argumentsSize = Math.max(PyUtil.flattenedParensAndTuples(returnStatement.getExpression()).size(),
+                                             PyUtil.flattenedParensAndLists(returnStatement.getExpression()).size());
+          if (expressionsSize < 0) {
+            expressionsSize = argumentsSize;
+          }
+          if (expressionsSize != argumentsSize) {
+            return -1;
+          }
+        }
+        return expressionsSize;
+      }
+
+
+      private PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,
+                                                          @NotNull PyResolveContext resolveContext) {
+        final PyCallable callable = callExpression.resolveCalleeFunction(resolveContext);
+        if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST(callable)) {
+          PyStatementList statementList = ((PyFunction)callable).getStatementList();
+          return PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
+        }
+        return new PyReturnStatement[0];
+      }
+
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
         Map<PyExpression, PyExpression> additionalExpressions = new HashMap<PyExpression, PyExpression>();
@@ -444,36 +475,207 @@ public class PyStringFormatInspection extends PyInspection {
 
           if (chunk != null) {
             String mappingKey = inspectNewStyleChunk(formatExpression, i, chunk);
-            inspectNewStyleArgumentForChunk(i, chunk, mappingKey, formatExpression);
+            inspectArgumentsForNewStyleChunk(i, chunk, mappingKey, formatExpression);
           }
         }
       }
 
-      private void inspectNewStyleArgumentForChunk(int i,
-                                                   @NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
-                                                   @NotNull String mappingKey, @NotNull PyStringLiteralExpression formatExpression) {
-        final PsiElement resolve = new PySubstitutionChunkReference(formatExpression, chunk, i).resolve();
-        if (resolve == null) {
+      private void inspectArgumentsForNewStyleChunk(int i,
+                                                    @NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
+                                                    @NotNull String mappingKey,
+                                                    @NotNull PyStringLiteralExpression formatExpression) {
+        final PsiElement target = new PySubstitutionChunkReference(formatExpression, chunk, i).resolve();
+        if (target == null) {
           final String chunkMapping = chunk.getMappingKey();
-          if (chunkMapping != null) {
-            registerProblem(formatExpression, PyBundle.message("INSP.unused.mapping", chunkMapping));
+          registerProblem(formatExpression, chunkMapping == null ? PyBundle.message("INSP.too.few.keys") : 
+                                            PyBundle.message("INSP.unused.mapping", chunkMapping));
+        }
+        else {
+          if (chunk.getMappingKeyElementIndex() != null) {
+            inspectIndexElements(chunk, formatExpression, target, target, mappingKey);
           }
-          else {
-            registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
+
+          checkTypesCompatibleForCheckedTypesOnly(mappingKey, formatExpression, target);
+        }
+      }
+
+      private void inspectIndexElements(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
+                                        @NotNull PyStringLiteralExpression formatExpression,
+                                        @NotNull final PsiElement problemElement,
+                                        @NotNull PsiElement inspectedElement,
+                                        @NotNull String mappingKey) {
+        final String indexElement = chunk.getMappingKeyElementIndex();
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+        if (indexElement != null) {
+          try {
+            final Integer index = Integer.valueOf(indexElement);
+            if (inspectedElement instanceof PyListLiteralExpression) {
+              inspectListElements(formatExpression, problemElement, index, inspectedElement);
+            }
+
+            if (inspectedElement instanceof PyParenthesizedExpression) {
+              final PyExpression flatten = PyPsiUtils.flattenParens((PyParenthesizedExpression)inspectedElement);
+              if (flatten != null) {
+                inspectIndexElements(chunk, formatExpression, problemElement, flatten, mappingKey);
+              }
+            }
+            else if (inspectedElement instanceof PyTupleExpression) {
+              final PyExpression[] elements = ((PyTupleExpression)inspectedElement).getElements();
+              if (index >= elements.length) {
+                registerProblem(problemElement, PyBundle.message("INSP.too.few.args.for.fmt.string"));
+              }
+              else {
+                checkTypesCompatibleForCheckedTypesOnly(indexElement, formatExpression, elements[index]);
+              }
+            }
+            else if (inspectedElement instanceof PyReferenceExpression) {
+              inspectReferenceExpressionForNumericKey(chunk, formatExpression, (PyReferenceExpression)inspectedElement, mappingKey,
+                                                      indexElement);
+            }
+            else if (inspectedElement instanceof PyCallExpression) {
+              final int callResultsArgumentsNumber = inspectCallExpression((PyCallExpression)inspectedElement, resolveContext);
+              if (index < callResultsArgumentsNumber) {
+                checkTypesCompatibleForCheckedTypesOnly(mappingKey, formatExpression, inspectedElement);
+              }
+              else {
+                registerProblem(inspectedElement, PyBundle.message("INSP.too.few.args.for.fmt.string"));
+              }
+            }
+            else if (inspectedElement instanceof PyDictLiteralExpression) {
+              inspectDictForKey(formatExpression, inspectedElement, (PyDictLiteralExpression)inspectedElement, mappingKey, index);
+            }
+          }
+          catch (NumberFormatException e) {
+            if (inspectedElement instanceof PyCallExpression) {
+              final PyReturnStatement[] returnValues = getFunctionReturnValues((PyCallExpression)inspectedElement, resolveContext);
+              for (PyReturnStatement value : returnValues) {
+                PyExpression valueExpression = value.getExpression();
+                valueExpression = PyPsiUtils.flattenParens(valueExpression);
+                if (valueExpression instanceof PyDictLiteralExpression) {
+                  inspectDictForKey(formatExpression, inspectedElement, (PyDictLiteralExpression)valueExpression, mappingKey,
+                                    indexElement);
+                }
+                else if (valueExpression instanceof PyCallExpression) {
+                  final PyExpression callee = ((PyCallExpression)valueExpression).getCallee();
+                  if (callee != null && callee.getName() != null && callee.getName().equals("dict")) {
+                    final PyExpression[] arguments = ((PyCallExpression)valueExpression).getArguments();
+                    for (PyExpression argument : arguments) {
+                      if (argument instanceof PyKeywordArgument && indexElement.equals(((PyKeywordArgument)argument).getKeyword())) {
+                        checkTypesCompatibleForCheckedTypesOnly(mappingKey, formatExpression, argument);
+                        return;
+                      }
+                    }
+
+                    registerProblem(inspectedElement, PyBundle.message("INSP.too.few.keys"));
+                  }
+                }
+              }
+            }
+            else if (inspectedElement instanceof PyReferenceExpression) {
+              inspectReferenceExpressionForNumericKey(chunk, formatExpression, (PyReferenceExpression)inspectedElement, mappingKey,
+                                                      indexElement);
+            }
+            else if (inspectedElement instanceof PyDictLiteralExpression) {
+              inspectDictForKey(formatExpression, inspectedElement, (PyDictLiteralExpression)inspectedElement, mappingKey, indexElement);
+            }
+            else if (inspectedElement instanceof PyParenthesizedExpression) {
+              final PyExpression expression = PyPsiUtils.flattenParens((PyExpression)inspectedElement);
+
+              if (expression != null) {
+                inspectIndexElements(chunk, formatExpression, expression, expression, mappingKey);
+              }
+            }
+          }
+        }
+      }
+
+      private void inspectReferenceExpressionForNumericKey(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk,
+                                                           @NotNull PyStringLiteralExpression formatExpression,
+                                                           @NotNull PyReferenceExpression target,
+                                                           @NotNull String mappingKey,
+                                                           @NotNull String index) {
+        if (PyNames.DICT.equals(target.getName())) return;
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+        final PsiElement element = target.followAssignmentsChain(resolveContext).getElement();
+
+        if (element == target || !(element instanceof PyExpression)) {
+          return;
+        }
+
+        if (element instanceof PyDictLiteralExpression) {
+          try {
+            final Integer ind = Integer.valueOf(index);
+            inspectDictForKey(formatExpression, target, (PyDictLiteralExpression)element, mappingKey, ind);
+          }
+          catch (NumberFormatException e) {
+            inspectDictForKey(formatExpression, target, (PyDictLiteralExpression)element, mappingKey, index);
           }
         }
         else {
-          final PyTypedElement typedElement = as(resolve, PyTypedElement.class);
-          if (typedElement != null) {
-            if (myFormatSpec.containsKey(mappingKey)) {
-              final PyType actual = myTypeEvalContext.getType(typedElement);
-              final PyType expected = PyTypeParser.getTypeByName(formatExpression, myFormatSpec.get(mappingKey));
-              if (expected != null && actual != null
-                  && CHECKED_TYPES.contains(actual.getName())
-                  && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-                registerProblem(resolve, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
-              }
-            }
+          inspectIndexElements(chunk, formatExpression, target, element, mappingKey);
+        }
+      }
+
+      private void inspectDictForKey(@NotNull PyStringLiteralExpression formatExpression,
+                                     @NotNull PsiElement problemElement,
+                                     @NotNull PyDictLiteralExpression dict,
+                                     @NotNull String mappingKey,
+                                     @NotNull Integer index) {
+        final PyKeyValueExpression[] elements = dict.getElements();
+
+        for (PyKeyValueExpression element : elements) {
+          final PyExpression key = element.getKey();
+          if (key instanceof PyNumericLiteralExpression && new Long(index).equals(((PyNumericLiteralExpression)key).getLongValue())) {
+            checkTypesCompatibleForCheckedTypesOnly(mappingKey, formatExpression, key);
+            return;
+          }
+        }
+
+        registerProblem(problemElement, PyBundle.message("INSP.too.few.keys"));
+      }
+
+      private void inspectDictForKey(@NotNull PyStringLiteralExpression formatExpression,
+                                     @NotNull PsiElement problemElement,
+                                     @NotNull PyDictLiteralExpression dict,
+                                     @NotNull String mappingKey,
+                                     @NotNull String indexElement) {
+        final PyKeyValueExpression[] elements = dict.getElements();
+
+        for (PyKeyValueExpression element : elements) {
+          final PyExpression key = element.getKey();
+          if (key instanceof PyStringLiteralExpression && indexElement.equals(((PyStringLiteralExpression)key).getStringValue())) {
+            checkTypesCompatibleForCheckedTypesOnly(mappingKey, formatExpression, key);
+            return;
+          }
+        }
+
+        registerProblem(problemElement, PyBundle.message("INSP.too.few.keys"));
+      }
+
+      private void inspectListElements(@NotNull final PyStringLiteralExpression formatExpression,
+                                       @NotNull final PsiElement problemElement,
+                                       @NotNull final Integer index,
+                                       @NotNull final PsiElement target) {
+        final PyExpression[] elements = ((PyListLiteralExpression)target).getElements();
+        if (elements.length > index) {
+          checkTypesCompatibleForCheckedTypesOnly(String.valueOf(index), formatExpression, elements[index]);
+        }
+        else {
+          registerProblem(problemElement, PyBundle.message("INSP.too.few.args.for.fmt.string"));
+        }
+      }
+
+      private void checkTypesCompatibleForCheckedTypesOnly(@NotNull String mappingKey,
+                                                           @NotNull PyStringLiteralExpression anchor,
+                                                           @NotNull PsiElement target) {
+        final PyTypedElement typedElement = as(target, PyTypedElement.class);
+        if (typedElement != null && myFormatSpec.containsKey(mappingKey)) {
+          final PyType actual = myTypeEvalContext.getType(typedElement);
+          final PyType expected = PyTypeParser.getTypeByName(anchor, myFormatSpec.get(mappingKey));
+          if (expected != null && actual != null
+              && CHECKED_TYPES.contains(actual.getName())
+              && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+            registerProblem(typedElement, PyBundle.message("INSP.unexpected.type.$0", actual.getName()));
           }
         }
       }
