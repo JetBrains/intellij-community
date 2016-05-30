@@ -26,6 +26,7 @@ import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.util.PatternFilterable
@@ -220,6 +221,11 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       } else {
         externalSourceSet.sourceCompatibility = projectSourceCompatibility
         externalSourceSet.targetCompatibility = projectTargetCompatibility
+      }
+
+      def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
+      if(jarTask instanceof AbstractArchiveTask) {
+        externalSourceSet.artifacts = [jarTask.archivePath]
       }
 
       def sources = [:] as Map<ExternalSystemSourceType, ExternalSourceDirectorySet>

@@ -769,8 +769,13 @@ class DependencyResolverImpl implements DependencyResolver {
                     projectPath: componentSelector.projectPath,
                     configurationName: it.projectConfiguration.name
                   )
-                  dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
+                  dependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
+                  if(it.projectConfiguration.artifacts.size() == 1) {
+                    def publishArtifact = it.projectConfiguration.allArtifacts.first()
+                    dependency.classifier = publishArtifact.classifier
+                    dependency.packaging = publishArtifact.extension ?: 'jar'
+                  }
 
                   if (componentResult != dependencyResult.from) {
                     dependency.dependencies.addAll(
@@ -789,8 +794,13 @@ class DependencyResolverImpl implements DependencyResolver {
                     projectPath: componentSelector.projectPath,
                     configurationName: it.projectConfiguration.name
                   )
-                  dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
+                  dependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
+                  if(it.projectConfiguration.artifacts.size() == 1) {
+                    def publishArtifact = it.projectConfiguration.allArtifacts.first()
+                    dependency.classifier = publishArtifact.classifier
+                    dependency.packaging = publishArtifact.extension ?: 'jar'
+                  }
 
                   if (componentResult != dependencyResult.from) {
                     dependency.dependencies.addAll(
