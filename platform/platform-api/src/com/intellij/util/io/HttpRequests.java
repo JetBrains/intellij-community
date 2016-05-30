@@ -73,6 +73,10 @@ public final class HttpRequests {
     byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
+  public interface ConnectionTuner {
+    void tune(@NotNull URLConnection connection) throws IOException;
+  }
+
   public interface RequestProcessor<T> {
     T process(@NotNull Request request) throws IOException;
   }
@@ -285,6 +289,10 @@ public final class HttpRequests {
       }
 
       connection.setUseCaches(false);
+      
+      if (builder.myTuner != null) {
+        builder.myTuner.tune(connection);
+      }
 
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();

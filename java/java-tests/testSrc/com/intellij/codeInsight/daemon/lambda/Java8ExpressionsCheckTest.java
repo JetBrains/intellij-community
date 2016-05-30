@@ -15,9 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +77,35 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testMethodOverloadsInsideLambdaHierarchy() throws Exception {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testNonCachingFolding() throws Exception {
+    final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiNewExpression newWithAnonym =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiNewExpression.class);
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(newWithAnonym, false);
+    assertNotNull(types);
+
+    doTestConfiguredFile(false, false, filePath);
+  }
+
+  public void testRejectCachedTopLevelSessionIfItCorrespondsToTheWrongOverload() throws Exception {
+    final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiMethodCallExpression methodCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertNotNull(methodCall);
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodCall.getProject()).getResolveHelper();
+    CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
+    for (CandidateInfo candidate : candidates) {
+      if (candidate instanceof MethodCandidateInfo) {
+        //try to cache top level session
+        candidate.getSubstitutor();
+      }
+    }
+
+    doTestConfiguredFile(false, false, filePath);
   }
 
   private void doTestCachedUnresolved() {

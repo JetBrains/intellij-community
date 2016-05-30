@@ -212,6 +212,23 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA153076() throws Exception {
+    doTest();
+  }
+
+  //java 8 error
+  public void testNotPotentiallyCompatibleMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testSpecificFunctionalInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreStaticCorrectnessDuringOverloadResolution() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

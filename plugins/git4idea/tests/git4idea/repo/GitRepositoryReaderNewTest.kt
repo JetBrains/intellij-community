@@ -111,6 +111,14 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     assertEquals("Fresh repository should be on master", "master", currentBranch!!.name)
   }
 
+  fun `test non-ascii current branch name`() {
+    makeCommit("file.txt")
+    val branch = "teslá"
+    git("checkout -b $branch")
+    val state = readState()
+    assertEquals(branch, state.currentBranch!!.name)
+  }
+
   private fun moveToDetachedHead(): String {
     makeCommit("file.txt")
     makeCommit("file.txt")

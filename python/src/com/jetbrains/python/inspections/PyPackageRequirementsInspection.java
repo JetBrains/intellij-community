@@ -256,7 +256,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         packages = manager.getPackages(PySdkUtil.isRemote(sdk));
       }
       catch (ExecutionException e) {
-        LOG.error(e);
+        LOG.warn(e);
         return null;
       }
       if (packages == null) return null;

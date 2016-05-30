@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-17841
   public void testNoMostDerivedMetaClass() {
+    doTest();
+  }
+
+  // PY-19028
+  public void testDecodeBytesAfterSlicing() {
     doTest();
   }
 }

@@ -36,9 +36,8 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(3, runner.getAllTestsCount());
+        assertEquals(4, runner.getAllTestsCount());
         assertEquals(3, runner.getPassedTestsCount());
-        runner.assertAllTestsPassed();
       }
     });
   }

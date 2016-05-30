@@ -1,4 +1,4 @@
-# $Id: __init__.py 6314 2010-04-26 10:04:17Z milde $
+# $Id: __init__.py 7598 2013-01-30 12:39:24Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -49,12 +49,12 @@ Anything that isn't already customizable is that way simply because that type
 of customizability hasn't been implemented yet.  Patches welcome!
 
 When instantiating an object of the `Parser` class, two parameters may be
-passed: ``rfc2822`` and ``inliner``.  Pass ``rfc2822=1`` to enable an initial
-RFC-2822 style header block, parsed as a "field_list" element (with "class"
-attribute set to "rfc2822").  Currently this is the only body-level element
-which is customizable without subclassing.  (Tip: subclass `Parser` and change
-its "state_classes" and "initial_state" attributes to refer to new classes.
-Contact the author if you need more details.)
+passed: ``rfc2822`` and ``inliner``.  Pass ``rfc2822=True`` to enable an
+initial RFC-2822 style header block, parsed as a "field_list" element (with
+"class" attribute set to "rfc2822").  Currently this is the only body-level
+element which is customizable without subclassing.  (Tip: subclass `Parser`
+and change its "state_classes" and "initial_state" attributes to refer to new
+classes. Contact the author if you need more details.)
 
 The ``inliner`` parameter takes an instance of `states.Inliner` or a subclass.
 It handles inline markup recognition.  A common extension is the addition of
@@ -69,10 +69,12 @@ appropriate).
 
 __docformat__ = 'reStructuredText'
 
+
 import docutils.parsers
 import docutils.statemachine
-from docutils import frontend
 from docutils.parsers.rst import states
+from docutils import frontend, nodes, Component
+from docutils.transforms import universal
 
 
 class Parser(docutils.parsers.Parser):
@@ -130,18 +132,32 @@ class Parser(docutils.parsers.Parser):
            'validator': frontend.validate_boolean}),
          ('Enable the "raw" directive.  Enabled by default.',
           ['--raw-enabled'],
-          {'action': 'store_true'}),))
+          {'action': 'store_true'}),
+         ('Token name set for parsing code with Pygments: one of '
+          '"long", "short", or "none (no parsing)". Default is "long".',
+          ['--syntax-highlight'],
+          {'choices': ['long', 'short', 'none'],
+           'default': 'long', 'metavar': '<format>'}),
+         ('Change straight quotation marks to typographic form: '
+          'one of "yes", "no", "alt[ernative]" (default "no").',
+          ['--smart-quotes'],
+          {'default': False, 'validator': frontend.validate_ternary}),
+        ))
 
     config_section = 'restructuredtext parser'
     config_section_dependencies = ('parsers',)
 
-    def __init__(self, rfc2822=None, inliner=None):
+    def __init__(self, rfc2822=False, inliner=None):
         if rfc2822:
             self.initial_state = 'RFC2822Body'
         else:
             self.initial_state = 'Body'
         self.state_classes = states.state_classes
         self.inliner = inliner
+
+    def get_transforms(self):
+        return Component.get_transforms(self) + [
+            universal.SmartQuotes]
 
     def parse(self, inputstring, document):
         """Parse `inputstring` and populate `document`, a document tree."""
@@ -152,7 +168,7 @@ class Parser(docutils.parsers.Parser):
               debug=document.reporter.debug_flag)
         inputlines = docutils.statemachine.string2lines(
               inputstring, tab_width=document.settings.tab_width,
-              convert_whitespace=1)
+              convert_whitespace=True)
         self.statemachine.run(inputlines, document, inliner=self.inliner)
         self.finish_parse()
 
@@ -299,7 +315,6 @@ class Directive(object):
         self.block_text = block_text
         self.state = state
         self.state_machine = state_machine
-        self.src, self.scrline = state_machine.get_source_and_line(lineno)
 
     def run(self):
         raise NotImplementedError('Must override run() is subclass.')
@@ -315,8 +330,9 @@ class Directive(object):
         at level `level`, which automatically gets the directive block
         and the line number added.
 
-        You'd often use self.error(message) instead, which will
-        generate an ERROR-level directive error.
+        Preferably use the `debug`, `info`, `warning`, `error`, or `severe`
+        wrapper methods, e.g. ``self.error(message)`` to generate an
+        ERROR-level directive error.
         """
         return DirectiveError(level, message)
 
@@ -345,6 +361,18 @@ class Directive(object):
         if not self.content:
             raise self.error('Content block expected for the "%s" directive; '
                              'none found.' % self.name)
+
+    def add_name(self, node):
+        """Append self.options['name'] to node['names'] if it exists.
+
+        Also normalize the name string and register it as explicit target.
+        """
+        if 'name' in self.options:
+            name = nodes.fully_normalize_name(self.options.pop('name'))
+            if 'name' in node:
+                del(node['name'])
+            node['names'].append(name)
+            self.state.document.note_explicit_target(node, node)
 
 
 def convert_directive_function(directive_fn):

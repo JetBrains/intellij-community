@@ -17,6 +17,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,5 +139,65 @@ public class XmlStringUtil {
   @NotNull
   public static String convertToHtmlContent(@NotNull String text) {
     return isWrappedInHtml(text) ? stripHtml(text) : escapeString(text);
+  }
+
+  /**
+   * Some characters are illegal in XML even as numerical character references. This method performs escaping of them
+   * in a custom format, which is supposed to be unescaped on retrieving from XML using {@link #unescapeIllegalXmlChars(String)}.
+   * Resulting text can be part of XML version 1.0 document.
+   *
+   * @see <a href="https://www.w3.org/International/questions/qa-controls">https://www.w3.org/International/questions/qa-controls</a>
+   * @see Verifier#isXMLCharacter(int)
+   */
+  @NotNull
+  public static String escapeIllegalXmlChars(@NotNull String text) {
+    StringBuilder b = null;
+    int lastPos = 0;
+    for (int i = 0; i < text.length(); i++) {
+      int c = text.codePointAt(i);
+      if (Character.isSupplementaryCodePoint(c)) {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+      }
+      if (c == '#' || !Verifier.isXMLCharacter(c)) {
+        if (b == null) b = new StringBuilder(text.length() + 5); // assuming there's one 'large' char (e.g. 0xFFFF) to escape numerically
+        b.append(text, lastPos, i).append('#');
+        if (c != '#') b.append(Integer.toHexString(c));
+        b.append('#');
+        lastPos = i + 1;
+      }
+    }
+    return b == null ? text : b.append(text, lastPos, text.length()).toString();
+  }
+
+  /**
+   * @see XmlStringUtil#escapeIllegalXmlChars(String)
+   */
+  @NotNull
+  public static String unescapeIllegalXmlChars(@NotNull String text) {
+    StringBuilder b = null;
+    int lastPos = 0;
+    for (int i = 0; i < text.length(); i++) {
+      int c = text.charAt(i);
+      if (c == '#') {
+        int numberEnd = text.indexOf('#', i + 1);
+        if (numberEnd > 0) {
+          int charCode;
+          try {
+            charCode = numberEnd == (i + 1) ? '#' : Integer.parseInt(text.substring(i + 1, numberEnd), 16);
+          }
+          catch (NumberFormatException e) {
+            continue;
+          }
+          if (b == null) b = new StringBuilder(text.length());
+          b.append(text, lastPos, i);
+          b.append((char) charCode);
+          //noinspection AssignmentToForLoopParameter
+          i = numberEnd;
+          lastPos = i + 1;
+        }
+      }
+    }
+    return b == null ? text : b.append(text, lastPos, text.length()).toString();
   }
 }

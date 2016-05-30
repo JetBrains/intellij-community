@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -101,15 +100,8 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       final PsiSubstitutor partialSubstitutor = getSubstitutor(state);
-      final NotNullComputable<PsiSubstitutor> substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(
-        new NotNullComputable<PsiSubstitutor>() {
-          @NotNull
-          @Override
-          public PsiSubstitutor compute() {
-            return mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
-          }
-        }
-      );
+      final NotNullComputable<PsiSubstitutor> substitutorComputer =
+        () -> mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);

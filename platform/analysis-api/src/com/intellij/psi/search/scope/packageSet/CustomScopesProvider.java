@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,4 +31,15 @@ public interface CustomScopesProvider {
 
   @NotNull
   List<NamedScope> getCustomScopes();
+
+  @NotNull
+  default List<NamedScope> getFilteredScopes() {
+    CustomScopesFilter[] filters = CustomScopesFilter.EP_NAME.getExtensions();
+    return ContainerUtil.filter(getCustomScopes(), scope -> {
+      for (CustomScopesFilter filter : filters) {
+        if (filter.excludeScope(scope)) return false;
+      }
+      return true;
+    });
+  }
 }

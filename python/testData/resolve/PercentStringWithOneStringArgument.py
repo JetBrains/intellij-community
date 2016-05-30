@@ -1,1 +1,1 @@
-v = "<ref>%s" % "hello"
+v = "%<ref>s" % "hello"

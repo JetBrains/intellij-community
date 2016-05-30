@@ -14,6 +14,7 @@ import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,9 +31,16 @@ import java.util.Set;
 class ReplaceUsageViewContext extends UsageViewContext {
   private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
+  private UsageView myUsageView;
+  private Set<Usage> myExcludedSet;
 
   ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {
     super(configuration, context, searchStarter);
+  }
+
+  @Override
+  public void setUsageView(UsageView usageView) {
+    myUsageView = usageView;
   }
 
   public Replacer getReplacer() {
@@ -55,18 +63,18 @@ class ReplaceUsageViewContext extends UsageViewContext {
         LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
 
         doReplace();
-        getUsageView().close();
+        myUsageView.close();
 
         labelAction.finish();
       }
     };
 
     //noinspection HardCodedStringLiteral
-    getUsageView().addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
+    myUsageView.addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
 
     final Runnable replaceSelected = new Runnable() {
       public void run() {
-        final Set<Usage> infos = getUsageView().getSelectedUsages();
+        final Set<Usage> infos = myUsageView.getSelectedUsages();
         if (infos == null || infos.isEmpty()) return;
 
         LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
@@ -81,10 +89,10 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
         labelAction.finish();
 
-        if (getUsageView().getUsagesCount() > 0) {
-          for (Usage usage : getUsageView().getSortedUsages()) {
+        if (myUsageView.getUsagesCount() > 0) {
+          for (Usage usage : myUsageView.getSortedUsages()) {
             if (!isExcluded(usage)) {
-              getUsageView().selectUsages(new Usage[]{usage});
+              myUsageView.selectUsages(new Usage[]{usage});
               return;
             }
           }
@@ -92,11 +100,11 @@ class ReplaceUsageViewContext extends UsageViewContext {
       }
     };
 
-    getUsageView().addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
+    myUsageView.addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
 
     final Runnable previewReplacement = new Runnable() {
       public void run() {
-        Set<Usage> selection = getUsageView().getSelectedUsages();
+        Set<Usage> selection = myUsageView.getSelectedUsages();
 
         if (selection != null && !selection.isEmpty()) {
           UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
@@ -108,7 +116,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
       }
     };
 
-    getUsageView().addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
+    myUsageView.addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
 
     super.configureActions();
   }
@@ -137,17 +145,17 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
     if (approved) {
       ensureFileWritable(info);
-      getUsageView().removeUsage(info);
+      myUsageView.removeUsage(info);
       getReplacer().replace(replacementInfo);
 
-      if (getUsageView().getUsagesCount() == 0) {
-        getUsageView().close();
+      if (myUsageView.getUsagesCount() == 0) {
+        myUsageView.close();
       }
     }
   }
 
   private void doReplace() {
-    List<Usage> infos = getUsageView().getSortedUsages();
+    List<Usage> infos = myUsageView.getSortedUsages();
     List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(infos.size());
 
     for (final Usage info : infos) {
@@ -159,5 +167,10 @@ class ReplaceUsageViewContext extends UsageViewContext {
     }
 
     getReplacer().replaceAll(results);
+  }
+
+  private boolean isExcluded(Usage usage) {
+    if (myExcludedSet == null) myExcludedSet = myUsageView.getExcludedUsages();
+    return myExcludedSet.contains(usage);
   }
 }

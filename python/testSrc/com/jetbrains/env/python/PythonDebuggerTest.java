@@ -771,8 +771,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void after() throws Exception {
-        PyDebuggerSettings.getInstance().setSteppingFilters(Collections.emptyList());
+      public void doFinally() {
+        final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.setLibrariesFilterEnabled(false);
+        debuggerSettings.setSteppingFiltersEnabled(false);
       }
 
       @Override

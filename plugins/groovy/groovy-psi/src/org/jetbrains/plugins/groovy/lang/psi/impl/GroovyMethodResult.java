@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NotNullComputable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 public class GroovyMethodResult extends GroovyResolveResultImpl {
 
@@ -31,32 +33,33 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
-                            @NotNull PsiSubstitutor substitutor,
+                            @NotNull PsiSubstitutor partialSubstitutor,
                             @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
-                            boolean isAccessible, boolean staticsOK) {
-    super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, true, true);
-    mySubstitutorComputer = substitutorComputer;
+                            boolean isAccessible, boolean isStaticsOK) {
+    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, true, isAccessible, isStaticsOK, true);
   }
 
-  public GroovyMethodResult(@NotNull PsiMethod element,
+  public GroovyMethodResult(@NotNull PsiMethod method,
+                            @Nullable PsiElement resolveContext,
+                            @Nullable SpreadState spreadState,
+                            @NotNull PsiSubstitutor partialSubstitutor,
+                            @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                            boolean isAccessible, boolean isStaticsOK, boolean isApplicable) {
+    this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, false, isAccessible, isStaticsOK, isApplicable);
+  }
+
+  public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
                             @NotNull PsiSubstitutor partialSubstitutor,
                             @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                             boolean isInvokedOnProperty,
-                            boolean isAccessible, boolean staticsOK, boolean isApplicable) {
-    super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, isInvokedOnProperty, isApplicable);
-    mySubstitutorComputer = substitutorComputer;
-  }
-
-  public GroovyMethodResult(@NotNull PsiMethod element,
-                            @Nullable PsiElement resolveContext,
-                            @Nullable SpreadState spreadState,
-                            @NotNull PsiSubstitutor partialSubstitutor,
-                            @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
-                            boolean isAccessible, boolean staticsOK, boolean isApplicable) {
-    super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, false, isApplicable);
-    mySubstitutorComputer = substitutorComputer;
+                            boolean isAccessible, boolean isStaticsOk, boolean isApplicable) {
+    super(method, resolveContext, spreadState, partialSubstitutor, isAccessible, isStaticsOk, isInvokedOnProperty, isApplicable);
+    mySubstitutorComputer = new NotNullCachedComputableWrapper<>(() -> {
+      PsiSubstitutor substitutor = RecursionManager.doPreventingRecursion(this, false, substitutorComputer);
+      return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+    });
   }
 
   @NotNull
@@ -74,6 +77,26 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean infer) {
     return infer ? mySubstitutorComputer.compute() : super.getSubstitutor();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    GroovyMethodResult result = (GroovyMethodResult)o;
+
+    if (!mySubstitutorComputer.equals(result.mySubstitutorComputer)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + mySubstitutorComputer.hashCode();
+    return result;
   }
 
   @TestOnly

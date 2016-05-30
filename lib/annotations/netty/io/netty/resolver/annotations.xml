@@ -1,0 +1,5 @@
+<root>
+  <item name='io.netty.resolver.HostsFileEntriesResolver java.net.InetAddress address(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

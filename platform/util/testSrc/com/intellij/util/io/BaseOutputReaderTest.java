@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -61,25 +62,26 @@ public class BaseOutputReaderTest {
 
   @Test(timeout = 30000)
   public void testBlockingRead() throws Exception {
-    doReadTest(BaseDataReader.SleepingPolicy.BLOCKING);
+    doReadTest(BaseDataReader.SleepingPolicy.BLOCKING, true);
   }
 
   @Test(timeout = 30000)
   public void testNonBlockingRead() throws Exception {
-    doReadTest(BaseDataReader.SleepingPolicy.SIMPLE);
+    doReadTest(BaseDataReader.SleepingPolicy.SIMPLE, false);
   }
 
-  @Test(timeout = 30000)
-  public void testBlockingStop() throws Exception {
-    doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
-  }
+  // Stopping is not supported for an open stream in blocking mode
+  //@Test(timeout = 30000)
+  //public void testBlockingStop() throws Exception {
+  //  doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
+  //}
 
   @Test(timeout = 30000)
   public void testNonBlockingStop() throws Exception {
     doStopTest(BaseDataReader.SleepingPolicy.SIMPLE);
   }
 
-  private void doReadTest(BaseDataReader.SleepingPolicy policy) throws Exception {
+  private void doReadTest(BaseDataReader.SleepingPolicy policy, boolean checkLines) throws Exception {
     Process process = launchTest("data");
     TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy);
 
@@ -88,7 +90,13 @@ public class BaseOutputReaderTest {
     reader.waitFor();
 
     assertEquals(0, process.exitValue());
-    assertEquals(Arrays.asList(TEST_DATA), reader.myLines);
+    if (checkLines) {
+      assertEquals(Arrays.asList(TEST_DATA), reader.myLines);
+    }
+    else {
+      assertThat(reader.myLines.size()).isGreaterThanOrEqualTo(TEST_DATA.length);
+      assertThat(StringUtil.join(reader.myLines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
+    }
   }
 
   private void doStopTest(BaseDataReader.SleepingPolicy policy) throws Exception {

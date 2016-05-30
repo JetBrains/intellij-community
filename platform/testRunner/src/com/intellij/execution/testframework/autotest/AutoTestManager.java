@@ -253,12 +253,15 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
   public void loadState(State state) {
     List<RunConfiguration> configurations = ContainerUtil.newArrayList();
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-    for (RunConfigurationDescriptor descriptor : state.myEnabledRunConfigurations) {
-      RunnerAndConfigurationSettings settings = runManager.findConfigurationByTypeAndName(descriptor.myType,
-                                                                                          descriptor.myName);
-      RunConfiguration configuration = settings != null ? settings.getConfiguration() : null;
-      if (configuration != null) {
-        configurations.add(configuration);
+    List<RunConfigurationDescriptor> descriptors = ContainerUtil.notNullize(state.myEnabledRunConfigurations);
+    for (RunConfigurationDescriptor descriptor : descriptors) {
+      if (descriptor.myType != null && descriptor.myName != null) {
+        RunnerAndConfigurationSettings settings = runManager.findConfigurationByTypeAndName(descriptor.myType,
+                                                                                            descriptor.myName);
+        RunConfiguration configuration = settings != null ? settings.getConfiguration() : null;
+        if (configuration != null) {
+          configurations.add(configuration);
+        }
       }
     }
     myEnabledRunProfiles.clear();

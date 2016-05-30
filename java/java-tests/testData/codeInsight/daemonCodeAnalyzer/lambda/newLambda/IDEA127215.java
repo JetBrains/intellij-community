@@ -26,6 +26,6 @@ class Test {
       .map(object -> Arrays.stream(functions)
         .map(fn -> fn.apply(object))
         .collect(toList()))
-      .collect(toList<error descr="'toList()' in 'java.util.stream.Collectors' cannot be applied to '()'">()</error>);
+      .collect<error descr="'collect(java.util.stream.Collector<? super java.util.List<capture<?>>,A,R>)' in 'java.util.stream.Stream' cannot be applied to '(java.util.stream.Collector<T,capture<?>,java.util.List<T>>)'">(toList())</error>;
   }
 }

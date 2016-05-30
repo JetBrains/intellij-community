@@ -1,4 +1,4 @@
-# $Id: __init__.py 6328 2010-05-23 21:20:29Z gbrandl $
+# $Id: __init__.py 7630 2013-03-15 22:27:04Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,10 +8,13 @@ PEP HTML Writer.
 
 __docformat__ = 'reStructuredText'
 
+
+import sys
 import os
 import os.path
-
-from docutils import frontend, nodes, utils
+import codecs
+import docutils
+from docutils import frontend, nodes, utils, writers
 from docutils.writers import html4css1
 
 
@@ -49,8 +52,7 @@ class Writer(html4css1.Writer):
     settings_default_overrides = {'stylesheet_path': default_stylesheet_path,
                                   'template': default_template_path,}
 
-    relative_path_settings = (html4css1.Writer.relative_path_settings
-                              + ('template',))
+    relative_path_settings = ('template',)
 
     config_section = 'pep_html writer'
     config_section_dependencies = ('writers', 'html4css1 writer')

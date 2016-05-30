@@ -34,13 +34,13 @@ private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
 
 // generateVirtualFile only for debug purposes
-open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
+open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: MappingList, protected val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
   var rawNameToSource: MutableMap<String, String>? = null
     private set
 
   // PsiNamedElement, JSVariable for example
   // returns generated name
-  fun map(identifierOrNamedElement: PsiElement): String? {
+  open fun map(identifierOrNamedElement: PsiElement): String? {
     val offset = identifierOrNamedElement.textOffset
     val line = document.getLineNumber(offset)
 
@@ -67,15 +67,19 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     }
 
     var sourceName = sourceEntry.name
-    if (sourceName == null || Registry.`is`("js.debugger.name.mappings.by.source.code", false)) {
+    if (sourceName == null || (Registry.`is`("js.debugger.name.mappings.by.source.code", false) || Registry.`is`("js.debugger.map.this.by.source.code", false))) {
       sourceName = (identifierOrNamedElement as? PsiNamedElement)?.name ?: identifierOrNamedElement.text ?: sourceName ?: return null
     }
 
+    addMapping(generatedName, sourceName)
+    return generatedName
+  }
+
+  fun addMapping(generatedName: String, sourceName: String) {
     if (rawNameToSource == null) {
       rawNameToSource = THashMap<String, String>()
     }
     rawNameToSource!!.put(generatedName, sourceName)
-    return generatedName
   }
 
   protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)

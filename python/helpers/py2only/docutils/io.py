@@ -1,23 +1,40 @@
-# $Id: io.py 6269 2010-03-18 22:27:53Z milde $
+# $Id: io.py 7596 2013-01-25 13:42:17Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 """
 I/O classes provide a uniform API for low-level input and output.  Subclasses
-will exist for a variety of input/output mechanisms.
+exist for a variety of input/output mechanisms.
 """
 
 __docformat__ = 'reStructuredText'
 
 import sys
-try:
-    import locale
-except:
-    pass
+import os
 import re
 import codecs
 from docutils import TransformSpec
 from docutils._compat import b
+from docutils.utils.error_reporting import locale_encoding, ErrorString, ErrorOutput
+
+
+class InputError(IOError): pass
+class OutputError(IOError): pass
+
+def check_encoding(stream, encoding):
+    """Test, whether the encoding of `stream` matches `encoding`.
+
+    Returns
+
+    :None:  if `encoding` or `stream.encoding` are not a valid encoding
+            argument (e.g. ``None``) or `stream.encoding is missing.
+    :True:  if the encoding argument resolves to the same value as `encoding`,
+    :False: if the encodings differ.
+    """
+    try:
+        return codecs.lookup(stream.encoding) == codecs.lookup(encoding)
+    except (LookupError, AttributeError, TypeError):
+        return None
 
 
 class Input(TransformSpec):
@@ -88,42 +105,27 @@ class Input(TransformSpec):
                 # Apply heuristics only if no encoding is explicitly given and
                 # no BOM found.  Start with UTF-8, because that only matches
                 # data that *IS* UTF-8:
-                encodings = ['utf-8']
-                try:
-                    encodings.append(locale.getlocale()[1])
-                except:
-                    pass
-                try:
-                    encodings.append(locale.getdefaultlocale()[1])
-                except:
-                    pass
-                # fallback encoding:
-                encodings.append('latin-1')
-        error = None
-        error_details = ''
+                encodings = ['utf-8', 'latin-1']
+                if locale_encoding:
+                    encodings.insert(1, locale_encoding)
         for enc in encodings:
-            if not enc:
-                continue
             try:
                 decoded = unicode(data, enc, self.error_handler)
                 self.successful_encoding = enc
                 # Return decoded, removing BOMs.
                 return decoded.replace(u'\ufeff', u'')
-            except (UnicodeError, LookupError), tmperror:
-                error = tmperror  # working around Python 3 deleting the
-                                  # error variable after the except clause
-        if error is not None:
-            error_details = '\n(%s: %s)' % (error.__class__.__name__, error)
+            except (UnicodeError, LookupError), err:
+                error = err # in Python 3, the <exception instance> is
+                            # local to the except clause
         raise UnicodeError(
             'Unable to decode input data.  Tried the following encodings: '
-            '%s.%s'
-            % (', '.join([repr(enc) for enc in encodings if enc]),
-               error_details))
+            '%s.\n(%s)' % (', '.join([repr(enc) for enc in encodings]),
+                         ErrorString(error)))
 
     coding_slug = re.compile(b("coding[:=]\s*([-\w.]+)"))
     """Encoding declaration pattern."""
 
-    byte_order_marks = ((codecs.BOM_UTF8, 'utf-8'), # actually 'utf-8-sig'
+    byte_order_marks = ((codecs.BOM_UTF8, 'utf-8'), # 'utf-8-sig' new in v2.5
                         (codecs.BOM_UTF16_BE, 'utf-16-be'),
                         (codecs.BOM_UTF16_LE, 'utf-16-le'),)
     """Sequence of (start_bytes, encoding) tuples for encoding detection.
@@ -189,7 +191,7 @@ class Output(TransformSpec):
                 'a Unicode string')
             return data
         if not isinstance(data, unicode):
-            # Non-unicode (e.g. binary) output.
+            # Non-unicode (e.g. bytes) output.
             return data
         else:
             return data.encode(self.encoding, self.error_handler)
@@ -200,10 +202,9 @@ class FileInput(Input):
     """
     Input for single, simple file-like objects.
     """
-
     def __init__(self, source=None, source_path=None,
                  encoding=None, error_handler='strict',
-                 autoclose=1, handle_io_errors=1, mode='rU'):
+                 autoclose=True, handle_io_errors=None, mode='rU'):
         """
         :Parameters:
             - `source`: either a file-like object (which is read directly), or
@@ -211,16 +212,17 @@ class FileInput(Input):
             - `source_path`: a path to a file, which is opened and then read.
             - `encoding`: the expected text encoding of the input file.
             - `error_handler`: the encoding error handler to use.
-            - `autoclose`: close automatically after read (boolean); always
-              false if `sys.stdin` is the source.
-            - `handle_io_errors`: summarize I/O errors here, and exit?
+            - `autoclose`: close automatically after read (except when
+              `sys.stdin` is the source).
+            - `handle_io_errors`: ignored, deprecated, will be removed.
             - `mode`: how the file is to be opened (see standard function
               `open`). The default 'rU' provides universal newline support
               for text files.
         """
         Input.__init__(self, source, source_path, encoding, error_handler)
         self.autoclose = autoclose
-        self.handle_io_errors = handle_io_errors
+        self._stderr = ErrorOutput()
+
         if source is None:
             if source_path:
                 # Specify encoding in Python 3
@@ -233,17 +235,15 @@ class FileInput(Input):
                 try:
                     self.source = open(source_path, mode, **kwargs)
                 except IOError, error:
-                    if not handle_io_errors:
-                        raise
-                    print >>sys.stderr, '%s: %s' % (error.__class__.__name__,
-                                                    error)
-                    print >>sys.stderr, ('Unable to open source file for '
-                                         "reading ('%s').  Exiting." %
-                                         source_path)
-                    sys.exit(1)
+                    raise InputError(error.errno, error.strerror, source_path)
             else:
                 self.source = sys.stdin
-                self.autoclose = None
+        elif (sys.version_info >= (3,0) and
+              check_encoding(self.source, self.encoding) is False):
+            # TODO: re-open, warn or raise error?
+            raise UnicodeError('Encoding clash: encoding given is "%s" '
+                               'but source is opened with encoding "%s".' %
+                               (self.encoding, self.source.encoding))
         if not source_path:
             try:
                 self.source_path = self.source.name
@@ -254,8 +254,25 @@ class FileInput(Input):
         """
         Read and decode a single file and return the data (Unicode string).
         """
-        try:
-            data = self.source.read()
+        try: # In Python < 2.5, try...except has to be nested in try...finally.
+            try:
+                if self.source is sys.stdin and sys.version_info >= (3,0):
+                    # read as binary data to circumvent auto-decoding
+                    data = self.source.buffer.read()
+                    # normalize newlines
+                    data = b('\n').join(data.splitlines()) + b('\n')
+                else:
+                    data = self.source.read()
+            except (UnicodeError, LookupError), err: # (in Py3k read() decodes)
+                if not self.encoding and self.source_path:
+                    # re-read in binary mode and decode with heuristics
+                    b_source = open(self.source_path, 'rb')
+                    data = b_source.read()
+                    b_source.close()
+                    # normalize newlines
+                    data = b('\n').join(data.splitlines()) + b('\n')
+                else:
+                    raise
         finally:
             if self.autoclose:
                 self.close()
@@ -265,15 +282,11 @@ class FileInput(Input):
         """
         Return lines of a single file as list of Unicode strings.
         """
-        try:
-            lines = self.source.readlines()
-        finally:
-            if self.autoclose:
-                self.close()
-        return [self.decode(line) for line in lines]
+        return self.read().splitlines(True)
 
     def close(self):
-        self.source.close()
+        if self.source is not sys.stdin:
+            self.source.close()
 
 
 class FileOutput(Output):
@@ -282,9 +295,15 @@ class FileOutput(Output):
     Output for single, simple file-like objects.
     """
 
+    mode = 'w'
+    """The mode argument for `open()`."""
+    # 'wb' for binary (e.g. OpenOffice) files (see also `BinaryFileOutput`).
+    # (Do not use binary mode ('wb') for text files, as this prevents the
+    # conversion of newlines to the system specific default.)
+
     def __init__(self, destination=None, destination_path=None,
-                 encoding=None, error_handler='strict', autoclose=1,
-                 handle_io_errors=1):
+                 encoding=None, error_handler='strict', autoclose=True,
+                 handle_io_errors=None, mode=None):
         """
         :Parameters:
             - `destination`: either a file-like object (which is written
@@ -292,20 +311,33 @@ class FileOutput(Output):
               `destination_path` given).
             - `destination_path`: a path to a file, which is opened and then
               written.
-            - `autoclose`: close automatically after write (boolean); always
-              false if `sys.stdout` is the destination.
+            - `encoding`: the text encoding of the output file.
+            - `error_handler`: the encoding error handler to use.
+            - `autoclose`: close automatically after write (except when
+              `sys.stdout` or `sys.stderr` is the destination).
+            - `handle_io_errors`: ignored, deprecated, will be removed.
+            - `mode`: how the file is to be opened (see standard function
+              `open`). The default is 'w', providing universal newline
+              support for text files.
         """
         Output.__init__(self, destination, destination_path,
                         encoding, error_handler)
-        self.opened = 1
+        self.opened = True
         self.autoclose = autoclose
-        self.handle_io_errors = handle_io_errors
+        if mode is not None:
+            self.mode = mode
+        self._stderr = ErrorOutput()
         if destination is None:
             if destination_path:
-                self.opened = None
+                self.opened = False
             else:
                 self.destination = sys.stdout
-                self.autoclose = None
+        elif (# destination is file-type object -> check mode:
+              mode and hasattr(self.destination, 'mode')
+              and mode != self.destination.mode):
+                print >>self._stderr, ('Warning: Destination mode "%s" '
+                               'differs from specified mode "%s"' %
+                               (self.destination.mode, mode))
         if not destination_path:
             try:
                 self.destination_path = self.destination.name
@@ -314,65 +346,71 @@ class FileOutput(Output):
 
     def open(self):
         # Specify encoding in Python 3.
-        # (Do not use binary mode ('wb') as this prevents the
-        # conversion of newlines to the system specific default.)
-        if sys.version_info >= (3,0):
+        if sys.version_info >= (3,0) and 'b' not in self.mode:
             kwargs = {'encoding': self.encoding,
                       'errors': self.error_handler}
         else:
             kwargs = {}
-
         try:
-            self.destination = open(self.destination_path, 'w', **kwargs)
+            self.destination = open(self.destination_path, self.mode, **kwargs)
         except IOError, error:
-            if not self.handle_io_errors:
-                raise
-            print >>sys.stderr, '%s: %s' % (error.__class__.__name__,
-                                            error)
-            print >>sys.stderr, ('Unable to open destination file for writing'
-                                 " ('%s').  Exiting." % self.destination_path)
-            sys.exit(1)
-        self.opened = 1
+            raise OutputError(error.errno, error.strerror,
+                              self.destination_path)
+        self.opened = True
 
     def write(self, data):
         """Encode `data`, write it to a single file, and return it.
 
-        In Python 3, a (unicode) String is returned.
+        With Python 3 or binary output mode, `data` is returned unchanged,
+        except when specified encoding and output encoding differ.
         """
-        if sys.version_info >= (3,0):
-            output = data # in py3k, write expects a (Unicode) string
-        else:
-            output = self.encode(data)
         if not self.opened:
             self.open()
-        try:
-            self.destination.write(output)
+        if ('b' not in self.mode and sys.version_info < (3,0)
+            or check_encoding(self.destination, self.encoding) is False
+           ):
+            if sys.version_info >= (3,0) and os.linesep != '\n':
+                data = data.replace('\n', os.linesep) # fix endings
+            data = self.encode(data)
+
+        try: # In Python < 2.5, try...except has to be nested in try...finally.
+            try:
+                self.destination.write(data)
+            except TypeError, e:
+                if sys.version_info >= (3,0) and isinstance(data, bytes):
+                    try:
+                        self.destination.buffer.write(data)
+                    except AttributeError:
+                        if check_encoding(self.destination, 
+                                          self.encoding) is False:
+                            raise ValueError('Encoding of %s (%s) differs \n'
+                                '  from specified encoding (%s)' %
+                                (self.destination_path or 'destination',
+                                self.destination.encoding, self.encoding))
+                        else:
+                            raise e
+            except (UnicodeError, LookupError), err:
+                raise UnicodeError(
+                    'Unable to encode output data. output-encoding is: '
+                    '%s.\n(%s)' % (self.encoding, ErrorString(err)))
         finally:
             if self.autoclose:
                 self.close()
-        return output
+        return data
 
     def close(self):
-        self.destination.close()
-        self.opened = None
+        if self.destination not in (sys.stdout, sys.stderr):
+            self.destination.close()
+            self.opened = False
 
 
 class BinaryFileOutput(FileOutput):
     """
     A version of docutils.io.FileOutput which writes to a binary file.
     """
-    def open(self):
-        try:
-            self.destination = open(self.destination_path, 'wb')
-        except IOError, error:
-            if not self.handle_io_errors:
-                raise
-            print >>sys.stderr, '%s: %s' % (error.__class__.__name__,
-                                            error)
-            print >>sys.stderr, ('Unable to open destination file for writing '
-                                 "('%s').  Exiting." % self.destination_path)
-            sys.exit(1)
-        self.opened = 1
+    # Used by core.publish_cmdline_to_binary() which in turn is used by
+    # rst2odt (OpenOffice writer)
+    mode = 'wb'
 
 
 class StringInput(Input):

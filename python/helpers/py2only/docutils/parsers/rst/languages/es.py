@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: es.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: es.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Marcelo Huerta San Martín <richieadler@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
@@ -20,6 +20,7 @@ directives = {
       u'atenci\u00f3n': 'attention',
       u'atencion': 'attention',
       u'precauci\u00f3n': 'caution',
+      u'code (translation required)': 'code',
       u'precaucion': 'caution',
       u'peligro': 'danger',
       u'error': 'error',
@@ -51,6 +52,7 @@ directives = {
       u'tabla-csv': 'csv-table',
       u'tabla-lista': 'list-table',
       u'meta': 'meta',
+      'math (translation required)': 'math',
       #'imagemap': 'imagemap',
       u'imagen': 'image',
       u'figura': 'figure',
@@ -86,6 +88,7 @@ roles = {
     u'acronimo': 'acronym',
     u'acronimo': 'acronym',
     u'ac': 'acronym',
+    u'code (translation required)': 'code',
     u'indice': 'index',
     u'i': 'index',
     u'subindice': 'subscript',
@@ -103,6 +106,7 @@ roles = {
     u'\u00e9nfasis': 'emphasis',
     u'destacado': 'strong',
     u'literal': 'literal',              # "literal" is also a word in Spanish :-)
+    u'math (translation required)': 'math',
     u'referencia-con-nombre': 'named-reference',
     u'referencia-anonima': 'anonymous-reference',
     u'referencia-an\u00f3nima': 'anonymous-reference',

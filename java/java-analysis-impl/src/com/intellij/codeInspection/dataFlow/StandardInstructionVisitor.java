@@ -476,7 +476,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       Object value = ((DfaConstValue)dfaRight).getValue();
       if (value instanceof Number) {
         DfaInstructionState[] result = checkComparingWithConstant(instruction, runner, memState, (DfaVariableValue)dfaLeft, opSign,
-                                                                  ((Number)value).doubleValue());
+                                                                  (Number)value);
         if (result != null) {
           return result;
         }
@@ -508,12 +508,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DataFlowRunner runner,
                                                                   DfaMemoryState memState,
                                                                   DfaVariableValue var,
-                                                                  IElementType opSign, double comparedWith) {
+                                                                  IElementType opSign, Number comparedWith) {
     DfaConstValue knownConstantValue = memState.getConstantValue(var);
     Object knownValue = knownConstantValue == null ? null : knownConstantValue.getValue();
     if (knownValue instanceof Number) {
-      double knownDouble = ((Number)knownValue).doubleValue();
-      return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, knownDouble, knownDouble);
+      return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, (Number)knownValue, (Number)knownValue);
     }
 
     PsiType varType = var.getVariableType();
@@ -533,28 +532,36 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
   }
 
+  private static int compare(Number a, Number b) {
+    long aLong = a.longValue();
+    long bLong = b.longValue();
+    if (aLong != bLong) return aLong > bLong ? 1 : -1;
+
+    return Double.compare(a.doubleValue(), b.doubleValue());
+  }
+
   @Nullable
   private static DfaInstructionState[] checkComparisonWithKnownRange(BinopInstruction instruction,
                                                                      DataFlowRunner runner,
                                                                      DfaMemoryState memState,
                                                                      IElementType opSign,
-                                                                     double comparedWith,
-                                                                     double rangeMin,
-                                                                     double rangeMax) {
-    if (comparedWith < rangeMin || comparedWith > rangeMax) {
+                                                                     Number comparedWith,
+                                                                     Number rangeMin,
+                                                                     Number rangeMax) {
+    if (compare(comparedWith, rangeMin) < 0 || compare(comparedWith, rangeMax) > 0) {
       if (opSign == EQEQ) return alwaysFalse(instruction, runner, memState);
       if (opSign == NE) return alwaysTrue(instruction, runner, memState);
     }
 
-    if (opSign == LT && comparedWith <= rangeMin) return alwaysFalse(instruction, runner, memState);
-    if (opSign == LT && comparedWith > rangeMax) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && comparedWith >= rangeMax) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && comparedWith < rangeMin) return alwaysFalse(instruction, runner, memState);
+    if (opSign == LT && compare(comparedWith, rangeMin) <= 0) return alwaysFalse(instruction, runner, memState);
+    if (opSign == LT && compare(comparedWith, rangeMax) > 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LE && compare(comparedWith, rangeMax) >= 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LE && compare(comparedWith, rangeMin) < 0) return alwaysFalse(instruction, runner, memState);
 
-    if (opSign == GT && comparedWith >= rangeMax) return alwaysFalse(instruction, runner, memState);
-    if (opSign == GT && comparedWith < rangeMin) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && comparedWith <= rangeMin) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && comparedWith > rangeMax) return alwaysFalse(instruction, runner, memState);
+    if (opSign == GT && compare(comparedWith, rangeMax) >= 0) return alwaysFalse(instruction, runner, memState);
+    if (opSign == GT && compare(comparedWith, rangeMin) < 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GE && compare(comparedWith, rangeMin) <= 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GE && compare(comparedWith, rangeMax) > 0) return alwaysFalse(instruction, runner, memState);
 
     return null;
   }

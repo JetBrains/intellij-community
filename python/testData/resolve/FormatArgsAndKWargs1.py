@@ -1,1 +1,1 @@
-"I want to format{} as well as" <ref>"{kwd}".format("positional args", kwd="keyword")
+"I want to format{} as well as {<ref>kwd}".format("positional args", kwd="keyword")

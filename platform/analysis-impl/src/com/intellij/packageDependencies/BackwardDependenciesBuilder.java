@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Processor;
@@ -107,8 +108,12 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
           }
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              final PsiFile file = psiManager.findFile(virtualFile);
+              PsiFile file = psiManager.findFile(virtualFile);
               if (file != null) {
+                final PsiElement navigationElement = file.getNavigationElement();
+                if (navigationElement instanceof PsiFile) {
+                  file = (PsiFile)navigationElement;
+                }
                 final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
                 for (final PsiFile psiFile : dependencies.keySet()) {
                   if (dependencies.get(psiFile).contains(file)) {

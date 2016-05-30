@@ -17,7 +17,9 @@ package com.intellij.usages.actions;
 
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.impl.UsageViewImpl;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -27,13 +29,12 @@ public class RemoveUsageAction extends IncludeExcludeActionBase {
 
   @Override
   protected void process(Usage[] usages, UsageView usageView) {
-
-    Usage nextToSelect = null;
+    if (usages.length == 0) return;
+    Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
+    final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
 
     for (Usage usage : usages) {
-      Usage toSelect = getNextToSelect(usageView, usage);
       usageView.removeUsage(usage);
-      nextToSelect = toSelect;
     }
 
     if (nextToSelect != null) {

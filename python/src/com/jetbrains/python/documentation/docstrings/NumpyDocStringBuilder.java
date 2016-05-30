@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.psi.PyIndentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
   public static final String DEFAULT_SECTION_INDENT = "";
-  public static final String DEFAULT_CONTINUATION_INDENT = "    ";
+  public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;
   public static final char DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL = '-';
   
   private char myUnderlineSymbol = DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL;

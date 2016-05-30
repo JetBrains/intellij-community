@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
+import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Random;
 
@@ -53,7 +54,7 @@ public class GitRebaseEditorService {
   /**
    * Random number generator
    */
-  private static final Random oursRandom = new Random();
+  private static final Random oursRandom = new SecureRandom();
   /**
    * The prefix for rebase editors
    */

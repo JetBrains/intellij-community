@@ -402,6 +402,7 @@ public class HighlightControlFlowUtil {
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass, @NotNull PsiFile containingFile) {
     PsiElement element = psiElement;
     while (element != null) {
+      if (element instanceof PsiLambdaExpression) return false;
       if (element instanceof PsiClass) return !containingFile.getManager().areElementsEquivalent(element, containingClass);
       element = element.getParent();
     }

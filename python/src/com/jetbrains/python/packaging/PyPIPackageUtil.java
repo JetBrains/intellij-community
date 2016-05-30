@@ -65,9 +65,9 @@ public class PyPIPackageUtil {
 
   private XmlRpcClient myXmlRpcClient;
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
-  private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
+  private static Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
-  private Set<RepoPackage> myAdditionalPackageNames;
+  private static Set<RepoPackage> ourAdditionalPackageNames = new TreeSet<RepoPackage>();
   @Nullable private volatile Set<String> myPackageNames = null;
 
 
@@ -98,15 +98,19 @@ public class PyPIPackageUtil {
   @NotNull
   private static Pair<String, String> splitNameVersion(@NotNull final String pyPackage) {
     int dashInd = pyPackage.lastIndexOf("-");
-    if (dashInd >= 0) {
+    if (dashInd >= 0 && dashInd+1 < pyPackage.length()) {
       final String name = pyPackage.substring(0, dashInd);
-      final String version =  pyPackage.substring(dashInd);
+      final String version = pyPackage.substring(dashInd+1);
       if (StringUtil.containsAlphaCharacters(version)) {
         return Pair.create(pyPackage, null);
       }
       return Pair.create(name, version);
     }
     return Pair.create(pyPackage, null);
+  }
+
+  public static boolean isPyPIRepository(@Nullable final String repository) {
+    return repository != null && repository.startsWith(PYPI_HOST);
   }
 
   public void fillAdditionalPackages(@NotNull final String url) {
@@ -116,7 +120,7 @@ public class PyPIPackageUtil {
     for (String pyPackage : packagesList) {
       if (simpleIndex) {
         final Pair<String, String> nameVersion = splitNameVersion(pyPackage);
-        myAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
+        ourAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
       }
       else {
         try {
@@ -126,7 +130,7 @@ public class PyPIPackageUtil {
             final String packageName = matcher.group(1);
             final String packageVersion = matcher.group(2);
             if (!packageName.contains(" "))
-              myAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
+              ourAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
           }
         }
         catch (UnsupportedEncodingException e) {
@@ -137,18 +141,17 @@ public class PyPIPackageUtil {
   }
 
   public Set<RepoPackage> getAdditionalPackageNames() {
-    if (myAdditionalPackageNames == null || myAdditionalPackageNames.isEmpty()) {
-      myAdditionalPackageNames = new TreeSet<RepoPackage>();
+    if (ourAdditionalPackageNames.isEmpty()) {
       for (String url : PyPackageService.getInstance().additionalRepositories) {
         fillAdditionalPackages(url);
       }
     }
-    return myAdditionalPackageNames;
+    return ourAdditionalPackageNames;
   }
 
   public void clearPackagesCache() {
     PyPackageService.getInstance().PY_PACKAGES.clear();
-    if (myAdditionalPackageNames != null) myAdditionalPackageNames.clear();
+    ourAdditionalPackageNames.clear();
   }
 
   public void addPackageDetails(@NonNls String packageName, Hashtable details) {
@@ -167,7 +170,14 @@ public class PyPIPackageUtil {
       final Vector<String> params = new Vector<String>();
       params.add(packageName);
       try {
-        params.add(getPyPIPackages().get(packageName));
+        String version = getPyPIPackages().get(packageName);
+        if (version == null) {
+          final List<String> releases = getPackageReleases(packageName);
+          if (releases != null && !releases.isEmpty()) {
+            version = releases.get(0);
+          }
+        }
+        params.add(version);
         myXmlRpcClient.executeAsync("release_data", params, callback);
       }
       catch (Exception ignored) {
@@ -187,6 +197,7 @@ public class PyPIPackageUtil {
     if (releases == null) {
       final Vector<String> params = new Vector<String>();
       params.add(packageName);
+      params.add("show_hidden=True");
       myXmlRpcClient.executeAsync("package_releases", params, callback);
     }
     else {
@@ -195,9 +206,63 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  public List<String> getPackageReleases(@NonNls String packageName) {
+  public static List<String> getPackageReleases(@NonNls String packageName) {
     if (packageToReleases.containsKey(packageName)) return packageToReleases.get(packageName);
+    final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
+    if (!repositories.isEmpty()) {
+      for (String repository : repositories) {
+        repository = composeSimpleUrl(packageName, repository);
+
+        final List<String> versions = parsePackageVersions(repository);
+        if (!versions.isEmpty()) {
+          packageToReleases.put(packageName, versions);
+          return versions;
+        }
+      }
+    }
     return null;
+  }
+
+  private static List<String> parsePackageVersions(@NotNull final String repository) {
+    return HttpRequests.request(repository).connect(new HttpRequests.RequestProcessor<List<String>>() {
+      @Override
+      public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
+        final List<String> versions = new ArrayList<String>();
+        Reader reader = request.getReader();
+        new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
+          HTML.Tag myTag;
+
+          @Override
+          public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+            myTag = tag;
+          }
+
+          @Override
+          public void handleText(char[] data, int pos) {
+            if (myTag != null && "a".equals(myTag.toString())) {
+              String packageVersion = String.valueOf(data);
+              final String suffix = ".tar.gz";
+              if (!packageVersion.endsWith(suffix)) return;
+              packageVersion = StringUtil.trimEnd(packageVersion, suffix);
+              versions.add(splitNameVersion(packageVersion).second);
+            }
+          }
+
+        }, true);
+        return versions;
+      }
+    }, Collections.emptyList(), LOG);
+  }
+
+  @NotNull
+  private static String composeSimpleUrl(@NonNls @NotNull final String packageName, @NotNull final String rep) {
+    String suffix = "";
+    final String repository = StringUtil.trimEnd(rep, "/");
+    if (!repository.endsWith("+simple")) {
+      suffix = "/+simple";
+    }
+    suffix += "/" + packageName;
+    return repository + suffix;
   }
 
   private PyPIPackageUtil() {
@@ -282,7 +347,7 @@ public class PyPIPackageUtil {
         }, true);
         return packages;
       }
-    }, Collections.<String>emptyList(), LOG);
+    }, Collections.emptyList(), LOG);
   }
 
   public Collection<String> getPackageNames() {

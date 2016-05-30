@@ -42,24 +42,22 @@ public class JavaClassSupersImpl extends JavaClassSupers {
                                                  @NotNull GlobalSearchScope scope,
                                                  @NotNull PsiSubstitutor derivedSubstitutor) {
     if (InheritanceImplUtil.hasObjectQualifiedName(superClass)) return PsiSubstitutor.EMPTY;
-    if (!(derivedClass instanceof PsiTypeParameter)) {
-      List<PsiType> bounds = null;
-      if (superClass instanceof InferenceVariable) {
-        bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
+    List<PsiType> bounds = null;
+    if (superClass instanceof InferenceVariable) {
+      bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
+    }
+    else if (superClass instanceof PsiTypeParameter) {
+      final PsiType lowerBound = superClass.getUserData(InferenceSession.LOWER_BOUND);
+      if (lowerBound != null) {
+        bounds = Collections.singletonList(lowerBound);
       }
-      else if (superClass instanceof PsiTypeParameter) {
-        final PsiType lowerBound = superClass.getUserData(InferenceSession.LOWER_BOUND);
+    }
+    if (bounds != null) {
+      for (PsiType lowerBound : bounds) {
         if (lowerBound != null) {
-          bounds = Collections.singletonList(lowerBound);
-        }
-      }
-      if (bounds != null) {
-        for (PsiType lowerBound : bounds) {
-          if (lowerBound != null) {
-            final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
-            if (substitutor != null) {
-              return substitutor;
-            }
+          final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
+          if (substitutor != null) {
+            return substitutor;
           }
         }
       }

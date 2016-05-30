@@ -82,6 +82,13 @@ def _update_type_map():
             pass  #django may not be installed
 
         try:
+            from django.forms import BaseForm
+            _TYPE_MAP.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
+            #we should put it before instance resolver
+        except:
+            pass  #django may not be installed
+
+        try:
             from collections import deque
             _TYPE_MAP.append((deque, pydevd_resolver.dequeResolver))
         except:
@@ -181,6 +188,11 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
 
     _type, typeName, resolver = get_type(v)
 
+    do_not_call_value_str = False
+    if isinstance(resolver, pydevd_resolver.djangoFormResolver.__class__):
+        # do not call str() of Django form objects because has side effects and breaks self.errors
+        do_not_call_value_str = True
+
     try:
         if hasattr(v, '__class__'):
             if v.__class__ == frame_type:
@@ -204,7 +216,11 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
                         cName = cName[:-2]
                 except:
                     cName = str(v.__class__)
-                value = '%s: %s' % (cName, v)
+
+                if do_not_call_value_str:
+                    value = '%s: %r' % (cName, v)
+                else:
+                    value = '%s: %s' % (cName, v)
         else:
             value = str(v)
     except:

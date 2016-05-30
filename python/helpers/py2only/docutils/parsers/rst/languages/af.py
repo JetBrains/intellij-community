@@ -1,4 +1,4 @@
-# $Id: af.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: af.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Jannie Hofmeyr <jhsh@sun.ac.za>
 # Copyright: This module has been placed in the public domain.
 
@@ -18,6 +18,7 @@ __docformat__ = 'reStructuredText'
 directives = {
       'aandag': 'attention',
       'versigtig': 'caution',
+      'code (translation required)': 'code',
       'gevaar': 'danger',
       'fout': 'error',
       'wenk': 'hint',
@@ -29,6 +30,7 @@ directives = {
       'kantstreep': 'sidebar',
       'onderwerp': 'topic',
       'lynblok': 'line-block',
+      'math (translation required)': 'math',
       'parsed-literal (translation required)': 'parsed-literal',
       'rubriek': 'rubric',
       'epigraaf': 'epigraph',
@@ -72,6 +74,7 @@ roles = {
     'ab': 'abbreviation',
     'akroniem': 'acronym',
     'ac': 'acronym',
+    u'code (translation required)': 'code',
     'indeks': 'index',
     'i': 'index',
     'voetskrif': 'subscript',
@@ -88,6 +91,7 @@ roles = {
     'nadruk': 'emphasis',
     'sterk': 'strong',
     'literal (translation required)': 'literal',
+    'math (translation required)': 'math',
     'benoemde verwysing': 'named-reference',
     'anonieme verwysing': 'anonymous-reference',
     'voetnootverwysing': 'footnote-reference',

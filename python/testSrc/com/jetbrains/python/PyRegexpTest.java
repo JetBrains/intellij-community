@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
+import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -158,7 +159,20 @@ public class PyRegexpTest extends PyTestCase {
                        "(foomissing_valuebaz$)");
   }
 
-  private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
+  // PY-18881
+  public void testVerboseSyntaxWithShortFlag() {
+    final PsiElement element =
+      doTestInjectedText("import re\n" +
+                         "\n" +
+                         "re.search(\"\"\"\n" +
+                         ".* # <caret>comment\n" +
+                         "\"\"\", re.I | re.M | re.X)",
+                         "\n.* # comment\n");
+    assertEquals(element.getLanguage(), PythonVerboseRegexpLanguage.INSTANCE);
+  }
+
+  @NotNull
+  private PsiElement doTestInjectedText(@NotNull String text, @NotNull String expected) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
     final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElementAtCaret());
@@ -168,6 +182,7 @@ public class PyRegexpTest extends PyTestCase {
     assertFalse(files.isEmpty());
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
+    return injected;
   }
 
   @NotNull

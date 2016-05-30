@@ -26,8 +26,11 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,27 +244,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                           @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final QualifiedName calleeName = target.getCalleeName();
-      if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
-        // TODO: Create stubs for namedtuple for preventing switch from stub to AST
-        final PyExpression value = target.findAssignedValue();
-        if (value instanceof PyCallExpression) {
-          final PyCallExpression call = (PyCallExpression)value;
-          final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
-          if (callee != null) {
-            final PyCallable callable = callee.getCallable();
-            if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
-              return PyNamedTupleType.fromCall(call, context, 1);
-            }
-          }
-        }
+      final PyTargetExpressionStub stub = target.getStub();
+
+      if (stub != null) {
+        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), 1);
+      } else {
+        return getNamedTupleTypeFromAST(target, context, 1);
       }
     }
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      final PyFunction function = (PyFunction)referenceTarget;
-      if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
-        return PyNamedTupleType.fromCall((PyCallExpression)anchor, context, 2);
-      }
+      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, 2);
     }
     return null;
   }
@@ -320,5 +312,43 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     return result;
+  }
+
+  @Nullable
+  private static PyType getNamedTupleTypeFromStub(@NotNull PsiElement referenceTarget,
+                                                  @Nullable PyNamedTupleStub stub,
+                                                  int definitionLevel) {
+    if (stub == null) {
+      return null;
+    }
+
+    final PyClass tupleClass = PyBuiltinCache.getInstance(referenceTarget).getClass(PyNames.FAKE_NAMEDTUPLE);
+    if (tupleClass == null) {
+      return null;
+    }
+
+    return new PyNamedTupleType(tupleClass, referenceTarget, stub.getName(), stub.getFields(), definitionLevel);
+  }
+
+  @Nullable
+  private static PyType getNamedTupleTypeFromAST(@NotNull PyTargetExpression expression,
+                                                 @NotNull TypeEvalContext context,
+                                                 int definitionLevel) {
+    if (context.maySwitchToAST(expression)) {
+      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyType getNamedTupleTypeFromAST(@NotNull PyCallExpression expression,
+                                                 @NotNull TypeEvalContext context,
+                                                 int definitionLevel) {
+    if (context.maySwitchToAST(expression)) {
+      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
+    }
+
+    return null;
   }
 }

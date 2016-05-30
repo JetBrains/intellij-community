@@ -10,7 +10,7 @@ import java.util.Collections;
  */
 public class RepoPackage implements Comparable {
   private final String myName;
-  private final String myRepoUrl;
+  @Nullable final String myRepoUrl;
   @Nullable final String myLatestVersion;
   private final Collection<String> myKeywords;
 
@@ -18,11 +18,11 @@ public class RepoPackage implements Comparable {
    this(name, repoUrl, null);
   }
 
-  public RepoPackage(String name, String repoUrl, @Nullable String latestVersion) {
-    this(name, repoUrl, latestVersion, Collections.<String>emptyList());
+  public RepoPackage(String name, @Nullable final String repoUrl, @Nullable String latestVersion) {
+    this(name, repoUrl, latestVersion, Collections.emptyList());
   }
 
-  public RepoPackage(String name, String repoUrl, @Nullable String latestVersion, Collection<String> keywords) {
+  public RepoPackage(String name, @Nullable final String repoUrl, @Nullable String latestVersion, Collection<String> keywords) {
     myName = name;
     myRepoUrl = repoUrl;
     myLatestVersion = latestVersion;
@@ -33,6 +33,7 @@ public class RepoPackage implements Comparable {
     return myName;
   }
 
+  @Nullable
   public String getRepoUrl() {
     return myRepoUrl;
   }

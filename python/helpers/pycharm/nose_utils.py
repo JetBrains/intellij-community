@@ -55,7 +55,10 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def _is_failure(self, test):
-    return isinstance(test.test, Failure)
+    try:
+      return isinstance(test.test, Failure)
+    except AttributeError:
+      return False
 
   def addError(self, test, err):
     exctype, value, tb = err

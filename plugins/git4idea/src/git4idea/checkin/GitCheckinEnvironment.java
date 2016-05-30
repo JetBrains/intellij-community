@@ -72,8 +72,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
@@ -115,7 +113,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
-      GitRepository repository = assertNotNull(manager.getRepositoryForRoot(root));
+      GitRepository repository = manager.getRepositoryForRoot(root);
+      if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
+        log.warn("Unregistered repository: " + root);
+        continue;
+      }
       File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
       File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
       try {

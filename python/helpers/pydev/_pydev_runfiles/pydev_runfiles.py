@@ -14,23 +14,23 @@ import time
 class Configuration:
 
     def __init__(
-        self,
-        files_or_dirs='',
-        verbosity=2,
-        include_tests=None,
-        tests=None,
-        port=None,
-        files_to_tests=None,
-        jobs=1,
-        split_jobs='tests',
-        coverage_output_dir=None,
-        coverage_include=None,
-        coverage_output_file=None,
-        exclude_files=None,
-        exclude_tests=None,
-        include_files=None,
-        django=False,
-        ):
+            self,
+            files_or_dirs='',
+            verbosity=2,
+            include_tests=None,
+            tests=None,
+            port=None,
+            files_to_tests=None,
+            jobs=1,
+            split_jobs='tests',
+            coverage_output_dir=None,
+            coverage_include=None,
+            coverage_output_file=None,
+            exclude_files=None,
+            exclude_tests=None,
+            include_files=None,
+            django=False,
+    ):
         self.files_or_dirs = files_or_dirs
         self.verbosity = verbosity
         self.include_tests = include_tests
@@ -80,26 +80,26 @@ class Configuration:
 
  - django: %s
 ''' % (
-        self.files_or_dirs,
-        self.verbosity,
-        self.tests,
-        self.port,
-        self.files_to_tests,
-        self.jobs,
-        self.split_jobs,
+            self.files_or_dirs,
+            self.verbosity,
+            self.tests,
+            self.port,
+            self.files_to_tests,
+            self.jobs,
+            self.split_jobs,
 
-        self.include_files,
-        self.include_tests,
+            self.include_files,
+            self.include_tests,
 
-        self.exclude_files,
-        self.exclude_tests,
+            self.exclude_files,
+            self.exclude_tests,
 
-        self.coverage_output_dir,
-        self.coverage_include,
-        self.coverage_output_file,
+            self.coverage_output_dir,
+            self.coverage_include,
+            self.coverage_output_file,
 
-        self.django,
-    )
+            self.django,
+        )
 
 
 #=======================================================================================================================
@@ -507,7 +507,7 @@ class PydevTestRunner(object):
                     add = imp[len(s) + 1:]
                     if add:
                         choices.append(add)
-                    #sys.stdout.write(' ' + add + ' ')
+                        #sys.stdout.write(' ' + add + ' ')
 
             if not choices:
                 sys.stdout.write('PYTHONPATH not found for file: %s\n' % imp)
@@ -803,29 +803,51 @@ class PydevTestRunner(object):
 
 
 try:
-    from django.test.simple import DjangoTestSuiteRunner
-except:
-    class DjangoTestSuiteRunner:
-        def __init__(self):
+    # django >= 1.8
+    import django
+    from django.test.runner import DiscoverRunner
+
+    class MyDjangoTestSuiteRunner(DiscoverRunner):
+
+        def __init__(self, on_run_suite):
+            django.setup()
+            DiscoverRunner.__init__(self)
+            self.on_run_suite = on_run_suite
+
+        def build_suite(self, *args, **kwargs):
             pass
 
-        def run_tests(self, *args, **kwargs):
-            raise AssertionError("Unable to run suite with DjangoTestSuiteRunner because it couldn't be imported.")
+        def suite_result(self, *args, **kwargs):
+            pass
 
-class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
+        def run_suite(self, *args, **kwargs):
+            self.on_run_suite()
+except:
+    # django < 1.8
+    try:
+        from django.test.simple import DjangoTestSuiteRunner
+    except:
+        class DjangoTestSuiteRunner:
+            def __init__(self):
+                pass
 
-    def __init__(self, on_run_suite):
-        DjangoTestSuiteRunner.__init__(self)
-        self.on_run_suite = on_run_suite
+            def run_tests(self, *args, **kwargs):
+                raise AssertionError("Unable to run suite with django.test.runner.DiscoverRunner nor django.test.simple.DjangoTestSuiteRunner because it couldn't be imported.")
 
-    def build_suite(self, *args, **kwargs):
-        pass
+    class MyDjangoTestSuiteRunner(DjangoTestSuiteRunner):
 
-    def suite_result(self, *args, **kwargs):
-        pass
+        def __init__(self, on_run_suite):
+            DjangoTestSuiteRunner.__init__(self)
+            self.on_run_suite = on_run_suite
 
-    def run_suite(self, *args, **kwargs):
-        self.on_run_suite()
+        def build_suite(self, *args, **kwargs):
+            pass
+
+        def suite_result(self, *args, **kwargs):
+            pass
+
+        def run_suite(self, *args, **kwargs):
+            self.on_run_suite()
 
 
 #=======================================================================================================================

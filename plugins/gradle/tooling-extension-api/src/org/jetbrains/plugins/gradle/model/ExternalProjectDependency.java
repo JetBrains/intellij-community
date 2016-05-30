@@ -26,5 +26,7 @@ public interface ExternalProjectDependency extends ExternalDependency {
 
   String getProjectPath();
 
+  String getConfigurationName();
+
   Collection<File> getProjectDependencyArtifacts();
 }

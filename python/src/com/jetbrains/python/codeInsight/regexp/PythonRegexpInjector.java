@@ -134,7 +134,8 @@ public class PythonRegexpInjector implements MultiHostInjector {
       return isVerbose(keywordArgument.getValueExpression());
     }
     if (expr instanceof PyReferenceExpression) {
-      return "VERBOSE".equals(((PyReferenceExpression)expr).getReferencedName());
+      final String flagName = ((PyReferenceExpression)expr).getReferencedName();
+      return "VERBOSE".equals(flagName) || "X".equals(flagName);
     }
     if (expr instanceof PyBinaryExpression) {
       return isVerbose(((PyBinaryExpression)expr).getLeftExpression()) || isVerbose(((PyBinaryExpression)expr).getRightExpression());

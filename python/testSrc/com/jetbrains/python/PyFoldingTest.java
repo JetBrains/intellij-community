@@ -57,4 +57,13 @@ public class PyFoldingTest extends PyTestCase {
     doTest();
   }
 
+  public void testNestedFolding() {
+    doTest();
+  }
+
+  //PY-18928
+  public void testCustomFoldingWithComments() {
+    doTest();
+  }
+
 }

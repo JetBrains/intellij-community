@@ -844,6 +844,7 @@ class PyDB:
     def patch_threads(self):
         try:
             # not available in jython!
+            import threading
             threading.settrace(self.trace_dispatch)  # for all future threads
         except:
             pass

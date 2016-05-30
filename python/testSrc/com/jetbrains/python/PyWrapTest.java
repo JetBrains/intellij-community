@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -63,8 +64,21 @@ public class PyWrapTest extends PyTestCase {
     doTest("=None");
   }
 
-  public void testWrapInStringLiteral() {  // PY-4947
+  // PY-4947
+  public void testWrapInStringLiteral() {
+    myFixture.setCaresAboutInjection(false);
     doTest(" AND field");
+  }
+
+  public void testWrapInInjectedStringLiteral() {
+    myFixture.setCaresAboutInjection(false);
+    myFixture.configureByFile("wrap/WrapInStringLiteral.py");
+
+    final int stringLiteralOffset = 114;
+    assertNotNull(InjectedLanguageUtil.findInjectedElementNoCommit(myFixture.getFile(), stringLiteralOffset + "\"".length()));
+
+    myFixture.type(" AND field");
+    myFixture.checkResultByFile("wrap/WrapInStringLiteral.after.py", true);
   }
 
   public void testDontWrapStartOfString() { // PY-9436

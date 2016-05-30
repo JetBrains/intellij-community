@@ -216,11 +216,23 @@ public class LambdaUtil {
   public static List<HierarchicalMethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       final List<HierarchicalMethodSignature> methods = new ArrayList<HierarchicalMethodSignature>();
+      final Map<MethodSignature, Set<PsiMethod>> overrideEquivalents = PsiSuperMethodUtil.collectOverrideEquivalents(psiClass);
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
+        final Set<PsiMethod> equivalentMethods = overrideEquivalents.get(signature);
+        if (equivalentMethods != null && equivalentMethods.size() > 1) {
+          boolean hasNonAbstractOverrideEquivalent = false;
+          for (PsiMethod method : equivalentMethods) {
+            if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(method, psiMethod)) {
+              hasNonAbstractOverrideEquivalent = true;
+              break;
+            }
+          }
+          if (hasNonAbstractOverrideEquivalent) continue;
+        }
         if (!overridesPublicObjectMethod(signature)) {
           methods.add(signature);
         }

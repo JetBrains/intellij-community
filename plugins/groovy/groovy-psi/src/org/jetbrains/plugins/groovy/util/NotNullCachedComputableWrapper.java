@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard(NotNullCachedComputableWrapper.class.getName());
 
-  private NotNullComputable<T> myComputable;
-  private volatile T myValue;
+  private volatile NotNullComputable<T> myComputable;
+  private final AtomicReference<T> myValueRef = new AtomicReference<>();
 
   public NotNullCachedComputableWrapper(@NotNull NotNullComputable<T> computable) {
     myComputable = computable;
@@ -35,27 +37,30 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
   @NotNull
   @Override
   public T compute() {
-    T result = myValue;
-    if (result != null) return result;
+    while (true) {
+      T value = myValueRef.get();
+      if (value != null) return value;                  // value already computed and cached
 
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      result = myValue;
-      if (result == null) {
-        final RecursionGuard.StackStamp stamp = ourGuard.markStack();
-        result = myComputable.compute();
-        if (stamp.mayCacheNow()) {
-          myValue = result;
-          myComputable = null;  // allow gc to clean this up
+      final NotNullComputable<T> computable = myComputable;
+      if (computable == null) continue;                 // computable is null only after some thread succeeds CAS
+
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      value = computable.compute();
+      if (stamp.mayCacheNow()) {
+        if (myValueRef.compareAndSet(null, value)) {    // try to cache value
+          myComputable = null;                          // if ok, allow gc to clean computable
+          return value;
         }
+        // if CAS failed then other thread already set this value => loop & get value from reference
+      }
+      else {
+        return value;                                   // recursion detected
       }
     }
-
-    return result;
   }
 
   @TestOnly
   public boolean isComputed() {
-    return myValue != null;
+    return myValueRef.get() != null;
   }
 }

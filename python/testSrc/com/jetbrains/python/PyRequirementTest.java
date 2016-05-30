@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -98,6 +99,15 @@ public class PyRequirementTest extends PyTestCase {
   public void testGitRevisionWithSlash() {
     assertEquals(new PyRequirement("django", null, "git+git://github.com/django/django.git@stable/1.5.x", false),
                  PyRequirement.fromString("git+git://github.com/django/django.git@stable/1.5.x"));
+  }
+
+  // PY-18543
+  public void testRecursiveRequirement() {
+    final VirtualFile requirementsFile = getVirtualFileByName(getTestDataPath() + "/requirement/recursive/requirements.txt");
+    assertNotNull(requirementsFile);
+
+    assertEquals(list(new PyRequirement("bitly_api"), new PyRequirement("numpy")),
+                 PyRequirement.parse(requirementsFile));
   }
 
   private static <T> List<T> list(T... xs) {

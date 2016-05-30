@@ -108,7 +108,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static PsiTypeLookupItem createNewArrayItem(PsiElement context, PsiType type) {
-    return PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), context).setShowPackage();
+    return PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(GenericsUtil.getVariableTypeByExpressionType(type)), context).setShowPackage();
   }
 
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {

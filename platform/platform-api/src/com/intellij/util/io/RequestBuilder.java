@@ -49,6 +49,7 @@ public final class RequestBuilder {
   HostnameVerifier myHostnameVerifier;
   String myUserAgent;
   String myAccept;
+  HttpRequests.ConnectionTuner myTuner;
 
   HTTPMethod myMethod;
 
@@ -101,6 +102,11 @@ public final class RequestBuilder {
   @NotNull
   public RequestBuilder userAgent(@Nullable String userAgent) {
     myUserAgent = userAgent;
+    return this;
+  }
+  
+  public RequestBuilder tuner(@Nullable HttpRequests.ConnectionTuner tuner) {
+    myTuner = tuner;
     return this;
   }
 

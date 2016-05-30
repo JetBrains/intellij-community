@@ -35,10 +35,7 @@ import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -394,10 +391,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
           projects.add(projectDataDataNode);
         }
       }
-      catch (ClassNotFoundException e) {
-        IOException ioException = new IOException();
-        ioException.initCause(e);
-        throw ioException;
+      catch (Exception e) {
+        throw new IOException(e);
       }
       finally {
         os.close();

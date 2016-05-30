@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     createPredefinedScopeDescriptors(model);
 
-    final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getCustomScopes();
+    final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getFilteredScopes();
     if (!changeLists.isEmpty()) {
       model.addElement(new ScopeSeparator("VCS Scopes"));
       for (NamedScope changeListScope : changeLists) {

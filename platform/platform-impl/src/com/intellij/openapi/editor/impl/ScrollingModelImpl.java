@@ -59,6 +59,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean myAnimationDisabled = false;
   private final DocumentAdapter myDocumentListener;
+  private final ChangeListener myViewportChangeListener;
   private int myAccumulatedXOffset = -1;
   private int myAccumulatedYOffset = -1;
   private boolean myAccumulateViewportChanges;
@@ -67,7 +68,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
 
-    myEditor.getScrollPane().getViewport().addChangeListener(new ChangeListener() {
+    myViewportChangeListener = new ChangeListener() {
       private Rectangle myLastViewRect;
 
       @Override
@@ -85,7 +86,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
           listener.visibleAreaChanged(visibleAreaEvent);
         }
       }
-    });
+    };
+    myEditor.getScrollPane().getViewport().addChangeListener(myViewportChangeListener);
 
     myDocumentListener = new DocumentAdapter() {
       @Override
@@ -404,6 +406,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   public void dispose() {
     myEditor.getDocument().removeDocumentListener(myDocumentListener);
+    myEditor.getScrollPane().getViewport().removeChangeListener(myViewportChangeListener);
   }
 
   public void beforeModalityStateChanged() {

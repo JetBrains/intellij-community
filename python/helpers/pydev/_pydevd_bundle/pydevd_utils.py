@@ -132,6 +132,18 @@ def _get_project_roots(project_roots_cache=[]):
     return project_roots_cache[-1] # returns the project roots with case normalized
 
 
+def _get_library_roots(library_roots_cache=[]):
+    # Note: the project_roots_cache is the same instance among the many calls to the method
+    if not library_roots_cache:
+        roots = os.getenv('LIBRARY_ROOTS', '').split(os.pathsep)
+        pydev_log.debug("LIBRARY_ROOTS %s\n" % roots)
+        new_roots = []
+        for root in roots:
+            new_roots.append(os.path.normcase(root))
+        library_roots_cache.append(new_roots)
+    return library_roots_cache[-1] # returns the project roots with case normalized
+
+
 def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
     # Note: the filename_to_not_in_scope_cache is the same instance among the many calls to the method
     try:
@@ -146,6 +158,13 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
         else: # for else (only called if the break wasn't reached).
             filename_to_not_in_scope_cache[filename] = True
 
+        if not filename_to_not_in_scope_cache[filename]:
+            # additional check if interpreter is situated in a project directory
+            library_roots = _get_library_roots()
+            for root in library_roots:
+                if root != '' and filename.startswith(root):
+                    filename_to_not_in_scope_cache[filename] = True
+
         # at this point it must be loaded.
         return filename_to_not_in_scope_cache[filename]
 
@@ -155,12 +174,15 @@ def is_filter_enabled():
 
 
 def is_filter_libraries():
-    return os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+    is_filter = os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+    pydev_log.debug("PYDEVD_FILTER_LIBRARIES %s\n" % is_filter)
+    return is_filter
 
 
 def _get_stepping_filters(filters_cache=[]):
     if not filters_cache:
         filters = os.getenv('PYDEVD_FILTERS', '').split(';')
+        pydev_log.debug("PYDEVD_FILTERS %s\n" % filters)
         new_filters = []
         for new_filter in filters:
             new_filters.append(new_filter)

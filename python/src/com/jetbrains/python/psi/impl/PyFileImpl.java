@@ -426,7 +426,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     final List<String> allNames = getDunderAll();
     if (allNames != null && allNames.contains(name)) {
-      return ResolveResultList.to(findExportedName(PyNames.ALL));
+      final PsiElement allElement = findExportedName(PyNames.ALL);
+      final ResolveResultList allFallbackResults = new ResolveResultList();
+      allFallbackResults.poke(allElement, RatedResolveResult.RATE_LOW);
+      return allFallbackResults;
     }
     return Collections.emptyList();
   }

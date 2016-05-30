@@ -209,6 +209,36 @@ public class UpdateStrategyTest {
     assertEquals("144.888", build.getNumber().toString());
   }
 
+  @Test
+  public void test162EAP() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-145.597");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    settings.setKnownChannelIds(Arrays.asList("IDEA_EAP", "IDEA_Release"));
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(2016, currentBuild, InfoReader.read("idea-16.2-eap.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("162.128", build.getNumber().toString());
+  }
+
+  @Test
+  public void test162Release() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-145.597");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
+    settings.setKnownChannelIds(Arrays.asList("IDEA_EAP", "IDEA_Release"));
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(2016, currentBuild, InfoReader.read("idea-16.2-release.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("162.211", build.getNumber().toString());
+  }
+
   private static class TestUpdateSettings implements UserUpdateSettings {
     private final ChannelStatus myChannelStatus;
     private final List<String> myIgnoredBuildNumbers;

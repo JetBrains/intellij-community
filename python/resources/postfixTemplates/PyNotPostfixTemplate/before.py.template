@@ -1,3 +1,2 @@
-def f(a) {
-  return <spot>a</spot>$key
-}
+def f(a):
+    return <spot>a</spot>$key

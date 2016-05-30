@@ -5,6 +5,6 @@ import java.util.List;
 class Sample {
   List<Exception> foo = new ArrayList<>();
   {
-      foo.forEach(Exception::printStackTrace);
+      foo.forEach(Throwable::printStackTrace);
   }
 }

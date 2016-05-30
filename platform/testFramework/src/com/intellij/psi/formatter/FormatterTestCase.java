@@ -175,7 +175,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     return false;
   }
 
-  private void checkDocument(final PsiFile file, final String text, String textAfter) {
+  protected void checkDocument(final PsiFile file, final String text, String textAfter) {
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     final EditorImpl editor;
 

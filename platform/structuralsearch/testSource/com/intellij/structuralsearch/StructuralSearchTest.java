@@ -1186,6 +1186,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(source2,
                                   "[script(\"" +
                                   "import com.intellij.psi.*\n" +
+                                  "__context__ instanceof PsiElement &&" +
                                   "a instanceof PsiClass &&" +
                                   "b instanceof PsiTypeElement &&" +
                                   "c instanceof PsiField &&" +
@@ -1195,8 +1196,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "g instanceof PsiTypeElement &&" +
                                   "h instanceof PsiLocalVariable &&" +
                                   "i instanceof PsiPolyadicExpression &&" +
-                                  "j instanceof PsiReferenceExpression" +
-                                  "\n\")]" +
+                                  "j instanceof PsiReferenceExpression\n" +
+                                  "\")]" +
                                   "class '_a {" +
                                   "  '_b '_c = '_d;" +
                                   "  '_e '_f() {" +

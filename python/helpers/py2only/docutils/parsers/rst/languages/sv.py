@@ -1,4 +1,4 @@
-# $Id: sv.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: sv.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Adam Chodorowski <chodorowski@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
@@ -17,6 +17,7 @@ __docformat__ = 'reStructuredText'
 directives = {
       u'observera': 'attention',
       u'caution (translation required)': 'caution',
+      u'code (translation required)': 'code',
       u'fara': 'danger',
       u'fel': 'error',
       u'v\u00e4gledning': 'hint',
@@ -43,6 +44,7 @@ directives = {
       u'csv-table (translation required)': 'csv-table',
       u'list-table (translation required)': 'list-table',
       u'meta': 'meta',
+      'math (translation required)': 'math',
       # u'bildkarta': 'imagemap',   # FIXME: Translation might be too literal.
       u'bild': 'image',
       u'figur': 'figure',
@@ -69,6 +71,7 @@ mapping."""
 roles = {
       u'abbreviation (translation required)': 'abbreviation',
       u'acronym (translation required)': 'acronym',
+      u'code (translation required)': 'code',
       u'index (translation required)': 'index',
       u'subscript (translation required)': 'subscript',
       u'superscript (translation required)': 'superscript',
@@ -78,6 +81,7 @@ roles = {
       u'emphasis (translation required)': 'emphasis',
       u'strong (translation required)': 'strong',
       u'literal (translation required)': 'literal',
+    'math (translation required)': 'math',
       u'named-reference (translation required)': 'named-reference',
       u'anonymous-reference (translation required)': 'anonymous-reference',
       u'footnote-reference (translation required)': 'footnote-reference',

@@ -247,7 +247,13 @@ abstract class GitBranchOperation {
   protected void updateRecentBranch() {
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
-      mySettings.setRecentBranchOfRepository(repository.getRoot().getPath(), myCurrentHeads.get(repository));
+      String currentHead = myCurrentHeads.get(repository);
+      if (currentHead != null) {
+        mySettings.setRecentBranchOfRepository(repository.getRoot().getPath(), currentHead);
+      }
+      else {
+        LOG.error("Current head is not known for " + repository.getRoot().getPath());
+      }
     }
     else {
       String recentCommonBranch = getRecentCommonBranch();

@@ -239,8 +239,7 @@ class CompoundRendererConfigurable extends JPanel {
     myTable = new JBTable(tableModel);
     myListChildrenEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "NamedChildrenConfigurable");
 
-    final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
-    exprColumn.setCellEditor(new AbstractTableCellEditor() {
+    AbstractTableCellEditor editor = new AbstractTableCellEditor() {
       @Override
       public Object getCellEditorValue() {
         return myListChildrenEditor.getText();
@@ -251,7 +250,14 @@ class CompoundRendererConfigurable extends JPanel {
         myListChildrenEditor.setText((TextWithImports)value);
         return myListChildrenEditor;
       }
-    });
+    };
+    myListChildrenEditor.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    myListChildrenEditor.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+    TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
+    exprColumn.setCellEditor(editor);
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
       @NotNull
       @Override

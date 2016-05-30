@@ -30,6 +30,6 @@ public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   }
 
   public static boolean isAvailable() {
-    return Registry.is("ide.new.welcome.screen.force") || PlatformUtils.isJetBrainsProduct();
+    return Registry.is("ide.new.welcome.screen.force") || (PlatformUtils.isJetBrainsProduct() && !PlatformUtils.isDatabaseIDE());
   }
 }

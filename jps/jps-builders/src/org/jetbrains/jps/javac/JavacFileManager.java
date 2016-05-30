@@ -25,6 +25,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -175,7 +176,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
     final JavaFileObject fo = super.getJavaFileForInput(location, className, kind);
-    if (fo == null) {
+    if (fo == null && !"module-info".equals(className)) {
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
     }
@@ -335,5 +336,22 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
 
   public Context getContext() {
     return myContext;
+  }
+
+  private static Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
+
+  JavaFileManager getApiCallHandler(Method method) {
+    Boolean isImplemented = ourImplStatus.get(method);
+    if (isImplemented == null) {
+      try {
+        JavacFileManager.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
+        isImplemented = Boolean.TRUE;
+      }
+      catch (NoSuchMethodException e) {
+        isImplemented = Boolean.FALSE;
+      }
+      ourImplStatus.put(method, isImplemented);
+    }
+    return isImplemented? this : getStdManager();
   }
 }

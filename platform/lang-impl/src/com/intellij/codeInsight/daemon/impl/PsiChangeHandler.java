@@ -201,8 +201,15 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
     }
 
     if (!child.isValid()) return;
-    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+
+    PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    Document document = pdm.getCachedDocument(file);
     if (document != null) {
+      if (pdm.getSynchronizer().getTransaction(document) == null) {
+        myFileStatusMap.markAllFilesDirty(child);
+        return;
+      }
+
       List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
       if (toUpdate == null) {
         toUpdate = new SmartList<>();

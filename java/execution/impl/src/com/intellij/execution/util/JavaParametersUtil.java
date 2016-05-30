@@ -165,7 +165,9 @@ public class JavaParametersUtil {
       throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
     }
 
-    final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
+    final JavaSdk javaSdk = JavaSdk.getInstance();
+    final String versionString = javaSdk.getVersionString(jreHome);
+    final Sdk jdk = javaSdk.createJdk(versionString != null ? versionString : "", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
     return jdk;
   }

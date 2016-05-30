@@ -15,7 +15,7 @@ setProperty("pythonCommunityHome", "$home/python")
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonCommunityHome/python-community-ide-resources/resources/idea/PyCharmCoreApplicationInfo.xml", collapseAttributes: "true")
 
-setProperty("system_selector", "PyCharmCE${p("component.version.major")}.${p("component.version.minor")}")
+setProperty("system_selector", "PyCharmCE${versionSelector()}")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 

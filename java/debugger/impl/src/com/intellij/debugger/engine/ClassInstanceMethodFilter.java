@@ -43,7 +43,7 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter imple
   }
 
   @Override
-  public int onReached(SuspendContextImpl context) {
+  public int onReached(SuspendContextImpl context, RequestHint hint) {
     StackFrameProxyImpl proxy = context.getFrameProxy();
     if (proxy != null) {
       try {
@@ -58,6 +58,7 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter imple
             breakpoint.setInstanceFiltersEnabled(true);
             breakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
             breakpoint.createRequest(debugProcess);
+            breakpoint.setRequestHint(hint);
             debugProcess.setRunToCursorBreakpoint(breakpoint);
             return RequestHint.RESUME;
           }

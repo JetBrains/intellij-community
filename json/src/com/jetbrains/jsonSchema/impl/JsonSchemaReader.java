@@ -83,7 +83,8 @@ public class JsonSchemaReader {
       if (current.getRef() != null) {
         final JsonSchemaObject definition = findDefinition(current.getRef(), root, ids);
         if (definition == null) {
-          throw new RuntimeException("Can not find definition: " + current.getRef());
+          current.setRef(null);
+          continue;
         }
         if (definition.getRef() != null && !"#".equals(definition.getRef())) {
           queue.addFirst(current);
@@ -107,6 +108,8 @@ public class JsonSchemaReader {
     }
     final JsonSchemaObject found = ids.get(ref);
     if (found != null) return found;
+    // temporal solution for now: do not parse non-local references completely, just ignore them and do not use for check
+    if (ref.indexOf("#/") > 0) return null;
     if (!ref.startsWith("#/")) throw new RuntimeException("Non-relative reference: " + ref);
     ref = ref.substring(2);
 

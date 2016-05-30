@@ -241,10 +241,15 @@ public class DvcsUtil {
    */
   @NotNull
   public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
+    return tryLoadFile(file, null);
+  }
+
+  @NotNull
+  public static String tryLoadFile(@NotNull final File file, @Nullable String encoding) throws RepoStateException {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file, encoding)).trim();
       }
     }, file);
   }
@@ -252,8 +257,14 @@ public class DvcsUtil {
   @Nullable
   @Contract("_ , !null -> !null")
   public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+    return tryLoadFileOrReturn(file, defaultValue, null);
+  }
+
+  @Nullable
+  @Contract("_ , !null, _ -> !null")
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue, @Nullable String encoding) {
     try {
-      return tryLoadFile(file);
+      return tryLoadFile(file, encoding);
     }
     catch (RepoStateException e) {
       LOG.error(e);

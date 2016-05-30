@@ -100,7 +100,7 @@ object UpdateChecker {
 
   @JvmStatic
   private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
-
+  
   /**
    * For scheduled update checks.
    */
@@ -656,7 +656,7 @@ object UpdateChecker {
 
     return null
   }
-
+  
   @JvmStatic
   private fun skipUtf8BOM(bytes: ByteArray): Int {
     if (bytes.size < UTF8_BOM.size) {

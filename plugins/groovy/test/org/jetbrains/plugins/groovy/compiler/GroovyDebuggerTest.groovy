@@ -260,6 +260,7 @@ class B {
       eval 'delegate.size()', '6'
       eval 'owner.name', 'B'
       eval 'this.name', 'B'
+      eval '[0, 1, 2, 3].collect { int numero -> numero.toString() }', '[0, 1, 2, 3]'
     }
   }
 

@@ -41,6 +41,16 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   public void testSlice() {
     doTest();
   }
+  
+  // PY-18954
+  public void testOneElementDict() {
+    doTest();
+  }
+  
+  // PY-18725
+  public void testDictWithReferenceKeys() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");

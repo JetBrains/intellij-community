@@ -315,7 +315,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     return StringUtil.offsetToLineNumber(text, start) != StringUtil.offsetToLineNumber(text, end);
   }
 
-  private static boolean ignoreDueToSettings(Project project, Problem problem, PsiElement element) {
+  private static boolean ignoreDueToSettings(Project project, Problem problem, @Nullable PsiElement element) {
     final EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (!editorSettings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
       // ignore trailing spaces errors if they're going to disappear after save
@@ -323,46 +323,51 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         return true;
       }
     }
-    
+
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(PythonLanguage.getInstance());
     final PyCodeStyleSettings pySettings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
-    // E303 too many blank lines (num)
-    if (problem.myCode.equals("E303") && element instanceof PsiWhiteSpace) {
-      final Matcher matcher = E303_LINE_COUNT_PATTERN.matcher(problem.myDescription);
-      if (matcher.matches()) {
-        final int reportedBlanks = Integer.parseInt(matcher.group(1));
-        final PsiElement nonWhitespaceAfter = PyPsiUtils.getNextNonWhitespaceSibling(element);
-        final PsiElement nonWhitespaceBefore = PyPsiUtils.getPrevNonWhitespaceSibling(element);
-        final boolean classNearby = nonWhitespaceBefore instanceof PyClass || nonWhitespaceAfter instanceof PyClass;
-        final boolean functionNearby = nonWhitespaceBefore instanceof PyFunction || nonWhitespaceAfter instanceof PyFunction;
-        if (functionNearby || classNearby) {
-          if (PyUtil.isTopLevel(element)) {
-            if (reportedBlanks <= pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS) {
-              return true;
+    
+    if (element instanceof PsiWhiteSpace) {
+      // E303 too many blank lines (num)
+      if (problem.myCode.equals("E303")) {
+        final Matcher matcher = E303_LINE_COUNT_PATTERN.matcher(problem.myDescription);
+        if (matcher.matches()) {
+          final int reportedBlanks = Integer.parseInt(matcher.group(1));
+          final PsiElement nonWhitespaceAfter = PyPsiUtils.getNextNonWhitespaceSibling(element);
+          final PsiElement nonWhitespaceBefore = PyPsiUtils.getPrevNonWhitespaceSibling(element);
+          final boolean classNearby = nonWhitespaceBefore instanceof PyClass || nonWhitespaceAfter instanceof PyClass;
+          final boolean functionNearby = nonWhitespaceBefore instanceof PyFunction || nonWhitespaceAfter instanceof PyFunction;
+          if (functionNearby || classNearby) {
+            if (PyUtil.isTopLevel(element)) {
+              if (reportedBlanks <= pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS) {
+                return true;
+              }
             }
-          }
-          else {
-            // Blanks around classes have priority over blanks around functions as defined in Python spacing builder
-            if (classNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_CLASS ||
-                functionNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_METHOD) {
-              return true;
+            else {
+              // Blanks around classes have priority over blanks around functions as defined in Python spacing builder
+              if (classNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_CLASS ||
+                  functionNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_METHOD) {
+                return true;
+              }
             }
           }
         }
       }
+      
+      if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
+        return true;
+      }
+        
+      // E251 unexpected spaces around keyword / parameter equals
+      // Note that E222 (multiple spaces after operator) is not suppressed, though. 
+      if (problem.myCode.equals("E251") &&
+          (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
+           element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
+        return true;
+      }
     }
-    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
-      return true;
-    }
-    // E251 unexpected spaces around keyword / parameter equals
-    // Note that E222 (multiple spaces after operator) is not suppressed, though. 
-    if (problem.myCode.equals("E251") &&
-        (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
-         element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
-      return true;
-    }
-      return false;
+    return false;
   }
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");

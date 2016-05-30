@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,16 +56,16 @@ public class GitAskPassApp implements GitExternalApp {
       boolean usernameNeeded = arguments.getFirst();
       String url = arguments.getSecond();
 
-      int handler = Integer.parseInt(getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV));
+      String token = getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV);
       int xmlRpcPort = Integer.parseInt(getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV));
       GitAskPassXmlRpcClient xmlRpcClient = new GitAskPassXmlRpcClient(xmlRpcPort);
 
       if (usernameNeeded) {
-        String username = xmlRpcClient.askUsername(handler, url);
+        String username = xmlRpcClient.askUsername(token, url);
         System.out.println(username);
       }
       else {
-        String pass = xmlRpcClient.askPassword(handler, url);
+        String pass = xmlRpcClient.askPassword(token, url);
         System.out.println(pass);
       }
     }
@@ -77,11 +77,11 @@ public class GitAskPassApp implements GitExternalApp {
 
   @NotNull
   private static String getNotNull(@NotNull String env) {
-    String handlerValue = System.getenv(env);
-    if (handlerValue == null) {
+    String value = System.getenv(env);
+    if (value == null) {
       throw new IllegalStateException(env + " environment variable is not defined!");
     }
-    return handlerValue;
+    return value;
   }
 
   @NotNull

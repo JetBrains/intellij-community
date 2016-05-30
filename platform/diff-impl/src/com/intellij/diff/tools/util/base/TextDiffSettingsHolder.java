@@ -58,6 +58,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     public boolean SHOW_INDENT_LINES = false;
     public boolean USE_SOFT_WRAPS = false;
     public HighlightingLevel HIGHLIGHTING_LEVEL = HighlightingLevel.INSPECTIONS;
+    public boolean READ_ONLY_LOCK = true;
 
     // Fragments settings
     public boolean EXPAND_BY_DEFAULT = true;
@@ -163,6 +164,14 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setExpandByDefault(boolean value) {
       PLACE_SETTINGS.EXPAND_BY_DEFAULT = value;
+    }
+
+    public boolean isReadOnlyLock() {
+      return PLACE_SETTINGS.READ_ONLY_LOCK;
+    }
+
+    public void setReadOnlyLock(boolean state) {
+      PLACE_SETTINGS.READ_ONLY_LOCK = state;
     }
 
     //

@@ -189,13 +189,12 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
-      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
-      if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
+
+      final String gradleProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+      assert gradleProjectPath != null;
 
       if (shouldBeBuiltByExternalSystem(module)) continue;
 
-      final String gradleProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-      assert gradleProjectPath != null;
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         context.addMessage(CompilerMessageCategory.ERROR,

@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
@@ -51,6 +51,7 @@ import java.util.Map;
  */
 public class PyStructuredDocstringFormatter {
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
+  private static final Charset DEFAULT_CHARSET = CharsetToolkit.UTF8_CHARSET;
 
   private PyStructuredDocstringFormatter() {
   }
@@ -130,9 +131,7 @@ public class PyStructuredDocstringFormatter {
     final String sdkHome = sdk.getHomePath();
     if (sdkHome == null) return null;
 
-    final Charset charset = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
-
-    final ByteBuffer encoded = charset.encode(docstring);
+    final ByteBuffer encoded = DEFAULT_CHARSET.encode(docstring);
     final byte[] data = new byte[encoded.limit()];
     encoded.get(data);
 
@@ -140,6 +139,8 @@ public class PyStructuredDocstringFormatter {
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
     final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.<String>newArrayList());
+    commandLine.setCharset(DEFAULT_CHARSET);
+    
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
     final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, false);

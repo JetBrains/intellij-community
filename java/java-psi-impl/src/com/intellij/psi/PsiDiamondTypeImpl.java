@@ -24,8 +24,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -179,6 +179,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
 
+    //15.9.3 Choosing the Constructor and its Arguments
+    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6)
+    if (InferenceSession.wasUncheckedConversionPerformed(context)) {
+      return DiamondInferenceResult.RAW_RESULT;
+    }
+
     final PsiMethod staticFactory = ((MethodCandidateInfo)staticFactoryInfo).getElement();
     final PsiTypeParameter[] parameters = staticFactory.getTypeParameters();
     final PsiElement staticFactoryContext = staticFactory.getContext();
@@ -221,13 +227,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return null;
     }
 
-    final PsiClass psiClass = findClass(newExpression);
-    if (psiClass == null) {
-      //should not happens: unresolved class reference would be first and inference won't start
-      return null;
-    }
-
-    final PsiMethod staticFactory = findConstructorStaticFactory(psiClass, newExpression);
+    final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(newExpression));
+    final JavaResolveResult[] result = collectStaticFactories(newExpression, resolver);
+    final PsiMethod staticFactory = result != null && result.length == 1 ? (PsiMethod)result[0].getElement() : null;
     if (staticFactory == null) {
       //additional diagnostics: inference fails due to unresolved constructor
       return JavaResolveResult.EMPTY;
@@ -238,7 +240,6 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return staticFactoryCandidateInfo;
     }
 
-    final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(argumentList));
     final ArrayList<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
     conflicts.add(staticFactoryCandidateInfo);
     conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
@@ -246,20 +247,27 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Nullable
-  private static PsiMethod findConstructorStaticFactory(final PsiClass containingClass, PsiNewExpression newExpression) {
-    final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) return null;
+  public static JavaResolveResult[] collectStaticFactories(PsiNewExpression newExpression, final PsiConflictResolver... conflictResolvers) {
+    PsiExpressionList argumentList = newExpression.getArgumentList();
+    if (argumentList == null) {
+      return null;
+    }
 
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(newExpression);
-    final List<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
-    PsiMethod[] constructors = containingClass.getConstructors();
+    final PsiClass psiClass = findClass(newExpression);
+    if (psiClass == null) {
+      //should not happens: unresolved class reference would be first and inference won't start
+      return null;
+    }
+
+    final List<CandidateInfo> candidates = new ArrayList<CandidateInfo>();
+    PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) {
       //default constructor
       constructors = new PsiMethod[] {null};
     }
 
-    final PsiConflictResolver[] conflictResolvers = {new JavaMethodsConflictResolver(argumentList, languageLevel)};
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, conflicts) {
+    final MethodCandidatesProcessor
+      processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, candidates) {
       @Override
       protected boolean isAccepted(PsiMethod candidate) {
         return true;
@@ -267,7 +275,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
       @Override
       protected PsiClass getContainingClass(PsiMethod method) {
-        return containingClass;
+        return psiClass;
       }
 
       @Override
@@ -278,15 +286,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     processor.setArgumentList(argumentList);
 
     for (PsiMethod constructor : constructors) {
-      final PsiTypeParameter[] params = getAllTypeParams(constructor, containingClass);
-      final PsiMethod staticFactory = generateStaticFactory(constructor, containingClass, params, newExpression.getClassReference());
+      final PsiTypeParameter[] params = getAllTypeParams(constructor, psiClass);
+      final PsiMethod staticFactory = generateStaticFactory(constructor, psiClass, params, newExpression.getClassReference());
       if (staticFactory != null) {
         processor.add(staticFactory, PsiSubstitutor.EMPTY);
       }
     }
 
-    final JavaResolveResult[] result = processor.getResult();
-    return result.length == 1 ? (PsiMethod)result[0].getElement() : null;
+    return processor.getResult();
   }
 
   @Nullable

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
@@ -51,6 +52,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
+
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
 /**
  * @author Vladislav.Soroka
@@ -185,11 +188,11 @@ public class GradleProjectResolverUtil {
     DependencyScope dependencyScope = getDependencyScope(projectDependency.getScope());
     String projectPath = projectDependency.getProjectPath();
     String moduleId = StringUtil.isEmpty(projectPath) || ":".equals(projectPath) ? projectDependency.getName() : projectPath;
-    if (dependencyScope == DependencyScope.TEST) {
-      moduleId += ":test";
+    if (Dependency.DEFAULT_CONFIGURATION.equals(projectDependency.getConfigurationName())) {
+      moduleId += dependencyScope == DependencyScope.TEST ? ":test" : ":main";
     }
     else {
-      moduleId += ":main";
+      moduleId += (':' + projectDependency.getConfigurationName());
     }
     return moduleId;
   }
@@ -253,8 +256,11 @@ public class GradleProjectResolverUtil {
       ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
     assert sourceSetMap != null;
 
+    final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+    assert artifactsMap != null;
+
     DataNode fakeNode = new DataNode(CONTAINER_KEY, moduleDataNode.getData(), null);
-    buildDependencies(sourceSetMap, fakeNode, dependencies, null);
+    buildDependencies(sourceSetMap, artifactsMap, fakeNode, dependencies, null);
     final Collection<DataNode<?>> dataNodes =
       ExternalSystemApiUtil.findAllRecursively(fakeNode, new BooleanFunction<DataNode<?>>() {
         @Override
@@ -271,6 +277,7 @@ public class GradleProjectResolverUtil {
   }
 
   public static void buildDependencies(@NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
+                                       @NotNull final Map<String, String> artifactsMap,
                                        @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
                                        @NotNull Collection<ExternalDependency> dependencies,
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
@@ -327,10 +334,11 @@ public class GradleProjectResolverUtil {
       queue.addAll(dependency.getDependencies());
     }
 
-    doBuildDependencies(sourceSetMap, dependencyMap, ownerDataNode, dependencies, ideProject);
+    doBuildDependencies(sourceSetMap, artifactsMap, dependencyMap, ownerDataNode, dependencies, ideProject);
   }
 
   private static void doBuildDependencies(@NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
+                                          @NotNull final Map<String, String> artifactsMap,
                                           @NotNull Map<ExternalDependencyId, ExternalDependency> mergedDependencyMap,
                                           @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
                                           @NotNull Collection<ExternalDependency> dependencies,
@@ -361,10 +369,20 @@ public class GradleProjectResolverUtil {
 
       assert ownerModule != null;
 
+      DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
       if (mergedDependency instanceof ExternalProjectDependency) {
         final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
         String moduleId = getModuleId(projectDependency);
         Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
+
+        if (projectPair == null) {
+          for (File file : projectDependency.getProjectDependencyArtifacts()) {
+            moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
+            if (moduleId != null) break;
+          }
+          projectPair = sourceSetMap.get(moduleId);
+        }
+
         if (projectPair == null) {
           final LibraryLevel level = LibraryLevel.MODULE;
           final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, "");
@@ -377,7 +395,9 @@ public class GradleProjectResolverUtil {
             for (File artifact : projectDependency.getProjectDependencyArtifacts()) {
               library.addPath(LibraryPathType.BINARY, artifact.getPath());
             }
-            ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+          } else {
+            depOwnerDataNode = ownerDataNode;
           }
         }
         else {
@@ -396,12 +416,10 @@ public class GradleProjectResolverUtil {
               }
             }));
 
-          DataNode<ModuleDependencyData> ideModuleDependencyNode =
-            ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-          doBuildDependencies(sourceSetMap, mergedDependencyMap, ideModuleDependencyNode, dependency.getDependencies(), ideProject);
+          depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
         }
       }
-      if (mergedDependency instanceof ExternalLibraryDependency) {
+      else if (mergedDependency instanceof ExternalLibraryDependency) {
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
@@ -419,15 +437,13 @@ public class GradleProjectResolverUtil {
         if (javaDocPath != null) {
           library.addPath(LibraryPathType.DOC, javaDocPath.getAbsolutePath());
         }
-        DataNode<LibraryDependencyData> libraryDependencyDataNode =
-          ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
 
         if (StringUtil.isNotEmpty(libraryName)) {
           linkProjectLibrary(ideProject, library);
         }
-        doBuildDependencies(sourceSetMap, mergedDependencyMap, libraryDependencyDataNode, dependency.getDependencies(), ideProject);
       }
-      if (mergedDependency instanceof ExternalMultiLibraryDependency) {
+      else if (mergedDependency instanceof ExternalMultiLibraryDependency) {
         final LibraryLevel level = LibraryLevel.MODULE;
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
@@ -446,12 +462,9 @@ public class GradleProjectResolverUtil {
           library.addPath(LibraryPathType.DOC, file.getAbsolutePath());
         }
 
-        DataNode<LibraryDependencyData> libraryDependencyDataNode =
-          ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-
-        doBuildDependencies(sourceSetMap, mergedDependencyMap, libraryDependencyDataNode, dependency.getDependencies(), ideProject);
+        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
-      if (mergedDependency instanceof FileCollectionDependency) {
+      else if (mergedDependency instanceof FileCollectionDependency) {
         final LibraryLevel level = LibraryLevel.MODULE;
         String libraryName = "";
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
@@ -466,7 +479,7 @@ public class GradleProjectResolverUtil {
 
         ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
-      if (mergedDependency instanceof UnresolvedExternalDependency) {
+      else if (mergedDependency instanceof UnresolvedExternalDependency) {
         final LibraryLevel level = LibraryLevel.PROJECT;
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, true);
@@ -478,6 +491,10 @@ public class GradleProjectResolverUtil {
         }
         ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
         linkProjectLibrary(ideProject, library);
+      }
+
+      if (depOwnerDataNode != null) {
+        doBuildDependencies(sourceSetMap, artifactsMap, mergedDependencyMap, depOwnerDataNode, dependency.getDependencies(), ideProject);
       }
     }
   }

@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -26,24 +27,28 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
-public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView, ObservableConsoleView {
+public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView, 
+                                                                                                       ObservableConsoleView,
+                                                                                                       DataProvider {
   private final static String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
   private final static String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
 
@@ -213,7 +218,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   @Override
   public AnAction[] createConsoleActions() {
     List<AnAction> actions = Lists.newArrayList();
-    actions.addAll(Arrays.asList(myPrimaryConsoleView.createConsoleActions()));
+    actions.addAll(mergeConsoleActions(Arrays.asList(myPrimaryConsoleView.createConsoleActions()), 
+                                       Arrays.asList(mySecondaryConsoleView.createConsoleActions())));
     actions.add(mySwitchConsoleAction);
 
     LanguageConsoleView langConsole = ContainerUtil.findInstance(Arrays.asList(myPrimaryConsoleView, mySecondaryConsoleView), LanguageConsoleView.class);
@@ -253,6 +259,18 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    final ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
+    if (consoleView instanceof DataProvider) {
+      return ((DataProvider)consoleView).getData(dataId);
+    }
+    else {
+      return null;
+    }
+  }
+
   @NotNull
   public Presentation getSwitchConsoleActionPresentation() {
     return mySwitchConsoleAction.getTemplatePresentation();
@@ -261,7 +279,41 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   public void setDisableSwitchConsoleActionOnProcessEnd(boolean disableSwitchConsoleActionOnProcessEnd) {
     myDisableSwitchConsoleActionOnProcessEnd = disableSwitchConsoleActionOnProcessEnd;
   }
+  
+  @NotNull
+  private List<AnAction> mergeConsoleActions(@NotNull List<AnAction> actions1, @NotNull Collection<AnAction> actions2) {
+    return ContainerUtil.map(actions1, action1 -> {
+      final AnAction action2 = ContainerUtil.find(actions2, action -> action1.getClass() == action.getClass()
+                                                                      && StringUtil.equals(action1.getTemplatePresentation().getText(),
+                                                                                           action.getTemplatePresentation().getText()));
+      if (action2 instanceof ToggleUseSoftWrapsToolbarAction) {
+        return new MergedWrapTextAction(((ToggleUseSoftWrapsToolbarAction)action1), (ToggleUseSoftWrapsToolbarAction)action2);
+      }
+      else if (action2 instanceof ScrollToTheEndToolbarAction) {
+        return new MergedToggleAction(((ToggleAction)action1), (ToggleAction)action2);
+      }
+      else if (action2 instanceof ConsoleViewImpl.ClearAllAction) {
+        return new MergedAction(action1, action2);
+      }
+      else {
+        return action1;
+      }
+    });
+  }
 
+  private class MergedWrapTextAction extends MergedToggleAction {
+
+    private MergedWrapTextAction(@NotNull ToggleUseSoftWrapsToolbarAction action1, @NotNull ToggleUseSoftWrapsToolbarAction action2) {
+      super(action1, action2);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
+      DuplexConsoleView.this.getComponent().revalidate();
+    }
+  }
+  
   private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     public SwitchDuplexConsoleViewAction() {
@@ -303,4 +355,48 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
       }
     }
   }
+  
+  private static class MergedToggleAction extends ToggleAction implements DumbAware {
+    @NotNull
+    private final ToggleAction myAction1;
+    @NotNull
+    private final ToggleAction myAction2;
+
+    private MergedToggleAction(@NotNull ToggleAction action1, @NotNull ToggleAction action2) {
+      myAction1 = action1;
+      myAction2 = action2;
+      copyFrom(action1);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myAction1.isSelected(e);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myAction1.setSelected(e, state);
+      myAction2.setSelected(e, state);
+    }
+  }
+
+  private static class MergedAction extends AnAction implements DumbAware {
+    @NotNull
+    private final AnAction myAction1;
+    @NotNull
+    private final AnAction myAction2;
+
+    private MergedAction(@NotNull AnAction action1, @NotNull AnAction action2) {
+      myAction1 = action1;
+      myAction2 = action2;
+      copyFrom(action1);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myAction1.actionPerformed(e);
+      myAction2.actionPerformed(e);
+    }
+  }
+  
 }

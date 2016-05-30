@@ -32,10 +32,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
@@ -103,9 +100,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiStatement body = statement.getBody();
           if (iteratedValue != null && body != null) {
             final PsiType iteratedValueType = iteratedValue.getType();
-            if (InheritanceUtil.isInheritor(iteratedValueType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-              final PsiClass iteratorClass = PsiUtil.resolveClassInType(iteratedValueType);
-              LOG.assertTrue(iteratorClass != null);
+            final PsiClass iteratorClass = PsiUtil.resolveClassInType(iteratedValueType);
+            final PsiClass collectionClass = JavaPsiFacade.getInstance(body.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
+            if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
               try {
                 final ControlFlow controlFlow = ControlFlowFactory.getInstance(holder.getProject())
                   .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -124,8 +121,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
 
                   if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
-                    if (!(iteratedValueType instanceof PsiClassType && ((PsiClassType)iteratedValueType).isRaw()) && 
-                        isCollectCall(body, statement.getIterationParameter())) {
+                    if (!isRawSubstitution(iteratedValueType, collectionClass) && isCollectCall(body, statement.getIterationParameter())) {
                       boolean addAll = isAddAllCall(statement, body);
                       holder.registerProblem(iteratedValue, "Can be replaced with " + (addAll ? "addAll call" : "collect call"),
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
@@ -150,6 +146,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             }
           }
         }
+      }
+
+      private boolean isRawSubstitution(PsiType iteratedValueType, PsiClass collectionClass) {
+        return iteratedValueType instanceof PsiClassType && PsiUtil
+          .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
       }
     };
   }

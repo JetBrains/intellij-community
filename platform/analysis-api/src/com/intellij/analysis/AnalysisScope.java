@@ -39,10 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -306,22 +303,9 @@ public class AnalysisScope {
       }
       return true;
     }
+    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
-      final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      final ContentIterator contentIterator = new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-          final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              if (isFiltered(fileOrDir, projectFileIndex)) return false;
-              if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-              return ((GlobalSearchScope)myScope).contains(fileOrDir);
-            }
-          }).booleanValue();
-          return !isInScope || processor.process(fileOrDir);
-        }
-      };
+      final ContentIterator contentIterator = createScopeIterator(processor, projectFileIndex, myScope);
       if (!projectFileIndex.iterateContent(contentIterator)) return false;
       if (mySearchInLibraries) {
         final VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
@@ -351,12 +335,9 @@ public class AnalysisScope {
     if (modules != null) {
       for (final Module module : modules) {
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        if (!moduleFileIndex.iterateContent(new ContentIterator() {
-          @Override
-          public boolean processFile(@NotNull VirtualFile fileOrDir) {
-            return processor.process(fileOrDir);
-          }
-        })) return false;
+        if (!moduleFileIndex.iterateContent(createScopeIterator(processor, moduleFileIndex, null))) {
+          return false;
+        }
       }
       return true;
     }
@@ -373,13 +354,28 @@ public class AnalysisScope {
       });
       return file == null || processor.process(file);
     }
-    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return projectFileIndex.iterateContent(new ContentIterator() {
-      @Override
-      public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-        return processor.process(fileOrDir);
-      }
-    });
+
+    return projectFileIndex.iterateContent(createScopeIterator(processor, projectFileIndex, null));
+  }
+
+  @NotNull
+  private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor,
+                                              @NotNull final FileIndex projectFileIndex,
+                                              @Nullable final SearchScope searchScope) {
+    return new ContentIterator() {
+        @Override
+        public boolean processFile(@NotNull final VirtualFile fileOrDir) {
+          final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            @Override
+            public Boolean compute() {
+              if (isFiltered(fileOrDir, projectFileIndex)) return false;
+              if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
+              return searchScope == null || ((GlobalSearchScope)searchScope).contains(fileOrDir);
+            }
+          }).booleanValue();
+          return !isInScope || processor.process(fileOrDir);
+        }
+      };
   }
 
   private static boolean processFile(@NotNull final VirtualFile vFile,

@@ -1,4 +1,4 @@
-# $Id: roles.py 6121 2009-09-10 12:05:04Z milde $
+# $Id: roles.py 7514 2012-09-14 14:27:12Z milde $
 # Author: Edward Loper <edloper@gradient.cis.upenn.edu>
 # Copyright: This module has been placed in the public domain.
 
@@ -75,6 +75,7 @@ __docformat__ = 'reStructuredText'
 from docutils import nodes, utils
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.languages import en as _fallback_language_module
+from docutils.utils.code_analyzer import Lexer, LexerError
 
 DEFAULT_INTERPRETED_ROLE = 'title-reference'
 """
@@ -308,12 +309,54 @@ def raw_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
         return [prb], [msg]
     set_classes(options)
     node = nodes.raw(rawtext, utils.unescape(text, 1), **options)
+    node.source, node.line = inliner.reporter.get_source_and_line(lineno)
     return [node], []
 
 raw_role.options = {'format': directives.unchanged}
 
 register_canonical_role('raw', raw_role)
 
+def code_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
+    set_classes(options)
+    language = options.get('language', '')
+    classes = ['code']
+    if 'classes' in options:
+        classes.extend(options['classes'])
+    if language and language not in classes:
+        classes.append(language)
+    try:
+        tokens = Lexer(utils.unescape(text, 1), language,
+                       inliner.document.settings.syntax_highlight)
+    except LexerError, error:
+        msg = inliner.reporter.warning(error)
+        prb = inliner.problematic(rawtext, rawtext, msg)
+        return [prb], [msg]
+
+    node = nodes.literal(rawtext, '', classes=classes)
+
+    # analyze content and add nodes for every token
+    for classes, value in tokens:
+        # print (classes, value)
+        if classes:
+            node += nodes.inline(value, value, classes=classes)
+        else:
+            # insert as Text to decrease the verbosity of the output
+            node += nodes.Text(value, value)
+
+    return [node], []
+
+code_role.options = {'class': directives.class_option,
+                     'language': directives.unchanged}
+
+register_canonical_role('code', code_role)
+
+def math_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
+    i = rawtext.find('`')
+    text = rawtext.split('`')[1]
+    node = nodes.math(rawtext, text)
+    return [node], []
+
+register_canonical_role('math', math_role)
 
 ######################################################################
 # Register roles that are currently unimplemented.

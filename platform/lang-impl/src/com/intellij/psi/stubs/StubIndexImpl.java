@@ -308,7 +308,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     try {
+      myAccessValidator.startedProcessingActivityForIndex(indexKey);
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -320,6 +322,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         forceRebuild(e);
       }
       throw e;
+    } finally {
+      myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
     }
     return true;
   }

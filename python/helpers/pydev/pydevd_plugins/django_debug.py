@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items, DJANGO_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items, DJANGO_SUSPEND, IS_PY2
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
@@ -162,7 +162,11 @@ def _find_django_render_frame(frame):
 #=======================================================================================================================
 
 def _read_file(filename):
-    f = open(filename, "r")
+    # type: (str) -> str
+    if IS_PY2:
+        f = open(filename, 'r')
+    else:
+        f = open(filename, 'r', encoding='utf-8', errors='replace')
     s = f.read()
     f.close()
     return s

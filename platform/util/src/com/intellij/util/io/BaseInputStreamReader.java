@@ -42,4 +42,8 @@ public class BaseInputStreamReader extends InputStreamReader {
   public void close() throws IOException {
     myInputStream.close(); // close underlying input stream without locking in StreamDecoder.
   }
+
+  public boolean availableUnsupported() {
+    return "com.pty4j.unix.PTYInputStream".equals(myInputStream.getClass().getName());
+  }
 }

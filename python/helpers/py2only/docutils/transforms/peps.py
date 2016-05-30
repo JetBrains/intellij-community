@@ -1,4 +1,4 @@
-# $Id: peps.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: peps.py 6433 2010-09-28 08:21:25Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -13,13 +13,13 @@ Transforms for PEP processing.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 import os
 import re
 import time
-
-from docutils import DataError
 from docutils import nodes, utils, languages
-from docutils.transforms import Transform
+from docutils import ApplicationError, DataError
+from docutils.transforms import Transform, TransformError
 from docutils.transforms import parts, references, misc
 
 
@@ -144,7 +144,8 @@ class Contents(Transform):
     default_priority = 380
 
     def apply(self):
-        language = languages.get_language(self.document.settings.language_code)
+        language = languages.get_language(self.document.settings.language_code,
+                                          self.document.reporter)
         name = language.labels['contents']
         title = nodes.title('', name)
         topic = nodes.topic('', title, classes=['contents'])

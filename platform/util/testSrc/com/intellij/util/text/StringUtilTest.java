@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jdom.Verifier;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -491,5 +492,14 @@ public class StringUtilTest {
     assertEquals(1, StringUtil.lastIndexOf("axaxa", 'x', 0, 3));
     assertEquals(3, StringUtil.lastIndexOf("axaxa", 'x', 0, 5));
     assertEquals(2, StringUtil.lastIndexOf("abcd", 'c', -42, 99));  // #IDEA-144968
+  }
+
+  @Test
+  public void testEscapingIllegalXmlChars() {
+    for (String s : new String[]{"ab\n\0\r\tde", "\\abc\1\2\3\uFFFFdef"}) {
+      String escapedText = XmlStringUtil.escapeIllegalXmlChars(s);
+      assertNull(Verifier.checkCharacterData(escapedText));
+      assertEquals(s, XmlStringUtil.unescapeIllegalXmlChars(escapedText));
+    }
   }
 }

@@ -57,6 +57,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isPreviewMode();
 
+  boolean isResolveModulePerSourceSet();
+
   @NotNull
   ProjectImportAction.AllModels getModels();
 

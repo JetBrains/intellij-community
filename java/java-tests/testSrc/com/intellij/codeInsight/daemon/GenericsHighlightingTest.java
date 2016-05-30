@@ -601,4 +601,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCaptureConversionWithWildcardBounds() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
+
+  public void testIntersectTypeParameterBounds() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
 }

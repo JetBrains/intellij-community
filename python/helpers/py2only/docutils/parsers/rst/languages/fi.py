@@ -1,4 +1,5 @@
-# $Id: fi.py 4564 2006-05-21 20:44:42Z wiemann $
+# -*- coding: utf-8 -*-
+# $Id: fi.py 7119 2011-09-02 13:00:23Z milde $
 # Author: Asko Soukka <asko.soukka@iki.fi>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,6 +20,7 @@ directives = {
       # language-dependent: fixed
       u'huomio': u'attention',
       u'varo': u'caution',
+      u'code (translation required)': 'code',
       u'vaara': u'danger',
       u'virhe': u'error',
       u'vihje': u'hint',
@@ -42,6 +44,7 @@ directives = {
       u'container (translation required)': 'container',
       #u'kysymykset': u'questions',
       u'meta': u'meta',
+      'math (translation required)': 'math',
       #u'kuvakartta': u'imagemap',
       u'kuva': u'image',
       u'kaavio': u'figure',
@@ -69,6 +72,7 @@ roles = {
     u'lyhennys': u'abbreviation',
     u'akronyymi': u'acronym',
     u'kirjainsana': u'acronym',
+    u'code (translation required)': 'code',
     u'hakemisto': u'index',
     u'luettelo': u'index',
     u'alaindeksi': u'subscript',
@@ -81,6 +85,7 @@ roles = {
     u'korostus': u'emphasis',
     u'vahvistus': u'strong',
     u'tasalevyinen': u'literal',
+    'math (translation required)': 'math',
     u'named-reference (translation required)': u'named-reference',
     u'anonymous-reference (translation required)': u'anonymous-reference',
     u'footnote-reference (translation required)': u'footnote-reference',

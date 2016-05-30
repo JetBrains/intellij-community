@@ -97,7 +97,18 @@ public class CompilerMessage extends BuildMessage {
   }
 
   public String toString() {
-    return getCompilerName() + ":" + getKind().name() + ":" + super.toString();
+    final StringBuilder builder = new StringBuilder();
+    builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());
+    final String path = getSourcePath();
+    if (path != null) {
+      builder.append("; file: ").append(path);
+      final long line = getLine();
+      final long column = getColumn();
+      if (line >= 0 && column >= 0) {
+        builder.append(" at (").append(line).append(":").append(column).append(")");
+      }
+    }
+    return builder.toString();
   }
 
   public static String getTextFromThrowable(Throwable internalError) {

@@ -1,4 +1,4 @@
-# $Id: misc.py 6185 2009-10-25 20:43:42Z milde $
+# $Id: misc.py 7487 2012-07-22 21:20:28Z milde $
 # Authors: David Goodger <goodger@python.org>; Dethe Elza
 # Copyright: This module has been placed in the public domain.
 
@@ -6,15 +6,18 @@
 
 __docformat__ = 'reStructuredText'
 
+import sys
 import os.path
 import re
 import time
-
 from docutils import io, nodes, statemachine, utils
+from docutils.utils.error_reporting import SafeString, ErrorString
+from docutils.utils.error_reporting import locale_encoding
 from docutils.parsers.rst import Directive, convert_directive_function
 from docutils.parsers.rst import directives, roles, states
+from docutils.parsers.rst.directives.body import CodeBlock, NumberLines
+from docutils.parsers.rst.roles import set_classes
 from docutils.transforms import misc
-
 
 class Include(Directive):
 
@@ -32,18 +35,23 @@ class Include(Directive):
     optional_arguments = 0
     final_argument_whitespace = True
     option_spec = {'literal': directives.flag,
+                   'code': directives.unchanged,
                    'encoding': directives.encoding,
                    'tab-width': int,
                    'start-line': int,
                    'end-line': int,
                    'start-after': directives.unchanged_required,
-                   'end-before': directives.unchanged_required}
+                   'end-before': directives.unchanged_required,
+                   # ignored except for 'literal' or 'code':
+                   'number-lines': directives.unchanged, # integer or None
+                   'class': directives.class_option,
+                   'name': directives.unchanged}
 
     standard_include_path = os.path.join(os.path.dirname(states.__file__),
                                          'include')
 
     def run(self):
-        """Include a reST file as part of the content of this reST file."""
+        """Include a file as part of the content of this reST file."""
         if not self.state.document.settings.file_insertion_enabled:
             raise self.warning('"%s" directive disabled.' % self.name)
         source = self.state_machine.input_lines.source(
@@ -57,24 +65,22 @@ class Include(Directive):
         path = nodes.reprunicode(path)
         encoding = self.options.get(
             'encoding', self.state.document.settings.input_encoding)
+        e_handler=self.state.document.settings.input_encoding_error_handler
         tab_width = self.options.get(
             'tab-width', self.state.document.settings.tab_width)
         try:
             self.state.document.settings.record_dependencies.add(path)
-            include_file = io.FileInput(
-                source_path=path, encoding=encoding,
-                error_handler=(self.state.document.settings.\
-                               input_encoding_error_handler),
-                handle_io_errors=None)
+            include_file = io.FileInput(source_path=path,
+                                        encoding=encoding,
+                                        error_handler=e_handler)
+        except UnicodeEncodeError, error:
+            raise self.severe(u'Problems with "%s" directive path:\n'
+                              'Cannot encode input file path "%s" '
+                              '(wrong locale?).' %
+                              (self.name, SafeString(path)))
         except IOError, error:
-            raise self.severe('Problems with "%s" directive path:\n%s: %s.' %
-                        (self.name, error.__class__.__name__, str(error)))
-            # Hack: Since Python 2.6, the string interpolation returns a
-            # unicode object if one of the supplied %s replacements is a
-            # unicode object. IOError has no `__unicode__` method and the
-            # fallback `__repr__` does not report the file name. Explicitely
-            # converting to str fixes this for now::
-            #   print '%s\n%s\n%s\n' %(error, str(error), repr(error))
+            raise self.severe(u'Problems with "%s" directive path:\n%s.' %
+                      (self.name, ErrorString(error)))
         startline = self.options.get('start-line', None)
         endline = self.options.get('end-line', None)
         try:
@@ -84,9 +90,8 @@ class Include(Directive):
             else:
                 rawtext = include_file.read()
         except UnicodeError, error:
-            raise self.severe(
-                'Problem with "%s" directive:\n%s: %s'
-                % (self.name, error.__class__.__name__, error))
+            raise self.severe(u'Problem with "%s" directive:\n%s' %
+                              (self.name, ErrorString(error)))
         # start-after/end-before: no restrictions on newlines in match-text,
         # and no restrictions on matching inside lines vs. line boundaries
         after_text = self.options.get('start-after', None)
@@ -105,20 +110,52 @@ class Include(Directive):
                 raise self.severe('Problem with "end-before" option of "%s" '
                                   'directive:\nText not found.' % self.name)
             rawtext = rawtext[:before_index]
+
+        include_lines = statemachine.string2lines(rawtext, tab_width,
+                                                  convert_whitespace=True)
         if 'literal' in self.options:
             # Convert tabs to spaces, if `tab_width` is positive.
             if tab_width >= 0:
                 text = rawtext.expandtabs(tab_width)
             else:
                 text = rawtext
-            literal_block = nodes.literal_block(rawtext, text, source=path)
+            literal_block = nodes.literal_block(rawtext, source=path,
+                                    classes=self.options.get('class', []))
             literal_block.line = 1
+            self.add_name(literal_block)
+            if 'number-lines' in self.options:
+                try:
+                    startline = int(self.options['number-lines'] or 1)
+                except ValueError:
+                    raise self.error(':number-lines: with non-integer '
+                                     'start value')
+                endline = startline + len(include_lines)
+                if text.endswith('\n'):
+                    text = text[:-1]
+                tokens = NumberLines([([], text)], startline, endline)
+                for classes, value in tokens:
+                    if classes:
+                        literal_block += nodes.inline(value, value,
+                                                      classes=classes)
+                    else:
+                        literal_block += nodes.Text(value, value)
+            else:
+                literal_block += nodes.Text(text, text)
             return [literal_block]
-        else:
-            include_lines = statemachine.string2lines(
-                rawtext, tab_width, convert_whitespace=1)
-            self.state_machine.insert_input(include_lines, path)
-            return []
+        if 'code' in self.options:
+            self.options['source'] = path
+            codeblock = CodeBlock(self.name,
+                                  [self.options.pop('code')], # arguments
+                                  self.options,
+                                  include_lines, # content
+                                  self.lineno,
+                                  self.content_offset,
+                                  self.block_text,
+                                  self.state,
+                                  self.state_machine)
+            return codeblock.run()
+        self.state_machine.insert_input(include_lines, path)
+        return []
 
 
 class Raw(Directive):
@@ -149,6 +186,7 @@ class Raw(Directive):
         attributes = {'format': ' '.join(self.arguments[0].lower().split())}
         encoding = self.options.get(
             'encoding', self.state.document.settings.input_encoding)
+        e_handler=self.state.document.settings.input_encoding_error_handler
         if self.content:
             if 'file' in self.options or 'url' in self.options:
                 raise self.error(
@@ -166,21 +204,20 @@ class Raw(Directive):
                                                  self.options['file']))
             path = utils.relative_path(None, path)
             try:
+                raw_file = io.FileInput(source_path=path,
+                                        encoding=encoding,
+                                        error_handler=e_handler)
+                # TODO: currently, raw input files are recorded as
+                # dependencies even if not used for the chosen output format.
                 self.state.document.settings.record_dependencies.add(path)
-                raw_file = io.FileInput(
-                    source_path=path, encoding=encoding,
-                    error_handler=(self.state.document.settings.\
-                                   input_encoding_error_handler),
-                    handle_io_errors=None)
             except IOError, error:
-                raise self.severe('Problems with "%s" directive path:\n%s.'
-                                  % (self.name, error))
+                raise self.severe(u'Problems with "%s" directive path:\n%s.'
+                                  % (self.name, ErrorString(error)))
             try:
                 text = raw_file.read()
             except UnicodeError, error:
-                raise self.severe(
-                    'Problem with "%s" directive:\n%s: %s'
-                    % (self.name, error.__class__.__name__, error))
+                raise self.severe(u'Problem with "%s" directive:\n%s'
+                    % (self.name, ErrorString(error)))
             attributes['source'] = path
         elif 'url' in self.options:
             source = self.options['url']
@@ -191,24 +228,23 @@ class Raw(Directive):
             try:
                 raw_text = urllib2.urlopen(source).read()
             except (urllib2.URLError, IOError, OSError), error:
-                raise self.severe(
-                    'Problems with "%s" directive URL "%s":\n%s.'
-                    % (self.name, self.options['url'], error))
-            raw_file = io.StringInput(
-                source=raw_text, source_path=source, encoding=encoding,
-                error_handler=(self.state.document.settings.\
-                               input_encoding_error_handler))
+                raise self.severe(u'Problems with "%s" directive URL "%s":\n%s.'
+                    % (self.name, self.options['url'], ErrorString(error)))
+            raw_file = io.StringInput(source=raw_text, source_path=source,
+                                      encoding=encoding, 
+                                      error_handler=e_handler)
             try:
                 text = raw_file.read()
             except UnicodeError, error:
-                raise self.severe(
-                    'Problem with "%s" directive:\n%s: %s'
-                    % (self.name, error.__class__.__name__, error))
+                raise self.severe(u'Problem with "%s" directive:\n%s'
+                                  % (self.name, ErrorString(error)))
             attributes['source'] = source
         else:
             # This will always fail because there is no content.
             self.assert_has_content()
         raw_node = nodes.raw('', text, **attributes)
+        (raw_node.source,
+        raw_node.line) = self.state_machine.get_source_and_line(self.lineno)
         return [raw_node]
 
 
@@ -226,21 +262,23 @@ class Replace(Directive):
         element = nodes.Element(text)
         self.state.nested_parse(self.content, self.content_offset,
                                 element)
-        if ( len(element) != 1
-             or not isinstance(element[0], nodes.paragraph)):
-            messages = []
-            for node in element:
-                if isinstance(node, nodes.system_message):
-                    node['backrefs'] = []
-                    messages.append(node)
-            error = self.state_machine.reporter.error(
-                'Error in "%s" directive: may contain a single paragraph '
-                'only.' % (self.name), line=self.lineno)
-            messages.append(error)
-            return messages
-        else:
-            return element[0].children
-
+        # element might contain [paragraph] + system_message(s)
+        node = None
+        messages = []
+        for elem in element:
+            if not node and isinstance(elem, nodes.paragraph):
+                node = elem
+            elif isinstance(elem, nodes.system_message):
+                elem['backrefs'] = []
+                messages.append(elem)
+            else:
+                return [
+                    self.state_machine.reporter.error(
+                        'Error in "%s" directive: may contain a single paragraph '
+                        'only.' % (self.name), line=self.lineno) ]
+        if node:
+            return messages + node.children
+        return messages
 
 class Unicode(Directive):
 
@@ -279,10 +317,9 @@ class Unicode(Directive):
         for code in codes:
             try:
                 decoded = directives.unicode_code(code)
-            except ValueError, err:
-                raise self.error(
-                    'Invalid character code: %s\n%s: %s'
-                    % (code, err.__class__.__name__, err))
+            except ValueError, error:
+                raise self.error(u'Invalid character code: %s\n%s'
+                    % (code, ErrorString(error)))
             element += nodes.Text(decoded)
         return element.children
 
@@ -377,8 +414,8 @@ class Role(Directive):
                 options['class'] = directives.class_option(new_role_name)
             except ValueError, detail:
                 error = self.state_machine.reporter.error(
-                    'Invalid argument for "%s" directive:\n%s.'
-                    % (self.name, detail), nodes.literal_block(
+                    u'Invalid argument for "%s" directive:\n%s.'
+                    % (self.name, SafeString(detail)), nodes.literal_block(
                     self.block_text, self.block_text), line=self.lineno)
                 return messages + [error]
         role = roles.CustomRole(new_role_name, base_role, options, content)
@@ -390,7 +427,6 @@ class DefaultRole(Directive):
 
     """Set the default interpreted text role."""
 
-    required_arguments = 0
     optional_arguments = 1
     final_argument_whitespace = False
 
@@ -434,8 +470,22 @@ class Date(Directive):
             raise self.error(
                 'Invalid context: the "%s" directive can only be used within '
                 'a substitution definition.' % self.name)
-        format = '\n'.join(self.content) or '%Y-%m-%d'
-        text = time.strftime(format)
+        format_str = '\n'.join(self.content) or '%Y-%m-%d'
+        if sys.version_info< (3, 0):
+            try:
+                format_str = format_str.encode(locale_encoding or 'utf-8')
+            except UnicodeEncodeError:
+                raise self.warning(u'Cannot encode date format string '
+                    u'with locale encoding "%s".' % locale_encoding)
+        text = time.strftime(format_str)
+        if sys.version_info< (3, 0):
+            # `text` is a byte string that may contain non-ASCII characters:
+            try:
+                text = text.decode(locale_encoding or 'utf-8')
+            except UnicodeDecodeError:
+                text = text.decode(locale_encoding or 'utf-8', 'replace')
+                raise self.warning(u'Error decoding "%s"'
+                    u'with locale encoding "%s".' % (text, locale_encoding))
         return [nodes.Text(text)]
 
 
@@ -443,7 +493,6 @@ class TestDirective(Directive):
 
     """This directive is useful only for testing purposes."""
 
-    required_arguments = 0
     optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {'option': directives.unchanged_required}

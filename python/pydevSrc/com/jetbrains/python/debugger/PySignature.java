@@ -11,9 +11,10 @@ import java.util.List;
  * @author traff
  */
 public class PySignature {
+  private static final String UNION_PREFIX = "Union[";
   private final String myFile;
   private final String myFunctionName;
-  
+
   private NamedParameter myReturnType = null;
 
   private final List<NamedParameter> myArgs = Lists.newArrayList();
@@ -107,8 +108,13 @@ public class PySignature {
 
     @NotNull
     private static List<String> parseTypes(@NotNull String type) {
-      String[] parts = type.split(" or ");
-      return Lists.newArrayList(parts);
+      if (type.startsWith(UNION_PREFIX) && type.endsWith("]")) {
+        return Lists.newArrayList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*"));
+      }
+      else {
+        String[] parts = type.split(" or ");
+        return Lists.newArrayList(parts);
+      }
     }
 
     public String getName() {
@@ -120,7 +126,7 @@ public class PySignature {
         return noneTypeToNone(myTypes.get(0));
       }
       else {
-        return "Union[" + StringUtil.join(myTypes, NamedParameter::noneTypeToNone, ", ") + "]";
+        return UNION_PREFIX + StringUtil.join(myTypes, NamedParameter::noneTypeToNone, ", ") + "]";
       }
     }
 

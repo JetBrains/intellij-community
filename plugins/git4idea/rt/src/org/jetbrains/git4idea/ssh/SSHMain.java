@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class SSHMain implements GitExternalApp {
   /**
    * Handler number
    */
-  private final int myHandlerNo;
+  private final String myHandlerNo;
   /**
    * the xml RPC port
    */
@@ -120,7 +120,7 @@ public class SSHMain implements GitExternalApp {
   private SSHMain(String host, String username, Integer port, String command) throws IOException {
     SSHConfig config = SSHConfig.load();
     myHost = config.lookup(username, host, port);
-    myHandlerNo = Integer.parseInt(System.getenv(GitSSHHandler.SSH_HANDLER_ENV));
+    myHandlerNo = System.getenv(GitSSHHandler.SSH_HANDLER_ENV);
     int xmlRpcPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PORT_ENV));
     myXmlRpcClient = new GitSSHXmlRpcClient(xmlRpcPort, myHost.isBatchMode());
     myCommand = command;

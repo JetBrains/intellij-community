@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -80,7 +79,7 @@ public class InferenceSessionContainer {
                                                                                           });
         if (topLevelCall != null) {
 
-          final InferenceSession session;
+          InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
@@ -92,6 +91,22 @@ public class InferenceSessionContainer {
                 return new Result<InferenceSession>(startTopLevelInference(topLevelCall), PsiModificationTracker.MODIFICATION_COUNT);
               }
             });
+
+            if (session != null) {
+              //reject cached top level session if it was based on wrong candidate: check nested session if candidate (it's type parameters) are the same
+              //such situations are avoided when overload resolution is performed (MethodCandidateInfo.isOverloadCheck above)
+              //but situations when client code iterates through PsiResolveHelper.getReferencedMethodCandidates or similar are impossible to guess
+              final Map<PsiElement, InferenceSession> sessions = session.getInferenceSessionContainer().myNestedSessions;
+              final InferenceSession childSession = sessions.get(parent);
+              if (childSession != null) {
+                for (PsiTypeParameter parameter : typeParameters) {
+                  if (!childSession.getInferenceSubstitution().getSubstitutionMap().containsKey(parameter)) {
+                    session = startTopLevelInference(topLevelCall);
+                    break;
+                  }
+                }
+              }
+            }
           }
 
           if (session != null) {
@@ -101,7 +116,6 @@ public class InferenceSessionContainer {
               InferenceSession childSession = new InferenceSession(initialInferenceState);
               final List<String> errorMessages = session.getIncompatibleErrorMessages();
               if (errorMessages != null) {
-                properties.getInfo().setInferenceError(StringUtil.join(errorMessages, "\n"));
                 return childSession.prepareSubstitution();
               }
               return childSession
@@ -127,6 +141,15 @@ public class InferenceSessionContainer {
     final InferenceSessionContainer copy = new InferenceSessionContainer() {
       @Override
       public PsiSubstitutor findNestedSubstitutor(PsiElement arg, @Nullable PsiSubstitutor defaultSession) {
+        //for the case foo(bar(a -> m())): top level inference won't touch lambda "a -> m()"
+        //for the case foo(a -> bar(b -> m())): top level inference would go till nested lambda "b -> m()" and the state from top level could be found here by "bar(b -> m())"
+        //but proceeding with additional constraints from saved point would produce new expression constraints with different inference variables (could be found in myNestedSessions)
+        //which won't be found in the system if we won't reject stored sessions in such cases
+        final PsiSubstitutor substitutor = super.findNestedSubstitutor(arg, null);
+        if (substitutor != null) {
+          return substitutor;
+        }
+
         final InitialInferenceState state = nestedStates.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
         if (state != null) {
           return state.getInferenceSubstitutor();

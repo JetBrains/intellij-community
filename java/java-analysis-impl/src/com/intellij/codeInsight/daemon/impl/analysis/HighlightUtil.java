@@ -436,8 +436,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (rExpression == null) return null;
     final PsiType rType = rExpression.getType();
     HighlightInfo errorResult = null;
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true) ||
-        PsiType.getJavaLangObject(containingFile.getManager(), assignment.getResolveScope()).equals(lType)) {
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
                                                  JavaHighlightUtil.formatType(lType),

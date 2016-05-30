@@ -27,6 +27,8 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.service.ui.SelectExternalProjectDialog;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -64,10 +66,13 @@ public class GradleParentProjectForm {
   private JPanel myPanel;
   private JButton mySelectParent;
   private EditorTextField myParentPathField;
+  @NotNull
+  private final WizardContext myContext;
 
-  public GradleParentProjectForm(WizardContext context, @Nullable NullableConsumer<ProjectData> consumer) {
+  public GradleParentProjectForm(@NotNull WizardContext context, @Nullable NullableConsumer<ProjectData> consumer) {
     myProjectOrNull = context.getProject();
-    myConsumer = consumer == null ? EmptyConsumer.<ProjectData>getInstance() : consumer;
+    myContext = context;
+    myConsumer = consumer == null ? EmptyConsumer.getInstance() : consumer;
     myIsVisible = !context.isCreatingNewProject() && myProjectOrNull != null && isGradleModuleExist(context);
     initComponents();
   }
@@ -86,6 +91,9 @@ public class GradleParentProjectForm {
         myConsumer.consume(myParent);
       }
     });
+    if (myParent == null) {
+      myParent = findPotentialParentProject(myProjectOrNull);
+    }
   }
 
   public JPanel getComponent() {
@@ -121,6 +129,20 @@ public class GradleParentProjectForm {
   private Project getProject() {
     Project project = myProjectOrNull != null ? myProjectOrNull : ArrayUtil.getFirstElement(ProjectManager.getInstance().getOpenProjects());
     return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+  }
+
+  @Nullable
+  private ProjectData findPotentialParentProject(@Nullable Project project) {
+    if (project == null) return null;
+
+    ExternalProjectSettings linkedProjectSettings =
+      ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectSettings(myContext.getProjectFileDirectory());
+    if(linkedProjectSettings == null) return null;
+
+    final ExternalProjectInfo projectInfo =
+      ProjectDataManager.getInstance().getExternalProjectData(project, GradleConstants.SYSTEM_ID, linkedProjectSettings.getExternalProjectPath());
+    return projectInfo != null && projectInfo.getExternalProjectStructure() != null
+           ? projectInfo.getExternalProjectStructure().getData() : null;
   }
 
   private static void collapseIfPossible(@NotNull EditorTextField editorTextField,

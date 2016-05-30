@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class PythonPatterns extends PlatformPatterns {
+
+  private static final int STRING_LITERAL_LIMIT = 10000;
+
   public static PyElementPattern.Capture<PyLiteralExpression> pyLiteralExpression() {
     return new PyElementPattern.Capture<PyLiteralExpression>(new InitialPatternCondition<PyLiteralExpression>(PyLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -49,7 +52,7 @@ public class PythonPatterns extends PlatformPatterns {
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         if (o instanceof PyStringLiteralExpression) {
           final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
-          if (!DocStringUtil.isDocStringExpression(expr)) {
+          if (!DocStringUtil.isDocStringExpression(expr) && expr.getTextLength() < STRING_LITERAL_LIMIT) {
             final String value = expr.getStringValue();
             return pattern.matcher(value).find();
           }

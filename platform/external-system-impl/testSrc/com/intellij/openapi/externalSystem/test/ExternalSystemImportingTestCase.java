@@ -487,6 +487,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             error.set(Couple.of(errorMessage, errorDetails));
           }
         })
+        .forceWhenUptodate()
     );
 
     if (!error.isNull()) {

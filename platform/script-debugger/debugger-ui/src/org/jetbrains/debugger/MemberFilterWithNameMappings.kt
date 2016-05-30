@@ -15,12 +15,8 @@
  */
 package org.jetbrains.debugger
 
-open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) : MemberFilter {
-  protected val rawNameToSource = rawNameToSource ?: emptyMap<String, String>()
-
-  override fun hasNameMappings(): Boolean {
-    return !rawNameToSource.isEmpty()
-  }
+open class MemberFilterWithNameMappings(protected val rawNameToSource: Map<String, String> = emptyMap()) : MemberFilter {
+  override fun hasNameMappings() = !rawNameToSource.isEmpty()
 
   override fun rawNameToSource(variable: Variable): String {
     val name = variable.name
@@ -28,9 +24,7 @@ open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) :
     return sourceName ?: normalizeMemberName(name)
   }
 
-  protected open fun normalizeMemberName(name: String): String {
-    return name
-  }
+  protected open fun normalizeMemberName(name: String) = name
 
   override fun sourceNameToRaw(name: String): String? {
     if (!hasNameMappings()) {

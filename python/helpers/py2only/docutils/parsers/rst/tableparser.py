@@ -1,4 +1,4 @@
-# $Id: tableparser.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: tableparser.py 7320 2012-01-19 22:33:02Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,13 +19,25 @@ and produce a well-formed data structure suitable for building a CALS table.
 
 __docformat__ = 'reStructuredText'
 
+
 import re
 import sys
-
 from docutils import DataError
+from docutils.utils import strip_combining_chars
 
 
-class TableMarkupError(DataError): pass
+class TableMarkupError(DataError):
+
+    """
+    Raise if there is any problem with table markup.
+
+    The keyword argument `offset` denotes the offset of the problem
+    from the table's start line.
+    """
+
+    def __init__(self, *args, **kwargs):
+            self.offset = kwargs.pop('offset', 0)
+            DataError.__init__(self, *args)
 
 
 class TableParser:
@@ -63,16 +75,17 @@ class TableParser:
             if self.head_body_separator_pat.match(line):
                 if self.head_body_sep:
                     raise TableMarkupError(
-                        'Multiple head/body row separators in table (at line '
-                        'offset %s and %s); only one allowed.'
-                        % (self.head_body_sep, i))
+                        'Multiple head/body row separators '
+                        '(table lines %s and %s); only one allowed.'
+                        % (self.head_body_sep+1, i+1), offset=i)
                 else:
                     self.head_body_sep = i
                     self.block[i] = line.replace('=', '-')
         if self.head_body_sep == 0 or self.head_body_sep == (len(self.block)
                                                              - 1):
             raise TableMarkupError('The head/body row separator may not be '
-                                   'the first or last line of the table.')
+                                   'the first or last line of the table.',
+                                   offset=i)
 
 
 class GridTableParser(TableParser):
@@ -190,8 +203,8 @@ class GridTableParser(TableParser):
         last = self.bottom - 1
         for col in range(self.right):
             if self.done[col] != last:
-                return None
-        return 1
+                return False
+        return True
 
     def scan_cell(self, top, left):
         """Starting at the top-left corner, start tracing out a cell."""
@@ -414,7 +427,7 @@ class SimpleTableParser(TableParser):
         """
         cols = []
         end = 0
-        while 1:
+        while True:
             begin = line.find('-', end)
             end = line.find(' ', begin)
             if begin < 0:
@@ -424,8 +437,9 @@ class SimpleTableParser(TableParser):
             cols.append((begin, end))
         if self.columns:
             if cols[-1][1] != self.border_end:
-                raise TableMarkupError('Column span incomplete at line '
-                                       'offset %s.' % offset)
+                raise TableMarkupError('Column span incomplete in table '
+                                       'line %s.' % (offset+1),
+                                       offset=offset)
             # Allow for an unbounded rightmost column:
             cols[-1] = (cols[-1][0], self.columns[-1][1])
         return cols
@@ -441,8 +455,9 @@ class SimpleTableParser(TableParser):
                     i += 1
                     morecols += 1
             except (AssertionError, IndexError):
-                raise TableMarkupError('Column span alignment problem at '
-                                       'line offset %s.' % (offset + 1))
+                raise TableMarkupError('Column span alignment problem '
+                                       'in table line %s.' % (offset+2),
+                                       offset=offset+1)
             cells.append([0, morecols, offset, []])
             i += 1
         return cells
@@ -454,7 +469,7 @@ class SimpleTableParser(TableParser):
         The row is parsed according to the current column spec (either
         `spanline` if provided or `self.columns`).  For each column, extract
         text from each line, and check for text in column margins.  Finally,
-        adjust for insigificant whitespace.
+        adjust for insignificant whitespace.
         """
         if not (lines or spanline):
             # No new row, just blank lines.
@@ -485,6 +500,9 @@ class SimpleTableParser(TableParser):
         # check for text overflow:
         columns.append((sys.maxint, None))
         lastcol = len(columns) - 2
+        # combining characters do not contribute to the column width
+        lines = [strip_combining_chars(line) for line in lines]
+
         for i in range(len(columns) - 1):
             start, end = columns[i]
             nextstart = columns[i+1][0]
@@ -498,8 +516,9 @@ class SimpleTableParser(TableParser):
                     if new_end > main_end:
                         self.columns[-1] = (main_start, new_end)
                 elif line[end:nextstart].strip():
-                    raise TableMarkupError('Text in column margin at line '
-                                           'offset %s.' % (first_line + offset))
+                    raise TableMarkupError('Text in column margin '
+                        'in table line %s.' % (first_line+offset+1),
+                        offset=first_line+offset)
                 offset += 1
         columns.pop()
 

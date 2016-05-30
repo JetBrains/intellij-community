@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -111,9 +113,11 @@ public class ScratchFileActions {
   static void doCreateNewScratch(@NotNull Project project, boolean buffer, @NotNull Language language, @NotNull String text) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
 
+    LanguageFileType fileType = language.getAssociatedFileType();
+    String ext = buffer || fileType == null? "" : fileType.getDefaultExtension();
     String fileName = buffer ? "buffer" + nextBufferIndex() : "scratch";
     ScratchFileService.Option option = buffer ? ScratchFileService.Option.create_if_missing : ScratchFileService.Option.create_new_always;
-    VirtualFile f = ScratchRootType.getInstance().createScratchFile(project, fileName, language, text, option);
+    VirtualFile f = ScratchRootType.getInstance().createScratchFile(project, PathUtil.makeFileName(fileName, ext), language, text, option);
     if (f != null) {
       FileEditorManager.getInstance(project).openFile(f, true);
     }

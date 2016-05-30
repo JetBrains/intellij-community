@@ -29,6 +29,12 @@ public class PyBinaryModuleCompletionTest extends PyTestCase {
     myFixture.checkResultByFile("completion/pySideImport.after.py");
   }
 
+  public void testPyQt4Import() {
+    myFixture.configureByFile("completion/pyQt4Import.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/pyQt4Import.after.py");
+  }
+
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return ourDescriptor;

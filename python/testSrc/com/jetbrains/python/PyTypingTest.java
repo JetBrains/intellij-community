@@ -592,6 +592,16 @@ public class PyTypingTest extends PyTestCase {
            "expr = f");
   }
 
+  // PY-18877
+  public void testFunctionTypeCommentOnTheSameLine() {
+    doTest("(x: int, y: int) -> None", 
+           "def f(x,\n" +
+           "      y):  # type: (int, int) -> None\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f");
+  }
+  
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",

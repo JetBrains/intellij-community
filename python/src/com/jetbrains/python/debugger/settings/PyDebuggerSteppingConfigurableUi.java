@@ -143,12 +143,13 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
                                                 new NonEmptyInputValidator());
       if (pattern != null) {
         mutator.fun(item).setFilter(pattern);
+        myPySteppingFilterEditor.getModel().fireTableDataChanged();
       }
     }
 
     @Override
     public void applyEdited(@NotNull PySteppingFilter oldItem, @NotNull PySteppingFilter newItem) {
-      newItem.setFilter(oldItem.getFilter());
+      oldItem.setFilter(newItem.getFilter());
     }
 
     @Override

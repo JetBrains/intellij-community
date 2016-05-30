@@ -497,16 +497,18 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
       super.visitReferenceExpression(expression);
       if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-        final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-        if (field != null) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMember.class);
+        if (member instanceof PsiField || member instanceof PsiClassInitializer) {
           final PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField && 
-              ((PsiField)resolved).getContainingClass() == field.getContainingClass() && 
+          final PsiClass memberContainingClass = member.getContainingClass();
+          if (resolved instanceof PsiField &&
+              memberContainingClass != null &&
+              PsiTreeUtil.isAncestor(((PsiField)resolved).getContainingClass(), memberContainingClass, false) &&
               expression.getQualifierExpression() == null) {
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
-                resolved == field ||
-                initializer.getTextOffset() > myAnonymClass.getTextOffset() && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+                resolved == member ||
+                initializer.getTextOffset() > myAnonymClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
               return;
             }

@@ -26,7 +26,7 @@ import java.awt.event.MouseWheelEvent;
 /**
  * @author Sergey.Malenkov
  */
-final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
+public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
   static final JBColor FOREGROUND = new JBColor(0x8C8C8C, 0x8C8C8C);
   static final JBColor BACKGROUND = new JBColor(0xF5F5F5, 0x4B4F52);
   static final JBColor BORDER = new JBColor(0xDEDEDE, 0x383B3D);

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
@@ -40,8 +41,7 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message("change.modifier.quickfix",
-                                           modifierText);
+    return InspectionGadgetsBundle.message("change.modifier.quickfix", VisibilityUtil.toPresentableText(modifierText));
   }
 
   @NotNull

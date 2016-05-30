@@ -152,12 +152,15 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         continue;
       }
 
-      if (event instanceof VFileContentChangeEvent || event instanceof VFileCopyEvent || event instanceof VFileCreateEvent ||
-          event instanceof VFileMoveEvent) {
+      if (event instanceof VFileContentChangeEvent || event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
         dirtyFilesAndDirs.add(file);
-      } else if (event instanceof VFilePropertyChangeEvent) {
-        final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent) event;
-
+      }
+      else if (event instanceof VFileCopyEvent) {
+        VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+        dirtyFilesAndDirs.add(copyEvent.getNewParent().findChild(copyEvent.getNewChildName()));
+      }
+      else if (event instanceof VFilePropertyChangeEvent) {
+        final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
         if (pce.getPropertyName().equals(VirtualFile.PROP_NAME)) {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.

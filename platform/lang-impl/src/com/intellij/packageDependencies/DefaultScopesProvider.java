@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.packageDependencies;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,21 +44,9 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
 
   public DefaultScopesProvider(@NotNull Project project) {
     myProject = project;
-    final NamedScope projectScope = new ProjectFilesScope();
-    final NamedScope nonProjectScope = new NonProjectFilesScope();
-    final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
-      @Override
-      public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
-        return contains(file, holder.getProject(), holder);
-      }
-
-      @Override
-      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-        return project == myProject
-               && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
-      }
-    });
+    NamedScope projectScope = new ProjectFilesScope();
+    NamedScope nonProjectScope = new NonProjectFilesScope();
+    myProblemsScope = new ProblemScope(project);
     myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope);
   }
 
@@ -78,7 +65,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   public List<NamedScope> getAllCustomScopes() {
     final List<NamedScope> scopes = new ArrayList<NamedScope>();
     for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, myProject)) {
-      scopes.addAll(provider.getCustomScopes());
+      scopes.addAll(provider.getFilteredScopes());
     }
     return scopes;
   }

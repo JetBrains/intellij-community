@@ -58,6 +58,19 @@ public abstract class PsiDiamondType extends PsiType {
       }
     };
 
+    public static final DiamondInferenceResult RAW_RESULT = new DiamondInferenceResult() {
+      @NotNull
+      @Override
+      public PsiType[] getTypes() {
+        return PsiType.EMPTY_ARRAY;
+      }
+
+      @Override
+      public String getErrorMessage() {
+        return null;
+      }
+    };
+
     public static final DiamondInferenceResult UNRESOLVED_CONSTRUCTOR = new DiamondInferenceResult() {
       @NotNull
       @Override

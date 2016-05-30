@@ -90,10 +90,17 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void foldSequentialComments(ASTNode node, List<FoldingDescriptor> descriptors) {
+    //do not start folded comments from custom region
+    if (isCustomRegionElement(node.getPsi())) {
+      return;
+    }
     //need to skip previous comments in sequence
     ASTNode curNode = node.getTreePrev();
     while (curNode != null) {
       if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        if (isCustomRegionElement(curNode.getPsi())) {
+          break;
+        }
         return;
       }
       curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreePrev() : null;
@@ -104,6 +111,10 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     ASTNode lastCommentNode = node;
     while (curNode != null) {
       if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        //do not end folded comments with custom region
+        if (isCustomRegionElement(curNode.getPsi())) {
+          break;
+        }
         lastCommentNode = curNode;
         curNode = curNode.getTreeNext();
         continue;

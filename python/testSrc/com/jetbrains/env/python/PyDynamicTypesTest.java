@@ -24,6 +24,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
 
@@ -89,9 +90,15 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorTestUtil.CaretAndSelectionState(
             Lists.newArrayList(new EditorTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));
           final IntentionAction action = myFixture.findSingleIntention(PyBundle.message("INTN.doc.string.stub"));
-          myFixture.launchAction(action);
-          myFixture.checkResultByFile("dynamicTypes/" + getTestName(true) + "_after.py");
-        });
+          boolean saved = PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB;
+          try {
+            PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB = true;
+            myFixture.launchAction(action);
+            myFixture.checkResultByFile("dynamicTypes/" + getTestName(true) + "_after.py");
+          } finally {
+            PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB = saved;
+          }
+          });
       }
     });
   }

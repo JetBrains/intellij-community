@@ -1316,7 +1316,13 @@ public class TypeConversionUtil {
 
       @Override
       public PsiType visitWildcardType(PsiWildcardType wildcardType) {
-        return wildcardType.getExtendsBound().accept(this);
+        return wildcardType;
+      }
+
+      @Nullable
+      @Override
+      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        return capturedWildcardType.getUpperBound().accept(this);
       }
 
       @Override

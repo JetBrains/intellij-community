@@ -1,5 +1,5 @@
 # Author: Meir Kriheli
-# Id: $Id: he.py 4837 2006-12-26 09:59:41Z sfcben $
+# Id: $Id: he.py 7119 2011-09-02 13:00:23Z milde $
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
@@ -19,6 +19,7 @@ directives = {
       # language-dependent: fixed
       u'\u05ea\u05e9\u05d5\u05de\u05ea \u05dc\u05d1': 'attention',
       u'\u05d6\u05d4\u05d9\u05e8\u05d5\u05ea': 'caution',
+      u'code (translation required)': 'code',
       u'\u05e1\u05db\u05e0\u05d4': 'danger',
       u'\u05e9\u05d2\u05d9\u05d0\u05d4' : 'error',
       u'\u05e8\u05de\u05d6': 'hint',
@@ -44,6 +45,7 @@ directives = {
       #'qa': 'questions',
       #'faq': 'questions',
       'meta': 'meta',
+      'math (translation required)': 'math',
       #'imagemap': 'imagemap',
       u'\u05ea\u05de\u05d5\u05e0\u05d4': 'image',
       'figure': 'figure',
@@ -74,6 +76,7 @@ roles = {
     'ab': 'abbreviation',
     'acronym': 'acronym',
     'ac': 'acronym',
+    u'code (translation required)': 'code',
     'index': 'index',
     'i': 'index',
     u'\u05ea\u05d7\u05ea\u05d9': 'subscript',
@@ -90,6 +93,7 @@ roles = {
     'emphasis': 'emphasis',
     'strong': 'strong',
     'literal': 'literal',
+    'math (translation required)': 'math',
     'named-reference': 'named-reference',
     'anonymous-reference': 'anonymous-reference',
     'footnote-reference': 'footnote-reference',
