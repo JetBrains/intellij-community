@@ -1421,7 +1421,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
     public Comparator<TreeNodeOnVcsRevision> getComparator() {
-      final Comparator comparator = myBaseColumn.getComparator();
+      final Comparator<VcsFileRevision> comparator = myBaseColumn.getComparator();
       if (comparator == null) return null;
       return (o1, o2) -> {
         if (o1 == null) return -1;
