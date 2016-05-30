@@ -196,7 +196,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private boolean groupsNotSorted() {
-      if (!myPySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY) {
+      if (!myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         return false;
       }
       final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
@@ -214,7 +214,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private void applyResults() {
-      if (myPySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY) {
+      if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
           Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
