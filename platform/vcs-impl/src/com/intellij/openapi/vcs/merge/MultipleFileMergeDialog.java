@@ -266,34 +266,28 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     
     for (final VirtualFile file : files) {
       final Ref<Exception> ex = new Ref<Exception>();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              try {
-                if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
-                  if (!DiffUtil.makeWritable(myProject, file)) {
-                    throw new IOException("File is read-only: " + file.getPresentableName());
-                  }
-                  MergeData data = myProvider.loadRevisions(file);
-                  if (isCurrent) {
-                    file.setBinaryContent(data.CURRENT);
-                  }
-                  else {
-                    file.setBinaryContent(data.LAST);
-                    checkMarkModifiedProject(file);
-                  }
-                }
-                markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          try {
+            if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
+              if (!DiffUtil.makeWritable(myProject, file)) {
+                throw new IOException("File is read-only: " + file.getPresentableName());
               }
-              catch (Exception e) {
-                ex.set(e);
+              MergeData data = myProvider.loadRevisions(file);
+              if (isCurrent) {
+                file.setBinaryContent(data.CURRENT);
+              }
+              else {
+                file.setBinaryContent(data.LAST);
+                checkMarkModifiedProject(file);
               }
             }
-          }, "Accept " + (isCurrent ? "Yours" : "Theirs"), null);
-        }
+            markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
+          }
+          catch (Exception e) {
+            ex.set(e);
+          }
+        }, "Accept " + (isCurrent ? "Yours" : "Theirs"), null);
       });
       if (!ex.isNull()) {
         //noinspection ThrowableResultOfMethodCallIgnored
@@ -362,21 +356,15 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       final List<byte[]> byteContents = ContainerUtil.list(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST);
       List<String> contentTitles = ContainerUtil.list(leftTitle, baseTitle, rightTitle);
 
-      Consumer<MergeResult> callback = new Consumer<MergeResult>() {
-        @Override
-        public void consume(final MergeResult result) {
-          Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-          if (document != null) FileDocumentManager.getInstance().saveDocument(document);
-          checkMarkModifiedProject(file);
+      Consumer<MergeResult> callback = result -> {
+        Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+        if (document != null) FileDocumentManager.getInstance().saveDocument(document);
+        checkMarkModifiedProject(file);
 
-          if (result != MergeResult.CANCEL) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                markFileProcessed(file, getSessionResolution(result));
-              }
-            });
-          }
+        if (result != MergeResult.CANCEL) {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            markFileProcessed(file, getSessionResolution(result));
+          });
         }
       };
 
@@ -441,12 +429,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        MultipleFileMergeDialog.super.show();
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> super.show());
   }
 
   private class VirtualFileRenderer extends ColoredTableCellRenderer {
