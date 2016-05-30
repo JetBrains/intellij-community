@@ -506,7 +506,10 @@ public class IdeEventQueue extends EventQueue {
   private AWTEvent mapMetaState(AWTEvent e) {
     if (myWinMetaPressed) {
       Application app = ApplicationManager.getApplication();
-      if (app == null || !app.isActive()) {
+
+      boolean weAreNotActive = app == null || !app.isActive();
+      weAreNotActive |=(e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null);
+      if (weAreNotActive) {
         myWinMetaPressed = false;
         return e;
       }
