@@ -21,6 +21,7 @@ import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -45,7 +46,8 @@ import java.awt.*;
 import java.io.IOException;
 
 public class VcsHistoryUtil {
-  public static Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = Key.create("VcsHistoryUtil.Change");
+  @Deprecated
+  public static Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
@@ -107,8 +109,8 @@ public class VcsHistoryUtil {
 
     final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
 
-    diffContent1.putUserData(REVISION_INFO_KEY, getRevisionInfo(revision1));
-    diffContent2.putUserData(REVISION_INFO_KEY, getRevisionInfo(revision2));
+    diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
+    diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
 
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
