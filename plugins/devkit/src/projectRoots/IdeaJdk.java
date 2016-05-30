@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.JBIterable;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -305,19 +306,23 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     addSources(sdkModificator, internalJava);
     //roots for openapi and other libs
     if (isFromIDEAProject(sdkHome)) {
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
       for (String prefix : new String[]{"community", ""}) {
         for (String path : new String[]{"lib", "build/kotlinc/lib/kotlin-runtime.jar"}) {
-          VirtualFile libDir = fileSystem.refreshAndFindFileByPath(sdkHome + "/" + prefix + "/" + path);
-          if (libDir == null) continue;
-          for (VirtualFile file : libDir.isDirectory() ? libDir.getChildren() : new VirtualFile[]{libDir}) {
+          File libDir = new File(sdkHome, FileUtil.toSystemDependentName(prefix + "/" + path));
+          if (!libDir.exists()) continue;
+          for (File file : JBIterable.of(libDir.listFiles()).append(libDir)) {
             if (file.isDirectory()) continue;
-            if (!StringUtil.equalsIgnoreCase(file.getExtension(), "jar")) continue;
-            sdkModificator.addRoot(file, OrderRootType.CLASSES);
+            if (!StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) continue;
+            String jarPath = FileUtil.toSystemIndependentName(file.getPath()) + JarFileSystem.JAR_SEPARATOR;
+            VirtualFile jar = jarFileSystem.findFileByPath(jarPath);
+            if (jar == null) continue;
+            sdkModificator.addRoot(jar, OrderRootType.CLASSES);
           }
         }
       }
-      VirtualFile out = fileSystem.refreshAndFindFileByPath(sdkHome + "/out/classes/production");
+      LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      VirtualFile out = localFileSystem.refreshAndFindFileByPath(sdkHome + "/out/classes/production");
       if (out != null) {
         for (VirtualFile dir : out.getChildren()) {
           if (!dir.isDirectory()) continue;
@@ -396,7 +401,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
           }
         }
         else {
-          final File jdkHome = new File(javaSdk.getHomePath()).getParentFile();
+          String homePath = javaSdk.getHomePath();
+          if (homePath == null) return;
+          final File jdkHome = new File(homePath).getParentFile();
           @NonNls final String srcZip = "src.zip";
           final File jarFile = new File(jdkHome, srcZip);
           if (jarFile.exists()){
