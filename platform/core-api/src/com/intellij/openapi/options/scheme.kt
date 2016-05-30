@@ -46,9 +46,13 @@ interface SchemeExtensionProvider {
   val isUpgradeNeeded: Boolean
 }
 
-
 interface SchemeDataHolder {
+  /**
+   * You should call updateDigest() after read on init.
+   */
   fun read(): Element
+
+  fun updateDigest()
 }
 
 abstract class SchemeManagerFactory {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   private final ApplicationProfileManager myApplicationProfileManager;
 
-  private final Map<String, Profile> myProfiles = new THashMap<String, Profile>();
+  private final Map<String, Profile> myProfiles = new THashMap<>();
   protected final DependencyValidationManager myHolder;
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
@@ -101,8 +101,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     for (String profile : sortedProfiles) {
       final Profile projectProfile = myProfiles.get(profile);
       if (projectProfile != null) {
-        Element profileElement = new Element(PROFILE);
-        projectProfile.writeExternal(profileElement);
+        Element profileElement = projectProfile.writeExternal();
         boolean hasSmthToSave = sortedProfiles.length > 1 || isCustomProfileUsed();
         if (!hasSmthToSave) {
           for (Element child : profileElement.getChildren()) {

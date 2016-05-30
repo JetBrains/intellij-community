@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.profile.DefaultProjectProfileManager.PROFILE;
 
 /**
  * User: anna
@@ -63,9 +65,7 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public void copyFrom(@NotNull Profile profile) {
-    Element config = new Element("config");
-    profile.writeExternal(config);
-    readExternal(config);
+    readExternal(profile.writeExternal());
   }
 
   @Override
@@ -116,9 +116,11 @@ public abstract class ProfileEx implements Profile {
     mySerializer.writeExternal(this, element, preserveCompatibility);
   }
 
-  @Override
-  public void writeExternal(Element element) {
-    serializeInto(element, true);
+  @NotNull
+  public Element writeExternal() {
+    Element result = new Element(PROFILE);
+    serializeInto(result, true);
+    return result;
   }
 
   public void profileChanged() {

@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
   SnappyOutputStream(byteOut).use {
-    writeElement(state, it)
+    serializeElementToBinary(state, it)
   }
   return byteOut
 }

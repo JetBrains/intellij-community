@@ -353,13 +353,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
         FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, file -> {
-          final Element element = new Element("inspections");
+          final Element element;
           try {
             final SingleInspectionProfilePanel panel = getSelectedPanel();
             LOG.assertTrue(panel != null);
             final InspectionProfileImpl profile = getSelectedObject();
             LOG.assertTrue(true);
-            profile.writeExternal(element);
+            element = profile.writeExternal();
             final String filePath =
               FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
             if (new File(filePath).isFile()) {

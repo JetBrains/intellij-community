@@ -263,6 +263,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
+  @Override
+  public Element writeExternal() {
+    if (myDataHolder == null) {
+      return super.writeExternal();
+    }
+    else {
+      return myDataHolder.read();
+    }
+  }
+
+  @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
     LOG.assertTrue(myInitialized);
     final Set<HighlightSeverity> result = new HashSet<>();
@@ -565,7 +576,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
     }
-    final GraphGenerator<String> graphGenerator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+
+    if (dataHolder != null) {
+      dataHolder.updateDigest();
+    }
+
+    DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
         return dependencies.keySet();
@@ -575,9 +591,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       public Iterator<String> getIn(String n) {
         return dependencies.get(n).iterator();
       }
-    }));
-
-    DFSTBuilder<String> builder = new DFSTBuilder<>(graphGenerator);
+    })));
     if (builder.isAcyclic()) {
       final List<String> scopes = builder.getSortedNodes();
       myScopesOrder = ArrayUtil.toStringArray(scopes);

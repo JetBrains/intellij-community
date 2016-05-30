@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
@@ -48,7 +49,9 @@ import org.xmlpull.mxp1.MXParser
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.*
 import java.util.function.Function
 
@@ -216,7 +219,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
         val info = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
-        info.hash = element.getTreeHash()
+        info.digest = element.digest()
         info.schemeName = scheme.name
         val oldInfo = schemeToInfo.put(scheme, info)
         LOG.assertTrue(oldInfo == null)
@@ -338,13 +341,24 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     return info != null && schemeExtension != info.fileExtension
   }
 
-  private class SchemeDataHolderImpl(private val bytes: ByteArray, private val externalInfo: ExternalInfo) : SchemeDataHolder {
-    override fun read(): Element {
-      val element = loadElement(bytes.inputStream())
-      if (externalInfo.hash == 0) {
-        externalInfo.hash = element.getTreeHash()
-      }
-      return element
+  private inner class SchemeDataHolderImpl(private val bytes: ByteArray, private val externalInfo: ExternalInfo) : SchemeDataHolder {
+    override fun read() = loadElement(bytes.inputStream())
+
+    override fun updateDigest() {
+      schemeToInfo.forEachEntry({ k, v ->
+        if (v !== externalInfo) {
+          return@forEachEntry true
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        try {
+          externalInfo.digest = (processor.writeScheme(k as MUTABLE_SCHEME) as Element).digest()
+        }
+        catch (e: WriteExternalException) {
+          LOG.error("Cannot update digest", e)
+        }
+        false
+      })
     }
   }
 
@@ -395,7 +409,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       element?.let {
-        info.hash = it.getTreeHash()
+        info.digest = it.digest()
       }
       info.schemeName = schemeName
       return info
@@ -558,14 +572,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.name, false))
     }
 
-    val newHash = element!!.getTreeHash()
-    if (externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && newHash == externalInfo.hash) {
+    val newDigest = element!!.digest()
+    if (externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && externalInfo.isDigestEquals(newDigest)) {
       return
     }
 
     // save only if scheme differs from bundled
     val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
+    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.isDigestEquals(newDigest) ?: false) {
       externalInfo?.scheduleDelete()
       return
     }
@@ -639,7 +653,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     else {
       externalInfo.setFileNameWithoutExtension(fileNameWithoutExtension, schemeExtension)
     }
-    externalInfo.hash = newHash
+    externalInfo.digest = newDigest
     externalInfo.schemeName = scheme.name
   }
 
@@ -889,7 +903,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
     // we keep it to detect rename
     var schemeName: String? = null
-    var hash = 0
+
+    var digest: ByteArray? = null
 
     val fileName: String
       get() = "$fileNameWithoutExtension$fileExtension"
@@ -898,6 +913,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       fileNameWithoutExtension = nameWithoutExtension
       fileExtension = extension
     }
+
+    fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
 
     override fun toString() = fileName
   }
@@ -930,4 +947,25 @@ fun createDir(ioDir: Path, requestor: Any): VirtualFile {
 
 fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {
   return parent.findChild(fileName) ?: runWriteAction { parent.createChildData(requestor, fileName) }
+}
+
+class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
+  override fun write(b: Int) {
+    digest.update(b.toByte())
+  }
+
+  override fun write(b: ByteArray, off: Int, len: Int) {
+    digest.update(b, off, len)
+  }
+
+  override fun toString(): String {
+    return "[Digest Output Stream] " + digest.toString()
+  }
+}
+
+fun Element.digest(): ByteArray {
+  // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
+  val digest = MessageDigest.getInstance("SHA-1")
+  serializeElementToBinary(this, DigestOutputStream(digest))
+  return digest.digest()
 }

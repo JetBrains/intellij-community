@@ -10,12 +10,8 @@ private enum class TypeMarker {
   ELEMENT, CDATA, TEXT, ELEMENT_END
 }
 
-fun writeElement(element: Element, out: OutputStream) {
+fun serializeElementToBinary(element: Element, out: OutputStream) {
   writeElement(element, DataOutputStream(out))
-}
-
-fun writeElement(element: Element, out: DataOutputStream) {
-  writeElement(out, element)
 }
 
 fun readElement(input: InputStream) = readElement(DataInputStream(input))
@@ -38,7 +34,7 @@ private fun readContent(element: Element, input: DataInputStream) {
   }
 }
 
-private fun writeElement(out: DataOutputStream, element: Element) {
+private fun writeElement(element: Element, out: DataOutputStream) {
   out.writeUTF(element.name)
 
   writeAttributes(out, element.attributes)
@@ -47,7 +43,7 @@ private fun writeElement(out: DataOutputStream, element: Element) {
   for (item in content) {
     if (item is Element) {
       out.writeByte(TypeMarker.ELEMENT.ordinal)
-      writeElement(out, item)
+      writeElement(item, out)
     }
     else if (item is Text) {
       if (!isAllWhitespace(item)) {

@@ -193,10 +193,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   private void createDefaultProfile() {
-    final InspectionProfileImpl defaultProfile = createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
-    addProfile(defaultProfile);
+    addProfile(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
   }
-
 
   @Override
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {

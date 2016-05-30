@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.maddyhome.idea.copyright;
 import com.intellij.profile.ProfileEx;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class CopyrightProfile extends ProfileEx {
   @SuppressWarnings("SpellCheckingInspection")
@@ -63,5 +65,13 @@ public class CopyrightProfile extends ProfileEx {
 
   public void setAllowReplaceKeyword(String allowReplaceKeyword) {
     this.allowReplaceKeyword = allowReplaceKeyword;
+  }
+
+  @NotNull
+  @Override
+  public Element writeExternal() {
+    Element result = new Element(CopyrightManager.COPYRIGHT);
+    serializeInto(result, true);
+    return result;
   }
 }

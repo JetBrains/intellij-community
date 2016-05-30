@@ -84,10 +84,12 @@ public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableSchem
 
   @Override
   public CodeStyleSettings getCodeStyleSettings() {
-    if (myDataHolder != null) {
-      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myDataHolder.read());
-      myParentSchemeName = null;
+    SchemeDataHolder dataHolder = myDataHolder;
+    if (dataHolder != null) {
       myDataHolder = null;
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      dataHolder.updateDigest();
+      myParentSchemeName = null;
     }
     return myCodeStyleSettings;
   }

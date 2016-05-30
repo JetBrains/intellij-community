@@ -61,11 +61,6 @@ public class InspectionToolRegistrar {
         if (!isInternal && ep.isInternal) continue;
         factories.add(() -> new GlobalInspectionToolWrapper(ep));
       }
-      for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
-        for (final InspectionProfileEntry profileEntry : factory.createTools()) {
-          factories.add(() -> wrapTool(profileEntry));
-        }
-      }
       myInspectionToolFactories.addAll(factories);
     }
   }
