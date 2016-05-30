@@ -70,12 +70,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub [p]\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=A fqn=p.A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:I, J<I>]\n" +
            "  CLASS:PsiClassStub[name=B fqn=p.B]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      TYPE_PARAMETER:PsiTypeParameter[K]\n" +
            "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
@@ -84,19 +84,19 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:a/*skip*/.A]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    CLASS:PsiClassStub[name=I fqn=p.B.I]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "      IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface deprecatedA name=I fqn=p.I]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANNOTATION:PsiAnnotationStub[@java.lang.Deprecated]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
@@ -120,17 +120,17 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[interface annotation name=Anno fqn=Anno]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    ANNOTATION_METHOD:PsiMethodStub[annotation i:int default=42]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "    ANNOTATION_METHOD:PsiMethodStub[annotation s:String]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1033]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=9]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
@@ -149,33 +149,33 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "        PARAMETER:PsiParameterStub[i:int]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4112]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=16]\n" +
            "        PARAMETER:PsiParameterStub[a1:int[]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        PARAMETER:PsiParameterStub[a2:int[]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        PARAMETER:PsiParameterStub[a3:int[][]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "    METHOD:PsiMethodStub[varargs v2a:int[]]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=10]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "        PARAMETER:PsiParameterStub[v:int...]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface name=I fqn=I]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m1:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m2:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=513]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=512]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
@@ -195,17 +195,17 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4104]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=8]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    FIELD:PsiFieldStub[f:float]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=6144]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=2048]\n" +
            "    FIELD:PsiFieldStub[j:int[]={0}]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    FIELD:PsiFieldStub[k:int]\n" +
            "    FIELD:PsiFieldStub[s:String=\"-\"]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4104]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=8]\n" +
            "  CLASS:PsiClassStub[name=D fqn=D]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -227,12 +227,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
@@ -248,27 +248,27 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[enum name=E fqn=E]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst E1:E]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=25]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ENUM_CONSTANT_INITIALIZER:PsiClassStub[anonymous enumInit name=null fqn=null baseref=E]\n" +
            "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=1024]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "  CLASS:PsiClassStub[enum name=U fqn=U]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=17]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst U1:U]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=25]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst U2:U]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=25]\n");
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n");
   }
 
   public void testLocalVariables() {
@@ -290,12 +290,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
@@ -331,12 +331,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Iterable<String>]\n" +
            "        METHOD:PsiMethodStub[iterator:Iterator<String>]\n" +
            "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
@@ -355,7 +355,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@SuppressWarnings(\"UnusedDeclaration\")]\n" +
@@ -388,7 +388,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.C]\n" +
            "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.D]\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      TYPE_PARAMETER:PsiTypeParameter[T]\n" +
            "        ANNOTATION:PsiAnnotationStub[@A]\n" +
@@ -403,7 +403,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
            "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
@@ -413,13 +413,13 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    METHOD:PsiMethodStub[m:T]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
            "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "        PARAMETER:PsiParameterStub[p:int]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "            ANNOTATION:PsiAnnotationStub[@TA]\n" +
            "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:@A E]\n" +
@@ -450,7 +450,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANNOTATION:PsiAnnotationStub[@A9]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    METHOD:PsiMethodStub[v:int[][]]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
@@ -470,17 +470,17 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "      CLASS:PsiClassStub[name=L fqn=null]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
@@ -503,12 +503,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     assertEquals("PsiJavaFileStub []\n" +
                  "  IMPORT_LIST:PsiImportListStub\n" +
                  "  CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]\n" +
-                 "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+                 "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
                  "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
                  "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
                  "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
                  "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
-                 "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n",
+                 "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n",
                  DebugUtil.stubTreeToString(tree));
     System.out.println("SOE depth=" + i + ", time=" + t + "ms");
   }
