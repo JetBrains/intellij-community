@@ -29,6 +29,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -77,7 +79,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
         Collection<PsiReturnStatement> statements = PsiTreeUtil.findChildrenOfType(method, PsiReturnStatement.class);
         for (PsiReturnStatement returnStatement : statements) {
           PsiExpression expression = returnStatement.getReturnValue();
-          String value = getTitleValue(expression);
+          String value = getTitleValue(expression, new HashSet<>());
           if (value == null) continue;
           Nls.Capitalization capitalization = getCapitalizationFromAnno(method);
           checkCapitalization(expression, holder, capitalization);
@@ -113,7 +115,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
 
   private static void checkCapitalization(PsiExpression element, @NotNull ProblemsHolder holder, Nls.Capitalization capitalization) {
     if (capitalization == Nls.Capitalization.NotSpecified) return;
-    String titleValue = getTitleValue(element);
+    String titleValue = getTitleValue(element, new HashSet<>());
     if (!checkCapitalization(titleValue, capitalization)) {
       holder.registerProblem(element, "String '" + titleValue + "' is not properly capitalized. It should have " +
                                       StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
@@ -122,7 +124,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  private static String getTitleValue(@Nullable PsiExpression arg) {
+  private static String getTitleValue(@Nullable PsiExpression arg, Set<PsiElement> processed) {
     if (arg instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)arg).getValue();
       if (value instanceof String) {
@@ -136,7 +138,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
         return null;
       }
       if (returnValue != null) {
-        return getTitleValue(returnValue);
+        return getTitleValue(returnValue, processed);
       }
       Property propertyArgument = getPropertyArgument((PsiMethodCallExpression)arg);
       if (propertyArgument != null) {
@@ -145,8 +147,8 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiReferenceExpression) {
       PsiElement result = ((PsiReferenceExpression)arg).resolve();
-      if (result instanceof PsiVariable && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
-        return getTitleValue(((PsiVariable) result).getInitializer());
+      if (result instanceof PsiVariable && processed.add(result) && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
+        return getTitleValue(((PsiVariable) result).getInitializer(), processed);
       }
     }
     return null;
