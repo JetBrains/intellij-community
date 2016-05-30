@@ -34,7 +34,7 @@ import javax.swing.*;
  * @author Mikhail Golubev
  */
 public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
-  private JBCheckBox mySortImportsAlphabetically;
+  private JBCheckBox mySortImports;
   private JBCheckBox mySortNamesInFromImports;
   private JBCheckBox mySortImportsByTypeFirst;
   private JBCheckBox myJoinFromImportsWithSameSource;
@@ -44,8 +44,8 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     super(PythonLanguage.getInstance(), null, settings);
     addPanelToWatch(myRootPanel);
 
-    mySortImportsAlphabetically.addActionListener(e -> {
-      final boolean sortingEnabled = mySortImportsAlphabetically.isSelected();
+    mySortImports.addActionListener(e -> {
+      final boolean sortingEnabled = mySortImports.isSelected();
       mySortNamesInFromImports.setEnabled(sortingEnabled);
       mySortImportsByTypeFirst.setEnabled(sortingEnabled);
     });
@@ -83,7 +83,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
-    pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY = mySortImportsAlphabetically.isSelected();
+    pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS = mySortImports.isSelected();
     pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = mySortNamesInFromImports.isSelected();
     pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = mySortImportsByTypeFirst.isSelected();
     pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = myJoinFromImportsWithSameSource.isSelected();
@@ -93,7 +93,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
-    return mySortImportsAlphabetically.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY ||
+    return mySortImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS ||
            mySortNamesInFromImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS ||
            mySortImportsByTypeFirst.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST ||
            myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE;
@@ -109,11 +109,11 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   protected void resetImpl(CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
-    mySortImportsAlphabetically.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY);
+    mySortImports.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS);
     mySortNamesInFromImports.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS);
-    mySortNamesInFromImports.setEnabled(mySortImportsAlphabetically.isSelected());
+    mySortNamesInFromImports.setEnabled(mySortImports.isSelected());
     mySortImportsByTypeFirst.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST);
-    mySortImportsByTypeFirst.setSelected(mySortImportsAlphabetically.isSelected());
+    mySortImportsByTypeFirst.setSelected(mySortImports.isSelected());
     myJoinFromImportsWithSameSource.setSelected(pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE);
   }
 }
