@@ -19,10 +19,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author Irina.Chernushina on 4/1/2016.
  */
 public interface JsonSchemaServiceEx extends JsonSchemaService {
 
   boolean checkFileForId(@NotNull String id, @NotNull VirtualFile file);
+
+  Set<VirtualFile> getSchemaFiles();
 }
