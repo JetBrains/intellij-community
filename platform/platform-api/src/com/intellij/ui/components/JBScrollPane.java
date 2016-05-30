@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,9 +38,12 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
+import java.lang.reflect.Field;
 
 public class JBScrollPane extends JScrollPane {
   /**
@@ -71,6 +75,8 @@ public class JBScrollPane extends JScrollPane {
   @Deprecated
   public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
   static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new RoundThumbPainter(2, 0f, .15f, Gray.xFF);
+
+  private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
@@ -168,6 +174,35 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+    if (ui instanceof BasicScrollPaneUI) {
+      try {
+        Field field = BasicScrollPaneUI.class.getDeclaredField("mouseScrollListener");
+        field.setAccessible(true);
+        Object value = field.get(ui);
+        if (value instanceof MouseWheelListener) {
+          MouseWheelListener oldListener = (MouseWheelListener)value;
+          MouseWheelListener newListener = event -> {
+            if (UIUtil.isScrollEvent(event)) {
+              Object source = event.getSource();
+              if (source instanceof JScrollPane) {
+                JScrollPane pane = (JScrollPane)source;
+                if (pane.isWheelScrollingEnabled()) {
+                  JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
+                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                }
+              }
+            }
+          };
+          field.set(ui, newListener);
+          // replace listener if field updated successfully
+          removeMouseWheelListener(oldListener);
+          addMouseWheelListener(newListener);
+        }
+      }
+      catch (Exception exception) {
+        LOG.warn(exception);
+      }
+    }
   }
 
   @Override

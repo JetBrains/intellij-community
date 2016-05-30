@@ -325,6 +325,7 @@ public final class IdeMouseEventDispatcher {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
+             && UIUtil.isScrollEvent(mwe)
              && findHorizontalScrollBar(c) != null;
     }
     return false;
