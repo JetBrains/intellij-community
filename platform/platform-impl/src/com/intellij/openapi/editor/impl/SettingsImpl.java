@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -337,7 +336,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void reinitDocumentIndentOptions() {
-    if (myEditor == null || myEditor.isViewer() || AsyncEditorLoader.isCreatingAsyncEditor()) return;
+    if (myEditor == null || myEditor.isViewer()) return;
     final Project project = myEditor.getProject();
     final DocumentEx document = myEditor.getDocument();
 
@@ -364,7 +363,7 @@ public class SettingsImpl implements EditorSettings {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
     int tabSize;
-    if (project == null || project.isDisposed() || AsyncEditorLoader.isCreatingAsyncEditor()) {
+    if (project == null || project.isDisposed()) {
       tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
     }
     else  {

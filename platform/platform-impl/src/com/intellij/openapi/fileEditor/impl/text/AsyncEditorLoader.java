@@ -17,14 +17,14 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -199,24 +199,4 @@ public class AsyncEditorLoader {
   public static boolean isEditorLoaded(@NotNull Editor editor) {
     return editor.getUserData(ASYNC_LOADER) == null;
   }
-
-  //todo remove this with async indent inference
-  public static boolean isCreatingAsyncEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return ourCreatingAsyncEditor;
-  }
-
-  @NotNull
-  static TextEditorComponent createAsyncEditor(@NotNull Computable<TextEditorComponent> computable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    assert !ourCreatingAsyncEditor;
-    ourCreatingAsyncEditor = true;
-    try {
-      return computable.compute();
-    }
-    finally {
-      ourCreatingAsyncEditor = false;
-    }
-  }
-
 }
