@@ -139,7 +139,7 @@ public class PyOptimizeImportsTest extends PyTestCase {
   
   // PY-18792
   public void testDisableAlphabeticalOrder() {
-    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY = false;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = false;
     doTest();
   }
 
