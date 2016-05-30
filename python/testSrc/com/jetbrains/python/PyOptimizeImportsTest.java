@@ -186,6 +186,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-18792
+  public void testSortImportsByNameFirstWithinGroup() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = false;
+    doTest();
+  }
+
   // PY-19674
   public void testUnresolvedRelativeImportsShouldBeInProjectGroup() {
     final String testName = getTestName(true);
