@@ -44,40 +44,41 @@ class ComplexTextFragment extends TextFragment {
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
     myCharPositions[numChars - 1] = totalWidth;
     int lastCharIndex = -1;
-    int ligatureStartCharIndex = 0;
     float lastX = isRtl ? totalWidth : 0;
     float prevX = lastX;
-    // Here we determine coordinates for boundaries between characters. 
+    // Here we determine coordinates for boundaries between characters.
     // They will be used to place caret, last boundary coordinate is also defining the width of text fragment.
     //
     // We expect these positions to be ordered, so that when caret moves through text characters in some direction, corresponding text
     // offsets change monotonously (within the same-directionality fragment).
     //
     // Special case that we must account for is a ligature, when several adjacent characters are represented as a single glyph. 
-    // In a glyph vector this glyph is associated with the first character, other characters are associated with empty glyphs.
+    // In a glyph vector this glyph is associated with the first character,
+    // other characters either don't have an associated glyph, or they are associated with empty glyphs.
     // (in RTL case real glyph will be associated with first logical character, i.e. last visual character)
     for (int i = 0; i < numGlyphs; i++) {
       int visualGlyphIndex = isRtl ? numGlyphs - 1 - i : i;
       int charIndex = myGlyphVector.getGlyphCharIndex(visualGlyphIndex);
       if (charIndex > lastCharIndex) {
         Rectangle2D bounds = myGlyphVector.getGlyphLogicalBounds(visualGlyphIndex).getBounds2D();
-        if (bounds.isEmpty()) {
-          for (int j = ligatureStartCharIndex; j <= charIndex; j++) {
-            setCharPosition(j, prevX + (lastX - prevX) * (j - ligatureStartCharIndex + 1) / (charIndex - ligatureStartCharIndex + 1), 
-                            isRtl, numChars);
+        if (!bounds.isEmpty()) {
+          if (charIndex > lastCharIndex + 1) {
+            for (int j = Math.max(0, lastCharIndex); j < charIndex; j++) {
+              setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
+            }
           }
-        }
-        else {
           float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX());
           newX = Math.max(0, Math.min(totalWidth, newX));
-          ligatureStartCharIndex = lastCharIndex + 1;
-          for (int j =  ligatureStartCharIndex; j <= charIndex; j++) {
-            setCharPosition(j, newX, isRtl, numChars);
-          }
+          setCharPosition(charIndex, newX, isRtl, numChars);
           prevX = lastX;
           lastX = newX;
+          lastCharIndex = charIndex;
         }
-        lastCharIndex = charIndex;
+      }
+    }
+    if (lastCharIndex < numChars - 1) {
+      for (int j = Math.max(0, lastCharIndex); j < numChars - 1; j++) {
+        setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (numChars - lastCharIndex), isRtl, numChars);
       }
     }
   }
