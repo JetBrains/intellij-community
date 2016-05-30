@@ -379,8 +379,8 @@ public class InspectionTree extends Tree {
     ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
   }
 
-  public void restoreExpansionAndSelection(@Nullable InspectionTreeNode reloadedNode) {
-    myState.restoreExpansionAndSelection(this, reloadedNode);
+  public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
+    myState.restoreExpansionAndSelection(this, treeNodesMightChange);
   }
 
   public void setState(@NotNull InspectionTreeState state) {
