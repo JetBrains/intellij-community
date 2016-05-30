@@ -17,6 +17,7 @@ package org.jetbrains.builtInWebServer;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -156,7 +157,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
   private static final SingletonNotificationManager
     notificationManager = new SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue(), NotificationType.INFORMATION, null);
   // internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
-  static boolean isActivatable() { return Registry.is("ide.built.in.web.server.activatable", true); }
+  static boolean isActivatable() { return Registry.is("ide.built.in.web.server.activatable", true) && !ApplicationManager.getApplication().isUnitTestMode(); }
 
   private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable String projectName) {
     final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
