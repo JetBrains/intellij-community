@@ -49,6 +49,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -353,5 +354,16 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   @NotNull
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Override
+  public Color getBackground() {
+    //noinspection ConstantConditions
+    return myEditor == null ? super.getBackground() : myEditor.getContentComponent().getBackground();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 }
