@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 public abstract class InspectionRVContentProvider {
   private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
@@ -133,7 +133,7 @@ public abstract class InspectionRVContentProvider {
                                @NotNull InspectionToolWrapper toolWrapper,
                                @NotNull Function<T, UserObjectContainer<T>> computeContainer,
                                final boolean showStructure,
-                               final Consumer<InspectionTreeNode> createdNodesConsumer) {
+                               final UnaryOperator<InspectionTreeNode> createdNodesConsumer) {
     final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<String, Map<String, InspectionPackageNode>>();
     boolean supportStructure = showStructure;
     final MultiMap<InspectionPackageNode, UserObjectContainer<T>> packageDescriptors = new MultiMap<>();
@@ -170,6 +170,7 @@ public abstract class InspectionRVContentProvider {
             if (module != null) {
               moduleNode = new InspectionModuleNode(module);
               moduleNodes.put(moduleName, moduleNode);
+              moduleNode = (InspectionModuleNode)createdNodesConsumer.apply(moduleNode);
             }
             else { //module content was removed ?
               continue;
@@ -177,13 +178,15 @@ public abstract class InspectionRVContentProvider {
           }
           else {
             for (InspectionPackageNode packageNode : packageNodes.values()) {
-              createdNodesConsumer.accept(packageNode);
+              createdNodesConsumer.apply(packageNode);
               for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
                 appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
               }
             }
             continue;
           }
+        } else {
+          moduleNode = (InspectionModuleNode)createdNodesConsumer.apply(moduleNode);
         }
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
@@ -198,7 +201,6 @@ public abstract class InspectionRVContentProvider {
             }
           }
         }
-        createdNodesConsumer.accept(moduleNode);
       }
     }
     else {
@@ -214,7 +216,7 @@ public abstract class InspectionRVContentProvider {
           }
           for (TreeNode childNode: childNodes) {
             if (childNode instanceof ProblemDescriptionNode) {
-              createdNodesConsumer.accept(pNode);
+              createdNodesConsumer.apply(pNode);
               break;
             }
             LOG.assertTrue(childNode instanceof RefElementNode, childNode.getClass().getName());
@@ -234,7 +236,7 @@ public abstract class InspectionRVContentProvider {
                 parentNodes.add((RefElementNode)grandChildNode);
               }
               if (!hasElementNodeUnder) {
-                createdNodesConsumer.accept(elementNode);
+                createdNodesConsumer.apply(elementNode);
                 continue;
               }
             }
@@ -256,7 +258,7 @@ public abstract class InspectionRVContentProvider {
               }
             }
             for (RefElementNode node : parentNodes) {
-              createdNodesConsumer.accept(node);
+              createdNodesConsumer.apply(node);
             }
           }
         }
@@ -315,7 +317,7 @@ public abstract class InspectionRVContentProvider {
   }
 
   @SuppressWarnings({"ConstantConditions"}) //class cast suppression
-  protected static void merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
+  protected static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     if (merge) {
       for (int i = 0; i < parent.getChildCount(); i++) {
         InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
@@ -325,31 +327,31 @@ public abstract class InspectionRVContentProvider {
         if (current instanceof InspectionPackageNode) {
           if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0) {
             processDepth(child, current);
-            return;
+            return current;
           }
         }
         else if (current instanceof RefElementNode) {
           if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0 &&
               ((RefElementNode)current).getElement().getQualifiedName().compareTo(((RefElementNode)child).getElement().getQualifiedName()) == 0) {
             processDepth(child, current);
-            return;
+            return current;
           }
         }
         else if (current instanceof InspectionNode) {
           if (((InspectionNode)current).getToolWrapper().getShortName().compareTo(((InspectionNode)child).getToolWrapper().getShortName()) == 0) {
             processDepth(child, current);
-            return;
+            return current;
           }
         }
         else if (current instanceof InspectionModuleNode) {
           if (((InspectionModuleNode)current).getName().compareTo(((InspectionModuleNode)child).getName()) == 0) {
             processDepth(child, current);
-            return;
+            return current;
           }
         }
       }
     }
-    parent.insertByOrder(child, false);
+    return parent.insertByOrder(child, false);
   }
 
   private static void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {
