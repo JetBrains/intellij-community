@@ -1,11 +1,9 @@
 package com.intellij.stats.completion
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.Time
@@ -25,9 +23,8 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
 
     private fun send() {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-            val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
             try {
-                sender.sendStatsData(uid)
+                sender.sendStatsData()
             }
             catch (e: Exception) {
                 LOG.error(e.message)
@@ -53,13 +50,13 @@ class StatisticSender(val urlProvider: UrlProvider,
                       val requestService: RequestService,
                       val filePathProvider: FilePathProvider) {
     
-    fun sendStatsData(uid: String) {
+    fun sendStatsData() {
         assertNotEDT()
         val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
             if (it.length() > 0) {
                 val url = urlProvider.statsServerPostUrl
-                val isSentSuccessfully = sendContent(url, uid, it)
+                val isSentSuccessfully = sendContent(url, it)
                 if (isSentSuccessfully) {
                     it.delete()
                 }
@@ -75,8 +72,8 @@ class StatisticSender(val urlProvider: UrlProvider,
         assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
     }
 
-    private fun sendContent(url: String, uid: String, file: File): Boolean {
-        val data = requestService.post("$url/$uid", file)
+    private fun sendContent(url: String, file: File): Boolean {
+        val data = requestService.post(url, file)
         if (data != null && data.code >= 200 && data.code < 300) {
             return true
         }
