@@ -199,7 +199,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (!myPySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY) {
         return false;
       }
-      final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
+      final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
       return ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
@@ -217,7 +217,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myPySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
+          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
           myGroups.put(priority, imports);
         }
       }

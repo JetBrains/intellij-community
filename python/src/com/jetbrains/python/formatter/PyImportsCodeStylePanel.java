@@ -36,6 +36,7 @@ import javax.swing.*;
 public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   private JBCheckBox mySortImportsAlphabetically;
   private JBCheckBox mySortNamesInFromImports;
+  private JBCheckBox mySortImportsByTypeFirst;
   private JBCheckBox myJoinFromImportsWithSameSource;
   private JPanel myRootPanel;
 
@@ -43,7 +44,11 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     super(PythonLanguage.getInstance(), null, settings);
     addPanelToWatch(myRootPanel);
 
-    mySortImportsAlphabetically.addActionListener(e -> mySortNamesInFromImports.setEnabled(mySortImportsAlphabetically.isSelected()));
+    mySortImportsAlphabetically.addActionListener(e -> {
+      final boolean sortingEnabled = mySortImportsAlphabetically.isSelected();
+      mySortNamesInFromImports.setEnabled(sortingEnabled);
+      mySortImportsByTypeFirst.setEnabled(sortingEnabled);
+    });
   }
 
   @Override
@@ -80,6 +85,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
 
     pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY = mySortImportsAlphabetically.isSelected();
     pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = mySortNamesInFromImports.isSelected();
+    pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = mySortImportsByTypeFirst.isSelected();
     pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = myJoinFromImportsWithSameSource.isSelected();
   }
 
@@ -89,6 +95,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
 
     return mySortImportsAlphabetically.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY ||
            mySortNamesInFromImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS ||
+           mySortImportsByTypeFirst.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST ||
            myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE;
   }
 
@@ -105,6 +112,8 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     mySortImportsAlphabetically.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_ALPHABETICALLY);
     mySortNamesInFromImports.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS);
     mySortNamesInFromImports.setEnabled(mySortImportsAlphabetically.isSelected());
+    mySortImportsByTypeFirst.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST);
+    mySortImportsByTypeFirst.setSelected(mySortImportsAlphabetically.isSelected());
     myJoinFromImportsWithSameSource.setSelected(pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE);
   }
 }
