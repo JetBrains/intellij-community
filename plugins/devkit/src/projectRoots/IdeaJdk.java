@@ -28,10 +28,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
@@ -45,7 +43,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,13 +123,10 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public static boolean isFromIDEAProject(String path) {
-    File home = new File(path);
-    File[] openapiDir = home.listFiles(pathname -> {
-      @NonNls final String name = pathname.getName();
-      if (name.equals("openapi") && pathname.isDirectory()) return true; //todo
-      return false;
-    });
-    return openapiDir != null && openapiDir.length != 0;
+    File ultimate = new File(path, "idea.iml");
+    File community = new File(path, "community-main.iml");
+    return ultimate.exists() && ultimate.isFile() ||
+           community.exists() && community.isFile();
   }
 
   @Nullable
@@ -151,6 +145,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
+    if (isFromIDEAProject(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -268,18 +263,11 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Nullable
   private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
+    if (isFromIDEAProject(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
     File apiJar = getOpenApiJar(ideaSdk.getHomePath());
-    if (apiJar != null) {
-      int classFileVersion = getIdeaClassFileVersion(apiJar);
-      if (classFileVersion > 0) {
-        LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
-        if (languageLevel != null) {
-          return JavaSdkVersion.fromLanguageLevel(languageLevel);
-        }
-      }
-    }
-
-    return null;
+    int classFileVersion = apiJar == null ? -1 : getIdeaClassFileVersion(apiJar);
+    LanguageLevel languageLevel = classFileVersion <= 0? null : ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
+    return languageLevel != null ? JavaSdkVersion.fromLanguageLevel(languageLevel) : null;
   }
 
   private static int getIdeaClassFileVersion(File apiJar) {
@@ -316,12 +304,31 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     addDocs(sdkModificator, internalJava);
     addSources(sdkModificator, internalJava);
     //roots for openapi and other libs
-    if (!isFromIDEAProject(sdkHome)) {
-      final VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
-      if (ideaLib != null) {
-        for (VirtualFile aIdeaLib : ideaLib) {
-          sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
+    if (isFromIDEAProject(sdkHome)) {
+      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      for (String prefix : new String[]{"community", ""}) {
+        for (String path : new String[]{"lib", "build/kotlinc/lib/kotlin-runtime.jar"}) {
+          VirtualFile libDir = fileSystem.refreshAndFindFileByPath(sdkHome + "/" + prefix + "/" + path);
+          if (libDir == null) continue;
+          for (VirtualFile file : libDir.isDirectory() ? libDir.getChildren() : new VirtualFile[]{libDir}) {
+            if (file.isDirectory()) continue;
+            if (!StringUtil.equalsIgnoreCase(file.getExtension(), "jar")) continue;
+            sdkModificator.addRoot(file, OrderRootType.CLASSES);
+          }
         }
+      }
+      VirtualFile out = fileSystem.refreshAndFindFileByPath(sdkHome + "/out/classes/production");
+      if (out != null) {
+        for (VirtualFile dir : out.getChildren()) {
+          if (!dir.isDirectory()) continue;
+          sdkModificator.addRoot(dir, OrderRootType.CLASSES);
+        }
+      }
+    }
+    else  {
+      VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
+      for (VirtualFile aIdeaLib : ideaLib) {
+        sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
       }
       addSources(new File(sdkHome), sdkModificator);
     }
