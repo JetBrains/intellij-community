@@ -20,6 +20,7 @@ import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -102,7 +103,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 }
 
 internal fun isCookieValidated() = Registry.`is`("ide.built.in.web.server.cookie.validated", false)
-internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
+internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false) && !ApplicationManager.getApplication().isUnitTestMode
 
 internal const val TOKEN_PARAM_NAME = "__ij-st"
 
