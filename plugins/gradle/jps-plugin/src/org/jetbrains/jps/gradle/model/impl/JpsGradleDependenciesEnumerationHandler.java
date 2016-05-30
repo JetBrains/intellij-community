@@ -67,11 +67,11 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
       JpsGradleExtensionService service = JpsGradleExtensionService.getInstance();
       for (JpsModule module : modules) {
         JpsGradleModuleExtension gradleModuleExtension = service.getExtension(module);
-        if (gradleModuleExtension != null) {
-          return "sourceSet".equals(gradleModuleExtension.getModuleType()) ? SOURCE_SET_TYPE_INSTANCE : NON_SOURCE_SET_TYPE_INSTANCE;
+        if (gradleModuleExtension != null && "sourceSet".equals(gradleModuleExtension.getModuleType())) {
+          return SOURCE_SET_TYPE_INSTANCE;
         }
       }
-      return null;
+      return NON_SOURCE_SET_TYPE_INSTANCE;
     }
   }
 }
