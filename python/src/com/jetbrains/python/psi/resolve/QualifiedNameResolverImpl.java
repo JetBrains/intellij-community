@@ -234,13 +234,17 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     final PsiFile footholdFile = myContext.getFootholdFile();
+    checkValidForTests(footholdFile);
     if (myRelativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
       PsiDirectory dir = footholdFile.getContainingDirectory();
+      checkValidForTests(dir);
       if (myRelativeLevel > 0) {
         dir = ResolveImportUtil.stepBackFrom(footholdFile, myRelativeLevel);
+        checkValidForTests(dir);
       }
 
       PsiElement module = resolveModuleAt(dir);
+      checkValidForTests(module);
       if (module != null) {
         addRoot(module, true);
       }
@@ -251,6 +255,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (mayCache) {
       final List<PsiElement> cachedResults = cache.get(myQualifiedName);
       if (cachedResults != null) {
+        cachedResults.stream().forEach(QualifiedNameResolverImpl::checkValidForTests);
         mySourceResults.addAll(cachedResults);
         return Lists.newArrayList(mySourceResults);
       }
@@ -452,18 +457,20 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (file == null) {
       return null;
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PyPsiUtils.assertValid(file);
-    }
+    checkValidForTests(file);
     for (final T element : PsiTreeUtil.getChildrenOfTypeAsList(file, aClass)) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        PyPsiUtils.assertValid(element);
-      }
+      checkValidForTests(element);
       if (memberName.equals(element.getName())) {
         return element;
       }
     }
     return null;
+  }
+
+  private static void checkValidForTests(@Nullable final PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PyPsiUtils.assertValid(element);
+    }
   }
 
   private static void checkAccess() {
