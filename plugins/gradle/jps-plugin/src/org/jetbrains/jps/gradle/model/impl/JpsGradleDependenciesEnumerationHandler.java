@@ -65,13 +65,20 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
     @Override
     public JpsJavaDependenciesEnumerationHandler createHandler(@NotNull Collection<JpsModule> modules) {
       JpsGradleExtensionService service = JpsGradleExtensionService.getInstance();
+      JpsJavaDependenciesEnumerationHandler handler = null;
       for (JpsModule module : modules) {
         JpsGradleModuleExtension gradleModuleExtension = service.getExtension(module);
-        if (gradleModuleExtension != null && "sourceSet".equals(gradleModuleExtension.getModuleType())) {
-          return SOURCE_SET_TYPE_INSTANCE;
+        if (gradleModuleExtension != null) {
+          if ("sourceSet".equals(gradleModuleExtension.getModuleType())) {
+            handler = SOURCE_SET_TYPE_INSTANCE;
+            break;
+          }
+          else {
+            handler = NON_SOURCE_SET_TYPE_INSTANCE;
+          }
         }
       }
-      return NON_SOURCE_SET_TYPE_INSTANCE;
+      return handler;
     }
   }
 }
