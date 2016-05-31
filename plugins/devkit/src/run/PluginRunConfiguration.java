@@ -51,6 +51,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
@@ -184,11 +185,20 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.setJdk(usedIdeaJdk);
 
         if (fromIdeaProject) {
+          List<String> suppressed = Arrays.asList("jps-plugin-system");
           for (String url : usedIdeaJdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
             String s = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-            if (s.endsWith("plugin-system")) continue;
+            if (s.endsWith("-ide")) continue;
+            if (suppressed.contains(s.substring(s.lastIndexOf('/') + 1))) continue;
             if (new File(toSystemDependentName(s+ "/META-INF/plugin.xml")).exists()) continue;
-            params.getClassPath().add(toSystemDependentName(s));
+            boolean first = s.endsWith("/resources");
+            if (first) {
+              // make sure resources/ProductivityFeaturesRegistry.xml is first
+              params.getClassPath().addFirst(toSystemDependentName(s));
+            }
+            else {
+              params.getClassPath().add(toSystemDependentName(s));
+            }
           }
         }
         else {
