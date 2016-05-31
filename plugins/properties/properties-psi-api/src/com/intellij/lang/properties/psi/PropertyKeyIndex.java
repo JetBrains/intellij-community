@@ -43,7 +43,7 @@ public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
   }
 
   @Override
-  public Collection<Property> get(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), s, project, scope, Property.class);
+  public Collection<Property> get(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), key, project, scope, Property.class);
   }
 }
