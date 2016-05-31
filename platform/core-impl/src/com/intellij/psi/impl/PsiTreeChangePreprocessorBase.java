@@ -29,6 +29,11 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     myProject = project;
   }
 
+  @NotNull
+  protected Project getProject() {
+    return myProject;
+  }
+
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     boolean changedInsideCodeBlock = false;
@@ -51,7 +56,12 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
       case BEFORE_CHILD_REMOVAL:
       case CHILD_ADDED:
       case CHILD_REMOVED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
+      case BEFORE_CHILD_REPLACEMENT:
+      case CHILD_REPLACED :
+        changedInsideCodeBlock = isInsideCodeBlock(event.getParent()) &&
+                                 isInsideCodeBlock(event.getChild()) &&
+                                 isInsideCodeBlock(event.getOldChild()) &&
+                                 isInsideCodeBlock(event.getNewChild());
         break;
 
       case BEFORE_PROPERTY_CHANGE:
@@ -59,14 +69,11 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
         changedInsideCodeBlock = false;
         break;
 
-      case BEFORE_CHILD_REPLACEMENT:
-      case CHILD_REPLACED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-        break;
-
       case BEFORE_CHILD_MOVEMENT:
       case CHILD_MOVED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
+        changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && 
+                                 isInsideCodeBlock(event.getNewParent()) && 
+                                 isInsideCodeBlock(event.getChild());
         break;
     }
 
@@ -78,6 +85,10 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
   @NotNull
   private PsiModificationTrackerImpl getModificationTracker() {
     return (PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker();
+  }
+
+  protected void processOutOfCodeBlockModification(final PsiTreeChangeEventImpl event) {
+    getModificationTracker().incOutOfCodeBlockModificationCounter();
   }
 
   protected abstract boolean isInsideCodeBlock(PsiElement element);
