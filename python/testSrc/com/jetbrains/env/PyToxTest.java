@@ -155,7 +155,7 @@ public final class PyToxTest extends PyEnvTestCase {
     private MyPyProcessWithConsoleTestTask(final int minimumSuccessTestCount,
                                            @NotNull final MyTestProcessRunner runner,
                                            @NotNull final Collection<Pair<String, InterpreterExpectations>> interpreterExpectations) {
-      super(SdkCreationType.SDK_PACKAGES_ONLY);
+      super(SdkCreationType.EMPTY_SDK);
       myMinimumSuccessTestCount = minimumSuccessTestCount;
       myRunner = runner;
       for (final Pair<String, InterpreterExpectations> interpreterExpectation : interpreterExpectations) {
