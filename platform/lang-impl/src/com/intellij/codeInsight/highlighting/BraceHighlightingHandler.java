@@ -540,7 +540,9 @@ public class BraceHighlightingHandler {
     LogicalPosition bracePosition = myEditor.offsetToLogicalPosition(lbraceStart);
     Point braceLocation = myEditor.logicalPositionToXY(bracePosition);
     final int y = braceLocation.y;
-    myAlarm.addRequest(() -> PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+    myAlarm.addRequest(() -> {
+      if (myProject.isDisposed()) return;
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         if (!myEditor.getComponent().isShowing()) return;
         Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
         if (y < viewRect.y) {
@@ -557,7 +559,8 @@ public class BraceHighlightingHandler {
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
           myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
         }
-      }), 300, ModalityState.stateForComponent(myEditor.getComponent()));
+      });
+    }, 300, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   void clearBraceHighlighters() {
