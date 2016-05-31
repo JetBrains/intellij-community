@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.SettingsImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -63,13 +65,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true) {
-        @Override
-        protected void customizeEditorSettings(EditorSettings settings) {
-          super.customizeEditorSettings(settings);
-          settings.setUseSoftWraps(true);
-        }
-      };
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
     }
 
     @Override
@@ -192,6 +188,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
     settings.setAnimatedScrolling(false);
+    if (settings instanceof SettingsImpl) {
+      ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
+    }
   }
 
   @Override

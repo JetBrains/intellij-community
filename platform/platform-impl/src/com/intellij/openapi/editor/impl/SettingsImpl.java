@@ -325,7 +325,14 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    mySoftWrapAppliancePlace = softWrapAppliancePlace;
+    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
+      mySoftWrapAppliancePlace = softWrapAppliancePlace;
+      fireEditorRefresh();
+    }
+  }
+
+  public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
+    return mySoftWrapAppliancePlace;
   }
 
   public void reinitSettings() {
