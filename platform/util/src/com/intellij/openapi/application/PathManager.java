@@ -33,7 +33,6 @@ import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 import java.io.*;
 import java.net.URL;
@@ -455,7 +454,6 @@ public class PathManager {
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j
-      PicoContainer.class,          // PicoContainer
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,          // OROMatcher
