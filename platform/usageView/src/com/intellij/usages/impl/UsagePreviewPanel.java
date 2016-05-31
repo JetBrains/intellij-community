@@ -62,13 +62,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true) {
-        @Override
-        protected void customizeEditorSettings(EditorSettings settings) {
-          super.customizeEditorSettings(settings);
-          settings.setUseSoftWraps(true);
-        }
-      };
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
     }
 
     @Override
