@@ -17,11 +17,13 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.StripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,6 +36,8 @@ import java.util.BitSet;
 public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailingSpacesFilter {
   @NotNull private final BitSet myDisabledLinesBitSet;
   @NotNull private final Document myDocument;
+  
+  private static Logger LOG = Logger.getInstance("#" + PsiBasedStripTrailingSpacesFilter.class.getName());
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
     @NotNull
@@ -88,6 +92,12 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
       if (documentManager.isCommitted(document)) {
         return documentManager.getCachedPsiFile(document);
       }
+    }
+    else {
+      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+      LOG.warn(
+        "No current project is given, trailing spaces will be stripped later (postponed). File: " +
+        (virtualFile != null ? virtualFile.getCanonicalPath() : "undefined"));
     }
     return null;
   }

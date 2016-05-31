@@ -60,11 +60,8 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
           g.translate(-x,-y);
         }
       } else {
-        //g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
         g.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
-        if (DarculaButtonUI.isHelpButton((JComponent)c)) {
-          g.drawOval((w - diam) / 2, (h - diam) / 2, diam, diam);
-        } else {
+        if (!DarculaButtonUI.isHelpButton((JComponent)c)) {
           g.translate(x, y);
           g.drawRect(0, 0, width - 1, height - 1);
           g.translate(-x, -y);

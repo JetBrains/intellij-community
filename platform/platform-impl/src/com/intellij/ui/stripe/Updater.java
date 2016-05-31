@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.ui.JBUI;
@@ -57,8 +56,12 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   };
 
   protected Updater(@NotNull Painter painter, JScrollPane pane) {
+    this(painter, pane.getVerticalScrollBar());
+  }
+
+  protected Updater(@NotNull Painter painter, JScrollBar bar) {
     myPainter = painter;
-    myScrollBar = pane.getVerticalScrollBar();
+    myScrollBar = bar;
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
     myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
@@ -75,8 +78,6 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
         myPainter.paint(g, x, y, width, height, object);
       }
     });
-    Disposer.register(this, new TranslucencyThumbPainter(myPainter, myScrollBar));
-    Disposer.register(this, new TranslucencyThumbPainter(null, pane.getHorizontalScrollBar()));
   }
 
   @Override

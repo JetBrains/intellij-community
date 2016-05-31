@@ -294,15 +294,30 @@ public class PlatformTestUtil {
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          IdeEventQueue.getInstance().dispatchEvent(event1);
-        }
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        eventQueue.dispatchEvent(event1);
+      }
     }
+  }
+
+  @TestOnly
+  public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    while (dispatchNextEventIfAny(eventQueue) != null);
+  }
+
+  public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return null;
+    AWTEvent event1 = eventQueue.getNextEvent();
+    eventQueue.dispatchEvent(event1);
+    return event1;
   }
 
   private static Date raidDate(Bombed bombed) {

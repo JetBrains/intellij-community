@@ -27,6 +27,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
@@ -205,6 +206,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       initialized = false;
       mySchemaFiles.clear();
     }
+    JsonSchemaFileTypeManager.getInstance().reset(myProject);
   }
 
   @Nullable
@@ -356,5 +358,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Override
   public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
     return myDefinitions.checkFileForId(id, file);
+  }
+
+  @Override
+  public Set<VirtualFile> getSchemaFiles() {
+    if (!initialized) {
+      ensureSchemaFiles(myProject);
+    }
+    return Collections.unmodifiableSet(mySchemaFiles);
   }
 }

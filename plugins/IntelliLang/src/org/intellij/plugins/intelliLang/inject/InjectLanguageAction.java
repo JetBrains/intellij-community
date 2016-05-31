@@ -173,7 +173,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
-  private static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
+  public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
     final List<Injectable> injectables = getAllInjectables();
 
     final JList list = new JBList(injectables);

@@ -375,6 +375,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  public void testNestedLocalClasses() throws Exception {
+    doTest(false, false);
+  }
+
   public void testInsane() throws IOException {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();

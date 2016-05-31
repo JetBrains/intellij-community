@@ -36,7 +36,7 @@ import java.util.Set;
  * @author Irina.Chernushina on 4/14/2016.
  */
 public class JsonSchemaResourcesRootsProvider extends IndexableSetContributor {
-  private static final NotNullLazyValue<Set<VirtualFile>> ourFiles = new AtomicNotNullLazyValue<Set<VirtualFile>>() {
+  public static final NotNullLazyValue<Set<VirtualFile>> ourFiles = new AtomicNotNullLazyValue<Set<VirtualFile>>() {
     @NotNull
     @Override
     protected Set<VirtualFile> compute() {

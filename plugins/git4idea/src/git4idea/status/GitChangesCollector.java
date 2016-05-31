@@ -26,10 +26,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -108,12 +108,7 @@ abstract class GitChangesCollector {
 
     removeCommonParents(allPaths);
 
-    final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
-    for (String p : allPaths) {
-      final File file = new File(p);
-      paths.add(VcsUtil.getFilePath(file));
-    }
-    return paths;
+    return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
   }
 
   protected void addToPaths(FilePath pathToAdd, List<String> paths) {
@@ -130,7 +125,7 @@ abstract class GitChangesCollector {
     Iterator<String> it = allPaths.iterator();
     while (it.hasNext()) {
       String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath)) {      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
         it.remove();
       }
       else {

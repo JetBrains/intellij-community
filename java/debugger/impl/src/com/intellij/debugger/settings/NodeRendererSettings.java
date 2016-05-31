@@ -28,6 +28,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -126,12 +127,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
   }
 
-  public void addListener(NodeRendererSettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeListener(NodeRendererSettingsListener listener) {
-    myDispatcher.removeListener(listener);
+  public void addListener(NodeRendererSettingsListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

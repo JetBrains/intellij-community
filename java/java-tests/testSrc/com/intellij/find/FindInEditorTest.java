@@ -92,6 +92,17 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResultByText("a <selection>b<caret></selection> b a");
   }
 
+  public void testSecondRegexReplaceShowsPopup() throws Exception {
+    configureFromText("<caret> aba");
+    initFind();
+    myFindModel.setRegularExpressions(true);
+    myFindModel.setStringToFind("a");
+    myFindModel.setStringToReplace("c");
+    myFindModel.setReplaceState(true);
+    myLivePreviewController.performReplace();
+    checkResults();
+  }
+
   private static void invokeFind() {
     executeAction(IdeActions.ACTION_FIND);
     UIUtil.dispatchAllInvocationEvents();

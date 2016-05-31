@@ -23,8 +23,8 @@ import java.util.*
 
 class RecentTestsData {
 
-  private val suitePacks = hashMapOf<String, SuitePackInfo>()
-  private var testsWithoutSuites: MutableList<TestInfo> = ContainerUtil.newArrayList<TestInfo>()
+  private val runConfigurationSuites = hashMapOf<String, RunConfigurationEntry>()
+  private var testsWithoutSuites: MutableList<SingleTestEntry> = ContainerUtil.newArrayList<SingleTestEntry>()
 
   fun addSuite(url: String,
                magnitude: TestStateInfo.Magnitude,
@@ -32,15 +32,16 @@ class RecentTestsData {
                runConfiguration: RunnerAndConfigurationSettings) 
   {
 
-    val suiteInfo = SuiteInfo(url, magnitude, runDate, runConfiguration)
+    val suiteInfo = SuiteEntry(url, magnitude, runDate, runConfiguration)
 
-    val suitePack = suitePacks[runConfiguration.uniqueID]
+    val configurationId = runConfiguration.uniqueID
+    val suitePack = runConfigurationSuites[configurationId]
     if (suitePack != null) {
       suitePack.addSuite(suiteInfo)
       return
     }
     
-    suitePacks[runConfiguration.uniqueID] = SuitePackInfo(runConfiguration, suiteInfo)
+    runConfigurationSuites[configurationId] = RunConfigurationEntry(runConfiguration, suiteInfo)
   }
 
 
@@ -49,7 +50,7 @@ class RecentTestsData {
               runDate: Date,
               runConfiguration: RunnerAndConfigurationSettings) {
 
-    val testInfo = TestInfo(url, magnitude, runDate, runConfiguration)
+    val testInfo = SingleTestEntry(url, magnitude, runDate, runConfiguration)
 
     val suite = findSuite(url, runConfiguration)
     if (suite != null) {
@@ -60,8 +61,8 @@ class RecentTestsData {
     testsWithoutSuites.add(testInfo)
   }
 
-  private fun findSuite(url: String, runConfiguration: RunnerAndConfigurationSettings): SuiteInfo? {
-    val pack: SuitePackInfo = suitePacks[runConfiguration.uniqueID] ?: return null
+  private fun findSuite(url: String, runConfiguration: RunnerAndConfigurationSettings): SuiteEntry? {
+    val pack: RunConfigurationEntry = runConfigurationSuites[runConfiguration.uniqueID] ?: return null
     val testName = VirtualFileManager.extractPath(url)
 
     pack.suites.forEach {
@@ -79,13 +80,13 @@ class RecentTestsData {
       findSuite(url, it.runConfiguration)?.addTest(it)
     }
     
-    val packsByDate = suitePacks.values.sortedByDescending { it.runDate }
+    val packsByDate = runConfigurationSuites.values.sortedByDescending { it.runDate }
     return packsByDate.fold(listOf(), { list, pack -> list + pack.entriesToShow() })
   }
   
 }
 
-fun SuitePackInfo.entriesToShow(): List<RecentTestsPopupEntry> {
+fun RunConfigurationEntry.entriesToShow(): List<RecentTestsPopupEntry> {
   if (suites.size == 1) {
     return suites[0].entriesToShow()
   }
@@ -97,7 +98,7 @@ fun SuitePackInfo.entriesToShow(): List<RecentTestsPopupEntry> {
   return failedSuites + this
 }
 
-fun SuiteInfo.entriesToShow(): List<RecentTestsPopupEntry> {
+fun SuiteEntry.entriesToShow(): List<RecentTestsPopupEntry> {
   val failed = failedTests
   if (failed.size > 0) {
     return failed.sortedByDescending { it.runDate } + this

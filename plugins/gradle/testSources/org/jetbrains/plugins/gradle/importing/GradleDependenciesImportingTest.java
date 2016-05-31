@@ -532,7 +532,49 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
 
     assertModuleModuleDeps("project2_main");
-    assertModuleModuleDeps("project2_test", "project1_test", "project2_main");
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "project1", "project2");
+    assertModuleModuleDeps("project2", "project1");
+  }
+
+  @Test
+  @TargetVersions("2.0+")
+  public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput2() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testArtifacts\n" +
+      "  }\n" +
+      "\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier = 'tests'\n" +
+      "    from sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    testArtifacts testJar\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(path: ':project1')\n" +
+      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDeps("project2_main", "project1_main");
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_main", "project1_test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project1", "project2");

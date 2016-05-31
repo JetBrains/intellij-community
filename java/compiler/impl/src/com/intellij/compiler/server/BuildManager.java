@@ -104,13 +104,13 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -889,7 +889,7 @@ public class BuildManager implements Disposable {
     for (Sdk candidate : candidates) {
       final String vs = candidate.getVersionString();
       if (vs != null) {
-        final JavaSdkVersion candidateVersion = javaSdkType.getVersion(vs);
+        final JavaSdkVersion candidateVersion = getSdkVersion(javaSdkType, vs);
         if (candidateVersion != null) {
           final int candidateMinorVersion = getMinorVersion(vs);
           if (projectJdk == null) {
@@ -917,6 +917,20 @@ public class BuildManager implements Disposable {
       sdkVersion = javaSdkType.getVersion(internalJdk);
     }
     return Pair.create(projectJdk, sdkVersion);
+  }
+
+  @Nullable
+  private static JavaSdkVersion getSdkVersion(final JavaSdk javaSdkType, final String vs) {
+    JavaSdkVersion version = javaSdkType.getVersion(vs);
+    if (version == null) {
+      // Unexpected version string: e.g. early access or experimental JDK build
+      // trying to find the 'known' sdk version that would best describe the passed version string  
+      final int parsed = JpsJavaSdkType.parseVersion(vs);
+      if (parsed > 0) {
+        version = javaSdkType.getVersion(parsed + ".0");
+      }
+    }
+    return version;
   }
 
   @NotNull

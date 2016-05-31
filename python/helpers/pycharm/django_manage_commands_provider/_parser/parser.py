@@ -2,12 +2,15 @@
 """
 Exports data from optparse or argparse based manage.py commands and reports it to _xml.XmlDumper.
 This module encapsulates Django semi-public API knowledge, and not very stable because of it.
+Optional env var ``_PYCHARM_DJANGO_DEFAULT_TIMEOUT`` sets timeout (in seconds) to wait for each command to be
+fetched.
 """
 import sys
 import threading
 from _jb_utils import VersionAgnosticUtils
 from django.core.management import ManagementUtility, get_commands
 from django_manage_commands_provider._parser import _optparse, _argparse
+import os
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -47,7 +50,7 @@ def report_data(dumper, commands_to_skip):
         fetcher = _Fetcher(utility, command_name)
         fetcher.daemon = True
         fetcher.start()
-        fetcher.join(2)
+        fetcher.join(int(os.getenv("_PYCHARM_DJANGO_DEFAULT_TIMEOUT", "2")))
         command = fetcher.result
         if not command:
             if fetcher.command_lead_to_exception:

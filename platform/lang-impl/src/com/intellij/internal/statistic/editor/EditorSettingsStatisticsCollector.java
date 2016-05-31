@@ -48,6 +48,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isAdditionalPageAtBottom(), false, "virtualSpaceAtFileBottom");
     addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR), false, "softWraps");
     addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE), false, "softWraps.console");
+    addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.PREVIEW), false, "softWraps.preview");
     addIfDiffers(set, es.isUseCustomSoftWrapIndent(), false, "softWraps.relativeIndent");
     addIfDiffers(set, es.isAllSoftWrapsShown(), false, "softWraps.showAll");
     addIfDiffers(set, es.getStripTrailingSpaces(), EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED, "stripTrailingSpaces");
