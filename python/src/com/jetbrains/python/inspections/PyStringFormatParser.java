@@ -179,9 +179,10 @@ public class PyStringFormatParser {
       myUnclosedMapping = unclosedMapping;
     }
   }
+
   public static class NewStyleSubstitutionChunk extends SubstitutionChunk {
     @Nullable private String myConversion;
-    @Nullable private String myFieldNameAttribute;
+    @Nullable private String myMappingKeyAttributeName;
     @Nullable private String myMappingKeyElementIndex;
     private char myConversionType;
     private boolean signOption;
@@ -243,12 +244,12 @@ public class PyStringFormatParser {
     }
 
     @Nullable
-    public String getFieldNameAttribute() {
-      return myFieldNameAttribute;
+    public String getMappingKeyAttributeName() {
+      return myMappingKeyAttributeName;
     }
 
-    public void setFieldNameAttribute(@NotNull String fieldNameAttribute) {
-      myFieldNameAttribute = fieldNameAttribute;
+    public void setMappingKeyAttributeName(@NotNull String mappingKeyAttributeName) {
+      myMappingKeyAttributeName = mappingKeyAttributeName;
     }
 
     @Nullable
@@ -298,7 +299,7 @@ public class PyStringFormatParser {
   @NotNull
   private List<FormatStringChunk> parse() {
     myPos = 0;
-    while(myPos < myLiteral.length()) {
+    while (myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
       while(next >= 0 && next < myLiteral.length()-1 && myLiteral.charAt(next+1) == '%') {
         next = myLiteral.indexOf('%', next+2);
@@ -350,7 +351,8 @@ public class PyStringFormatParser {
       try {
         final int number = Integer.parseInt(name);
         chunk.setPosition(number);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         chunk.setMappingKey(name);
       }
       myPos = nameEnd;
@@ -361,13 +363,13 @@ public class PyStringFormatParser {
     }
 
     // parse field name attribute name
-    if (isAt('.') ) {
+    if (isAt('.')) {
       myPos++;
 
       final int attributeEnd = StringUtil.indexOfAny(myLiteral, "!:.[}", myPos, end);
       if (attributeEnd > 0 && myPos < attributeEnd) {
         final String attributeName = myLiteral.substring(myPos, attributeEnd);
-        chunk.setFieldNameAttribute(attributeName);
+        chunk.setMappingKeyAttributeName(attributeName);
         myPos = attributeEnd;
       }
     }
@@ -399,7 +401,7 @@ public class PyStringFormatParser {
         if (attributeEnd > 0 && myPos < attributeEnd) {
           myPos = attributeEnd + 1;
         }
-      };
+      }
     }
 
     // conversion
@@ -452,7 +454,8 @@ public class PyStringFormatParser {
       if (isAtSet(NEW_STYLE_CONVERSION_TYPES)) {
         chunk.setConversionType(myLiteral.charAt(myPos));
       }
-    }
+    } 
+
 
     results.add(chunk);
     return autoPositionedFieldsCount;
@@ -464,7 +467,7 @@ public class PyStringFormatParser {
     myResult.add(chunk);
     myPos++;
     if (isAt('(')) {
-      int mappingEnd = myLiteral.indexOf(')', myPos+1);
+      int mappingEnd = myLiteral.indexOf(')', myPos + 1);
       if (mappingEnd < 0) {
         chunk.setEndIndex(myLiteral.length());
         chunk.setMappingKey(myLiteral.substring(myPos + 1));
@@ -473,7 +476,7 @@ public class PyStringFormatParser {
         return;
       }
       chunk.setMappingKey(myLiteral.substring(myPos + 1, mappingEnd));
-      myPos = mappingEnd+1;
+      myPos = mappingEnd + 1;
     }
     else  {
       chunk.setAutoPosition(mySubstitutionsCount);
@@ -516,7 +519,7 @@ public class PyStringFormatParser {
   @NotNull
   private String parseWhileCharacterInSet(@NotNull final String characterSet) {
     int flagStart = myPos;
-    while(isAtSet(characterSet)) {
+    while (isAtSet(characterSet)) {
       myPos++;
     }
     return myLiteral.substring(flagStart, myPos);

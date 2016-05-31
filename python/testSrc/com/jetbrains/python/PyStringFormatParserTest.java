@@ -506,8 +506,8 @@ public class PyStringFormatParserTest extends TestCase {
     final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
     assertEquals(TextRange.create(0, 7), chunk.getTextRange());
     assertEquals("foo", chunk.getMappingKey());
-    assertNotNull(chunk.getFieldNameAttribute());
-    assertEquals("a", chunk.getFieldNameAttribute());
+    assertNotNull(chunk.getMappingKeyAttributeName());
+    assertEquals("a", chunk.getMappingKeyAttributeName());
   }
   
   public void testNewStyleFiledNameWithElementIndex() {
@@ -526,8 +526,8 @@ public class PyStringFormatParserTest extends TestCase {
     final NewStyleSubstitutionChunk chunk = (NewStyleSubstitutionChunk)chunks.get(0);
     assertEquals(TextRange.create(0, 9), chunk.getTextRange());
     assertEquals("foo", chunk.getMappingKey());
-    assertNotNull(chunk.getFieldNameAttribute());
-    assertEquals("a", chunk.getFieldNameAttribute());
+    assertNotNull(chunk.getMappingKeyAttributeName());
+    assertEquals("a", chunk.getMappingKeyAttributeName());
     assertEquals('d', chunk.getConversionType());
   }
 

@@ -625,14 +625,14 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatPositionalArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyReferenceExpression);
+    assertInstanceOf(target,  PyReferenceExpression.class);
     assertEquals("string", target.getText());
   }
 
   //PY-2748
   public void testFormatArgsAndKWargs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertInstanceOf(target, PyStringLiteralExpression.class);
   }
 
   //PY-2748
@@ -652,14 +652,14 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatStringWithPackedListAsArgument() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertInstanceOf(target, PyNumericLiteralExpression.class);
     assertEquals("1", target.getText());
   }
 
   //PY-2748
   public void testFormatStringWithPackedTupleAsArgument() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertInstanceOf(target, PyStringLiteralExpression.class);
     assertEquals("\"snd\"", target.getText());
   }
 
