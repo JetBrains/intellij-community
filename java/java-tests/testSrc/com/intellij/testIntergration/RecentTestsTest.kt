@@ -24,6 +24,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.*
 
+fun String.suite() = "java:suite://$this"
+fun String.test() = "java:test://$this"
+
 class RecentTestsStepTest: LightIdeaTestCase() {
 
   lateinit var data: RecentTestsData
@@ -38,16 +41,24 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     `when`(allTests.name).thenAnswer { "all tests" }
     now = Date()
   }
+  
+  fun `test show suites without run configuration`() {
+    data.addTest("Test.x".test(), TestStateInfo.Magnitude.PASSED_INDEX, now, null)
+    data.addSuite("Test".suite(), TestStateInfo.Magnitude.PASSED_INDEX, now, null)
+    
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+  }
 
   fun `test all tests passed`() {
-    data.addRunConfigurationTest("java:test://Test.textXXX", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationSuite("java:suite://Test", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://Test.textYYY", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://Test.textZZZ", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://Test.textQQQ", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://Test.textXXX", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addSuite("java:suite://Test", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://Test.textYYY", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://Test.textZZZ", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://Test.textQQQ", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
 
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(1)
@@ -56,13 +67,13 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
 
   fun `test if one failed in run configuration show failed suite`() {
-    data.addRunConfigurationSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
-    data.addRunConfigurationSuite("java:suite://Test", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
+    data.addSuite("java:suite://Test", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
 
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
     
-    data.addRunConfigurationTest("java:test://Test.textXXX", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addTest("java:test://Test.textXXX", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
     
     val tests = data.getTestsToShow()
 
@@ -73,9 +84,9 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   
   
   fun `test if configuration with single test show failed test`() {
-    data.addRunConfigurationSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
-    data.addRunConfigurationTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
+    data.addSuite("java:suite://JavaFormatterSuperDuperTest", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", TestStateInfo.Magnitude.FAILED_INDEX, now, allTests)
+    data.addTest("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateInfo.Magnitude.PASSED_INDEX, now, allTests)
     
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(2)
