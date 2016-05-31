@@ -949,6 +949,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       myQuestionAction = null;
       myQuestionHint = null;
+      if (myLastEditor != null && project == myLastEditor.getProject()) {
+        updateLastEditor(null);
+      }
     }
   }
 
