@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.codeStyle;
+package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition.SyntaxElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.formatting.Indent.Type;
 import static com.intellij.formatting.Indent.Type.*;
-import static com.intellij.psi.impl.source.codeStyle.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
+import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 /**
  * A base class Java-like language line indent provider. If JavaLikeLangLineIndentProvider is unable to calculate

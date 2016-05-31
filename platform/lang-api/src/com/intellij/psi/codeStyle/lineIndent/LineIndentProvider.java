@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.codeStyle;
+package com.intellij.psi.codeStyle.lineIndent;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
