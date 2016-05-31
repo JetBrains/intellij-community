@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.codeInsight.highlighting.ReadWriteUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -282,7 +281,7 @@ class RefCountHolder {
       PsiElement refElement = ref.getElement();
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
-        ReadWriteAccessDetector.Access access = ReadWriteUtil.getReadWriteAccess(new PsiElement[]{resolved}, refElement);
+        ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
         if (access == ReadWriteAccessDetector.Access.Read || access == ReadWriteAccessDetector.Access.ReadWrite) {
           if (isJustIncremented(access, refElement)) continue;
           return true;
@@ -290,6 +289,15 @@ class RefCountHolder {
       }
     }
     return false;
+  }
+
+  private static ReadWriteAccessDetector.Access getAccess(@NotNull PsiReference ref, @NotNull PsiElement resolved) {
+    PsiElement start = resolved.getLanguage() == ref.getElement().getLanguage() ? resolved : ref.getElement();
+    ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(start);
+    if (detector != null) {
+      return detector.getReferenceAccess(resolved, ref);
+    }
+    return null;
   }
 
   // "var++;"
@@ -310,14 +318,9 @@ class RefCountHolder {
     }
     if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
-      final PsiElement refElement = ref.getElement();
-      if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
-        return true;
-      }
-
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
-        ReadWriteAccessDetector.Access access = ReadWriteUtil.getReadWriteAccess(new PsiElement[]{resolved}, refElement);
+        ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
         if (access == ReadWriteAccessDetector.Access.Write || access == ReadWriteAccessDetector.Access.ReadWrite) {
           return true;
         }

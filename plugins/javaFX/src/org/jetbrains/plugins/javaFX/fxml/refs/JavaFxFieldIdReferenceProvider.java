@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.AttributeValueSelfReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -52,7 +53,9 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
         }
       }
     }
-    return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
+    return new PsiReference[]{
+      new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass),
+      new AttributeValueSelfReference(xmlAttributeValue)};
   }
 
   public static class JavaFxControllerFieldRef extends JavaFxPropertyReference<XmlAttributeValue> {

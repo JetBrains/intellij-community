@@ -16,12 +16,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,38 +42,10 @@ public abstract class SplitWordsMacro extends MacroBase {
 
   @VisibleForTesting
   public String convertString(String text) {
-    final String[] words = NameUtil.nameToWords(text);
-    boolean insertSeparator = false;
-    final StringBuilder buf = new StringBuilder();
-    for (String word : words) {
-      if (!Character.isLetterOrDigit(word.charAt(0))) {
-        buf.append(mySeparator);
-        insertSeparator = false;
-        continue;
-      }
-      if (insertSeparator) {
-        buf.append(mySeparator);
-      } else {
-        insertSeparator = true;
-      }
-      buf.append(convertCase(word));
-    }
-    return buf.toString();
+    return NameUtil.splitWords(text, mySeparator, this::convertCase);
   }
 
   @NotNull protected abstract String convertCase(@NotNull String word);
-
-  public static class CapitalizeAndUnderscoreMacro extends SplitWordsMacro {
-
-    public CapitalizeAndUnderscoreMacro() {
-      super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"), '_');
-    }
-
-    @NotNull
-    protected String convertCase(@NotNull String word) {
-      return StringUtil.toUpperCase(word);
-    }
-  }
 
   public static class SnakeCaseMacro extends SplitWordsMacro {
     public SnakeCaseMacro() {

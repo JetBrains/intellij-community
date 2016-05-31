@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -180,7 +183,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     }
 
     boolean markAsNeedsStrippingLater =
-      ((DocumentImpl)document).stripTrailingSpaces(activeEditor == null ? null : activeEditor.getProject(),
+      ((DocumentImpl)document).stripTrailingSpaces(getProject(document, activeEditor),
                                                    inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
 
     if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
@@ -195,6 +198,16 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     }
 
     return !markAsNeedsStrippingLater;
+  }
+  
+  @Nullable
+  private static Project getProject(@NotNull Document document, @Nullable Editor editor) {
+    if (editor != null) return editor.getProject();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null) {
+      return ProjectUtil.guessProjectForFile(file);
+    }
+    return null;
   }
 
   public void documentDeleted(@NotNull Document doc) {
