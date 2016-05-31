@@ -88,7 +88,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+          if (project.isDisposed() || (DumbService.isDumb(project) && !DumbService.isDumbAware(provider))) {
             return false;
           }
           return provider.accept(project, file);
