@@ -742,6 +742,7 @@ binding.setVariable("zipSources", { String home, String targetDir ->
         include(name: "**/*.$it")
       }
       exclude(name: "**/testData/**")
+      exclude(name: "out/**")
     }
   }
 
