@@ -90,6 +90,11 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           return createIndentData(CONTINUATION, ArrayOpeningBracket);
         }
         else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(LeftParenthesis)
+        )) {
+          return createIndentData(CONTINUATION, LeftParenthesis);
+        }
+        else if (getPosition(editor, offset).matchesRule(
           position -> position.before().isAt(BlockOpeningBrace)
         )) {
           return createIndentData(getIndentTypeInBlock(project, language), BlockOpeningBrace);
