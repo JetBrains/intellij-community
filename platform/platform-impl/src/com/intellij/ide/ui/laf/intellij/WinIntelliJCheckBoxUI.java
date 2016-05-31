@@ -67,4 +67,9 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
       UIUtil.drawDottedRectangle(g, textRect.x - 2, textRect.y - 1, textRect.width + textRect.x + 1, textRect.height + 3);
     }
   }
+
+  @Override
+  public Icon getDefaultIcon() {
+    return JBUI.emptyIcon(18).asUIResource();
+  }
 }
