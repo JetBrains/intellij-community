@@ -39,7 +39,7 @@ class Test2 {
   public static void main(IJ s, J<String> j) {
     s.f("");
 
-    j.j<error descr="Ambiguous method call: both 'J.j(String)' and 'J.j(String)' match">("")</error>;
+    <error descr="Static method may be invoked on containing interface class only">j.j("");</error>
   }
 
 }
