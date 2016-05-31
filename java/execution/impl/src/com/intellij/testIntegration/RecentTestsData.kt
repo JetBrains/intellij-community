@@ -101,7 +101,6 @@ class RecentTestsData {
   }
 
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
-    assert(unmatchedRunConfigurationTests.isEmpty())
     val allEntries: List<RecentTestsPopupEntry> = runConfigurationSuites.values + urlSuites
     return allEntries
         .sortedByDescending { it.runDate }
