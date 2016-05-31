@@ -26,7 +26,7 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
   private volatile boolean myIsCanceled;
 
   public EmptyProgressIndicator() {
-    this(ModalityState.NON_MODAL);
+    this(ModalityState.defaultModalityState());
   }
 
   public EmptyProgressIndicator(@NotNull ModalityState modalityState) {
