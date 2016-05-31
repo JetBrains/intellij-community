@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 package org.jetbrains.intellij.build
-
-import groovy.transform.Immutable
-
 /**
  * @author nik
  */
 class ApplicationInfoProperties {
   final String majorVersion
   final String minorVersion
+  final String shortProductName
+  final String productName
+  final String companyName
   final boolean isEAP
 
+  @SuppressWarnings("GrUnresolvedAccess")
   ApplicationInfoProperties(String appInfoXmlPath) {
     def root = new XmlParser().parse(new File(appInfoXmlPath))
     majorVersion = root.version.first().@major
     minorVersion = root.version.first().@minor
+    shortProductName = root.names.first().@product
+    productName = root.names.first().@fullname
+    companyName = root.company.first().@name
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
   }
 }

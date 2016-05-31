@@ -22,43 +22,40 @@ public abstract class ProductProperties {
   String prefix
   String code
   String appInfoModule
-  String appInfoModulePath
+  String customInspectScriptName
 
   abstract def String appInfoFile()
 
   /**
-   * @return build number with product code (e.g. IC-142.239 for IDEA Community)
+   * Return {@code true} if tools.jar from JDK must be added to IDE's classpath
    */
-  abstract def String fullBuildNumber()
+  boolean toolsJarRequired = false
 
-  abstract def String systemSelector()
+  abstract def String systemSelector(ApplicationInfoProperties applicationInfo)
 
+  String additionalIDEPropertiesFilePath
   String exe_launcher_properties
   String exe64_launcher_properties
   String platformPrefix = null
-  String bundleIdentifier
 
-  abstract def String macAppRoot()
+  abstract def String macAppRoot(ApplicationInfoProperties applicationInfo, String buildNumber)
 
-  abstract def String winAppRoot()
+  abstract def String winAppRoot(String buildNumber)
 
-  abstract def String linuxAppRoot()
+  abstract def String linuxAppRoot(String buildNumber)
 
-  abstract def String archiveName()
+  abstract def String archiveName(String buildNumber)
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
-  String ideJvmArgs = null
+  String ideJvmArgs = ""
   boolean maySkipAndroidPlugin
   String relativeAndroidHome
   String relativeAndroidToolsBaseHome
 
   boolean includeYourkitAgentInEAP = false
-  boolean includeBatchLauncher = true
   boolean buildUpdater = false
   List<String> excludedPlugins = []
-  List<String> extraMacBins = []
-  List<String> extraLinuxBins = []
 
   def customLayout(targetDirectory) {}
 
@@ -71,4 +68,28 @@ public abstract class ProductProperties {
   String icon128
   String ico
   String icns
+
+  WindowsProductProperties windows = new WindowsProductProperties()
+  MacProductProperties mac = new MacProductProperties()
+  LinuxProductProperties linux = new LinuxProductProperties()
+}
+
+class WindowsProductProperties {
+  boolean includeBatchLauncher = true
+  boolean bundleJre = true
+}
+
+class MacProductProperties {
+  String minOSXVersion = "10.8"
+  String helpId = ""
+  String docTypes = null
+  List<String> urlSchemes = []
+  List<String> architectures = ["x86_64"]
+  boolean includeYourkitAgentInEAP = true
+  List<String> extraMacBins = []
+  String bundleIdentifier
+}
+
+class LinuxProductProperties {
+  List<String> extraLinuxBins = []
 }

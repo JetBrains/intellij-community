@@ -1,5 +1,5 @@
+import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ProductProperties
-
 /*
  * Copyright (C) 2015 The Android Open Source Project
  *
@@ -17,41 +17,47 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 
 
-def getProperties(String home, String buildNumber) {
+def getProperties(String home) {
   return new ProductProperties() {
     {
       prefix = "idea"
+      platformPrefix = "Idea"
       code = "IC"
       appInfoModule = "community-resources"
-      appInfoModulePath = "community-resources"
+      additionalIDEPropertiesFilePath = "$home/build/conf/ideaCE.properties"
       exe_launcher_properties = "$home/build/conf/ideaCE-launcher.properties"
       exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
-      bundleIdentifier = "com.jetbrains.intellij.ce"
       maySkipAndroidPlugin = true
       relativeAndroidHome = "android"
       relativeAndroidToolsBaseHome = "android/tools-base"
+      toolsJarRequired = true
 
       icon128 = "$home/platform/icons/src/icon_CE_128.png"
       ico = "$home/platform/icons/src/idea_CE.ico"
+
+      windows.bundleJre = true
+
+      mac.helpId = "IJ"
+      mac.urlSchemes = ["idea"]
+      mac.includeYourkitAgentInEAP = false
+      mac.bundleIdentifier = "com.jetbrains.intellij.ce"
     }
 
     def String appInfoFile() {
       "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
     }
 
-    def String fullBuildNumber() { "IC-$buildNumber" }
+    def String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC$applicationInfo.majorVersion" }
 
-    def String systemSelector() { "IdeaIC${p("component.version.major")}" }
-
-    def String macAppRoot() {
-      isEap() ? "IntelliJ IDEA ${p("component.version.major")}.${p("component.version.minor")} CE EAP.app/Contents"
+    def String macAppRoot(ApplicationInfoProperties applicationInfo, String buildNumber) {
+      applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"
               : "IntelliJ IDEA CE.app/Contents"
     }
 
-    def String winAppRoot() { "" }
+    def String winAppRoot(String buildNumber) { "" }
 
-    def String linuxAppRoot() { "idea-IC-$buildNumber" }
+    def String linuxAppRoot(String buildNumber) { "idea-IC-$buildNumber" }
 
-    def String archiveName() { "ideaIC-$buildNumber" }
+    def String archiveName(String buildNumber) { "ideaIC-$buildNumber" }
   }
 }

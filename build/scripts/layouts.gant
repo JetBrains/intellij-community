@@ -21,9 +21,9 @@ target('default': "Developers update") {
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   loadProjectFromPath(projectHome)
-  def patchedDescriptorDir = patchAppDescriptor(deploy)
-  layoutFull(home, deploy, patchedDescriptorDir)
-  ant.delete(dir: patchedDescriptorDir)
+  def patchedAppInfo = patchApplicationInfo(deploy)
+  layoutFull(home, deploy, patchedAppInfo)
+  ant.delete(dir: patchedAppInfo)
 }
 
 String appInfoFileName() {
@@ -64,7 +64,7 @@ List<String> getExcludedPlugins() {
   return isDefined("productProperties") ? productProperties.excludedPlugins : []
 }
 
-String patchAppDescriptor(String targetDirectory) {
+File patchApplicationInfo(String targetDirectory) {
   def patchedDirectory = "${targetDirectory}/../patched"
 
   ant.delete(dir: patchedDirectory)
@@ -79,10 +79,10 @@ String patchAppDescriptor(String targetDirectory) {
   ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_NUMBER__", value: "${code}-$snapshot")
   ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_DATE__", value: new Date().format("yyyyMMddHHmm"))
 
-  return patchedDirectory
+  return new File(patchedDirectory, "idea/${appInfoFileName()}")
 }
 
-def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
+def layoutFull(String home, String targetDirectory, File patchedApplicationInfo = null) {
   projectBuilder.stage("layout to $targetDirectory")
 
   List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
@@ -197,24 +197,24 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("platform-resources")
 
         def appInfoModule = appInfoModule()
-        def appInfoInCommunity = "community-resources".equals(appInfoModule)
-
-        if (appInfoInCommunity) {
+        if ("community-resources" == appInfoModule) {
           module("community-resources") {
-            if (patchedDescriptorDir != null) {
-              exclude(name: appInfoFileName())
+            if (patchedApplicationInfo != null) {
+              exclude(name: "idea/$patchedApplicationInfo.name")
             }
           }
         } else {
           module("community-resources")
           module(appInfoModule) {
-            if (patchedDescriptorDir != null) {
-              exclude(name: appInfoFileName())
+            if (patchedApplicationInfo != null) {
+              exclude(name: "idea/$patchedApplicationInfo.name")
             }
           }
         }
-        if (patchedDescriptorDir != null) {
-          fileset(dir: patchedDescriptorDir)
+        if (patchedApplicationInfo != null) {
+          dir("idea") {
+            fileset(file: patchedApplicationInfo.path)
+          }
         }
       }
 
