@@ -47,18 +47,22 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
-  private final CachedAnnotators cachedAnnotators;
+  private final CachedAnnotators myCachedAnnotators;
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project, @NotNull CachedAnnotators cachedAnnotators) {
     this(project, true, true, false, cachedAnnotators);
   }
 
-  DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators, boolean batchMode, @NotNull CachedAnnotators cachedAnnotators) {
+  DefaultHighlightVisitor(@NotNull Project project,
+                          boolean highlightErrorElements,
+                          boolean runAnnotators,
+                          boolean batchMode,
+                          @NotNull CachedAnnotators cachedAnnotators) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
-    this.cachedAnnotators = cachedAnnotators;
+    myCachedAnnotators = cachedAnnotators;
     myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
@@ -117,7 +121,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode,cachedAnnotators);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode, myCachedAnnotators);
   }
 
   @Override
@@ -126,7 +130,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage().getID());
+    List<Annotator> annotators = myCachedAnnotators.get(element.getLanguage().getID());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
 
