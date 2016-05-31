@@ -313,7 +313,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         runProcessWithProgressSynchronously(task, null);
       }
       else {
-        runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.NON_MODAL);
+        runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.defaultModalityState());
       }
     }
     else if (task.isModal()) {
@@ -341,7 +341,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
     }
   }
 
@@ -356,7 +356,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.defaultModalityState());
     }
   }
 
@@ -369,7 +369,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
                                                         @NotNull final ProgressIndicator progressIndicator,
                                                         @Nullable final Runnable continuation) {
-    return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.NON_MODAL);
+    return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.defaultModalityState());
   }
 
   @NotNull
