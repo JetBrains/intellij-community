@@ -58,10 +58,16 @@ public abstract class UsageContextPanelBase extends JPanel implements UsageConte
 
   @Override
   public final void updateLayout(@Nullable final List<UsageInfo> infos) {
-    PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-      if (isDisposed || myProject.isDisposed()) return;
+    PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
+    if (!pdm.hasUncommitedDocuments()) {
       updateLayoutLater(infos);
-    });
+    } else {
+      pdm.performLaterWhenAllCommitted(() -> {
+        if (isDisposed || myProject.isDisposed()) return;
+        updateLayoutLater(infos);
+      });
+    }
+
   }
 
   protected abstract void updateLayoutLater(@Nullable List<UsageInfo> infos);
