@@ -54,7 +54,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     SwitchCase,
     SwitchDefault,
     ElseKeyword,
-    IfKeyword
+    IfKeyword,
+    ForKeyword
   }
   
   @Nullable
@@ -105,11 +106,15 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         else {
           SemanticEditorPosition position = getPosition(editor, offset);
           if (position.before().isAt(RightParenthesis)) {
+            int offsetAfterParen = position.getStartOffset() + 1;
             position.beforeParentheses(LeftParenthesis, RightParenthesis);
             if (!position.isAtEnd()) {
               position.beforeOptional(Whitespace);
-              if (position.isAt(IfKeyword)) {
-                return createIndentData(NORMAL, IfKeyword);
+              if (position.isAt(IfKeyword) || position.isAt(ForKeyword)) {
+                SyntaxElement element = position.getCurrElement();
+                assert element != null;
+                Type indentType = getPosition(editor, offsetAfterParen).afterOptional(Whitespace).isAt(BlockOpeningBrace) ? NONE : NORMAL;
+                return createIndentData(indentType, element);
               }
             }
           }
@@ -183,7 +188,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     if (BlockOpeningBrace.equals(afterElement) && !isOnSeparateLine(editor, afterElement, offset)) {
       return findStatementStart(editor, afterElement, offset);
     }
-    else if (IfKeyword.equals(afterElement)) {
+    else if (IfKeyword.equals(afterElement) || ForKeyword.equals(afterElement)) {
       return findStatementStart(editor, null, offset);
     }
     return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
@@ -242,7 +247,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   @Nullable
-  private static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
+  protected static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
     return type != null ? Pair.create(type, element) : null;
   }
 

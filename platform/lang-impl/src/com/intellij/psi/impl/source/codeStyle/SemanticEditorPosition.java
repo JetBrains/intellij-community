@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rustam Vishnyakov
@@ -52,6 +53,13 @@ public abstract class SemanticEditorPosition {
   public SemanticEditorPosition before() {
     if (!myIterator.atEnd()) {
       myIterator.retreat();
+    }
+    return this;
+  }
+  
+  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+    if (!myIterator.atEnd()) {
+      if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.advance();
     }
     return this;
   }
@@ -114,6 +122,11 @@ public abstract class SemanticEditorPosition {
       }
     }
     return false;
+  }
+  
+  @Nullable
+  public SyntaxElement getCurrElement() {
+    return !myIterator.atEnd() ? map(myIterator.getTokenType()) : null;
   }
   
   public boolean matchesRule(@NotNull Rule rule) {

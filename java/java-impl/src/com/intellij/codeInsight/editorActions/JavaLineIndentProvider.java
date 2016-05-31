@@ -46,6 +46,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.DEFAULT_KEYWORD, SwitchDefault);
     SYNTAX_MAP.put(JavaTokenType.IF_KEYWORD, IfKeyword);
     SYNTAX_MAP.put(JavaTokenType.ELSE_KEYWORD, ElseKeyword);
+    SYNTAX_MAP.put(JavaTokenType.FOR_KEYWORD, ForKeyword);
   }
   
   @Nullable
