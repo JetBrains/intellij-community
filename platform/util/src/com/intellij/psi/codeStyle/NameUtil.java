@@ -436,6 +436,38 @@ public class NameUtil {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
+  @NotNull
+  public static String capitalizeAndUnderscore(@NotNull String name) {
+    return splitWords(name, '_', new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return StringUtil.toUpperCase(s);
+      }
+    });
+  }
+
+  @NotNull
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<String, String> transformWord) {
+    final String[] words = nameToWords(text);
+    boolean insertSeparator = false;
+    final StringBuilder buf = new StringBuilder();
+    for (String word : words) {
+      if (!Character.isLetterOrDigit(word.charAt(0))) {
+        buf.append(separator);
+        insertSeparator = false;
+        continue;
+      }
+      if (insertSeparator) {
+        buf.append(separator);
+      } else {
+        insertSeparator = true;
+      }
+      buf.append(transformWord.fun(word));
+    }
+    return buf.toString();
+
+  }
+
   public enum MatchingCaseSensitivity {
     NONE, FIRST_LETTER, ALL
   }

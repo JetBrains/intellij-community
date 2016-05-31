@@ -70,6 +70,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   private void resetFileSetForValue(Value value, Object fileSet) {
+    if (value == null) value = (Value)myNullValue;
     if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = fileSet;
     else ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
   }

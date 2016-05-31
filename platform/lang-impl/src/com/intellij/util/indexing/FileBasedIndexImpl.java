@@ -1479,7 +1479,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   // caller is responsible to ensure no concurrent same document processing
-  void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
+  void processRefreshedFile(@Nullable Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     // ProcessCanceledException will cause re-adding the file to processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (myChangedFilesCollector.myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)))) {
