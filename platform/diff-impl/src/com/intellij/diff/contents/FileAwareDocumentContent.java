@@ -2,6 +2,7 @@ package com.intellij.diff.contents;
 
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -36,9 +37,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public OpenFileDescriptor getNavigatable(@NotNull LineCol position) {
     if (myProject == null || getHighlightFile() == null || !getHighlightFile().isValid()) return null;
-    return new OpenFileDescriptor(myProject, getHighlightFile(), offset);
+    return new OpenFileDescriptor(myProject, getHighlightFile(), position.line, position.column);
   }
 
   @NotNull

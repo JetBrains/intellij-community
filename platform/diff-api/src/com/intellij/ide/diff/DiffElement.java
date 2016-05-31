@@ -18,15 +18,14 @@ package com.intellij.ide.diff;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,7 @@ public abstract class DiffElement<T> {
   public abstract DiffElement[] getChildren() throws IOException;
 
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+  public Navigatable getNavigatable(@Nullable Project project) {
     return null;
   }
 
