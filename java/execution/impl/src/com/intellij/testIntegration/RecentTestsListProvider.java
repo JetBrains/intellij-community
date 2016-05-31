@@ -100,11 +100,19 @@ public class RecentTestsListProvider {
     RunnerAndConfigurationSettings runConfiguration = myConfigurationProvider.getConfiguration(record);
     if (TestLocator.isSuite(url)) {
       if (runConfiguration != null) {
-        data.addSuite(url, magnitude, record.date, runConfiguration);
+        data.addRunConfigurationSuite(url, magnitude, record.date, runConfiguration);
+      }
+      else {
+        data.addUrlSuite(url, magnitude, record.date);  
       }
     }
     else {
-      data.addTest(url, magnitude, record.date, runConfiguration);
+      if (runConfiguration != null) {
+        data.addRunConfigurationTest(url, magnitude, record.date, runConfiguration);
+      }
+      else {
+        data.addUrlTest(url, magnitude, record.date);
+      }
     }
   }
 
