@@ -337,7 +337,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiClass[] sources = entry.getValue();
       if (psiFile instanceof PsiClassOwner && sources != null) {
         final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
-        if (createdFile == null) return null;
+        if (createdFile == null) {
+          //do not touch unmodified classes
+          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+            oldToNewMap.remove(aClass);
+          }
+          continue;
+        }
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (isSynthetic(destination)) {
             continue;
