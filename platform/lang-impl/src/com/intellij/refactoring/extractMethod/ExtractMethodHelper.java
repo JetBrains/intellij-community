@@ -19,6 +19,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -74,6 +75,45 @@ public class ExtractMethodHelper {
         ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(callElement, editor, replacer, duplicates));
       }
     });
+  }
+
+
+  /**
+   * Finds duplicates of the code fragment specified in the finder in given scopes.
+   *
+   * @param finder          finder object to seek for duplicates
+   * @param searchScopes    scopes where to look them in
+   * @param generatedMethod new method that should be excluded from the search
+   * @return list of duplicate code fragments discovered
+   * @see #replaceDuplicatesWithPrompt(List, PsiElement, Editor, Consumer) 
+   */
+  @NotNull
+  public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
+                                                    @NotNull List<PsiElement> searchScopes,
+                                                    @NotNull PsiElement generatedMethod) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return finder.findDuplicates(searchScopes, generatedMethod);
+    }
+    return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
+  }
+
+  /**
+   * Notifies user about found duplicates and then highlights each of them in the editor and asks user how to proceed.
+   *
+   * @param duplicates  discovered duplicates of extracted code fragment
+   * @param replacement generated expression or statement that contains invocation of the new method
+   * @param editor      instance of editor where refactoring is performed
+   * @param replacer    strategy of substituting each duplicate occurence with the replacement fragment
+   * @see #collectDuplicates(SimpleDuplicatesFinder, List, PsiElement)
+   */
+  public static void replaceDuplicatesWithPrompt(@NotNull List<SimpleMatch> duplicates,
+                                                 @NotNull PsiElement replacement,
+                                                 @NotNull Editor editor,
+                                                 @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      replaceDuplicates(replacement, editor, replacer, duplicates);
+    }
+    ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(replacement, editor, replacer, duplicates));
   }
 
   private static void replaceDuplicates(PsiElement callElement,

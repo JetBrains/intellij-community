@@ -40,7 +40,6 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -168,14 +167,17 @@ public class PyExtractMethodUtil {
       final PyFunction function1 = generator.createFromText(languageLevel, PyFunction.class, builder.toString());
       PsiElement callElement = function1.getStatementList().getStatements()[0];
 
-      // replace statements with call
-      callElement = replaceElements(elementsRange, callElement);
       // Both statements are used in finder, so should be valid at this moment
       PyPsiUtils.assertValid(statement1);
       PyPsiUtils.assertValid(statement2);
+      final List<SimpleMatch> duplicates = collectDuplicates(finder, statement1, generatedMethod);
+      
+      // replace statements with call
+      callElement = replaceElements(elementsRange, callElement);
       callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
+      
       if (callElement != null) {
-        processDuplicates(callElement, generatedMethod, finder, editor);
+        processDuplicates(duplicates, callElement, editor);
       }
 
       // Set editor
@@ -188,13 +190,19 @@ public class PyExtractMethodUtil {
     }), PyBundle.message("refactoring.extract.method"), null);
   }
 
-  private static void processDuplicates(@NotNull final PsiElement callElement,
-                                        @NotNull final PyFunction generatedMethod,
-                                        @NotNull final SimpleDuplicatesFinder finder,
-                                        @NotNull final Editor editor) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
-    if (owner instanceof PsiFile) return;
-    final List<PsiElement> scope = new ArrayList<PsiElement>();
+  @NotNull
+  private static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
+                                                     @NotNull PsiElement originalScopeAnchor,
+                                                     @NotNull PyFunction generatedMethod) {
+    final List<PsiElement> scopes = collectScopes(originalScopeAnchor, generatedMethod);
+    return ExtractMethodHelper.collectDuplicates(finder, scopes, generatedMethod);
+  }
+
+  @NotNull
+  private static List<PsiElement> collectScopes(@NotNull PsiElement anchor, @NotNull PyFunction generatedMethod) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(anchor);
+    if (owner instanceof PsiFile) return Collections.emptyList();
+    final List<PsiElement> scope = new ArrayList<>();
     if (owner instanceof PyFunction) {
       scope.add(owner);
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
@@ -206,9 +214,13 @@ public class PyExtractMethodUtil {
         }
       }
     }
-    ExtractMethodHelper.processDuplicates(callElement, generatedMethod, scope, finder, editor,
-                                          pair -> replaceElements(pair.first, pair.second.copy())
-    );
+    return scope;
+  }
+
+  private static void processDuplicates(@NotNull List<SimpleMatch> duplicates,
+                                        @NotNull PsiElement replacement,
+                                        @NotNull Editor editor) {
+    ExtractMethodHelper.replaceDuplicatesWithPrompt(duplicates, replacement, editor, pair -> replaceElements(pair.first, pair.second.copy()));
   }
 
   private static void processGlobalWrites(@NotNull final PyFunction function, @NotNull final PyCodeFragment fragment) {
@@ -337,12 +349,14 @@ public class PyExtractMethodUtil {
           callElement = ((PyExpressionStatement)generated).getExpression();
         }
 
+        PyPsiUtils.assertValid(expression);
+        final List<SimpleMatch> duplicates = collectDuplicates(finder, expression, generatedMethod);
         // replace statements with call
         if (callElement != null) {
           callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
         }
         if (callElement != null) {
-          processDuplicates(callElement, generatedMethod, finder, editor);
+          processDuplicates(duplicates, callElement, editor);
         }
         // Set editor
         setSelectionAndCaret(editor, callElement);
@@ -394,9 +408,7 @@ public class PyExtractMethodUtil {
         for (PyExpression arg : argumentList.getArguments()) {
           final String argText = arg.getText();
           if (argText != null && keys.contains(argText)) {
-            arg.replace(generator.createExpressionFromText(
-              LanguageLevel.forElement(callElement),
-              changedParameters.get(argText)));
+            arg.replace(generator.createExpressionFromText(LanguageLevel.forElement(callElement), changedParameters.get(argText)));
           }
         }
       }
