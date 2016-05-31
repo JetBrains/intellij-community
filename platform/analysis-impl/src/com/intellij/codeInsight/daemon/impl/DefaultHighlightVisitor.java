@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -29,7 +28,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -97,15 +99,6 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element);
     }
     else {
-      ASTNode node = element.getNode();
-      if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
-        char c = element.textToCharArray()[0];
-        boolean printable = StringUtil.isPrintableUnicode(c) && !Character.isSpaceChar(c);
-        String hex = String.format("U+%04X", (int)c);
-        String text = "Illegal character: " + (printable ? c + " (" + hex + ")" : hex);
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(text).create());
-      }
-
       if (myRunAnnotators) runAnnotators(element);
     }
 
