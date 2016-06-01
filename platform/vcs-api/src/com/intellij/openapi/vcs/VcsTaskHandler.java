@@ -76,6 +76,23 @@ public abstract class VcsTaskHandler {
     public int compareTo(TaskInfo o) {
       return Comparing.compare(myBranch, o.myBranch);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TaskInfo info = (TaskInfo)o;
+
+      if (myRemote != info.myRemote) return false;
+      if (!myBranch.equals(info.myBranch)) return false;
+      return myRepositories.size() == info.myRepositories.size() && myRepositories.containsAll(info.myRepositories);
+    }
+
+    @Override
+    public int hashCode() {
+      return myBranch.hashCode();
+    }
   }
 
   private static final ExtensionPointName<VcsTaskHandler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.taskHandler");

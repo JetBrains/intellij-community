@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -169,7 +168,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     if (myCreateBranch.isSelected()) {
       VcsTaskHandler.TaskInfo branchFrom = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
       Runnable createBranch = () -> myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText(), branchFrom);
-      if (branchFrom != null) {
+      VcsTaskHandler.TaskInfo[] current = myVcsTaskHandler.getCurrentTasks();
+      if (branchFrom != null && (current.length == 0 || !current[0].equals(branchFrom)))  {
         myVcsTaskHandler.switchToTask(branchFrom, createBranch);
       }
       else {
