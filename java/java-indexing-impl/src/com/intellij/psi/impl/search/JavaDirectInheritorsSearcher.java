@@ -175,7 +175,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                       @NotNull PsiClass baseClass,
                                                       @NotNull String baseClassName,
                                                       @NotNull SearchScope useScope) {
-    GlobalSearchScope globalUseScope = toGlobal(useScope, project);
+    GlobalSearchScope globalUseScope = ApplicationManager.getApplication().runReadAction((Computable<GlobalSearchScope>)()-> toGlobal(useScope, project));
     Collection<PsiReferenceList> candidates =
       MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
