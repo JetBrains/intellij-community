@@ -6,13 +6,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -144,11 +144,10 @@ public class PyMoveSymbolProcessor {
         if (importStmt != null) {
           PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, newElement);
         }
-      }
-      // TODO: usage is not valid after insertImportFromAndReplaceReference, to be fixed by east825
-      if (resolvesToLocalStarImport(usage)) {
-        PyClassRefactoringUtil.insertImport(usage, newElement);
-        myOptimizeImportTargets.add(usageFile);
+        else if (resolvesToLocalStarImport(usage)) {
+          PyClassRefactoringUtil.insertImport(usage, newElement);
+          myOptimizeImportTargets.add(usageFile);
+        }
       }
     }
     else if (usage instanceof PyStringLiteralExpression) {
@@ -212,18 +211,22 @@ public class PyMoveSymbolProcessor {
     expression.replace(generated);
   }
 
-  private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
-    final PsiReference ref = element.getReference();
-    final List<PsiElement> resolvedElements = new ArrayList<PsiElement>();
-    if (ref instanceof PsiPolyVariantReference) {
-      for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+  private static boolean resolvesToLocalStarImport(@NotNull PsiElement usage) {
+    // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
+    final List<PsiElement> resolvedElements = new ArrayList<>();
+    if (usage instanceof PyReferenceOwner) {
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.defaultContext());
+      for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }
     }
-    else if (ref != null) {
-      resolvedElements.add(ref.resolve());
+    else {
+      final PsiReference ref = usage.getReference();  
+      if (ref != null) {
+        resolvedElements.add(ref.resolve());
+      }
     }
-    final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = usage.getContainingFile();
     if (containingFile != null) {
       for (PsiElement resolved : resolvedElements) {
         if (resolved instanceof PyStarImportElement && resolved.getContainingFile() == containingFile) {
