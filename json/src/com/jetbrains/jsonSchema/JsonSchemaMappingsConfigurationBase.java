@@ -130,12 +130,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
     @Nullable
     public VirtualFile getSchemaFile(@NotNull final Project project) {
       final String pathToSchema = FileUtil.toSystemIndependentName(getRelativePathToSchema());
-      final List<String> strings = ContainerUtil.filter(pathToSchema.split("/"), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return !StringUtil.isEmptyOrSpaces(s);
-        }
-      });
+      final List<String> strings = ContainerUtil.filter(pathToSchema.split("/"), s -> !StringUtil.isEmptyOrSpaces(s));
       return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(strings));
     }
 

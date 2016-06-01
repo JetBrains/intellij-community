@@ -50,16 +50,13 @@ public class XmlRefCountHolder {
     new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
       @Override
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
-        return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlRefCountHolder>() {
-          @Override
-          public Result<XmlRefCountHolder> compute() {
-            final XmlRefCountHolder holder = new XmlRefCountHolder();
-            final Language language = file.getViewProvider().getBaseLanguage();
-            final PsiFile psiFile = file.getViewProvider().getPsi(language);
-            assert psiFile != null;
-            psiFile.accept(new IdGatheringRecursiveVisitor(holder));
-            return new Result<XmlRefCountHolder>(holder, file);
-          }
+        return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+          final XmlRefCountHolder holder = new XmlRefCountHolder();
+          final Language language = file.getViewProvider().getBaseLanguage();
+          final PsiFile psiFile = file.getViewProvider().getPsi(language);
+          assert psiFile != null;
+          psiFile.accept(new IdGatheringRecursiveVisitor(holder));
+          return new CachedValueProvider.Result<XmlRefCountHolder>(holder, file);
         }, false);
       }
     };

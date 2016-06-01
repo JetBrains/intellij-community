@@ -200,15 +200,12 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
     if (file instanceof XmlFile) {
       return manager.getCachedValue(file, KEY,
-                                    new CachedValueProvider<PropertiesFile>() {
-                                      @Override
-                                      public Result<PropertiesFile> compute() {
-                                        PropertiesFile value =
-                                          XmlPropertiesIndex.isPropertiesFile((XmlFile)file)
-                                          ? new XmlPropertiesFileImpl((XmlFile)file)
-                                          : null;
-                                        return Result.create(value, file);
-                                      }
+                                    () -> {
+                                      PropertiesFile value =
+                                        XmlPropertiesIndex.isPropertiesFile((XmlFile)file)
+                                        ? new XmlPropertiesFileImpl((XmlFile)file)
+                                        : null;
+                                      return CachedValueProvider.Result.create(value, file);
                                     }, false
       );
     }

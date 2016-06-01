@@ -177,12 +177,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());
-    configuration.setName(StringUtil.join(containingClasses, new Function<PsiClass, String>() {
-      @Override
-      public String fun(PsiClass aClass) {
-        return aClass.getName();
-      }
-    },"|"));
+    configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
   }
 }

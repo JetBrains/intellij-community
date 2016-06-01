@@ -17,11 +17,14 @@
 package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.SettingsImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,6 +35,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +46,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class UsagePreviewPanel extends UsageContextPanelBase {
+public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
   private final boolean myIsEditor;
@@ -59,17 +63,20 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     myIsEditor = isEditor;
   }
 
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.EDITOR.getName().equals(dataId) && myEditor != null) {
+      return myEditor;
+    }
+    return null;
+  }
+
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true) {
-        @Override
-        protected void customizeEditorSettings(EditorSettings settings) {
-          super.customizeEditorSettings(settings);
-          settings.setUseSoftWraps(true);
-        }
-      };
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
     }
 
     @Override
@@ -192,6 +199,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
     settings.setAnimatedScrolling(false);
+    if (settings instanceof SettingsImpl) {
+      ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
+    }
   }
 
   @Override
@@ -211,6 +221,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       myEditor = null;
     }
   }
+
+
 
   @Override
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {

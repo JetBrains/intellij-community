@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
@@ -1201,7 +1202,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     else {
       return;
     }
-    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile));
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile);
+    try {
+      myEditor.setHighlighter(highlighter);
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+    }
   }
 
   private class EditorListener extends CaretAdapter implements SelectionListener, DocumentListener {

@@ -473,7 +473,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$CapitalizeAndUnderscoreMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
@@ -936,7 +936,7 @@
     
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
-    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
+    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
@@ -953,7 +953,7 @@
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
-    <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.FormatterBasedLineIndentProvider"/>
+    <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"/>
   </extensions>
 </idea-plugin>
 

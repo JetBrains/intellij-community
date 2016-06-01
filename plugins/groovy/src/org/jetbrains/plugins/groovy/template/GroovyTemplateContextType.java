@@ -82,12 +82,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
-      PsiElement stmt = PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement element11) {
-          return PsiUtil.isExpressionStatement(element11);
-        }
-      });
+      PsiElement stmt = PsiTreeUtil.findFirstParent(element, element11 -> PsiUtil.isExpressionStatement(element11));
 
       return !isAfterExpression(element) && stmt != null && stmt.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }

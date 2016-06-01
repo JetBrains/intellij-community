@@ -378,16 +378,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     });
 
     myCurrentPopup =
-      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(new Computable<Boolean>() {
-        public Boolean compute() {
+      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(
+        () -> {
           final int caret = myPathTextField.getCaretPosition();
           myPathTextField.setSelectionStart(caret);
           myPathTextField.setSelectionEnd(caret);
           myPathTextField.setFocusTraversalKeysEnabled(true);
           SwingUtilities.invokeLater(() -> getField().requestFocus());
           return Boolean.TRUE;
-        }
-      }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
+        }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();
 
 

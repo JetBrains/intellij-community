@@ -106,12 +106,7 @@ public class PyMoveSymbolProcessor {
 
   @Nullable
   private PsiElement findTopLevelParent(@NotNull PsiElement element) {
-    return PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element.getParent() == myDestinationFile;
-      }
-    });
+    return PsiTreeUtil.findFirstParent(element, element1 -> element1.getParent() == myDestinationFile);
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
@@ -171,12 +166,9 @@ public class PyMoveSymbolProcessor {
   }
 
   private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
-    return ContainerUtil.exists(myAllMovedElements, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement movedElement) {
-        final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
-        return PsiTreeUtil.isAncestor(movedElementBody, element, false);
-      }
+    return ContainerUtil.exists(myAllMovedElements, movedElement -> {
+      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
+      return PsiTreeUtil.isAncestor(movedElementBody, element, false);
     });
   }
 

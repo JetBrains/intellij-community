@@ -78,12 +78,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static boolean hasMoreImportantReference(@NotNull PsiReference[] references, @NotNull PropertyReference propertyReference) {
-    return propertyReference.isSoft() && ContainerUtil.or(references, new Condition<PsiReference>() {
-      @Override
-      public boolean value(PsiReference reference) {
-        return !reference.isSoft();
-      }
-    });
+    return propertyReference.isSoft() && ContainerUtil.or(references, reference -> !reference.isSoft());
   }
 
   public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {

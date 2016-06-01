@@ -56,12 +56,9 @@ public class PsiErrorElementUtil {
     return cachedValuesManager.getCachedValue(
       psiFile,
       CONTAINS_ERROR_ELEMENT,
-      new CachedValueProvider<Boolean>() {
-        @Override
-        public Result<Boolean> compute() {
-          boolean error = hasErrorElements(psiFile);
-          return Result.create(error, psiFile);
-        }
+      () -> {
+        boolean error = hasErrorElements(psiFile);
+        return CachedValueProvider.Result.create(error, psiFile);
       },
       false
     );

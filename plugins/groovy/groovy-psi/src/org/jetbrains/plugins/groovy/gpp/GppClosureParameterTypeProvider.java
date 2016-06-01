@@ -118,12 +118,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)map)) {
         if (expected instanceof PsiClassType) {
           final List<Pair<PsiMethod, PsiSubstitutor>> pairs = getMethodsToOverrideImplementInInheritor((PsiClassType)expected, false);
-          return ContainerUtil.findAll(pairs, new Condition<Pair<PsiMethod, PsiSubstitutor>>() {
-              @Override
-              public boolean value(Pair<PsiMethod, PsiSubstitutor> pair) {
-                return methodName.equals(pair.first.getName());
-              }
-            });
+          return ContainerUtil.findAll(pairs, pair -> methodName.equals(pair.first.getName()));
         }
       }
     }

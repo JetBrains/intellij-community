@@ -41,13 +41,13 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   public boolean AUTOSCROLL_TO_SOURCE = false;
   public float SPLITTER_PROPORTION = 0.5f;
-  public boolean GROUP_BY_SEVERITY = false;
-  public boolean FILTER_RESOLVED_ITEMS = true;
+  public volatile boolean GROUP_BY_SEVERITY = false;
+  public volatile boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  public boolean SHOW_STRUCTURE = false;
+  public volatile boolean SHOW_STRUCTURE = false;
   public String FILE_MASK;
 
   public boolean ANALYSIS_IN_BACKGROUND = true;

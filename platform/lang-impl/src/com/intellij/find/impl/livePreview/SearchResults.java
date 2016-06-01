@@ -327,6 +327,7 @@ public class SearchResults implements DocumentListener {
     Collections.sort(myOccurrences, (findResult, findResult1) -> findResult.getStartOffset() - findResult1.getStartOffset());
 
     myFindModel = findModel;
+    myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
     updateCursor(oldCursorRange, next);
     updateExcluded();
     notifyChanged();
@@ -337,7 +338,6 @@ public class SearchResults implements DocumentListener {
       notifyCursorMoved();
     }
     dumpIfNeeded();
-    myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
   }
 
   private void dumpIfNeeded() {

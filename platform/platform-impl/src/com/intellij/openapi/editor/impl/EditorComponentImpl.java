@@ -797,12 +797,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public void setDot(int offset) {
-      myEditor.getCaretModel().moveToOffset(offset);
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(offset);
+      }
     }
 
     @Override
     public void moveDot(int offset) {
-      myEditor.getCaretModel().moveToOffset(offset);
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(offset);
+      }
     }
   }
 

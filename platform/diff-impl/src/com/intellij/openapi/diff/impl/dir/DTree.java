@@ -35,15 +35,12 @@ import static com.intellij.ide.diff.DiffType.ERROR;
  * @author Konstantin Bulenkov
  */
 public class DTree {
-  private static final Comparator<DTree> COMPARATOR = new Comparator<DTree>() {
-    @Override
-    public int compare(DTree o1, DTree o2) {
-      final boolean b1 = o1.isContainer();
-      final boolean b2 = o2.isContainer();
-      return (b1 && b2) || (!b1 && !b2)
-             ? o1.getName().compareToIgnoreCase(o2.getName())
-             : b1 ? 1 : -1;
-    }
+  private static final Comparator<DTree> COMPARATOR = (o1, o2) -> {
+    final boolean b1 = o1.isContainer();
+    final boolean b2 = o2.isContainer();
+    return (b1 && b2) || (!b1 && !b2)
+           ? o1.getName().compareToIgnoreCase(o2.getName())
+           : b1 ? 1 : -1;
   };
 
   private boolean myExpanded = true;

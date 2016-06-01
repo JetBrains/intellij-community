@@ -232,21 +232,18 @@ public class JsonSchemaMappingsView implements Disposable {
       builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
       builder.setHelpId(ADD_SCHEMA_MAPPING);
 
-      final Getter<String> textGetter = new Getter<String>() {
-        @Override
-        public String get() {
-          if (radioPattern.isSelected()) {
-            return patternField.getText();
-          }
-
-          final String text;
-          if (radioDirectory.isSelected()) {
-            text = directoryField.getText();
-          } else {
-            text = fileField.getText();
-          }
-          return getRelativePath(myProject, text);
+      final Getter<String> textGetter = () -> {
+        if (radioPattern.isSelected()) {
+          return patternField.getText();
         }
+
+        final String text;
+        if (radioDirectory.isSelected()) {
+          text = directoryField.getText();
+        } else {
+          text = fileField.getText();
+        }
+        return getRelativePath(myProject, text);
       };
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       final Runnable updaterValidator = new Runnable() {

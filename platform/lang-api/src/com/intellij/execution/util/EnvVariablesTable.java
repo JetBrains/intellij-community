@@ -109,12 +109,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
-        @Override
-        public boolean value(EnvironmentVariable item) {
-          return StringUtil.equals(environmentVariable.getName(), item.getName());
-        }
-      });
+      final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(),
+                                                                  item -> StringUtil.equals(environmentVariable.getName(), item.getName()));
       if (actualEnvVar == null) {
         return;
       }

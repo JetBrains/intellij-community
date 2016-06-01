@@ -169,17 +169,13 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   private static Map<String, ActionOrGroup> collectForFile(final IdeaPlugin plugin) {
     final XmlFile xmlFile = DomUtil.getFile(plugin);
-    return CachedValuesManager.getCachedValue(xmlFile, new CachedValueProvider<Map<String, ActionOrGroup>>() {
-      @Nullable
-      @Override
-      public Result<Map<String, ActionOrGroup>> compute() {
-        Map<String, ActionOrGroup> result = new HashMap<String, ActionOrGroup>();
-        for (Actions actions : plugin.getActions()) {
-          collectRecursive(result, actions);
-        }
-
-        return Result.create(result, xmlFile);
+    return CachedValuesManager.getCachedValue(xmlFile, () -> {
+      Map<String, ActionOrGroup> result = new HashMap<String, ActionOrGroup>();
+      for (Actions actions : plugin.getActions()) {
+        collectRecursive(result, actions);
       }
+
+      return CachedValueProvider.Result.create(result, xmlFile);
     });
   }
 

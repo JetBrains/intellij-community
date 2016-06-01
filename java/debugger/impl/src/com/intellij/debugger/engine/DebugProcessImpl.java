@@ -37,7 +37,10 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -123,15 +126,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   // we use null key here
   private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
 
-  private final NodeRendererSettingsListener mySettingsListener = new NodeRendererSettingsListener() {
-    @Override
-    public void renderersChanged() {
-      myNodeRenderersMap.clear();
-      myRenderers.clear();
-      loadRenderers();
-    }
-  };
-
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   private final DebuggerManagerThreadImpl myDebuggerManagerThread;
@@ -150,8 +144,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
-    NodeRendererSettings.getInstance().addListener(mySettingsListener);
-    loadRenderers();
+    NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
+    reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void paused(SuspendContext suspendContext) {
@@ -161,10 +155,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
   }
 
-  private void loadRenderers() {
+  private void reloadRenderers() {
     getManagerThread().invoke(new DebuggerCommandImpl() {
       @Override
+      public Priority getPriority() {
+        return Priority.HIGH;
+      }
+
+      @Override
       protected void action() throws Exception {
+        myNodeRenderersMap.clear();
+        myRenderers.clear();
         try {
           final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
           for (final NodeRenderer renderer : rendererSettings.getAllRenderers()) {
@@ -876,7 +877,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void dispose() {
-    NodeRendererSettings.getInstance().removeListener(mySettingsListener);
     Disposer.dispose(myDisposable);
     myRequestManager.setFilterThread(null);
   }

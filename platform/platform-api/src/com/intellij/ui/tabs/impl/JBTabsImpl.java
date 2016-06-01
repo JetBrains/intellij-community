@@ -608,13 +608,10 @@ public class JBTabsImpl extends JComponent
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
-      updateTab(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
-          changed.set(changed.get().booleanValue() || changes);
-          return changes;
-        }
+      updateTab(() -> {
+        final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
+        changed.set(changed.get().booleanValue() || changes);
+        return changes;
       }, eachInfo);
     }
 
@@ -811,12 +808,7 @@ public class JBTabsImpl extends JComponent
   @Override
   @NotNull
   public JBTabs setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup) {
-    return setPopupGroup(new Getter<ActionGroup>() {
-      @Override
-      public ActionGroup get() {
-        return popupGroup;
-      }
-    }, place, addNavigationGroup);
+    return setPopupGroup(() -> popupGroup, place, addNavigationGroup);
   }
 
   @NotNull
@@ -1161,24 +1153,18 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateIcon(final TabInfo tabInfo) {
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-        return true;
-      }
+    updateTab(() -> {
+      myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+      return true;
     }, tabInfo);
   }
 
   private void updateColor(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setInactiveStateImage(null);
 
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        repaint();
-        return true;
-      }
+    updateTab(() -> {
+      repaint();
+      return true;
     }, tabInfo);
   }
 
@@ -1241,14 +1227,11 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateText(final TabInfo tabInfo) {
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final TabLabel label = myInfo2Label.get(tabInfo);
-        label.setText(tabInfo.getColoredText());
-        label.setToolTipText(tabInfo.getTooltipText());
-        return true;
-      }
+    updateTab(() -> {
+      final TabLabel label = myInfo2Label.get(tabInfo);
+      label.setText(tabInfo.getColoredText());
+      label.setToolTipText(tabInfo.getTooltipText());
+      return true;
     }, tabInfo);
   }
 

@@ -78,12 +78,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
-      final PsiClass[] classes = MethodUsagesSearcher.resolveInReadAction(project, new Computable<PsiClass[]>() {
-        @Override
-        public PsiClass[] compute() {
-          return cache.getClassesByName(name, scope);
-        }
-      });
+      final PsiClass[] classes = MethodUsagesSearcher.resolveInReadAction(project, () -> cache.getClassesByName(name, scope));
       for (PsiClass psiClass : classes) {
         ProgressIndicatorProvider.checkCanceled();
         if (!processor.process(psiClass)) {

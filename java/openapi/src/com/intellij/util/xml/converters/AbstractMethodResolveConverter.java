@@ -113,11 +113,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     Set<PsiMethod> methodList = new LinkedHashSet<PsiMethod>();
     Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, s -> {
-      final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), new Condition<PsiMethod>() {
-        public boolean value(final PsiMethod object) {
-          return acceptMethod(object, context);
-        }
-      });
+      final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), object -> acceptMethod(object, context));
       return list.toArray(new PsiMethod[list.size()]);
     });
     return methodList;
@@ -183,11 +179,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   @Nullable
   public static PsiMethod findMethod(final PsiClass psiClass, final String methodName, @Nullable final AbstractMethodParams methodParameters) {
     if (psiClass == null || methodName == null) return null;
-    return ContainerUtil.find(psiClass.findMethodsByName(methodName, true), new Condition<PsiMethod>() {
-      public boolean value(final PsiMethod object) {
-        return methodParamsMatchSignature(methodParameters, object);
-      }
-    });
+    return ContainerUtil.find(psiClass.findMethodsByName(methodName, true), object -> methodParamsMatchSignature(methodParameters, object));
   }
 
   public static boolean methodParamsMatchSignature(@Nullable final AbstractMethodParams params, final PsiMethod psiMethod) {

@@ -71,23 +71,15 @@ class LanguageResolvingUtil {
     final Project project = context.getProject();
     final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
     final Collection<PsiClass> allLanguages =
-      CachedValuesManager.getCachedValue(languageClass, new CachedValueProvider<Collection<PsiClass>>() {
-        @Nullable
-        @Override
-        public Result<Collection<PsiClass>> compute() {
-          GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
-          return Result.create(ClassInheritorsSearch.search(languageClass, allScope, true).findAll(),
-                               PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
+      CachedValuesManager.getCachedValue(languageClass, () -> {
+        GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
+        return CachedValueProvider.Result.create(ClassInheritorsSearch.search(languageClass, allScope, true).findAll(),
+                                                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);
 
-    final Collection<PsiClass> projectLanguages = ContainerUtil.filter(allLanguages, new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass aClass) {
-        return PsiSearchScopeUtil.isInScope(projectProductionScope, aClass);
-      }
-    });
+    final Collection<PsiClass> projectLanguages = ContainerUtil.filter(allLanguages,
+                                                                       aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass));
     final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
 
     final List<LanguageDefinition> all = ContainerUtil.newArrayList(libraryDefinitions);
@@ -118,12 +110,7 @@ class LanguageResolvingUtil {
         return null;
       }
 
-      if (ContainerUtil.exists(libraryLanguages, new Condition<LanguageDefinition>() {
-        @Override
-        public boolean value(LanguageDefinition definition) {
-          return definition.clazz.equals(language);
-        }
-      })) {
+      if (ContainerUtil.exists(libraryLanguages, definition -> definition.clazz.equals(language))) {
         return null;
       }
 

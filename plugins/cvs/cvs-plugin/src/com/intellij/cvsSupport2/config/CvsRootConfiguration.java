@@ -140,33 +140,30 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
       new CvsExecutionEnvironment(errorProcessor, CvsExecutionEnvironment.DUMMY_STOPPER, errorProcessor, PostCvsActivity.DEAF, project);
     final CvsResult result = new CvsResultEx();
     try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final GetModulesListOperation operation = new GetModulesListOperation(createSettings());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final GetModulesListOperation operation = new GetModulesListOperation(createSettings());
 
-          final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
-          try {
-            if (connection instanceof SelfTestingConnection) {
-              ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
-            }
-            operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection, DummyProgressViewer.INSTANCE);
+        final CvsRootProvider cvsRootProvider = operation.getCvsRootProvider();
+        try {
+          if (connection instanceof SelfTestingConnection) {
+            ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
           }
-          catch (ValidRequestsExpectedException ex) {
-            result.addError(new CvsException(ex, cvsRootProvider.getCvsRootAsString()));
-          }
-          catch (CommandException ex) {
-            result.addError(new CvsException(ex.getUnderlyingException(), cvsRootProvider.getCvsRootAsString()));
-          }
-          catch (ProcessCanceledException ex) {
-            result.setIsCanceled();
-          }
-          catch (BugLog.BugException e) {
-            LOG.error(e);
-          }
-          catch (Exception e) {
-            result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
-          }
+          operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection, DummyProgressViewer.INSTANCE);
+        }
+        catch (ValidRequestsExpectedException ex) {
+          result.addError(new CvsException(ex, cvsRootProvider.getCvsRootAsString()));
+        }
+        catch (CommandException ex) {
+          result.addError(new CvsException(ex.getUnderlyingException(), cvsRootProvider.getCvsRootAsString()));
+        }
+        catch (ProcessCanceledException ex) {
+          result.setIsCanceled();
+        }
+        catch (BugLog.BugException e) {
+          LOG.error(e);
+        }
+        catch (Exception e) {
+          result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
         }
       }, CvsBundle.message("operation.name.test.connection"), true, null);
       if (result.isCanceled()) throw new ProcessCanceledException();

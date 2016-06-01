@@ -35,10 +35,9 @@ interface RecentTestsPopupEntry {
   open fun navigatableElement(locator: TestLocator): PsiElement? = null
 }
 
-open class TestInfo(val url: String, 
-                    override val magnitude: TestStateInfo.Magnitude, 
-                    override val runDate: Date,
-                    val runConfiguration: RunnerAndConfigurationSettings) : RecentTestsPopupEntry 
+open class SingleTestEntry(val url: String, 
+                           override val magnitude: TestStateInfo.Magnitude, 
+                           override val runDate: Date) : RecentTestsPopupEntry 
 {
 
   override val presentation = VirtualFileManager.extractPath(url)
@@ -52,36 +51,34 @@ open class TestInfo(val url: String,
   
 }
 
-class SuiteInfo(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date, runConfiguration: RunnerAndConfigurationSettings) 
-      : TestInfo(url, magnitude, runDate, runConfiguration) 
-{
-
-  private val tests = hashSetOf<TestInfo>()
+class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) : SingleTestEntry(url, magnitude, runDate) {
+  
+  private val tests = hashSetOf<SingleTestEntry>()
 
   override val testsUrls: List<String>
     get() = tests.fold(listOf<String>(), { acc, testEntry -> acc + testEntry.testsUrls })
   
   val suiteName = VirtualFileManager.extractPath(url)
   
-  val failedTests: List<TestInfo>
+  val failedTests: List<SingleTestEntry>
     get() = tests.filter { it.magnitude == FAILED_INDEX || it.magnitude == ERROR_INDEX }
   
-  fun addTest(info: TestInfo) = tests.add(info)
+  fun addTest(info: SingleTestEntry) = tests.add(info)
 
   override val presentation = suiteName
 
 }
 
 
-class SuitePackInfo(val runSettings: RunnerAndConfigurationSettings, initial: SuiteInfo) : RecentTestsPopupEntry {
+class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, initial: SuiteEntry) : RecentTestsPopupEntry {
 
-  val suites = ContainerUtil.newArrayList<SuiteInfo>()
+  val suites = ContainerUtil.newArrayList<SuiteEntry>()
 
   init {
     addSuite(initial)
   }
 
-  fun addSuite(s: SuiteInfo) = suites.add(s)
+  fun addSuite(s: SuiteEntry) = suites.add(s)
 
   override val runDate = suites.map { it.runDate }.min()!!
 

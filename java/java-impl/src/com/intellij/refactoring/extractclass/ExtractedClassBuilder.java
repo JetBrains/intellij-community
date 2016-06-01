@@ -540,11 +540,7 @@ class ExtractedClassBuilder {
     }
 
     private boolean isBackpointerReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
-        public boolean value(final PsiField psiField) {
-          return !fieldIsExtracted(psiField);
-        }
-      });
+      return BackpointerUtil.isBackpointerReference(expression, psiField -> !fieldIsExtracted(psiField));
     }
 
 

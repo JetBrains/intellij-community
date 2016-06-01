@@ -48,11 +48,7 @@ public class SshSessionConnection implements IConnection {
     myCloseListener = closeListener;
     mySessionProvider = sessionProvider;
     myTs = System.currentTimeMillis();
-    myActivityMonitor = new Runnable() {
-      public void run() {
-        myTs = System.currentTimeMillis();
-      }
-    };
+    myActivityMonitor = () -> myTs = System.currentTimeMillis();
     myState = LifeStages.NOT_EXIST;
   }
 

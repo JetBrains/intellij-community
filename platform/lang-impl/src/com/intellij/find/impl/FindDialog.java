@@ -32,7 +32,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -72,7 +71,10 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -621,13 +623,7 @@ public class FindDialog extends DialogWrapper {
         new NavigateToSourceListener().installOn(table);
 
         Splitter previewSplitter = new Splitter(true, 0.5f, 0.1f, 0.9f);
-        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), true) {
-          @Override
-          protected void customizeEditorSettings(EditorSettings settings) {
-            super.customizeEditorSettings(settings);
-            settings.setUseSoftWraps(true);
-          }
-        };
+        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), true);
         myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         registerNavigateToSourceShortcutOnComponent(table, myUsagePreviewPanel);
         myResultsPreviewTable = table;

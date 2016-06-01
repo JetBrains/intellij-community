@@ -65,12 +65,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
       if (rootPane != null) {
         button = (ComboBoxButton)
-          UIUtil.uiTraverser(rootPane).bfsTraversal().filter(new Condition<Component>() {
-            @Override
-            public boolean value(Component component) {
-              return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
-            }
-          }).first();
+          UIUtil.uiTraverser(rootPane).bfsTraversal().filter(
+            component -> component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this).first();
       }
       if (button == null) return;
     }

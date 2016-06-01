@@ -229,12 +229,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     }
 
     final Sdk preferred = compatibleSdk;
-    mySdkCombo = new PythonSdkChooserCombo(project, sdks, new Condition<Sdk>() {
-      @Override
-      public boolean value(Sdk sdk) {
-        return sdk == preferred;
-      }
-    });
+    mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
 
     final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");

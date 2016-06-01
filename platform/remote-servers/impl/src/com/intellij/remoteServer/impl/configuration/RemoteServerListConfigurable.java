@@ -252,16 +252,13 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
-            if (configurable.getDisplayName().equals(s)) {
-              return false;
-            }
+      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), s -> {
+        for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
+          if (configurable.getDisplayName().equals(s)) {
+            return false;
           }
-          return true;
         }
+        return true;
       });
       MyNode node = addServerNode(myServersManager.createServer(myServerType, name), true);
       selectNodeInTree(node);

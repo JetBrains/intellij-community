@@ -30,10 +30,12 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -256,17 +258,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return true;
     }
     final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
-    final Condition<PsiElement> nonFinalFieldRefCondition = new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement expression) {
-        if (expression instanceof PsiReferenceExpression) {
-          PsiElement element = ((PsiReferenceExpression)expression).resolve();
-          if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
-            return true;
-          }
+    final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
+      if (expression instanceof PsiReferenceExpression) {
+        PsiElement element = ((PsiReferenceExpression)expression).resolve();
+        if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
     return SyntaxTraverser
       .psiTraverser()
@@ -492,6 +491,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
       final PsiType denotableFunctionalInterfaceType = RefactoringChangeUtil.getTypeByExpression(lambdaExpression);
       if (denotableFunctionalInterfaceType == null) return;
+
+      Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(lambdaExpression, PsiComment.class),
+                                                          (comment) -> (PsiComment)comment.copy());
+
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 
@@ -507,6 +510,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
           cast.getOperand().replace(replace);
           replace = replace.replace(cast);
+        }
+
+        PsiElement anchor = PsiTreeUtil.getParentOfType(replace, PsiStatement.class);
+        if (anchor == null) {
+          anchor = replace;
+        }
+        for (PsiComment comment : comments) {
+          anchor.getParent().addBefore(comment, anchor);
         }
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
       }

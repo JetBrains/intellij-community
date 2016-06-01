@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.codeStyle;
+package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition.SyntaxElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.formatting.Indent.Type;
 import static com.intellij.formatting.Indent.Type.*;
-import static com.intellij.psi.impl.source.codeStyle.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
+import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 /**
  * A base class Java-like language line indent provider. If JavaLikeLangLineIndentProvider is unable to calculate
@@ -54,7 +55,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     SwitchCase,
     SwitchDefault,
     ElseKeyword,
-    IfKeyword
+    IfKeyword,
+    ForKeyword
   }
   
   @Nullable
@@ -88,6 +90,11 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           return createIndentData(CONTINUATION, ArrayOpeningBracket);
         }
         else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(LeftParenthesis)
+        )) {
+          return createIndentData(CONTINUATION, LeftParenthesis);
+        }
+        else if (getPosition(editor, offset).matchesRule(
           position -> position.before().isAt(BlockOpeningBrace)
         )) {
           return createIndentData(getIndentTypeInBlock(project, language), BlockOpeningBrace);
@@ -105,11 +112,15 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         else {
           SemanticEditorPosition position = getPosition(editor, offset);
           if (position.before().isAt(RightParenthesis)) {
+            int offsetAfterParen = position.getStartOffset() + 1;
             position.beforeParentheses(LeftParenthesis, RightParenthesis);
             if (!position.isAtEnd()) {
               position.beforeOptional(Whitespace);
-              if (position.isAt(IfKeyword)) {
-                return createIndentData(NORMAL, IfKeyword);
+              if (position.isAt(IfKeyword) || position.isAt(ForKeyword)) {
+                SyntaxElement element = position.getCurrElement();
+                assert element != null;
+                Type indentType = getPosition(editor, offsetAfterParen).afterOptional(Whitespace).isAt(BlockOpeningBrace) ? NONE : NORMAL;
+                return createIndentData(indentType, element);
               }
             }
           }
@@ -183,7 +194,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     if (BlockOpeningBrace.equals(afterElement) && !isOnSeparateLine(editor, afterElement, offset)) {
       return findStatementStart(editor, afterElement, offset);
     }
-    else if (IfKeyword.equals(afterElement)) {
+    else if (IfKeyword.equals(afterElement) || ForKeyword.equals(afterElement)) {
       return findStatementStart(editor, null, offset);
     }
     return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
@@ -242,7 +253,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   @Nullable
-  private static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
+  protected static Pair<Type,SyntaxElement> createIndentData(@Nullable Type type, @NotNull SyntaxElement element) {
     return type != null ? Pair.create(type, element) : null;
   }
 

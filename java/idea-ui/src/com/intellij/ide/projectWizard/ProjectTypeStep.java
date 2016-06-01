@@ -237,12 +237,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
     if (groupId != null) {
-      TemplatesGroup group = ContainerUtil.find(groups, new Condition<TemplatesGroup>() {
-        @Override
-        public boolean value(TemplatesGroup group) {
-          return groupId.equals(group.getId());
-        }
-      });
+      TemplatesGroup group = ContainerUtil.find(groups, group1 -> groupId.equals(group1.getId()));
       if (group != null) {
         myProjectTypeList.setSelectedValue(group, true);
       }
@@ -398,12 +393,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(groupModuleBuilder);
       final ProjectCategory category = group.getProjectCategory();
       if (category != null) {
-        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
-                    @Override
-                    public boolean value(FrameworkSupportInModuleProvider provider) {
-                      return matchFramework(category, provider);
-                    }
-                  });
+        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, provider -> matchFramework(category, provider));
         // add associated
         Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), PROVIDER_STRING_CONVERTOR);
         Set<FrameworkSupportInModuleProvider> set = new HashSet<FrameworkSupportInModuleProvider>(filtered);
@@ -513,13 +503,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
       if (nodes.isEmpty()) return templates;
       final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
-      return ContainerUtil.filter(templates, new Condition<ProjectTemplate>() {
-        @Override
-        public boolean value(ProjectTemplate template) {
-          if (!(template instanceof ArchivedProjectTemplate)) return true;
-          List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
-          return frameworks.containsAll(selectedFrameworks);
-        }
+      return ContainerUtil.filter(templates, template -> {
+        if (!(template instanceof ArchivedProjectTemplate)) return true;
+        List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
+        return frameworks.containsAll(selectedFrameworks);
       });
     }
   }

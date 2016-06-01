@@ -83,14 +83,15 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                                  @NotNull final InspectionNode toolNode,
+                                                  @NotNull final InspectionTreeNode parentNode,
+                                                  final boolean showStructure,
+                                                  boolean groupBySeverity,
+                                                  @NotNull final Map<String, Set<RefEntity>> contents,
+                                                  @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-    merge(toolNode, parentNode, false);
+    InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final Set<RefModule> moduleProblems = presentation.getModuleProblems();
@@ -108,7 +109,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               toolWrapper,
               refElement -> new RefElementContainer(refElement, problems.get(refElement)),
               showStructure,
-              node -> merge(node, toolNode, true));
+              node -> merge(node, mergedToolNode, true));
+    return mergedToolNode;
   }
 
   @Override

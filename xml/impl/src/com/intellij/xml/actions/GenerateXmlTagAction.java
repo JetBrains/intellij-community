@@ -111,12 +111,8 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         }.execute();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor xmlElementDescriptor) {
-            return xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get());
-          }
-        });
+        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors,
+                                                             xmlElementDescriptor -> xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get()));
         list.setSelectedValue(descriptor, false);
         runnable.run();
       }

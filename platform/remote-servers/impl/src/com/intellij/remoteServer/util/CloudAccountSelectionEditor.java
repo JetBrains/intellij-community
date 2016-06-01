@@ -155,17 +155,13 @@ public class CloudAccountSelectionEditor {
   }
 
   private static String generateServerName(ServerType<?> cloudType) {
-    return UniqueNameGenerator.generateUniqueName(cloudType.getPresentableName(), new Condition<String>() {
-
-      @Override
-      public boolean value(String s) {
-        for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-          if (server.getName().equals(s)) {
-            return false;
-          }
+    return UniqueNameGenerator.generateUniqueName(cloudType.getPresentableName(), s -> {
+      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
+        if (server.getName().equals(s)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 

@@ -95,12 +95,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
-        myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()), new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return StringUtil.startsWithIgnoreCase(s, "-Xmx");
-          }
-        }) == null);
+        myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
+                                                      s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
       }
     });
   }

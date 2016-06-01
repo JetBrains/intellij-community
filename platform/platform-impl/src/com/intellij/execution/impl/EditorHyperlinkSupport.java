@@ -178,14 +178,10 @@ public class EditorHyperlinkSupport {
     final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-                                                        new FilteringProcessor<RangeHighlighterEx>(new Condition<RangeHighlighterEx>() {
-                                                          @Override
-                                                          public boolean value(RangeHighlighterEx rangeHighlighterEx) {
-                                                            return HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
-                                                                   rangeHighlighterEx.isValid() &&
-                                                                   getHyperlinkInfo(rangeHighlighterEx) != null;
-                                                          }
-                                                        }, processor)
+                                                        new FilteringProcessor<RangeHighlighterEx>(
+                                                          rangeHighlighterEx -> HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
+                                                                              rangeHighlighterEx.isValid() &&
+                                                                 getHyperlinkInfo(rangeHighlighterEx) != null, processor)
     );
     return new ArrayList<RangeHighlighter>(processor.getResults());
   }

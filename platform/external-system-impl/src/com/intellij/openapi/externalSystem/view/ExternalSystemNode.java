@@ -278,12 +278,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
 
     sort(myChildrenList);
-    final List<ExternalSystemNode<?>> visibleNodes = ContainerUtil.filter(myChildrenList, new Condition<ExternalSystemNode<?>>() {
-      @Override
-      public boolean value(ExternalSystemNode<?> node) {
-        return node.isVisible();
-      }
-    });
+    final List<ExternalSystemNode<?>> visibleNodes = ContainerUtil.filter(myChildrenList, node -> node.isVisible());
     myChildren = visibleNodes.toArray(new ExternalSystemNode[visibleNodes.size()]);
     myExternalProjectsView.updateUpTo(this);
   }

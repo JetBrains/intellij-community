@@ -113,12 +113,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
     readDescriptor(new File(getTestDataPath() + file), context);
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    Project project = ContainerUtil.find(projects, new Condition<Project>() {
-      @Override
-      public boolean value(Project project) {
-        return projectName.equals(project.getName());
-      }
-    });
+    Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
     ((ProjectManagerEx)ProjectManager.getInstance()).closeAndDispose(project);
   }

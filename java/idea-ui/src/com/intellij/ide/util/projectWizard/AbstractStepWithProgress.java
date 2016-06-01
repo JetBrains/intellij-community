@@ -147,12 +147,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
 
-      Result result = ProgressManager.getInstance().runProcess(new Computable<Result>() {
-        @Override
-        public Result compute() {
-          return calculate();
-        }
-      }, progress);
+      Result result = ProgressManager.getInstance().runProcess(() -> calculate(), progress);
       onFinished(result, false);
       return;
     }

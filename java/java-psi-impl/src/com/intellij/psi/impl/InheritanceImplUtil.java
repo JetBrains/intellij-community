@@ -77,24 +77,22 @@ public class InheritanceImplUtil {
         String baseQName = baseClass.getQualifiedName();
         if (baseQName == null) return false;
 
-        GlobalSearchScope scope = candidateClass.getResolveScope();
-
-        if (CommonClassNames.JAVA_LANG_ENUM.equals(baseQName) &&
-            candidateClass.isEnum() &&
-            facade.findClass(baseQName, scope) != null) {
-          return true;
+        if (CommonClassNames.JAVA_LANG_ENUM.equals(baseQName)) {
+          return candidateClass.isEnum();
         }
-        if (CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseQName) &&
-            candidateClass.isAnnotationType() &&
-            facade.findClass(baseQName, scope) != null) {
-          return true;
+        if (CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseQName)) {
+          return candidateClass.isAnnotationType();
         }
 
         boolean isCandidateInterface = candidateClass.isInterface();
         boolean isBaseInterface = baseClass.isInterface();
 
-        if (isCandidateInterface == isBaseInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), scope, facade)) return true;
-        return isBaseInterface && !isCandidateInterface && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), scope, facade);
+        if (isCandidateInterface == isBaseInterface &&
+            checkReferenceListWithQualifiedNamesInClsClass(baseQName, candidateClass.getExtendsList(), facade)) {
+          return true;
+        }
+        return isBaseInterface && !isCandidateInterface &&
+               checkReferenceListWithQualifiedNamesInClsClass(baseQName, candidateClass.getImplementsList(), facade);
       }
       boolean isCandidateInterface = candidateClass.isInterface();
       boolean isBaseInterface = baseClass.isInterface();
@@ -112,14 +110,18 @@ public class InheritanceImplUtil {
     return isInheritorWithoutCaching(manager, candidateClass, baseClass, checkedClasses);
   }
 
-  private static boolean checkReferenceListWithQualifiedNames(@NotNull final String baseQName,
-                                                              @Nullable final PsiReferenceList extList,
-                                                              @NotNull final GlobalSearchScope scope,
-                                                              @NotNull JavaPsiFacade facade) {
+  private static boolean checkReferenceListWithQualifiedNamesInClsClass(@NotNull final String baseQName,
+                                                                        @Nullable final PsiReferenceList extList,
+                                                                        @NotNull JavaPsiFacade facade) {
     if (extList != null) {
-      for (PsiJavaCodeReferenceElement ref : extList.getReferenceElements()) {
-        if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && facade.findClass(baseQName, scope) != null)
-          return true;
+      // in Cls class it's fast
+      PsiJavaCodeReferenceElement[] referenceElements = extList.getReferenceElements();
+      if (referenceElements.length != 0) {
+        GlobalSearchScope scope = extList.getResolveScope();
+        for (PsiJavaCodeReferenceElement ref : referenceElements) {
+          if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && facade.findClass(baseQName, scope) != null)
+            return true;
+        }
       }
     }
     return false;

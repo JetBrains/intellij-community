@@ -20,11 +20,16 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends PlatformTestCase {
   public void testManyEvents() {
-    int N = 100/*000*/;
+    int N = 100000;
     PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
       UIUtil.dispatchAllInvocationEvents();
       AtomicInteger count = new AtomicInteger();
@@ -34,5 +39,52 @@ public class IdeEventQueueTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(N, count.get());
     }).assertTiming();
+  }
+
+  public void testKeyboardEventsAreDetected() throws InterruptedException {
+    assertTrue(EventQueue.isDispatchThread());
+
+    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    assertSame(ideEventQueue, eventQueue);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+
+    int posted = ideEventQueue.myKeyboardEventsPosted.get();
+    int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
+    KeyEvent pressX = new KeyEvent(new JLabel(), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
+    eventQueue.postEvent(pressX);
+    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(pressX, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
+
+    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+
+    // do not react to other events
+    MouseEvent mouseClick = new MouseEvent(new JLabel(), MouseEvent.BUTTON1, 1, InputEvent.BUTTON1_DOWN_MASK, 12, 14, 1, true);
+    eventQueue.postEvent(mouseClick);
+    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(mouseClick, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
+
+    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+
+    KeyEvent keyRelease = new KeyEvent(new JLabel(), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
+    eventQueue.postEvent(keyRelease);
+    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(keyRelease, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
+
+    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
+    assertEquals(dispatched+2, ideEventQueue.myKeyboardEventsDispatched.get());
+  }
+
+  // need this because everybody can post some crazy stuff to IdeEventQueue, so we have to filter InvocationEvents out
+  private static AWTEvent dispatchAllInvocationEventsUntilOtherEvent(IdeEventQueue ideEventQueue) throws InterruptedException {
+    while (true) {
+      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue);
+      if (!(event instanceof InvocationEvent)) return event;
+    }
   }
 }

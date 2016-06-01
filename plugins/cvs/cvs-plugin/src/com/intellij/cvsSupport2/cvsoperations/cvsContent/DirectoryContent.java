@@ -69,11 +69,7 @@ public class DirectoryContent {
 
   private static Collection<String> convertToSortedCollection(Collection<String> collection) {
     ArrayList<String> result = new ArrayList<String>(collection);
-    Collections.sort(result, new Comparator<String>() {
-      public int compare(String o, String o1) {
-        return o.compareToIgnoreCase(o1);
-      }
-    });
+    Collections.sort(result, (o, o1) -> o.compareToIgnoreCase(o1));
     return result;
   }
 

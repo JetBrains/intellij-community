@@ -104,12 +104,7 @@ public class LibrariesContainerFactory {
   }
 
   private static String getUniqueLibraryName(final String baseName, final LibraryTable.ModifiableModel model) {
-    return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return model.getLibraryByName(s) == null;
-      }
-    });
+    return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", s -> model.getLibraryByName(s) == null);
   }
 
   @NotNull

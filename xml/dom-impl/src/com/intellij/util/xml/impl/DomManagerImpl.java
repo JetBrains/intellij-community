@@ -427,12 +427,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
-    return createStableValue(provider, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t.isValid();
-      }
-    });
+    return createStableValue(provider, t -> t.isValid());
   }
 
   @Override

@@ -61,13 +61,8 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
   @Nullable
   public PsiClassType getConstructedClassType() {
-    return CachedValuesManager.getCachedValue(getElement(), new CachedValueProvider<PsiClassType>() {
-      @Nullable
-      @Override
-      public Result<PsiClassType> compute() {
-        return Result.create(inferConversionType(), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(getElement(), () -> CachedValueProvider.Result
+      .create(inferConversionType(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable

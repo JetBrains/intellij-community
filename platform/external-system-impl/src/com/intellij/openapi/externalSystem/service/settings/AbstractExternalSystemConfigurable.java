@@ -134,12 +134,8 @@ public abstract class AbstractExternalSystemConfigurable<
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
     List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
     myProjectsList.setVisibleRowCount(Math.max(3, Math.min(5, settings.size())));
-    ContainerUtil.sort(settings, new Comparator<ProjectSettings>() {
-      @Override
-      public int compare(ProjectSettings s1, ProjectSettings s2) {
-        return getProjectName(s1.getExternalProjectPath()).compareTo(getProjectName(s2.getExternalProjectPath()));
-      }
-    });
+    ContainerUtil.sort(settings,
+                       (s1, s2) -> getProjectName(s1.getExternalProjectPath()).compareTo(getProjectName(s2.getExternalProjectPath())));
 
     myProjectSettingsControls.clear();
     for (ProjectSettings setting : settings) {

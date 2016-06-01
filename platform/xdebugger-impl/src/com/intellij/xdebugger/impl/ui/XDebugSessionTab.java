@@ -330,6 +330,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         addVariablesAndWatches(mySession);
         attachViewToSession(mySession, myViews.get(DebuggerContentInfo.VARIABLES_CONTENT));
         attachViewToSession(mySession, myViews.get(DebuggerContentInfo.WATCHES_CONTENT));
+        myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.VARIABLES_CONTENT), true, false);
         rebuildViews();
       }
     }
@@ -351,11 +352,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized
+      tab.restoreContent(viewId);
+
       JComponent component = tab.getUi().getComponent();
       if (component instanceof DataProvider) {
         RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
         if (ui != null) {
-          ui.restoreContent(viewId);
           Content content = ui.findContent(viewId);
 
           // if the view is not visible (e.g. Console tab is selected, while Debugger tab is not)
@@ -412,10 +414,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void removeContent(String contentId) {
+    restoreContent(contentId); //findContent returns null if content is minimized
     myUi.removeContent(myUi.findContent(contentId), true);
     XDebugView view = myViews.remove(contentId);
     if (view != null) {
       Disposer.dispose(view);
+    }
+  }
+
+  private void restoreContent(String contentId) {
+    JComponent component = myUi.getComponent();
+    if (component instanceof DataProvider) {
+      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+      if (ui != null) {
+        ui.restoreContent(contentId);
+      }
     }
   }
 }

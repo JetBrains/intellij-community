@@ -238,13 +238,7 @@ public class PythonTask {
           Messages.showErrorDialog(e.getMessage(), myRunTabTitle);
         }
       })
-      .withStop(() -> process.destroyProcess(), new Computable<Boolean>() {
-
-                  @Override
-                  public Boolean compute() {
-                    return !process.isProcessTerminated();
-                  }
-                }
+      .withStop(() -> process.destroyProcess(), () -> !process.isProcessTerminated()
       )
       .withAfterCompletion(myAfterCompletion)
       .withHelpId(myHelpId)

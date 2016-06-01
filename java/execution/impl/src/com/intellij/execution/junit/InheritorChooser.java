@@ -61,12 +61,8 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        return psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-      }
-    });
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass,
+                                    psiClass -> psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
   public boolean runMethodInAbstractClass(final ConfigurationContext context,

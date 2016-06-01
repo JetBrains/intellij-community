@@ -1191,12 +1191,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     if (!documents.isEmpty()) {
-      Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents, new Condition<Document>() {
-        @Override
-        public boolean value(Document document) {
-          return belongsToScope(myFileDocumentManager.getFile(document), restrictedFile, filter);
-        }
-      });
+      Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents,
+                                                                               document -> belongsToScope(myFileDocumentManager.getFile(document), restrictedFile, filter));
 
       if (!documentsToProcessForProject.isEmpty()) {
         final StorageGuard.StorageModeExitHandler guard = setDataBufferingEnabled(true);
@@ -1454,23 +1450,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
-    return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile virtualFile) {
-        if (virtualFile instanceof DeletedVirtualFileStub) {
+    return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), virtualFile -> {
+      if (virtualFile instanceof DeletedVirtualFileStub) {
+        return true;
+      }
+      for (IndexableFileSet set : myIndexableSets) {
+        final Project proj = myIndexableSetToProjectMap.get(set);
+        if (proj != null && !proj.equals(project)) {
+          continue; // skip this set as associated with a different project
+        }
+        if (set.isInSet(virtualFile)) {
           return true;
         }
-        for (IndexableFileSet set : myIndexableSets) {
-          final Project proj = myIndexableSetToProjectMap.get(set);
-          if (proj != null && !proj.equals(project)) {
-            continue; // skip this set as associated with a different project
-          }
-          if (set.isInSet(virtualFile)) {
-            return true;
-          }
-        }
-        return false;
       }
+      return false;
     });
   }
 
@@ -1479,7 +1472,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   // caller is responsible to ensure no concurrent same document processing
-  void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
+  void processRefreshedFile(@Nullable Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     // ProcessCanceledException will cause re-adding the file to processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (myChangedFilesCollector.myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)))) {
@@ -1673,12 +1666,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private void scheduleUpdate(@NotNull final ID<?, ?> indexId, final Computable<Boolean> update, VirtualFile file, final int inputId, final boolean hasContent) {
     if (myNotRequiringContentIndices.contains(indexId) && !Registry.is("idea.concurrent.scanning.files.to.index")) {
       myContentlessIndicesUpdateQueue.submit(
-        new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return updateWithBufferingEnabled(update);
-          }
-        },
+        () -> updateWithBufferingEnabled(update),
         () -> indexedStampUpdate(indexId, file, inputId, hasContent));
     }
     else {

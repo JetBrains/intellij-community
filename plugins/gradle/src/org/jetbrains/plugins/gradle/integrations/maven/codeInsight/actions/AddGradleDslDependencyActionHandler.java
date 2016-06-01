@@ -65,12 +65,9 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
       protected void run() {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         List<GrMethodCall> closableBlocks = PsiTreeUtil.getChildrenOfTypeAsList(file, GrMethodCall.class);
-        GrCall dependenciesBlock = ContainerUtil.find(closableBlocks, new Condition<GrMethodCall>() {
-          @Override
-          public boolean value(GrMethodCall call) {
-            GrExpression expression = call.getInvokedExpression();
-            return expression != null && "dependencies".equals(expression.getText());
-          }
+        GrCall dependenciesBlock = ContainerUtil.find(closableBlocks, call -> {
+          GrExpression expression = call.getInvokedExpression();
+          return expression != null && "dependencies".equals(expression.getText());
         });
 
         if (dependenciesBlock == null) {

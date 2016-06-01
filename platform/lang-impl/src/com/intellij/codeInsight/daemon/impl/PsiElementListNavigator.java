@@ -142,12 +142,9 @@ public class PsiElementListNavigator {
         Object[] selectedElements = list.getSelectedValues();
         consumer.consume(selectedElements);
       }).
-      setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          HintUpdateSupply.hideHint(list);
-          return true;
-        }
+      setCancelCallback(() -> {
+        HintUpdateSupply.hideHint(list);
+        return true;
       });
     final Ref<UsageView> usageView = new Ref<UsageView>();
     if (findUsagesTitle != null) {

@@ -229,10 +229,6 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
-  public void testNonComparableFunctionalInterfacesWithConcreteShouldNotWin() throws Exception {
-    doTest(false);
-  }
-
   private void doTest() {
     doTest(true);
   }

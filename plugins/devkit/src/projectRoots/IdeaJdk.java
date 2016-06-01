@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+
 /**
  * @author anna
  * @since Nov 22, 2004
@@ -325,8 +327,13 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
       VirtualFile out = localFileSystem.refreshAndFindFileByPath(sdkHome + OUT_CLASSES);
       if (out != null) {
-        for (VirtualFile dir : out.getChildren()) {
+        List<String> suppressed = Arrays.asList("jps-plugin-system");
+        for (VirtualFile dir : JBIterable.of(out.findChild("resources")).append(out.getChildren())) {
           if (!dir.isDirectory()) continue;
+          String name = dir.getName();
+          if (name.endsWith("-ide") || suppressed.contains(name)) continue;
+          if (!name.equals("ultimate-resources") &&
+              FileUtil.exists(toSystemDependentName(dir.getPath() + "/META-INF/plugin.xml"))) continue;
           sdkModificator.addRoot(dir, OrderRootType.CLASSES);
         }
       }

@@ -125,12 +125,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle), getConsoleIcon());
 
-    contentDescriptor.setFocusComputable(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return getConsoleView().getConsoleEditor().getContentComponent();
-      }
-    });
+    contentDescriptor.setFocusComputable(() -> getConsoleView().getConsoleEditor().getContentComponent());
     contentDescriptor.setAutoFocusContent(isAutoFocusContent());
 
 

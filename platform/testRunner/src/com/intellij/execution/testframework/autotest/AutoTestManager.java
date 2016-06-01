@@ -84,15 +84,12 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
 
   @NotNull
   private DelayedDocumentWatcher createWatcher() {
-    return new DelayedDocumentWatcher(myProject, myDelayMillis, modificationStamp -> restartAllAutoTests(modificationStamp), new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        if (ScratchFileService.getInstance().getRootType(file) != null) {
-          return false;
-        }
-        // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
-        return FileEditorManager.getInstance(myProject).isFileOpen(file);
+    return new DelayedDocumentWatcher(myProject, myDelayMillis, modificationStamp -> restartAllAutoTests(modificationStamp), file -> {
+      if (ScratchFileService.getInstance().getRootType(file) != null) {
+        return false;
       }
+      // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
+      return FileEditorManager.getInstance(myProject).isFileOpen(file);
     });
   }
 

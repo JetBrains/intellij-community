@@ -291,12 +291,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
         annotation.registerFix(new IgnoreErrorFix(problem.myCode));
         annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                                           new Computable<String>() {
-                                                                             @Override
-                                                                             public String compute() {
-                                                                               return "Edit inspection profile setting";
-                                                                             }
-                                                                           }));
+                                                                           () -> "Edit inspection profile setting"));
       }
     }
   }

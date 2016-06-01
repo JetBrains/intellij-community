@@ -117,17 +117,14 @@ public class ModuleChooserUtil {
 
   @NotNull
   private static Condition<Module> isGroovyCompatibleModule(final Condition<Module> condition) {
-    return new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        if (condition.value(module)) {
-          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-            return true;
-          }
+    return module -> {
+      if (condition.value(module)) {
+        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 

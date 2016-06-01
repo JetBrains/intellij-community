@@ -43,13 +43,7 @@ public abstract class DomModelCache<T, H extends UserDataHolder> {
   public T getCachedValue(final @NotNull H dataHolder) {
     CachedValue<T> cachedValue = dataHolder.getUserData(myKey);
     if (cachedValue == null) {
-      final CachedValueProvider<T> myProvider = new CachedValueProvider<T>() {
-        @Override
-        @Nullable
-        public Result<T> compute() {
-          return computeValue(dataHolder);
-        }
-      };
+      final CachedValueProvider<T> myProvider = () -> computeValue(dataHolder);
       final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
       cachedValue = manager.createCachedValue(myProvider, false);
       dataHolder.putUserData(myKey, cachedValue);

@@ -113,11 +113,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
 
   public List<DualTreeElement> getFlattenItems() {
     List<DualTreeElement> items = getTreeViewModel().getItems();
-    return ContainerUtil.findAll(items, new Condition<DualTreeElement>() {
-      public boolean value(final DualTreeElement object) {
-        return object.shouldBeInTheFlatView();
-      }
-    });
+    return ContainerUtil.findAll(items, object -> object.shouldBeInTheFlatView());
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {

@@ -52,13 +52,10 @@ public class GetInvocation implements Invocation {
       final DomManagerImpl domManager = handler.getManager();
       final Project project = domManager.getProject();
       final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(project);
-      handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<List<Pair<Converter,Object>>>() {
-        @Override
-        public Result<List<Pair<Converter,Object>>> compute() {
-          List<Pair<Converter, Object>> list = ContainerUtil.createLockFreeCopyOnWriteList();
-          return Result
-            .create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
-        }
+      handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(() -> {
+        List<Pair<Converter, Object>> list = ContainerUtil.createLockFreeCopyOnWriteList();
+        return CachedValueProvider.Result
+          .create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
       }, false));
     }
 

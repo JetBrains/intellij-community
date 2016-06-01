@@ -40,26 +40,23 @@ import java.util.*;
  */
 public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 
-  @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = new Comparator<TreeNode>() {
-    @Override
-    public int compare(TreeNode t1, TreeNode t2) {
-      Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
-      Object e2 = ((ExternalSystemNode<?>)t2).getDescriptor().getElement();
-      if (e1 instanceof ExternalProjectPojo) {
-        if (e2 instanceof ExternalTaskExecutionInfo) {
-          return 1;
-        }
-        else {
-          return ((ExternalProjectPojo)e1).getName().compareTo(((ExternalProjectPojo)e2).getName());
-        }
+  @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
+    Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
+    Object e2 = ((ExternalSystemNode<?>)t2).getDescriptor().getElement();
+    if (e1 instanceof ExternalProjectPojo) {
+      if (e2 instanceof ExternalTaskExecutionInfo) {
+        return 1;
       }
       else {
-        if (e2 instanceof ExternalProjectPojo) {
-          return -1;
-        }
-        else {
-          return getTaskName((ExternalTaskExecutionInfo)e1).compareTo(getTaskName((ExternalTaskExecutionInfo)e2));
-        }
+        return ((ExternalProjectPojo)e1).getName().compareTo(((ExternalProjectPojo)e2).getName());
+      }
+    }
+    else {
+      if (e2 instanceof ExternalProjectPojo) {
+        return -1;
+      }
+      else {
+        return getTaskName((ExternalTaskExecutionInfo)e1).compareTo(getTaskName((ExternalTaskExecutionInfo)e2));
       }
     }
   };

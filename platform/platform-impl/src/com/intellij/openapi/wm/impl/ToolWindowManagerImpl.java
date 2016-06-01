@@ -442,17 +442,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     });
 
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof KeyEvent) {
-          dispatchKeyEvent((KeyEvent)e);
-        }
-        if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
-          resetHoldState();
-        }
-        return false;
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof KeyEvent) {
+        dispatchKeyEvent((KeyEvent)e);
       }
+      if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
+        resetHoldState();
+      }
+      return false;
     }, myProject);
   }
 

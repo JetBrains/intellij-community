@@ -72,33 +72,30 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       }
     }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
 
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof MouseEvent) {
-          MouseEvent mouseEvent = (MouseEvent)e;
-          if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(ToolWindowsWidget.this))) {
-            return false;
-          }
-
-          if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
-            Point p = mouseEvent.getLocationOnScreen();
-            Point screen = ToolWindowsWidget.this.getLocationOnScreen();
-            if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
-              mouseEntered();
-              wasExited = false;
-            } else {
-              if (!wasExited) {
-                wasExited = mouseExited(p);
-              }
-            }
-          } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-            //mouse exits WND
-            mouseExited(mouseEvent.getLocationOnScreen());
-          }
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof MouseEvent) {
+        MouseEvent mouseEvent = (MouseEvent)e;
+        if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(ToolWindowsWidget.this))) {
+          return false;
         }
-        return false;
+
+        if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
+          Point p = mouseEvent.getLocationOnScreen();
+          Point screen = ToolWindowsWidget.this.getLocationOnScreen();
+          if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
+            mouseEntered();
+            wasExited = false;
+          } else {
+            if (!wasExited) {
+              wasExited = mouseExited(p);
+            }
+          }
+        } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+          //mouse exits WND
+          mouseExited(mouseEvent.getLocationOnScreen());
+        }
       }
+      return false;
     }, parent);
 
     UISettings.getInstance().addUISettingsListener(this, this);

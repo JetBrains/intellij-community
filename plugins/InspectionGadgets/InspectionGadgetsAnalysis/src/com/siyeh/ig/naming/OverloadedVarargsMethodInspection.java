@@ -17,7 +17,9 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -65,7 +67,11 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
       final String methodName = method.getName();
       final PsiMethod[] sameNameMethods = aClass.findMethodsByName(methodName, true);
       for (PsiMethod sameNameMethod : sameNameMethods) {
-        if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod, method)) {
+        PsiClass superClass = sameNameMethod.getContainingClass();
+        PsiSubstitutor substitutor = superClass != null ? TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY)
+                                                        : PsiSubstitutor.EMPTY;
+        if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod.getSignature(substitutor),
+                                                    method.getSignature(PsiSubstitutor.EMPTY))) {
           registerMethodError(method, method);
           return;
         }

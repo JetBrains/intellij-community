@@ -44,6 +44,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
@@ -468,8 +469,15 @@ public abstract class DialogWrapper {
       actions = ArrayUtil.remove(actions, getHelpAction());
     }
 
-    JPanel panel = new JPanel(new BorderLayout());
-    final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
+        return bg != null ? bg : super.getBackground();
+      }
+    };
+    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
@@ -551,12 +559,12 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
+      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
       panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
     } else {
       panel.setBorder(JBUI.Borders.emptyTop(8));
     }
-
     return panel;
   }
 
@@ -636,7 +644,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);

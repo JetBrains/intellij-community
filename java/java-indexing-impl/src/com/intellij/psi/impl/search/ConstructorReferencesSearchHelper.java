@@ -103,14 +103,10 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "this(..)"
-    if (!MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch,
-                                  PsiKeyword.THIS, processor);
-      }
-    })) {
+    if (!MethodUsagesSearcher.resolveInReadAction(project,
+                                                  () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                                                                                                                     isStrictSignatureSearch,
+                                                                                                                     PsiKeyword.THIS, processor))) {
       return false;
     }
 
@@ -131,21 +127,18 @@ public class ConstructorReferencesSearchHelper {
                                                @NotNull final PsiMethod constructor,
                                                @NotNull final Project project,
                                                @NotNull final PsiClass aClass) {
-    return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        for (PsiField field : aClass.getFields()) {
-          if (field instanceof PsiEnumConstant) {
-            PsiReference reference = field.getReference();
-            if (reference != null && reference.isReferenceTo(constructor)) {
-              if (!processor.process(reference)) {
-                return false;
-              }
+    return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+      for (PsiField field : aClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          PsiReference reference = field.getReference();
+          if (reference != null && reference.isReferenceTo(constructor)) {
+            if (!processor.process(reference)) {
+              return false;
             }
           }
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -156,18 +149,15 @@ public class ConstructorReferencesSearchHelper {
     return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
       final PsiElement element = reference.getElement();
       if (element != null) {
-        return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            final PsiElement parent = element.getParent();
-            if (parent instanceof PsiMethodReferenceExpression &&
-                ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
-              if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-                if (!processor.process((PsiReference)parent)) return false;
-              }
+        return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiMethodReferenceExpression &&
+              ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+            if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+              if (!processor.process((PsiReference)parent)) return false;
             }
-            return true;
           }
+          return true;
         });
       }
       return true;
@@ -229,12 +219,7 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final Project project,
                                                  @NotNull final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
-    boolean same = MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass());
-      }
-    });
+    boolean same = MethodUsagesSearcher.resolveInReadAction(project, () -> myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass()));
     if (!same) {
       return true;
     }

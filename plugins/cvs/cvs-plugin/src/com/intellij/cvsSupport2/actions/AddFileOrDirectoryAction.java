@@ -107,12 +107,9 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       return CommandCvsHandler.createAddFilesHandler(project, roots);
     }
     final Ref<CvsHandler> handler = new Ref<CvsHandler>();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-        handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
-      }
+    final Runnable runnable = () -> {
+      final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
+      handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
     };
     ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any());
 
@@ -152,11 +149,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       }
       addFilesToCollection(result, file);
     }
-    Collections.sort(result, new Comparator<VirtualFile>() {
-      public int compare(final VirtualFile o1, final VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
     return result;
   }
 

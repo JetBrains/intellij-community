@@ -41,12 +41,7 @@ public class LocalHistoryUtil {
 
   static boolean isLabelRevision(@NotNull RevisionItem rev, @NotNull LabelImpl label) {
     final long targetChangeId = label.getLabelChangeId();
-    return ContainerUtil.exists(rev.labels, new Condition<Revision>() {
-      @Override
-      public boolean value(Revision revision) {
-        return isChangeWithId(revision, targetChangeId);
-      }
-    });
+    return ContainerUtil.exists(rev.labels, revision -> isChangeWithId(revision, targetChangeId));
   }
 
   private static boolean isChangeWithId(@NotNull Revision revision, long targetChangeId) {

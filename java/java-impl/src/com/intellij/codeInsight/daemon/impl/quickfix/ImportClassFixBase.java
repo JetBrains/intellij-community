@@ -193,20 +193,17 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
     final String memberName = getRequiredMemberName(myElement);
     if (memberName != null) {
-      List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          PsiField field = psiClass.findFieldByName(memberName, true);
-          if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myElement)) return true;
+      List<PsiClass> filtered = ContainerUtil.findAll(classList, psiClass -> {
+        PsiField field = psiClass.findFieldByName(memberName, true);
+        if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myElement)) return true;
 
-          PsiClass inner = psiClass.findInnerClassByName(memberName, true);
-          if (inner != null && isAccessible(inner, myElement)) return true;
+        PsiClass inner = psiClass.findInnerClassByName(memberName, true);
+        if (inner != null && isAccessible(inner, myElement)) return true;
 
-          for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-            if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myElement)) return true;
-          }
-          return false;
+        for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
+          if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myElement)) return true;
         }
+        return false;
       });
       if (!filtered.isEmpty()) {
         classList = filtered;
@@ -277,12 +274,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
             }
             return true;
           });
-          List<PsiClass> filtered = ContainerUtil.filter(candidates, new Condition<PsiClass>() {
-            @Override
-            public boolean value(PsiClass psiClass) {
-              return probableTypes.contains(psiClass);
-            }
-          });
+          List<PsiClass> filtered = ContainerUtil.filter(candidates, psiClass -> probableTypes.contains(psiClass));
           if (!filtered.isEmpty()) {
             return filtered;
           }

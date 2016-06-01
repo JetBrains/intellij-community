@@ -35,15 +35,9 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
     @Override
     public void paintBorder(Component c, Graphics graphics, int x, int y, int width, int height) {
       Graphics2D g = (Graphics2D)graphics;
-      final Insets ins = getBorderInsets(c);
-      final int yOff = (ins.top + ins.bottom) / 4;
-      final boolean square = DarculaButtonUI.isSquare(c);
-      int offset = JBUI.scale(square ? 1 : getOffset());
-      int w = c.getWidth();
-      int h = c.getHeight();
-      int diam = JBUI.scale(22);
-
-      if (c.hasFocus() || DarculaButtonUI.isDefaultButton((JComponent)c)) {
+      final boolean hasFocus = c.hasFocus();
+      final boolean isDefault = DarculaButtonUI.isDefaultButton((JComponent)c);
+      if (hasFocus || isDefault) {
         if (DarculaButtonUI.isHelpButton((JComponent)c)) {
             //todo
         } else {
@@ -52,7 +46,7 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
           g.translate(x,y);
           g.drawRect(JBUI.scale(1), JBUI.scale(1), width-2*JBUI.scale(1), height-2*JBUI.scale(1));
 
-          if (c.hasFocus()) {
+          if (hasFocus) {
             g.setStroke(new BasicStroke(JBUI.scale(1f)));
             g.setColor(Gray.x00);
             UIUtil.drawDottedRectangle(g, JBUI.scale(1) + 1, JBUI.scale(1) + 1, width-2*JBUI.scale(1) - 1, height-2*JBUI.scale(1) - 1);
@@ -60,11 +54,8 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
           g.translate(-x,-y);
         }
       } else {
-        //g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
         g.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
-        if (DarculaButtonUI.isHelpButton((JComponent)c)) {
-          g.drawOval((w - diam) / 2, (h - diam) / 2, diam, diam);
-        } else {
+        if (!DarculaButtonUI.isHelpButton((JComponent)c)) {
           g.translate(x, y);
           g.drawRect(0, 0, width - 1, height - 1);
           g.translate(-x, -y);
@@ -75,12 +66,12 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
     @Override
     public Insets getBorderInsets(Component c) {
       if (c.getParent() instanceof ActionToolbar) {
-        return JBUI.insets(4, 16, 4, 16);
+        return JBUI.insets(4, 16).asUIResource();
       }
       if (DarculaButtonUI.isSquare(c)) {
-        return JBUI.insets(2, 0, 2, 0).asUIResource();
+        return JBUI.insets(2, 0).asUIResource();
       }
-      return JBUI.insets(3, 17, 3, 15).asUIResource();
+      return JBUI.insets(3, 17).asUIResource();
     }
 
     protected int getOffset() {

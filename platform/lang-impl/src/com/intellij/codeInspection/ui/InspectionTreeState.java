@@ -16,11 +16,13 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -37,24 +39,13 @@ public class InspectionTreeState {
     mySelectionPath = new InspectionTreeSelectionPath(selectionPath);
   }
 
-  public void restoreExpansionAndSelection(InspectionTree tree, InspectionTreeNode reloadedNode) {
+  public void restoreExpansionAndSelection(InspectionTree tree, boolean treeNodeMightChange) {
     restoreExpansionStatus((InspectionTreeNode)tree.getModel().getRoot(), tree);
     if (mySelectionPath != null) {
-      if (reloadedNode == null || needRestore(reloadedNode)) {
-        mySelectionPath.restore(tree);
-      }
+      mySelectionPath.restore(tree, treeNodeMightChange);
     } else {
       TreeUtil.selectFirstNode(tree);
     }
-  }
-
-  private boolean needRestore(@NotNull InspectionTreeNode node) {
-    for (Object o : mySelectionPath.myPath) {
-      if (InspectionResultsViewComparator.getInstance().areEqual((InspectionTreeNode)o, node)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void restoreExpansionStatus(InspectionTreeNode node, InspectionTree tree) {
@@ -94,33 +85,30 @@ public class InspectionTreeState {
       return idx;
     }
 
-    public void restore(InspectionTree tree) {
+    public void restore(InspectionTree tree, boolean treeNodeMightChange) {
       tree.getSelectionModel().removeSelectionPaths(tree.getSelectionModel().getSelectionPaths());
-      TreeUtil.selectPath(tree, restorePath(tree));
+      TreeUtil.selectPath(tree, restorePath(tree, treeNodeMightChange));
     }
 
-    private TreePath restorePath(InspectionTree tree) {
+    private TreePath restorePath(InspectionTree tree, boolean treeNodeMightChange) {
       ArrayList<Object> newPath = new ArrayList<Object>();
 
       newPath.add(tree.getModel().getRoot());
-      restorePath(newPath, 1);
+      restorePath(newPath, 1, treeNodeMightChange);
       return new TreePath(newPath.toArray());
     }
 
-    private void restorePath(ArrayList<Object> newPath, int idx) {
+    private void restorePath(ArrayList<Object> newPath, int idx, boolean treeNodeMightChange) {
       if (idx >= myPath.length) return;
       InspectionTreeNode oldNode = (InspectionTreeNode)myPath[idx];
-
       InspectionTreeNode newRoot = (InspectionTreeNode)newPath.get(idx - 1);
 
-
-      InspectionResultsViewComparator comparator = InspectionResultsViewComparator.getInstance();
       Enumeration children = newRoot.children();
       while (children.hasMoreElements()) {
         InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        if (comparator.areEqual(child, oldNode)) {
+        if (treeNodeMightChange ? InspectionResultsViewComparator.getInstance().areEqual(child, oldNode) : child == oldNode) {
           newPath.add(child);
-          restorePath(newPath, idx + 1);
+          restorePath(newPath, idx + 1, treeNodeMightChange);
           return;
         }
       }

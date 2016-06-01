@@ -38,25 +38,22 @@ import java.util.*;
  */
 public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
-  private final Set<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
+  private final Set<VirtualFile> myEntries = new LinkedHashSet<>();
 
   private int myCachedHashCode;
 
   public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Module[] modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Set<Sdk> processedSdk = new THashSet<Sdk>();
-    final Set<Library> processedLibraries = new THashSet<Library>();
-    final Set<Module> processedModules = new THashSet<Module>();
-    final Condition<OrderEntry> condition = new Condition<OrderEntry>() {
-      @Override
-      public boolean value(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-          return module != null && !processedModules.contains(module);
-        }
-        return true;
+    final Set<Sdk> processedSdk = new THashSet<>();
+    final Set<Library> processedLibraries = new THashSet<>();
+    final Set<Module> processedModules = new THashSet<>();
+    final Condition<OrderEntry> condition = orderEntry -> {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+        return module != null && !processedModules.contains(module);
       }
+      return true;
     };
     for (Module module : modules) {
       buildEntries(module, processedModules, processedLibraries, processedSdk, condition);
@@ -138,9 +135,6 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   @Nullable
   private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    if (myIndex.isLibraryClassFile(file)) {
-      return myIndex.getClassRootForFile(file);
-    }
     if (myIndex.isInContent(file)) {
       return myIndex.getSourceRootForFile(file);
     }
@@ -164,7 +158,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   @TestOnly
   @NotNull
   public List<VirtualFile> getRoots() {
-    return new ArrayList<VirtualFile>(myEntries);
+    return new ArrayList<>(myEntries);
   }
 
   @Override

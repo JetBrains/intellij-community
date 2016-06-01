@@ -192,7 +192,7 @@ abstract class UndoRedo {
   }
 
   private boolean restore(EditorAndState pair) {
-    if (myEditor == null || pair == null || pair.getEditor() == null) {
+    if (myEditor == null || !myEditor.isValid() || pair == null || pair.getEditor() == null) {
       return false;
     }
 

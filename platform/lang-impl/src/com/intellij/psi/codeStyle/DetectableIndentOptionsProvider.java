@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.autodetect;
+package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.LanguageFormatting;
@@ -24,13 +24,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -38,29 +39,54 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider implements ProviderForCommittedDocument {
+public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
+  
+  private static final ExecutorService BOUNDED_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  
   private boolean myIsEnabledInTest;
-  private final List<VirtualFile> myAcceptedFiles = new WeakList<VirtualFile>();
-  private final List<VirtualFile> myDisabledFiles = new WeakList<VirtualFile>();
+  private final List<VirtualFile> myAcceptedFiles = new WeakList<>();
+  private final List<VirtualFile> myDisabledFiles = new WeakList<>();
 
   @Nullable
   @Override
-  public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
-    return isDocumentCommitted(file) && isEnabled(settings, file)
-           ? new IndentOptionsDetectorImpl(file).getIndentOptions()
-           : null;
-  }
+  public IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    if (!isEnabled(settings, file)) {
+      return null;
+    }
 
-  private static boolean isDocumentCommitted(@NotNull PsiFile file) {
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = manager.getDocument(file);
-    return document != null && manager.isCommitted(document);
+    Project project = file.getProject();
+    PsiDocumentManager psiManager = PsiDocumentManager.getInstance(project);
+    Document document = psiManager.getDocument(file);
+    if (document == null) {
+      return null;
+    }
+
+    IndentOptions options = getValidCachedIndentOptions(file, document);
+    if (options != null) {
+      return options;
+    }
+
+    TimeStampedIndentOptions indentOptions = getDefault(file.getFileType(), project, document.getModificationStamp());
+    indentOptions.associateWithDocument(document);
+
+    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
+    task.scheduleInBackgroundForCommittedDocument();
+
+    return indentOptions;
+  }
+  
+  @NotNull
+  private static TimeStampedIndentOptions getDefault(@NotNull FileType fileType, Project project, long timeStamp) {
+    CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
+    return new TimeStampedIndentOptions(manager.getIndentOptions(fileType), timeStamp);
   }
 
   @Override
@@ -94,8 +120,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
   public EditorNotificationInfo getNotificationInfo(@NotNull final Project project,
                                                     @NotNull final VirtualFile file,
                                                     @NotNull final FileEditor fileEditor,
-                                                    @NotNull CommonCodeStyleSettings.IndentOptions userOptions,
-                                                    @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions)
+                                                    @NotNull IndentOptions userOptions,
+                                                    @NotNull IndentOptions detectedOptions)
   {
     final NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
     final Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
@@ -138,8 +164,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
   }
 
   @Nullable
-  private static NotificationLabels getNotificationLabels(@NotNull CommonCodeStyleSettings.IndentOptions userOptions,
-                                                          @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions) {
+  private static NotificationLabels getNotificationLabels(@NotNull IndentOptions userOptions,
+                                                          @NotNull IndentOptions detectedOptions) {
     if (userOptions.USE_TAB_CHARACTER) {
       if (!detectedOptions.USE_TAB_CHARACTER) {
         return new NotificationLabels(ApplicationBundle.message("code.style.space.indent.detected", detectedOptions.INDENT_SIZE),
@@ -172,6 +198,18 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
   @Override
   public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
     return !FileIndentOptionsProvider.isShowNotification() || myAcceptedFiles.contains(file);
+  }
+
+  public IndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
+    IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
+    long documentStamp = document.getModificationStamp();
+    if (options instanceof TimeStampedIndentOptions) {
+      long optionsStamp = ((TimeStampedIndentOptions)options).getTimeStamp();
+      if (optionsStamp == documentStamp) {
+        return options;
+      }
+    }
+    return null;
   }
 
   private static class NotificationLabels {

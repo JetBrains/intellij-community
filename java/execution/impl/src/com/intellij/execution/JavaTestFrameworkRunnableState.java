@@ -166,12 +166,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
     LOG.assertTrue(rerunFailedTestsAction != null);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return viewer;
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);

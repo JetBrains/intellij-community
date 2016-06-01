@@ -29,7 +29,6 @@ import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,20 +104,23 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                              @NotNull final InspectionNode toolNode,
+                                              @NotNull final InspectionTreeNode parentNode,
+                                              final boolean showStructure,
+                                              boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
+                                              @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
-      final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
-        descriptor -> new OfflineProblemDescriptorContainer(descriptor);
       parentNode.add(toolNode);
-      buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
+      buildTree(context, filteredContent, false, toolWrapper, OfflineProblemDescriptorContainer::new, showStructure,
+                (newChild) -> {
+                  toolNode.add(newChild);
+                  return newChild;
+                });
     }
+    return toolNode;
   }
 
   @Nullable

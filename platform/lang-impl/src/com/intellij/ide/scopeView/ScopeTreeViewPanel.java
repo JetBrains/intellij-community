@@ -530,12 +530,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             isProblem = myWolfTheProblemSolver.isProblemFile(virtualFile);
           }
           else if (virtualFile != null) {
-            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(new Condition<VirtualFile>() {
-              @Override
-              public boolean value(VirtualFile file) {
-                return VfsUtilCore.isAncestor(virtualFile, file, false);
-              }
-            });
+            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(file -> VfsUtilCore.isAncestor(virtualFile, file, false));
           }
           else {
             final Module module =  node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null;

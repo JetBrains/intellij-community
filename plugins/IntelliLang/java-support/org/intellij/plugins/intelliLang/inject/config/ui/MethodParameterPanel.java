@@ -190,11 +190,8 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
           final PsiModifierList modifiers = method.getModifierList();
           if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
           if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
-              ContainerUtil.find(method.getParameterList().getParameters(), new Condition<PsiParameter>() {
-                public boolean value(PsiParameter p) {
-                  return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
-                }
-              }) != null) {
+              ContainerUtil.find(method.getParameterList().getParameters(),
+                                 p -> MethodParameterInjection.isInjectable(p.getType(), p.getProject())) != null) {
             final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
             if (!visitedSignatures.add(info.getMethodSignature())) continue;
             myData.put(method, info);
@@ -243,11 +240,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       }
     }).booleanValue();
     if (applyMethods) {
-      other.setMethodInfos(ContainerUtil.findAll(myData.values(), new Condition<MethodParameterInjection.MethodInfo>() {
-        public boolean value(final MethodParameterInjection.MethodInfo methodInfo) {
-          return methodInfo.isEnabled();
-        }
-      }));
+      other.setMethodInfos(ContainerUtil.findAll(myData.values(), methodInfo -> methodInfo.isEnabled()));
     }
   }
 

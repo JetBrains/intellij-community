@@ -266,13 +266,7 @@ public class ExpectedTypesProvider {
         parent.accept(visitor);
         for (final ExpectedTypeInfo info : visitor.myResult) {
           myResult.add(createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailTypes.RPARENTH, info.getCalledMethod(),
-                                      new NullableComputable<String>() {
-                                        @Nullable
-                                        @Override
-                                        public String compute() {
-                                          return ((ExpectedTypeInfoImpl)info).getExpectedName();
-                                        }
-                                      }));
+                                      () -> ((ExpectedTypeInfoImpl)info).getExpectedName()));
         }
       }
     }
@@ -409,12 +403,7 @@ public class ExpectedTypesProvider {
       if (type != null) {
         NullableComputable<String> expectedName;
         if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-          expectedName = new NullableComputable<String>() {
-            @Override
-            public String compute() {
-              return PropertyUtil.getPropertyName(scopeMethod);
-            }
-          };
+          expectedName = () -> PropertyUtil.getPropertyName(scopeMethod);
         }
         else {
           expectedName = ExpectedTypeInfoImpl.NULL;
@@ -651,13 +640,7 @@ public class ExpectedTypesProvider {
           for (int i = 0; i < myResult.size(); i++) {
             final ExpectedTypeInfo info = myResult.get(i);
             myResult.set(i, createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailType.NONE, info.getCalledMethod(),
-                                           new NullableComputable<String>() {
-                                             @Nullable
-                                             @Override
-                                             public String compute() {
-                                               return ((ExpectedTypeInfoImpl)info).getExpectedName();
-                                             }
-                                           }
+                                           () -> ((ExpectedTypeInfoImpl)info).getExpectedName()
             ));
           }
         }
@@ -872,13 +855,7 @@ public class ExpectedTypesProvider {
         for (int i = 0; i < types.length; i++) {
           final ExpectedTypeInfo info = types[i];
           types[i] = createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailType.COND_EXPR_COLON, info.getCalledMethod(),
-                                    new NullableComputable<String>() {
-                                      @Nullable
-                                      @Override
-                                      public String compute() {
-                                        return ((ExpectedTypeInfoImpl)info).getExpectedName();
-                                      }
-                                    });
+                                    () -> ((ExpectedTypeInfoImpl)info).getExpectedName());
         }
         Collections.addAll(myResult, types);
       }
@@ -1202,15 +1179,12 @@ public class ExpectedTypesProvider {
 
     @Nullable
     private static NullableComputable<String> getPropertyName(@NotNull final PsiVariable variable) {
-      return new NullableComputable<String>() {
-        @Override
-        public String compute() {
-          final String name = variable.getName();
-          if (name == null) return null;
-          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
-          VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-          return codeStyleManager.variableNameToPropertyName(name, variableKind);
-        }
+      return () -> {
+        final String name = variable.getName();
+        if (name == null) return null;
+        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
+        VariableKind variableKind = codeStyleManager.getVariableKind(variable);
+        return codeStyleManager.variableNameToPropertyName(name, variableKind);
       };
     }
 

@@ -27,9 +27,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

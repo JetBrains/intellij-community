@@ -38,17 +38,14 @@ public class XmlEntityCache {
       final SmartPsiElementPointer declPointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(decl);
 
       cachingMap.put(
-        name, CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
-          @Override
-          public Result<XmlEntityDecl> compute() {
-            PsiElement declElement = declPointer.getElement();
-            if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
-              return new Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
-            cachingMap.put(name,null);
-            return new Result<XmlEntityDecl>(null, ModificationTracker.NEVER_CHANGED);
-          }
+        name, CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+          PsiElement declElement = declPointer.getElement();
+          if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
+            return new CachedValueProvider.Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
+          cachingMap.put(name,null);
+          return new CachedValueProvider.Result<XmlEntityDecl>(null, ModificationTracker.NEVER_CHANGED);
         },
-        false
+                                                                                  false
       ));
     }
   }

@@ -111,24 +111,9 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
-  public static final Condition<PsiClass> IS_INTERFACE = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return aClass.isInterface();
-    }
-  };
-  private static final Condition<PsiClass> IS_NOT_INTERFACE = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return !aClass.isInterface();
-    }
-  };
-  public static final Condition<PsiClass> IS_TRAIT = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return GrTraitUtil.isTrait(aClass);
-    }
-  };
+  public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
+  private static final Condition<PsiClass> IS_NOT_INTERFACE = aClass -> !aClass.isInterface();
+  public static final Condition<PsiClass> IS_TRAIT = aClass -> GrTraitUtil.isTrait(aClass);
 
   private final AnnotationHolder myHolder;
 
@@ -1695,12 +1680,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
         if (elementType == GroovyTokenTypes.kSUPER && containingClass != null && GrTraitUtil.isTrait((PsiClass)resolved)) {
           PsiClassType[] superTypes = containingClass.getSuperTypes();
-          if (ContainerUtil.find(superTypes, new Condition<PsiClassType>() {
-            @Override
-            public boolean value(PsiClassType type) {
-              return ref.getManager().areElementsEquivalent(type.resolve(), resolved);
-            }
-          }) != null) {
+          if (ContainerUtil.find(superTypes, type -> ref.getManager().areElementsEquivalent(type.resolve(), resolved)) != null) {
             holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
             return; // reference to trait method
           }

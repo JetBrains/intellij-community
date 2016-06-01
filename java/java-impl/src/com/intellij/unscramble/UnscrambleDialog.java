@@ -65,12 +65,7 @@ public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
-  private static final Condition<ThreadState> DEADLOCK_CONDITION = new Condition<ThreadState>() {
-    @Override
-    public boolean value(ThreadState state) {
-      return state.isDeadlocked();
-    }
-  };
+  private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
   private final Project myProject;
@@ -330,12 +325,7 @@ public class UnscrambleDialog extends DialogWrapper {
       CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
       if (!line.matches("\\s+.*") && lastLine.length() > 0) {
         if (lastLine.toString().matches("\\s*at") //separate 'at' from filename
-            || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, new Condition<String>() {
-          @Override
-          public boolean value(String word) {
-            return line.startsWith(word);
-          }
-        })) {
+            || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, word -> line.startsWith(word))) {
           builder.append(" ");
         }
       }

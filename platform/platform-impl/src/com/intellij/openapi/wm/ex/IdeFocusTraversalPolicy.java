@@ -60,12 +60,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
       Component defaultComponent;
       if (focusTraversalPolicy instanceof LayoutFocusTraversalPolicyExt) {
         final LayoutFocusTraversalPolicyExt extPolicy = (LayoutFocusTraversalPolicyExt)focusTraversalPolicy;
-        defaultComponent = extPolicy.queryImpl(new Computable<Component>() {
-          @Override
-          public Component compute() {
-            return extPolicy.getDefaultComponent(component);
-          }
-        });
+        defaultComponent = extPolicy.queryImpl(() -> extPolicy.getDefaultComponent(component));
       } else {
         defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
       }

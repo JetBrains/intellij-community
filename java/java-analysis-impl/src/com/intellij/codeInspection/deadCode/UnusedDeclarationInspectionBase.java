@@ -731,12 +731,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        boolean alreadyAdded = ContainerUtil.find(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return point.getClass().equals(extension.getClass());
-          }
-        }) != null;
+        boolean alreadyAdded = ContainerUtil.find(myExtensions, point1 -> point1.getClass().equals(extension.getClass())) != null;
         if (!alreadyAdded) {
           try {
             myExtensions.add(extension.clone());
@@ -749,12 +744,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
       @Override
       public void extensionRemoved(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ContainerUtil.retainAll(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return !point.getClass().equals(extension.getClass());
-          }
-        });
+        ContainerUtil.retainAll(myExtensions, point12 -> !point12.getClass().equals(extension.getClass()));
       }
     }, getEntryPointsManager());
   }

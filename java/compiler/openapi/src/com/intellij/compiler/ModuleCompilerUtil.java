@@ -176,16 +176,13 @@ public final class ModuleCompilerUtil {
   public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<Module>(modules);
-    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        for (ModuleSourceSet sourceSet : chunk.getNodes()) {
-          if (modulesSet.contains(sourceSet.getModule())) {
-            return true;
-          }
+    return ContainerUtil.filter(chunks, chunk -> {
+      for (ModuleSourceSet sourceSet : chunk.getNodes()) {
+        if (modulesSet.contains(sourceSet.getModule())) {
+          return true;
         }
-        return false;
       }
+      return false;
     });
   }
 
@@ -255,12 +252,7 @@ public final class ModuleCompilerUtil {
   }
 
   private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<Chunk<ModuleSourceSet>> chunks) {
-    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        return chunk.getNodes().size() > 1;
-      }
-    });
+    return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
 
   /**
@@ -277,15 +269,12 @@ public final class ModuleCompilerUtil {
       }
     }
 
-    return ContainerUtil.filter(sourceSetCycles, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        if (getCommonType(chunk) != ModuleSourceSet.Type.TEST) return true;
-        for (Set<Module> productionCycle : productionCycles) {
-          if (productionCycle.containsAll(ModuleSourceSet.getModules(chunk.getNodes()))) return false;
-        }
-        return true;
+    return ContainerUtil.filter(sourceSetCycles, chunk -> {
+      if (getCommonType(chunk) != ModuleSourceSet.Type.TEST) return true;
+      for (Set<Module> productionCycle : productionCycles) {
+        if (productionCycle.containsAll(ModuleSourceSet.getModules(chunk.getNodes()))) return false;
       }
+      return true;
     });
   }
 

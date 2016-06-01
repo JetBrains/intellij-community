@@ -275,7 +275,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLocalClass(@NotNull PsiClass psiClass) {
     PsiElement parent = psiClass.getParent();
-    return parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock;
+    if (parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock) {
+      return true;
+    }
+
+    if (parent instanceof PsiClass) {
+      return isLocalOrAnonymousClass((PsiClass)parent);
+    }
+    return false;
   }
 
   public static boolean isAbstractClass(@NotNull PsiClass clazz) {

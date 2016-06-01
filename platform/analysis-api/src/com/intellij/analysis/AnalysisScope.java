@@ -393,13 +393,10 @@ public class AnalysisScope {
     while (true) {
       final DumbService dumbService = DumbService.getInstance(project);
       dumbService.waitForSmartMode();
-      boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (dumbService.isDumb()) return false;
-          runnable.run();
-          return true;
-        }
+      boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+        if (dumbService.isDumb()) return false;
+        runnable.run();
+        return true;
       });
       if (passed) {
         break;

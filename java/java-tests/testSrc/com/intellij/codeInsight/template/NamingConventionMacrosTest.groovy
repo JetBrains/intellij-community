@@ -17,8 +17,8 @@ package com.intellij.codeInsight.template
 
 import com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
+import com.intellij.psi.codeStyle.NameUtil
 import junit.framework.TestCase
-
 /**
  * @author peter
  */
@@ -71,7 +71,7 @@ class NamingConventionMacrosTest extends TestCase {
     return new SplitWordsMacro.SnakeCaseMacro().convertString(s)
   }
   private static def cau(String s) {
-    return new SplitWordsMacro.CapitalizeAndUnderscoreMacro().convertString(s)
+    return NameUtil.capitalizeAndUnderscore(s)
   }
   
 }

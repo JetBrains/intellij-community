@@ -153,12 +153,8 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
   public final DomElement createPathStableCopy() {
     final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
-    return getManager().createStableValue(new Factory<DomElement>() {
-      @Override
-      public DomElement create() {
-        return parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null;
-      }
-    });
+    return getManager().createStableValue(
+      (Factory<DomElement>)() -> parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null);
   }
 
 }

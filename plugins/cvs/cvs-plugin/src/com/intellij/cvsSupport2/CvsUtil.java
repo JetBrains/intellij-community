@@ -239,13 +239,11 @@ public class CvsUtil {
     catch (Exception ex) {
       final String entries = loadFrom(dir, ENTRIES, true);
       if (entries != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
-            Messages.showErrorDialog(
-              CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
-              CvsBundle.message("message.error.invalid.entries.title"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
+          Messages.showErrorDialog(
+            CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+            CvsBundle.message("message.error.invalid.entries.title"));
         });
       }
       return entriesHandler;
@@ -570,11 +568,7 @@ public class CvsUtil {
     File ioFile = new File(file.getPath());
     final Pattern pattern = Pattern.compile("\\Q.#" + ioFile.getName() + ".\\E" + REVISION_PATTERN);
     final File dir = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
-    File[] files = dir.listFiles(new FilenameFilter() {
-      public boolean accept(final File dir, final String name) {
-        return (!storedFilename.equals(name)) && pattern.matcher(name).matches();
-      }
-    });
+    File[] files = dir.listFiles((dir1, name) -> (!storedFilename.equals(name)) && pattern.matcher(name).matches());
     if (files != null) {
       for (File oldFile : files) {
         oldFile.delete();
@@ -710,12 +704,8 @@ public class CvsUtil {
     }
 
     catch (final IOException e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
-                                   CvsBundle.message("message.error.restore.entry.title"));
-        }
-      });
+      SwingUtilities.invokeLater(() -> Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
+                                                            CvsBundle.message("message.error.restore.entry.title")));
     }
   }
 

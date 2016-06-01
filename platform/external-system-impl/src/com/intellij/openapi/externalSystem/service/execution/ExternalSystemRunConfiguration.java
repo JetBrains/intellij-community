@@ -179,59 +179,56 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
       Disposer.register(myProject, consoleView);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-          final String greeting;
-          if (mySettings.getTaskNames().size() > 1) {
-            greeting = ExternalSystemBundle
-              .message("run.text.starting.multiple.task", startDateTime, mySettings.toString());
-          }
-          else {
-            greeting =
-              ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString());
-          }
-          processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
-          task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
-
-            private boolean myResetGreeting = true;
-
-            @Override
-            public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-              if (myResetGreeting) {
-                processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
-                myResetGreeting = false;
-              }
-
-              consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-            }
-
-            @Override
-            public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-              String exceptionMessage = ExceptionUtil.getMessage(e);
-              String text = exceptionMessage == null ? e.toString() : exceptionMessage;
-              processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
-              processHandler.notifyProcessTerminated(1);
-            }
-
-            @Override
-            public void onEnd(@NotNull ExternalSystemTaskId id) {
-              final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-              final String farewell;
-              if (mySettings.getTaskNames().size() > 1) {
-                farewell = ExternalSystemBundle
-                  .message("run.text.ended.multiple.task", endDateTime, mySettings.toString());
-              }
-              else {
-                farewell =
-                  ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
-              }
-              processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
-              processHandler.notifyProcessTerminated(0);
-            }
-          });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+        final String greeting;
+        if (mySettings.getTaskNames().size() > 1) {
+          greeting = ExternalSystemBundle
+            .message("run.text.starting.multiple.task", startDateTime, mySettings.toString());
         }
+        else {
+          greeting =
+            ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString());
+        }
+        processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
+        task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
+
+          private boolean myResetGreeting = true;
+
+          @Override
+          public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+            if (myResetGreeting) {
+              processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
+              myResetGreeting = false;
+            }
+
+            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+          }
+
+          @Override
+          public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+            String exceptionMessage = ExceptionUtil.getMessage(e);
+            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
+            processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+            processHandler.notifyProcessTerminated(1);
+          }
+
+          @Override
+          public void onEnd(@NotNull ExternalSystemTaskId id) {
+            final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+            final String farewell;
+            if (mySettings.getTaskNames().size() > 1) {
+              farewell = ExternalSystemBundle
+                .message("run.text.ended.multiple.task", endDateTime, mySettings.toString());
+            }
+            else {
+              farewell =
+                ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
+            }
+            processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
+            processHandler.notifyProcessTerminated(0);
+          }
+        });
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
       result.setRestartActions(consoleManager.getRestartActions(consoleView));

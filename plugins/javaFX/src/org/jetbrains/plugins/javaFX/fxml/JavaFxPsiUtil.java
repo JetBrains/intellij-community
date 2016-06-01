@@ -287,13 +287,9 @@ public class JavaFxPsiUtil {
         }
       }
       final CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
-      final PsiClass injectedControllerClass = ourGuard.doPreventingRecursion(containingFile, true, new Computable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          return manager.getCachedValue(containingFile, INJECTED_CONTROLLER,
-                                        new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true);
-        }
-      });
+      final PsiClass injectedControllerClass = ourGuard.doPreventingRecursion(containingFile, true,
+                                                                              () -> manager.getCachedValue(containingFile, INJECTED_CONTROLLER,
+                                                                                                                                                                               new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true));
       if (injectedControllerClass != null) {
         return injectedControllerClass;
       }
@@ -513,30 +509,26 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean hasBuilder(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        final Project project = psiClass.getProject();
-        final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_FXML_BUILDER,
-                                                                                   GlobalSearchScope.allScope(project));
-        if (builderClass != null) {
-          final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
-          if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
-            if (ClassInheritorsSearch.search(builderClass).forEach(aClass -> {
-              PsiType returnType = null;
-              final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
-              if (method != null) {
-                returnType = method.getReturnType();
-              }
-              return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
-            })) {
-              return Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      final Project project = psiClass.getProject();
+      final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_FXML_BUILDER,
+                                                                                 GlobalSearchScope.allScope(project));
+      if (builderClass != null) {
+        final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
+        if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+          if (ClassInheritorsSearch.search(builderClass).forEach(aClass -> {
+            PsiType returnType = null;
+            final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+            if (method != null) {
+              returnType = method.getReturnType();
             }
+            return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+          })) {
+            return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
         }
-        return Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
+      return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

@@ -100,15 +100,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public void insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
-    if (!allowDuplication && getIndex(child) != -1) {
-      return;
+  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
+    if (!allowDuplication) {
+      int index = getIndex(child);
+      if (index != -1) {
+        return (InspectionTreeNode)getChildAt(index);
+      }
     }
-    final int i = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-    if (!allowDuplication && i >= 0){
-      return;
+    int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
+    if (!allowDuplication && index >= 0){
+      return (InspectionTreeNode)getChildAt(index);
     }
-    insert(child, Math.abs(i + 1));
+    insert(child, Math.abs(index + 1));
+    return child;
   }
 
   @Override

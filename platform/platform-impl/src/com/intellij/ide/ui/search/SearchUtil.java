@@ -627,12 +627,7 @@ public class SearchUtil {
       addChildren(each, result);
     }
     
-    result = ContainerUtil.filter(result, new Condition<Configurable>() {
-      @Override
-      public boolean value(Configurable configurable) {
-        return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
-      }
-    });
+    result = ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible());
    
     return result;
   }

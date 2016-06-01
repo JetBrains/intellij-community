@@ -106,13 +106,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
       myCbProjectJdk.setSetupButton(setUpButton, myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem(), null, false);
       myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-      myCbProjectJdk.setEditButton(editButton, myProject, new Computable<Sdk>() {
-        @Override
-        @Nullable
-        public Sdk compute() {
-          return myJdksModel.getProjectSdk();
-        }
-      });
+      myCbProjectJdk.setEditButton(editButton, myProject, () -> myJdksModel.getProjectSdk());
 
       myJdkPanel.add(editButton, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
     }

@@ -175,16 +175,13 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     });
 
     try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            runner.execute(environment);
-          }
-          catch (ExecutionException e) {
-            targetDone.up();
-            LOG.error(e);
-          }
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          runner.execute(environment);
+        }
+        catch (ExecutionException e) {
+          targetDone.up();
+          LOG.error(e);
         }
       }, ModalityState.NON_MODAL);
     }

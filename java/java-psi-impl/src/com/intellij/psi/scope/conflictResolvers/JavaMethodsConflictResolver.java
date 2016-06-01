@@ -626,32 +626,23 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (applicable12 && !applicable21) return Specifics.SECOND;
         if (applicable21 && !applicable12) return Specifics.FIRST;
   
-        if (MethodSignatureUtil.areOverrideEquivalent(method1, method2)) {
-          //from 15.12.2.5 Choosing the Most Specific Method: concrete = nonabstract or default
-          final boolean concrete1 = !method1.hasModifierProperty(PsiModifier.ABSTRACT) || method1.hasModifierProperty(PsiModifier.DEFAULT);
-          final boolean concrete2 = !method2.hasModifierProperty(PsiModifier.ABSTRACT) || method2.hasModifierProperty(PsiModifier.DEFAULT);
-          if (concrete2 && !concrete1) {
+        //from 15.12.2.5 Choosing the Most Specific Method: concrete = nonabstract or default
+        final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT) || method1.hasModifierProperty(PsiModifier.DEFAULT);
+        final boolean abstract2 = method2.hasModifierProperty(PsiModifier.ABSTRACT) || method2.hasModifierProperty(PsiModifier.DEFAULT);
+        if (abstract1 && !abstract2) {
+          return Specifics.SECOND;
+        }
+        if (abstract2 && !abstract1) {
+          return Specifics.FIRST;
+        }
+
+        if (abstract1 && abstract2 && MethodSignatureUtil.areOverrideEquivalent(method1, method2)) {
+          final PsiType returnType1 = method1.getReturnType();
+          final PsiType returnType2 = method2.getReturnType();
+          if (returnType1 != null && returnType2 != null && returnType1.isAssignableFrom(returnType2)) {
             return Specifics.SECOND;
           }
-
-          if (concrete1 && !concrete2) {
-            return Specifics.FIRST;
-          }
-
-          if (!concrete1 && !concrete2) {
-            final PsiType returnType1 = method1.getReturnType();
-            final PsiType returnType2 = method2.getReturnType();
-            if (returnType1 != null && returnType2 != null) {
-              boolean assignableFrom12 = returnType1.isAssignableFrom(returnType2);
-              boolean assignableFrom21 = returnType2.isAssignableFrom(returnType1);
-              if (assignableFrom12 && !assignableFrom21) {
-                return Specifics.SECOND;
-              }
-              //then the most specific method is chosen arbitrarily among the subset of the maximally specific methods
-              //that have the most specific return type
-              return Specifics.FIRST;
-            }
-          }
+          return Specifics.FIRST;
         }
       }
     } 

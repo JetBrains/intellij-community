@@ -249,13 +249,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       try {
         myCvs2SettingsEditPanel.saveTo(mySelection);
       } catch (final InputException e) {
-        SwingUtilities.invokeLater(new Runnable() {
-
-          @Override
-          public void run() {
-            e.show();
-          }
-        });
+        SwingUtilities.invokeLater(() -> e.show());
         return false;
       }
     }
