@@ -36,7 +36,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
     setFont(UIUtil.getTreeFont());
     setIcon(null);
 
-    if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
       setOpaque(false);
       myIsSelected = false;
       myHasFocus = false;
