@@ -47,7 +47,6 @@ public class TasksNode extends ExternalSystemNode {
     if (dataNodes != null && !dataNodes.isEmpty()) {
       for (DataNode<?> dataNode : dataNodes) {
         if (!(dataNode.getData() instanceof TaskData)) continue;
-        if (dataNode.getParent() != null && ProjectKeys.PROJECT.equals(dataNode.getParent().getKey())) break;
         String group = ((TaskData)dataNode.getData()).getGroup();
         if (group == null) group = "other";
         myTasksMap.putValue(StringUtil.toLowerCase(group), new TaskNode(externalProjectsView, (DataNode<TaskData>)dataNode));
