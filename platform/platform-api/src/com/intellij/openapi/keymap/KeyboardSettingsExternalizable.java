@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
+    if (Registry.is("ide.keyboard.dvorak")) return true;
     if (SystemInfo.isMac) return false;
     String keyboardLayoutLanguage = getLanguageForComponent(component);
     for (String language : supportedNonEnglishLanguages) {

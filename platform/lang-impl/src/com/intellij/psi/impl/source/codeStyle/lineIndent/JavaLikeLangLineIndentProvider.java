@@ -56,7 +56,10 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     SwitchDefault,
     ElseKeyword,
     IfKeyword,
-    ForKeyword
+    ForKeyword,
+    BlockComment,
+    DocBlockStart,
+    DocBlockEnd
   }
   
   @Nullable
@@ -108,6 +111,16 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           position -> position.before().isAt(ElseKeyword)
         )) {
           return createIndentData(NORMAL, ElseKeyword);
+        }
+        else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(BlockComment)
+        )) {
+          return createIndentData(NONE, BlockComment);
+        }
+        else if (getPosition(editor, offset).matchesRule(
+          position -> position.before().isAt(DocBlockEnd)
+        )) {
+          return createIndentData(NONE, DocBlockEnd);
         }
         else {
           SemanticEditorPosition position = getPosition(editor, offset);
@@ -197,7 +210,32 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     else if (IfKeyword.equals(afterElement) || ForKeyword.equals(afterElement)) {
       return findStatementStart(editor, null, offset);
     }
+    else if (BlockComment.equals(afterElement)) {
+      return findStartOfBlockComment(editor, offset);
+    }
+    else if (DocBlockEnd.equals(afterElement)) {
+      return findStartOfDocComment(editor, offset);
+    }
     return CharArrayUtil.shiftBackward(docChars, offset, " \t\n\r");
+  }
+
+  private int findStartOfDocComment(Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    while (!position.isAtEnd()) {
+      if (position.isAt(DocBlockStart)) return position.getStartOffset();
+      position.before();
+    }
+    return -1;
+  }
+
+
+  private int findStartOfBlockComment(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    while (!position.isAtEnd()) {
+      if (position.isAt(BlockComment)) return position.getStartOffset();
+      position.before();
+    }
+    return -1;
   }
   
   
