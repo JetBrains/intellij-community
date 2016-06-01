@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  * @since 11/6/2014
  */
-@Order(1)
+@Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER)
 public class TasksNode extends ExternalSystemNode {
 
   private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<String, TaskNode>();
