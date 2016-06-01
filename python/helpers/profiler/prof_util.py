@@ -17,21 +17,30 @@ class ProfDaemonThread(threading.Thread):
     def OnRun(self):
         pass
 
-def generate_snapshot_filepath(basepath, local_temp_dir=False):
+def generate_snapshot_filepath(basepath, local_temp_dir=False, extension='.pstat'):
+    basepath = get_snapshot_basepath(basepath, local_temp_dir)
+
+    n = 0
+    path = basepath + extension
+    while os.path.exists(path):
+        n+=1
+        path = basepath + (str(n) if n>0 else '') + extension
+
+    return path
+
+
+def get_snapshot_basepath(basepath, local_temp_dir):
     if basepath is None:
         basepath = 'snapshot'
     if local_temp_dir:
         basepath = os.path.join(tempfile.gettempdir(), os.path.basename(basepath.replace('\\', '/')))
+    return basepath
 
-    n = 0
-    path = basepath + '.pstat'
-    while os.path.exists(path):
-        n+=1
-        path = basepath + (str(n) if n>0 else '') + '.pstat'
 
-    return path
-
-def statsToResponse(stats, m):
+def stats_to_response(stats, m):
+    if stats is None:
+        return
+    
     ystats = Stats()
     ystats.func_stats = []
     m.ystats = ystats
@@ -65,5 +74,7 @@ def statsToResponse(stats, m):
             caller_stat.own_time = tt
 
 
-    m.validate()
+    # m.validate()
+
+
 
