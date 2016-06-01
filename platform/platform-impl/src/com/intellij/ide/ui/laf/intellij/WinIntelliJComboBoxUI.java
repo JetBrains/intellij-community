@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
 
 /**
@@ -78,7 +79,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected JButton createArrowButton() {
-    final JButton button = new JButton() {
+    final JButton button = new BasicArrowButton(SwingConstants.SOUTH) {
       @Override
       public Dimension getPreferredSize() {
         return JBUI.size(14, 6);
@@ -92,8 +93,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       }
     };
     button.setOpaque(false);
-    button.setFocusable(false);
-    button.setBorder(null);
+    button.setBorder(JBUI.Borders.empty());
     return button;
   }
 
@@ -102,7 +102,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (comboBox == null || arrowButton == null) {
       return; //NPE on LaF change
     }
-    g2.setColor(UIManager.getColor("ComboBox.borderColor"));
+    hasFocus = false;
+    checkFocus();
+    if (hasFocus) {
+      g2.setColor(UIManager.getColor("ComboBox.activeBorderColor"));
+    } else {
+      g2.setColor(UIManager.getColor("ComboBox.borderColor"));
+    }
     g2.drawRect(x + 1, y + 1, width - 2, height - 2);
   }
 }
