@@ -507,6 +507,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     else {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
     }
     layoutDataRef.set(layoutData);
 
@@ -780,6 +781,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     JPanel buttons = createButtons(notification, content, listener);
     if (buttons != null) {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
