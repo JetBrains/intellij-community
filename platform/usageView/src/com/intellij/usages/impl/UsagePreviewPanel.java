@@ -193,7 +193,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   protected void customizeEditorSettings(EditorSettings settings) {
     settings.setLineMarkerAreaShown(false);
-    settings.setIndentGuidesShown(false);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
