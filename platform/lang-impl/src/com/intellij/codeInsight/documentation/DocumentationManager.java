@@ -19,6 +19,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -39,6 +40,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -47,7 +50,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -63,11 +65,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,9 +73,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -457,94 +452,97 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            PopupUpdateProcessor updateProcessor,
                            final PsiElement originalElement,
                            @Nullable final Runnable closeCallback) {
-    final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) : 
-                                             myTestDocumentationComponent;
-    component.setNavigateCallback(psiElement -> {
-      final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
-      if (jbPopup != null) {
-        final String title = getTitle(psiElement, false);
-        jbPopup.setCaption(title);
-        // Set panel name so that it is announced by readers when it gets the focus
-        AccessibleContextUtil.setName(component, title);
-      }
-    });
-    Processor<JBPopup> pinCallback = popup -> {
-      createToolWindow(element, originalElement);
-      myToolWindow.setAutoHide(false);
-      popup.cancel();
-      return false;
-    };
+    //final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) :
+    //                                         myTestDocumentationComponent;
+    //component.setNavigateCallback(psiElement -> {
+    //  final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+    //  if (jbPopup != null) {
+    //    final String title = getTitle(psiElement, false);
+    //    jbPopup.setCaption(title);
+    //    // Set panel name so that it is announced by readers when it gets the focus
+    //    AccessibleContextUtil.setName(component, title);
+    //  }
+    //});
+    //Processor<JBPopup> pinCallback = popup -> {
+    //  createToolWindow(element, originalElement);
+    //  myToolWindow.setAutoHide(false);
+    //  popup.cancel();
+    //  return false;
+    //};
+    //
+    //ActionListener actionListener = new ActionListener() {
+    //  @Override
+    //  public void actionPerformed(ActionEvent e) {
+    //    createToolWindow(element, originalElement);
+    //    final JBPopup hint = getDocInfoHint();
+    //    if (hint != null && hint.isVisible()) hint.cancel();
+    //  }
+    //};
+    //List<Pair<ActionListener, KeyStroke>> actions = ContainerUtil.newSmartList();
+    //AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    //for (Shortcut shortcut : quickDocAction.getShortcutSet().getShortcuts()) {
+    //  if (!(shortcut instanceof KeyboardShortcut)) continue;
+    //  actions.add(Pair.create(actionListener, ((KeyboardShortcut)shortcut).getFirstKeyStroke()));
+    //}
+    //
+    //boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
+    //final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+    //  .setProject(element.getProject())
+    //  .addListener(updateProcessor)
+    //  .addUserData(updateProcessor)
+    //  .setKeyboardActions(actions)
+    //  .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
+    //  .setResizable(true)
+    //  .setMovable(true)
+    //  .setRequestFocus(requestFocus)
+    //  .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
+    //  .setTitle(getTitle(element, false))
+    //  .setCouldPin(pinCallback)
+    //  .setModalContext(false)
+    //  .setCancelCallback(new Computable<Boolean>() {
+    //    @Override
+    //    public Boolean compute() {
+    //      myCloseOnSneeze = false;
+    //      if (closeCallback != null) {
+    //        closeCallback.run();
+    //      }
+    //      if (fromQuickSearch()) {
+    //        ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+    //      }
+    //
+    //      Disposer.dispose(component);
+    //      myEditor = null;
+    //      myPreviouslyFocused = null;
+    //      return Boolean.TRUE;
+    //    }
+    //  })
+    //  .setKeyEventHandler(e -> {
+    //    if (myCloseOnSneeze) {
+    //      closeDocHint();
+    //    }
+    //    if (AbstractPopup.isCloseRequest(e) && getDocInfoHint() != null) {
+    //      closeDocHint();
+    //      return true;
+    //    }
+    //    return false;
+    //  })
+    //  .createPopup();
+    //
+    //component.setHint(hint);
+    //
+    //if (myEditor == null) {
+    //  // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked,
+    //  // so reevaluate the editor for proper popup placement
+    //  Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
+    //  myEditor = lookup != null ? lookup.getEditor() : null;
+    //}
+    fetchDocInfo(getDefaultCollector(element, originalElement), null);
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        createToolWindow(element, originalElement);
-        final JBPopup hint = getDocInfoHint();
-        if (hint != null && hint.isVisible()) hint.cancel();
-      }
-    };
-    List<Pair<ActionListener, KeyStroke>> actions = ContainerUtil.newSmartList();
-    AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
-    for (Shortcut shortcut : quickDocAction.getShortcutSet().getShortcuts()) {
-      if (!(shortcut instanceof KeyboardShortcut)) continue;
-      actions.add(Pair.create(actionListener, ((KeyboardShortcut)shortcut).getFirstKeyStroke()));
-    }
-
-    boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
-    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setProject(element.getProject())
-      .addListener(updateProcessor)
-      .addUserData(updateProcessor)
-      .setKeyboardActions(actions)
-      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
-      .setResizable(true)
-      .setMovable(true)
-      .setRequestFocus(requestFocus)
-      .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
-      .setTitle(getTitle(element, false))
-      .setCouldPin(pinCallback)
-      .setModalContext(false)
-      .setCancelCallback(() -> {
-        myCloseOnSneeze = false;
-        if (closeCallback != null) {
-          closeCallback.run();
-        }
-        if (fromQuickSearch()) {
-          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-        }
-
-        Disposer.dispose(component);
-        myEditor = null;
-        myPreviouslyFocused = null;
-        return Boolean.TRUE;
-      })
-      .setKeyEventHandler(e -> {
-        if (myCloseOnSneeze) {
-          closeDocHint();
-        }
-        if (AbstractPopup.isCloseRequest(e) && getDocInfoHint() != null) {
-          closeDocHint();
-          return true;
-        }
-        return false;
-      })
-      .createPopup();
-
-    component.setHint(hint);
-
-    if (myEditor == null) {
-      // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked, 
-      // so reevaluate the editor for proper popup placement
-      Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
-      myEditor = lookup != null ? lookup.getEditor() : null;
-    }
-    fetchDocInfo(getDefaultCollector(element, originalElement), component);
-
-    myDocInfoHintRef = new WeakReference<>(hint);
-
-    if (fromQuickSearch() && myPreviouslyFocused != null) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
-    }
+    //myDocInfoHintRef = new WeakReference<JBPopup>(hint);
+    //
+    //if (fromQuickSearch() && myPreviouslyFocused != null) {
+    //  ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
+    //}
   }
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
@@ -698,13 +696,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
     final ActionCallback callback = new ActionCallback();
     myLastAction = callback;
-    boolean wasEmpty = component.isEmpty();
-    component.startWait();
+    //boolean wasEmpty = component.isEmpty();
+    //component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
-    if (wasEmpty) {
-      component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), null, clearHistory);
+    if (true) {
+      setText(CodeInsightBundle.message("javadoc.fetching.progress"));
       final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
       if (jbPopup != null) {
         jbPopup.setDimensionServiceKey(null);
@@ -730,7 +728,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           String message = ex[0] instanceof IndexNotReadyException
                          ? "Documentation is not available until indices are built."
                          : CodeInsightBundle.message("javadoc.external.fetch.error.message");
-          component.setText(message, null, true);
+          setText(message);
           callback.setDone();
         });
         return;
@@ -758,31 +756,64 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         if (documentationText == null) {
-          component.setText(CodeInsightBundle.message("no.documentation.found"), element, true, clearHistory);
+          setText(CodeInsightBundle.message("no.documentation.found"));
         }
         else if (documentationText.isEmpty()) {
-          component.setText(component.getText(), element, true, clearHistory);
+          setText(component.getText());
         }
         else {
-          component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl(), provider.getRef());
+          setText(documentationText);
         }
 
-        final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
-        if(jbPopup==null){
-          callback.setDone();
-          return;
-        }
-        jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
-        jbPopup.setCaption(getTitle(element, false));
-        // Set panel name so that it is announced by readers when it gets the focus
-        AccessibleContextUtil.setName(component, getTitle(element, false));
-        callback.setDone();
+        //final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+        //if(jbPopup==null){
+        //  callback.setDone();
+        //  return;
+        //}
+        //jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
+        //jbPopup.setCaption(getTitle(element, false));
+        //// Set panel name so that it is announced by readers when it gets the focus
+        //AccessibleContextUtil.setName(component, getTitle(element, false));
+        //callback.setDone();
       });
     }, 10);
     return callback;
   }
 
-  @NotNull 
+  private void setText(String text) {
+    for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myEditor.getDocument().getTextLength() + 1, Inlay.Type.BLOCK)) {
+      Disposer.dispose(inlay);
+    }
+    JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, "");
+    pane.setEditorKit(UIUtil.getHTMLEditorKit(false));
+    pane.setText(text);
+    pane.setBackground(HintUtil.INFORMATION_COLOR);
+    pane.setBorder(BorderFactory.createLineBorder(Color.gray));
+    int width = myEditor.getSettings().getRightMargin(myEditor.getProject()) * EditorUtil.getPlainSpaceWidth(myEditor);
+    pane.setSize(width, Integer.MAX_VALUE);
+    int height = pane.getPreferredSize().height;
+    pane.setSize(width, height);
+    myEditor.getInlayModel().addElement(myEditor.getCaretModel().getOffset(), Inlay.Type.BLOCK, new Inlay.Renderer() {
+      @Override
+      public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
+        Graphics localG = g.create(r.x, r.y, r.width, r.height);
+        pane.paint(localG);
+        localG.dispose();
+      }
+
+      @Override
+      public int calcHeightInPixels(@NotNull Editor editor) {
+        return height;
+      }
+
+      @Override
+      public int calcWidthInPixels(@NotNull Editor editor) {
+        return width;
+      }
+    });
+  }
+
+  @NotNull
   public static DocumentationProvider getProviderFromElement(final PsiElement element) {
     return getProviderFromElement(element, null);
   }
