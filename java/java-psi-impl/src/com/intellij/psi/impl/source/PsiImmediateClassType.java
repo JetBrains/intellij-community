@@ -108,12 +108,6 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     assert substitutor.isValid();
   }
 
-  @NotNull
-  @Override
-  public PsiImmediateClassType annotate(@NotNull TypeAnnotationProvider provider) {
-    return provider == getAnnotationProvider() ? this : new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, provider);
-  }
-
   @Override
   public PsiClass resolve() {
     return myClass;

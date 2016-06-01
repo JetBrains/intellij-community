@@ -134,7 +134,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         else {
           type = PsiWildcardType.createUnbounded(getManager());
         }
-        type = ((PsiWildcardType)type).annotate(filterTypeUse(annotations));
+        type = type.annotate(filterTypeUse(annotations));
         break;
       }
 

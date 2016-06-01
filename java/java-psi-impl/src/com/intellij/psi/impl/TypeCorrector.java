@@ -211,13 +211,6 @@ class TypeCorrector extends PsiTypeMapper {
       });
     }
 
-    @NotNull
-    @Override
-    public PsiCorrectedClassType annotate(@NotNull TypeAnnotationProvider provider) {
-      return provider == getAnnotationProvider() ? this
-                                                 : new PsiCorrectedClassType(myLanguageLevel, myDelegate, myResolveResult, provider);
-    }
-
     @Override
     public int getParameterCount() {
       return myDelegate.getParameters().length;
