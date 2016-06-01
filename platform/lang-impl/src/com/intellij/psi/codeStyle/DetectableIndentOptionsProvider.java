@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +101,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   private boolean isEnabled(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledFile) return false;
+    if (file instanceof PsiCompiledFile || file.getFileType() == ScratchFileType.INSTANCE) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myIsEnabledInTest;
     }
