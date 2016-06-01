@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
@@ -19,16 +20,20 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.NotNullProducer;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxComponentIdReferenceProvider;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Pavel.Dolgov
@@ -36,7 +41,7 @@ import java.util.Map;
 public class JavaFxPropertyRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    final PsiReference reference = getReference(dataContext);
+    final PsiReference reference = getKnownReference(getReferences(dataContext));
     return reference != null;
   }
 
@@ -56,7 +61,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   private static void performInvoke(@NotNull Project project, @Nullable Editor editor, DataContext dataContext) {
-    PsiReference reference = getReference(dataContext);
+    final PsiReference[] references = getReferences(dataContext);
+    final PsiReference reference = getKnownReference(references);
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
@@ -66,10 +72,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
       final JavaFxPropertyReference propertyReference = (JavaFxPropertyReference)reference;
       final Map<PsiElement, String> elementsToRename = getElementsToRename(propertyReference, "a");
-      final boolean cannotRename = !elementsToRename.isEmpty() &&
-                                   elementsToRename.keySet().stream()
-                                     .anyMatch(element -> !PsiElementRenameHandler.canRename(project, editor, element));
-      if (cannotRename) {
+      if (!canRename(project, editor, elementsToRename.keySet())) {
         return;
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -83,6 +86,30 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
         new PropertyRenameDialog(propertyReference, psiElement, project, editor).show();
       }
     }
+    if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef) {
+      final Set<PsiElement> elementsToRename = new THashSet<>();
+      JavaFxRenameAttributeProcessor.visitReferencedElements(references, psiElement -> {
+        if (psiElement != null) {
+          elementsToRename.add(psiElement);
+        }
+      });
+      if (!canRename(project, editor, elementsToRename)) {
+        return;
+      }
+      final XmlAttributeValue fxIdElement = ((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference).getXmlAttributeValue();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+        assert newName != null : "Rename property";
+        new RenameDialog(project, fxIdElement, null, editor).performRename(newName);
+      }
+      else {
+        new RenameDialog(project, fxIdElement, null, editor).show();
+      }
+    }
+  }
+
+  private static boolean canRename(@NotNull Project project, @Nullable Editor editor, @NotNull Collection<PsiElement> elements) {
+    return elements.stream().allMatch(element -> PsiElementRenameHandler.canRename(project, editor, element));
   }
 
   private static void doRename(JavaFxPropertyReference reference, String newName, final boolean searchInComments, boolean isPreview) {
@@ -98,7 +125,12 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
 
 
   @Nullable
-  private static PsiReference getReference(DataContext dataContext) {
+  private static PsiReference getKnownReference(PsiReference[] references) {
+    return ContainerUtil.find(references, JavaFxPropertyRenameHandler::isKnown);
+  }
+
+  @NotNull
+  private static PsiReference[] getReferences(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
@@ -114,21 +146,18 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       final PsiReference reference = file.findReferenceAt(offset);
 
       if (reference instanceof PsiMultiReference) {
-        final PsiReference[] references = ((PsiMultiReference)reference).getReferences();
-        for (PsiReference ref : references) {
-          if (isKnown(ref)) {
-            return ref;
-          }
-        }
+        return ((PsiMultiReference)reference).getReferences();
       }
-      if (isKnown(reference)) return reference;
+      if (isKnown(reference)) return new PsiReference[]{reference};
     }
 
-    return null;
+    return PsiReference.EMPTY_ARRAY;
   }
 
   private static boolean isKnown(PsiReference reference) {
-    if (reference instanceof JavaFxPropertyReference) return true;
+    if (reference instanceof JavaFxPropertyReference || reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef) {
+      return true;
+    }
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase) {
       return ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn();
     }
