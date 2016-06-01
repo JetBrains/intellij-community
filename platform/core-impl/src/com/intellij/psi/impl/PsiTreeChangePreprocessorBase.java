@@ -78,7 +78,7 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     }
 
     if (!changedInsideCodeBlock) {
-      getModificationTracker().incOutOfCodeBlockModificationCounter();
+      processOutOfCodeBlockModification(event);
     }
   }
 
