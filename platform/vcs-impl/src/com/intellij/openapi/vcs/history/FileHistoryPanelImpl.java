@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,6 +82,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.io.IOException;
@@ -92,7 +95,7 @@ import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
+public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements CopyProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
@@ -715,6 +718,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else if (VcsDataKeys.HISTORY_PROVIDER.is(dataId)) {
       return myProvider;
     }
+    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return this;
+    }
     else {
       return super.getData(dataId);
     }
@@ -867,6 +873,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     int result = myFilePath.hashCode();
     result = 31 * result + (myStartingRevision != null ? myStartingRevision.asString().hashCode() : 0); // NB: asString to conform to equals
     return result;
+  }
+
+  @Override
+  public void performCopy(@NotNull DataContext dataContext) {
+    CopyPasteManager.getInstance()
+      .setContents(new StringSelection(StringUtil.join(getSelectedRevisions(), MessageColumnInfo::getSubject, "\n")));
+  }
+
+  @Override
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+    return getSelection().size() > 0;
+  }
+
+  @Override
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
+    return true;
   }
 
   public static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
@@ -1029,13 +1051,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       myIssueLinkRenderer = new IssueLinkRenderer(project, myRenderer);
     }
 
-    protected String getDataOf(VcsFileRevision object) {
+    @NotNull
+    public static String getSubject(@NotNull VcsFileRevision object) {
       final String originalMessage = object.getCommitMessage();
       if (originalMessage == null) return "";
 
       int index = StringUtil.indexOfAny(originalMessage, "\n\r");
       if (index == -1) return originalMessage;
       return originalMessage.substring(0, index) + "...";
+    }
+
+    protected String getDataOf(VcsFileRevision object) {
+      return getSubject(object);
     }
 
     @Override
