@@ -220,6 +220,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             aClass.getInitializers().length == 0) {
           final PsiMethod method = methods[0];
           return method.getBody() != null &&
+                 method.getDocComment() == null &&
                  !hasForbiddenRefsInsideBody(method, aClass) &&
                  !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
                  !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);

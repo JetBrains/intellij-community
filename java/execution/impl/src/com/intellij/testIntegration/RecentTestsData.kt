@@ -16,52 +16,78 @@
 package com.intellij.testIntegration
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
+
+fun SuiteEntry.isMyTest(test: SingleTestEntry): Boolean {
+  val testName = VirtualFileManager.extractPath(test.url)
+  return testName.startsWith(this.suiteName)
+}
 
 class RecentTestsData {
 
   private val runConfigurationSuites = hashMapOf<String, RunConfigurationEntry>()
-  private var testsWithoutSuites: MutableList<SingleTestEntry> = ContainerUtil.newArrayList<SingleTestEntry>()
 
-  fun addSuite(url: String,
-               magnitude: TestStateInfo.Magnitude,
-               runDate: Date,
-               runConfiguration: RunnerAndConfigurationSettings) 
-  {
+  private var unmatchedRunConfigurationTests = arrayListOf<SingleTestEntry>()
 
-    val suiteInfo = SuiteEntry(url, magnitude, runDate, runConfiguration)
+  private val urlSuites = mutableListOf<SuiteEntry>()
+  private var unmatchedUrlTests = mutableListOf<SingleTestEntry>()
 
-    val configurationId = runConfiguration.uniqueID
-    val suitePack = runConfigurationSuites[configurationId]
-    if (suitePack != null) {
-      suitePack.addSuite(suiteInfo)
-      return
+  
+  fun addSuite(url: String, magnitude: Magnitude, runDate: Date, runConfiguration: RunnerAndConfigurationSettings?) {
+    val suite = SuiteEntry(url, magnitude, runDate)
+    if (runConfiguration != null) {
+      addRunConfigurationSuite(suite, runConfiguration)
     }
+    else {
+      addUrlSuite(suite)
+    }
+  }
+
+  fun addTest(url: String, magnitude: Magnitude, runDate: Date, runConfiguration: RunnerAndConfigurationSettings?) {
+    val test = SingleTestEntry(url, magnitude, runDate)
+    if (runConfiguration != null) {
+      addRunConfigurationTest(test, runConfiguration)
+    }
+    else {
+      addUrlTest(test)
+    }
+  }
+  
+  private fun addUrlSuite(suite: SuiteEntry) {
+    val suiteTests = unmatchedUrlTests.filter { suite.isMyTest(it) }
+    suiteTests.forEach { suite.addTest(it) }
     
-    runConfigurationSuites[configurationId] = RunConfigurationEntry(runConfiguration, suiteInfo)
+    unmatchedUrlTests = unmatchedUrlTests.filterTo(arrayListOf(), { !suite.isMyTest(it) })
+    
+    urlSuites.add(suite)
   }
 
+  private fun addRunConfigurationSuite(suite: SuiteEntry, config: RunnerAndConfigurationSettings) {
+    val suiteTests = unmatchedRunConfigurationTests.filter { suite.isMyTest(it) }
+    suiteTests.forEach { suite.addTest(it) }
+    
+    unmatchedRunConfigurationTests = unmatchedRunConfigurationTests.filterTo(arrayListOf(), { !suite.isMyTest(it) })
 
-  fun addTest(url: String,
-              magnitude: TestStateInfo.Magnitude,
-              runDate: Date,
-              runConfiguration: RunnerAndConfigurationSettings) {
-
-    val testInfo = SingleTestEntry(url, magnitude, runDate, runConfiguration)
-
-    val suite = findSuite(url, runConfiguration)
-    if (suite != null) {
-      suite.addTest(testInfo)
-      return
-    }
-
-    testsWithoutSuites.add(testInfo)
+    val id = config.uniqueID
+    runConfigurationSuites[id]?.addSuite(suite) ?: runConfigurationSuites.put(id, RunConfigurationEntry(config, suite))
   }
 
-  private fun findSuite(url: String, runConfiguration: RunnerAndConfigurationSettings): SuiteEntry? {
+  private fun addUrlTest(test: SingleTestEntry) {
+    findUrlSuite(test.url)?.addTest(test) ?: unmatchedUrlTests.add(test)
+  }
+
+  private fun addRunConfigurationTest(test: SingleTestEntry, runConfiguration: RunnerAndConfigurationSettings) {
+    findRunConfigurationSuite(test.url, runConfiguration)?.addTest(test) ?: unmatchedRunConfigurationTests.add(test)
+  }
+
+  private fun findUrlSuite(url: String) = urlSuites.find {
+    val testName = VirtualFileManager.extractPath(url)
+    testName.startsWith(it.suiteName)
+  }
+
+  private fun findRunConfigurationSuite(url: String, runConfiguration: RunnerAndConfigurationSettings): SuiteEntry? {
     val pack: RunConfigurationEntry = runConfigurationSuites[runConfiguration.uniqueID] ?: return null
     val testName = VirtualFileManager.extractPath(url)
 
@@ -75,13 +101,15 @@ class RecentTestsData {
   }
 
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
-    testsWithoutSuites.forEach {
-      val url = it.url
-      findSuite(url, it.runConfiguration)?.addTest(it)
-    }
-    
-    val packsByDate = runConfigurationSuites.values.sortedByDescending { it.runDate }
-    return packsByDate.fold(listOf(), { list, pack -> list + pack.entriesToShow() })
+    val allEntries: List<RecentTestsPopupEntry> = runConfigurationSuites.values + urlSuites
+    return allEntries
+        .sortedByDescending { it.runDate }
+        .fold(listOf(), { popupList, currentEntry -> 
+          when (currentEntry) {
+            is RunConfigurationEntry -> popupList + currentEntry.entriesToShow()
+            else -> popupList + currentEntry
+          } 
+        })
   }
   
 }

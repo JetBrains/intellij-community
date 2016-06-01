@@ -35,10 +35,9 @@ interface RecentTestsPopupEntry {
   open fun navigatableElement(locator: TestLocator): PsiElement? = null
 }
 
-open class SingleTestEntry(val url: String,
-                           override val magnitude: TestStateInfo.Magnitude,
-                           override val runDate: Date,
-                           val runConfiguration: RunnerAndConfigurationSettings) : RecentTestsPopupEntry 
+open class SingleTestEntry(val url: String, 
+                           override val magnitude: TestStateInfo.Magnitude, 
+                           override val runDate: Date) : RecentTestsPopupEntry 
 {
 
   override val presentation = VirtualFileManager.extractPath(url)
@@ -52,10 +51,8 @@ open class SingleTestEntry(val url: String,
   
 }
 
-class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date, runConfiguration: RunnerAndConfigurationSettings) 
-      : SingleTestEntry(url, magnitude, runDate, runConfiguration) 
-{
-
+class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) : SingleTestEntry(url, magnitude, runDate) {
+  
   private val tests = hashSetOf<SingleTestEntry>()
 
   override val testsUrls: List<String>

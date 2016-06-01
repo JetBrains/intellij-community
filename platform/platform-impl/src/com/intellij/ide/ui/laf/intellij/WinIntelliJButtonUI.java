@@ -75,6 +75,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
+  protected void setupDefaultButton(JButton button) {
+    //do nothing
+  }
+
+  @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
     g.setColor(UIManager.getColor("Button.disabledText"));
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,

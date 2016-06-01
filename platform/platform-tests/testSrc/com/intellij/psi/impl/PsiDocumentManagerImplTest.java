@@ -671,4 +671,22 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
+  @SuppressWarnings("ConstantConditions")
+  public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+
+    PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
+    WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "a"));
+    pdm.performWhenAllCommitted(
+      () -> pdm.performLaterWhenAllCommitted(
+        () -> WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(1, "b"))));
+
+    assertTrue(pdm.hasUncommitedDocuments());
+    assertEquals("a", document.getText());
+
+    DocumentCommitThread.getInstance().waitForAllCommits();
+    assertEquals("ab", document.getText());
+  }
+
 }

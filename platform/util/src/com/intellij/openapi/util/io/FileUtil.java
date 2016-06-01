@@ -98,6 +98,10 @@ public class FileUtil extends FileUtilRt {
     return new File(path).isAbsolute();
   }
 
+  public static boolean exists(@Nullable String path) {
+    return path != null && new File(path).exists();
+  }
+
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
    *

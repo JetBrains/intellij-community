@@ -63,6 +63,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String FORK_NONE = "none";
   @NonNls public static final String FORK_METHOD = "method";
   @NonNls public static final String FORK_KLASS = "class";
+  @NonNls public static final String FORK_REPEAT = "repeat";
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
