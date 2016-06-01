@@ -260,7 +260,7 @@ public class GitHistoryUtils {
         final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
         firstCommit.set(record.getHash());
         final String[] parentHashes = record.getParentsHashes();
-        if (parentHashes == null || parentHashes.length < 1) {
+        if (parentHashes.length < 1) {
           firstCommitParent.set(null);
         }
         else {
@@ -279,10 +279,9 @@ public class GitHistoryUtils {
             revisionPath = currentPath.get();
           }
 
-          final Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
-          final Couple<String> committerPair =
-            record.getCommitterName() == null ? null : Couple.of(record.getCommitterName(), record.getCommitterEmail());
-          Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
+          Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
+          Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
+          Collection<String> parents = Arrays.asList(parentHashes);
           consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
