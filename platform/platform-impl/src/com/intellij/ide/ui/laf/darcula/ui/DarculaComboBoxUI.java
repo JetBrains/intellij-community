@@ -382,7 +382,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     g.dispose();
   }
 
-  private void checkFocus() {
+  protected void checkFocus() {
     if (!comboBox.isEnabled()) {
       hasFocus = false;
       return;
@@ -398,7 +398,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     }
   }
 
-  private static boolean hasFocus(Component c) {
+  protected static boolean hasFocus(Component c) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
