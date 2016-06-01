@@ -140,7 +140,7 @@ private val STANDARD_COOKIE by lazy {
   // http://stackoverflow.com/questions/8134384/chrome-doesnt-create-cookie-for-domain-localhost-in-broken-https
   val cookie = DefaultCookie(productName + "-" + Integer.toHexString(configPath.hashCode()), token!!)
   cookie.isHttpOnly = true
-  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365 * 10))
+  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(90))
   cookie.setPath("/")
   cookie
 }
