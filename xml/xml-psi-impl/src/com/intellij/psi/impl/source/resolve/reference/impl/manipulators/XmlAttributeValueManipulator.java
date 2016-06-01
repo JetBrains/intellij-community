@@ -17,10 +17,12 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -56,7 +58,10 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
       LOG.error("Range: " + range + " in text: '" + oldText + "'", e);
       throw e;
     }
-    final XmlTag tag = XmlElementFactory.getInstance(element.getProject()).createTagFromText(text);
+    final Project project = element.getProject();
+    final XmlTag tag = element.getParent().getParent() instanceof HtmlTag ?
+                       XmlElementFactory.getInstance(project).createHTMLTagFromText(text) :
+                       XmlElementFactory.getInstance(project).createTagFromText(text);
     final XmlAttribute attribute = tag.getAttribute("value");
     assert attribute != null && attribute.getValueElement() != null;
     element.getNode().replaceAllChildrenToChildrenOf(attribute.getValueElement().getNode());
