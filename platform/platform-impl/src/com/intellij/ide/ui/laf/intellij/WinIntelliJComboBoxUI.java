@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -53,7 +54,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     }
     Rectangle r = rectangleForCurrentValue();
     g.setColor(getComboBackGround());
-    g.fillRect(1,1, w-2, h-2);
+    g.fillRect(1, 2, w-2, h-4);
     if (!isTableCellEditor(c)) {
       paintBorder(c, g, 0, 0, w, h);
       hasFocus = comboBox.hasFocus();
@@ -102,13 +103,16 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (comboBox == null || arrowButton == null) {
       return; //NPE on LaF change
     }
+    final GraphicsConfig config = new GraphicsConfig(g2);
     hasFocus = false;
     checkFocus();
     if (hasFocus) {
       g2.setColor(UIManager.getColor("ComboBox.activeBorderColor"));
+      ((Graphics2D)g2).setStroke(new BasicStroke(JBUI.scale(2f)));
     } else {
       g2.setColor(UIManager.getColor("ComboBox.borderColor"));
     }
-    g2.drawRect(x + 1, y + 1, width - 2, height - 2);
+    g2.drawRect(x + 1, y + 2, width - 2, height - 4);
+    config.restore();
   }
 }
