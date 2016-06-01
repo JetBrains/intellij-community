@@ -59,12 +59,12 @@
 # own risk!
 # ----------------------------------------------------------------------------
 
-import base64
-import inspect
-import os.path
 import re
-import sys
 import types
+import sys
+import os.path
+import inspect
+import base64
 import warnings
 
 __version__    = '3.8'

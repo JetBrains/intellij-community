@@ -4,11 +4,12 @@ from __future__ import absolute_import
 
 import array
 from struct import pack, unpack
-from thriftpy._compat import PY3
 
 from .exc import TProtocolException
 from ..thrift import TException
 from ..thrift import TType
+
+from thriftpy._compat import PY3
 
 CLEAR = 0
 FIELD_WRITE = 1

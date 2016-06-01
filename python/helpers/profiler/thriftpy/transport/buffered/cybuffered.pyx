@@ -1,3 +1,9 @@
+from thriftpy.transport.cybase cimport (
+    TCyBuffer,
+    CyTransportBase,
+    DEFAULT_BUFFER
+)
+
 from .. import TTransportException
 
 DEF MIN_BUFFER_SIZE = 1024

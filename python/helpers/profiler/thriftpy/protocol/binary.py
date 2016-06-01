@@ -4,8 +4,9 @@ from __future__ import absolute_import
 
 import struct
 
-from .exc import TProtocolException
 from ..thrift import TType
+
+from .exc import TProtocolException
 
 # VERSION_MASK = 0xffff0000
 VERSION_MASK = -65536

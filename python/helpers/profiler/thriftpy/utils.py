@@ -4,8 +4,8 @@ from __future__ import absolute_import
 
 import binascii
 
-from .protocol.binary import TBinaryProtocolFactory
 from .transport import TMemoryBuffer
+from .protocol.binary import TBinaryProtocolFactory
 
 
 def serialize(thrift_object, proto_factory=TBinaryProtocolFactory()):

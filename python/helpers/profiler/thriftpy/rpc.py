@@ -4,10 +4,10 @@ from __future__ import absolute_import
 
 import contextlib
 import warnings
-from thriftpy.server import TThreadedServer
-from thriftpy.thrift import TProcessor, TClient
 
 from thriftpy.protocol import TBinaryProtocolFactory
+from thriftpy.server import TThreadedServer
+from thriftpy.thrift import TProcessor, TClient
 from thriftpy.transport import (
     TBufferedTransportFactory,
     TServerSocket,

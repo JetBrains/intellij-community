@@ -2,7 +2,7 @@ import vmprof
 
 import os
 import six
-from _prof_imports import TreeStats
+from _prof_imports import TreeStats, CallTreeStat
 import tempfile
 import shutil
 
@@ -74,10 +74,13 @@ def _walk_tree(parent, node, callback):
 def tree_stats_to_response(filename, response):
     stats = vmprof.read_profile(filename)
 
+    response.tree_stats = TreeStats()
+    response.tree_stats.sampling_interval = vmprof.DEFAULT_PERIOD
+
     tree = stats.get_tree()
 
     def convert(parent, node):
-        tstats = TreeStats()
+        tstats = CallTreeStat()
         tstats.name = node.name
         tstats.count = node.count
         tstats.children = []
@@ -89,4 +92,4 @@ def tree_stats_to_response(filename, response):
 
         return tstats
 
-    response.tree_stats = _walk_tree(None, tree, convert)
+    response.tree_stats.call_tree = _walk_tree(None, tree, convert)

@@ -18,13 +18,13 @@
 from __future__ import absolute_import
 
 from contextlib import contextmanager
-from datetime import timedelta
-from io import BytesIO
 from tornado import tcpserver, ioloop, iostream, gen
+from io import BytesIO
+from datetime import timedelta
 
-from .thrift import TApplicationException, TProcessor, TClient
 from .transport import TTransportException, TTransportBase
 from .transport.memory import TMemoryBuffer
+from .thrift import TApplicationException, TProcessor, TClient
 
 # TODO need TCyTornadoStreamTransport to work with cython binary protocol
 from .protocol.binary import TBinaryProtocolFactory

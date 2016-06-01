@@ -19,10 +19,15 @@ struct Stats {
   1: required list<Function> func_stats
 }
 
-struct TreeStats {
+struct CallTreeStat {
   1: required i32 count,
   2: required string name,
-  3: required list<TreeStats> children,
+  3: required list<CallTreeStat> children,
+}
+
+struct TreeStats {
+  1: required double sampling_interval,
+  2: required CallTreeStat call_tree,
 }
 
 

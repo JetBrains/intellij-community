@@ -17,7 +17,7 @@ from thriftpy.protocol.binary import TBinaryProtocolFactory
 from thriftpy.transport import TMemoryBuffer
 
 # noinspection PyUnresolvedReferences
-from profiler_thrift import ProfilerRequest, ProfilerResponse, Stats, FuncStat, Function, TreeStats
+from profiler_thrift import ProfilerRequest, ProfilerResponse, Stats, FuncStat, Function, TreeStats, CallTreeStat
 
 def serialize(thrift_object,
               protocol_factory=TBinaryProtocolFactory()):

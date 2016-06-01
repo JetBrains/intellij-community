@@ -3,8 +3,8 @@
 from __future__ import absolute_import
 
 from io import BytesIO
-from thriftpy._compat import CYTHON
 
+from thriftpy._compat import CYTHON
 from .. import TTransportBase
 
 
