@@ -312,6 +312,7 @@ public class PlatformTestUtil {
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
+  @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return null;

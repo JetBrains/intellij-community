@@ -116,9 +116,7 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, @NotNull final QualifiedName qName) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PyPsiUtils.assertValid(importElement);
-    }
+    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(importElement));
     final PyStatement importStatement = importElement.getContainingImportStatement();
     if (importStatement instanceof PyFromImportStatement) {
       return resolveNameInFromImport((PyFromImportStatement)importStatement, qName);

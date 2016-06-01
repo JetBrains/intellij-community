@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
@@ -53,6 +54,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -735,6 +738,47 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         markChangeResolved(change);
       }
+    }
+
+    @Nullable
+    public CharSequence resolveConflictUsingInnerDifferences(@NotNull TextMergeChange change) {
+      if (!change.isConflict()) return null;
+      if (change.isResolved(Side.LEFT) || change.isResolved(Side.RIGHT)) return null;
+
+      MergeLineFragment changeFragment = change.getFragment();
+      if (changeFragment.getStartLine(ThreeSide.LEFT) == changeFragment.getEndLine(ThreeSide.LEFT)) return null;
+      if (changeFragment.getStartLine(ThreeSide.BASE) == changeFragment.getEndLine(ThreeSide.BASE)) return null;
+      if (changeFragment.getStartLine(ThreeSide.RIGHT) == changeFragment.getEndLine(ThreeSide.RIGHT)) return null;
+
+
+      int baseStartLine = changeFragment.getStartLine(ThreeSide.BASE);
+      int baseEndLine = changeFragment.getEndLine(ThreeSide.BASE);
+      DiffContent baseDiffContent = ThreeSide.BASE.select(myMergeRequest.getContents());
+      Document baseDocument = ((DocumentContent)baseDiffContent).getDocument();
+
+      int resultStartLine = change.getStartLine();
+      int resultEndLine = change.getEndLine();
+      Document resultDocument = getEditor().getDocument();
+
+      CharSequence baseContent = DiffUtil.getLinesContent(baseDocument, baseStartLine, baseEndLine);
+      CharSequence resultContent = DiffUtil.getLinesContent(resultDocument, resultStartLine, resultEndLine);
+      if (!StringUtil.equals(baseContent, resultContent)) return null;
+
+
+      List<CharSequence> texts = ThreeSide.map((side) -> {
+        return DiffUtil.getLinesContent(getEditor(side).getDocument(), change.getStartLine(side), change.getEndLine(side));
+      });
+
+      return ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
+    }
+
+    public void resolveConflictedChange(@NotNull TextMergeChange change) {
+      CharSequence newContent = resolveConflictUsingInnerDifferences(change);
+      if (newContent == null) return;
+
+      String[] newContentLines = LineTokenizer.tokenize(newContent, false);
+      myModel.replaceChange(change.getIndex(), Arrays.asList(newContentLines));
+      markChangeResolved(change);
     }
 
     private class MyMergeModel extends MergeModelBase<TextMergeChange.State> {

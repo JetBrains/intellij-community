@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,6 +31,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +71,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // Good check, but too slow for production
-      PyPsiUtils.assertValid(this);
-    }
+    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));
     if (visitor instanceof PyElementVisitor) {
       acceptPyVisitor(((PyElementVisitor)visitor));
     }

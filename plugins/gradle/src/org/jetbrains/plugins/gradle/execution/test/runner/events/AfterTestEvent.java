@@ -43,8 +43,8 @@ public class AfterTestEvent extends AbstractTestEvent {
 
     final String startTime = eventXml.queryXml("/ijLog/event/test/result/@startTime");
     final String endTime = eventXml.queryXml("/ijLog/event/test/result/@endTime");
-    final String exceptionMsg = eventXml.queryXml("/ijLog/event/test/result/errorMsg");
-    final String stackTrace = eventXml.queryXml("/ijLog/event/test/result/stackTrace");
+    final String exceptionMsg = decode(eventXml.queryXml("/ijLog/event/test/result/errorMsg"));
+    final String stackTrace = decode(eventXml.queryXml("/ijLog/event/test/result/stackTrace"));
 
     final SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
@@ -59,18 +59,17 @@ public class AfterTestEvent extends AbstractTestEvent {
     final TestEventResult result = getTestEventResultType(eventXml);
     switch (result) {
       case SUCCESS:
-        runInEdt.add(() -> testProxy.setFinished());
+        runInEdt.add(testProxy::setFinished);
         break;
       case FAILURE:
         final String failureType = eventXml.queryXml("/ijLog/event/test/result/failureType");
         if ("comparison".equals(failureType)) {
-          String actualText = eventXml.queryXml("/ijLog/event/test/result/actual");
-          String expectedText = eventXml.queryXml("/ijLog/event/test/result/expected");
-          final Condition<String> emptyString = s -> StringUtil.isEmpty(s);
-          String filePath = ObjectUtils.nullizeByCondition(
-            eventXml.queryXml("/ijLog/event/test/result/filePath"), emptyString);
+          String actualText = decode(eventXml.queryXml("/ijLog/event/test/result/actual"));
+          String expectedText = decode(eventXml.queryXml("/ijLog/event/test/result/expected"));
+          final Condition<String> emptyString = StringUtil::isEmpty;
+          String filePath = ObjectUtils.nullizeByCondition(decode(eventXml.queryXml("/ijLog/event/test/result/filePath")), emptyString);
           String actualFilePath = ObjectUtils.nullizeByCondition(
-            eventXml.queryXml("/ijLog/event/test/result/actualFilePath"), emptyString);
+            decode(eventXml.queryXml("/ijLog/event/test/result/actualFilePath")), emptyString);
           testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, actualText, expectedText, filePath, actualFilePath);
         }
         else {

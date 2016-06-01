@@ -15,8 +15,6 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,19 +126,6 @@ public class RollbackLineStatusAction extends DumbAwareAction {
   }
 
   private static void execute(@NotNull final LineStatusTracker tracker, @NotNull final Runnable task) {
-    CommandProcessor.getInstance().executeCommand(tracker.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (!tracker.getDocument().isWritable()) {
-              final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler
-                .getInstance(tracker.getProject()).ensureFilesWritable(tracker.getVirtualFile());
-              if (operationStatus.hasReadonlyFiles()) return;
-            }
-            task.run();
-          }
-        });
-      }
-    }, VcsBundle.message("command.name.rollback.change"), null);
+    DiffUtil.executeWriteCommand(tracker.getDocument(), tracker.getProject(), VcsBundle.message("command.name.rollback.change"), task);
   }
 }

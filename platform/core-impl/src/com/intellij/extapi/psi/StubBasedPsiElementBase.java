@@ -19,7 +19,6 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -240,32 +238,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   @NotNull
   public PsiFile getContainingFile() {
-    StubElement stub = getStub();
-    if (stub != null) {
-      while (!(stub instanceof PsiFileStub)) {
-        stub = stub.getParentStub();
-      }
-      PsiFile psi = (PsiFile)stub.getPsi();
-      if (psi != null) {
-        return psi;
-      }
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      synchronized (PsiLock.LOCK) {
-        if (getStub() != null) {
-          String reason = ((PsiFileStubImpl<?>)stub).getInvalidationReason();
-          PsiInvalidElementAccessException exception =
-            new PsiInvalidElementAccessException(this, "no psi for file stub " + stub + ", invalidation reason=" + reason, null);
-          if (PsiFileImpl.STUB_PSI_MISMATCH.equals(reason)) {
-            // we're between finding stub-psi mismatch and the next EDT spot where the file is reparsed and stub rebuilt
-            //    see com.intellij.psi.impl.source.PsiFileImpl.rebuildStub()
-            // most likely it's just another highlighting thread accessing the same PSI concurrently and not yet canceled, so cancel it
-            throw new ProcessCanceledException(exception);
-          }
-          throw exception;
-        }
-      }
-    }
-
     return mySubstrateRef.getContainingFile();
   }
 

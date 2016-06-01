@@ -858,6 +858,16 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * Executes code only if <pre>_PYCHARM_VERBOSE_MODE</pre> is set in env (which should be done for debug purposes only)
+   * @param runnable code to call
+   */
+  public static void verboseOnly(@NotNull final Runnable runnable) {
+    if (System.getenv().get("_PYCHARM_VERBOSE_MODE") != null) {
+      runnable.run();
+    }
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
