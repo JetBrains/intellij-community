@@ -51,7 +51,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
       newContent = oldText.startsWith("'") || oldText.endsWith("'") ?
                    newContent.replace("'", oldText.contains("&#39;") ? "&#39;" : "&apos;") :
                    newContent.replace("\"", oldText.contains("&#34;") ? "&#34;" : "&quot;");
-      text = "<a value=" + textBeforeRange + newContent + textAfterRange + "/>";
+      text = "<a value=" + textBeforeRange + newContent + textAfterRange;
     } catch(StringIndexOutOfBoundsException e) {
       LOG.error("Range: " + range + " in text: '" + oldText + "'", e);
       throw e;
@@ -59,7 +59,8 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     final XmlTag tag = XmlElementFactory.getInstance(element.getProject()).createTagFromText(text);
     final XmlAttribute attribute = tag.getAttribute("value");
     assert attribute != null && attribute.getValueElement() != null;
-    return (XmlAttributeValue)element.replace(attribute.getValueElement());
+    element.getNode().replaceAllChildrenToChildrenOf(attribute.getValueElement().getNode());
+    return element;
   }
 
   @Override
