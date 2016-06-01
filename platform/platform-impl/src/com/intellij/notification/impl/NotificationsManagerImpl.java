@@ -282,8 +282,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
 
             if (!sticky) {
-              ((BalloonImpl)balloon).startFadeoutTimer(0);
-              ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              if (newEnabled()) {
+                ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+              }
+              else {
+                ((BalloonImpl)balloon).startFadeoutTimer(0);
+                ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              }
             }
             else //noinspection ConstantConditions
               if (noProjects && !newEnabled()) {
