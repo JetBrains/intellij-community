@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -379,7 +380,7 @@ public class GitHistoryUtils {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
-    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(version)) {
+    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(version) && Registry.is("git.file.history.full")) {
       h.addParameters("--full-history", "--simplify-merges");
     }
     if (parameters != null && parameters.length > 0) {
