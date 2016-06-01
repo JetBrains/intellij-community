@@ -38,6 +38,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
+    if (myEditor.getDocument().isInEventsHandling()) throw new IllegalStateException("Cannot add inlay during document update");
     myInlayTree = new RangeMarkerTree<InlayImpl>(editor.getDocument()) {
       @NotNull
       @Override
@@ -64,22 +65,22 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, @NotNull Inlay.Renderer renderer) {
+  public Inlay addElement(int offset, @NotNull Inlay.Type type, @NotNull Inlay.Renderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlayImpl(myEditor, offset, renderer);
+    InlayImpl inlay = new InlayImpl(myEditor, offset, type, renderer);
     myDispatcher.getMulticaster().onAdded(inlay);
     return inlay;
   }
 
   @NotNull
   @Override
-  public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+  public List<Inlay> getElementsInRange(int startOffset, int endOffset, @NotNull Inlay.Type type) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Inlay> result = new ArrayList<>();
     myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (startOffset == endOffset || inlay.getOffset() != endOffset) result.add(inlay);
+      if (inlay.getType() == type && (startOffset == endOffset || inlay.getOffset() != endOffset)) result.add(inlay);
       return true;
     });
     Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));

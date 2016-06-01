@@ -593,8 +593,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(new InlayModel.Adapter() {
       @Override
       public void onChanged(Inlay inlay) {
+        if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
         validateSize();
-        repaint(inlay.getOffset(), inlay.getOffset(), false);
+        if (inlay.getType() == Inlay.Type.INLINE) {
+          repaint(inlay.getOffset(), inlay.getOffset(), false);
+        }
+        else {
+          repaintToScreenBottom(myDocument.getLineNumber(inlay.getOffset()));
+        }
       }
     }, myCaretModel);
 

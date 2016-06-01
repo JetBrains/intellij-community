@@ -656,6 +656,8 @@ public class SoftWrapModelImpl extends InlayModel.Adapter implements SoftWrapMod
 
   @Override
   public void onChanged(Inlay inlay) {
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate() ||
+        inlay.getType() == Inlay.Type.BLOCK) return;
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;

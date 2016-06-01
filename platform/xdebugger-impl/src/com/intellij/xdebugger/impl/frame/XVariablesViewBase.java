@@ -103,7 +103,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           Editor e = ((TextEditor)editor).getEditor();
-          List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength() + 1);
+          List<Inlay> existing = e.getInlayModel().getElementsInRange(0, e.getDocument().getTextLength() + 1, Inlay.Type.INLINE);
           for (Inlay inlay : existing) {
             if (inlay.getRenderer() instanceof XValueNodeImpl.MyRenderer) {
               Disposer.dispose(inlay);

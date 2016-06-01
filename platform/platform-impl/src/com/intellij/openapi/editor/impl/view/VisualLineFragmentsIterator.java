@@ -157,9 +157,10 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
       myInlays = mySegmentEndOffset > mySegmentStartOffset
-                 ? myView.getEditor().getInlayModel().getInlineElementsInRange(mySegmentStartOffset, mySegmentEndOffset +
-                                                                                                     // including inlays at line end
-                                                                                                     (normalLineEnd ? 1 : 0))
+                 ? myView.getEditor().getInlayModel().getElementsInRange(mySegmentStartOffset,
+                                                                         mySegmentEndOffset + // including inlays at line end
+                                                                         (normalLineEnd ? 1 : 0),
+                                                                         Inlay.Type.INLINE)
                  : Collections.emptyList();
       if (!myInlays.isEmpty() && myInlays.get(0).getOffset() == mySegmentStartOffset) {
         myCurrentInlayIndex = 0;

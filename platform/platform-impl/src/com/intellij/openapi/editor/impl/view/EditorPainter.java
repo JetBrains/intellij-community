@@ -42,8 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Renders editor contents.
@@ -344,12 +346,12 @@ class EditorPainter implements TextDrawingCallback {
       int visualLine = visLinesIterator.getVisualLine();
       if (visualLine > endVisualLine || visualLine >= lineCount) break;
 
-      int y = myView.visualLineToY(visualLine) + myView.getAscent();
+      int y = myView.visualLineToY(visualLine);
       final boolean paintSoftWraps = paintAllSoftWraps || 
                                      myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
       final int[] currentLogicalLine = new int[] {-1}; 
       
-      paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
+      paintLineFragments(g, clip, visLinesIterator, y + myView.getAscent(), new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
           if (paintSoftWraps) {
@@ -368,7 +370,7 @@ class EditorPainter implements TextDrawingCallback {
             for (Inlay inlay : inlays) {
               Inlay.Renderer renderer = inlay.getRenderer();
               int width = inlay.getWidthInPixels();
-              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()));
+              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()), myEditor);
               xStart += width;
             }
             return;
@@ -405,6 +407,21 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       });
+      y += myEditor.getLineHeight();
+      int startOffset = visLinesIterator.getVisualLineStartOffset();
+      int endOffset = visLinesIterator.getVisualLineEndOffset();
+      if (myEditor.getSoftWrapModel().getSoftWrap(endOffset) == null) endOffset++;
+      List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(startOffset, endOffset, Inlay.Type.BLOCK);
+      int visibleWidth = myEditor.getScrollingModel().getVisibleArea().width;
+      for (Inlay inlay : inlays) {
+        if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+          int height = inlay.getHeightInPixels();
+          int width = inlay.getWidthInPixels();
+          if (width <= 0) width = visibleWidth;
+          inlay.getRenderer().paint(g, new Rectangle(0, y, width, height), myEditor);
+          y += height;
+        }
+      }
       visLinesIterator.advance();
     }
     ComplexTextFragment.flushDrawingCache(g);
@@ -808,7 +825,8 @@ class EditorPainter implements TextDrawingCallback {
       Caret caret = location.myCaret;
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-        if (caret != null && !myEditor.getInlayModel().getInlineElementsInRange(caret.getOffset(), caret.getOffset()).isEmpty()) {
+        if (caret != null &&
+            !myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE).isEmpty()) {
           int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
           int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
           g.drawRect(x1, y, x2 - x1 - 1, lineHeight - 1);
@@ -870,7 +888,7 @@ class EditorPainter implements TextDrawingCallback {
       int y = location.myPoint.y;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
       if (lineCaret && caret != null &&
-          !myEditor.getInlayModel().getInlineElementsInRange(caret.getOffset(), caret.getOffset()).isEmpty()) {
+          !myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE).isEmpty()) {
         int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
         int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
         myEditor.getContentComponent().repaintEditorComponent(x1, location.myPoint.y, x2 - x1 + width, lineHeight);

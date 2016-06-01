@@ -434,8 +434,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     int limit = 3 * (myContext.tokenEndOffset - myContext.lineStartPosition.offset);
     int counter = 0;
     int startOffset = myContext.currentPosition.offset;
-    myContext.inlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset,
-                                                                         myContext.tokenEndOffset + (nextIsFoldRegion ? 0 : 1));
+    myContext.inlays = myEditor.getInlayModel().getElementsInRange(startOffset, myContext.tokenEndOffset + (nextIsFoldRegion ? 0 : 1),
+                                                                   Inlay.Type.INLINE);
     myContext.inlayIndex = 0;
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
       if (counter++ > limit) {

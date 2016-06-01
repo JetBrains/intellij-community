@@ -3,6 +3,9 @@
   <action id="EditorAddInlay">
     <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
+  <action id="EditorAddBlockInlay">
+    <keyboard-shortcut first-keystroke="control alt W"/>
+  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>

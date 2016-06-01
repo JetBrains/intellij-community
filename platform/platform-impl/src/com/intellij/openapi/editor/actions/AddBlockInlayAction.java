@@ -26,21 +26,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class AddInlayAction extends EditorAction {
-  public AddInlayAction() {
+public class AddBlockInlayAction extends EditorAction {
+  public AddBlockInlayAction() {
     super(new EditorActionHandler() {
       @Override
       protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-        editor.getInlayModel().addElement(editor.getCaretModel().getOffset(), Inlay.Type.INLINE, new Inlay.Renderer() {
+        editor.getInlayModel().addElement(editor.getCaretModel().getOffset(), Inlay.Type.BLOCK, new Inlay.Renderer() {
           @Override
           public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
             g.setColor(Color.pink);
-            g.drawRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3);
+            g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 5, 5);
+          }
+
+          @Override
+          public int calcHeightInPixels(@NotNull Editor editor) {
+            return 10;
           }
 
           @Override
           public int calcWidthInPixels(@NotNull Editor editor) {
-            return 50;
+            return 500;
           }
         });
       }

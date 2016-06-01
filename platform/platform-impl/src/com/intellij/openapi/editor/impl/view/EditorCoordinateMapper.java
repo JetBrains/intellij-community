@@ -49,11 +49,32 @@ class EditorCoordinateMapper {
   }
 
   int visualLineToY(int line) {
-    return myView.getInsets().top + Math.max(0, line) * myView.getLineHeight();
+    if (line < 0) line = 0;
+    int limitOffset = line >= myView.getEditor().getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
+    List<Inlay> inlays = myView.getEditor().getInlayModel().getElementsInRange(0, limitOffset, Inlay.Type.BLOCK);
+    int y = myView.getInsets().top + line * myView.getLineHeight();
+    for (Inlay inlay : inlays) {
+      if (!myFoldingModel.isOffsetCollapsed(inlay.getOffset())) y += inlay.getHeightInPixels();
+    }
+    return y;
   }
 
   int yToVisualLine(int y) {
-    return Math.max(0, y - myView.getInsets().top) / myView.getLineHeight();
+    y = Math.max(0, y - myView.getInsets().top);
+    VisualLinesIterator it = new VisualLinesIterator(myView, 0);
+    while (!it.atEnd()) {
+      y -= myView.getEditor().getLineHeight();
+      int startOffset = it.getVisualLineStartOffset();
+      int endOffset = it.getVisualLineEndOffset();
+      if (myView.getEditor().getSoftWrapModel().getSoftWrap(endOffset) == null) endOffset++;
+      List<Inlay> inlays = myView.getEditor().getInlayModel().getElementsInRange(startOffset, endOffset, Inlay.Type.BLOCK);
+      for (Inlay inlay : inlays) {
+        if (!myFoldingModel.isOffsetCollapsed(inlay.getOffset())) y -= inlay.getHeightInPixels();
+      }
+      if (y < 0) return it.getVisualLine();
+      it.advance();
+    }
+    return myView.getEditor().getVisibleLineCount() + y / myView.getLineHeight();
   }
 
   @NotNull

@@ -26,13 +26,28 @@ public interface Inlay extends Disposable, UserDataHolderEx {
 
   int getOffset();
 
-  @NotNull Renderer getRenderer();
+  @NotNull
+  Type getType();
+
+  @NotNull
+  Renderer getRenderer();
 
   int getWidthInPixels();
 
-  abstract class Renderer {
-    public abstract void paint(@NotNull Graphics g, @NotNull Rectangle r);
+  int getHeightInPixels();
 
-    public abstract int calcWidthInPixels();
+  enum Type { INLINE, BLOCK }
+
+  abstract class Renderer {
+    public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
+    }
+
+    public int calcWidthInPixels(@NotNull Editor editor) {
+      return 0;
+    }
+
+    public int calcHeightInPixels(@NotNull Editor editor) {
+      return 0;
+    }
   }
 }

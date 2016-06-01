@@ -142,7 +142,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     @Override
     public void doApplyInformationToEditor() {
       assert myDocument != null;
-      for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength() + 1)) {
+      for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.INLINE)) {
         if (!(inlay.getRenderer() instanceof MyRenderer)) continue;
         int offset = inlay.getOffset();
         String oldText = ((MyRenderer)inlay.getRenderer()).myText;
@@ -151,7 +151,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         else myAnnotations.remove(offset);
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
-        myEditor.getInlayModel().addInlineElement(e.getKey(), new MyRenderer(e.getValue()));
+        myEditor.getInlayModel().addElement(e.getKey(), Inlay.Type.INLINE, new MyRenderer(e.getValue()));
       }
     }
   }
@@ -165,12 +165,12 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     }
 
     @Override
-    public int calcWidthInPixels() {
+    public int calcWidthInPixels(@NotNull Editor editor) {
       return FONT.fontMetrics().stringWidth(myText) + 4;
     }
 
     @Override
-    public void paint(@NotNull Graphics g, @NotNull Rectangle r) {
+    public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       g.setColor(Gray._230);
       g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);

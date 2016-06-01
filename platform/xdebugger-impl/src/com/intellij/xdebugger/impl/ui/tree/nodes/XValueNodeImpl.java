@@ -170,13 +170,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                 CharSequence text = e.getDocument().getImmutableCharSequence();
                 int offset = position.getOffset();
                 while (offset < text.length() && Character.isJavaIdentifierPart(text.charAt(offset))) offset++;
-                List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(offset, offset);
+                List<Inlay> existing = e.getInlayModel().getElementsInRange(offset, offset, Inlay.Type.INLINE);
                 for (Inlay inlay : existing) {
                   if (inlay.getRenderer() instanceof MyRenderer) {
                     Disposer.dispose(inlay);
                   }
                 }
-                e.getInlayModel().addInlineElement(offset, new MyRenderer(finalValue));
+                e.getInlayModel().addElement(offset, Inlay.Type.INLINE, new MyRenderer(finalValue));
               }
             });
           }
@@ -206,12 +206,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
 
     @Override
-    public int calcWidthInPixels() {
+    public int calcWidthInPixels(@NotNull Editor editor) {
       return FONT.fontMetrics().stringWidth(myText) + 5;
     }
 
     @Override
-    public void paint(@NotNull Graphics g, @NotNull Rectangle r) {
+    public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
       g.setColor(new Color(0, 150, 150));
       g.fillRoundRect(r.x + 1, r.y + 2, r.width - 3, r.height - 4, 2, 2);
       g.setColor(new Color(50, 200, 200));

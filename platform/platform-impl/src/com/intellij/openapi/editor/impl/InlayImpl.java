@@ -23,14 +23,25 @@ import org.jetbrains.annotations.NotNull;
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @NotNull
   private final EditorImpl myEditor;
+  @NotNull
+  private final Type myType;
   private final int myWidthInPixels;
+  private final int myHeightInPixels;
   @NotNull
   private final Renderer myRenderer;
 
-  InlayImpl(@NotNull EditorImpl editor, int offset, @NotNull Renderer renderer) {
+  InlayImpl(@NotNull EditorImpl editor, int offset, @NotNull Type type, @NotNull Renderer renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
-    myWidthInPixels = renderer.calcWidthInPixels();
+    myType = type;
+    myWidthInPixels = renderer.calcWidthInPixels(editor);
+    if (type == Type.INLINE && myWidthInPixels <= 0) {
+      throw new IllegalArgumentException("Positive width should be defined for an inline inlay");
+    }
+    myHeightInPixels = renderer.calcHeightInPixels(editor);
+    if (type == Type.BLOCK && myHeightInPixels <= 0) {
+      throw new IllegalArgumentException("Positive height should be defined for a block inlay");
+    }
     myRenderer = renderer;
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
   }
@@ -64,6 +75,17 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public int getWidthInPixels() {
     return myWidthInPixels;
+  }
+
+  @Override
+  public int getHeightInPixels() {
+    return myHeightInPixels;
+  }
+
+  @Override
+  @NotNull
+  public Type getType() {
+    return myType;
   }
 
   @Override

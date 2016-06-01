@@ -144,7 +144,13 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
 
   @Override
   public void onChanged(Inlay inlay) {
-    doInvalidateRange(inlay.getOffset(), inlay.getOffset());
+    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+    if (inlay.getType() == Inlay.Type.INLINE) {
+      doInvalidateRange(inlay.getOffset(), inlay.getOffset());
+    }
+    else {
+      myWidthInPixels = -1;
+    }
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
@@ -258,6 +264,12 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
       }
       maxWidth = Math.max(maxWidth, Math.abs(width));
       iterator.advance();
+    }
+    List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.BLOCK);
+    for (Inlay inlay : inlays) {
+      if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+        maxWidth = Math.max(maxWidth, inlay.getWidthInPixels());
+      }
     }
     return maxWidth;
   }

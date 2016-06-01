@@ -24,11 +24,11 @@ import java.util.List;
 
 public interface InlayModel {
   @Nullable
-  Inlay addInlineElement(int offset, @NotNull Inlay.Renderer renderer);
+  Inlay addElement(int offset, @NotNull Inlay.Type type, @NotNull Inlay.Renderer renderer);
 
   // startOffset inclusive, endOffset exclusive (unless startOffset == endOffset)
   @NotNull
-  List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
+  List<Inlay> getElementsInRange(int startOffset, int endOffset, @NotNull Inlay.Type type);
 
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
