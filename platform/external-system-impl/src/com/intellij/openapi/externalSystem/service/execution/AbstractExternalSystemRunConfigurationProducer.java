@@ -71,7 +71,11 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
     ExternalSystemTaskLocation taskLocation = (ExternalSystemTaskLocation)contextLocation;
     ExternalSystemTaskExecutionSettings contextTaskExecutionSettings = taskLocation.getTaskInfo().getSettings();
     ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
-    if (!StringUtil.equals(contextTaskExecutionSettings.getExternalProjectPath(), configuration.getSettings().getExternalProjectPath())) {
+
+    if(!contextTaskExecutionSettings.getExternalSystemId().equals(taskExecutionSettings.getExternalSystemId())) {
+      return false;
+    }
+    if (!StringUtil.equals(contextTaskExecutionSettings.getExternalProjectPath(), taskExecutionSettings.getExternalProjectPath())) {
       return false;
     }
     if (!contextTaskExecutionSettings.getTaskNames().equals(taskExecutionSettings.getTaskNames())) return false;
