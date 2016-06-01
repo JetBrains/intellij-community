@@ -17,6 +17,9 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.intellij.lang.xpath.*;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +64,16 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
 
     @NotNull
     public XPathType getType() {
+        return CachedValuesManager.getCachedValue(this, new CachedValueProvider<XPathType>() {
+          @Nullable
+          @Override
+          public Result<XPathType> compute() {
+            return CachedValueProvider.Result.create(calcType(), PsiModificationTracker.MODIFICATION_COUNT);
+          }
+        });
+    }
+    @NotNull
+    private XPathType calcType() {
         final XPathElementType operator = getOperator();
         if (operator == XPathTokenTypes.UNION || XPath2TokenTypes.INTERSECT_EXCEPT.contains(operator)) {
             return XPathType.NODESET;
