@@ -61,7 +61,7 @@ public class ExtractMethodHelper {
       return;
     }
     final Project project = callElement.getProject();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for duplicates...", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("searching.for.duplicates"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
         final List<SimpleMatch> duplicates = ApplicationManager.getApplication().runReadAction(new Computable<List<SimpleMatch>>() {
@@ -100,7 +100,7 @@ public class ExtractMethodHelper {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
           return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
-        }, "Searching for duplicates...", true, project);
+        }, RefactoringBundle.message("searching.for.duplicates"), true, project);
     }
     catch (ProcessCanceledException e) {
       return Collections.emptyList();
