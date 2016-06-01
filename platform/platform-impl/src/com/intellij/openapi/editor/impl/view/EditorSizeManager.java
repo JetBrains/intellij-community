@@ -195,7 +195,7 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
 
     // Preferred height of less than a single line height doesn't make sense:
     // at least a single line with a blinking caret on it is to be displayed
-    int size = Math.max(myEditor.getVisibleLineCount(), 1) * lineHeight;
+    int size = Math.max(lineHeight, myView.visualLineToY(myEditor.getVisibleLineCount()));
 
     EditorSettings settings = myEditor.getSettings();
     if (settings.isAdditionalPageAtBottom()) {
