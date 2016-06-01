@@ -144,12 +144,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     };
     final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, InspectionProfileManager.getInstance());
-    initAndDo(new Computable() {
-      @Override
-      public Object compute() {
-        profile.initInspectionTools(project);
-        return null;
-      }
+    initAndDo((Computable)() -> {
+      profile.initInspectionTools(project);
+      return null;
     });
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       profile.enableTool(toolWrapper.getShortName(), project);
@@ -598,12 +595,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : new Computable<String>() {
-        @Override
-        public String compute() {
-          return extension.getDisplayName();
-        }
-      };
+      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : (Computable<String>)() -> extension.getDisplayName();
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());

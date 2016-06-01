@@ -105,12 +105,7 @@ public class TaskExecutionTreeTable extends TreeTable {
   private Collection<? extends ExecutionNode> getSelectedNodes() {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
     if (selectionPaths != null) {
-      return ContainerUtil.map(selectionPaths, new Function<TreePath, ExecutionNode>() {
-        @Override
-        public ExecutionNode fun(TreePath path) {
-          return getNodeFor(path);
-        }
-      });
+      return ContainerUtil.map(selectionPaths, path -> getNodeFor(path));
     }
     return Collections.emptyList();
   }
@@ -172,12 +167,10 @@ public class TaskExecutionTreeTable extends TreeTable {
   }
 
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        final ExecutionNode executionNode = getNodeFor(treePath);
-        if (executionNode != NULL_NODE) {
-          handleDoubleClickOrEnter(executionNode, e);
-        }
+    Runnable runnable = () -> {
+      final ExecutionNode executionNode = getNodeFor(treePath);
+      if (executionNode != NULL_NODE) {
+        handleDoubleClickOrEnter(executionNode, e);
       }
     };
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));

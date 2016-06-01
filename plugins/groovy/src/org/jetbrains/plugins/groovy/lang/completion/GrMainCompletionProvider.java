@@ -175,12 +175,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() <= 1, psiClass -> {
       for (JavaPsiClassReferenceElement element : JavaClassNameCompletionContributor
-        .createClassLookupItems(psiClass, afterNew, new GroovyClassNameInsertHandler(), new Condition<PsiClass>() {
-          @Override
-          public boolean value(PsiClass psiClass) {
-            return !inheritors.alreadyProcessed(psiClass);
-          }
-        })) {
+        .createClassLookupItems(psiClass, afterNew, new GroovyClassNameInsertHandler(),
+                                psiClass1 -> !inheritors.alreadyProcessed(psiClass1))) {
         consumer.consume(element);
       }
     });

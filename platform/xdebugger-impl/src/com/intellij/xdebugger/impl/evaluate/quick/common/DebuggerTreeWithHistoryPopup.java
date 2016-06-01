@@ -106,19 +106,16 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
           }
         }
       })
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          Window parent = SwingUtilities.getWindowAncestor(tree);
-          if (parent != null) {
-            for (Window child : parent.getOwnedWindows()) {
-              if (child.isShowing()) {
-                return false;
-              }
+      .setCancelCallback(() -> {
+        Window parent = SwingUtilities.getWindowAncestor(tree);
+        if (parent != null) {
+          for (Window child : parent.getOwnedWindows()) {
+            if (child.isShowing()) {
+              return false;
             }
           }
-          return true;
         }
+        return true;
       })
       .createPopup();
 

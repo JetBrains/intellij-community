@@ -352,12 +352,7 @@ class PassExecutorService implements Disposable {
   }
 
   private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
-    return ContainerUtil.find(textEditorHighlightingPasses, new Condition<TextEditorHighlightingPass>() {
-      @Override
-      public boolean value(TextEditorHighlightingPass pass) {
-        return pass.getId() == id;
-      }
-    });
+    return ContainerUtil.find(textEditorHighlightingPasses, pass -> pass.getId() == id);
   }
 
   private void submit(@NotNull ScheduledPass pass) {

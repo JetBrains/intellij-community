@@ -103,24 +103,19 @@ public class TestStateStorage implements Disposable {
 
   @NotNull
   private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
-    return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
+    return () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
       @Override
-      public PersistentHashMap<String, Record> compute() throws IOException {
-        return new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
-          @Override
-          public void save(@NotNull DataOutput out, Record value) throws IOException {
-            out.writeInt(value.magnitude);
-            out.writeLong(value.date.getTime());
-            out.writeLong(value.configurationHash);
-          }
-
-          @Override
-          public Record read(@NotNull DataInput in) throws IOException {
-            return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
-          }
-        }, 4096, CURRENT_VERSION);
+      public void save(@NotNull DataOutput out, Record value) throws IOException {
+        out.writeInt(value.magnitude);
+        out.writeLong(value.date.getTime());
+        out.writeLong(value.configurationHash);
       }
-    };
+
+      @Override
+      public Record read(@NotNull DataInput in) throws IOException {
+        return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
+      }
+    }, 4096, CURRENT_VERSION);
   }
 
   @Nullable

@@ -193,12 +193,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     if (statusBar == null) return Collections.emptyList();
 
     return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-                                 new Condition<Pair<TaskInfo, ProgressIndicator>>() {
-                                   @Override
-                                   public boolean value(Pair<TaskInfo, ProgressIndicator> pair) {
-                                     return pair.first.isCancellable() && !pair.second.isCanceled();
-                                   }
-                                 });
+                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
   }
 
   @Nullable

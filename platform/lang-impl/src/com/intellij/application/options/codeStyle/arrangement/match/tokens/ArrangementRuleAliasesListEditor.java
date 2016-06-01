@@ -56,12 +56,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       token.setTokenName(name.replaceAll("\\s+", " "));
     }
   };
-  private static final Factory<StdArrangementRuleAliasToken> FACTORY = new Factory<StdArrangementRuleAliasToken>() {
-    @Override
-    public StdArrangementRuleAliasToken create() {
-      return new StdArrangementRuleAliasToken("");
-    }
-  };
+  private static final Factory<StdArrangementRuleAliasToken> FACTORY = () -> new StdArrangementRuleAliasToken("");
   private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<StdArrangementRuleAliasToken>() {
     @Override
     public StdArrangementRuleAliasToken cloneOf(StdArrangementRuleAliasToken original) {

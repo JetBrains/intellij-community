@@ -212,12 +212,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public void createAndFillControls(PaintAwarePanel content, int indentLevel) {
-    content.setPaintCallback(new Consumer<Graphics>() {
-      @Override
-      public void consume(Graphics graphics) {
-        showBalloonIfNecessary();
-      }
-    });
+    content.setPaintCallback(graphics -> showBalloonIfNecessary());
 
     content.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -502,12 +497,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
 
-    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s);
-      }
-    });
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s -> (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
 
     myGradleJdkComboBox.refreshData(sdkItem);
   }

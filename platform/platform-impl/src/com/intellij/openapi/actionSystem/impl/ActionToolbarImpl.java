@@ -1073,15 +1073,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       .setTitle(null)
       .setCancelOnClickOutside(true)
       .setCancelOnOtherWindowOpen(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final boolean toClose = myActionManager.isActionPopupStackEmpty();
-          if (toClose) {
-            myUpdater.updateActions(false, true);
-          }
-          return toClose;
+      .setCancelCallback(() -> {
+        final boolean toClose = myActionManager.isActionPopupStackEmpty();
+        if (toClose) {
+          myUpdater.updateActions(false, true);
         }
+        return toClose;
       })
       .setCancelOnMouseOutCallback(new MouseChecker() {
         @Override

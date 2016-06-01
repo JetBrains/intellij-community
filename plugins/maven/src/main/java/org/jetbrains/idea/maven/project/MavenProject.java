@@ -917,11 +917,7 @@ public class MavenProject {
   }
 
   private static List<MavenPlugin> getDeclaredPlugins(State state) {
-    return ContainerUtil.findAll(state.myPlugins, new Condition<MavenPlugin>() {
-      public boolean value(MavenPlugin mavenPlugin) {
-        return !mavenPlugin.isDefault();
-      }
-    });
+    return ContainerUtil.findAll(state.myPlugins, mavenPlugin -> !mavenPlugin.isDefault());
   }
 
   @Nullable

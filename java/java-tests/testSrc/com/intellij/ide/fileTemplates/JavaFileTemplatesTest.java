@@ -34,18 +34,8 @@ public class JavaFileTemplatesTest extends LightCodeInsightFixtureTestCase {
 
     myFixture.configureByText("foo.java", "");
     AnAction[] children = new CreateFromTemplateGroup().getChildren(new TestActionEvent(new TestDataProvider(getProject())));
-    assertNull(ContainerUtil.find(children, new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Class");
-      }
-    }));
-    assertNotNull(ContainerUtil.find(children, new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Singleton");
-      }
-    }));
+    assertNull(ContainerUtil.find(children, action -> action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Class")));
+    assertNotNull(ContainerUtil.find(children, action -> action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Singleton")));
   }
 
   @SuppressWarnings("ConstantConditions")

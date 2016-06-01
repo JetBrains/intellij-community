@@ -89,12 +89,7 @@ public class StatisticsWeigher extends CompletionWeigher {
 
       //noinspection unchecked
       final THashSet<LookupElement> initialSet = new THashSet<LookupElement>(initialList, TObjectHashingStrategy.IDENTITY);
-      final Condition<LookupElement> notInInitialList = new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return !initialSet.contains(element);
-        }
-      };
+      final Condition<LookupElement> notInInitialList = element -> !initialSet.contains(element);
 
       return ContainerUtil.concat(initialList, new Iterable<LookupElement>() {
         @Override

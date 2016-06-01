@@ -149,12 +149,7 @@ public class CheckRegExpForm {
       mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
       myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
       myRootPanel.revalidate();
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return false;
-      }
-    });
+    }, o -> false);
   }
 
   @TestOnly

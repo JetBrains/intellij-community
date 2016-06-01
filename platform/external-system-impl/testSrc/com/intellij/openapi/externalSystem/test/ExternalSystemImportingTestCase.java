@@ -192,12 +192,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleOutputs(String moduleName, String... outputs) {
     String[] outputPaths = ContainerUtil.map2Array(CompilerPathsEx.getOutputPaths(new Module[]{getModule(moduleName)}), String.class,
-                                                   new Function<String, String>() {
-                                                     @Override
-                                                     public String fun(String s) {
-                                                       return getAbsolutePath(s);
-                                                     }
-                                                   });
+                                                   s -> getAbsolutePath(s));
     assertUnorderedElementsAreEqual(outputPaths, outputs);
   }
 
@@ -268,12 +263,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<LibraryOrderEntry> deps = getModuleLibDeps(moduleName, depName);
-    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<LibraryOrderEntry, Object>() {
-      @Override
-      public Object fun(LibraryOrderEntry entry) {
-        return entry.getScope();
-      }
-    }), scopes);
+    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
   }
 
   protected List<LibraryOrderEntry> getModuleLibDeps(String moduleName, String depName) {
@@ -314,12 +304,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleModuleDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<ModuleOrderEntry> deps = getModuleModuleDeps(moduleName, depName);
-    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<ModuleOrderEntry, Object>() {
-      @Override
-      public Object fun(ModuleOrderEntry entry) {
-        return entry.getScope();
-      }
-    }), scopes);
+    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
   }
 
   @NotNull
@@ -434,12 +419,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
     final Collection<DataNode<?>> nodes = ExternalSystemApiUtil.findAllRecursively(projectDataNode, booleanFunction);
     for (DataNode<?> node : nodes) {
-      ExternalSystemApiUtil.visit(node, new Consumer<DataNode<?>>() {
-        @Override
-        public void consume(DataNode dataNode) {
-          dataNode.setIgnored(ignored);
-        }
-      });
+      ExternalSystemApiUtil.visit(node, dataNode -> dataNode.setIgnored(ignored));
     }
     ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
   }

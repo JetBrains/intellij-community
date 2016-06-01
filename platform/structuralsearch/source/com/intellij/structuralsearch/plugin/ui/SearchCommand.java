@@ -79,15 +79,10 @@ public class SearchCommand {
     ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
     UsageViewManager.getInstance(mySearchContext.getProject()).searchAndShowUsages(
       new UsageTarget[]{target},
-      new Factory<UsageSearcher>() {
+      () -> new UsageSearcher() {
         @Override
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            @Override
-            public void generate(@NotNull final Processor<Usage> processor) {
-              findUsages(processor);
-            }
-          };
+        public void generate(@NotNull final Processor<Usage> processor) {
+          findUsages(processor);
         }
       },
       processPresentation,

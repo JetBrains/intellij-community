@@ -195,11 +195,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    final VirtualFile[] children = dataManager.doInReadActionIfProjectOpen(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        return dir.getChildren();
-      }
-    });
+    final VirtualFile[] children = dataManager.doInReadActionIfProjectOpen(() -> dir.getChildren());
 
     if (children == null) {
       return null;
@@ -303,11 +299,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
 
       // find all modules content roots
-      final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(new Computable<VirtualFile[]>() {
-        public VirtualFile[] compute() {
-          return rootManager.getContentRoots();
-        }
-      });
+      final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
 
       if (modulesContentRoots == null) {
         return;

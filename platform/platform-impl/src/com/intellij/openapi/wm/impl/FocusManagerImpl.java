@@ -146,32 +146,29 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     final AppListener myAppListener = new AppListener();
     myApp.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof FocusEvent) {
-          final FocusEvent fe = (FocusEvent)e;
-          final Component c = fe.getComponent();
-          if (c instanceof Window || c == null) return false;
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof FocusEvent) {
+        final FocusEvent fe = (FocusEvent)e;
+        final Component c = fe.getComponent();
+        if (c instanceof Window || c == null) return false;
 
-          Component parent = UIUtil.findUltimateParent(c);
+        Component parent = UIUtil.findUltimateParent(c);
 
-          if (parent instanceof IdeFrame) {
-            myLastFocused.put((IdeFrame)parent, c);
-          }
+        if (parent instanceof IdeFrame) {
+          myLastFocused.put((IdeFrame)parent, c);
         }
-        else if (e instanceof WindowEvent) {
-          Window wnd = ((WindowEvent)e).getWindow();
-          if (e.getID() == WindowEvent.WINDOW_CLOSED) {
-            if (wnd instanceof IdeFrame) {
-              myLastFocused.remove(wnd);
-              myLastFocusedAtDeactivation.remove(wnd);
-            }
-          }
-        }
-
-        return false;
       }
+      else if (e instanceof WindowEvent) {
+        Window wnd = ((WindowEvent)e).getWindow();
+        if (e.getID() == WindowEvent.WINDOW_CLOSED) {
+          if (wnd instanceof IdeFrame) {
+            myLastFocused.remove(wnd);
+            myLastFocusedAtDeactivation.remove(wnd);
+          }
+        }
+      }
+
+      return false;
     }, this);
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", new PropertyChangeListener() {

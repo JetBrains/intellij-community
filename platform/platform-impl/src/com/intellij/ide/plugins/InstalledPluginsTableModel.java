@@ -62,12 +62,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     columns = SystemInfo.isMac ? new ColumnInfo[]{infoColumn, enabledColumn, new Spacer()} : new ColumnInfo[]{infoColumn, enabledColumn};
 
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    view.addAll(ContainerUtil.filter(PluginManagerCore.getPlugins(), new Condition<IdeaPluginDescriptor>() {
-      @Override
-      public boolean value(IdeaPluginDescriptor descriptor) {
-        return !appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString());
-      }
-    }));
+    view.addAll(ContainerUtil.filter(PluginManagerCore.getPlugins(),
+                                     descriptor -> !appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())));
     view.addAll(ourState.getInstalledPlugins());
 
     myEnabled.put(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID), true);
@@ -145,25 +141,22 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       if (descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted()) continue;
       final Boolean enabled = myEnabled.get(pluginId);
       if (enabled == null || enabled.booleanValue()) {
-        PluginManagerCore.checkDependants(descriptor, pluginId1 -> PluginManager.getPlugin(pluginId1), new Condition<PluginId>() {
-                                            @Override
-                                            public boolean value(final PluginId dependantPluginId) {
-                                              final Boolean enabled = myEnabled.get(dependantPluginId);
-                                              if ((enabled == null && !ourState.wasUpdated(dependantPluginId)) ||
-                                                  (enabled != null && !enabled.booleanValue())) {
-                                                Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
-                                                if (required == null) {
-                                                  required = new HashSet<PluginId>();
-                                                  myDependentToRequiredListMap.put(pluginId, required);
-                                                }
+        PluginManagerCore.checkDependants(descriptor, pluginId1 -> PluginManager.getPlugin(pluginId1), dependantPluginId -> {
+          final Boolean enabled1 = myEnabled.get(dependantPluginId);
+          if ((enabled1 == null && !ourState.wasUpdated(dependantPluginId)) ||
+              (enabled1 != null && !enabled1.booleanValue())) {
+            Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
+            if (required == null) {
+              required = new HashSet<PluginId>();
+              myDependentToRequiredListMap.put(pluginId, required);
+            }
 
-                                                required.add(dependantPluginId);
-                                                //return false;
-                                              }
+            required.add(dependantPluginId);
+            //return false;
+          }
 
-                                              return true;
-                                            }
-                                          }
+          return true;
+        }
         );
         if (enabled == null && !myDependentToRequiredListMap.containsKey(pluginId) && PluginManagerCore.isCompatible(descriptor)) {
           myEnabled.put(pluginId, true);
@@ -361,33 +354,30 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     for (final IdeaPluginDescriptor ideaPluginDescriptor : descriptorsToCheckDependencies) {
-      PluginManagerCore.checkDependants(ideaPluginDescriptor, pluginId -> PluginManager.getPlugin(pluginId), new Condition<PluginId>() {
-                                          @Override
-                                          public boolean value(final PluginId pluginId) {
-                                            Boolean enabled = myEnabled.get(pluginId);
-                                            if (enabled == null) {
-                                              return false;
-                                            }
-                                            if (newVal && !enabled.booleanValue()) {
-                                              deps.add(pluginId);
-                                            }
+      PluginManagerCore.checkDependants(ideaPluginDescriptor, pluginId -> PluginManager.getPlugin(pluginId), pluginId -> {
+        Boolean enabled = myEnabled.get(pluginId);
+        if (enabled == null) {
+          return false;
+        }
+        if (newVal && !enabled.booleanValue()) {
+          deps.add(pluginId);
+        }
 
-                                            if (!newVal) {
-                                              if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl &&
-                                                  ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isDeleted()) {
-                                                return true;
-                                              }
-                                              final PluginId pluginDescriptorId = ideaPluginDescriptor.getPluginId();
-                                              for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
-                                                if (pluginId.equals(descriptor.getPluginId())) {
-                                                  deps.add(pluginDescriptorId);
-                                                  break;
-                                                }
-                                              }
-                                            }
-                                            return true;
-                                          }
-                                        }
+        if (!newVal) {
+          if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl &&
+              ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isDeleted()) {
+            return true;
+          }
+          final PluginId pluginDescriptorId = ideaPluginDescriptor.getPluginId();
+          for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
+            if (pluginId.equals(descriptor.getPluginId())) {
+              deps.add(pluginDescriptorId);
+              break;
+            }
+          }
+        }
+        return true;
+      }
       );
     }
     if (!deps.isEmpty()) {

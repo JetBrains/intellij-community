@@ -68,12 +68,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     }
     catch (Throwable e) {
-      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(), new Condition<Project>() {
-        @Override
-        public boolean value(Project project) {
-          return myWizard.getProjectName().equals(project.getName());
-        }
-      });
+      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(),
+                                            project -> myWizard.getProjectName().equals(project.getName()));
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);

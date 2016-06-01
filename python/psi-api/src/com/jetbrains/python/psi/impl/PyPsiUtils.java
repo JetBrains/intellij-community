@@ -273,12 +273,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getParentRightBefore(@NotNull PsiElement element, @NotNull final PsiElement superParent) {
-    return PsiTreeUtil.findFirstParent(element, false, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element.getParent() == superParent;
-      }
-    });
+    return PsiTreeUtil.findFirstParent(element, false, element1 -> element1.getParent() == superParent);
   }
 
   public static List<PsiElement> collectElements(final PsiElement statement1, final PsiElement statement2) {

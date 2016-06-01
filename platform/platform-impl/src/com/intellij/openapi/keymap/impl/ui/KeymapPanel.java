@@ -73,12 +73,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
-  private static final Condition<Keymap> KEYMAP_FILTER = new Condition<Keymap>() {
-    @Override
-    public boolean value(Keymap keymap) {
-      return !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
-    }
-  };
+  private static final Condition<Keymap> KEYMAP_FILTER =
+    keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
 
   // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
   // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.

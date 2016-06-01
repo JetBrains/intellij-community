@@ -43,35 +43,31 @@ public class ExternalSystemStartupActivity implements StartupActivity {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    Runnable task = new Runnable() {
-      @SuppressWarnings("unchecked")
-      @Override
-      public void run() {
-        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-          if (manager instanceof StartupActivity) {
-            ((StartupActivity)manager).runActivity(project);
-          }
+    Runnable task = () -> {
+      for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+        if (manager instanceof StartupActivity) {
+          ((StartupActivity)manager).runActivity(project);
         }
-        if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
-          for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-            final boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
-            if (isNewProject) {
-              ExternalSystemUtil.refreshProjects(
-                new ImportSpecBuilder(project, manager.getSystemId())
-              );
-            }
-            else {
-              ExternalSystemUtil.refreshProjects(
-                new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
-              );
-            }
-          }
-        }
-        ExternalSystemAutoImporter.letTheMagicBegin(project);
-        ExternalToolWindowManager.handle(project);
-        ExternalSystemVcsRegistrar.handle(project);
-        ProjectRenameAware.beAware(project);
       }
+      if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
+        for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+          final boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+          if (isNewProject) {
+            ExternalSystemUtil.refreshProjects(
+              new ImportSpecBuilder(project, manager.getSystemId())
+            );
+          }
+          else {
+            ExternalSystemUtil.refreshProjects(
+              new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
+            );
+          }
+        }
+      }
+      ExternalSystemAutoImporter.letTheMagicBegin(project);
+      ExternalToolWindowManager.handle(project);
+      ExternalSystemVcsRegistrar.handle(project);
+      ProjectRenameAware.beAware(project);
     };
 
     ExternalProjectsManager.getInstance(project).init();

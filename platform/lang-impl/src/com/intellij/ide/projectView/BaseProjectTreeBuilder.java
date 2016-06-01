@@ -195,12 +195,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       result.setDone();
     };
 
-    final Condition<AbstractTreeNode> condition = new Condition<AbstractTreeNode>() {
-      @Override
-      public boolean value(AbstractTreeNode abstractTreeNode) {
-        return !result.isProcessed() && nonStopCondition.value(abstractTreeNode);
-      }
-    };
+    final Condition<AbstractTreeNode> condition = abstractTreeNode -> !result.isProcessed() && nonStopCondition.value(abstractTreeNode);
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)

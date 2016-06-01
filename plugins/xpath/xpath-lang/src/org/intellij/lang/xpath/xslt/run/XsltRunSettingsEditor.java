@@ -289,12 +289,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
-      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), new Condition<Sdk>() {
-        @Override
-        public boolean value(Sdk sdk) {
-          return sdk.getSdkType() instanceof JavaSdkType;
-        }
-      });
+      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(),
+                                                     sdk -> sdk.getSdkType() instanceof JavaSdkType);
       myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
       if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);

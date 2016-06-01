@@ -36,12 +36,8 @@ public class MockInspectionProfile extends InspectionProfileImpl {
 
   @Override
   public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
-    final InspectionToolWrapper entry = ContainerUtil.find(myInspectionTools, new Condition<InspectionToolWrapper>() {
-      @Override
-      public boolean value(final InspectionToolWrapper inspectionProfileEntry) {
-        return key.equals(HighlightDisplayKey.find(inspectionProfileEntry.getShortName()));
-      }
-    });
+    final InspectionToolWrapper entry = ContainerUtil.find(myInspectionTools,
+                                                           inspectionProfileEntry -> key.equals(HighlightDisplayKey.find(inspectionProfileEntry.getShortName())));
     assert entry != null;
     return !myDisabledTools.contains(entry);
   }

@@ -152,12 +152,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     final Project project = file.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    return ContainerUtil.find(NullableNotNullManager.getInstance(project).getNullables(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return facade.findClass(s, scope) != null;
-      }
-    }) == null;
+    return ContainerUtil.find(NullableNotNullManager.getInstance(project).getNullables(), s -> facade.findClass(s, scope) != null) == null;
   }
 
   private static boolean checkNonStandardAnnotations(PsiField field,

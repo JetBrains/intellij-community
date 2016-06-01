@@ -59,24 +59,14 @@ public class AfterTestEvent extends AbstractTestEvent {
     final TestEventResult result = getTestEventResultType(eventXml);
     switch (result) {
       case SUCCESS:
-        runInEdt.add(new Runnable() {
-          @Override
-          public void run() {
-            testProxy.setFinished();
-          }
-        });
+        runInEdt.add(() -> testProxy.setFinished());
         break;
       case FAILURE:
         final String failureType = eventXml.queryXml("/ijLog/event/test/result/failureType");
         if ("comparison".equals(failureType)) {
           String actualText = eventXml.queryXml("/ijLog/event/test/result/actual");
           String expectedText = eventXml.queryXml("/ijLog/event/test/result/expected");
-          final Condition<String> emptyString = new Condition<String>() {
-            @Override
-            public boolean value(String s) {
-              return StringUtil.isEmpty(s);
-            }
-          };
+          final Condition<String> emptyString = s -> StringUtil.isEmpty(s);
           String filePath = ObjectUtils.nullizeByCondition(
             eventXml.queryXml("/ijLog/event/test/result/filePath"), emptyString);
           String actualFilePath = ObjectUtils.nullizeByCondition(
@@ -103,44 +93,28 @@ public class AfterTestEvent extends AbstractTestEvent {
           }
 
           final Couple<String> finalComparisonPair = comparisonPair;
-          runInEdt.add(new Runnable() {
-            @Override
-            public void run() {
-              if (finalComparisonPair != null) {
-                testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
-              }
-              else {
-                testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
-              }
+          runInEdt.add(() -> {
+            if (finalComparisonPair != null) {
+              testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
+            }
+            else {
+              testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
             }
           });
         }
-        runInEdt.add(new Runnable() {
-          @Override
-          public void run() {
-            getResultsViewer().onTestFailed(testProxy);
-          }
-        });
+        runInEdt.add(() -> getResultsViewer().onTestFailed(testProxy));
         break;
       case SKIPPED:
-        runInEdt.add(new Runnable() {
-          @Override
-          public void run() {
-            testProxy.setTestIgnored(null, null);
-            getResultsViewer().onTestIgnored(testProxy);
-          }
+        runInEdt.add(() -> {
+          testProxy.setTestIgnored(null, null);
+          getResultsViewer().onTestIgnored(testProxy);
         });
         break;
       case UNKNOWN_RESULT:
         break;
     }
 
-    runInEdt.add(new Runnable() {
-      @Override
-      public void run() {
-        getResultsViewer().onTestFinished(testProxy);
-      }
-    });
+    runInEdt.add(() -> getResultsViewer().onTestFinished(testProxy));
 
     addToInvokeLater(runInEdt);
   }

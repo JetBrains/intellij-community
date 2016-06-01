@@ -228,12 +228,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         @NotNull
         @Override
         protected PsiType[] inferComponents() {
-          return ContainerUtil.map(initializers, expression -> RecursionManager.doPreventingRecursion(expression, false, new Computable<PsiType>() {
-            @Override
-            public PsiType compute() {
-              return TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope);
-            }
-          }), new PsiType[initializers.length]);
+          return ContainerUtil.map(initializers, expression -> RecursionManager.doPreventingRecursion(expression, false,
+                                                                                                      () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope)), new PsiType[initializers.length]);
         }
 
         @Override

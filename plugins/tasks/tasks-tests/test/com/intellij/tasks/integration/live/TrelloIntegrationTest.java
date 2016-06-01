@@ -145,12 +145,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     List<TrelloCard> allCards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, LIST_1_1_NAME, true);
     assertObjectsNamed("All cards of the list should be included", allCards, "Card 1-1-1", "Card 1-1-2", "Archived Card");
 
-    TrelloCard card = ContainerUtil.find(allCards, new Condition<TrelloCard>() {
-      @Override
-      public boolean value(TrelloCard card) {
-        return card.getName().equals("Archived Card");
-      }
-    });
+    TrelloCard card = ContainerUtil.find(allCards, card1 -> card1.getName().equals("Archived Card"));
     assertNotNull(card);
     assertTrue(card.isClosed());
     assertFalse(card.isVisible());

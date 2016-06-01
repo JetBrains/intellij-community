@@ -36,12 +36,7 @@ import java.util.List;
 
 public abstract class FileTypeManager extends FileTypeRegistry {
   static {
-    FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
-      @Override
-      public FileTypeRegistry get() {
-        return FileTypeManager.getInstance();
-      }
-    };
+    FileTypeRegistry.ourInstanceGetter = () -> FileTypeManager.getInstance();
   }
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);

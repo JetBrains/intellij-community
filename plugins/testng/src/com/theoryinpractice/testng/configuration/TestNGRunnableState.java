@@ -158,12 +158,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     console.attachToProcess(processHandler);
 
     RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console, console.getProperties());
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return console.getResultsView();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> console.getResultsView());
 
     final DefaultExecutionResult result = new DefaultExecutionResult(console, processHandler);
     result.setRestartActions(rerunFailedTestsAction);

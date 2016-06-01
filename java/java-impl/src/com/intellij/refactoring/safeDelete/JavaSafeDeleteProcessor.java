@@ -503,11 +503,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   public static Condition<PsiElement> getUsageInsideDeletedFilter(final PsiElement[] allElementsToDelete) {
-    return new Condition<PsiElement>() {
-      public boolean value(final PsiElement usage) {
-        return !(usage instanceof PsiFile) && isInside(usage, allElementsToDelete);
-      }
-    };
+    return usage -> !(usage instanceof PsiFile) && isInside(usage, allElementsToDelete);
   }
 
   private static void findClassUsages(final PsiClass psiClass, final PsiElement[] allElementsToDelete, final List<UsageInfo> usages) {
@@ -656,11 +652,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
     }
 
-    return new Condition<PsiElement>() {
-      public boolean value(PsiElement usage) {
-        if(usage instanceof PsiFile) return false;
-        return isInside(usage, allElementsToDelete) || isInside(usage,  validOverriding);
-      }
+    return usage -> {
+      if(usage instanceof PsiFile) return false;
+      return isInside(usage, allElementsToDelete) || isInside(usage,  validOverriding);
     };
   }
 
@@ -723,11 +717,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             validateOverridingMethods(constructor, originalReferences, constructorsToRefs.keySet(), constructorsToRefs, usages,
                                       allElementsToDelete);
 
-    return new Condition<PsiElement>() {
-      public boolean value(PsiElement usage) {
-        if(usage instanceof PsiFile) return false;
-        return isInside(usage, allElementsToDelete) || isInside(usage, validOverriding);
-      }
+    return usage -> {
+      if(usage instanceof PsiFile) return false;
+      return isInside(usage, allElementsToDelete) || isInside(usage, validOverriding);
     };
   }
 

@@ -126,15 +126,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
-    doScheduleUpdate(UPDATE_REVS, new Computable<Runnable>() {
-      public Runnable compute() {
-        synchronized (myModel) {
-          if (configRunnable != null) configRunnable.consume(myModel);
-          myModel.clearRevisions();
-          myModel.getRevisions();// force load
-        }
-        return () -> myRevisionsList.updateData(myModel);
+    doScheduleUpdate(UPDATE_REVS, () -> {
+      synchronized (myModel) {
+        if (configRunnable != null) configRunnable.consume(myModel);
+        myModel.clearRevisions();
+        myModel.getRevisions();// force load
       }
+      return () -> myRevisionsList.updateData(myModel);
     });
   }
 
@@ -241,17 +239,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
-    doScheduleUpdate(UPDATE_DIFFS, new Computable<Runnable>() {
-      public Runnable compute() {
-        synchronized (myModel) {
-          if (toSelect == null) {
-            myModel.resetSelection();
-          }
-          else {
-            myModel.selectRevisions(toSelect.first, toSelect.second);
-          }
-          return doUpdateDiffs(myModel);
+    doScheduleUpdate(UPDATE_DIFFS, () -> {
+      synchronized (myModel) {
+        if (toSelect == null) {
+          myModel.resetSelection();
         }
+        else {
+          myModel.selectRevisions(toSelect.first, toSelect.second);
+        }
+        return doUpdateDiffs(myModel);
       }
     });
   }

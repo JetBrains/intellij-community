@@ -109,12 +109,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void disablePostprocessFormattingInside(@NotNull final Runnable runnable) {
-    disablePostprocessFormattingInside(new NullableComputable<Object>() {
-      @Override
-      public Object compute() {
-        runnable.run();
-        return null;
-      }
+    disablePostprocessFormattingInside((NullableComputable<Object>)() -> {
+      runnable.run();
+      return null;
     });
   }
 
@@ -130,12 +127,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void postponeFormattingInside(@NotNull final Runnable runnable) {
-    postponeFormattingInside(new NullableComputable<Object>() {
-      @Override
-      public Object compute() {
-        runnable.run();
-        return null;
-      }
+    postponeFormattingInside((NullableComputable<Object>)() -> {
+      runnable.run();
+      return null;
     });
   }
 

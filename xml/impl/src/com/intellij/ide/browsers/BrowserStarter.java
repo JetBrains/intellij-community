@@ -36,13 +36,7 @@ public class BrowserStarter {
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
                         @NotNull final ProcessHandler serverProcessHandler) {
-    this(runConfiguration, settings, new Computable<Boolean>() {
-
-      @Override
-      public Boolean compute() {
-        return serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated();
-      }
-    });
+    this(runConfiguration, settings, () -> serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated());
   }
 
   public void start() {

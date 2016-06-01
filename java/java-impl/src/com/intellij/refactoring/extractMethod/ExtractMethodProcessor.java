@@ -612,12 +612,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
-    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
-      @Override
-      public boolean value(PsiStatement statement) {
-        return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
-      }
-    });
+    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
     return map.toArray(new PsiExpression[map.size()]);
   }

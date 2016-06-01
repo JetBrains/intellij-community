@@ -284,12 +284,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
     public CompositeCodeInsightProviderWithWarning(List<JsonSchemaObjectCodeInsightWrapper> wrappers) {
       final List<JsonSchemaObjectCodeInsightWrapper> userSchemaWrappers =
-        ContainerUtil.filter(wrappers, new Condition<JsonSchemaObjectCodeInsightWrapper>() {
-          @Override
-          public boolean value(JsonSchemaObjectCodeInsightWrapper wrapper) {
-            return wrapper.isUserSchema();
-          }
-        });
+        ContainerUtil.filter(wrappers, wrapper -> wrapper.isUserSchema());
       // filter for the case when there are one system schema and one (several) user schemas
       // then do not use provided system schema: user schema will override it (maybe the user updated the version himself)
       // if there are 2 or more system schemas - just go the common way: it is unclear what happened and why

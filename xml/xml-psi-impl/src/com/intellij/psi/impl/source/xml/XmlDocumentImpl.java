@@ -185,19 +185,16 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
-      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
-        @Override
-        public Result<XmlNSDescriptor> compute() {
-          final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), () -> {
+        final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
-          if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
-          }
-
-          return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                       ? defaultNSDescriptorInner.getDependences()
-                                                                       : ExternalResourceManager.getInstance());
+        if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+          return new CachedValueProvider.Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
         }
+
+        return new CachedValueProvider.Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
+                                                                     ? defaultNSDescriptorInner.getDependences()
+                                                                     : ExternalResourceManager.getInstance());
       }));
     }
     return cachedValue.getValue();
@@ -302,14 +299,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   private static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
-    return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
-      @Nullable
-      @Override
-      public Result<XmlNSDescriptor> compute() {
-        final XmlDocument document = descriptorFile.getDocument();
-        if (document == null) return Result.create(null, descriptorFile);
-        return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
-      }
+    return CachedValuesManager.getCachedValue(descriptorFile, () -> {
+      final XmlDocument document = descriptorFile.getDocument();
+      if (document == null) return CachedValueProvider.Result.create(null, descriptorFile);
+      return CachedValueProvider.Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
     });
   }
 

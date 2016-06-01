@@ -262,12 +262,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
-    return new Condition<PostfixTemplate>() {
-      @Override
-      public boolean value(PostfixTemplate template) {
-        return template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
-      }
-    };
+    return template -> template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
   }
 
   @NotNull

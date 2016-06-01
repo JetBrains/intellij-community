@@ -146,11 +146,6 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
   }
 
   private static boolean containsImport(List<String> importedNames, final String pkg) {
-    return ContainerUtil.or(importedNames, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return s.startsWith(pkg + '.') || s.equals(pkg);
-      }
-    });
+    return ContainerUtil.or(importedNames, s -> s.startsWith(pkg + '.') || s.equals(pkg));
   }
 }

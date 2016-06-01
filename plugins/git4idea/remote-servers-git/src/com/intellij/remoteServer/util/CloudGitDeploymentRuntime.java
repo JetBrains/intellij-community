@@ -204,32 +204,26 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     commitSemaphore.down();
 
     final Ref<Boolean> commitSucceeded = new Ref<Boolean>(false);
-    Boolean commitStarted = runOnEdt(new Computable<Boolean>() {
+    Boolean commitStarted = runOnEdt(() -> CommitChangeListDialog.commitChanges(getProject(),
+                                                                            relevantChanges,
+                                                                            activeChangeList,
+                                                                            ourCommitExecutors,
+                                                                            false,
+                                                                            COMMIT_MESSAGE,
+                                                                            new CommitResultHandler() {
 
-      @Override
-      public Boolean compute() {
-        return CommitChangeListDialog.commitChanges(getProject(),
-                                                    relevantChanges,
-                                                    activeChangeList,
-                                                    ourCommitExecutors,
-                                                    false,
-                                                    COMMIT_MESSAGE,
-                                                    new CommitResultHandler() {
+                                                  @Override
+                                                  public void onSuccess(@NotNull String commitMessage) {
+                                                    commitSucceeded.set(true);
+                                                    commitSemaphore.up();
+                                                  }
 
-                                                      @Override
-                                                      public void onSuccess(@NotNull String commitMessage) {
-                                                        commitSucceeded.set(true);
-                                                        commitSemaphore.up();
-                                                      }
-
-                                                      @Override
-                                                      public void onFailure() {
-                                                        commitSemaphore.up();
-                                                      }
-                                                    },
-                                                    false);
-      }
-    });
+                                                  @Override
+                                                  public void onFailure() {
+                                                    commitSemaphore.up();
+                                                  }
+                                                },
+                                                                            false));
     if (commitStarted != null && commitStarted) {
       commitSemaphore.waitFor();
       if (!commitSucceeded.get()) {
@@ -488,13 +482,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected CloudGitApplication findApplication() throws ServerRuntimeException {
-    return getAgentTaskExecutor().execute(new Computable<CloudGitApplication>() {
-
-      @Override
-      public CloudGitApplication compute() {
-        return getDeployment().findApplication();
-      }
-    });
+    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication());
   }
 
   protected CloudGitApplication getApplication() throws ServerRuntimeException {
@@ -506,13 +494,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected CloudGitApplication createApplication() throws ServerRuntimeException {
-    return getAgentTaskExecutor().execute(new Computable<CloudGitApplication>() {
-
-      @Override
-      public CloudGitApplication compute() {
-        return getDeployment().createApplication();
-      }
-    });
+    return getAgentTaskExecutor().execute(() -> getDeployment().createApplication());
   }
 
   public CloudGitApplication findApplication4Repository() throws ServerRuntimeException {
@@ -523,13 +505,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       }
     }
 
-    return getAgentTaskExecutor().execute(new Computable<CloudGitApplication>() {
-
-      @Override
-      public CloudGitApplication compute() {
-        return getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls));
-      }
-    });
+    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls)));
   }
 
   public class CloneJob {

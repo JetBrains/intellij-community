@@ -89,11 +89,7 @@ public class CvsFileAnnotation extends FileAnnotation{
       for(VcsFileRevision revision: revisions) {
         myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
       }
-      Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
-        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-          return -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-      });
+      Collections.sort(myRevisions, (o1, o2) -> -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber()));
     }
 
     myCvsEntriesListener = new CvsEntriesListener() {

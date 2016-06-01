@@ -330,12 +330,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type1, types.size()));
         panel.setVisible(true);
       };
-      myEventLocation = new Computable<Point>() {
-        @Override
-        public Point compute() {
-          Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
-          return new Point(location.x, location.y + 5);
-        }
+      myEventLocation = () -> {
+        Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
+        return new Point(location.x, location.y + 5);
       };
       return panel;
     }

@@ -83,12 +83,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
     if (qName == null) {
       patterns = myPatterns;
     } else {
-      final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, new Condition<DElementPattern>() {
-        @Override
-        public boolean value(DElementPattern pattern) {
-          return pattern.getName().contains(qName);
-        }
-      });
+      final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, pattern -> pattern.getName().contains(qName));
       patterns = p.toArray(new DPattern[p.size()]);
     }
 

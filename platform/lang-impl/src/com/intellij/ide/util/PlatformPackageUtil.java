@@ -200,12 +200,7 @@ public class PlatformPackageUtil {
     final PsiManager manager = PsiManager.getInstance(project);
 
     Query<VirtualFile> query = DirectoryIndex.getInstance(scope.getProject()).getDirectoriesByPackageName(rootPackage, true);
-    query = new FilteredQuery<VirtualFile>(query, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile virtualFile) {
-        return scope.contains(virtualFile);
-      }
-    });
+    query = new FilteredQuery<VirtualFile>(query, virtualFile -> scope.contains(virtualFile));
 
     List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), virtualFile -> manager.findDirectory(virtualFile));
     return directories.toArray(new PsiDirectory[directories.size()]);

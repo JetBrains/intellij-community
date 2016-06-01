@@ -67,12 +67,9 @@ public class FacetFinderImpl extends FacetFinder {
   private <F extends Facet & FacetRootsProvider> Map<VirtualFile, List<Facet>> getRootToFacetsMap(final FacetTypeId<F> type) {
     CachedValue<Map<VirtualFile, List<Facet>>> cachedValue = myCachedMaps.get(type);
     if (cachedValue == null) {
-      cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Map<VirtualFile, List<Facet>>>() {
-        @Override
-        public Result<Map<VirtualFile, List<Facet>>> compute() {
-          Map<VirtualFile, List<Facet>> map = computeRootToFacetsMap(type);
-          return Result.create(map, getAllFacetsOfTypeModificationTracker(type));
-        }
+      cachedValue = myCachedValuesManager.createCachedValue(() -> {
+        Map<VirtualFile, List<Facet>> map = computeRootToFacetsMap(type);
+        return CachedValueProvider.Result.create(map, getAllFacetsOfTypeModificationTracker(type));
       }, false);
       myCachedMaps.put(type, cachedValue);
     }

@@ -166,12 +166,7 @@ public class ImportModuleAction extends AnAction {
   @NotNull
   public static List<ProjectImportProvider> getProviders(@Nullable final Project project) {
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-    return ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
-      @Override
-      public boolean value(ProjectImportProvider provider) {
-        return project == null ? provider.canCreateNewProject() : provider.canImportModule();
-      }
-    });
+    return ContainerUtil.filter(providers, provider -> project == null ? provider.canCreateNewProject() : provider.canImportModule());
   }
 
   @Nullable
@@ -179,12 +174,7 @@ public class ImportModuleAction extends AnAction {
                                                    @Nullable Component dialogParent,
                                                    @NotNull final VirtualFile file,
                                                    ProjectImportProvider... providers) {
-    List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
-      @Override
-      public boolean value(ProjectImportProvider provider) {
-        return provider.canImport(file, project);
-      }
-    });
+    List<ProjectImportProvider> available = ContainerUtil.filter(providers, provider -> provider.canImport(file, project));
     if (available.isEmpty()) {
       Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
       return null;

@@ -258,17 +258,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return true;
     }
     final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
-    final Condition<PsiElement> nonFinalFieldRefCondition = new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement expression) {
-        if (expression instanceof PsiReferenceExpression) {
-          PsiElement element = ((PsiReferenceExpression)expression).resolve();
-          if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
-            return true;
-          }
+    final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
+      if (expression instanceof PsiReferenceExpression) {
+        PsiElement element = ((PsiReferenceExpression)expression).resolve();
+        if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
     return SyntaxTraverser
       .psiTraverser()

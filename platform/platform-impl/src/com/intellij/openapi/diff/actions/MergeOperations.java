@@ -43,11 +43,7 @@ public class MergeOperations {
   private final DiffPanelImpl myDiffPanel;
   private final FragmentSide mySide;
   private static final List<Operation> NO_OPERATIONS = ContainerUtil.emptyList();
-  private static final Condition<Fragment> NOT_EQUAL_FRAGMENT = new Condition<Fragment>() {
-          public boolean value(Fragment fragment) {
-            return fragment.getType() != null;
-          }
-        };
+  private static final Condition<Fragment> NOT_EQUAL_FRAGMENT = fragment -> fragment.getType() != null;
 
   public MergeOperations(DiffPanelImpl diffPanel, FragmentSide side) {
     myDiffPanel = diffPanel;

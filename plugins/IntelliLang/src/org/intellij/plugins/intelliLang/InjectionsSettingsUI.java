@@ -116,11 +116,9 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
   private void createActions(ToolbarDecorator decorator) {
     final Consumer<BaseInjection> consumer = injection -> addInjection(injection);
-    final Factory<BaseInjection> producer = new NullableFactory<BaseInjection>() {
-      public BaseInjection create() {
-        final InjInfo info = getSelectedInjection();
-        return info == null? null : info.injection;
-      }
+    final Factory<BaseInjection> producer = (NullableFactory<BaseInjection>)() -> {
+      final InjInfo info = getSelectedInjection();
+      return info == null? null : info.injection;
     };
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       ContainerUtil.addAll(myAddActions, support.createAddActions(myProject, consumer));
@@ -811,12 +809,10 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
           List<BaseInjection> injections =
             CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg).getOwnInjections(s) : CfgInfo.this.cfg
               .getInjections(s);
-          return ContainerUtil.findAll(injections, new Condition<BaseInjection>() {
-              public boolean value(final BaseInjection injection) {
-                String id = injection.getInjectedLanguageId();
-                return InjectedLanguage.findLanguageById(id) != null || ReferenceInjector.findById(id) != null;
-              }
-            });
+          return ContainerUtil.findAll(injections, injection -> {
+            String id = injection.getInjectedLanguageId();
+            return InjectedLanguage.findLanguageById(id) != null || ReferenceInjector.findById(id) != null;
+          });
         }));
       sortInjections(originalInjections);
       reset();

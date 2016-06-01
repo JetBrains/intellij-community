@@ -63,12 +63,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
 
   @NotNull
   public Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
-    return ContainerUtil.filter(myElements, new Condition<PipelineElement>() {
-      @Override
-      public boolean value(PipelineElement element) {
-        return methodName.equals(element.getMethodName());
-      }
-    });
+    return ContainerUtil.filter(myElements, element -> methodName.equals(element.getMethodName()));
   }
 
   public void readExternal(final @NotNull Element xmlElement) {

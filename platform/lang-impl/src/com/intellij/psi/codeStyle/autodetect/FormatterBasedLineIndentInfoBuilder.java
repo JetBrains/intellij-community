@@ -80,12 +80,7 @@ public class FormatterBasedLineIndentInfoBuilder {
     List<Indent.Type> allIndents = getIndentOnStartOffset(block, range, startOffset);
 
     if (hasOnlyNormalOrNoneIndents(allIndents)) {
-      int normalIndents = ContainerUtil.filter(allIndents, new Condition<Indent.Type>() {
-      @Override
-      public boolean value(Indent.Type type) {
-        return type == Indent.Type.NORMAL;
-      }
-    }).size();
+      int normalIndents = ContainerUtil.filter(allIndents, type -> type == Indent.Type.NORMAL).size();
       return normalIndents < 2;
     }
     

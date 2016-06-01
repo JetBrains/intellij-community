@@ -38,12 +38,7 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
 
   protected static final Map<Pair<QName, Integer>, Function> XSLT2_FUNCTIONS;
 
-  private static final Factory<FunctionContext> FACTORY = new Factory<FunctionContext>() {
-    @Override
-    public FunctionContext create() {
-      return new Xslt2FunctionContext();
-    }
-  };
+  private static final Factory<FunctionContext> FACTORY = () -> new Xslt2FunctionContext();
 
   protected Xslt2FunctionContext() {
     super(Xslt2ContextProvider.TYPE);

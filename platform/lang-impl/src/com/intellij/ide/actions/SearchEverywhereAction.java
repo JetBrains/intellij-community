@@ -178,17 +178,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
 
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent event) {
-        if (event instanceof KeyEvent) {
-          final int keyCode = ((KeyEvent)event).getKeyCode();
-          if (keyCode == KeyEvent.VK_SHIFT) {
-            ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
-          }
+    IdeEventQueue.getInstance().addPostprocessor(event -> {
+      if (event instanceof KeyEvent) {
+        final int keyCode = ((KeyEvent)event).getKeyCode();
+        if (keyCode == KeyEvent.VK_SHIFT) {
+          ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
         }
-        return false;
       }
+      return false;
     }, null);
   }
 
@@ -711,12 +708,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return !mySkipFocusGain;
-        }
-      })
+      .setCancelCallback(() -> !mySkipFocusGain)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
@@ -2023,22 +2015,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
               .setResizable(true)
-              .setCancelCallback(new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-                  if (event instanceof MouseEvent) {
-                    final Component comp = ((MouseEvent)event).getComponent();
-                    if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
-                      return false;
-                    }
+              .setCancelCallback(() -> {
+                final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+                if (event instanceof MouseEvent) {
+                  final Component comp = ((MouseEvent)event).getComponent();
+                  if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
+                    return false;
                   }
-                  final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
-                  if (canClose) {
-                    PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
-                  }
-                  return canClose;
                 }
+                final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                if (canClose) {
+                  PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
+                }
+                return canClose;
               })
               .setShowShadow(false)
               .setShowBorder(false)

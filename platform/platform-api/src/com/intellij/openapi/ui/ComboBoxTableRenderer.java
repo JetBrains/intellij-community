@@ -126,12 +126,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   private void showPopup(final T value, final int row) {
-    List<T> filtered = ContainerUtil.findAll(myValues, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return isApplicable(t, row);
-      }
-    });
+    List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<T>(filtered, value) {
       @NotNull
       public String getTextFor(T value) {

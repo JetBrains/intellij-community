@@ -102,12 +102,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @Nullable
   public String getSDKVersion(@NotNull final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<String>() {
-      @Override
-      public Result<String> compute() {
-        final String path = LibrariesUtil.getGroovyHomePath(module);
-        return Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
-      }
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      final String path = LibrariesUtil.getGroovyHomePath(module);
+      return CachedValueProvider.Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
     });
   }
 

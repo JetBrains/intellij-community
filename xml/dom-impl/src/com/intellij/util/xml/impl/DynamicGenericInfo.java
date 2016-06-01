@@ -78,22 +78,19 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
     if (!myInvocationHandler.exists()) return true;
 
-    return ourGuard.doPreventingRecursion(myInvocationHandler, false, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        DomExtensionsRegistrarImpl registrar = runDomExtenders();
+    return ourGuard.doPreventingRecursion(myInvocationHandler, false, () -> {
+      DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (myInvocationHandler) {
-          if (!myInitialized) {
-            if (registrar != null) {
-              applyExtensions(registrar);
-            }
-            myInitialized = true;
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (myInvocationHandler) {
+        if (!myInitialized) {
+          if (registrar != null) {
+            applyExtensions(registrar);
           }
+          myInitialized = true;
         }
-        return Boolean.TRUE;
       }
+      return Boolean.TRUE;
     }) == Boolean.TRUE;
   }
 

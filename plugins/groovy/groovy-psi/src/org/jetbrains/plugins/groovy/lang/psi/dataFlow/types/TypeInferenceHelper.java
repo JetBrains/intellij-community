@@ -104,13 +104,8 @@ public class TypeInferenceHelper {
 
   @NotNull
   private static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
-    return CachedValuesManager.getCachedValue(scope, new CachedValueProvider<InferenceCache>() {
-      @Nullable
-      @Override
-      public Result<InferenceCache> compute() {
-        return Result.create(new InferenceCache(scope), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(scope, () -> CachedValueProvider.Result
+      .create(new InferenceCache(scope), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   public static boolean isTooComplexTooAnalyze(@NotNull GrControlFlowOwner scope) {
@@ -250,32 +245,25 @@ public class TypeInferenceHelper {
       final String varName = instruction.getVariableName();
       if (varName == null) return;
 
-      updateVariableType(state, instruction, varName, new NullableComputable<DFAType>() {
-        @Override
-        public DFAType compute() {
-          ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
-          assert originalInstr != null && !originalInstr.isWrite();
+      updateVariableType(state, instruction, varName, (NullableComputable<DFAType>)() -> {
+        ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
+        assert originalInstr != null && !originalInstr.isWrite();
 
-          DFAType original = state.getVariableType(varName);
-          if (original == null) {
-            original = DFAType.create(null);
-          }
-          original = original.negate(originalInstr);
-          original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
-          return original;
+        DFAType original = state.getVariableType(varName);
+        if (original == null) {
+          original = DFAType.create(null);
         }
+        original = original.negate(originalInstr);
+        original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
+        return original;
       });
     }
 
     private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
-        updateVariableType(state, instruction, instruction.getVariableName(), new Computable<DFAType>() {
-          @Override
-          public DFAType compute() {
-            return DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope()));
-          }
-        });
+        updateVariableType(state, instruction, instruction.getVariableName(),
+                           () -> DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope())));
       }
     }
 
@@ -420,13 +408,9 @@ public class TypeInferenceHelper {
 
     @Nullable
     private static PsiElement findDependencyScope(@Nullable PsiElement element) {
-      return PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement element) {
-          return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement(element) ||
-                 !(element.getParent() instanceof GrExpression);
-        }
-      });
+      return PsiTreeUtil.findFirstParent(element,
+                                         element1 -> org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement(element1) ||
+                                                     !(element1.getParent() instanceof GrExpression));
     }
 
     private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {

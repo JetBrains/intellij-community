@@ -1330,12 +1330,8 @@ public class PsiUtil {
 
   public static boolean scopeClassImplementsTrait(@NotNull final PsiClass trait, @NotNull final PsiElement place) {
     GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true);
-    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(), new Condition<PsiClassType>() {
-      @Override
-      public boolean value(PsiClassType type) {
-        return place.getManager().areElementsEquivalent(type.resolve(), trait);
-      }
-    }) != null;
+    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(),
+                                                    type -> place.getManager().areElementsEquivalent(type.resolve(), trait)) != null;
   }
 
   public static boolean isThisOrSuperRef(@Nullable PsiElement qualifier) {
@@ -1417,18 +1413,12 @@ public class PsiUtil {
   }
 
   public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {
-    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Boolean>() {
-      @Nullable
+    return CachedValuesManager.getCachedValue(block, () -> CachedValueProvider.Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
-      public Result<Boolean> compute() {
-        return Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            return returnValue == null || !(returnValue instanceof GrLiteral);
-          }
-        }), PsiModificationTracker.MODIFICATION_COUNT);
+      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+        return returnValue == null || !(returnValue instanceof GrLiteral);
       }
-    });
+    }), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {

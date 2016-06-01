@@ -868,20 +868,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static ListPopupStep buildStep(@NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
-      return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, new Condition<Pair<AnAction, KeyStroke>>() {
-        @Override
-        public boolean value(Pair<AnAction, KeyStroke> pair) {
-          final AnAction action = pair.getFirst();
-          final Presentation presentation = action.getTemplatePresentation().clone();
-          AnActionEvent event = new AnActionEvent(null, ctx,
-                                                  ActionPlaces.UNKNOWN,
-                                                  presentation,
-                                                  ActionManager.getInstance(),
-                                                  0);
+      return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, pair -> {
+        final AnAction action = pair.getFirst();
+        final Presentation presentation = action.getTemplatePresentation().clone();
+        AnActionEvent event = new AnActionEvent(null, ctx,
+                                                ActionPlaces.UNKNOWN,
+                                                presentation,
+                                                ActionManager.getInstance(),
+                                                0);
 
-          ActionUtil.performDumbAwareUpdate(action, event, true);
-          return presentation.isEnabled() && presentation.isVisible();
-        }
+        ActionUtil.performDumbAwareUpdate(action, event, true);
+        return presentation.isEnabled() && presentation.isVisible();
       })) {
         @Override
         public PopupStep onChosen(Pair<AnAction, KeyStroke> selectedValue, boolean finalChoice) {

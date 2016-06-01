@@ -182,12 +182,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setTitle(title).
       setItemChoosenCallback(runnable).
       setMovable(true).
-      setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          HintUpdateSupply.hideHint(list);
-          return true;
-        }
+      setCancelCallback(() -> {
+        HintUpdateSupply.hideHint(list);
+        return true;
       }).
       setCouldPin(popup1 -> {
         usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));

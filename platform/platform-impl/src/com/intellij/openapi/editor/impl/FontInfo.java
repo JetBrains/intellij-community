@@ -128,12 +128,7 @@ public class FontInfo {
     
     if (style == Font.PLAIN) {
       // prefer font containing 'regular' in its name
-      List<File> regulars = ContainerUtil.filter(files, new Condition<File>() {
-        @Override
-        public boolean value(File file) {
-          return file.getName().toLowerCase(Locale.getDefault()).contains("regular");
-        }
-      });
+      List<File> regulars = ContainerUtil.filter(files, file -> file.getName().toLowerCase(Locale.getDefault()).contains("regular"));
       if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
     }
     

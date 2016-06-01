@@ -334,14 +334,9 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows = new JBList(twModel);
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       if (pinned) {
-        new NameFilteringListModel<ToolWindow>(toolWindows, window -> window.getStripeTitle(), new Condition<String>() {
-          @Override
-          public boolean value(@NotNull String s) {
-            return !mySpeedSearch.isPopupActive()
-                   || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
-          }
-        }, mySpeedSearch);
+        new NameFilteringListModel<ToolWindow>(toolWindows, window -> window.getStripeTitle(), s -> !mySpeedSearch.isPopupActive()
+                                                                                                || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                                                                                                || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
       toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
@@ -530,14 +525,9 @@ public class Switcher extends AnAction implements DumbAware {
 
       files = new JBList(filesModel);
       if (pinned) {
-        new NameFilteringListModel<FileInfo>(files, info -> info.getNameForRendering(), new Condition<String>() {
-          @Override
-          public boolean value(@NotNull String s) {
-            return !mySpeedSearch.isPopupActive()
-                   || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
-          }
-        }, mySpeedSearch);
+        new NameFilteringListModel<FileInfo>(files, info -> info.getNameForRendering(), s -> !mySpeedSearch.isPopupActive()
+                                                                                         || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                                                                                         || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
@@ -592,12 +582,9 @@ public class Switcher extends AnAction implements DumbAware {
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
         .setCancelKeyEnabled(false)
-        .setCancelCallback(new Computable<Boolean>() {
-          @NotNull
-          public Boolean compute() {
-            SWITCHER = null;
-            return true;
-          }
+        .setCancelCallback(() -> {
+          SWITCHER = null;
+          return true;
         }).createPopup();
 
       if (isPinnedMode()) {

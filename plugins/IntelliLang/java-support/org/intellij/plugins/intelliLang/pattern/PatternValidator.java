@@ -208,21 +208,18 @@ public class PatternValidator extends LocalInspectionTool {
     // cache compiled pattern with annotation
     CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
     if (p == null) {
-      final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
-        @Override
-        public Result<Pattern> compute() {
-          final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
-          Pattern p = null;
-          if (pattern != null) {
-            try {
-              p = Pattern.compile(pattern);
-            }
-            catch (PatternSyntaxException e) {
-              // pattern stays null
-            }
+      final CachedValueProvider<Pattern> provider = () -> {
+        final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
+        Pattern p1 = null;
+        if (pattern != null) {
+          try {
+            p1 = Pattern.compile(pattern);
           }
-          return Result.create(p, (Object[])annotations);
+          catch (PatternSyntaxException e) {
+            // pattern stays null
+          }
         }
+        return CachedValueProvider.Result.create(p1, (Object[])annotations);
       };
       p = CachedValuesManager.getManager(expression.getProject()).createCachedValue(provider, false);
       psiAnnotation.putUserData(COMPLIED_PATTERN, p);

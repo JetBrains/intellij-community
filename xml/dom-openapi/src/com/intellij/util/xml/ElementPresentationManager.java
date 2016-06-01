@@ -252,12 +252,7 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static <T> T findByName(Collection<T> collection, final String name) {
-    return ContainerUtil.find(collection, new Condition<T>() {
-      @Override
-      public boolean value(final T object) {
-        return Comparing.equal(name, getElementName(object), true);
-      }
-    });
+    return ContainerUtil.find(collection, object -> Comparing.equal(name, getElementName(object), true));
   }
 
 }

@@ -2003,12 +2003,7 @@ public class AbstractTreeUi {
   public boolean isReady(boolean attempt) {
     if (attempt && myStateLock.isLocked()) return false;
 
-    Boolean ready = checkValue(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return Boolean.valueOf(isIdle() && !hasPendingWork() && !isNodeActionsPending());
-      }
-    }, attempt);
+    Boolean ready = checkValue(() -> Boolean.valueOf(isIdle() && !hasPendingWork() && !isNodeActionsPending()), attempt);
 
     return ready != null && ready.booleanValue();
   }
@@ -3172,12 +3167,7 @@ public class AbstractTreeUi {
 
   @NotNull
   public Condition getExpiredElementCondition(final Object element) {
-    return new Condition() {
-      @Override
-      public boolean value(final Object o) {
-        return isInStructure(element);
-      }
-    };
+    return o -> isInStructure(element);
   }
 
   private void addSelectionPath(@NotNull final TreePath path,

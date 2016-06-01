@@ -134,13 +134,8 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   private static Set<String> collectDevPatternClassNames(@NotNull final Project project) {
     CachedValue<Set<String>> cachedValue = project.getUserData(PATTERN_CLASSES);
     if (cachedValue == null) {
-      cachedValue = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Set<String>>() {
-        @Nullable
-        @Override
-        public Result<Set<String>> compute() {
-          return Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
+      cachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
       project.putUserData(PATTERN_CLASSES, cachedValue);
     }
     return cachedValue.getValue();

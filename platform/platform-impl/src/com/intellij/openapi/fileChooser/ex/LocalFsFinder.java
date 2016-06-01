@@ -91,12 +91,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
     public FileChooserFilter(final FileChooserDescriptor descriptor, final FileSystemTree tree) {
       myDescriptor = descriptor;
-      myShowHidden = new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return tree.areHiddensShown();
-        }
-      };
+      myShowHidden = () -> tree.areHiddensShown();
     }
 
     public boolean isAccepted(final LookupFile file) {

@@ -162,19 +162,16 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     if (list.isEmpty()) {
       return null;
     }
-    final List<EncapsulatableClassMember> members = ContainerUtil.findAll(list, new Condition<EncapsulatableClassMember>() {
-      @Override
-      public boolean value(EncapsulatableClassMember member) {
-        try {
-          return generateMemberPrototypes(aClass, member).length > 0;
-        }
-        catch (GenerateCodeException e) {
-          return true;
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return false;
-        }
+    final List<EncapsulatableClassMember> members = ContainerUtil.findAll(list, member -> {
+      try {
+        return generateMemberPrototypes(aClass, member).length > 0;
+      }
+      catch (GenerateCodeException e) {
+        return true;
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return false;
       }
     });
     return members.toArray(new ClassMember[members.size()]);

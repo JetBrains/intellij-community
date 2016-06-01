@@ -286,12 +286,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
     final UsageView usageView = UsageViewManager.getInstance(project).showUsages(targets, usages, presentation, rerunFactory(project, scope));
 
-    final Runnable refactoringRunnable = applyRunnable(project, new Computable<UsageInfo[]>() {
-      @Override
-      public UsageInfo[] compute() {
-        final Set<UsageInfo> infos = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-        return infos.toArray(new UsageInfo[infos.size()]);
-      }
+    final Runnable refactoringRunnable = applyRunnable(project, () -> {
+      final Set<UsageInfo> infos = UsageViewUtil.getNotExcludedUsageInfos(usageView);
+      return infos.toArray(new UsageInfo[infos.size()]);
     });
 
     String canNotMakeString = "Cannot perform operation.\nThere were changes in code after usages have been found.\nPlease perform operation search again.";
@@ -301,20 +298,15 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @NotNull
   private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    return new Factory<UsageSearcher>() {
+    return () -> new UsageInfoSearcherAdapter() {
       @Override
-      public UsageSearcher create() {
-        return new UsageInfoSearcherAdapter() {
-          @Override
-          protected UsageInfo[] findUsages() {
-            return InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount());
-          }
+      protected UsageInfo[] findUsages() {
+        return InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount());
+      }
 
-          @Override
-          public void generate(@NotNull Processor<Usage> processor) {
-            processUsages(processor, project);
-          }
-        };
+      @Override
+      public void generate(@NotNull Processor<Usage> processor) {
+        processUsages(processor, project);
       }
     };
   }

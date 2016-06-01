@@ -89,11 +89,7 @@ public abstract class MavenImporter {
     }
 
     final ModuleType finalModuleType = moduleType;
-    return ContainerUtil.filter(result, new Condition<MavenImporter>() {
-      public boolean value(final MavenImporter importer) {
-        return importer.getModuleType() == finalModuleType;
-      }
-    });
+    return ContainerUtil.filter(result, importer -> importer.getModuleType() == finalModuleType);
   }
 
   public boolean isApplicable(MavenProject mavenProject) {

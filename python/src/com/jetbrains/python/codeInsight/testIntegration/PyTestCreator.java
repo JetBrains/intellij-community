@@ -70,23 +70,20 @@ public class PyTestCreator implements TestCreator {
    * @return file with test
    */
   static PsiFile generateTestAndNavigate(@NotNull final Project project, @NotNull final CreateTestDialog dialog) {
-    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<PsiFile>() {
-      public PsiFile compute() {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
-          public PsiFile compute() {
-            try {
-              final PyElement testClass = generateTest(project, dialog);
-              testClass.navigate(false);
-              return testClass.getContainingFile();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.warn(e);
-              return null;
-            }
+    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+      () -> ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+        public PsiFile compute() {
+          try {
+            final PyElement testClass = generateTest(project, dialog);
+            testClass.navigate(false);
+            return testClass.getContainingFile();
           }
-        });
-      }
-    });
+          catch (IncorrectOperationException e) {
+            LOG.warn(e);
+            return null;
+          }
+        }
+      }));
   }
 
   /**

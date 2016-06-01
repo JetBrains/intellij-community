@@ -483,12 +483,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     final String prefix = itemPattern(item);
-    boolean plainMatch = ContainerUtil.or(item.getAllLookupStrings(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return StringUtil.containsIgnoreCase(s, prefix);
-      }
-    });
+    boolean plainMatch = ContainerUtil.or(item.getAllLookupStrings(), s -> StringUtil.containsIgnoreCase(s, prefix));
     if (!plainMatch) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }

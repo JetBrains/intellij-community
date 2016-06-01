@@ -259,12 +259,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return getCachedIssues(withClosed);
     }
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
-    return ContainerUtil.filter(tasks, new Condition<Task>() {
-      @Override
-      public boolean value(final Task task) {
-        return withClosed || !task.isClosed();
-      }
-    });
+    return ContainerUtil.filter(tasks, task -> withClosed || !task.isClosed());
   }
 
   @Override
@@ -274,12 +269,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getCachedIssues(final boolean withClosed) {
-    return ContainerUtil.filter(myIssueCache.values(), new Condition<Task>() {
-      @Override
-      public boolean value(final Task task) {
-        return withClosed || !task.isClosed();
-      }
-    });
+    return ContainerUtil.filter(myIssueCache.values(), task -> withClosed || !task.isClosed());
   }
 
   @Nullable
@@ -316,12 +306,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public List<LocalTask> getLocalTasks(final boolean withClosed) {
     synchronized (myTasks) {
-      return ContainerUtil.filter(myTasks.values(), new Condition<LocalTask>() {
-        @Override
-        public boolean value(final LocalTask task) {
-          return withClosed || !isLocallyClosed(task);
-        }
-      });
+      return ContainerUtil.filter(myTasks.values(), task -> withClosed || !isLocallyClosed(task));
     }
   }
 
@@ -411,12 +396,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
       for (VcsTaskHandler.TaskInfo info : tasks) {
-        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), new Condition<BranchInfo>() {
-          @Override
-          public boolean value(BranchInfo info) {
-            return Comparing.equal(info.repository, repo);
-          }
-        }));
+        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), info1 -> Comparing.equal(info1.repository, repo)));
       }
     }
     return infos;
@@ -748,11 +728,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void updateIssues(final @Nullable Runnable onComplete) {
-    TaskRepository first = ContainerUtil.find(getAllRepositories(), new Condition<TaskRepository>() {
-      public boolean value(TaskRepository repository) {
-        return repository.isConfigured();
-      }
-    });
+    TaskRepository first = ContainerUtil.find(getAllRepositories(), repository -> repository.isConfigured());
     if (first == null) {
       myIssueCache.clear();
       if (onComplete != null) {

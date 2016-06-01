@@ -48,15 +48,12 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     final Set<Sdk> processedSdk = new THashSet<Sdk>();
     final Set<Library> processedLibraries = new THashSet<Library>();
     final Set<Module> processedModules = new THashSet<Module>();
-    final Condition<OrderEntry> condition = new Condition<OrderEntry>() {
-      @Override
-      public boolean value(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-          return module != null && !processedModules.contains(module);
-        }
-        return true;
+    final Condition<OrderEntry> condition = orderEntry -> {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+        return module != null && !processedModules.contains(module);
       }
+      return true;
     };
     for (Module module : modules) {
       buildEntries(module, processedModules, processedLibraries, processedSdk, condition);

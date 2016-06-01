@@ -339,12 +339,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       final PsiDocCommentOwner owner = docComment.getOwner();
       if (!(owner instanceof PsiMethod)) return null;
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
-      PsiParameter myParam = ContainerUtil.find(parameters, new Condition<PsiParameter>() {
-        @Override
-        public boolean value(PsiParameter psiParameter) {
-          return myName.equals(psiParameter.getName());
-        }
-      });
+      PsiParameter myParam = ContainerUtil.find(parameters, psiParameter -> myName.equals(psiParameter.getName()));
       if (myParam == null) return null;
 
       PsiDocTag[] tags = docComment.findTagsByName("param");

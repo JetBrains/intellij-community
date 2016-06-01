@@ -303,12 +303,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
-    return filter == null ? Conditions.<Sdk>alwaysTrue() : new Condition<Sdk>() {
-      @Override
-      public boolean value(Sdk sdk) {
-        return filter.value(sdk.getSdkType());
-      }
-    };
+    return filter == null ? Conditions.<Sdk>alwaysTrue() : (Condition<Sdk>)sdk -> filter.value(sdk.getSdkType());
   }
 
   public static class JdkComboBoxItem {

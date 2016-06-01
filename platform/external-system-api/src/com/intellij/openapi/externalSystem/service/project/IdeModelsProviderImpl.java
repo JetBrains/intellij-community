@@ -61,13 +61,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   @Override
   public Module[] getModules(@NotNull final ProjectData projectData) {
-    final List<Module> modules = ContainerUtil.filter(getModules(), new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        return isExternalSystemAwareModule(projectData.getOwner(), module) &&
-               StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module));
-      }
-    });
+    final List<Module> modules = ContainerUtil.filter(getModules(), module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
+                                                                          StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
     return ContainerUtil.toArray(modules, new Module[modules.size()]);
   }
 
@@ -142,18 +137,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
         if (((LibraryOrderEntry)entry).isModuleLevel() && libraryDependencyData.getLevel() != LibraryLevel.MODULE) continue;
         if (StringUtil.isEmpty(((LibraryOrderEntry)entry).getLibraryName())) {
           final Set<String> paths =
-            ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY), new Function<String, String>() {
-              @Override
-              public String fun(String path) {
-                return PathUtil.getLocalPath(path);
-              }
-            });
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES), new Function<String, String>() {
-            @Override
-            public String fun(String s) {
-              return PathUtil.getLocalPath(VfsUtilCore.urlToPath(s));
-            }
-          });
+            ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY), path -> PathUtil.getLocalPath(path));
+          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+                                                               s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
           if (entryPaths.equals(paths) && ((LibraryOrderEntry)entry).getScope() == data.getScope()) return entry;
           continue;
         }

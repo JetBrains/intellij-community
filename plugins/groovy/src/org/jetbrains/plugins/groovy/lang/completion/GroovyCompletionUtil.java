@@ -419,12 +419,7 @@ public class GroovyCompletionUtil {
     final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, null, place);
 
 
-    boolean hasSetters = ContainerUtil.find(clazz.getAllMethods(), new Condition<PsiMethod>() {
-      @Override
-      public boolean value(PsiMethod method) {
-        return GroovyPropertyUtils.isSimplePropertySetter(method);
-      }
-    }) != null;
+    boolean hasSetters = ContainerUtil.find(clazz.getAllMethods(), method -> GroovyPropertyUtils.isSimplePropertySetter(method)) != null;
 
     boolean hasParameters = false;
     boolean hasAccessibleConstructors = false;

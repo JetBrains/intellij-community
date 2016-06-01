@@ -422,12 +422,9 @@ public class RootIndex {
     // Note that this method is used in upsource as well, hence, don't reduce this method's visibility.
     List<VirtualFile> result = myPackageDirectoryCache.getDirectoriesByPackageName(packageName);
     if (!includeLibrarySources) {
-      result = ContainerUtil.filter(result, new Condition<VirtualFile>() {
-        @Override
-        public boolean value(VirtualFile file) {
-          DirectoryInfo info = getInfoForFile(file);
-          return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
-        }
+      result = ContainerUtil.filter(result, file -> {
+        DirectoryInfo info = getInfoForFile(file);
+        return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
       });
     }
     return new CollectionQuery<VirtualFile>(result);

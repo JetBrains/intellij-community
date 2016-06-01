@@ -87,16 +87,13 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       myActions.add(mySettingButton);
 
       if (myRepaintPanel != null) {
-        myLayoutData.showActions = new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            for (BalloonImpl.ActionButton action : myActions) {
-              if (!action.isShowing() || !action.hasPaint()) {
-                return Boolean.FALSE;
-              }
+        myLayoutData.showActions = () -> {
+          for (BalloonImpl.ActionButton action : myActions) {
+            if (!action.isShowing() || !action.hasPaint()) {
+              return Boolean.FALSE;
             }
-            return Boolean.TRUE;
           }
+          return Boolean.TRUE;
         };
       }
     }
