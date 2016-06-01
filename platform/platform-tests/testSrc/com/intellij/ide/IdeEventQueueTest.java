@@ -55,44 +55,36 @@ public class IdeEventQueueTest extends PlatformTestCase {
     eventQueue.postEvent(pressX);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
-    assertEquals(pressX, PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue));
+    assertEquals(pressX, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-
-    dispatchAllInvocationEventsOnly(ideEventQueue);
 
     // do not react to other events
     MouseEvent mouseClick = new MouseEvent(new JLabel(), MouseEvent.BUTTON1, 1, InputEvent.BUTTON1_DOWN_MASK, 12, 14, 1, true);
     eventQueue.postEvent(mouseClick);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    assertEquals(mouseClick, PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue));
+    assertEquals(mouseClick, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-
-    dispatchAllInvocationEventsOnly(ideEventQueue);
 
     KeyEvent keyRelease = new KeyEvent(new JLabel(), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
     eventQueue.postEvent(keyRelease);
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    assertEquals(keyRelease, PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue));
+    assertEquals(keyRelease, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+2, ideEventQueue.myKeyboardEventsDispatched.get());
-
-    dispatchAllInvocationEventsOnly(ideEventQueue);
   }
 
-  // need this because IdeEventQueue.dispatchEvent() calls invokeLater() and everybody else does too
-  private static void dispatchAllInvocationEventsOnly(IdeEventQueue ideEventQueue) throws InterruptedException {
+  // need this because everybody can post some crazy stuff to IdeEventQueue, so we have to filter InvocationEvents out
+  private static AWTEvent dispatchAllInvocationEventsUntilOtherEvent(IdeEventQueue ideEventQueue) throws InterruptedException {
     while (true) {
-      AWTEvent event = ideEventQueue.peekEvent();
-      if (!(event instanceof InvocationEvent)) break;
-      AWTEvent event1 = ideEventQueue.getNextEvent();
-      ideEventQueue.dispatchEvent(event1);
+      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue);
+      if (!(event instanceof InvocationEvent)) return event;
     }
   }
 }
