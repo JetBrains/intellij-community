@@ -1,5 +1,11 @@
 from libc.string cimport memcpy
 from libc.stdlib cimport malloc, free
+from thriftpy.transport.cybase cimport (
+    TCyBuffer,
+    CyTransportBase,
+    DEFAULT_BUFFER,
+)
+
 
 def to_bytes(s):
     try:

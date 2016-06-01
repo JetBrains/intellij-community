@@ -2,8 +2,8 @@
 
 from __future__ import absolute_import
 
-import contextlib
 import copy
+import contextlib
 import threading
 import uuid
 

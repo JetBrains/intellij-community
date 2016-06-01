@@ -4,8 +4,8 @@ from __future__ import absolute_import
 
 import struct
 from io import BytesIO
-from thriftpy._compat import CYTHON
 
+from thriftpy._compat import CYTHON
 from .. import TTransportBase, readall
 from ..buffered import TBufferedTransport
 
