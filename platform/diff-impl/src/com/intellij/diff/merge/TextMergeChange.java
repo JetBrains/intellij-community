@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -176,6 +177,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return myInnerFragments;
   }
 
+  @NotNull
+  public MergeLineFragment getFragment() {
+    return myFragment;
+  }
+
   @CalledInAwt
   public void setInnerFragments(@Nullable MergeInnerDifferences innerFragments) {
     if (myInnerFragments == null && innerFragments == null) return;
@@ -193,6 +199,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @CalledInAwt
   private void installOperations() {
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.BASE, OperationType.RESOLVE));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
@@ -264,22 +271,32 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     @Nullable
     public GutterIconRenderer createRenderer() {
-      if (mySide == ThreeSide.BASE) return null;
-      Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
-      assert versionSide != null;
-
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
-      if (!isChange(versionSide)) return null;
+      if (mySide == ThreeSide.BASE) {
+        switch (myType) {
+          case RESOLVE:
+            if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
+            return createResolveRenderer();
+          default:
+            throw new IllegalArgumentException(myType.name());
+        }
+      }
+      else {
+        Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
+        assert versionSide != null;
 
-      switch (myType) {
-        case APPLY:
-          return createApplyRenderer(versionSide, myCtrlPressed);
-        case IGNORE:
-          return createIgnoreRenderer(versionSide, myCtrlPressed);
-        default:
-          throw new IllegalArgumentException(myType.name());
+        if (!isChange(versionSide)) return null;
+
+        switch (myType) {
+          case APPLY:
+            return createApplyRenderer(versionSide, myCtrlPressed);
+          case IGNORE:
+            return createIgnoreRenderer(versionSide, myCtrlPressed);
+          default:
+            throw new IllegalArgumentException(myType.name());
+        }
       }
     }
   }
@@ -306,6 +323,17 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @Nullable
+  private GutterIconRenderer createResolveRenderer() {
+    if (myViewer.resolveConflictUsingInnerDifferences(this) == null) return null;
+
+    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Actions.Checked, false, () -> {
+      myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {
+        myViewer.resolveConflictedChange(this);
+      });
+    });
+  }
+
+  @Nullable
   private GutterIconRenderer createIconRenderer(@NotNull final String text,
                                                 @NotNull final Icon icon,
                                                 boolean ctrlClickVisible,
@@ -320,7 +348,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   private enum OperationType {
-    APPLY, IGNORE
+    APPLY, IGNORE, RESOLVE
   }
 
   //
