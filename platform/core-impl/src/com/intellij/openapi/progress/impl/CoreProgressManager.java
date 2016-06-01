@@ -466,7 +466,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       finishTask(task, finalCanceled, finalException);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
           finishTask(task, finalCanceled, finalException);
