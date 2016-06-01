@@ -581,9 +581,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     InspectionTreeNode parentNode = getToolParentNode(groupName, toolWrapper.getGroupPath(), errorLevel, groupedBySeverity, isSingleInspectionRun);
     InspectionNode toolNode = new InspectionNode(toolWrapper, myInspectionProfile);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
-    myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
+    toolNode = myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure, groupedBySeverity);
     InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);
-    toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure);
+    toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure, groupedBySeverity);
     ((DefaultInspectionToolPresentation)presentation).setToolNode(toolNode);
     registerActionShortcuts(presentation);
     return toolNode;

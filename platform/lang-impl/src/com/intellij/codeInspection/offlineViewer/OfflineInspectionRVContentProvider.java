@@ -104,12 +104,12 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                              @NotNull final InspectionNode toolNode,
+                                              @NotNull final InspectionTreeNode parentNode,
+                                              final boolean showStructure,
+                                              boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
+                                              @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
@@ -120,6 +120,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                   return newChild;
                 });
     }
+    return toolNode;
   }
 
   @Nullable

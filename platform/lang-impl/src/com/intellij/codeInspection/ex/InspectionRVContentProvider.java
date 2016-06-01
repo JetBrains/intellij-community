@@ -99,23 +99,25 @@ public abstract class InspectionRVContentProvider {
   public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
 
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull InspectionNode toolNode,
-                                    @NotNull InspectionTreeNode parentNode,
-                                    final boolean showStructure) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                              @NotNull InspectionNode toolNode,
+                                              @NotNull InspectionTreeNode parentNode,
+                                              boolean showStructure,
+                                              boolean groupBySeverity) {
     InspectionToolWrapper wrapper = toolNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
     Map<RefEntity, CommonProblemDescriptor[]> problems = presentation.getProblemElements();
-    appendToolNodeContent(context, toolNode, parentNode, showStructure, content, problems);
+    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems);
   }
 
-  public abstract void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                             @NotNull InspectionNode toolNode,
-                                             @NotNull InspectionTreeNode parentNode,
-                                             final boolean showStructure,
-                                             @NotNull Map<String, Set<RefEntity>> contents,
-                                             @NotNull Map<RefEntity, CommonProblemDescriptor[]> problems);
+  public abstract InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                                           @NotNull InspectionNode toolNode,
+                                                           @NotNull InspectionTreeNode parentNode,
+                                                           final boolean showStructure,
+                                                           boolean groupBySeverity,
+                                                           @NotNull Map<String, Set<RefEntity>> contents,
+                                                           @NotNull Map<RefEntity, CommonProblemDescriptor[]> problems);
 
   protected abstract void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                            @NotNull InspectionToolWrapper toolWrapper,
@@ -317,7 +319,7 @@ public abstract class InspectionRVContentProvider {
   }
 
   @SuppressWarnings({"ConstantConditions"}) //class cast suppression
-  protected static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
+  public static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     if (merge) {
       for (int i = 0; i < parent.getChildCount(); i++) {
         InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
