@@ -31,9 +31,11 @@ import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -160,15 +162,29 @@ public class InspectionResultsViewComparator implements Comparator {
         return positionComparing;
       }
     }
-    if (entity1 != null && entity2 != null) {
-      final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
-      if (nameComparing != 0) {
-        return nameComparing;
+    if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
+      final VirtualFile file1 = ((RefFile)entity1).getPointer().getVirtualFile();
+      final VirtualFile file2 = ((RefFile)entity2).getPointer().getVirtualFile();
+      if (file1 != null && file2 != null) {
+        if (file1.equals(file2)) return 0;
+        final int cmp = compareEntitiesByName(entity1, entity2);
+        if (cmp != 0) return cmp;
+        return file1.hashCode() - file2.hashCode();
       }
-      return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
+    }
+    if (entity1 != null && entity2 != null) {
+      return compareEntitiesByName(entity1, entity2);
     }
     if (entity1 != null) return -1;
     return entity2 != null ? 1 : 0;
+  }
+
+  private static int compareEntitiesByName(RefEntity entity1, RefEntity entity2) {
+    final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
+    if (nameComparing != 0) {
+      return nameComparing;
+    }
+    return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
   }
 
   private static class InspectionResultsViewComparatorHolder {
