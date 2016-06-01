@@ -59,9 +59,7 @@ public class PyEvaluator {
     if (expr == null || myVisited.contains(expr)) {
       return null;
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PyPsiUtils.assertValid(expr);
-    }
+    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(expr));
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
       return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());

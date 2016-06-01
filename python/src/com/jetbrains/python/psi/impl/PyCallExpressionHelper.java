@@ -462,9 +462,7 @@ public class PyCallExpressionHelper {
         final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
         final List<PyType> members = new ArrayList<PyType>();
         for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            PyPsiUtils.assertValid(target);
-          }
+          PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
           if (target != null) {
             final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
             if (typeRef != null) {
