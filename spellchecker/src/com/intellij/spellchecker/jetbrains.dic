@@ -176,6 +176,7 @@ finalizers
 findbugs
 firefox
 fixme
+foldr
 foreach
 formatter
 freelist
@@ -186,6 +187,8 @@ frontend
 ftlvariable
 fulltext
 func
+functor
+functorial
 fxml
 gdata
 gemfire
@@ -337,6 +340,8 @@ miny
 mixin
 mlslabel
 mockito
+monad
+monoidal
 mongodb
 monospaced
 multi
@@ -582,6 +587,7 @@ stylesheets
 subexpression
 subexpressions
 sublicense
+sublist
 subpackage
 subpackages
 subpartition
@@ -638,11 +644,13 @@ unbuffered
 uncomment
 uncommented
 uncommenting
+uncurry
 undef
 underwave
 undoable
 undofile
 unescaped
+unfoldr
 unhandled
 uninstall
 uniques
