@@ -473,7 +473,10 @@ public abstract class DialogWrapper {
       @Override
       public Color getBackground() {
         final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
-        return bg != null ? bg : super.getBackground();
+        if (getStyle() == DialogStyle.COMPACT && bg != null) {
+          return bg;
+        }
+        return super.getBackground();
       }
     };
     final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
