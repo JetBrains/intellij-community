@@ -781,15 +781,12 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static List<PsiClassType> filterOutExceptions(PsiClassType[] exceptions,
                                                         final GroovyPsiElement context,
                                                         final PsiClassType[] handledExceptions) {
-    return ContainerUtil.findAll(exceptions, new Condition<PsiClassType>() {
-      @Override
-      public boolean value(PsiClassType o) {
-        if (!InheritanceUtil.isInheritor(o, CommonClassNames.JAVA_LANG_EXCEPTION)) return false;
-        for (PsiClassType type : handledExceptions) {
-          if (TypesUtil.isAssignableByMethodCallConversion(type, o, context)) return false;
-        }
-        return true;
+    return ContainerUtil.findAll(exceptions, o -> {
+      if (!InheritanceUtil.isInheritor(o, CommonClassNames.JAVA_LANG_EXCEPTION)) return false;
+      for (PsiClassType type : handledExceptions) {
+        if (TypesUtil.isAssignableByMethodCallConversion(type, o, context)) return false;
       }
+      return true;
     });
   }
 

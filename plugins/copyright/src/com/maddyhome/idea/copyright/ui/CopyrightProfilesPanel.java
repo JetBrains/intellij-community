@@ -206,12 +206,9 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       @Override
       public void actionPerformed(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-          .withFileFilter(new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile file) {
-              final FileType fileType = file.getFileType();
-              return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
-            }
+          .withFileFilter(file -> {
+            final FileType fileType = file.getFileType();
+            return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
           })
           .withTitle("Choose File Containing Copyright Notice");
         FileChooser.chooseFile(descriptor, myProject, null, file -> {

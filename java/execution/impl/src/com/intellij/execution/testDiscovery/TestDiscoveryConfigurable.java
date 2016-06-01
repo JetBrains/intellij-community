@@ -112,12 +112,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     myMethod.setComponent(textFieldWithBrowseButton);
     final MethodBrowser methodBrowser = new MethodBrowser(project) {
       protected Condition<PsiMethod> getFilter(final PsiClass testClass) {
-        return new Condition<PsiMethod>() {
-          @Override
-          public boolean value(PsiMethod method) {
-            return method.getContainingClass() == testClass;
-          }
-        };
+        return method -> method.getContainingClass() == testClass;
       }
 
       @Override

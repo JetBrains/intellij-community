@@ -120,12 +120,7 @@ public class CompletionLookupArranger extends LookupArranger {
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       while (classifier != null) {
         final THashSet<LookupElement> itemSet = ContainerUtil.newIdentityTroveSet(thisSorterItems);
-        List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, new Condition<LookupElement>() {
-          @Override
-          public boolean value(LookupElement lookupElement) {
-            return itemSet.contains(lookupElement);
-          }
-        });
+        List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, lookupElement -> itemSet.contains(lookupElement));
         List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(unsortedItems, context);
         if (!hideSingleValued || !haveSameWeights(pairs)) {
           for (Pair<LookupElement, Object> pair : pairs) {
@@ -272,12 +267,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     addPrefixItems(model);
     addFrozenItems(items, model);
-    addSomeItems(model, byRelevance, new Condition<LookupElement>() {
-      @Override
-      public boolean value(LookupElement lastAdded) {
-        return model.size() >= MAX_PREFERRED_COUNT;
-      }
-    });
+    addSomeItems(model, byRelevance, lastAdded -> model.size() >= MAX_PREFERRED_COUNT);
     addCurrentlySelectedItemToTop(lookup, items, model);
 
     freezeTopItems(lookup, model);
@@ -293,24 +283,14 @@ public class CompletionLookupArranger extends LookupArranger {
     JList list = lookup.getList();
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     final int limit = Math.max(list.getLastVisibleIndex(), model.size()) + ourUISettings.MAX_LOOKUP_LIST_HEIGHT * 3;
-    addSomeItems(model, byRelevance, new Condition<LookupElement>() {
-      @Override
-      public boolean value(LookupElement lastAdded) {
-        return !testMode && model.size() >= limit;
-      }
-    });
+    addSomeItems(model, byRelevance, lastAdded -> !testMode && model.size() >= limit);
   }
 
   private static void ensureItemAdded(Set<LookupElement> items,
                                       LinkedHashSet<LookupElement> model,
                                       Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
     if (item != null && items.contains(item) && !model.contains(item)) {
-      addSomeItems(model, byRelevance, new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement lastAdded) {
-          return lastAdded == item;
-        }
-      });
+      addSomeItems(model, byRelevance, lastAdded -> lastAdded == item);
     }
   }
 

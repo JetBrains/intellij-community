@@ -45,12 +45,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
-    this(project, file, name, new Factory<T>() {
-      @Override
-      public T create() {
-        return component;
-      }
-    });
+    this(project, file, name, () -> component);
   }
 
   public DomFileEditor(final Project project, final VirtualFile file, final String name, final Factory<? extends T> component) {
@@ -164,16 +159,13 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
                                                   final Factory<? extends CommittablePanel> committablePanel) {
 
     final XmlFile file = DomUtil.getFile(element);
-    final Factory<BasicDomElementComponent> factory = new Factory<BasicDomElementComponent>() {
-      @Override
-      public BasicDomElementComponent create() {
+    final Factory<BasicDomElementComponent> factory = () -> {
 
-        CaptionComponent captionComponent = new CaptionComponent(name, icon);
-        captionComponent.initErrorPanel(element);
-        BasicDomElementComponent component = createComponentWithCaption(committablePanel.create(), captionComponent, element);
-        Disposer.register(component, captionComponent);
-        return component;
-      }
+      CaptionComponent captionComponent = new CaptionComponent(name, icon);
+      captionComponent.initErrorPanel(element);
+      BasicDomElementComponent component = createComponentWithCaption(committablePanel.create(), captionComponent, element);
+      Disposer.register(component, captionComponent);
+      return component;
     };
     return new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
       @Override

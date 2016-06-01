@@ -110,12 +110,7 @@ public class TestDiscoverySearchHelper {
     final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
     final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName);
     if (testsByMethodName != null) {
-      for (String pattern : ContainerUtil.filter(testsByMethodName, new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return s.startsWith(frameworkId);
-        }
-      })) {
+      for (String pattern : ContainerUtil.filter(testsByMethodName, s -> s.startsWith(frameworkId))) {
         patterns.add(pattern.substring(frameworkId.length()).replace('-', ','));
       }
     }

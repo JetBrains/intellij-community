@@ -158,12 +158,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   public static Condition<PsiElement> getDefaultInsideDeletedCondition(final PsiElement[] elements) {
-    return new Condition<PsiElement>() {
-      @Override
-      public boolean value(final PsiElement usage) {
-        return !(usage instanceof PsiFile) && isInside(usage, elements);
-      }
-    };
+    return usage -> !(usage instanceof PsiFile) && isInside(usage, elements);
   }
 
   public static void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages, final PsiElement[] allElementsToDelete) {

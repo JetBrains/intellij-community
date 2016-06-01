@@ -371,57 +371,54 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static List<GroovyDslScript> getDslScripts(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, new CachedValueProvider<List<GroovyDslScript>>() {
-      @Override
-      public Result<List<GroovyDslScript>> compute() {
-        if (GdslUtil.ourGdslStopped) {
-          return Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
+    return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, () -> {
+      if (GdslUtil.ourGdslStopped) {
+        return CachedValueProvider.Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
+      }
+
+      // eagerly initialize some services used by background gdsl parsing threads
+      // because service init requires a read action
+      // and there could be a deadlock with a write action waiting already on EDT
+      // if current thread is inside a non-cancellable read action
+      GdslScriptBase.getIdeaVersion();
+      DslActivationStatus.getInstance();
+
+      int count = 0;
+
+      List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
+
+      final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
+        new LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>();
+
+      for (VirtualFile vfile : getGdslFiles(project)) {
+        final long stamp = vfile.getModificationStamp();
+        final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
+        if (cached == null) {
+          scheduleParsing(queue, project, vfile, stamp, LoadTextUtil.loadText(vfile).toString());
+          count++;
         }
-
-        // eagerly initialize some services used by background gdsl parsing threads
-        // because service init requires a read action
-        // and there could be a deadlock with a write action waiting already on EDT
-        // if current thread is inside a non-cancellable read action
-        GdslScriptBase.getIdeaVersion();
-        DslActivationStatus.getInstance();
-
-        int count = 0;
-
-        List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
-
-        final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
-          new LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>();
-
-        for (VirtualFile vfile : getGdslFiles(project)) {
-          final long stamp = vfile.getModificationStamp();
-          final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
-          if (cached == null) {
-            scheduleParsing(queue, project, vfile, stamp, LoadTextUtil.loadText(vfile).toString());
-            count++;
-          }
-          else {
-            result.add(new GroovyDslScript(project, vfile, cached, vfile.getPath()));
-          }
+        else {
+          result.add(new GroovyDslScript(project, vfile, cached, vfile.getPath()));
         }
+      }
 
-        try {
-          while (count > 0 && !GdslUtil.ourGdslStopped) {
-            ProgressManager.checkCanceled();
-            final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
-            if (pair != null) {
-              count--;
-              if (pair.second != null) {
-                result.add(new GroovyDslScript(project, pair.first, pair.second, pair.first.getPath()));
-              }
+      try {
+        while (count > 0 && !GdslUtil.ourGdslStopped) {
+          ProgressManager.checkCanceled();
+          final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
+          if (pair != null) {
+            count--;
+            if (pair.second != null) {
+              result.add(new GroovyDslScript(project, pair.first, pair.second, pair.first.getPath()));
             }
           }
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
     }, false);
   }
 

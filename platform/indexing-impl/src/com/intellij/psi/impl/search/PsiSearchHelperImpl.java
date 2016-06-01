@@ -346,12 +346,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                   @NotNull final AtomicBoolean canceled,
                                   @NotNull AtomicInteger counter,
                                   int totalSize) throws ApplicationUtil.CannotRunReadActionException {
-    final PsiFile file = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return vfile.isValid() ? myManager.findFile(vfile) : null;
-      }
-    });
+    final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
       if (FileDocumentManager.getInstance().getCachedDocument(vfile) == null) {
@@ -420,12 +415,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
-    Condition<Integer> contextMatches = new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return (integer.intValue() & searchContext) != 0;
-      }
-    };
+    Condition<Integer> contextMatches = integer -> (integer.intValue() & searchContext) != 0;
     return processFilesContainingAllKeys(myManager.getProject(), scope, contextMatches, entries, processor);
   }
 
@@ -837,12 +827,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     entries.addAll(keys); // should find words from both text and container names
 
     final short finalSearchContext = searchContext;
-    Condition<Integer> contextMatches = new Condition<Integer>() {
-      @Override
-      public boolean value(Integer context) {
-        return (context.intValue() & finalSearchContext) != 0;
-      }
-    };
+    Condition<Integer> contextMatches = context -> (context.intValue() & finalSearchContext) != 0;
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(containerFiles);
     processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, processor);
 
@@ -881,12 +866,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
       for (final Processor<Processor<PsiReference>> customAction : collector.takeCustomSearchActions()) {
-        customs.add(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return customAction.process(processor);
-          }
-        });
+        customs.add(() -> customAction.process(processor));
       }
     }
 
@@ -962,13 +942,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
-                                                                          file -> !index.shouldBeFound(scope, file) || processor.process(file));
-      }
-    });
+    return DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
+                                                                        file -> !index.shouldBeFound(scope, file) || processor.process(file)));
   }
 
   @NotNull

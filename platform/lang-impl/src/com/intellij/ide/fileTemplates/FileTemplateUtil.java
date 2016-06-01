@@ -220,12 +220,7 @@ public class FileTemplateUtil{
       final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
       if (projectName instanceof String) {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        project = ContainerUtil.find(projects, new Condition<Project>() {
-          @Override
-          public boolean value(Project project) {
-            return projectName.equals(project.getName());
-          }
-        });
+        project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
       }
       VelocityWrapper.evaluate(project, context, stringWriter, templateContent);
     }

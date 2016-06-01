@@ -92,36 +92,33 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-              PsiElement psiElement = getElement(((PsiElement)element), popup);
-              psiElement = psiElement.getNavigationElement();
-              VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
+            PsiElement psiElement = getElement(((PsiElement)element), popup);
+            psiElement = psiElement.getNavigationElement();
+            VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
 
-              if (file != null && popup.getLinePosition() != -1) {
-                OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
-                Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
-                if (n.canNavigate()) {
-                  n.navigate(true);
-                  return;
-                }
+            if (file != null && popup.getLinePosition() != -1) {
+              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
+              Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+              if (n.canNavigate()) {
+                n.navigate(true);
+                return;
               }
+            }
 
-              if (file != null && popup.getMemberPattern() != null) {
-                NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-                Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
-                if (member != null) {
-                  member.navigate(true);
-                }
-              }
-
+            if (file != null && popup.getMemberPattern() != null) {
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+              Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+              if (member != null) {
+                member.navigate(true);
+              }
             }
-            else {
-              EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
-            }
+
+            NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+          }
+          else {
+            EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
           }
         });
       }

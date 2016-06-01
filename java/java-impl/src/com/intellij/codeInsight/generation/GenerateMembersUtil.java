@@ -469,15 +469,12 @@ public class GenerateMembersUtil {
     }
     final PsiParameter[] sourceParameters = source.getParameterList().getParameters();
     final PsiParameterList targetParameterList = target.getParameterList();
-    RefactoringUtil.fixJavadocsForParams(target, new HashSet<PsiParameter>(Arrays.asList(targetParameterList.getParameters())), new Condition<Pair<PsiParameter, String>>() {
-      @Override
-      public boolean value(Pair<PsiParameter, String> pair) {
-        final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
-        if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
-          return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());
-        }
-        return false;
+    RefactoringUtil.fixJavadocsForParams(target, new HashSet<PsiParameter>(Arrays.asList(targetParameterList.getParameters())), pair -> {
+      final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
+      if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
+        return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());
       }
+      return false;
     });
   }
 

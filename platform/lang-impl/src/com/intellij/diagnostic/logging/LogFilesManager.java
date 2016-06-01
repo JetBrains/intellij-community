@@ -67,12 +67,7 @@ public class LogFilesManager {
                 return;
               }
 
-              addConfigurationConsoles(logFile.getOptions(), new Condition<String>() {
-                @Override
-                public boolean value(final String file) {
-                  return !oldPaths.contains(file);
-                }
-              }, newPaths, logFile.getConfiguration());
+              addConfigurationConsoles(logFile.getOptions(), file -> !oldPaths.contains(file), newPaths, logFile.getConfiguration());
               for (String each : obsoletePaths) {
                 myManager.removeLogConsole(each);
               }

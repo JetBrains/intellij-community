@@ -126,12 +126,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
         final ManageTemplateVariablesDialog dialog = new ManageTemplateVariablesDialog(myManageTemplateVariablesButton);
         dialog.setTemplateVariables(myRepository.getAllTemplateVariables());
         if (dialog.showAndGet()) {
-          myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), new Condition<TemplateVariable>() {
-            @Override
-            public boolean value(TemplateVariable variable) {
-              return !variable.isReadOnly();
-            }
-          }));
+          myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), variable -> !variable.isReadOnly()));
           myCustomPanel.removeAll();
           myCustomPanel.add(createCustomPanel());
           //myCustomPanel.repaint();

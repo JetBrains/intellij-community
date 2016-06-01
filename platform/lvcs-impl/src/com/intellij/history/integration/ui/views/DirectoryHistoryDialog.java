@@ -207,11 +207,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     private Iterable<DirectoryChange> iterFileChanges() {
-      return ContainerUtil.iterate(getChanges(), new Condition<DirectoryChange>() {
-        public boolean value(DirectoryChange each) {
-          return each.canShowFileDifference();
-        }
-      });
+      return ContainerUtil.iterate(getChanges(), each -> each.canShowFileDifference());
     }
 
     @Override

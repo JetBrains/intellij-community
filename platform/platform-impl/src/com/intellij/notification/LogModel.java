@@ -130,12 +130,7 @@ public class LogModel implements Disposable {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    Notification message = ContainerUtil.find(notifications, new Condition<Notification>() {
-      @Override
-      public boolean value(Notification notification) {
-        return notification.isImportant();
-      }
-    });
+    Notification message = ContainerUtil.find(notifications, notification -> notification.isImportant());
     if (message == null) {
       setStatusMessage(null, 0);
     }

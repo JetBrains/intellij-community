@@ -83,12 +83,8 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
         return configurable.createComponent();
       }
     }
-    final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject), new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        return isSuitableForModule(module);
-      }
-    });
+    final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
+                                                      module -> isSuitableForModule(module));
     if (modules.size() == 1) {
       Module module = modules.get(0);
       final T configurable = createModuleConfigurable(module);

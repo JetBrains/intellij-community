@@ -146,12 +146,7 @@ public class GradleExecutionHelper {
                                   : jvmArgs;
 
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return StringUtil.isEmpty(s) ? null : s;
-        }
-      });
+      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);
 
       operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
     }
@@ -169,12 +164,7 @@ public class GradleExecutionHelper {
     if (!commandLineArgs.isEmpty()) {
       LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return StringUtil.isEmpty(s) ? null : s;
-        }
-      });
+      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
@@ -550,12 +540,9 @@ public class GradleExecutionHelper {
 
   @NotNull
   private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
-    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, new Function<Class, String>() {
-      @Override
-      public String fun(Class aClass) {
-        String path = PathManager.getJarPathForClass(aClass);
-        return path == null ? null : PathUtil.getCanonicalPath(path);
-      }
+    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
+      String path = PathManager.getJarPathForClass(aClass);
+      return path == null ? null : PathUtil.getCanonicalPath(path);
     });
     StringBuilder buf = new StringBuilder();
     buf.append('[');

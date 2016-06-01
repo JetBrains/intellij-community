@@ -45,13 +45,7 @@ import java.util.*;
 public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
-  @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = new NotNullFunction<String, File>() {
-    @NotNull
-    @Override
-    public File fun(String path) {
-      return new File(path);
-    }
-  };
+  @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
 
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
 

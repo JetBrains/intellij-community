@@ -63,21 +63,18 @@ public class DebuggerInvocationUtil {
 
   public static <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
     final Throwable[] ex = new Throwable[]{null};
-    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
-      @Override
-      public T compute() {
-        try {
-          return computable.compute();
-        }
-        catch (RuntimeException e) {
-          ex[0] = e;
-        }
-        catch (Exception th) {
-          ex[0] = th;
-        }
-
-        return null;
+    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      try {
+        return computable.compute();
       }
+      catch (RuntimeException e) {
+        ex[0] = e;
+      }
+      catch (Exception th) {
+        ex[0] = th;
+      }
+
+      return null;
     });
 
     if (ex[0] != null) {

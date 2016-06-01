@@ -635,12 +635,8 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean expectsClassLiteral(PsiElement position) {
-    return ContainerUtil.find(JavaSmartCompletionContributor.getExpectedTypes(position, false), new Condition<ExpectedTypeInfo>() {
-      @Override
-      public boolean value(ExpectedTypeInfo info) {
-        return InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS);
-      }
-    }) != null;
+    return ContainerUtil.find(JavaSmartCompletionContributor.getExpectedTypes(position, false),
+                              info -> InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS)) != null;
   }
 
   private static boolean isAtResourceVariableStart(PsiElement position) {

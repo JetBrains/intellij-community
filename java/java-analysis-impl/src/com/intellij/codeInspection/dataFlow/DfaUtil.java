@@ -60,13 +60,10 @@ public class DfaUtil {
 
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   private static Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(@NotNull final PsiElement codeBlock) {
-    return CachedValuesManager.getCachedValue(codeBlock, new CachedValueProvider<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>>() {
-      @Override
-      public Result<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>> compute() {
-        final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
-        RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
-        return Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
-      }
+    return CachedValuesManager.getCachedValue(codeBlock, () -> {
+      final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
+      RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+      return CachedValueProvider.Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
     });
   }
 

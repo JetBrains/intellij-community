@@ -130,12 +130,8 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             final PsiMethod[] foundMethods;
             if (methodName.endsWith("*")) {
               final String methodNameMask = StringUtil.trimEnd(methodName, "*");
-              final List<PsiMethod> methods = ContainerUtil.filter(psiClass.getMethods(), new Condition<PsiMethod>() {
-                @Override
-                public boolean value(PsiMethod method) {
-                  return method.getName().startsWith(methodNameMask);
-                }
-              });
+              final List<PsiMethod> methods = ContainerUtil.filter(psiClass.getMethods(),
+                                                                   method -> method.getName().startsWith(methodNameMask));
               foundMethods = methods.toArray(new PsiMethod[methods.size()]);
             } else {
               foundMethods = psiClass.findMethodsByName(methodName, true);

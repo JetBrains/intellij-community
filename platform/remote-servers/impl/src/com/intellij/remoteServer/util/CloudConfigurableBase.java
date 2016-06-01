@@ -74,17 +74,13 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
   }
 
   private String generateServerName() {
-    return UniqueNameGenerator.generateUniqueName(myCloudType.getPresentableName(), new Condition<String>() {
-
-      @Override
-      public boolean value(String s) {
-        for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-          if (server.getName().equals(s)) {
-            return false;
-          }
+    return UniqueNameGenerator.generateUniqueName(myCloudType.getPresentableName(), s -> {
+      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
+        if (server.getName().equals(s)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 

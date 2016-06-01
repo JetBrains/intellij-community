@@ -120,12 +120,7 @@ public class ControlFlowUtils {
 
     final GrCaseSection[] caseClauses = switchStatement.getCaseSections();
 
-    if (ContainerUtil.find(caseClauses, new Condition<GrCaseSection>() {
-      @Override
-      public boolean value(GrCaseSection section) {
-        return section.isDefault();
-      }
-    }) == null) {
+    if (ContainerUtil.find(caseClauses, section -> section.isDefault()) == null) {
       return true;
     }
 
@@ -621,19 +616,16 @@ public class ControlFlowUtils {
   }
 
   public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
-    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
-      @Override
-      public Result<Set<GrExpression>> compute() {
-        final Set<GrExpression> result = new HashSet<GrExpression>();
-        visitAllExitPoints(block, new ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            ContainerUtil.addIfNotNull(result, returnValue);
-            return true;
-          }
-        });
-        return Result.create(result, block);
-      }
+    return CachedValuesManager.getCachedValue(block, () -> {
+      final Set<GrExpression> result = new HashSet<GrExpression>();
+      visitAllExitPoints(block, new ExitPointVisitor() {
+        @Override
+        public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+          ContainerUtil.addIfNotNull(result, returnValue);
+          return true;
+        }
+      });
+      return CachedValueProvider.Result.create(result, block);
     });
   }
 
@@ -776,21 +768,11 @@ public class ControlFlowUtils {
 
   @Nullable
   public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   public static List<Instruction> findAllInstructions(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.findAll(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.findAll(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   @NotNull

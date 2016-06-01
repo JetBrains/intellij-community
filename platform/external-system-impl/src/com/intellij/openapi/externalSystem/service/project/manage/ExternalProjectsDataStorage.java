@@ -167,14 +167,11 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     final ProjectState projectState = myState.map.get(rootProjectPath);
     if (projectState == null) return;
 
-    ExternalSystemApiUtil.visit(projectDataNode, new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode node) {
-        final DataNode<ExternalConfigPathAware> projectOrModuleNode = resolveProjectNode(node);
-        assert projectOrModuleNode != null;
-        final ModuleState moduleState = projectState.map.get(projectOrModuleNode.getData().getLinkedExternalProjectPath());
-        node.setIgnored(isIgnored(projectState, moduleState, node.getKey()));
-      }
+    ExternalSystemApiUtil.visit(projectDataNode, node -> {
+      final DataNode<ExternalConfigPathAware> projectOrModuleNode = resolveProjectNode(node);
+      assert projectOrModuleNode != null;
+      final ModuleState moduleState = projectState.map.get(projectOrModuleNode.getData().getLinkedExternalProjectPath());
+      node.setIgnored(isIgnored(projectState, moduleState, node.getKey()));
     });
   }
 
@@ -183,25 +180,22 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
     final MultiMap<String, String> inclusionMap = MultiMap.create();
     final MultiMap<String, String> exclusionMap = MultiMap.create();
-    ExternalSystemApiUtil.visit(projectDataNode, new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode dataNode) {
-        try {
-          dataNode.getDataBytes();
-          DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
-          if (projectNode != null) {
-            final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
-            if (projectNode.isIgnored() || dataNode.isIgnored()) {
-              exclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
-            }
-            else {
-              inclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
-            }
+    ExternalSystemApiUtil.visit(projectDataNode, dataNode -> {
+      try {
+        dataNode.getDataBytes();
+        DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
+        if (projectNode != null) {
+          final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
+          if (projectNode.isIgnored() || dataNode.isIgnored()) {
+            exclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
+          }
+          else {
+            inclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
           }
         }
-        catch (IOException e) {
-          dataNode.clear(true);
-        }
+      }
+      catch (IOException e) {
+        dataNode.clear(true);
       }
     });
     final MultiMap<String, String> map;
@@ -237,12 +231,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   synchronized Collection<ExternalProjectInfo> list(@NotNull final ProjectSystemId projectSystemId) {
-    return ContainerUtil.mapNotNull(myExternalRootProjects.values(), new Function<InternalExternalProjectInfo, ExternalProjectInfo>() {
-      @Override
-      public ExternalProjectInfo fun(InternalExternalProjectInfo info) {
-        return projectSystemId.equals(info.getProjectSystemId()) ? info : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
+                                    info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }
 
   private void mergeLocalSettings() {
@@ -273,12 +263,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
           final Set<String> modulePaths = ContainerUtil.map2Set(
             ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE),
-            new Function<DataNode<ModuleData>, String>() {
-              @Override
-              public String fun(DataNode<ModuleData> node) {
-                return node.getData().getLinkedExternalProjectPath();
-              }
-            });
+            node -> node.getData().getLinkedExternalProjectPath());
           linkedProjectSettings.setModules(modulePaths);
         }
       }
@@ -325,15 +310,12 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
         continue;
       }
 
-      ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), new Consumer<DataNode<?>>() {
-        @Override
-        public void consume(DataNode dataNode) {
-          try {
-            dataNode.getDataBytes();
-          }
-          catch (IOException e) {
-            dataNode.clear(true);
-          }
+      ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), dataNode -> {
+        try {
+          dataNode.getDataBytes();
+        }
+        catch (IOException e) {
+          dataNode.clear(true);
         }
       });
     }
@@ -435,12 +417,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       return;
     }
 
-    ExternalSystemApiUtil.visit(dataNode, new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode node) {
-        node.setIgnored(isIgnored);
-      }
-    });
+    ExternalSystemApiUtil.visit(dataNode, node -> node.setIgnored(isIgnored));
 
     saveInclusionSettings(projectDataNode);
   }
@@ -491,13 +468,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
     public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
       myProject = project;
-      myExternalProjects = ContainerUtil.map(externalProjects, new Function<InternalExternalProjectInfo, InternalExternalProjectInfo>() {
-        @Override
-        public InternalExternalProjectInfo fun(
-          InternalExternalProjectInfo info) {
-          return (InternalExternalProjectInfo)info.copy();
-        }
-      });
+      myExternalProjects = ContainerUtil.map(externalProjects, info -> (InternalExternalProjectInfo)info.copy());
     }
 
     @Override

@@ -129,12 +129,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
         ProjectDataManager.getInstance().getExternalProjectsData(project, systemId);
 
       final List<DataNode<ProjectData>> dataNodes =
-        ContainerUtil.mapNotNull(projectsData, new Function<ExternalProjectInfo, DataNode<ProjectData>>() {
-          @Override
-          public DataNode<ProjectData> fun(ExternalProjectInfo info) {
-            return info.getExternalProjectStructure();
-          }
-        });
+        ContainerUtil.mapNotNull(projectsData, info -> info.getExternalProjectStructure());
       treeStructure.updateProjects(dataNodes);
       TreeUtil.expandAll(myTree);
 

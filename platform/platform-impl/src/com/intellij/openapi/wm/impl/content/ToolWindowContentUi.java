@@ -575,12 +575,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
                                                                                 DataManager.getInstance()
                                                                                   .getDataContext(myManager.getComponent()), false, true,
-                                                                                true, null, -1, new Condition<AnAction>() {
-        @Override
-        public boolean value(AnAction action) {
-          return action == selected.get() || action == selectedTab.get();
-        }
-      });
+                                                                                true, null, -1, action -> action == selected.get() || action == selectedTab.get());
 
     getCurrentLayout().showContentPopup(popup);
 

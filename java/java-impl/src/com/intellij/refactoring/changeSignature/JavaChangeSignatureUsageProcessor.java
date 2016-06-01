@@ -925,20 +925,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         newParameters.add(parameters[i]);
       }
     }
-    RefactoringUtil.fixJavadocsForParams(method, newParameters, new Condition<Pair<PsiParameter, String>>() {
-      @Override
-      public boolean value(Pair<PsiParameter, String> pair) {
-        final PsiParameter parameter = pair.first;
-        final String oldParamName = pair.second;
-        final int idx = ArrayUtil.find(oldParameterNames, oldParamName);
-        return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
-      }
-    }, new Condition<String>() {
-      @Override
-      public boolean value(String paramName) {
-        return ArrayUtil.find(oldParameterNames, paramName) >= 0;
-      }
-    });
+    RefactoringUtil.fixJavadocsForParams(method, newParameters, pair -> {
+      final PsiParameter parameter = pair.first;
+      final String oldParamName = pair.second;
+      final int idx = ArrayUtil.find(oldParameterNames, oldParamName);
+      return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
+    }, paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0);
   }
 
   private static PsiParameter createNewParameter(JavaChangeInfo changeInfo, JavaParameterInfo newParm,

@@ -254,12 +254,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       } else {
         getBuilder().expand(element, () -> done[0] = true);
       }
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return done[0];
-      }
-    });
+    }, o -> done[0]);
 
     Assert.assertNotNull(findNode(element, select));
   }

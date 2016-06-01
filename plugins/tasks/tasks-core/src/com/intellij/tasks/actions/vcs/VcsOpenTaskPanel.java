@@ -107,12 +107,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
           final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
           VcsTaskHandler.TaskInfo info = null;
           if (startFrom != null) {
-            info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
-              @Override
-              public boolean value(VcsTaskHandler.TaskInfo taskInfo) {
-                return startFrom.equals(taskInfo.getName());
-              }
-            });
+            info = ContainerUtil.find(tasks, taskInfo -> startFrom.equals(taskInfo.getName()));
           }
           if (info == null) {
             VcsTaskHandler.TaskInfo[] current = handler.getCurrentTasks();
@@ -186,12 +181,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       if (branch != null) {
         VcsTaskHandler.TaskInfo[] tasks = myVcsTaskHandler.getCurrentTasks();
         TaskManagerImpl.addBranches(myPreviousTask, tasks, true);
-        myVcsTaskHandler.switchToTask(branch, new Runnable() {
-          @Override
-          public void run() {
-            TaskManagerImpl.addBranches(localTask, new VcsTaskHandler.TaskInfo[]{branch}, false);
-          }
-        });
+        myVcsTaskHandler.switchToTask(branch, () -> TaskManagerImpl.addBranches(localTask, new VcsTaskHandler.TaskInfo[]{branch}, false));
       }
     }
   }

@@ -49,65 +49,30 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNewExpression() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0;
-      }
-    });
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0);
   }
 
   public void testNewExpressionWithNamedArgs() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof PsiClass;
-      }
-    });
+    doTest(element -> element instanceof PsiClass);
   }
 
   public void testNewExpressionWithMapParameter() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1;
-      }
-    });
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1);
   }
 
   public void testNewExpressionWithAnonymousClass() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2;
-      }
-    });
+    doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2);
   }
 
   public void testGroovyDocParameter1() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
-      }
-    });
+    doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 
   public void testGroovyDocParameter2() throws Throwable {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof GrParameter && ((GrParameter)element).getName().equals("x");
-      }
-    });
+    doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 
   public void testConstructorWithSuperClassSameName() {
-    doTest(new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element instanceof PsiMethod && "p2.MyClass".equals(((PsiMethod)element).getContainingClass().getQualifiedName());
-      }
-    }, "p/MyClass.groovy", "p2/MyClass.groovy");
+    doTest(element -> element instanceof PsiMethod && "p2.MyClass".equals(((PsiMethod)element).getContainingClass().getQualifiedName()), "p/MyClass.groovy", "p2/MyClass.groovy");
   }
 }

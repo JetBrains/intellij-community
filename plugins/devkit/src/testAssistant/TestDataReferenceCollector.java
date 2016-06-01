@@ -119,11 +119,8 @@ public class TestDataReferenceCollector {
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length && i < parameters.length; i++) {
       final int finalI = i;
-      result.put(parameters [i].getName(), new NullableComputable<String>() {
-        public String compute() {
-          return evaluate(arguments [finalI], Collections.<String, Computable<String>>emptyMap());
-        }
-      });
+      result.put(parameters [i].getName(),
+                 (NullableComputable<String>)() -> evaluate(arguments [finalI], Collections.<String, Computable<String>>emptyMap()));
     }
     return result;
   }

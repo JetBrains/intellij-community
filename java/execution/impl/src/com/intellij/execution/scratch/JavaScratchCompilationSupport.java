@@ -151,17 +151,8 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       final Set<File> cp = new LinkedHashSet<File>();
       final List<File> platformCp = new ArrayList<File>();
 
-      final Computable<OrderEnumerator> orderEnumerator = module != null ? new Computable<OrderEnumerator>() {
-        @Override
-        public OrderEnumerator compute() {
-          return ModuleRootManager.getInstance(module).orderEntries();
-        }
-      } : new Computable<OrderEnumerator>() {
-        @Override
-        public OrderEnumerator compute() {
-          return ProjectRootManager.getInstance(project).orderEntries();
-        }
-      };
+      final Computable<OrderEnumerator> orderEnumerator = module != null ? (Computable<OrderEnumerator>)() -> ModuleRootManager.getInstance(module).orderEntries()
+                                                                         : (Computable<OrderEnumerator>)() -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
         for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {

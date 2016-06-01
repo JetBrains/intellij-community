@@ -53,12 +53,7 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     }
 
     myPlugins = pluginDescriptions.toArray(new KeyValue[pluginDescriptions.size()]);
-    Arrays.sort(myPlugins, new Comparator<KeyValue>() {
-      @Override
-      public int compare(KeyValue o1, KeyValue o2) {
-        return String.valueOf(o1.getKey()).compareTo(String.valueOf(o2.getKey()));
-      }
-    });
+    Arrays.sort(myPlugins, (o1, o2) -> String.valueOf(o1.getKey()).compareTo(String.valueOf(o2.getKey())));
   }
 
   @NotNull

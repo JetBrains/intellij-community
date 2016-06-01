@@ -157,25 +157,22 @@ public class AddMethodsDialog extends DialogWrapper {
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
           final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<String, PsiMethod>();
-          for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
-            @Override
-            public boolean value(PsiMethod method) {
-              if (method.isConstructor() ||
-                  !method.hasModifierProperty(PsiModifier.STATIC) ||
-                  method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return false;
-              }
-              boolean templateFound = false;
-              for (PseudoLambdaReplaceTemplate template : possibleTemplates) {
-                if (template.validate(method) != null) {
-                  templateFound = true;
-                }
-              }
-              if (!templateFound) {
-                return false;
-              }
-              return true;
+          for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), method -> {
+            if (method.isConstructor() ||
+                !method.hasModifierProperty(PsiModifier.STATIC) ||
+                method.hasModifierProperty(PsiModifier.PRIVATE)) {
+              return false;
             }
+            boolean templateFound = false;
+            for (PseudoLambdaReplaceTemplate template : possibleTemplates) {
+              if (template.validate(method) != null) {
+                templateFound = true;
+              }
+            }
+            if (!templateFound) {
+              return false;
+            }
+            return true;
           })) {
             nameToMethod.putValue(m.getName(), m);
           }

@@ -273,12 +273,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     });
 
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, consoleProperties);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return packetsReceiver.getModel();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> packetsReceiver.getModel());
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);

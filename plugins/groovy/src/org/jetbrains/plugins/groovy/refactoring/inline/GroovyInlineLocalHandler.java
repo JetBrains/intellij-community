@@ -146,12 +146,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     else {
       flow = ControlFlowUtils.findControlFlowOwner(variable).getControlFlow();
       initializer = variable.getInitializerGroovy();
-      writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == variable;
-        }
-      });
+      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == variable);
     }
 
     if (initializer == null || writeInstr == null) {

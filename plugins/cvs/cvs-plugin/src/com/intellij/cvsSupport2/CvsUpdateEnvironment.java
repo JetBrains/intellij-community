@@ -184,11 +184,9 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       final CvsHandler editHandler = CommandCvsHandler.createEditHandler(VfsUtil.toVirtualFileArray(readOnlyFiles),
                                                                          CvsConfiguration.getInstance(project).RESERVED_EDIT);
       new CvsOperationExecutor(true, project, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for(VirtualFile file: readOnlyFiles) {
-            file.refresh(false, false);
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for(VirtualFile file: readOnlyFiles) {
+          file.refresh(false, false);
         }
       });
     }

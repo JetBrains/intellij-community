@@ -332,12 +332,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   @Override
   public boolean hasProblemFilesBeneath(@NotNull final Module scope) {
-    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile virtualFile) {
-        return ModuleUtilCore.moduleContainsFile(scope, virtualFile, false);
-      }
-    });
+    return hasProblemFilesBeneath(virtualFile -> ModuleUtilCore.moduleContainsFile(scope, virtualFile, false));
   }
 
   @Override

@@ -401,12 +401,7 @@ public class PluginGroups {
       }
     }
     else {
-      Condition<PluginId> condition = new Condition<PluginId>() {
-        @Override
-        public boolean value(PluginId id) {
-          return pluginId.equals(id.getIdString());
-        }
-      };
+      Condition<PluginId> condition = id -> pluginId.equals(id.getIdString());
       for (final IdeaPluginDescriptor plugin : myAllPlugins) {
         if (null != ContainerUtil.find(plugin.getDependentPluginIds(), condition) &&
             null == ContainerUtil.find(plugin.getOptionalDependentPluginIds(), condition)) {

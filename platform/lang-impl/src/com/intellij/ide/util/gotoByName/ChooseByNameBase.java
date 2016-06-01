@@ -910,13 +910,10 @@ public abstract class ChooseByNameBase {
         myTextPopup.cancel(event);
         return true;
       }
-    }).setCancelCallback(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        myTextPopup = null;
-        close(false);
-        return Boolean.TRUE;
-      }
+    }).setCancelCallback(() -> {
+      myTextPopup = null;
+      close(false);
+      return Boolean.TRUE;
     }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
     Point point = new Point(x, y);
@@ -1236,12 +1233,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    return ContainerUtil.filter(myList.getSelectedValues(), new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return o != EXTRA_ELEM && o != NON_PREFIX_SEPARATOR;
-      }
-    });
+    return ContainerUtil.filter(myList.getSelectedValues(), o -> o != EXTRA_ELEM && o != NON_PREFIX_SEPARATOR);
   }
 
   protected void chosenElementMightChange() {
@@ -1515,12 +1507,7 @@ public abstract class ChooseByNameBase {
     public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
       if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
 
-      return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
-        @Override
-        public Continuation compute() {
-          return performInReadAction(indicator);
-        }
-      });
+      return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> performInReadAction(indicator));
     }
 
     @Nullable

@@ -275,12 +275,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
     allProblems.addAll(visitor.myCCEInstructions);
-    allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction1) {
-        return instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1);
-      }
-    }));
+    allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), instruction1 -> instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1)));
 
     HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
@@ -654,12 +649,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (isCompileTimeFlagReference(condition)) return true;
 
     Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(condition, PsiReferenceExpression.class);
-    return ContainerUtil.or(refs, new Condition<PsiReferenceExpression>() {
-      @Override
-      public boolean value(PsiReferenceExpression ref) {
-        return isCompileTimeFlagReference(ref);
-      }
-    });
+    return ContainerUtil.or(refs, ref -> isCompileTimeFlagReference(ref));
   }
 
   private static boolean isCompileTimeFlagReference(PsiElement element) {
@@ -824,15 +814,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     
     Collection<PsiElement> getProblems(final NullabilityProblem kind) {
-      return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
-          // non-ephemeral NPE should be reported
-          // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
-          //  (e.g. if it's inside "if (var == null)" check after contract method invocation
-          return info.normalNpe || info.ephemeralNpe && !info.normalOk;
-        }
+      return ContainerUtil.filter(myProblems.get(kind), psiElement -> {
+        StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
+        // non-ephemeral NPE should be reported
+        // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
+        //  (e.g. if it's inside "if (var == null)" check after contract method invocation
+        return info.normalNpe || info.ephemeralNpe && !info.normalOk;
       });
     }
 

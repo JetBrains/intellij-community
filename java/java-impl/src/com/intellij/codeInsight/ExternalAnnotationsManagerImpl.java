@@ -274,12 +274,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @NotNull
   private static VirtualFile[] filterByReadOnliness(@NotNull VirtualFile[] files) {
-    List<VirtualFile> result = ContainerUtil.filter(files, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return file.isInLocalFileSystem();
-      }
-    });
+    List<VirtualFile> result = ContainerUtil.filter(files, file -> file.isInLocalFileSystem());
     return VfsUtilCore.toVirtualFileArray(result);
   }
 

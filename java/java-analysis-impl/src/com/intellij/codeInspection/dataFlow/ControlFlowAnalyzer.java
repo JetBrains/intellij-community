@@ -1515,30 +1515,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
-      @Nullable
-      @Override
-      public Result<List<MethodContract>> compute() {
-        final PsiAnnotation contractAnno = findContractAnnotation(method);
-        if (contractAnno != null) {
-          String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
-          if (text != null) {
-            try {
-              final int paramCount = method.getParameterList().getParametersCount();
-              List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
-                @Override
-                public boolean value(MethodContract contract) {
-                  return contract.arguments.length == paramCount;
-                }
-              });
-              return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-            }
-            catch (Exception ignored) {
-            }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      final PsiAnnotation contractAnno = findContractAnnotation(method);
+      if (contractAnno != null) {
+        String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+        if (text != null) {
+          try {
+            final int paramCount = method.getParameterList().getParametersCount();
+            List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text),
+                                                                   contract -> contract.arguments.length == paramCount);
+            return CachedValueProvider.Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
+          catch (Exception ignored) {
           }
         }
-        return Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
+      return CachedValueProvider.Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

@@ -367,13 +367,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Override
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<GrAnnotation[]> compute() {
-        return Result.create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> CachedValueProvider.Result
+                                                .create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   @Override

@@ -91,12 +91,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     else {
       AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), projectImportProvider);
       dialog.getWizardContext().setProjectBuilder(getBuilder());
-      dialog.navigateToStep(new Function<Step, Boolean>() {
-        @Override
-        public Boolean fun(Step step) {
-          return step instanceof SelectExternalProjectStep;
-        }
-      });
+      dialog.navigateToStep(step -> step instanceof SelectExternalProjectStep);
       result = dialog.showAndGet();
     }
     if (result && getBuilder().getExternalProjectNode() != null) {

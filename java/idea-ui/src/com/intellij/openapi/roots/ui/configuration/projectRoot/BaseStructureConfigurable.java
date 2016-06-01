@@ -339,6 +339,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
+      //noinspection Convert2Lambda
       super(new Condition<Object[]>() {
         @Override
         public boolean value(final Object[] objects) {

@@ -97,12 +97,7 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
     TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
 
     SyntaxTraverser<PsiElement> s = psiTraverser(myFile).
-      expand(compose(psiApi().TO_RANGE(), new Condition<TextRange>() {
-        @Override
-        public boolean value(TextRange range) {
-          return range.intersects(myStartOffset, myEndOffset);
-        }
-      })).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
+      expand(compose(psiApi().TO_RANGE(), range -> range.intersects(myStartOffset, myEndOffset))).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
     List<HighlightInfo> infos = ContainerUtil.newArrayList();
 
 

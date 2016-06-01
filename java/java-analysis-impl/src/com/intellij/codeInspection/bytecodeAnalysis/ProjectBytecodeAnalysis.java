@@ -92,13 +92,8 @@ public class ProjectBytecodeAnalysis {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation[]> compute() {
-        return Result.create(collectInferredAnnotations(listOwner), listOwner);
-      }
-    });
+    return CachedValuesManager.getCachedValue(listOwner,
+                                              () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
   /**

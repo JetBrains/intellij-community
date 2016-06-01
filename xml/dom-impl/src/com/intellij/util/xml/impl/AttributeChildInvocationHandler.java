@@ -111,12 +111,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   @Override
   public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
-    return getManager().createStableValue(new Factory<T>() {
-      @Override
-      public T create() {
-        return parentCopy.isValid() ? (T) getChildDescription().getValues(parentCopy).get(0) : null;
-      }
-    });
+    return getManager().createStableValue(() -> parentCopy.isValid() ? (T) getChildDescription().getValues(parentCopy).get(0) : null);
   }
 
   @Override

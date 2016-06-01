@@ -86,16 +86,14 @@ public class TemporaryPlacesRegistry {
     long modificationCount = myModificationTracker.getModificationCount();
     if (myPsiModificationCounter == modificationCount) return myTempPlaces;
     myPsiModificationCounter = modificationCount;
-    final List<TempPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, new Condition<TempPlace>() {
-      public boolean value(final TempPlace place) {
-        PsiLanguageInjectionHost element = place.elementPointer.getElement();
-        if (element == null) {
-          return true;
-        }
-        else {
-          element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
-          return false;
-        }
+    final List<TempPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, place -> {
+      PsiLanguageInjectionHost element = place.elementPointer.getElement();
+      if (element == null) {
+        return true;
+      }
+      else {
+        element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+        return false;
       }
     });
     if (!placesToRemove.isEmpty()) {

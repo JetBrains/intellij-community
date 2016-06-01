@@ -381,13 +381,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = doInReadActionIfProjectOpen(new Computable<PsiFile>() {
-      @Nullable
-      @Override
-      public PsiFile compute() {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    });
+    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> PsiManager.getInstance(myProject).findFile(file));
     if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
       final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {

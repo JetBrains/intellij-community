@@ -119,11 +119,6 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return new MavenPathReferenceConverter(new Condition<PsiFileSystemItem>() {
-      @Override
-      public boolean value(PsiFileSystemItem item) {
-        return item.isDirectory() || item.getName().equals("pom.xml");
-      }
-    }).createReferences(genericDomValue, element, context);
+    return new MavenPathReferenceConverter(item -> item.isDirectory() || item.getName().equals("pom.xml")).createReferences(genericDomValue, element, context);
   }
 }

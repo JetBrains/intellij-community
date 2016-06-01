@@ -212,12 +212,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         }
       });
 
-      String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return s.endsWith(".iml");
-        }
-      });
+      String iml = ContainerUtil.find(dir.list(), s -> s.endsWith(".iml"));
       if (moduleMode) {
         File from = new File(path, iml);
         File to = new File(getModuleFilePath());

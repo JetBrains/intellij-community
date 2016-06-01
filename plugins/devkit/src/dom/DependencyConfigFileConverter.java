@@ -61,15 +61,10 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
                                                   true, true,
                                                   new FileType[]{XmlFileType.INSTANCE}) {
 
-        private final Condition<PsiFileSystemItem> PLUGIN_XML_CONDITION = new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            return !item.isDirectory() &&
-                   !item.equals(getContainingFile()) &&
-                   (item instanceof XmlFile && DescriptorUtil.isPluginXml((PsiFile)item)) &&
-                   !isAlreadyUsed((XmlFile)item);
-          }
-        };
+        private final Condition<PsiFileSystemItem> PLUGIN_XML_CONDITION = item -> !item.isDirectory() &&
+                                                                              !item.equals(getContainingFile()) &&
+                                                                              (item instanceof XmlFile && DescriptorUtil.isPluginXml((PsiFile)item)) &&
+                                                                              !isAlreadyUsed((XmlFile)item);
 
         private boolean isAlreadyUsed(final XmlFile xmlFile) {
           final PsiFile file = getContainingFile();

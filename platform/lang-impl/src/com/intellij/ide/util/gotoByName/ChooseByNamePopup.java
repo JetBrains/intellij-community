@@ -173,12 +173,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setModalContext(false)
         .setAdText(adText)
         .setMayBeParent(true);
-      builder.setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return Boolean.TRUE;
-        }
-      });
+      builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setLocation(preferredBounds.getLocation());
       myDropdownPopup.setSize(preferredBounds.getSize());

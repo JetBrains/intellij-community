@@ -924,16 +924,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> parameter.getType());
 
       if (signatures.size() > 1) {
-        final PsiType[] fittingSignature = ContainerUtil.find(signatures, new Condition<PsiType[]>() {
-          @Override
-          public boolean value(PsiType[] types) {
-            for (int i = 0; i < types.length; i++) {
-              if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
-                return false;
-              }
+        final PsiType[] fittingSignature = ContainerUtil.find(signatures, types -> {
+          for (int i = 0; i < types.length; i++) {
+            if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
+              return false;
             }
-            return true;
           }
+          return true;
         });
         if (fittingSignature == null) {
           registerError(

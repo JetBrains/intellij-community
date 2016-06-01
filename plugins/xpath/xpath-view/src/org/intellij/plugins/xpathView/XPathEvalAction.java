@@ -269,12 +269,7 @@ public class XPathEvalAction extends XPathAction {
 
         //noinspection unchecked
         final List<?> _result = new ArrayList(result);
-        final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
-            @Override
-            public UsageSearcher create() {
-                return new MyUsageSearcher(_result, xPath, contextNode);
-            }
-        };
+        final Factory<UsageSearcher> searcherFactory = () -> new MyUsageSearcher(_result, xPath, contextNode);
         final MyUsageTarget usageTarget = new MyUsageTarget(xPath.toString(), contextNode);
 
         showUsageView(project, usageTarget, searcherFactory, new EditExpressionAction() {
@@ -308,12 +303,7 @@ public class XPathEvalAction extends XPathAction {
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
-            @Override
-            public ProgressIndicator create() {
-                return new FindProgressIndicator(project, "XML Document(s)");
-            }
-        });
+        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, "XML Document(s)"));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
         final UsageTarget[] usageTargets = { usageTarget };

@@ -114,79 +114,65 @@ public class GradleManager
   @NotNull
   @Override
   public Function<Project, GradleSettings> getSettingsProvider() {
-    return new Function<Project, GradleSettings>() {
-      @Override
-      public GradleSettings fun(Project project) {
-        return GradleSettings.getInstance(project);
-      }
-    };
+    return project -> GradleSettings.getInstance(project);
   }
 
   @NotNull
   @Override
   public Function<Project, GradleLocalSettings> getLocalSettingsProvider() {
-    return new Function<Project, GradleLocalSettings>() {
-      @Override
-      public GradleLocalSettings fun(Project project) {
-        return GradleLocalSettings.getInstance(project);
-      }
-    };
+    return project -> GradleLocalSettings.getInstance(project);
   }
 
   @NotNull
   @Override
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
-    return new Function<Pair<Project, String>, GradleExecutionSettings>() {
-
-      @Override
-      public GradleExecutionSettings fun(Pair<Project, String> pair) {
-        final Project project = pair.first;
-        GradleSettings settings = GradleSettings.getInstance(project);
-        File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
-        String localGradlePath = null;
-        if (gradleHome != null) {
-          try {
-            // Try to resolve symbolic links as there were problems with them at the gradle side.
-            localGradlePath = gradleHome.getCanonicalPath();
-          }
-          catch (IOException e) {
-            localGradlePath = gradleHome.getAbsolutePath();
-          }
+    return pair -> {
+      final Project project = pair.first;
+      GradleSettings settings = GradleSettings.getInstance(project);
+      File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
+      String localGradlePath = null;
+      if (gradleHome != null) {
+        try {
+          // Try to resolve symbolic links as there were problems with them at the gradle side.
+          localGradlePath = gradleHome.getCanonicalPath();
         }
-
-        GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
-        final DistributionType distributionType;
-        if (projectLevelSettings == null) {
-          distributionType =
-            GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
+        catch (IOException e) {
+          localGradlePath = gradleHome.getAbsolutePath();
         }
-        else {
-          distributionType =
-            projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
-        }
-
-        GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
-                                                                     settings.getServiceDirectoryPath(),
-                                                                     distributionType,
-                                                                     settings.getGradleVmOptions(),
-                                                                     settings.isOfflineWork());
-
-        for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-          result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
-        }
-
-        final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, pair.second);
-        final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
-        if (!StringUtil.isEmpty(javaHome)) {
-          LOG.info("Instructing gradle to use java from " + javaHome);
-        }
-        result.setJavaHome(javaHome);
-        result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
-        if (projectLevelSettings != null) {
-          result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
-        }
-        return result;
       }
+
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
+      final DistributionType distributionType;
+      if (projectLevelSettings == null) {
+        distributionType =
+          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
+      }
+      else {
+        distributionType =
+          projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
+      }
+
+      GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
+                                                                   settings.getServiceDirectoryPath(),
+                                                                   distributionType,
+                                                                   settings.getGradleVmOptions(),
+                                                                   settings.isOfflineWork());
+
+      for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+        result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
+      }
+
+      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, pair.second);
+      final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
+      if (!StringUtil.isEmpty(javaHome)) {
+        LOG.info("Instructing gradle to use java from " + javaHome);
+      }
+      result.setJavaHome(javaHome);
+      result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
+      if (projectLevelSettings != null) {
+        result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
+      }
+      return result;
     };
   }
 

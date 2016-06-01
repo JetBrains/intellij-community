@@ -317,25 +317,21 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getCachedValue(memberClass[0], new CachedValueProvider<SearchScope>() {
-          @Nullable
-          @Override
-          public Result<SearchScope> compute() {
-            final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
-            classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
+        return CachedValuesManager.getCachedValue(memberClass[0], () -> {
+          final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
+          classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
 
-            final Set<PsiClass> supers = new HashSet<PsiClass>();
-            for (PsiClass psiClass : classesToSearch) {
-              supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
-            }
-
-            final List<PsiElement> elements = new ArrayList<PsiElement>();
-            elements.addAll(classesToSearch);
-            elements.addAll(supers);
-            elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
-
-            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          final Set<PsiClass> supers = new HashSet<PsiClass>();
+          for (PsiClass psiClass : classesToSearch) {
+            supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
           }
+
+          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          elements.addAll(classesToSearch);
+          elements.addAll(supers);
+          elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
+
+          return new CachedValueProvider.Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         });
       }
     }

@@ -150,81 +150,53 @@ public class PyFindUsagesTest extends PyTestCase {
 
   // PY-8604
   public void testOuterVariableInGeneratorPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size());
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size()));
   }
 
   // PY-8604
   public void testOuterVariableInGeneratorPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size());
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size()));
   }
 
   // PY-18808
   public void testOuterVariableInListComprehensionPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size());
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size()));
   }
 
   // PY-18808
   public void testOuterVariableInListComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size());
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size()));
   }
 
   public void testOverrideVariableByTupleInComprehensionPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
-        assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
     });
   }
 
   public void testOverrideVariableByTupleInComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
-        assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
+      assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
     });
   }
 
   public void testOverrideVariableInComprehensionPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
-        assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
     });
   }
 
   public void testOverrideVariableInComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
-        assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
+      assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
     });
   }
 

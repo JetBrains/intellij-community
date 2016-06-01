@@ -73,12 +73,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   public PushedFilePropertiesUpdaterImpl(final Project project) {
     myProject = project;
     myPushers = Extensions.getExtensions(FilePropertyPusher.EP_NAME);
-    myFilePushers = ContainerUtil.findAllAsArray(myPushers, new Condition<FilePropertyPusher>() {
-      @Override
-      public boolean value(FilePropertyPusher pusher) {
-        return !pusher.pushDirectoriesOnly();
-      }
-    });
+    myFilePushers = ContainerUtil.findAllAsArray(myPushers, pusher -> !pusher.pushDirectoriesOnly());
 
     StartupManager.getInstance(project).registerPreStartupActivity(
       () -> project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {

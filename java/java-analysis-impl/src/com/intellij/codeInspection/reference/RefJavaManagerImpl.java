@@ -165,14 +165,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public RefParameter getParameterReference(final PsiParameter param, final int index) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
     
-    return myRefManager.getFromRefTableOrCache(param, new NullableFactory<RefParameter>() {
-      @Nullable
-      @Override
-      public RefParameter create() {
-        RefParameter ref = new RefParameterImpl(param, index, myRefManager);
-        ((RefParameterImpl)ref).initialize();
-        return ref;
-      }
+    return myRefManager.getFromRefTableOrCache(param, () -> {
+      RefParameter ref = new RefParameterImpl(param, index, myRefManager);
+      ((RefParameterImpl)ref).initialize();
+      return ref;
     });
   }
 

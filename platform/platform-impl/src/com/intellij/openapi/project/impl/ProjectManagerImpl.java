@@ -456,13 +456,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return project;
     }
     try {
-      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
-        @Override
-        @Nullable
-        public Project compute() {
-          initProject(project, null);
-          return project;
-        }
+      myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
+        initProject(project, null);
+        return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     }
     catch (ProcessCanceledException ignore) {

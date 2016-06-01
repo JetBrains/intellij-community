@@ -412,12 +412,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   @Override
   public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
-    final List<RatedResolveResult> results = RecursionManager.doPreventingRecursion(this, false, new Computable<List<RatedResolveResult>>() {
-      @Override
-      public List<RatedResolveResult> compute() {
-        return getExportedNameCache().multiResolve(name);
-      }
-    });
+    final List<RatedResolveResult> results = RecursionManager.doPreventingRecursion(this, false,
+                                                                                    () -> getExportedNameCache().multiResolve(name));
     if (results != null && !results.isEmpty()) {
       return results;
     }

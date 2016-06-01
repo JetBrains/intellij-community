@@ -199,12 +199,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
       public List<TasksActivation> getTasksActivation(@NotNull final ProjectSystemId systemId) {
         final Set<Map.Entry<String, TaskActivationState>> entries =
           myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation().entrySet();
-        return ContainerUtil.map(entries, new Function<Map.Entry<String, TaskActivationState>, TasksActivation>() {
-          @Override
-          public TasksActivation fun(Map.Entry<String, TaskActivationState> entry) {
-            return new TasksActivation(systemId, entry.getKey(), entry.getValue());
-          }
-        });
+        return ContainerUtil.map(entries, entry -> new TasksActivation(systemId, entry.getKey(), entry.getValue()));
       }
 
       @Override

@@ -84,15 +84,12 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
     final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true) {
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-        return new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            if (item instanceof PsiDirectory) return true;
-            final VirtualFile virtualFile = item.getVirtualFile();
-            if (virtualFile == null) return false;
-            final FileType fileType = virtualFile.getFileType();
-            return ArrayUtilRt.find(myAcceptedFileTypes, fileType) >= 0;
-          }
+        return item -> {
+          if (item instanceof PsiDirectory) return true;
+          final VirtualFile virtualFile = item.getVirtualFile();
+          if (virtualFile == null) return false;
+          final FileType fileType = virtualFile.getFileType();
+          return ArrayUtilRt.find(myAcceptedFileTypes, fileType) >= 0;
         };
       }
     };

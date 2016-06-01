@@ -115,13 +115,7 @@ public class LibraryOptionsPanel implements Disposable {
                              @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
 
-    this(libraryDescription, new NotNullComputable<String>() {
-      @NotNull
-      @Override
-      public String compute() {
-        return path;
-      }
-    }, versionFilter, librariesContainer, showDoNotCreateOption);
+    this(libraryDescription, () -> path, versionFilter, librariesContainer, showDoNotCreateOption);
   }
 
   public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,

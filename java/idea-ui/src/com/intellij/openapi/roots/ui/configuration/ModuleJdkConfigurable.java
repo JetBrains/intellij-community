@@ -115,35 +115,26 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     final Project project = getRootModel().getModule().getProject();
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     myCbModuleJdk
-      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>() {
-        @Override
-        public boolean value(Sdk jdk) {
-          final Sdk projectJdk = myJdksModel.getProjectSdk();
-          if (projectJdk == null) {
-            final int res =
-              Messages.showYesNoDialog(myJdkPanel,
-                                       ProjectBundle.message("project.roots.no.jdk.on.project.message"),
-                                       ProjectBundle.message("project.roots.no.jdk.on.project.title"),
-                                       Messages.getInformationIcon());
-            if (res == Messages.YES) {
-              myJdksModel.setProjectSdk(jdk);
-              return true;
-            }
+      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), jdk -> {
+        final Sdk projectJdk = myJdksModel.getProjectSdk();
+        if (projectJdk == null) {
+          final int res =
+            Messages.showYesNoDialog(myJdkPanel,
+                                     ProjectBundle.message("project.roots.no.jdk.on.project.message"),
+                                     ProjectBundle.message("project.roots.no.jdk.on.project.title"),
+                                     Messages.getInformationIcon());
+          if (res == Messages.YES) {
+            myJdksModel.setProjectSdk(jdk);
+            return true;
           }
-          return false;
         }
+        return false;
       }, true);
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        JBUI.insets(0, 4, 7, 0), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-    myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), new Computable<Sdk>() {
-      @Override
-      @Nullable
-      public Sdk compute() {
-        return getRootModel().getSdk();
-      }
-    });
+    myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), () -> getRootModel().getSdk());
     myJdkPanel.add(editButton,
                    new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           JBUI.insets(0, 4, 7, 0), 0, 0));

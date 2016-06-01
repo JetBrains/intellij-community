@@ -75,12 +75,9 @@ public class PluginDescriptorChooser {
                                                project,
                                                module.getModuleWithDependenciesScope());
 
-    elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public boolean value(DomFileElement<IdeaPlugin> element) {
-        VirtualFile virtualFile = element.getFile().getVirtualFile();
-        return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
-      }
+    elements = ContainerUtil.filter(elements, element -> {
+      VirtualFile virtualFile = element.getFile().getVirtualFile();
+      return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
     });
 
     elements = findAppropriateIntelliJModule(module.getName(), elements);

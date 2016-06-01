@@ -398,11 +398,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
                   return fieldsToInitializers.get(source).movedFieldsUsed;
                 }
               },
-              new Condition<PsiField>() {
-                public boolean value(PsiField object) {
-                  return !initializedFields.contains(object);
-                }
-              }
+              object -> !initializedFields.contains(object)
       );
 
       for (PsiField psiField : unmovable) {

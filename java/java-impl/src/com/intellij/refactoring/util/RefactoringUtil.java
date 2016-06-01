@@ -1280,11 +1280,7 @@ public class RefactoringUtil {
 
     public IsDescendantOf(PsiClass aClass) {
       myClass = aClass;
-      myConditionCache = new ConditionCache<PsiClass>(new Condition<PsiClass>() {
-        public boolean value(PsiClass aClass) {
-          return InheritanceUtil.isInheritorOrSelf(aClass, myClass, true);
-        }
-      });
+      myConditionCache = new ConditionCache<PsiClass>(aClass1 -> InheritanceUtil.isInheritorOrSelf(aClass1, myClass, true));
     }
 
     public boolean value(PsiClass aClass) {

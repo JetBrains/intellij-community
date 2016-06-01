@@ -77,18 +77,8 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   @NotNull private final Alarm         myDocumentAlarm;
   @NotNull private final ReadWriteLock myDocumentLock    = new ReentrantReadWriteLock();
 
-  @NotNull private final Runnable                       myFilesRequest         = new Runnable() {
-    @Override
-    public void run() {
-      refreshFilesIfNecessary();
-    }
-  };
-  @NotNull private final Runnable                       myDocumentsSaveRequest = new Runnable() {
-    @Override
-    public void run() {
-      saveDocumentsIfNecessary();
-    }
-  };
+  @NotNull private final Runnable                       myFilesRequest         = () -> refreshFilesIfNecessary();
+  @NotNull private final Runnable                       myDocumentsSaveRequest = () -> saveDocumentsIfNecessary();
   @NotNull private final ExternalProjectRefreshCallback myRefreshCallback      = new ExternalProjectRefreshCallback() {
     @Override
     public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
@@ -231,12 +221,9 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
       }
       myDocumentsToSave.clear();
       if (!toSave.isEmpty()) {
-        invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            for (Document document : toSave) {
-              fileDocumentManager.saveDocument(document);
-            }
+        invokeLaterIfNeeded(() -> {
+          for (Document document : toSave) {
+            fileDocumentManager.saveDocument(document);
           }
         });
       }

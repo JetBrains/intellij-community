@@ -894,24 +894,21 @@ public class FindPopupPanel extends JBPanel {
             .setShowShadow(false)
             .setShowBorder(false)
             .setResizable(true)
-            .setCancelCallback(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
-                if (canClose.get()) return Boolean.TRUE;
-                Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-                Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
-                if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
-                  return Boolean.FALSE;
-                }
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  if (myFindBalloon != null) {
-                    Disposer.dispose(myFindBalloon);
-                    myFindBalloon = null;
-                  }
-                });
-                return Boolean.TRUE;
+            .setCancelCallback(() -> {
+              DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
+              if (canClose.get()) return Boolean.TRUE;
+              Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+              Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
+              if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
+                return Boolean.FALSE;
               }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (myFindBalloon != null) {
+                  Disposer.dispose(myFindBalloon);
+                  myFindBalloon = null;
+                }
+              });
+              return Boolean.TRUE;
             })
             .setKeyEventHandler(event -> {
               if (AbstractPopup.isCloseRequest(event)) {

@@ -471,19 +471,16 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private Object[] filterFiles(final Object[] list) {
-    Condition<PsiFile> condition = new Condition<PsiFile>() {
-      @Override
-      public boolean value(final PsiFile psiFile) {
-        if (myFilter != null && !myFilter.accept(psiFile)) {
-          return false;
-        }
-        boolean accepted = myFileType == null || psiFile.getFileType() == myFileType;
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null && !accepted) {
-          accepted = virtualFile.getFileType() == myFileType;
-        }
-        return accepted;
+    Condition<PsiFile> condition = psiFile -> {
+      if (myFilter != null && !myFilter.accept(psiFile)) {
+        return false;
       }
+      boolean accepted = myFileType == null || psiFile.getFileType() == myFileType;
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && !accepted) {
+        accepted = virtualFile.getFileType() == myFileType;
+      }
+      return accepted;
     };
     final List<Object> result = new ArrayList<Object>(list.length);
     for (Object o : list) {

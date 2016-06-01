@@ -43,12 +43,7 @@ public abstract class DependentSdkType extends SdkType {
    * Checks if dependencies satisfied.
    */
   protected boolean checkDependency(SdkModel sdkModel) {
-    return ContainerUtil.find(sdkModel.getSdks(), new Condition<Sdk>() {
-      @Override
-      public boolean value(Sdk sdk) {
-        return isValidDependency(sdk);
-      }
-    }) != null;
+    return ContainerUtil.find(sdkModel.getSdks(), sdk -> isValidDependency(sdk)) != null;
   }
 
   protected abstract boolean isValidDependency(Sdk sdk);

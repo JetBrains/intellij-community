@@ -146,13 +146,8 @@ public class TestDataGuessByExistingFilesUtil {
 
   @Nullable
   private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull final PsiMethod method) {
-    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method, new CachedValueProvider<TestDataDescriptor>() {
-      @Nullable
-      @Override
-      public Result<TestDataDescriptor> compute() {
-        return new Result<TestDataDescriptor>(buildDescriptor(method), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method,
+                                                                              () -> new CachedValueProvider.Result<TestDataDescriptor>(buildDescriptor(method), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
     return cachedValue == TestDataDescriptor.NOTHING_FOUND ? null : cachedValue;
   }
 

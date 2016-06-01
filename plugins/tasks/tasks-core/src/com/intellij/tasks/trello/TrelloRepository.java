@@ -297,12 +297,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(fetchCardUrl.build(), TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
-      cards = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
-        @Override
-        public boolean value(TrelloCard card) {
-          return card.getIdMembers().contains(myCurrentUser.getId());
-        }
-      });
+      cards = ContainerUtil.filter(cards, card -> card.getIdMembers().contains(myCurrentUser.getId()));
       LOG.debug("Total " + cards.size() + " cards after filtering");
     }
     if (!cards.isEmpty()) {

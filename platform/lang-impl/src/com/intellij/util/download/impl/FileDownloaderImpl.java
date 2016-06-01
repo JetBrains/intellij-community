@@ -254,12 +254,7 @@ public class FileDownloaderImpl implements FileDownloader {
     List<Pair<File, DownloadableFileDescription>> result = new ArrayList<Pair<File, DownloadableFileDescription>>();
     for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
       final DownloadableFileDescription description = pair.getSecond();
-      final String fileName = description.generateFileName(new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return !new File(targetDir, s).exists();
-        }
-      });
+      final String fileName = description.generateFileName(s -> !new File(targetDir, s).exists());
       final File toFile = new File(targetDir, fileName);
       FileUtil.rename(pair.getFirst(), toFile);
       result.add(Pair.create(toFile, description));

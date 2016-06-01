@@ -54,13 +54,10 @@ public class GroovyStdTypeCalculators {
 
       final GrClosableBlock finalClosure = closure;
 
-      return ourGuard.doPreventingRecursion(methodCall, true, new NullableComputable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          PsiType returnType = finalClosure.getReturnType();
-          if (PsiType.VOID.equals(returnType)) return null;
-          return returnType;
-        }
+      return ourGuard.doPreventingRecursion(methodCall, true, (NullableComputable<PsiType>)() -> {
+        PsiType returnType = finalClosure.getReturnType();
+        if (PsiType.VOID.equals(returnType)) return null;
+        return returnType;
       });
     }
   }

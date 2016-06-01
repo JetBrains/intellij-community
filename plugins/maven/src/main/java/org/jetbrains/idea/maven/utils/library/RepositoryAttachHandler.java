@@ -268,12 +268,7 @@ public class RepositoryAttachHandler {
             if (!proceedFlag.get()) break;
             final Boolean aBoolean = i == length - 1 ? tooManyResults : null;
             ApplicationManager.getApplication().invokeLater(
-              () -> proceedFlag.set(resultProcessor.process(resultList, aBoolean)), new Condition() {
-                @Override
-                public boolean value(Object o) {
-                  return !proceedFlag.get();
-                }
-              });
+              () -> proceedFlag.set(resultProcessor.process(resultList, aBoolean)), o -> !proceedFlag.get());
           }
         }
       }
