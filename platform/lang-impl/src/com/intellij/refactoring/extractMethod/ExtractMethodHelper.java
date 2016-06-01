@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -35,16 +36,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -80,11 +79,13 @@ public class ExtractMethodHelper {
 
   /**
    * Finds duplicates of the code fragment specified in the finder in given scopes.
+   * Note that in contrast to {@link #processDuplicates} the search is performed synchronously because normally you need the results in 
+   * order to complete the refactoring. If user cancels it, empty list will be returned.
    *
    * @param finder          finder object to seek for duplicates
    * @param searchScopes    scopes where to look them in
    * @param generatedMethod new method that should be excluded from the search
-   * @return list of duplicate code fragments discovered
+   * @return list of discovered duplicate code fragments or empty list if user interrupted the search 
    * @see #replaceDuplicatesWithPrompt(List, PsiElement, Editor, Consumer) 
    */
   @NotNull
@@ -94,8 +95,18 @@ public class ExtractMethodHelper {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return finder.findDuplicates(searchScopes, generatedMethod);
     }
-    return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
+    final Project project = generatedMethod.getProject();
+    try {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
+          return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
+        }, "Searching for duplicates...", true, project);
+    }
+    catch (ProcessCanceledException e) {
+      return Collections.emptyList();
+    }
   }
+  
 
   /**
    * Notifies user about found duplicates and then highlights each of them in the editor and asks user how to proceed.
