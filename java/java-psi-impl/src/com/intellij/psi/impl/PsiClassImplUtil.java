@@ -405,8 +405,8 @@ public class PsiClassImplUtil {
       processDeclarationsInClassNotCached(myPsiClass, processor, ResolveState.initial(), null, null, myPsiClass, false,
                                           PsiUtil.getLanguageLevel(myPsiClass), myResolveScope);
       Map<String, PsiMember[]> result = ContainerUtil.newTroveMap();
-      for (Entry<String, List<PsiMember>> entry : map.entrySet()) {
-        result.put(entry.getKey(), entry.getValue().toArray(PsiMember.EMPTY_ARRAY));
+      for (String name : map.keySet()) {
+        result.put(name, map.get(name).toArray(PsiMember.EMPTY_ARRAY));
       }
       return result;
     }
