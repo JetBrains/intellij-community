@@ -65,10 +65,18 @@ public class PyRequirement {
   private static final String REVISION_REGEXP = "(@[^#\\s]+)?";
 
   @NotNull
-  private static final String EGG_GROUP = "egg";
+  private static final String EGG_BEFORE_SUBDIR_GROUP = "eggb";
 
   @NotNull
-  private static final String EGG_REGEXP = "(#egg=(?<" + EGG_GROUP + ">\\S+))?";
+  private static final String EGG_AFTER_SUBDIR_GROUP = "egga";
+
+  @NotNull
+  private static final String PARAMS_REGEXP =
+    "(" +
+    "(#egg=(?<" + EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s]+)(&subdirectory=\\S+)?)" +
+    "|" +
+    "(#subdirectory=[^&\\s]+&egg=(?<" + EGG_AFTER_SUBDIR_GROUP + ">\\S+))" +
+    ")?";
 
   @NotNull
   private static final String COMMENT_REGEXP = "(" + LINE_WS_REGEXP + "+#.*)?";
@@ -91,7 +99,7 @@ public class PyRequirement {
   private static final Pattern GIT_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
                                                                  EDITABLE_REGEXP +
                                                                  "git\\+" + USER_AT_REGEXP + "[^:\\s]+:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
                                                                  SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // supports: bzr+lp:...
@@ -99,7 +107,7 @@ public class PyRequirement {
   private static final Pattern BZR_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
                                                                  EDITABLE_REGEXP +
                                                                  "bzr\\+lp:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
                                                                  SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // supports: (bzr|git|hg|svn)(+smth)?://...
@@ -107,7 +115,7 @@ public class PyRequirement {
   private static final Pattern VCS_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
                                                                  EDITABLE_REGEXP +
                                                                  "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
                                                                  SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // PEP-508 + PEP-440
@@ -391,7 +399,7 @@ public class PyRequirement {
   @Nullable
   private static PyRequirement createVcsRequirement(@NotNull String line, @NotNull Matcher matcher) {
     final String path = matcher.group(PATH_GROUP);
-    final String egg = matcher.group(EGG_GROUP);
+    final String egg = getEgg(matcher);
 
     final String project = extractProject(dropTrunk(dropRevision(path)));
     final Pair<String, String> nameAndVersion =
@@ -420,10 +428,12 @@ public class PyRequirement {
     for (String line : StringUtil.splitByLines(text)) {
       if (line.endsWith("\\") && !line.endsWith("\\\\")) {
         sb.append(line.substring(0, line.length() - 1));
-      } else {
+      }
+      else {
         if (sb.length() == 0) {
           result.add(line);
-        } else {
+        }
+        else {
           sb.append(line);
 
           result.add(sb.toString());
@@ -459,6 +469,13 @@ public class PyRequirement {
   @Nullable
   private static String normalizeVcsOrArchiveVersionParts(@NotNull List<String> versionParts) {
     return versionParts.isEmpty() ? null : normalizeVersion(StringUtil.join(versionParts, "-"));
+  }
+
+  @Nullable
+  private static String getEgg(@NotNull Matcher matcher) {
+    final String beforeSubdir = matcher.group(EGG_BEFORE_SUBDIR_GROUP);
+
+    return beforeSubdir == null ? matcher.group(EGG_AFTER_SUBDIR_GROUP) : beforeSubdir;
   }
 
   @NotNull
