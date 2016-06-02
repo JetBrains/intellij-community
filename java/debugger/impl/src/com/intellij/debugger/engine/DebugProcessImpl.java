@@ -228,10 +228,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myRenderers.stream().filter(r -> r.isApplicable(type)).findFirst().orElseGet(() -> getDefaultRenderer(type)));
   }
 
+  @NotNull
   public static NodeRenderer getDefaultRenderer(Value value) {
     return getDefaultRenderer(value != null ? value.type() : null);
   }
 
+  @NotNull
   public static NodeRenderer getDefaultRenderer(Type type) {
     final NodeRendererSettings settings = NodeRendererSettings.getInstance();
 
