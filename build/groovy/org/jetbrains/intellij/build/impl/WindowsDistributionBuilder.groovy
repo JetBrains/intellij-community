@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 /**
  * @author nik
@@ -46,6 +47,10 @@ class WindowsDistributionBuilder {
     buildWinLauncher(JvmArchitecture.x64)
     buildContext.productProperties.customWinLayout(winDistPath)
     buildWinZip()
+
+    buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+      new WinExeInstallerBuilder(buildContext).buildInstaller(winDistPath)
+    }
   }
 
   //todo[nik] rename

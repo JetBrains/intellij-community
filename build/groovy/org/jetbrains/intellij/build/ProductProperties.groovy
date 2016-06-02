@@ -31,6 +31,8 @@ public abstract class ProductProperties {
    */
   boolean toolsJarRequired = false
 
+  String fullNameIncludingEdition = null
+
   abstract def String systemSelector(ApplicationInfoProperties applicationInfo)
 
   String additionalIDEPropertiesFilePath
@@ -45,6 +47,10 @@ public abstract class ProductProperties {
   abstract def String linuxAppRoot(String buildNumber)
 
   abstract def String archiveName(String buildNumber)
+
+  String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
+    return null
+  }
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
@@ -77,6 +83,15 @@ public abstract class ProductProperties {
 class WindowsProductProperties {
   boolean includeBatchLauncher = true
   boolean bundleJre = true
+  boolean associateIpr = true
+  /**
+   * Path to a directory containing images for installer: logo.bpm, headerlogo.bpm, install.icon, uninstall.ico
+   */
+  String installerImagesPath
+  /**
+   * List of file extensions (starting with dot) which need to be associated with the product
+   */
+  List<String> fileAssociations = []
 }
 
 class MacProductProperties {

@@ -24,6 +24,7 @@ def getProperties(String home) {
       platformPrefix = "Idea"
       code = "IC"
       appInfoModule = "community-resources"
+      fullNameIncludingEdition = "IntelliJ IDEA Community Edition"
       additionalIDEPropertiesFilePath = "$home/build/conf/ideaCE.properties"
       exe_launcher_properties = "$home/build/conf/ideaCE-launcher.properties"
       exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
@@ -36,12 +37,19 @@ def getProperties(String home) {
       ico = "$home/platform/icons/src/idea_CE.ico"
 
       windows.bundleJre = true
+      windows.installerImagesPath = "$home/build/conf/ideaCE/win/images"
+      windows.fileAssociations = [".java", ".groovy", ".kt"]
 
       mac.helpId = "IJ"
       mac.urlSchemes = ["idea"]
       mac.includeYourkitAgentInEAP = false
       mac.bundleIdentifier = "com.jetbrains.intellij.ce"
       mac.dmgImagePath = "$home/build/conf/mac/communitydmg.png"
+    }
+
+    @Override
+    String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
+      return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
     }
 
     def String appInfoFile() {
