@@ -15,14 +15,40 @@
  */
 package com.jetbrains.python.facet;
 
+import com.intellij.facet.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public interface LibraryContributingFacet {
-  @NonNls String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
+public abstract class LibraryContributingFacet<T extends FacetConfiguration> extends Facet<T> {
+  @NonNls public static final String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
 
-  void updateLibrary();
-  void removeLibrary();
+  public LibraryContributingFacet(@NotNull FacetType facetType,
+                                  @NotNull Module module,
+                                  @NotNull String name, @NotNull T configuration, Facet underlyingFacet) {
+    super(facetType, module, name, configuration, underlyingFacet);
+    final MessageBusConnection connection = module.getMessageBus().connect();
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+      @Override
+      public void beforeFacetRemoved(@NotNull Facet facet) {
+        if (facet instanceof LibraryContributingFacet) {
+          ((LibraryContributingFacet) facet).removeLibrary();
+        }
+      }
+
+      @Override
+      public void facetConfigurationChanged(@NotNull Facet facet) {
+        if (facet instanceof LibraryContributingFacet) {
+          ((LibraryContributingFacet) facet).updateLibrary();
+        }
+      }
+    });
+  }
+
+  public abstract void updateLibrary();
+  public abstract void removeLibrary();
 }
