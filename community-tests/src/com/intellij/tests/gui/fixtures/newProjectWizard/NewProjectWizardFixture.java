@@ -16,14 +16,23 @@
 package com.intellij.tests.gui.fixtures.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.tests.gui.fixtures.FrameworksTreeFixture;
+import com.intellij.tests.gui.fixtures.SelectSdkDialogFixture;
+import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.JListFixture;
 import org.fest.swing.fixture.JTreeFixture;
+import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
+
+import static org.fest.swing.timing.Pause.pause;
 
 public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWizardFixture> {
   @NotNull
@@ -41,6 +50,11 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     super(NewProjectWizardFixture.class, robot, target);
   }
 
+  @NotNull
+  public boolean isJdkEmpty(){
+    final JdkComboBox jdkComboBox = robot().finder().findByType(JdkComboBox.class);
+    return (jdkComboBox.getSelectedJdk() == null);
+  }
 
   @NotNull
   public NewProjectWizardFixture selectProjectType(String projectTypeName){
@@ -51,8 +65,20 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
 
   @NotNull
   public NewProjectWizardFixture selectFramework(String frameworkName){
-    JTreeFixture frameworkTree = new JTreeFixture(robot(), robot().finder().findByType(JTree.class, true));
-    //frameworkTree.
+    final FrameworksTreeFixture frameworksTreeFixture = FrameworksTreeFixture.find(robot());
+    frameworksTreeFixture.selectFramework(frameworkName);
+    return this;
+  }
+
+  public NewProjectWizardFixture selectSdkPath(@NotNull File sdkPath, String sdkType){
+    final SelectSdkDialogFixture sdkDialogFixture = SelectSdkDialogFixture.find(robot(), sdkType);
+    sdkDialogFixture.selectPathToSdk(sdkPath).clickOk();
+    pause(new Condition("Waiting for the returning of focus to dialog: " + target().getTitle()) {
+      @Override
+      public boolean test() {
+        return target().isFocused();
+      }
+    }, GuiTests.SHORT_TIMEOUT);
     return this;
   }
 

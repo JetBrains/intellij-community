@@ -15,13 +15,18 @@
  */
 package com.intellij.tests.gui;
 
-import com.intellij.tests.gui.fixtures.FrameworksTreeFixture;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
+import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.tests.gui.framework.IdeGuiTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 
 
@@ -38,13 +43,27 @@ public class NewProjectTest extends GuiTestCase {
     String myDomain = "com.test";
     String myPkg = "com.android.test.app";
 
+    //PREREQUISITES
+    String sdkPath = "/Library/Java/JavaVirtualMachines/jdk1.8.0_71.jdk/Contents/Home";
+    File javaSdkPath = new File(sdkPath);
+    String sdkType = "JDK";
 
     findWelcomeFrame().createNewProject();
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();
-    newProjectWizard.selectProjectType("Java");
 
-    final FrameworksTreeFixture frameworksTreeFixture = FrameworksTreeFixture.find(myRobot);
-    frameworksTreeFixture.selectFramework("Struts");
+    //check Project SDK is not Empty
+    if (newProjectWizard.isJdkEmpty()) {
+      JButton newButton = GuiTests.findButton(newProjectWizard,
+                                              GuiTests.adduction(ApplicationBundle.message("button.new")),
+                                              myRobot);
+      myRobot.click(newButton);
+      GuiTests.clickPopupMenuItem(GuiTests.adduction(ProjectBundle.message("sdk.java.name")), newButton, myRobot);
+      newProjectWizard.selectSdkPath(javaSdkPath, sdkType);
+    }
+
+    newProjectWizard.
+      selectProjectType("Java").
+      selectFramework("Struts");
 
     //newProjectWizard.
 

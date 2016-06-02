@@ -20,15 +20,11 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNodeBase;
 import com.intellij.ide.util.newProjectWizard.FrameworksTree;
 import com.intellij.ui.CheckboxTreeBase;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
-import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;

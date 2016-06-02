@@ -16,6 +16,7 @@
 package com.intellij.tests.gui.framework;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.util.text.StringUtil;
 import org.fest.swing.core.Robot;
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
@@ -454,7 +455,7 @@ public final class GuiTests {
   }
 
   @NotNull
-  private static JButton findButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text, Robot robot) {
+  public static JButton findButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text, Robot robot) {
     return robot.finder().find(container.target(), new GenericTypeMatcher<JButton>(JButton.class) {
         @Override
         protected boolean isMatching(@NotNull JButton button) {
@@ -558,5 +559,17 @@ public final class GuiTests {
     public void describeTo(Description description) {
       description.appendText("with prefix '" + prefix +"'");
     }
+
   }
+
+  public static String adduction(String s){
+    char ESCAPE_SYMBOL = '\u001B';
+    String ESCAPE_SYMBOL_STRING = "" + ESCAPE_SYMBOL;
+    if(s.contains(ESCAPE_SYMBOL_STRING)) {
+      return StringUtil.replace(s, ESCAPE_SYMBOL_STRING, "");
+    } else {
+      return s;
+    }
+  }
+
 }
