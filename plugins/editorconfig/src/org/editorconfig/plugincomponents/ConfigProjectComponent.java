@@ -1,12 +1,13 @@
 package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -18,10 +19,11 @@ import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfigProjectComponent implements ProjectComponent {
-
-  public ConfigProjectComponent(final Project project, final EditorFactory editorFactory) {
+public class ConfigProjectComponent implements StartupActivity, DumbAware {
+  @Override
+  public void runActivity(@NotNull Project project) {
     // Register project-level config managers
+    final EditorFactory editorFactory = EditorFactory.getInstance();
     MessageBus bus = project.getMessageBus();
     EditorSettingsManager editorSettingsManager = new EditorSettingsManager(project);
     EncodingManager encodingManager = new EncodingManager(project);
@@ -58,19 +60,4 @@ public class ConfigProjectComponent implements ProjectComponent {
       }
     }, project);
   }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ConfigProjectComponent";
-  }
-
-  public void projectOpened() {}
-
-  public void projectClosed() {}
 }
