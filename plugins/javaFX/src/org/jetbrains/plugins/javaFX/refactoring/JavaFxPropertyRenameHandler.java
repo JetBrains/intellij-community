@@ -66,7 +66,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", null, null);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", "Cannot rename", null);
       return;
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
