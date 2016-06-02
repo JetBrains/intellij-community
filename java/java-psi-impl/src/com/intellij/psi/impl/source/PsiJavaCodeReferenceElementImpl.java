@@ -265,7 +265,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @NotNull
   @Override
   public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations) {
-    return getCanonicalText(true, annotations, getContainingFile());
+    return getCanonicalText(annotated, annotations, getContainingFile());
   }
 
   @NotNull
