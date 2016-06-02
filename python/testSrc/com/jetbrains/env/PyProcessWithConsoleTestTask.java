@@ -134,11 +134,14 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
 
     LOG.info(String.format("Waiting for result on thread %s", Thread.currentThread()));
-    final boolean finishedSuccessfully = processFinishedSemaphore.waitFor(60000);
+    final boolean finishedSuccessfully = processFinishedSemaphore.waitFor(300000);
     if (!finishedSuccessfully) {
+      LOG.warn("Time out waiting for test finish");
       final ProcessHandler handler = processHandlerRef.get();
       if (handler != null) {
+        LOG.warn("We have leaked process, will kill it");
         handler.destroyProcess(); // To prevent process leak
+        Thread.sleep(1000); // Give time to listening threads to process process death
       }
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
     }
