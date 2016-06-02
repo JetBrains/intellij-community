@@ -123,7 +123,20 @@ public abstract class SemanticEditorPosition {
     }
     return false;
   }
+
+  public CharSequence getChars() {
+    return myChars;
+  }
   
+  
+  public int findStartOf(@NotNull SyntaxElement element) {
+    while (!myIterator.atEnd()) {
+      if (element.equals(map(myIterator.getTokenType()))) return myIterator.getStart();
+      myIterator.retreat();
+    }
+    return -1;
+  }
+
   @Nullable
   public SyntaxElement getCurrElement() {
     return !myIterator.atEnd() ? map(myIterator.getTokenType()) : null;
