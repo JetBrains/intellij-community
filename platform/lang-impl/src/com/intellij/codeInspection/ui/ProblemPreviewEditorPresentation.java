@@ -28,12 +28,8 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +43,6 @@ public class ProblemPreviewEditorPresentation {
 
   private final EditorEx myEditor;
   private final InspectionResultsView myView;
-  private final Set<CommonProblemDescriptor> myDescriptors = new HashSet<>();
   private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(new Comparator<PreviewEditorFoldingRegion>() {
     @Override
     public int compare(PreviewEditorFoldingRegion r1, PreviewEditorFoldingRegion r2) {
@@ -59,30 +54,36 @@ public class ProblemPreviewEditorPresentation {
   });
   private final DocumentEx myDocument;
 
-  public ProblemPreviewEditorPresentation(EditorEx editor, InspectionResultsView view, CommonProblemDescriptor[] descriptors) {
+  public ProblemPreviewEditorPresentation(EditorEx editor, InspectionResultsView view) {
     myEditor = editor;
     myView = view;
     myDocument = editor.getDocument();
     myFoldedRegions.add(new PreviewEditorFoldingRegion(0, myDocument.getLineCount()));
-    appendFoldings(descriptors);
+    appendFoldings(view.getTree().getAllValidSelectedDescriptors());
+  }
+
+  private static boolean inRegion(int position, PreviewEditorFoldingRegion range) {
+    return range.startLine <= position && range.endLine > position;
   }
 
   private void appendFoldings(CommonProblemDescriptor[] descriptors) {
     final boolean[] isUpdated = new boolean[]{false};
+    final boolean[] allValid = new boolean[]{true};
     final List<UsageInfo> elements = Arrays.stream(descriptors)
-      .filter(myDescriptors::add)
       .filter(ProblemDescriptorBase.class::isInstance)
       .map(ProblemDescriptorBase.class::cast)
       .map(ProblemDescriptorBase::getPsiElement)
-      .filter(e -> e != null && e.isValid())
-      .map(ProblemPreviewEditorPresentation::getWholeElement)
-      .map((e) -> {
-        isUpdated[0] |= appendFoldings(e.getTextRange());
-        return e;
+      .filter(e -> {
+        final boolean isValid = e != null && e.isValid();
+        allValid[0] &= isValid;
+        return isValid;
       })
+      .peek((e) -> isUpdated[0] |= appendFoldings(e.getTextRange()))
       .map(UsageInfo::new)
       .collect(Collectors.toList());
-    if (isUpdated[0]) {
+    if (!allValid[0]) return;
+
+    if (isUpdated[0] && descriptors.length > 1) {
       updateFoldings();
     }
 
@@ -98,44 +99,29 @@ public class ProblemPreviewEditorPresentation {
           final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
                                       document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
           myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
-        } else {
+        }
+        else {
           myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
         }
       }
     });
-
-  }
-
-  /**
-   * Usually we don't highlight whole the element: only its name identifier.
-   * For ex: "Declaration access can be weaker" inspection.
-   */
-  @NotNull
-  private static PsiElement getWholeElement(@NotNull PsiElement element) {
-    PsiNameIdentifierOwner nameIdentifierOwner = PsiTreeUtil.getParentOfType(element, PsiNameIdentifierOwner.class);
-    if (nameIdentifierOwner != null && nameIdentifierOwner.getNameIdentifier() == element) {
-      return nameIdentifierOwner;
-    }
-    return element;
   }
 
   private void updateFoldings() {
     myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
       myEditor.getFoldingModel().clearFoldRegions();
       myEditor.getMarkupModel().removeAllHighlighters();
-      if (myDescriptors.size() > 1) {
-        for (PreviewEditorFoldingRegion region : myFoldedRegions) {
-          if (region.endLine - region.startLine > 1) {
-            FoldRegion currentRegion = FoldingModelSupport.addFolding(myEditor,
-                                                                      region.startLine,
-                                                                      region.endLine,
-                                                                      false);
-            if (currentRegion != null) {
-              DiffDrawUtil.createLineSeparatorHighlighter(myEditor,
-                                                          myDocument.getLineStartOffset(region.startLine),
-                                                          myDocument.getLineEndOffset(region.endLine - 1),
-                                                          () -> currentRegion.isValid() && !currentRegion.isExpanded());
-            }
+      for (PreviewEditorFoldingRegion region : myFoldedRegions) {
+        if (region.endLine - region.startLine > 1) {
+          FoldRegion currentRegion = FoldingModelSupport.addFolding(myEditor,
+                                                                    region.startLine,
+                                                                    region.endLine,
+                                                                    false);
+          if (currentRegion != null) {
+            DiffDrawUtil.createLineSeparatorHighlighter(myEditor,
+                                                        myDocument.getLineStartOffset(region.startLine),
+                                                        myDocument.getLineEndOffset(region.endLine - 1),
+                                                        () -> currentRegion.isValid() && !currentRegion.isExpanded());
           }
         }
       }
@@ -175,10 +161,6 @@ public class ProblemPreviewEditorPresentation {
       }
     }
     return isUpdated;
-  }
-
-  private static boolean inRegion(int position, PreviewEditorFoldingRegion range) {
-    return range.startLine <= position && range.endLine > position;
   }
 
   private static class PreviewEditorFoldingRegion {

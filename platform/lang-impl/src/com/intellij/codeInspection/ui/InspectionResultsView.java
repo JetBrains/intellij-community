@@ -502,6 +502,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           editorPanel.add(fixToolbar, BorderLayout.NORTH);
         }
       }
+      if (previewEditor != null) {
+        new ProblemPreviewEditorPresentation(previewEditor, this);
+      }
       mySplitter.setSecondComponent(editorPanel);
     }
     finally {
