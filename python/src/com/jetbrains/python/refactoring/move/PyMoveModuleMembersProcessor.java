@@ -120,12 +120,9 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
             PyBundle.message("refactoring.move.module.members.error.destination.file.contains.global.variable.$0", e.getName()));
         }
         final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
-        final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
-          @Override
-          public boolean value(UsageInfo usageInfo) {
-            final PsiElement element = usageInfo.getElement();
-            return element != null && !PsiTreeUtil.isAncestor(e, element, false);
-          }
+        final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
+          final PsiElement element = usageInfo.getElement();
+          return element != null && !PsiTreeUtil.isAncestor(e, element, false);
         });
         if (usedFromOutside) {
           checkValidImportableFile(e, destination.getVirtualFile());

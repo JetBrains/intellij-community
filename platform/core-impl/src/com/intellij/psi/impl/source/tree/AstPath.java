@@ -22,10 +22,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SubstrateRef;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -49,6 +51,8 @@ public abstract class AstPath extends SubstrateRef {
     return getContainingFile().isValid();
   }
 
+  protected abstract int getDepth();
+
   @Nullable
   public static AstPath getNodePath(@NotNull CompositeElement node) {
     if (node instanceof FileElement) {
@@ -71,12 +75,15 @@ public abstract class AstPath extends SubstrateRef {
       return;
     }
 
+    final int depth = parentPath.getDepth() + 1;
+
     final List<CompositeElement> children = ContainerUtil.newArrayList();
     parent.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
       public void visitComposite(CompositeElement composite) {
         if (composite != parent && (composite instanceof LazyParseableElement || composite.getElementType() instanceof IStubElementType)) {
-          composite.putUserData(NODE_PATH, new ChildPath(parentPath, children.size()));
+          int index = children.size();
+          composite.putUserData(NODE_PATH, depth % 4 == 0 ? new MilestoneChildPath(parentPath, index, depth) : new ChildPath(parentPath, index));
           children.add(composite);
         }
 
@@ -131,6 +138,11 @@ public abstract class AstPath extends SubstrateRef {
     }
 
     @Override
+    protected int getDepth() {
+      return 1 + myParent.getDepth();
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ChildPath)) return false;
@@ -142,6 +154,39 @@ public abstract class AstPath extends SubstrateRef {
     @Override
     public int hashCode() {
       return 31 * myParent.hashCode() + myIndex;
+    }
+  }
+
+  private static class MilestoneChildPath extends ChildPath {
+    private final int myDepth;
+    private final PsiFileImpl myFile;
+    private volatile WeakReference<CompositeElement> myNode;
+
+    MilestoneChildPath(@NotNull AstPath parent, int index, int depth) {
+      super(parent, index);
+      myDepth = depth;
+      myFile = parent.getContainingFile();
+    }
+
+    @NotNull
+    @Override
+    public CompositeElement getNode() {
+      CompositeElement node = SoftReference.dereference(myNode);
+      if (node == null) {
+        myNode = new WeakReference<CompositeElement>(node = super.getNode());
+      }
+      return node;
+    }
+
+    @NotNull
+    @Override
+    public PsiFileImpl getContainingFile() {
+      return myFile;
+    }
+
+    @Override
+    protected int getDepth() {
+      return myDepth;
     }
   }
 
@@ -172,6 +217,11 @@ public abstract class AstPath extends SubstrateRef {
     @Override
     public CompositeElement getNode() {
       return myFile.calcTreeElement();
+    }
+
+    @Override
+    protected int getDepth() {
+      return 0;
     }
   }
 

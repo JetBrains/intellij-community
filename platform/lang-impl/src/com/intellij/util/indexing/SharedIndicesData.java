@@ -105,12 +105,7 @@ public class SharedIndicesData {
 
     static IndexedStateMap createMap(final File indexFile) throws IOException {
       return IOUtil.openCleanOrResetBroken(
-        new ThrowableComputable<IndexedStateMap, IOException>() {
-          @Override
-          public IndexedStateMap compute() throws IOException {
-            return new IndexedStateMap(indexFile);
-          }
-        }, indexFile);
+        () -> new IndexedStateMap(indexFile), indexFile);
     }
   }
 

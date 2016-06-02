@@ -57,19 +57,15 @@ public class PropertiesReferenceManager {
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
     ConcurrentFactoryMap<String, List<PropertiesFile>> map =
-      CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<ConcurrentFactoryMap<String, List<PropertiesFile>>>() {
-        @Nullable
-        @Override
-        public Result<ConcurrentFactoryMap<String, List<PropertiesFile>>> compute() {
-          ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
-            @Nullable
-            @Override
-            protected List<PropertiesFile> create(String bundleName) {
-              return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName, BundleNameEvaluator.DEFAULT);
-            }
-          };
-          return Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
-        }
+      CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+        ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
+          @Nullable
+          @Override
+          protected List<PropertiesFile> create(String bundleName1) {
+            return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1, BundleNameEvaluator.DEFAULT);
+          }
+        };
+        return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(bundleName);
   }

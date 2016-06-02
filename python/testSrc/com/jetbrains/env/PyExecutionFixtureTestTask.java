@@ -59,14 +59,24 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-    moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
+    final String testDataPath = getTestDataPath();
+
+    final boolean customTestData = !testDataPath.equals(getDefaultTestDataPath());
+  // No need to set default testdata as  module root: too many data to index and useless
+    if (customTestData) {
+      moduleFixtureBuilder.addSourceContentRoot(testDataPath);
+    }
     final List<String> contentRoots = getContentRoots();
     for (String contentRoot : contentRoots) {
-      moduleFixtureBuilder.addContentRoot(getTestDataPath() + contentRoot);
+      moduleFixtureBuilder.addContentRoot(testDataPath + contentRoot);
     }
 
     myFixture.setUp();
-    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setTestDataPath(testDataPath);
+  }
+
+  private static String getDefaultTestDataPath() {
+    return PythonTestUtil.getTestDataPath();
   }
 
   protected List<String> getContentRoots() {
@@ -74,7 +84,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
+    return getDefaultTestDataPath();
   }
 
   protected void initFixtureBuilder() {

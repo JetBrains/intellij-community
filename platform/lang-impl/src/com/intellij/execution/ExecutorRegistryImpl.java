@@ -260,19 +260,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       List<RunContentDescriptor> runningDescriptors =
-        executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings s) {
-            return s == selectedConfiguration;
-          }
-        });
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, new Condition<RunContentDescriptor>() {
-        @Override
-        public boolean value(RunContentDescriptor descriptor) {
-          RunContentDescriptor contentDescriptor =
-            executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
-          return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
-        }
+        executionManager.getRunningDescriptors(s -> s == selectedConfiguration);
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
+        RunContentDescriptor contentDescriptor =
+          executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
+        return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
       });
 
       if (!runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId()) && selectedConfiguration.isSingleton()) {

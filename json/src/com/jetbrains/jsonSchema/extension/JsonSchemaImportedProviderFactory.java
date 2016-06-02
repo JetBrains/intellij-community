@@ -79,12 +79,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
 
           String path = pattern.getPath().replace('\\', '/');
-          final List<String> parts = ContainerUtil.filter(path.split("/"), new Condition<String>() {
-            @Override
-            public boolean value(String s) {
-              return !".".equals(s);
-            }
-          });
+          final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
           final VirtualFile relativeFile;
           if (parts.isEmpty()) {
             relativeFile = project.getBaseDir();

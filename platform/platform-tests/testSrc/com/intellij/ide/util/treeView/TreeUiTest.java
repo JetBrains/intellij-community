@@ -152,12 +152,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     }).notify(done));
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return done.isProcessed();
-      }
-    });
+    waitBuilderToCome(o -> done.isProcessed());
 
     assertTrue(done.isDone());
     assertNotNull(ready.get());
@@ -290,12 +285,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     invokeLaterIfNeeded(() -> getBuilder().expand(new NodeElement("fabrique"), null));
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return disposeRequested.get();
-      }
-    });
+    waitBuilderToCome(o -> disposeRequested.get());
     assertTrue(wasUiNull.get());
     assertFalse(done.get());
     assertTrue(rejected.get());
@@ -408,12 +398,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     }).notify(done));
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return done.isProcessed() || myCancelRequest != null;
-      }
-    });
+    waitBuilderToCome(o -> done.isProcessed() || myCancelRequest != null);
 
     assertNull(myCancelRequest);
     assertTrue(done.isRejected());
@@ -1128,12 +1113,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       done.set(Boolean.TRUE);
     }));
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return (done.get() != null) && done.get().booleanValue();
-      }
-    });
+    waitBuilderToCome(o -> (done.get() != null) && done.get().booleanValue());
 
     assertTree("-/\n" +
                " +com\n");
@@ -1282,12 +1262,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       getBuilder().select(new NodeElement("jetbrains"), () -> jetbrainsSelected.set(true), true);
     });
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object object) {
-        return intellijSelected.get() && jetbrainsSelected.get();
-      }
-    });
+    waitBuilderToCome(object -> intellijSelected.get() && jetbrainsSelected.get());
 
     assertTree("-/\n" +
                " -com\n" +
@@ -2289,12 +2264,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     invokeLaterIfNeeded(
       () -> getBuilder().select(new NodeElement("jetbrains"), () -> getBuilder().expand(new NodeElement("fabrique"), () -> done[0] = true)));
 
-    waitBuilderToCome(new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return done[0];
-      }
-    });
+    waitBuilderToCome(o -> done[0]);
 
     assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xUnit\n");
   }

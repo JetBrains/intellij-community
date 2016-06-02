@@ -98,46 +98,28 @@ public class PreferByKindWeigher extends LookupElementWeigher {
                                    JavaPsiFacade.getInstance(position.getProject()).findClass(
                                      CommonClassNames.JAVA_LANG_THROWABLE, position.getResolveScope()));
       }
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          for (PsiClass exception : thrownExceptions) {
-            if (InheritanceUtil.isInheritorOrSelf(psiClass, exception, true)) {
-              return true;
-            }
+      return psiClass -> {
+        for (PsiClass exception : thrownExceptions) {
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, exception, true)) {
+            return true;
           }
-          return false;
         }
+        return false;
       };
     }
     else if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) || INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
-        }
-      };
+      return psiClass -> InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (IN_RESOURCE.accepts(position)) {
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
-        }
-      };
+      return psiClass -> InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
     }
 
     if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
       assert annotation != null;
       final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-      return new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null;
-        }
-      };
+      return psiClass -> psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null;
     }
 
     return Conditions.alwaysFalse();

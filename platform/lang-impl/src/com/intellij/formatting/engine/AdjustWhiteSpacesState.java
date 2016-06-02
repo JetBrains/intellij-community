@@ -135,12 +135,8 @@ public class AdjustWhiteSpacesState extends State {
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
 
     DependantSpacingImpl spacing = (DependantSpacingImpl)spaceProperty;
-    return ContainerUtil.filter(spacing.getDependentRegionRanges(), new Condition<TextRange>() {
-      @Override
-      public boolean value(TextRange dependencyRange) {
-        return whiteSpace.getStartOffset() < dependencyRange.getEndOffset();
-      }
-    });
+    return ContainerUtil.filter(spacing.getDependentRegionRanges(),
+                                dependencyRange -> whiteSpace.getStartOffset() < dependencyRange.getEndOffset());
   }
 
 

@@ -38,6 +38,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
+import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.stubs.SerializedStubTree
@@ -46,6 +47,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
@@ -486,5 +488,18 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertTrue(foundId[0])
     assertTrue(!foundStub[0])
+  }
+
+  public void testNullProjectScope() throws Throwable {
+    final GlobalSearchScope allScope = new EverythingGlobalScope(null);
+    // create file to be indexed
+    final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile();
+    assertNoException(new IllegalArgumentExceptionCase() {
+      @Override
+      public void tryClosure() throws IllegalArgumentException {
+        //force to index new file with null project scope
+        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope);
+      }
+    });
   }
 }

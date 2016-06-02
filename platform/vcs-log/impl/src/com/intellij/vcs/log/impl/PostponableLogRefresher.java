@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -57,7 +58,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public static boolean keepUpToDate() {
-    return Registry.is("vcs.log.keep.up.to.date");
+    return Registry.is("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled();
   }
 
   protected boolean canRefreshNow() {

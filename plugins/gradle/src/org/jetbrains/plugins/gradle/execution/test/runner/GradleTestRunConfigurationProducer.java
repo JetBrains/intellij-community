@@ -159,13 +159,9 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       if (sourceSetId == null) return ContainerUtil.emptyList();
 
       final DataNode<TaskData> taskNode =
-        ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {
-          @Override
-          public boolean fun(DataNode<TaskData> node) {
-            return GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
-                   StringUtil.startsWith(sourceSetId, node.getData().getName());
-          }
-        });
+        ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK,
+                                   node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
+                                                                  StringUtil.startsWith(sourceSetId, node.getData().getName()));
 
       if (taskNode == null) return ContainerUtil.emptyList();
       final String taskName = taskNode.getData().getName();
@@ -181,11 +177,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       final String join = StringUtil.join(pathParts, ":");
       path = ":" + join + (!join.isEmpty() ? ":" : "");
     }
-    return ContainerUtil.map(result, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return path + s;
-      }
-    });
+    return ContainerUtil.map(result, s -> path + s);
   }
 }

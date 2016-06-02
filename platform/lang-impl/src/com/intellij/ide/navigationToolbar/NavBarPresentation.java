@@ -167,24 +167,21 @@ public class NavBarPresentation {
   }
 
   public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
-    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile virtualFile) {
-        if (scope instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)scope;
-          if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
-          return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
-        }
-        else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
-          final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
-          for (PsiDirectory directory : psiDirectories) {
-            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
-              return true;
-            }
+    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(virtualFile -> {
+      if (scope instanceof PsiDirectory) {
+        final PsiDirectory directory = (PsiDirectory)scope;
+        if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
+        return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
+      }
+      else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
+        final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
+        for (PsiDirectory directory : psiDirectories) {
+          if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
+            return true;
           }
         }
-        return false;
       }
+      return false;
     });
   }
 }

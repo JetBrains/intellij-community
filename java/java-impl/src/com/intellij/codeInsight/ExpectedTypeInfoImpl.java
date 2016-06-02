@@ -26,12 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
-  public static final NullableComputable<String> NULL = new NullableComputable<String>() {
-    @Override
-    public String compute() {
-      return null;
-    }
-  };
+  public static final NullableComputable<String> NULL = () -> null;
   @NotNull
   private final PsiType type;
   @NotNull

@@ -353,12 +353,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   public SectionField getFirstFieldForParameter(@NotNull final String name) {
-    return ContainerUtil.find(getParameterFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return field.getNames().contains(name);
-      }
-    });
+    return ContainerUtil.find(getParameterFields(), field -> field.getNames().contains(name));
   }
 
   @NotNull
@@ -418,12 +413,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   private SectionField getFirstFieldForKeywordArgument(@NotNull final String name) {
-    return ContainerUtil.find(getKeywordArgumentFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return field.getNames().contains(name);
-      }
-    });
+    return ContainerUtil.find(getKeywordArgumentFields(), field -> field.getNames().contains(name));
   }
 
   @Nullable
@@ -491,12 +481,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   private SectionField getFirstFieldForException(@NotNull final String exceptionType) {
-    return ContainerUtil.find(getExceptionFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return exceptionType.equals(field.getType());
-      }
-    });
+    return ContainerUtil.find(getExceptionFields(), field -> exceptionType.equals(field.getType()));
   }
 
   @NotNull

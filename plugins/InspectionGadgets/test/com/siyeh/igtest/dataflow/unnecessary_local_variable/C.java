@@ -193,6 +193,10 @@ class UsingConstant {
   void foo() {
     int <warning descr="Local variable 'yes' is redundant">yes</warning> = YES;
     System.out.println(yes);
-    System.out.println(yes);
+  }
+
+  void bar() {
+    int yes = YES;
+    yes++;
   }
 }

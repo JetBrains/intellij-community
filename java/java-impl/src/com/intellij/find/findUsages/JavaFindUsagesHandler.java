@@ -163,12 +163,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
         if (!accessors.isEmpty()) {
-          boolean containsPhysical = ContainerUtil.find(accessors, new Condition<PsiMethod>() {
-            @Override
-            public boolean value(PsiMethod psiMethod) {
-              return psiMethod.isPhysical();
-            }
-          }) != null;
+          boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical ||
                                    Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                                                FindBundle.message("find.field.accessors.title"),

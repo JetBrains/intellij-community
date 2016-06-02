@@ -77,24 +77,20 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
     public void perform(final Project project, final Runnable onDone) {
       getTaskExecutor().submit(() -> {
         try {
-          getAgentTaskExecutor().execute(new Computable<Object>() {
+          getAgentTaskExecutor().execute(() -> {
+            Deployment deployment = getDeploymentModel();
+            CloudAgentLoggingHandler loggingHandler
+              = deployment == null
+                ? null
+                : new CloudLoggingHandlerImpl(deployment.getOrCreateLogManager(project)) {
 
-            @Override
-            public Object compute() {
-              Deployment deployment = getDeploymentModel();
-              CloudAgentLoggingHandler loggingHandler
-                = deployment == null
-                  ? null
-                  : new CloudLoggingHandlerImpl(deployment.getOrCreateLogManager(project)) {
-
-                    @Override
-                    public void println(String message) {
-                      LOG.info(message);
-                    }
-                  };
-              LoggingTask.this.run(loggingHandler);
-              return null;
-            }
+                  @Override
+                  public void println(String message) {
+                    LOG.info(message);
+                  }
+                };
+            LoggingTask.this.run(loggingHandler);
+            return null;
           });
           onDone.run();
         }

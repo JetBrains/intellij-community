@@ -46,7 +46,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                 @NotNull InspectionNode node,
                                 @NotNull InspectionRVContentProvider provider,
                                 @NotNull InspectionTreeNode parentNode,
-                                final boolean showStructure);
+                                final boolean showStructure,
+                                final boolean groupBySeverity);
   void updateContent();
 
   boolean hasReportedProblems();

@@ -36,12 +36,9 @@ public class GetDirectoriesListViaUpdateOperation extends LocalPathIndifferentOp
 
   public GetDirectoriesListViaUpdateOperation(CvsEnvironment env, final String parentDirectoryName) {
     super(new AdminReaderOnStoredRepositoryPath(createRepositoryPathProvider(parentDirectoryName)), env);
-    addFinishAction(new Runnable() {
-      @Override
-      public void run() {
-        if (myStreamingListener != null) {
-          myStreamingListener.consume(myStreamingDirectoryContentListener.getDirectoryContent());
-        }
+    addFinishAction(() -> {
+      if (myStreamingListener != null) {
+        myStreamingListener.consume(myStreamingDirectoryContentListener.getDirectoryContent());
       }
     });
   }

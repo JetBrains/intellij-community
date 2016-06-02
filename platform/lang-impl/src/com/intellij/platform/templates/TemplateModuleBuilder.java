@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -22,6 +23,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,10 +36,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -45,8 +45,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,6 +202,57 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       };
 
       final File dir = new File(path);
+
+      class ExceptionConsumer implements Consumer<VelocityException> {
+
+        private String myPath;
+        private String myText;
+        private SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
+
+        @Override
+        public void consume(VelocityException e) {
+          myFailures.add(Trinity.create(myPath, myText, e));
+        }
+
+        private void setCurrentFile(String path, String text) {
+          myPath = path;
+          myText = text;
+        }
+
+        private void reportFailures() {
+          if (myFailures.isEmpty()) {
+            return;
+          }
+
+          String dialogMessage;
+          if (myFailures.size() == 1) {
+            dialogMessage = "Failed to decode file \'" + myFailures.get(0).getFirst() + "\'";
+          }
+          else {
+            StringBuilder dialogMessageBuilder = new StringBuilder();
+            dialogMessageBuilder.append("Failed to decode files: \n");
+            for (Trinity<String, String, VelocityException> failure : myFailures) {
+              dialogMessageBuilder.append(failure.getFirst()).append("\n");
+            }
+            dialogMessage = dialogMessageBuilder.toString();
+          }
+          Messages.showErrorDialog(dialogMessage, "Decoding Template");
+
+
+          StringBuilder reportBuilder = new StringBuilder();
+          for (Trinity<String, String, VelocityException> failure : myFailures) {
+            reportBuilder.append("File: ").append(failure.getFirst()).append("\n");
+            reportBuilder.append("Exception:\n").append(ExceptionUtil.getThrowableText(failure.getThird())).append("\n");
+            reportBuilder.append("File content:\n\'").append(failure.getSecond()).append("\'\n");
+            reportBuilder.append("\n===========================================\n");
+          }
+
+          LOG.error(LogMessageEx.createEvent("Cannot decode files in template", "",
+                                             new Attachment("Files in template", reportBuilder.toString())));
+        }
+      }
+      ExceptionConsumer consumer = new ExceptionConsumer();
+
       myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
@@ -205,19 +260,16 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             @Override
             public byte[] processContent(byte[] content, File file) throws IOException {
               FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
-              return fileType.isBinary() ? content : processTemplates(projectName, new String(content, CharsetToolkit.UTF8_CHARSET), file);
+              String text = new String(content, CharsetToolkit.UTF8_CHARSET);
+              consumer.setCurrentFile(file.getName(), text);
+              return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
             }
           }, true);
           return null;
         }
       });
 
-      String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return s.endsWith(".iml");
-        }
-      });
+      String iml = ContainerUtil.find(dir.list(), s -> s.endsWith(".iml"));
       if (moduleMode) {
         File from = new File(path, iml);
         File to = new File(getModuleFilePath());
@@ -230,6 +282,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         throw new IOException("Can't find " + dir);
       }
       RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
+
+      consumer.reportFailures();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -242,7 +296,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @SuppressWarnings("UseOfPropertiesAsHashtable")
   @Nullable
-  private byte[] processTemplates(@Nullable String projectName, String content, File file) throws IOException {
+  private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
+    throws IOException {
     for (WizardInputField field : myAdditionalFields) {
       if (!field.acceptFile(file)) {
         return null;
@@ -255,9 +310,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     if (projectName != null) {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
-    String merged = FileTemplateUtil.mergeTemplate(properties, content, true);
-    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(
-      CharsetToolkit.UTF8_CHARSET);
+    String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
+    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").
+      getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @Nullable

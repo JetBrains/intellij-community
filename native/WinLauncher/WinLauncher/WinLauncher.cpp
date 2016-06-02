@@ -432,7 +432,14 @@ bool FindValidVMOptions(std::vector<std::wstring> files, std::wstring& used, std
 
 void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
 {
-  std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
+  TCHAR buffer[_MAX_PATH];
+  TCHAR copy[_MAX_PATH];
+  if (LoadString(hInst, IDS_VM_OPTIONS, buffer, _MAX_PATH))
+  {
+    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH);
+  }
+  std::wstring module(copy);
+  std::string vmOptions(module.begin(), module.end());
   while (vmOptions.size() > 0)
   {
     int pos = vmOptions.find(' ');

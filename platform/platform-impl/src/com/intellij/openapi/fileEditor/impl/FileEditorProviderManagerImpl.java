@@ -101,12 +101,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
     // Throw out default editors provider if necessary
     if (doNotShowTextEditor) {
-      ContainerUtil.retainAll(sharedProviders, new Condition<FileEditorProvider>() {
-        @Override
-        public boolean value(FileEditorProvider provider) {
-          return !(provider instanceof TextEditorProvider);
-        }
-      });
+      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof TextEditorProvider));
     }
 
     // Sort editors according policies

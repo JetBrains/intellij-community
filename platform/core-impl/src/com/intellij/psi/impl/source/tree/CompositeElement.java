@@ -787,9 +787,7 @@ public class CompositeElement extends TreeElement {
     if (wrapper != null) return wrapper;
 
     wrapper = obtainStubBasedPsi();
-    if (wrapper != null) return wrapper;
-
-    wrapper = createPsiNoLock();
+    if (wrapper == null) wrapper = createPsiNoLock();
     return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : ObjectUtils.assertNotNull(myWrapper);
   }
 
@@ -800,17 +798,12 @@ public class CompositeElement extends TreeElement {
   @Nullable
   private PsiElement obtainStubBasedPsi() {
     AstPath path = getElementType() instanceof IStubElementType ? AstPath.getNodePath(this) : null;
-    PsiElement wrapper = path == null ? null : path.getContainingFile().obtainPsi(path, new Factory<StubBasedPsiElementBase<?>>() {
+    return path == null ? null : path.getContainingFile().obtainPsi(path, new Factory<StubBasedPsiElementBase<?>>() {
       @Override
       public StubBasedPsiElementBase<?> create() {
         return (StubBasedPsiElementBase<?>)createPsiNoLock();
       }
     });
-    if (wrapper != null) {
-      myWrapper = wrapper;
-      return wrapper;
-    }
-    return null;
   }
 
   @Override

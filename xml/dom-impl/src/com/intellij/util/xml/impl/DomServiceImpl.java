@@ -58,12 +58,8 @@ public class DomServiceImpl extends DomService {
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
     @Override
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
-      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlFileHeader>() {
-        @Override
-        public Result<XmlFileHeader> compute() {
-          return new Result<XmlFileHeader>(calcXmlFileHeader(file), file);
-        }
-      }, false);
+      return CachedValuesManager.getManager(file.getProject()).createCachedValue(
+        () -> new CachedValueProvider.Result<XmlFileHeader>(calcXmlFileHeader(file), file), false);
     }
   };
 

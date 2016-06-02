@@ -105,12 +105,9 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
           .setMovable(true)
           .setRequestFocus(true)
           .setTitle(DesignerBundle.message("designer.properties.javadoc.title", property.getName()))
-          .setCancelCallback(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              Disposer.dispose(component);
-              return Boolean.TRUE;
-            }
+          .setCancelCallback(() -> {
+            Disposer.dispose(component);
+            return Boolean.TRUE;
           })
           .createPopup();
       component.setHint(hint);

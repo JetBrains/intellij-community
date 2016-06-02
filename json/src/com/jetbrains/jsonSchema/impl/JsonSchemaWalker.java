@@ -80,12 +80,7 @@ class JsonSchemaWalker {
       }
       if (step.getTransition() != null && !step.getTransition().possibleFromState(step.getType())) continue;
 
-      final Condition<JsonSchemaObject> byTypeFilter = new Condition<JsonSchemaObject>() {
-        @Override
-        public boolean value(JsonSchemaObject object) {
-          return byStateType(step.getType(), object);
-        }
-      };
+      final Condition<JsonSchemaObject> byTypeFilter = object -> byStateType(step.getType(), object);
       // not??
 
       if (schema.getAllOf() != null) {

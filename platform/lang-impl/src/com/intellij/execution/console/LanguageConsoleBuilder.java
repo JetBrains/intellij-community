@@ -86,13 +86,7 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
-    executionEnabled = new Condition<LanguageConsoleView>() {
-
-      @Override
-      public boolean value(LanguageConsoleView console) {
-        return !processHandler.isProcessTerminated();
-      }
-    };
+    executionEnabled = console -> !processHandler.isProcessTerminated();
     return this;
   }
 

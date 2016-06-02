@@ -219,21 +219,13 @@ public class FoldingModelSupport {
     for (int i = 0; i < myCount; i++) {
       final Editor editor = myEditors[i];
       final Runnable finalRunnable = lastRunnable;
-      lastRunnable = new Runnable() {
-        @Override
-        public void run() {
-          Runnable operation = new Runnable() {
-            @Override
-            public void run() {
-              finalRunnable.run();
-            }
-          };
-          if (DiffUtil.isFocusedComponent(editor.getComponent())) {
-            editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
-          }
-          else {
-            editor.getFoldingModel().runBatchFoldingOperation(operation);
-          }
+      lastRunnable = () -> {
+        Runnable operation = () -> finalRunnable.run();
+        if (DiffUtil.isFocusedComponent(editor.getComponent())) {
+          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+        }
+        else {
+          editor.getFoldingModel().runBatchFoldingOperation(operation);
         }
       };
     }

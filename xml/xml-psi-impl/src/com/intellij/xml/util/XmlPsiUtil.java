@@ -216,14 +216,11 @@ public class XmlPsiUtil {
     CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
 
     if (value == null) {
-      value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(new CachedValueProvider<PsiElement>() {
-        @Override
-        public Result<PsiElement> compute() {
-          final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-          if (res == null) return new Result<PsiElement>(res, targetFile);
-          if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
-          return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
-        }
+      value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
+        final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
+        if (res == null) return new CachedValueProvider.Result<PsiElement>(res, targetFile);
+        if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
+        return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
       }, false);
       value = ((XmlEntityRefImpl)entityRef).putUserDataIfAbsent(PARSED_DECL_KEY, value);
     }

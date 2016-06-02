@@ -110,14 +110,11 @@ public class FileReferenceUtil {
     @Override
     public Object[] getVariants() {
       final Object[] variants = super.getVariants();
-      return ContainerUtil.findAll(variants, new Condition<Object>() {
-        @Override
-        public boolean value(Object o) {
-          /*if (o instanceof CandidateInfo) {
-            o = ((CandidateInfo)o).getElement();
-          }*/
-          return match(o, myCond);
-        }
+      return ContainerUtil.findAll(variants, o -> {
+        /*if (o instanceof CandidateInfo) {
+          o = ((CandidateInfo)o).getElement();
+        }*/
+        return match(o, myCond);
       }).toArray();
     }
 

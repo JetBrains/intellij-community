@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,7 +106,7 @@ public class InspectionTree extends Tree {
 
   public void removeAllNodes() {
     getRoot().removeAllChildren();
-    nodeStructureChanged(getRoot());
+    ApplicationManager.getApplication().invokeLater(() -> nodeStructureChanged(getRoot()));
   }
 
   public InspectionTreeNode getRoot() {
@@ -378,8 +379,8 @@ public class InspectionTree extends Tree {
     ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
   }
 
-  public void restoreExpansionAndSelection(@Nullable InspectionTreeNode reloadedNode) {
-    myState.restoreExpansionAndSelection(this, reloadedNode);
+  public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
+    myState.restoreExpansionAndSelection(this, treeNodesMightChange);
   }
 
   public void setState(@NotNull InspectionTreeState state) {

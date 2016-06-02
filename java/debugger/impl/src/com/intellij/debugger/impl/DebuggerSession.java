@@ -567,14 +567,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       }
 
-      SourcePosition position = PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(new Computable<SourcePosition>() {
-        @Override
-        public
-        @Nullable
-        SourcePosition compute() {
-          return ContextUtil.getSourcePosition(positionContext);
-        }
-      });
+      SourcePosition position = PsiDocumentManager.getInstance(getProject()).commitAndRunReadAction(
+        () -> ContextUtil.getSourcePosition(positionContext));
 
       if (position != null) {
         final List<Pair<Breakpoint, com.sun.jdi.event.Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);

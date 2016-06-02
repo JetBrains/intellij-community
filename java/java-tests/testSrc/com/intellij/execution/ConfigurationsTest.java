@@ -541,12 +541,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   private static List<String> extractAllInPackageTests(JavaParameters parameters, PsiPackage psiPackage)
     throws IOException {
-    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(), new Condition<String>() {
-      @Override
-      public boolean value(String value) {
-        return StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@");
-      }
-    }).substring(1);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = readLinesFrom(new File(filePath));
     assertEquals(psiPackage.getQualifiedName(), lines.get(0));
     //lines.remove(0);

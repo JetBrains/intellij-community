@@ -312,12 +312,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
-          return myCanClose;
-        }
+      .setCancelCallback(() -> {
+        DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
+        return myCanClose;
       })
       .createPopup();
 

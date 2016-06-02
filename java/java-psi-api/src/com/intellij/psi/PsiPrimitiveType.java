@@ -56,7 +56,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @NotNull
   @Override
   public PsiPrimitiveType annotate(@NotNull TypeAnnotationProvider provider) {
-    return provider == getAnnotationProvider() ? this : new PsiPrimitiveType(myName, provider);
+    return (PsiPrimitiveType)super.annotate(provider);
   }
 
   @NotNull

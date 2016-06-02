@@ -55,6 +55,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
 
+  private boolean myDisposed;
+
   public IdeMessagePanel(@NotNull MessagePool messagePool) {
     super(new BorderLayout());
     myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
@@ -85,6 +87,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   public void dispose() {
+    myDisposed = true;
     myMessagePool.removeListener(this);
   }
 
@@ -257,7 +260,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     }
 
     Window window = SwingUtilities.getWindowAncestor(this);
-    assert window instanceof IdeFrame : window;
+    assert window instanceof IdeFrame : "Show error for " + window + " window, dispose state:" + myDisposed;
 
     IdeFrame frame = (IdeFrame)window;
     BalloonLayout layout = frame.getBalloonLayout();

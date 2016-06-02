@@ -533,30 +533,34 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
-    final ModalityState modalityState = ModalityState.current();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    final ModalityState modalityState = ModalityState.defaultModalityState();
+    final Runnable whenAllCommitted = new Runnable() {
       @Override
       public void run() {
-        performWhenAllCommitted(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            // later because we may end up in write action here if there was a synchronous commit
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (hasUncommitedDocuments()) {
-                  // no luck, will try later
-                  performLaterWhenAllCommitted(runnable);
-                }
-                else {
-                  runnable.run();
-                }
-              }
-            }, modalityState, myProject.getDisposed());
+            if (hasUncommitedDocuments()) {
+              // no luck, will try later
+              performLaterWhenAllCommitted(runnable);
+            }
+            else {
+              runnable.run();
+            }
           }
-        });
+        }, modalityState, myProject.getDisposed());
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
+      whenAllCommitted.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          performWhenAllCommitted(whenAllCommitted);
+        }
+      });
+    }
   }
 
   private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
@@ -586,7 +590,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
       List<Map.Entry<Object, Runnable>> entries = new ArrayList<Map.Entry<Object, Runnable>>(new LinkedHashMap<Object, Runnable>(actionsWhenAllDocumentsAreCommitted).entrySet());
-      weAreInsideAfterCommitHandler();
+      beforeCommitHandler();
 
       try {
         for (Map.Entry<Object, Runnable> entry : entries) {
@@ -605,13 +609,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private void weAreInsideAfterCommitHandler() {
+  private void beforeCommitHandler() {
     actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
   }
   private void checkWeAreOutsideAfterCommitHandler() {
-    if (actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance()) {
+    if (isInsideCommitHandler()) {
       throw new IncorrectOperationException("You must not call performWhenAllCommitted()/cancelAndRunWhenCommitted() from within after-commit handler");
     }
+  }
+
+  private boolean isInsideCommitHandler() {
+    return actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance();
   }
 
   @Override

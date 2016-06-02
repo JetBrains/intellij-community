@@ -39,6 +39,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.velocity.VelocityContext;
@@ -194,7 +195,7 @@ public class FileTemplateUtil{
       String name = (String)o;
       context.put(name, attributes.get(name));
     }
-    return mergeTemplate(content, context, useSystemLineSeparators);
+    return mergeTemplate(content, context, useSystemLineSeparators, null);
   }
 
   private static VelocityContext createVelocityContext() {
@@ -203,29 +204,30 @@ public class FileTemplateUtil{
     return context;
   }
 
-  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException {
+    return mergeTemplate(attributes, content, useSystemLineSeparators, null);
+  }
+
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators,
+                                     @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
     VelocityContext context = createVelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
       String name = (String)names.nextElement();
       context.put(name, attributes.getProperty(name));
     }
-    return mergeTemplate(content, context, useSystemLineSeparators);
+    return mergeTemplate(content, context, useSystemLineSeparators, exceptionHandler);
   }
 
-  private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators) throws IOException {
+  private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators,
+                                      @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
     final StringWriter stringWriter = new StringWriter();
     try {
       Project project = null;
       final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
       if (projectName instanceof String) {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        project = ContainerUtil.find(projects, new Condition<Project>() {
-          @Override
-          public boolean value(Project project) {
-            return projectName.equals(project.getName());
-          }
-        });
+        project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
       }
       VelocityWrapper.evaluate(project, context, stringWriter, templateContent);
     }
@@ -234,8 +236,14 @@ public class FileTemplateUtil{
         LOG.error(e);
       }
       LOG.info("Error evaluating template:\n" + templateContent, e);
-      ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
-                                                                                 IdeBundle.message("title.velocity.error")));
+      if (exceptionHandler == null) {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
+                                                      IdeBundle.message("title.velocity.error")));
+      }
+      else {
+        exceptionHandler.consume(e);
+      }
     }
     final String result = stringWriter.toString();
 

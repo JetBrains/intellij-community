@@ -83,12 +83,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
     String result = null;
     if (element instanceof GrLiteral) {
       GrLiteral grLiteral = (GrLiteral)element;
-      PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          return psiElement instanceof GrCall;
-        }
-      });
+      PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, psiElement -> psiElement instanceof GrCall);
       if (stmt instanceof GrCall) {
         GrCall grCall = (GrCall)stmt;
         PsiMethod psiMethod = grCall.resolveMethod();

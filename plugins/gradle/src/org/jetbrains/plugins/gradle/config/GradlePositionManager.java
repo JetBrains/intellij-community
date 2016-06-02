@@ -120,11 +120,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   @Nullable
   private ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
-    return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
-      public Result<ClassLoader> compute() {
-        return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
-        }
-      }, false);
+    return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER,
+                                                                  () -> CachedValueProvider.Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project)), false);
   }
 
   @Nullable

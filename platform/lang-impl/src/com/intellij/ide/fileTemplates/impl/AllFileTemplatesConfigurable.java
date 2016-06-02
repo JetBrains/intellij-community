@@ -695,18 +695,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       if (!myChangesCache.containsKey(myScheme)) {
         Map<String, FileTemplate[]> templates = new HashMap<String, FileTemplate[]>();
         FileTemplate[] allTemplates = myTemplatesList.getTemplates();
-        templates.put(DEFAULT_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates, new Condition<FileTemplate>() {
-          @Override
-          public boolean value(FileTemplate template) {
-            return !myInternalTemplateNames.contains(template.getName());
-          }
-        }).toArray(FileTemplate.EMPTY_ARRAY));
-        templates.put(INTERNAL_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates, new Condition<FileTemplate>() {
-          @Override
-          public boolean value(FileTemplate template) {
-            return myInternalTemplateNames.contains(template.getName());
-          }
-        }).toArray(FileTemplate.EMPTY_ARRAY));
+        templates.put(DEFAULT_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates,
+                                                                       template -> !myInternalTemplateNames.contains(template.getName())).toArray(FileTemplate.EMPTY_ARRAY));
+        templates.put(INTERNAL_TEMPLATES_CATEGORY, ContainerUtil.filter(allTemplates,
+                                                                        template -> myInternalTemplateNames.contains(template.getName())).toArray(FileTemplate.EMPTY_ARRAY));
         templates.put(INCLUDES_TEMPLATES_CATEGORY, myIncludesList.getTemplates());
         templates.put(CODE_TEMPLATES_CATEGORY, myCodeTemplatesList.getTemplates());
         templates.put(J2EE_TEMPLATES_CATEGORY, myOtherTemplatesList == null ? FileTemplate.EMPTY_ARRAY : myOtherTemplatesList.getTemplates());

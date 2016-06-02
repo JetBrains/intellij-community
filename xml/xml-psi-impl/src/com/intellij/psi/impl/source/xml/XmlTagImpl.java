@@ -370,51 +370,48 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (map == null) map = new THashMap<String, CachedValue<XmlNSDescriptor>>();
 
     // We put cached value in any case to cause its value update on e.g. mapping change
-    map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
-      @Override
-      public Result<XmlNSDescriptor> compute() {
-        XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(fileLocation);
-        if (descriptor != null) {
-          return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
-        }
+    map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(() -> {
+      XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(fileLocation);
+      if (descriptor != null) {
+        return new CachedValueProvider.Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
+      }
 
-        XmlFile currentFile = retrieveFile(fileLocation, version, namespace, nsDecl);
-        if (currentFile == null) {
-          final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
-          if (document != null) {
-            final String uri = XmlUtil.getDtdUri(document);
-            if (uri != null) {
-              final XmlFile containingFile = XmlUtil.getContainingFile(document);
-              final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
-              descriptor = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-            }
+      XmlFile currentFile = retrieveFile(fileLocation, version, namespace, nsDecl);
+      if (currentFile == null) {
+        final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
+        if (document != null) {
+          final String uri = XmlUtil.getDtdUri(document);
+          if (uri != null) {
+            final XmlFile containingFile = XmlUtil.getContainingFile(document);
+            final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
+            descriptor = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+          }
 
-            // We want to get fixed xmlns attr from dtd and check its default with requested namespace
-            if (descriptor instanceof com.intellij.xml.impl.dtd.XmlNSDescriptorImpl) {
-              final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
-              if (elementDescriptor != null) {
-                final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);
-                if (attributeDescriptor != null && attributeDescriptor.isFixed()) {
-                  final String defaultValue = attributeDescriptor.getDefaultValue();
-                  if (defaultValue != null && defaultValue.equals(namespace)) {
-                    return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
-                                                       ExternalResourceManager.getInstance());
-                  }
+          // We want to get fixed xmlns attr from dtd and check its default with requested namespace
+          if (descriptor instanceof com.intellij.xml.impl.dtd.XmlNSDescriptorImpl) {
+            final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
+            if (elementDescriptor != null) {
+              final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);
+              if (attributeDescriptor != null && attributeDescriptor.isFixed()) {
+                final String defaultValue = attributeDescriptor.getDefaultValue();
+                if (defaultValue != null && defaultValue.equals(namespace)) {
+                  return new CachedValueProvider.Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
+                                                                         ExternalResourceManager.getInstance());
                 }
               }
             }
           }
         }
-        PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
-        if (currentOwner != null) {
-          descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
-          if (descriptor != null) {
-            return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
-                                               ExternalResourceManager.getInstance());
-          }
-        }
-        return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile == null ? XmlTagImpl.this : currentFile, ExternalResourceManager.getInstance());
       }
+      PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
+      if (currentOwner != null) {
+        descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
+        if (descriptor != null) {
+          return new CachedValueProvider.Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this,
+                                                                 ExternalResourceManager.getInstance());
+        }
+      }
+      return new CachedValueProvider.Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile == null ? XmlTagImpl.this : currentFile, ExternalResourceManager.getInstance());
     }, false));
 
     return map;
@@ -787,19 +784,16 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       // When there is no namespace declarations then qualified names should be just used in dtds
       // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
 
-      String result = ourGuard.doPreventingRecursion("getNsByPrefix", true, new Computable<String>() {
-        @Override
-        public String compute() {
-          final String nsFromEmptyPrefix = getNamespaceByPrefix("");
-          final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
-          final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(XmlTagImpl.this) : null;
-          final String nameFromRealDescriptor =
-            descriptor != null && descriptor.getDeclaration() != null && descriptor.getDeclaration().isPhysical()
-            ? descriptor.getName()
-            : "";
-          if (nameFromRealDescriptor.equals(getName())) return nsFromEmptyPrefix;
-          return XmlUtil.EMPTY_URI;
-        }
+      String result = ourGuard.doPreventingRecursion("getNsByPrefix", true, () -> {
+        final String nsFromEmptyPrefix = getNamespaceByPrefix("");
+        final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
+        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(XmlTagImpl.this) : null;
+        final String nameFromRealDescriptor =
+          descriptor != null && descriptor.getDeclaration() != null && descriptor.getDeclaration().isPhysical()
+          ? descriptor.getName()
+          : "";
+        if (nameFromRealDescriptor.equals(getName())) return nsFromEmptyPrefix;
+        return XmlUtil.EMPTY_URI;
       });
       if (result != null) {
         return result;

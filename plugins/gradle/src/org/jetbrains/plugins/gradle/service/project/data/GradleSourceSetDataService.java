@@ -53,26 +53,23 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
                                                           @NotNull final ProjectData projectData,
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    return new Computable<Collection<Module>>() {
-      @Override
-      public Collection<Module> compute() {
-        List<Module> orphanIdeModules = ContainerUtil.newSmartList();
+    return () -> {
+      List<Module> orphanIdeModules = ContainerUtil.newSmartList();
 
-        for (Module module : modelsProvider.getModules()) {
-          if (module.isDisposed()) continue;
-          if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-          if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
+      for (Module module : modelsProvider.getModules()) {
+        if (module.isDisposed()) continue;
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
+        if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
 
-          final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-          if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-            if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
-              orphanIdeModules.add(module);
-            }
+        final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+        if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
+          if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
+            orphanIdeModules.add(module);
           }
         }
-
-        return orphanIdeModules;
       }
+
+      return orphanIdeModules;
     };
   }
 

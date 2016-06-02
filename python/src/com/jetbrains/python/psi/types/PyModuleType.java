@@ -368,13 +368,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
                                                                                boolean suppressParentheses,
                                                                                PointInImport point) {
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement psiElement) {
-        return !(psiElement instanceof PyImportElement) ||
-               PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
-      }
-    }, null);
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location,
+                                                                                  psiElement -> !(psiElement instanceof PyImportElement) ||
+                                                                                                                                                                          PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement, null);
     if (suppressParentheses) {
       processor.suppressParentheses();
     }

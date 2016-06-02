@@ -295,13 +295,9 @@ public class InjectorUtils {
 
   @Nullable
   private static TreeMap<TextRange, BaseInjection> getInjectionMap(@NotNull final PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<TreeMap<TextRange, BaseInjection>>() {
-      @Nullable
-      @Override
-      public Result<TreeMap<TextRange, BaseInjection>> compute() {
-        TreeMap<TextRange, BaseInjection> map = calcInjections(file);
-        return Result.create(map.isEmpty() ? null : map, file);
-      }
+    return CachedValuesManager.getCachedValue(file, () -> {
+      TreeMap<TextRange, BaseInjection> map = calcInjections(file);
+      return CachedValueProvider.Result.create(map.isEmpty() ? null : map, file);
     });
   }
 

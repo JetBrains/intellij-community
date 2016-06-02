@@ -71,12 +71,7 @@ public abstract class IndexableSetContributor {
         LOG.error("Please fix " + contributor.getClass().getName() + "#" + methodInfo + ".\n" +
                   (root == null ? "The returned set is not expected to contain nulls, but it is " + roots
                                 : "Invalid file returned: " + root));
-        return ContainerUtil.newLinkedHashSet(ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-          @Override
-          public boolean value(VirtualFile virtualFile) {
-            return virtualFile != null && virtualFile.isValid();
-          }
-        }));
+        return ContainerUtil.newLinkedHashSet(ContainerUtil.filter(roots, virtualFile -> virtualFile != null && virtualFile.isValid()));
       }
     }
     return roots;

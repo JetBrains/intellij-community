@@ -233,6 +233,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
     }
     );
+
+    myRepeatCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if ((Integer) myTypeChooser.getSelectedItem() == JUnitConfigurationModel.CLASS) {
+          myForkCb.setModel(getForkModelBasedOnRepeat());
+        }
+      }
+    });
     myModel.setType(JUnitConfigurationModel.CLASS);
     installDocuments();
     addRadioButtonsListeners(new JRadioButton[]{myWholeProjectScope, mySingleModuleScope, myModuleWDScope}, null);
@@ -286,6 +295,11 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   public void resetEditorFrom(final JUnitConfiguration configuration) {
+    final int count = configuration.getRepeatCount();
+    myRepeatCountField.setText(String.valueOf(count));
+    myRepeatCountField.setEnabled(count > 1);
+    myRepeatCb.setSelectedItem(configuration.getRepeatMode());
+
     myModel.reset(configuration);
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
@@ -302,10 +316,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myJrePathEditor
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
-    final int count = configuration.getRepeatCount();
-    myRepeatCountField.setText(String.valueOf(count));
-    myRepeatCountField.setEnabled(count > 1);
-    myRepeatCb.setSelectedItem(configuration.getRepeatMode());
   }
 
   private void changePanel () {
@@ -346,7 +356,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myCategory.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
+      myForkCb.setModel(getForkModelBasedOnRepeat());
       myForkCb.setSelectedItem(selectedItem != JUnitConfiguration.FORK_KLASS ? selectedItem : JUnitConfiguration.FORK_METHOD);
     }
     else if (selectedType == JUnitConfigurationModel.METHOD){
@@ -383,6 +393,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
     }
+  }
+
+  private DefaultComboBoxModel getForkModelBasedOnRepeat() {
+    return new DefaultComboBoxModel(RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem()) ? FORK_MODE : FORK_MODE_ALL);
   }
 
   public ModulesComboBox getModulesComponent() {

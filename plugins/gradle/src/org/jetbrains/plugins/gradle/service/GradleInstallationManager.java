@@ -442,12 +442,9 @@ public class GradleInstallationManager {
     if(files == null) return null;
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    return ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
-      @Override
-      public VirtualFile fun(File file) {
-        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
-        return virtualFile != null ? jarFileSystem.getJarRootForLocalFile(virtualFile) : null;
-      }
+    return ContainerUtil.mapNotNull(files, file -> {
+      final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
+      return virtualFile != null ? jarFileSystem.getJarRootForLocalFile(virtualFile) : null;
     });
   }
 
@@ -540,12 +537,8 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File[] distFiles = localDistribution.getDistributionDir().listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File f) {
-        return f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-");
-      }
-    });
+    File[] distFiles = localDistribution.getDistributionDir().listFiles(
+      f -> f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-"));
 
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
   }

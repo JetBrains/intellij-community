@@ -204,18 +204,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     enterModality();
     init.run();
 
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
-      @Override
-      public boolean value(final AWTEvent object) {
-        if (myShouldShowCancel &&
-            object instanceof KeyEvent &&
-            object.getID() == KeyEvent.KEY_PRESSED &&
-            ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
-            ((KeyEvent)object).getModifiers() == 0) {
-          SwingUtilities.invokeLater(() -> cancel());
-        }
-        return isStarted() && !isRunning();
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, object -> {
+      if (myShouldShowCancel &&
+          object instanceof KeyEvent &&
+          object.getID() == KeyEvent.KEY_PRESSED &&
+          ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
+          ((KeyEvent)object).getModifiers() == 0) {
+        SwingUtilities.invokeLater(() -> cancel());
       }
+      return isStarted() && !isRunning();
     });
 
     exitModality();

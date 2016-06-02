@@ -479,26 +479,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final int savedInputId;
     if (myHasSnapshotMapping) {
       try {
-        final NotNullComputable<Collection<Key>> keysForGivenInputId = new NotNullComputable<Collection<Key>>() {
-          @NotNull
-          @Override
-          public Collection<Key> compute() {
-            try {
-              Integer currentHashId = readInputHashId(inputId);
-              Collection<Key> currentKeys;
-              if (currentHashId != null) {
-                ByteSequence byteSequence = readContents(currentHashId);
-                currentKeys = byteSequence != null ? deserializeSavedPersistentData(byteSequence).keySet() : Collections.<Key>emptyList();
-              }
-              else {
-                currentKeys = Collections.emptyList();
-              }
+        final NotNullComputable<Collection<Key>> keysForGivenInputId = () -> {
+          try {
+            Integer currentHashId = readInputHashId(inputId);
+            Collection<Key> currentKeys;
+            if (currentHashId != null) {
+              ByteSequence byteSequence = readContents(currentHashId);
+              currentKeys = byteSequence != null ? deserializeSavedPersistentData(byteSequence).keySet() : Collections.<Key>emptyList();
+            }
+            else {
+              currentKeys = Collections.emptyList();
+            }
 
-              return currentKeys;
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+            return currentKeys;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
         };
 
@@ -540,20 +536,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             };
           }
         } else {
-          oldKeysGetter = new NotNullComputable<Collection<Key>>() {
-            @NotNull
-            @Override
-            public Collection<Key> compute() {
-              try {
-                Collection<Key> oldKeys = readInputKeys(inputId);
-                if (oldKeys == null) {
-                  return keysForGivenInputId.compute();
-                }
-                return oldKeys;
+          oldKeysGetter = () -> {
+            try {
+              Collection<Key> oldKeys = readInputKeys(inputId);
+              if (oldKeys == null) {
+                return keysForGivenInputId.compute();
               }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              return oldKeys;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
             }
           };
           savedInputId = NULL_MAPPING;
@@ -562,17 +554,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         throw new RuntimeException(ex);
       }
     } else {
-      oldKeysGetter = new NotNullComputable<Collection<Key>>() {
-        @NotNull
-        @Override
-        public Collection<Key> compute() {
-          try {
-            Collection<Key> oldKeys = readInputKeys(inputId);
-            return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      oldKeysGetter = () -> {
+        try {
+          Collection<Key> oldKeys = readInputKeys(inputId);
+          return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
       };
       savedInputId = inputId;
@@ -580,21 +568,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     // do not depend on content!
     final UpdateData<Key, Value> updateData = optimizedUpdateData != null ? optimizedUpdateData : buildUpdateData(data, oldKeysGetter, savedInputId);
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
+    return () -> {
 
-        try {
-          updateWithMap(inputId, updateData);
-        }
-        catch (StorageException|ProcessCanceledException ex) {
-          LOG.info("Exception during updateWithMap:" + ex);
-          FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
-          return Boolean.FALSE;
-        }
-
-        return Boolean.TRUE;
+      try {
+        updateWithMap(inputId, updateData);
       }
+      catch (StorageException|ProcessCanceledException ex) {
+        LOG.info("Exception during updateWithMap:" + ex);
+        FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+        return Boolean.FALSE;
+      }
+
+      return Boolean.TRUE;
     };
   }
 
@@ -752,7 +737,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             myValueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
 
           if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + myIndexId.toString() + " violates equals / hashCode contract for Value parameter");
+            LOG.error("Index " + myIndexId.toString() + " deserialization violates equals / hashCode contract for Value parameter");
           }
         } catch (IOException ex) {
           LOG.error(ex);

@@ -41,11 +41,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getUser().compareTo(o1.getUser());
-        }
-      };
+      return (o, o1) -> o.getUser().compareTo(o1.getUser());
     }
   };
 
@@ -55,11 +51,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getActions().compareTo(o1.getActions());
-        }
-      };
+      return (o, o1) -> o.getActions().compareTo(o1.getActions());
     }
   };
 
@@ -69,11 +61,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getFile().compareTo(o1.getFile());
-        }
-      };
+      return (o, o1) -> o.getFile().compareTo(o1.getFile());
     }
   };
 

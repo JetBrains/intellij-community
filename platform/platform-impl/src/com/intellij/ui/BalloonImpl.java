@@ -16,9 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.RemoteDesktopDetector;
+import com.intellij.ide.*;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -86,6 +84,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private long myFadeoutRequestMillis = 0;
   private int myFadeoutRequestDelay = 0;
 
+  private boolean mySmartFadeout;
+  private boolean mySmartFadeoutPaused;
+  private int mySmartFadeoutDelay;
+
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
   private AbstractPosition myPosition;
@@ -109,6 +111,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
     public void eventDispatched(final AWTEvent e) {
+      if (mySmartFadeoutDelay > 0) {
+        startFadeoutTimer(mySmartFadeoutDelay);
+        mySmartFadeoutDelay = 0;
+      }
+
       final int id = e.getID();
       if (e instanceof MouseEvent) {
         final MouseEvent me = (MouseEvent)e;
@@ -843,12 +850,45 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myAnimator.resume();
   }
 
+  public void runWithSmartFadeoutPause(@NotNull Runnable handler) {
+    if (mySmartFadeout) {
+      mySmartFadeoutPaused = true;
+      handler.run();
+      if (mySmartFadeoutPaused) {
+        mySmartFadeoutPaused = false;
+      }
+      else {
+        hide();
+      }
+    }
+    else {
+      handler.run();
+    }
+  }
+
+  public void startSmartFadeoutTimer(int delay) {
+    mySmartFadeout = true;
+    mySmartFadeoutDelay = delay;
+    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+      @Override
+      public void onFrameDeactivated() {
+        if (myFadeoutAlarm.getActiveRequestCount() > 0) {
+          myFadeoutAlarm.cancelAllRequests();
+          mySmartFadeoutDelay = myFadeoutRequestDelay - (int)(System.currentTimeMillis() - myFadeoutRequestMillis);
+          if (mySmartFadeoutDelay <= 0) {
+            mySmartFadeoutDelay = 1;
+          }
+        }
+      }
+    }, this);
+  }
+
   public void startFadeoutTimer(final int fadeoutDelay) {
     if (fadeoutDelay > 0) {
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(() -> hide(), fadeoutDelay, null);
+      myFadeoutAlarm.addRequest(this::hide, fadeoutDelay, null);
     }
   }
 
@@ -910,6 +950,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
+
+    if (mySmartFadeoutPaused) {
+      mySmartFadeoutPaused = false;
+      return;
+    }
 
     if (myTraceDispose) {
       Logger.getInstance("#com.intellij.ui.BalloonImpl").error("Dispose balloon before showing", new Throwable());

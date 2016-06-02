@@ -41,12 +41,8 @@ public class TaskSearchSupport {
   public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern, final boolean withClosed) {
     List<Task> tasks = new ArrayList<Task>();
     ContainerUtil.addAll(tasks, myManager.getLocalTasks(withClosed));
-    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed), new Condition<Task>() {
-      @Override
-      public boolean value(final Task task) {
-        return myManager.findTask(task.getId()) == null;
-      }
-    }));
+    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed),
+                                                     task -> myManager.findTask(task.getId()) == null));
     List<Task> filteredTasks = filterTasks(pattern, tasks);
     ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return filteredTasks;

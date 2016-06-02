@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
@@ -495,7 +496,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     @Override
     protected void applyAdditionalHints(@NotNull Graphics2D g) {
-      super.applyAdditionalHints(g);
+      EditorUIUtil.setupAntialiasing(g);
     }
   }
 

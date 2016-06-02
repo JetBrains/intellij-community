@@ -142,12 +142,7 @@ public class ProjectTemplateList extends JPanel {
     if (templateName != null && myList.getModel() instanceof CollectionListModel) {
       @SuppressWarnings("unchecked")
       List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
-      ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-        @Override
-        public boolean value(ProjectTemplate template) {
-          return templateName.equals(template.getName());
-        }
-      });
+      ProjectTemplate template = ContainerUtil.find(list, template1 -> templateName.equals(template1.getName()));
       if (template != null) {
         myList.setSelectedValue(template, true);
       }

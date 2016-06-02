@@ -55,4 +55,14 @@ public class OverloadedVarargsMethodInspectionTest extends LightInspectionTestCa
            "  public void test(String... ss) {}" +
            "}");
   }
+
+  public void testGenericMethods() throws Exception {
+    doTest("interface Foo<T> {" +
+           "        void makeItSo(T command, int... values);" +
+           "    }" +
+           "    class Bar implements Foo<String> {" +
+           "        public void makeItSo(final String command, final int... values) {" +
+           "        }" +
+           "    }");
+  }
 }

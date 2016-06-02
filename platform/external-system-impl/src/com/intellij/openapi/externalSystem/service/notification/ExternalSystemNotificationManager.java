@@ -140,63 +140,51 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   public void showNotification(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationData notificationData) {
-    myUpdater.submit(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
+    myUpdater.submit(() -> {
+      if (myProject.isDisposed()) return;
 
-        final Application app = ApplicationManager.getApplication();
-          Runnable action = new Runnable() {
-            public void run() {
-              if (!initializedExternalSystem.contains(externalSystemId)) {
-                app.runWriteAction(new Runnable() {
-                  public void run() {
-                    if (myProject.isDisposed()) return;
-                    ExternalSystemUtil.ensureToolWindowContentInitialized(myProject, externalSystemId);
-                    initializedExternalSystem.add(externalSystemId);
-                  }
-                });
-              }
+      final Application app = ApplicationManager.getApplication();
+        Runnable action = () -> {
+          if (!initializedExternalSystem.contains(externalSystemId)) {
+            app.runWriteAction(() -> {
               if (myProject.isDisposed()) return;
-              NotificationGroup group;
-              if (notificationData.getBalloonGroup() == null) {
-                ExternalProjectsView externalProjectsView =
-                  ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
-                group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                        ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-              }
-              else {
-                final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-                group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
-              }
-              if (group == null) return;
+              ExternalSystemUtil.ensureToolWindowContentInitialized(myProject, externalSystemId);
+              initializedExternalSystem.add(externalSystemId);
+            });
+          }
+          if (myProject.isDisposed()) return;
+          NotificationGroup group;
+          if (notificationData.getBalloonGroup() == null) {
+            ExternalProjectsView externalProjectsView =
+              ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+            group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                    ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+          }
+          else {
+            final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+            group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+          }
+          if (group == null) return;
 
-              final Notification notification = group.createNotification(
-                notificationData.getTitle(), notificationData.getMessage(),
-                notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+          final Notification notification = group.createNotification(
+            notificationData.getTitle(), notificationData.getMessage(),
+            notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
 
-              myNotifications.add(notification);
+          myNotifications.add(notification);
 
-              if (notificationData.isBalloonNotification()) {
-                applyNotification(notification);
-              }
-              else {
-                addMessage(notification, externalSystemId, notificationData);
-              }
-            }
-          };
-        app.invokeLater(action, ModalityState.defaultModalityState(), myProject.getDisposed());
-      }
+          if (notificationData.isBalloonNotification()) {
+            applyNotification(notification);
+          }
+          else {
+            addMessage(notification, externalSystemId, notificationData);
+          }
+        };
+      app.invokeLater(action, ModalityState.defaultModalityState(), myProject.getDisposed());
     });
   }
 
   public void openMessageView(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationSource notificationSource) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        prepareMessagesView(externalSystemId, notificationSource, true);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> prepareMessagesView(externalSystemId, notificationSource, true));
   }
 
   public void clearNotifications(@NotNull final NotificationSource notificationSource,
@@ -208,43 +196,37 @@ public class ExternalSystemNotificationManager implements Disposable {
                                  @NotNull final NotificationSource notificationSource,
                                  @NotNull final ProjectSystemId externalSystemId) {
     myMessageCounter.remove(groupName, notificationSource, externalSystemId);
-    myUpdater.submit(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
-          Notification notification = iterator.next();
-          if (groupName == null || groupName.equals(notification.getGroupId())) {
-            notification.expire();
-            iterator.remove();
-          }
+    myUpdater.submit(() -> {
+      if (myProject.isDisposed()) return;
+      for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
+        Notification notification = iterator.next();
+        if (groupName == null || groupName.equals(notification.getGroupId())) {
+          notification.expire();
+          iterator.remove();
         }
+      }
 
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (toolWindow == null) return;
+      final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+      if (toolWindow == null) return;
 
-        final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
-        final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            for (Content content : messageView.getContentManager().getContents()) {
-              if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
-                if (groupName == null) {
-                  messageView.getContentManager().removeContent(content, true);
-                }
-                else {
-                  assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
-                  NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
-                  ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
-                  errorViewStructure.removeGroup(groupName);
-                }
-              }
+      final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
+      final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (myProject.isDisposed()) return;
+        for (Content content : messageView.getContentManager().getContents()) {
+          if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
+            if (groupName == null) {
+              messageView.getContentManager().removeContent(content, true);
+            }
+            else {
+              assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
+              NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
+              ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
+              errorViewStructure.removeGroup(groupName);
             }
           }
-        });
-      }
+        }
+      });
     });
   }
 
@@ -287,39 +269,36 @@ public class ExternalSystemNotificationManager implements Disposable {
     final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(guiLine);
     final String rendererPrefix = NewErrorTreeViewPanel.createRendererPrefix(guiLine, guiColumn);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        boolean activate =
-          notificationData.getNotificationCategory() == NotificationCategory.ERROR ||
-          notificationData.getNotificationCategory() == NotificationCategory.WARNING;
-        final NewErrorTreeViewPanel errorTreeView =
-          prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
-        final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
-        final NavigatableMessageElement navigatableMessageElement;
-        if (notificationData.hasLinks()) {
-          navigatableMessageElement = new EditableNotificationMessageElement(
-            notification,
-            kind,
-            groupingElement,
-            message,
-            navigatable,
-            exportPrefix,
-            rendererPrefix);
-        }
-        else {
-          navigatableMessageElement = new NotificationMessageElement(
-            kind,
-            groupingElement,
-            message,
-            navigatable,
-            exportPrefix,
-            rendererPrefix);
-        }
-
-        errorTreeView.getErrorViewStructure().addNavigatableMessage(groupName, navigatableMessageElement);
-        errorTreeView.updateTree();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      boolean activate =
+        notificationData.getNotificationCategory() == NotificationCategory.ERROR ||
+        notificationData.getNotificationCategory() == NotificationCategory.WARNING;
+      final NewErrorTreeViewPanel errorTreeView =
+        prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
+      final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
+      final NavigatableMessageElement navigatableMessageElement;
+      if (notificationData.hasLinks()) {
+        navigatableMessageElement = new EditableNotificationMessageElement(
+          notification,
+          kind,
+          groupingElement,
+          message,
+          navigatable,
+          exportPrefix,
+          rendererPrefix);
       }
+      else {
+        navigatableMessageElement = new NotificationMessageElement(
+          kind,
+          groupingElement,
+          message,
+          navigatable,
+          exportPrefix,
+          rendererPrefix);
+      }
+
+      errorTreeView.getErrorViewStructure().addNavigatableMessage(groupName, navigatableMessageElement);
+      errorTreeView.updateTree();
     });
   }
 

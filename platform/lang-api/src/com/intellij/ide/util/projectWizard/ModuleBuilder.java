@@ -74,13 +74,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
       result.add(factory.createBuilder());
     }
-    return ContainerUtil.filter(result, new Condition<ModuleBuilder>() {
-
-      @Override
-      public boolean value(ModuleBuilder moduleBuilder) {
-        return moduleBuilder.isAvailable();
-      }
-    });
+    return ContainerUtil.filter(result, moduleBuilder -> moduleBuilder.isAvailable());
   }
 
   public static void deleteModuleFile(String moduleFilePath) {

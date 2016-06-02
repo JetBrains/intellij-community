@@ -72,4 +72,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testSkipAbstractMethodsIfTheyMustBeDeclaredInNonAbstractSuperclass() {
     doTest(false, false);
   }
+  public void testVariableUsedBeforeAssignmentWithParenthesis() {
+    doTest(false, false);
+  }
 }

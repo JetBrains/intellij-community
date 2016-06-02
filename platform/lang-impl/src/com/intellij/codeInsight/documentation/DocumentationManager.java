@@ -497,22 +497,19 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setTitle(getTitle(element, false))
       .setCouldPin(pinCallback)
       .setModalContext(false)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          myCloseOnSneeze = false;
-          if (closeCallback != null) {
-            closeCallback.run();
-          }
-          if (fromQuickSearch()) {
-            ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-          }
-
-          Disposer.dispose(component);
-          myEditor = null;
-          myPreviouslyFocused = null;
-          return Boolean.TRUE;
+      .setCancelCallback(() -> {
+        myCloseOnSneeze = false;
+        if (closeCallback != null) {
+          closeCallback.run();
         }
+        if (fromQuickSearch()) {
+          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+        }
+
+        Disposer.dispose(component);
+        myEditor = null;
+        myPreviouslyFocused = null;
+        return Boolean.TRUE;
       })
       .setKeyEventHandler(e -> {
         if (myCloseOnSneeze) {

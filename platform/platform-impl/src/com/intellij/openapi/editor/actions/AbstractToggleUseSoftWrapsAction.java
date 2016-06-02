@@ -20,8 +20,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +55,25 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (myGlobal) {
+      Editor editor = getEditor(e);
+      if (editor != null) {
+        EditorSettings settings = editor.getSettings();
+        if (settings instanceof SettingsImpl && ((SettingsImpl)settings).getSoftWrapAppliancePlace() != myAppliancePlace) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+      }
+    }
+    super.update(e);
+  }
+
+  @Override
   public boolean isSelected(AnActionEvent e) {
-    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
     Editor editor = getEditor(e);
-    return editor != null && editor.getSettings().isUseSoftWraps();
+    if (editor != null) return editor.getSettings().isUseSoftWraps();
+    else return myGlobal && EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
   }
 
   @Override

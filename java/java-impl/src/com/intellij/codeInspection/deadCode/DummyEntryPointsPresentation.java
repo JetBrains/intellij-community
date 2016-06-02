@@ -106,7 +106,8 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure) {
+                                       boolean showStructure,
+                                       boolean groupByStructure) {
     return node;
   }
 

@@ -469,29 +469,24 @@ public class RefManagerImpl extends RefManager {
 
     return getFromRefTableOrCache(
       elem,
-      new NullableFactory<RefElementImpl>() {
+      () -> ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
         @Override
-        public RefElementImpl create() {
-          return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-            @Override
-            @Nullable
-            public RefElementImpl compute() {
-              final RefManagerExtension extension = getExtension(elem.getLanguage());
-              if (extension != null) {
-                final RefElement refElement = extension.createRefElement(elem);
-                if (refElement != null) return (RefElementImpl)refElement;
-              }
-              if (elem instanceof PsiFile) {
-                return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-              }
-              if (elem instanceof PsiDirectory) {
-                return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-              }
-              return null;
-            }
-          });
+        @Nullable
+        public RefElementImpl compute() {
+          final RefManagerExtension extension = getExtension(elem.getLanguage());
+          if (extension != null) {
+            final RefElement refElement = extension.createRefElement(elem);
+            if (refElement != null) return (RefElementImpl)refElement;
+          }
+          if (elem instanceof PsiFile) {
+            return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+          }
+          if (elem instanceof PsiDirectory) {
+            return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+          }
+          return null;
         }
-      },
+      }),
       element -> {
         element.initialize();
         for (RefManagerExtension each : myExtensions.values()) {

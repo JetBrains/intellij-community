@@ -3710,4 +3710,18 @@ public class UIUtil {
       }
     });
   }
+
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (Registry.is("ide.scroll.event.old.behavior")) return true;
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    int modifiers = ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & event.getModifiers();
+    return modifiers == 0; // no modifiers expected except SHIFT for horizontal scrolling
+  }
 }

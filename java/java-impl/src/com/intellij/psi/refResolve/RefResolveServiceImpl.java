@@ -548,11 +548,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       return false;
     });
 
-    return !ContainerUtil.exists(results, new Condition<Boolean>() {
-      @Override
-      public boolean value(Boolean result) {
-        return result != null && !result;  // null means PCE
-      }
+    return !ContainerUtil.exists(results, result -> {
+      return result != null && !result;  // null means PCE
     });
   }
 
@@ -709,23 +706,20 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
     final TIntHashSet forward = new TIntHashSet();
 
-    final PsiFile psiFile = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        if (fileCount.incrementAndGet() % 100 == 0) {
-          PsiManager.getInstance(myProject).dropResolveCaches();
-          try {
-            storage.flush();
-            log.flush();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+    final PsiFile psiFile = ApplicationUtil.tryRunReadAction(() -> {
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      if (fileCount.incrementAndGet() % 100 == 0) {
+        PsiManager.getInstance(myProject).dropResolveCaches();
+        try {
+          storage.flush();
+          log.flush();
         }
-
-        return PsiManager.getInstance(myProject).findFile(virtualFile);
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
+
+      return PsiManager.getInstance(myProject).findFile(virtualFile);
     });
     final int fileId = getAbsId(virtualFile);
     if (psiFile != null) {

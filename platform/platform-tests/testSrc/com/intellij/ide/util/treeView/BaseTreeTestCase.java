@@ -74,12 +74,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       runnable.run();
     });
 
-    waitBuilderToCome(new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return started.get() && condition.value(null);
-      }
-    });
+    waitBuilderToCome(o -> started.get() && condition.value(null));
   }
 
   void waitBuilderToCome()  {
@@ -390,12 +385,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
     final AtomicBoolean done = new AtomicBoolean();
-    doAndWaitForBuilder(() -> getBuilder().select(elements, () -> done.set(true), addToSelection), new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return done.get() || canBeInterrupted && getBuilder().getUi().isCancelledReady();
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().select(elements, () -> done.set(true), addToSelection),
+                        o -> done.get() || canBeInterrupted && getBuilder().getUi().isCancelledReady());
   }
 
   protected final boolean isYieldingUiBuild() {

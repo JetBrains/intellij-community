@@ -21,20 +21,48 @@ import sun.swing.SwingUtilities2;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJButtonUI extends DarculaButtonUI {
+  private PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      final Object source = evt.getSource();
+      if (source instanceof AbstractButton) {
+        if (isHelpButton((JComponent)source)) {
+          ((AbstractButton)source).setOpaque(false);
+        }
+      }
+    }
+  };
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new WinIntelliJButtonUI();
   }
 
   @Override
+  protected void installListeners(AbstractButton b) {
+    super.installListeners(b);
+    b.addPropertyChangeListener("JButton.buttonType", helpButtonListener);
+  }
+
+  @Override
+  protected void uninstallListeners(AbstractButton b) {
+    b.removePropertyChangeListener("JButton.buttonType", helpButtonListener);
+    super.uninstallListeners(b);
+  }
+
+  @Override
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     if (isHelpButton(c)) {
-      return super.paintDecorations(g, c);
+      final Icon help = MacIntelliJIconCache.getIcon("winHelp");
+      help.paintIcon(c, g, (c.getWidth() - help.getIconWidth()) / 2, (c.getHeight() - help.getIconHeight()) / 2);
+      return false;
     }
     final Insets i = c.getInsets();
     g.setColor(c.hasFocus() ? UIManager.getColor("Button.intellij.native.activeBackgroundColor") : c.getBackground());
@@ -44,6 +72,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       g.fillRect(i.left, i.top, c.getWidth() - i.left - i.right, c.getHeight() - i.top - i.bottom);
     }
     return true;
+  }
+
+  @Override
+  protected void setupDefaultButton(JButton button) {
+    //do nothing
   }
 
   @Override

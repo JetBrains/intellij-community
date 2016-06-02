@@ -74,27 +74,12 @@ public class TreeTraverserTest extends TestCase {
       build();
   }
 
-  private static final Condition<Integer> IS_ODD = new Condition<Integer>() {
-    @Override
-    public boolean value(Integer integer) {
-      return integer.intValue() % 2 == 1;
-    }
-  };
+  private static final Condition<Integer> IS_ODD = integer -> integer.intValue() % 2 == 1;
 
-  private static final Condition<Integer> IS_POSITIVE = new Condition<Integer>() {
-    @Override
-    public boolean value(Integer integer) {
-      return integer.intValue() > 0;
-    }
-  };
+  private static final Condition<Integer> IS_POSITIVE = integer -> integer.intValue() > 0;
 
   private static Condition<Integer> inRange(final int s, final int e) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return s <= integer && integer <= e;
-      }
-    };
+    return integer -> s <= integer && integer <= e;
   }
 
   public static final Function<Integer, List<Integer>> WRAP_TO_LIST = integer -> ContainerUtil.newArrayList(integer);
@@ -119,22 +104,12 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static Condition<Integer> LESS_THAN(final int max) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer < max;
-      }
-    };
+    return integer -> integer < max;
   }
 
   @NotNull
   private static Condition<Integer> LESS_THAN_MOD(final int max) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer % max < max / 2;
-      }
-    };
+    return integer -> integer % max < max / 2;
   }
 
   @NotNull

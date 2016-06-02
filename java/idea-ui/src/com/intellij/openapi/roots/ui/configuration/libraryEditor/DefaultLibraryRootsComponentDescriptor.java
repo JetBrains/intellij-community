@@ -50,12 +50,7 @@ import java.util.*;
  */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
-  public static final Condition<VirtualFile> LIBRARY_ROOT_CONDITION = new Condition<VirtualFile>() {
-    @Override
-    public boolean value(VirtualFile file) {
-      return FileElement.isArchive(file) || isNativeLibrary(file);
-    }
-  };
+  public static final Condition<VirtualFile> LIBRARY_ROOT_CONDITION = file -> FileElement.isArchive(file) || isNativeLibrary(file);
 
   @Override
   public OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type) {

@@ -32,15 +32,12 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -328,7 +325,14 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    mySoftWrapAppliancePlace = softWrapAppliancePlace;
+    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
+      mySoftWrapAppliancePlace = softWrapAppliancePlace;
+      fireEditorRefresh();
+    }
+  }
+
+  public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
+    return mySoftWrapAppliancePlace;
   }
 
   public void reinitSettings() {
@@ -337,7 +341,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void reinitDocumentIndentOptions() {
-    if (myEditor == null || myEditor.isViewer() || AsyncEditorLoader.isCreatingAsyncEditor()) return;
+    if (myEditor == null || myEditor.isViewer()) return;
     final Project project = myEditor.getProject();
     final DocumentEx document = myEditor.getDocument();
 
@@ -347,16 +351,7 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptionsByFile(file);
-
-    if (CodeStyleSettings.isRecalculateForCommittedDocument(options)) {
-      PsiDocumentManager.getInstance(project).performForCommittedDocument(document,
-                                                                          () -> CodeStyleSettingsManager.updateDocumentIndentOptions(project, document));
-    }
-    else {
-      CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
-    }
+    CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
   }
 
   @Override
@@ -364,7 +359,7 @@ public class SettingsImpl implements EditorSettings {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
     int tabSize;
-    if (project == null || project.isDisposed() || AsyncEditorLoader.isCreatingAsyncEditor()) {
+    if (project == null || project.isDisposed()) {
       tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
     }
     else  {

@@ -643,18 +643,15 @@ public abstract class MvcFramework {
 
     final Project project = module.getProject();
 
-    return CachedValuesManager.getManager(project).getCachedValue(module, new CachedValueProvider<MvcFramework>() {
-      @Override
-      public Result<MvcFramework> compute() {
-        final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
-        for (final MvcFramework framework : EP_NAME.getExtensions()) {
-          if (framework.hasSupport(module)) {
-            return Result.create(framework, tracker);
-          }
+    return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
+      final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
+      for (final MvcFramework framework : EP_NAME.getExtensions()) {
+        if (framework.hasSupport(module)) {
+          return CachedValueProvider.Result.create(framework, tracker);
         }
-        return Result.create(null, tracker);
-
       }
+      return CachedValueProvider.Result.create(null, tracker);
+
     });
   }
 

@@ -173,7 +173,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
-  private static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
+  public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
     final List<Injectable> injectables = getAllInjectables();
 
     final JList list = new JBList(injectables);
@@ -200,12 +200,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName()).setMinSize(minSize).createPopup();
     final String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
     if (lastInjected != null) {
-      Injectable injectable = ContainerUtil.find(injectables, new Condition<Injectable>() {
-        @Override
-        public boolean value(Injectable injectable) {
-          return lastInjected.equals(injectable.getId());
-        }
-      });
+      Injectable injectable = ContainerUtil.find(injectables, injectable1 -> lastInjected.equals(injectable1.getId()));
       list.setSelectedValue(injectable, true);
     }
     popup.showInBestPositionFor(editor);

@@ -1430,18 +1430,15 @@ public class Messages {
     @Override
     public void show() {
       if (isMacSheetEmulation()) {
-        setInitialLocationCallback(new Computable<Point>() {
-          @Override
-          public Point compute() {
-            JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
-            if (rootPane == null) {
-              rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
-            }
-
-            Point p = rootPane.getLocationOnScreen();
-            p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
-            return p;
+        setInitialLocationCallback(() -> {
+          JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
+          if (rootPane == null) {
+            rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
           }
+
+          Point p = rootPane.getLocationOnScreen();
+          p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
+          return p;
         });
         animate();
         if (SystemInfo.isJavaVersionAtLeast("1.7")) {

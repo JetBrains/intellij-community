@@ -68,12 +68,7 @@ public class HighlightUtils {
       final PsiElement[] elements =
         PsiUtilCore.toPsiElementArray(elementCollection);
       final PsiElement firstElement = elements[0];
-      if (ContainerUtil.exists(elements, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement element) {
-          return !element.isValid();
-        }
-      })) {
+      if (ContainerUtil.exists(elements, element -> !element.isValid())) {
         return;
       }
       final Project project = firstElement.getProject();

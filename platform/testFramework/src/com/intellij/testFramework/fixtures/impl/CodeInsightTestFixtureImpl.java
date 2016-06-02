@@ -161,14 +161,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @NotNull
       @Override
       protected List<Tools> getUsedTools() {
-        return InspectionProfileImpl.initAndDo(new Computable<List<Tools>>() {
-          @Override
-          public List<Tools> compute() {
-            for (InspectionToolWrapper tool : toolWrappers) {
-              profile.enableTool(tool.getShortName(), project);
-            }
-            return profile.getAllEnabledInspectionTools(project);
+        return InspectionProfileImpl.initAndDo(() -> {
+          for (InspectionToolWrapper tool : toolWrappers) {
+            profile.enableTool(tool.getShortName(), project);
           }
+          return profile.getAllEnabledInspectionTools(project);
         });
       }
     };
@@ -216,13 +213,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     });
     inspectionProfileManager.setRootProfile(profile.getName());
-    InspectionProfileImpl.initAndDo(new Computable() {
-      @Override
-      public Object compute() {
-        InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
-        InspectionProjectProfileManager.getInstance(project).setProjectProfile(profile.getName());
-        return null;
-      }
+    InspectionProfileImpl.initAndDo((Computable)() -> {
+      InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
+      InspectionProjectProfileManager.getInstance(project).setProjectProfile(profile.getName());
+      return null;
     });
   }
 
@@ -687,12 +681,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) {
     final List<IntentionAction> availableIntentions = getAvailableIntentions();
-    return ContainerUtil.findAll(availableIntentions, new Condition<IntentionAction>() {
-      @Override
-      public boolean value(final IntentionAction intentionAction) {
-        return intentionAction.getText().startsWith(hint);
-      }
-    });
+    return ContainerUtil.findAll(availableIntentions, intentionAction -> intentionAction.getText().startsWith(hint));
   }
 
   @Override
@@ -1636,12 +1625,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<HighlightInfo> doHighlighting(@NotNull final HighlightSeverity minimalSeverity) {
-    return ContainerUtil.filter(doHighlighting(), new Condition<HighlightInfo>() {
-      @Override
-      public boolean value(HighlightInfo info) {
-        return info.getSeverity().compareTo(minimalSeverity) >= 0;
-      }
-    });
+    return ContainerUtil.filter(doHighlighting(), info -> info.getSeverity().compareTo(minimalSeverity) >= 0);
   }
 
   @NotNull

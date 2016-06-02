@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,16 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   private EventDispatcher(@NotNull Class<T> listenerClass) {
+    myMulticaster = createMulticaster(listenerClass, new Getter<Iterable<T>>() {
+      @Override
+      public Iterable<T> get() {
+        return myListeners;
+      }
+    });
+  }
+
+  @NotNull
+  static <T> T createMulticaster(@NotNull Class<T> listenerClass, final Getter<Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     InvocationHandler handler = new InvocationHandler() {
       @Override
@@ -65,14 +76,14 @@ public class EventDispatcher<T extends EventListener> {
           }
         }
         else {
-          dispatch(method, args);
+          dispatch(listeners.get(), method, args);
           return null;
         }
       }
     };
 
     //noinspection unchecked
-    myMulticaster = (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
+    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
   }
 
   @NotNull
@@ -80,10 +91,10 @@ public class EventDispatcher<T extends EventListener> {
     return myMulticaster;
   }
 
-  private void dispatch(@NotNull Method method, Object[] args) {
+  private static <T> void dispatch(Iterable<T> listeners, @NotNull Method method, Object[] args) {
     method.setAccessible(true);
 
-    for (T listener : myListeners) {
+    for (T listener : listeners) {
       try {
         method.invoke(listener, args);
       }

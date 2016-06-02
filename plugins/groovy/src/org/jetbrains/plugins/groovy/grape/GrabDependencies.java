@@ -117,26 +117,22 @@ public class GrabDependencies implements IntentionAction {
   private static PsiAnnotation findGrab(final PsiFile file) {
     if (!(file instanceof GroovyFile)) return null;
 
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<PsiAnnotation>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation> compute() {
-        PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GrabAnnos.GRAB_ANNO, file.getResolveScope());
-        final Ref<PsiAnnotation> result = Ref.create();
-        if (grab != null) {
-          ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(reference -> {
-            if (reference instanceof GrCodeReferenceElement) {
-              PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
-              if (parent instanceof PsiAnnotation) {
-                result.set((PsiAnnotation)parent);
-                return false;
-              }
+    return CachedValuesManager.getCachedValue(file, () -> {
+      PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GrabAnnos.GRAB_ANNO, file.getResolveScope());
+      final Ref<PsiAnnotation> result = Ref.create();
+      if (grab != null) {
+        ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(reference -> {
+          if (reference instanceof GrCodeReferenceElement) {
+            PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
+            if (parent instanceof PsiAnnotation) {
+              result.set((PsiAnnotation)parent);
+              return false;
             }
-            return true;
-          });
-        }
-        return Result.create(result.get(), file);
+          }
+          return true;
+        });
       }
+      return CachedValueProvider.Result.create(result.get(), file);
     });
   }
 

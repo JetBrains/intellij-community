@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.impl.source.tree.AstPath;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A weak cache for all instantiated stub-based PSI to allow {@link CompositeElement#getPsi()} return it when AST is reloaded.<p/>
@@ -38,6 +40,16 @@ class AstPathPsiMap {
    * Otherwise the files end up retaining lots of maps with all-gc-ed stuff inside, but the maps are still very large.
    */
   private final ConcurrentMap<AstPath, MyReference> myMap = ContainerUtil.newConcurrentMap();
+
+  static {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        // clean up AstPath objects when no PSI is accessed, e.g. after project closing
+        processQueue();
+      }
+    }, 5, 5, TimeUnit.SECONDS);
+  }
 
   void invalidatePsi() {
     processQueue();

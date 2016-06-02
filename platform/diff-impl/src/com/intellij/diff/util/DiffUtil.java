@@ -100,7 +100,10 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -1059,64 +1062,38 @@ public class DiffUtil {
   // Writable
   //
 
-  public static abstract class DiffCommandAction implements Runnable {
-    @Nullable protected final Project myProject;
-    @NotNull protected final Document myDocument;
-    @Nullable private final String myCommandName;
-    @Nullable private final String myCommandGroupId;
-    @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
-    private final boolean myUnderBulkUpdate;
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName,
-                             @Nullable String commandGroupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
-                             boolean underBulkUpdate) {
-      myDocument = document;
-      myProject = project;
-      myCommandName = commandName;
-      myCommandGroupId = commandGroupId;
-      myConfirmationPolicy = confirmationPolicy;
-      myUnderBulkUpdate = underBulkUpdate;
+  @CalledInAwt
+  public static void executeWriteCommand(@Nullable Project project,
+                                         @NotNull Document document,
+                                         @Nullable String commandName,
+                                         @Nullable String commandGroupId,
+                                         @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                         boolean underBulkUpdate,
+                                         @NotNull Runnable task) {
+    if (!makeWritable(project, document)) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+      return;
     }
 
-    @Override
-    @CalledInAwt
-    public final void run() {
-      if (!makeWritable(myProject, myDocument)) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
-        LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
-        return;
-      }
-
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          if (myUnderBulkUpdate) {
-            DocumentUtil.executeInBulk(myDocument, true, this::execute);
-          }
-          else {
-            execute();
-          }
-        }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
-      });
-    }
-
-    @CalledWithWriteLock
-    protected abstract void execute();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        if (underBulkUpdate) {
+          DocumentUtil.executeInBulk(document, true, task);
+        }
+        else {
+          task.run();
+        }
+      }, commandName, commandGroupId, confirmationPolicy, document);
+    });
   }
 
   @CalledInAwt
   public static void executeWriteCommand(@NotNull final Document document,
                                          @Nullable final Project project,
-                                         @Nullable final String name,
+                                         @Nullable final String commandName,
                                          @NotNull final Runnable task) {
-    new DiffCommandAction(project, document, name, null, UndoConfirmationPolicy.DEFAULT, false) {
-      @Override
-      protected void execute() {
-        task.run();
-      }
-    }.run();
+    executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
 
   public static boolean isEditable(@NotNull Editor editor) {
@@ -1137,15 +1114,13 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
-    if (document.isWritable()) return true;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null || !file.isValid()) return false;
+    if (file == null || !file.isValid()) return document.isWritable();
     return makeWritable(project, file) && document.isWritable();
   }
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.isWritable()) return true;
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
     return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
   }

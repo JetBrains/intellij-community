@@ -39,13 +39,10 @@ public final class DeclarationChecker extends ElementProcessor<XmlTag> implement
   private final static UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void> CACHE =
           new UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void>("CACHE") {
             protected CachedValue<DeclarationChecker> compute(final XmlFile file, final Void p) {
-              return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<DeclarationChecker>() {
-                @Override
-                public CachedValueProvider.Result<DeclarationChecker> compute() {
-                  final DeclarationChecker holder = new DeclarationChecker(file);
-                  holder.check(file);
-                  return CachedValueProvider.Result.create(holder, file);
-                }
+              return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+                final DeclarationChecker holder = new DeclarationChecker(file);
+                holder.check(file);
+                return CachedValueProvider.Result.create(holder, file);
               }, false);
             }
           };

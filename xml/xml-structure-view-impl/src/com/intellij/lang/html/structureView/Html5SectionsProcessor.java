@@ -213,15 +213,12 @@ class Html5SectionsProcessor {
   }
 
   private static Computable<Collection<StructureViewTreeElement>> createChildrenComputable(final Collection<Section> children) {
-    return new Computable<Collection<StructureViewTreeElement>>() {
-      @Override
-      public Collection<StructureViewTreeElement> compute() {
-        final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-        for (Section section : children) {
-          result.add(createHtml5SectionTreeElement(section));
-        }
-        return result;
+    return () -> {
+      final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+      for (Section section : children) {
+        result.add(createHtml5SectionTreeElement(section));
       }
+      return result;
     };
   }
 

@@ -59,22 +59,17 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
           }
         });
 
-        return ContainerUtil.filter(methodsToCheck, new Condition<PsiMethod>() {
-          @Override
-          public boolean value(final PsiMethod m) {
-            return containingClass.equals(m.getContainingClass()) &&
-                   !psiMethod.equals(m) &&
-                   m.findDeepestSuperMethods().length == 0 &&
-                   ReferencesSearch.search(m).forEach(new CommonProcessors.CollectProcessor<PsiReference>() {
-                     @Override
-                     public boolean process(PsiReference reference) {
-                       final PsiElement element = reference.getElement();
-                       return PsiTreeUtil.isAncestor(psiMethod, element, true) ||
-                              PsiTreeUtil.isAncestor(m, element, true);
-                     }
-                   });
-          }
-        });
+        return ContainerUtil.filter(methodsToCheck, m -> containingClass.equals(m.getContainingClass()) &&
+                                                     !psiMethod.equals(m) &&
+               m.findDeepestSuperMethods().length == 0 &&
+                                                     ReferencesSearch.search(m).forEach(new CommonProcessors.CollectProcessor<PsiReference>() {
+                 @Override
+                 public boolean process(PsiReference reference) {
+                   final PsiElement element = reference.getElement();
+                   return PsiTreeUtil.isAncestor(psiMethod, element, true) ||
+                          PsiTreeUtil.isAncestor(m, element, true);
+                 }
+               }));
       }
     }
     return null;
@@ -137,12 +132,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
 
     @Override
     protected Condition<PsiMethod> getFilter() {
-      return new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !myMethod.equals(method);
-        }
-      };
+      return method -> !myMethod.equals(method);
     }
   }
 }

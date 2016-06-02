@@ -208,7 +208,9 @@ public class ParametersFolder {
       if (expressions == null) {
         expressions = new ArrayList<PsiExpression>();
         while (expression != null) {
-          if (isAccessedForWriting((PsiExpression)expression)) return null;
+          if (isAccessedForWriting((PsiExpression)expression)) {
+            return null;
+          }
           for (PsiElement scopeElement : scopeElements) {
             if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
               expression = null;
@@ -300,7 +302,8 @@ public class ParametersFolder {
     PsiElement expression = element;
     while (expression  != null) {
       if (PsiEquivalenceUtil.areElementsEquivalent(expression, expr)) {
-        return (PsiExpression)expression;
+        PsiExpression psiExpression = (PsiExpression)expression;
+        return PsiUtil.isAccessedForWriting(psiExpression) ? null : psiExpression;
       }
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
     }

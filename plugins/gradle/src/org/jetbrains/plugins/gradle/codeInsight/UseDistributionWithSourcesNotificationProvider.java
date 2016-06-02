@@ -103,22 +103,16 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
         final EditorNotificationPanel panel = new EditorNotificationPanel();
         panel.setText(GradleBundle.message("gradle.notifications.use.distribution.with.sources"));
-        panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), new Runnable() {
-          @Override
-          public void run() {
-            settings.setDisableWrapperSourceDistributionNotification(true);
-            EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
-          }
+        panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), () -> {
+          settings.setDisableWrapperSourceDistributionNotification(true);
+          EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
         });
-        panel.createActionLabel(GradleBundle.message("gradle.notifications.apply.suggestion"), new Runnable() {
-          @Override
-          public void run() {
-            updateDefaultWrapperConfiguration(rootProjectPath);
-            EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
-            ExternalSystemUtil.refreshProject(
-              module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), true,
-              ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
-          }
+        panel.createActionLabel(GradleBundle.message("gradle.notifications.apply.suggestion"), () -> {
+          updateDefaultWrapperConfiguration(rootProjectPath);
+          EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
+          ExternalSystemUtil.refreshProject(
+            module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), true,
+            ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
         });
         return panel;
       }

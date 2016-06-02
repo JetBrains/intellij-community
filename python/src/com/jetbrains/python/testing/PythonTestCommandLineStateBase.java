@@ -143,12 +143,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     PyRerunFailedTestsAction rerunFailedTestsAction = new PyRerunFailedTestsAction(console);
     if (console instanceof SMTRunnerConsoleView) {
       rerunFailedTestsAction.init(((BaseTestsOutputConsoleView)console).getProperties());
-      rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return ((SMTRunnerConsoleView)console).getResultsViewer();
-      }
-    });
+      rerunFailedTestsAction.setModelProvider(() -> ((SMTRunnerConsoleView)console).getResultsViewer());
     }
 
     executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());

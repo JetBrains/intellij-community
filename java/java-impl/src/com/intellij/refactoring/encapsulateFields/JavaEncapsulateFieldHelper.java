@@ -311,12 +311,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   @NotNull
   @Override
   public PsiField[] getApplicableFields(@NotNull PsiClass aClass) {
-    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), new Condition<PsiField>() {
-      @Override
-      public boolean value(PsiField field) {
-        return !(field instanceof PsiEnumConstant);
-      }
-    });
+    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
     return fields.toArray(new PsiField[fields.size()]);
   }
 

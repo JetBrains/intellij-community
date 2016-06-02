@@ -89,22 +89,20 @@ public class AntTasksProvider {
       return Collections.emptySet();
     }
 
-    return CachedValuesManager.getManager(file.getProject()).getCachedValue(file, GANT_METHODS, new CachedValueProvider<Set<LightMethodBuilder>>() {
-      @Override
-      public Result<Set<LightMethodBuilder>> compute() {
-        Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
+    return CachedValuesManager.getManager(file.getProject()).getCachedValue(file, GANT_METHODS, () -> {
+      Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
 
-        final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
+      final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
 
-        final Project project = file.getProject();
-        final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
-        final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
+      final Project project = file.getProject();
+      final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
+      final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
 
-        for (String name : antObjects.keySet()) {
-          methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
-        }
-        return Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+      for (String name : antObjects.keySet()) {
+        methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
       }
+      return CachedValueProvider.Result
+        .create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
     }, false);
   }
 

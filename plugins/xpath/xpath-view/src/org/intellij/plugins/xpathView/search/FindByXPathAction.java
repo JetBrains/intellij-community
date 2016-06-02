@@ -93,22 +93,15 @@ public class FindByXPathAction extends AnAction {
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
-            public ProgressIndicator create() {
-                return new FindProgressIndicator(project, scope.getName());
-            }
-        });
+        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, scope.getName()));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
 
         final XPathEvalAction.MyUsageTarget usageTarget = new XPathEvalAction.MyUsageTarget(context.input.expression, null);
         final UsageTarget[] usageTargets = new UsageTarget[]{ usageTarget };
 
-        final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
-            public UsageSearcher create() {
-                return new XPathUsageSearcher(project, context.input, scope, settings.MATCH_RECURSIVELY);
-            }
-        };
+        final Factory<UsageSearcher> searcherFactory =
+          () -> new XPathUsageSearcher(project, context.input, scope, settings.MATCH_RECURSIVELY);
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
             public void usageViewCreated(@NotNull UsageView usageView) {
                 usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");

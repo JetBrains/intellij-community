@@ -67,8 +67,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   @Override
   public final boolean isOverSelection(final Point point) {
-    final TreeUI ui = getUI();
-    final TreePath path = ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection()
+    final TreePath path = WideSelectionTreeUI.isWideSelection(this)
                           ? getClosestPathForLocation(point.x, point.y) : getPathForLocation(point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);

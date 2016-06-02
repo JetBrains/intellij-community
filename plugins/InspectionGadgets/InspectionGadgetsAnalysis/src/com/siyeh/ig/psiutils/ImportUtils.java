@@ -524,14 +524,8 @@ public final class ImportUtils {
    */
   private static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
-      CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
-        @Nullable
-        @Override
-        public Result<Map<String, Boolean>> compute() {
-          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()),
-                                                  PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      });
+      CachedValuesManager.getCachedValue(element, () -> new CachedValueProvider.Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()),
+                                                                                                             PsiModificationTracker.MODIFICATION_COUNT));
     Boolean conflictingRef = cachedValue.get(fullyQualifiedName);
     if (conflictingRef != null) {
       return conflictingRef.booleanValue();

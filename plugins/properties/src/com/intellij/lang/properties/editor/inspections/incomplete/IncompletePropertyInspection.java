@@ -164,13 +164,8 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   public List<PropertiesFile> getPropertiesFilesWithoutTranslation(final ResourceBundle resourceBundle, final String key) {
-    return ContainerUtil.filter(resourceBundle.getPropertiesFiles(), new Condition<PropertiesFile>() {
-      @Override
-      public boolean value(PropertiesFile propertiesFile) {
-        return propertiesFile.findPropertyByKey(key) == null &&
-               !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(propertiesFile));
-      }
-    });
+    return ContainerUtil.filter(resourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.findPropertyByKey(key) == null &&
+                                                                                   !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(propertiesFile)));
   }
 
   public void addSuffixes(Collection<String> suffixes) {

@@ -97,13 +97,9 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
 
 
   public void undeploy() throws ServerRuntimeException {
-    getAgentTaskExecutor().execute(new Computable<Object>() {
-
-      @Override
-      public Object compute() {
-        getDeployment().deleteApplication();
-        return null;
-      }
+    getAgentTaskExecutor().execute(() -> {
+      getDeployment().deleteApplication();
+      return null;
     });
   }
 

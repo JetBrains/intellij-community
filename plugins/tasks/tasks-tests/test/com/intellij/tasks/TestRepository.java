@@ -34,12 +34,7 @@ public class TestRepository extends BaseRepository {
   @Nullable
   @Override
   public Task findTask(@NotNull final String id) throws Exception {
-    return ContainerUtil.find(myTasks, new Condition<Task>() {
-      @Override
-      public boolean value(Task task) {
-        return id.equals(task.getId());
-      }
-    });
+    return ContainerUtil.find(myTasks, task -> id.equals(task.getId()));
   }
 
   @Override

@@ -77,12 +77,8 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
-            final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
-              @Override
-              public GenericDomValue create() {
-                return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
-              }
-            });
+            final GenericDomValue element = domElement.getManager().createStableValue(
+              () -> domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null);
             doBind(DomUIFactory.createControl(element, commitOnEveryChange(element)), boundComponent);
           }
           else {

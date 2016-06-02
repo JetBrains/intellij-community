@@ -205,12 +205,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
     @Override
     protected Condition<PsiMethod> getFilter() {
-      return new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !myMethod.equals(method) && getParameter(method) != null;
-        }
-      };
+      return method -> !myMethod.equals(method) && getParameter(method) != null;
     }
 
     private PsiParameter getParameter(PsiMethod caller) {

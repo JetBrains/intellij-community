@@ -116,12 +116,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
         for (Module module : modelsProvider.getModules(projectData)) {
           final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
           if(projectPath != null && StringUtil.startsWith(projectPath, linkedExternalProjectPath + "/buildSrc")) {
-            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), new Function<VirtualFile, String>() {
-              @Override
-              public String fun(VirtualFile file) {
-                return file.getPath();
-              }
-            });
+            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), file -> file.getPath());
             result.addAll(sourceRoots);
           }
         }

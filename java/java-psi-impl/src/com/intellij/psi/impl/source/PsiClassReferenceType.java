@@ -58,12 +58,6 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
-  @NotNull
-  @Override
-  public PsiClassReferenceType annotate(@NotNull TypeAnnotationProvider provider) {
-    return provider == getAnnotationProvider() ? this : new PsiClassReferenceType(myReference, myLanguageLevel, provider);
-  }
-
   @Override
   public boolean isValid() {
     return myReference.isValid();

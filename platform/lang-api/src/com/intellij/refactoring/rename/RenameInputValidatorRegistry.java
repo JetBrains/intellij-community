@@ -37,16 +37,13 @@ public class RenameInputValidatorRegistry {
         acceptedValidators.put(validator, context);
       }
     }
-    return acceptedValidators.isEmpty() ? null : new Condition<String>() {
-      @Override
-      public boolean value(final String s) {
-        for (RenameInputValidator validator : acceptedValidators.keySet()) {
-          if (!validator.isInputValid(s, element, acceptedValidators.get(validator))) {
-            return false;
-          }
+    return acceptedValidators.isEmpty() ? null : (Condition<String>)s -> {
+      for (RenameInputValidator validator : acceptedValidators.keySet()) {
+        if (!validator.isInputValid(s, element, acceptedValidators.get(validator))) {
+          return false;
         }
-        return true;
       }
+      return true;
     };
   }
 

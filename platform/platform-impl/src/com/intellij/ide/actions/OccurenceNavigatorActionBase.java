@@ -152,11 +152,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
     ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
 
-    String id = mgr.getLastActiveToolWindowId(new Condition<JComponent>() {
-      public boolean value(final JComponent component) {
-        return findNavigator(component) != null;
-      }
-    });
+    String id = mgr.getLastActiveToolWindowId(component -> findNavigator(component) != null);
     if (id == null) {
       return null;
     }

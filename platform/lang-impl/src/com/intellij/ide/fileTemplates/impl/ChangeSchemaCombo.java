@@ -56,12 +56,7 @@ public class ChangeSchemaCombo extends ComboBoxAction implements DumbAware {
 
   @Override
   protected Condition<AnAction> getPreselectCondition() {
-    return new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return myConfigurable.getCurrentScheme().getName().equals(action.getTemplatePresentation().getText());
-      }
-    };
+    return action -> myConfigurable.getCurrentScheme().getName().equals(action.getTemplatePresentation().getText());
   }
 
   private class ChangeSchemaAction extends AnAction {

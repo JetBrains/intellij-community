@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,31 +27,45 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.function.Predicate;
 
 public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {
   public void testMethodArgument() throws Exception {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
-    assertNotNull(elementAtCaret);
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(elementAtCaret, PsiClass.class, false);
-    assertTrue(psiClass != null && psiClass.isInterface());
-    final Collection<PsiFunctionalExpression> expressions = FunctionalExpressionSearch.search(psiClass).findAll();
-    assertTrue(expressions.size() == 1);
-    final PsiFunctionalExpression next = expressions.iterator().next();
-    assertNotNull(next);
-    assertEquals("() -> {}", next.getText());
+    doTestOneExpression();
   }
 
   public void testMethodArgumentByTypeParameter() throws Exception {
+    doTestOneExpression();
+  }
+
+  @Bombed(month = Calendar.AUGUST, day = 1, user = "ann peter")
+  public void testFieldDeclaredInFileWithoutFunctionalInterfaces() throws Exception {
+    myFixture.addClass("class B {" +
+                       "  void f(A a) {" +
+                       "    a.r = () -> {};" +
+                       "  }" +
+                       "}");
+    myFixture.addClass("public class A {" +
+                       "  public I r;" +
+                       "}");
+    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 1; i++) {
+      myFixture.addClass("class B" + i + " { {Runnable r = () -> {};}}"); //ensure common case is used
+    }
+
+    doTestOneExpression();
+  }
+
+  private void doTestOneExpression() {
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();
     assertNotNull(elementAtCaret);
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(elementAtCaret, PsiClass.class, false);
     assertTrue(psiClass != null && psiClass.isInterface());
     final Collection<PsiFunctionalExpression> expressions = FunctionalExpressionSearch.search(psiClass).findAll();
-    assertTrue(expressions.size() == 1);
+    int size = expressions.size();
+    assertEquals(1, size);
     final PsiFunctionalExpression next = expressions.iterator().next();
     assertNotNull(next);
     assertEquals("() -> {}", next.getText());

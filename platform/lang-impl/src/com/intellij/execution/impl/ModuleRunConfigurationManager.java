@@ -47,12 +47,8 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NonNls static final String COMPONENT_NAME = "ModuleRunConfigurationManager";
   @NotNull
-  private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition = new Condition<RunnerAndConfigurationSettings>() {
-    @Override
-    public boolean value(@Nullable RunnerAndConfigurationSettings settings) {
-      return settings != null && usesMyModule(settings.getConfiguration());
-    }
-  };
+  private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
+    settings -> settings != null && usesMyModule(settings.getConfiguration());
   @NotNull
   private final Module myModule;
   @NotNull

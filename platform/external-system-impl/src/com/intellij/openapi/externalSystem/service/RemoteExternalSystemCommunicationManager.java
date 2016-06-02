@@ -113,11 +113,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       }
     };
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      public void run() {
-        shutdown(false);
-      }
-    });
+    ShutDownTracker.getInstance().registerShutdownTask(() -> shutdown(false));
   }
 
   public synchronized void shutdown(boolean wait) {

@@ -52,7 +52,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   @NotNull private final TIntHashSet myChangesToUpdate = new TIntHashSet();
   private int myBulkChangeUpdateDepth;
 
-  @Nullable private MyCommandAction myCurrentCommand;
+  private boolean myInsideCommand;
 
   private boolean myDisposed;
 
@@ -104,7 +104,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
 
   @CalledInAwt
   public boolean isInsideCommand() {
-    return myCurrentCommand != null;
+    return myInsideCommand;
   }
 
   private void setLineStart(int index, int line) {
@@ -201,7 +201,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
         if (oldState == null) continue;
 
         invalidateHighlighters(index);
-        if (myCurrentCommand == null) corruptedStates.add(oldState);
+        if (!isInsideCommand()) corruptedStates.add(oldState);
       }
 
       if (myUndoManager != null && !corruptedStates.isEmpty()) {
@@ -224,67 +224,46 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
                                   boolean underBulkUpdate,
                                   @Nullable TIntArrayList affectedChanges,
                                   @NotNull Runnable task) {
-    new MyCommandAction(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, affectedChanges, task).run();
-  }
-
-  private class MyCommandAction extends DiffUtil.DiffCommandAction {
-    @Nullable private final TIntArrayList myAffectedChanges;
-    @NotNull private final Runnable myTask;
-
-    public MyCommandAction(@Nullable Project project,
-                           @NotNull Document document,
-                           @Nullable String commandName,
-                           @Nullable String commandGroupId,
-                           @NotNull UndoConfirmationPolicy confirmationPolicy,
-                           boolean underBulkUpdate,
-                           @Nullable TIntArrayList affectedChanges,
-                           @NotNull Runnable task) {
-      super(project, document, commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
-      myAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
-      myTask = task;
-    }
-
-    @Override
-    @CalledWithWriteLock
-    protected final void execute() {
-      LOG.assertTrue(myCurrentCommand == null);
+    TIntArrayList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
+    DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
+      LOG.assertTrue(!myInsideCommand);
 
       // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
       // Undo actions are performed in backward order, while redo actions are performed in forward order.
       // Thus we should register two UndoableActions.
 
-      myCurrentCommand = this;
+      myInsideCommand = true;
       enterBulkChangeUpdateBlock();
-      registerUndoRedo(true);
+      registerUndoRedo(true, allAffectedChanges);
       try {
-        myTask.run();
+        task.run();
       }
       finally {
-        registerUndoRedo(false);
+        registerUndoRedo(false, allAffectedChanges);
         exitBulkChangeUpdateBlock();
-        myCurrentCommand = null;
+        myInsideCommand = false;
+      }
+    });
+  }
+
+  private void registerUndoRedo(boolean undo, @Nullable TIntArrayList affectedChanges) {
+    if (myUndoManager == null) return;
+
+    List<S> states;
+    if (affectedChanges != null) {
+      states = new ArrayList<>(affectedChanges.size());
+      affectedChanges.forEach((index) -> {
+        states.add(storeChangeState(index));
+        return true;
+      });
+    }
+    else {
+      states = new ArrayList<>(getChangesCount());
+      for (int index = 0; index < getChangesCount(); index++) {
+        states.add(storeChangeState(index));
       }
     }
-
-    private void registerUndoRedo(final boolean undo) {
-      if (myUndoManager == null) return;
-
-      List<S> states;
-      if (myAffectedChanges != null) {
-        states = new ArrayList<>(myAffectedChanges.size());
-        myAffectedChanges.forEach((index) -> {
-          states.add(storeChangeState(index));
-          return true;
-        });
-      }
-      else {
-        states = new ArrayList<>(getChangesCount());
-        for (int index = 0; index < getChangesCount(); index++) {
-          states.add(storeChangeState(index));
-        }
-      }
-      myUndoManager.undoableActionPerformed(new MyUndoableAction(MergeModelBase.this, states, undo));
-    }
+    myUndoManager.undoableActionPerformed(new MyUndoableAction(this, states, undo));
   }
 
   private static class MyUndoableAction extends BasicUndoableAction {

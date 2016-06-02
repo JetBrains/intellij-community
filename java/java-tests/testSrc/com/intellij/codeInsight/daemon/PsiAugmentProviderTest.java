@@ -23,8 +23,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -105,10 +109,15 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
       return null;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
-      return (PsiModifier.FINAL.equals(name) && isLombokVal(modifierList.getParent())) ? Boolean.TRUE : null;
+    protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+      if (isLombokVal(modifierList.getParent())) {
+        THashSet<String> result = ContainerUtil.newTroveSet(modifiers);
+        result.add(PsiModifier.FINAL);
+        return result;
+      }
+      return modifiers;
     }
 
     private static boolean isLombokVal(PsiElement variable) {

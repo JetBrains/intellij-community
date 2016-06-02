@@ -186,8 +186,6 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         if (fromIdeaProject) {
           for (String url : usedIdeaJdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
             String s = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-            if (s.endsWith("plugin-system")) continue;
-            if (new File(toSystemDependentName(s+ "/META-INF/plugin.xml")).exists()) continue;
             params.getClassPath().add(toSystemDependentName(s));
           }
         }

@@ -124,36 +124,23 @@ public class GradleRunnerUtil {
       @Override
       public void onStatusChange(@NotNull final ExternalSystemTaskNotificationEvent event) {
         if (event instanceof ExternalSystemTaskExecutionEvent) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if(((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemProgressEventUnsupported) {
-                duplexConsoleView.enableConsole(false);
-              }
-              gradleExecutionConsole.onStatusChange((ExternalSystemTaskExecutionEvent)event);
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if(((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemProgressEventUnsupported) {
+              duplexConsoleView.enableConsole(false);
             }
+            gradleExecutionConsole.onStatusChange((ExternalSystemTaskExecutionEvent)event);
           });
         }
       }
 
       @Override
       public void onQueued(@NotNull ExternalSystemTaskId id, final String workingDir) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            gradleExecutionConsole.setWorkingDir(workingDir);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> gradleExecutionConsole.setWorkingDir(workingDir));
       }
 
       @Override
       public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull final Exception e) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            gradleExecutionConsole.onFailure(e);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> gradleExecutionConsole.onFailure(e));
       }
 
       @Override

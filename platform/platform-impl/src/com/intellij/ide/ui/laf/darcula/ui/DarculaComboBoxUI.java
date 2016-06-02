@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     paintCurrentValue(g, r, hasFocus);
   }
 
-  private static boolean isTableCellEditor(JComponent c) {
+  protected static boolean isTableCellEditor(JComponent c) {
     return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor")) || c.getParent() instanceof JTable;
   }
 
@@ -382,7 +382,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     g.dispose();
   }
 
-  private void checkFocus() {
+  protected void checkFocus() {
     if (!comboBox.isEnabled()) {
       hasFocus = false;
       return;
@@ -398,7 +398,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     }
   }
 
-  private static boolean hasFocus(Component c) {
+  protected static boolean hasFocus(Component c) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }

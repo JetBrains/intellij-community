@@ -3371,6 +3371,16 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  @Contract(pure = true)
+  @NotNull
+  @SuppressWarnings("SpellCheckingInspection")
+  public static String toHexString(@NotNull byte[] bytes) {
+    String digits = "0123456789abcdef";
+    StringBuilder sb = new StringBuilder(2 * bytes.length);
+    for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    return sb.toString();
+  }
+
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
   @SuppressWarnings("unused")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {

@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -132,11 +133,14 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
       final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
+
+      final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
       TreeUtil.traverse(root, node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
           Element problems = new Element(PROBLEMS);
           InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+          if (!visitedWrappers.add(toolWrapper)) return true;
 
           final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
           for (InspectionToolWrapper wrapper : toolWrappers) {
@@ -181,7 +185,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
     final Set<InspectionToolWrapper> result = new HashSet<InspectionToolWrapper>();
     final InspectionToolWrapper wrapper = node.getToolWrapper();
-    if (myView.getCurrentProfileName() != null){
+    if (myView.getCurrentProfileName() == null){
       result.add(wrapper);
       return result;
     }

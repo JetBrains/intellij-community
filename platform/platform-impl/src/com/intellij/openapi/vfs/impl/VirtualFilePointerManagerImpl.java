@@ -445,12 +445,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       toFirePointers = toPointers(toFireEvents);
       for (final VirtualFilePointerListener listener : myPointers.keySet()) {
         if (listener == null) continue;
-        List<VirtualFilePointer> filtered = ContainerUtil.filter(toFirePointers, new Condition<VirtualFilePointer>() {
-          @Override
-          public boolean value(VirtualFilePointer pointer) {
-            return ((VirtualFilePointerImpl)pointer).getListener() == listener;
-          }
-        });
+        List<VirtualFilePointer> filtered = ContainerUtil.filter(toFirePointers,
+                                                                 pointer -> ((VirtualFilePointerImpl)pointer).getListener() == listener);
         if (!filtered.isEmpty()) {
           EventDescriptor event = new EventDescriptor(listener, filtered.toArray(new VirtualFilePointer[filtered.size()]));
           myEvents.add(event);

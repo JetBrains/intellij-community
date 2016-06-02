@@ -18,11 +18,15 @@ package com.intellij.psi.impl.source;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +130,30 @@ public abstract class SubstrateRef {
     @NotNull
     @Override
     public PsiFile getContainingFile() {
-      throw new UnsupportedOperationException();
+      StubElement stub = myStub;
+      while (!(stub instanceof PsiFileStub)) {
+        stub = stub.getParentStub();
+      }
+      PsiFile psi = (PsiFile)stub.getPsi();
+      if (psi != null) {
+        return psi;
+      }
+      return reportError(stub);
+    }
+
+    private PsiFile reportError(StubElement stub) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+
+      String reason = ((PsiFileStubImpl<?>)stub).getInvalidationReason();
+      PsiInvalidElementAccessException exception =
+        new PsiInvalidElementAccessException(myStub.getPsi(), "no psi for file stub " + stub + ", invalidation reason=" + reason, null);
+      if (PsiFileImpl.STUB_PSI_MISMATCH.equals(reason)) {
+        // we're between finding stub-psi mismatch and the next EDT spot where the file is reparsed and stub rebuilt
+        //    see com.intellij.psi.impl.source.PsiFileImpl.rebuildStub()
+        // most likely it's just another highlighting thread accessing the same PSI concurrently and not yet canceled, so cancel it
+        throw new ProcessCanceledException(exception);
+      }
+      throw exception;
     }
   }
 }

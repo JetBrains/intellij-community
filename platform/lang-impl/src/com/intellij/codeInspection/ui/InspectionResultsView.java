@@ -581,12 +581,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     InspectionTreeNode parentNode = getToolParentNode(groupName, toolWrapper.getGroupPath(), errorLevel, groupedBySeverity, isSingleInspectionRun);
     InspectionNode toolNode = new InspectionNode(toolWrapper, myInspectionProfile);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
-    myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
+    toolNode = myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure, groupedBySeverity);
     InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);
-    toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure);
-    synchronized (getTreeStructureUpdateLock()) {
-      ((DefaultInspectionToolPresentation)presentation).setToolNode(toolNode);
-    }
+    toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure, groupedBySeverity);
+    ((DefaultInspectionToolPresentation)presentation).setToolNode(toolNode);
     registerActionShortcuts(presentation);
     return toolNode;
   }
@@ -630,9 +628,27 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myTree.removeAllNodes();
-    mySeverityGroupNodes.clear();
-    buildTree();
+    final Application app = ApplicationManager.getApplication();
+    final Runnable buildAction = () -> {
+      try {
+        setUpdating(true);
+        synchronized (getTreeStructureUpdateLock()) {
+          mySeverityGroupNodes.clear();
+          myGroups.clear();
+          myTree.removeAllNodes();
+          addTools(myGlobalInspectionContext.getTools().values());
+        }
+      }
+      finally {
+        setUpdating(false);
+        UIUtil.invokeLaterIfNeeded(() -> myTree.restoreExpansionAndSelection(false));
+      }
+    };
+    if (app.isUnitTestMode()) {
+      buildAction.run();
+    } else {
+      app.executeOnPooledThread(() -> app.runReadAction(buildAction));
+    }
   }
 
   public void setUpdating(boolean isUpdating) {
@@ -669,46 +685,27 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void addTools(Collection<Tools> tools) {
-    InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
-    boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-    boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
-    for (Tools currentTools : tools) {
-      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-      if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS && myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
-        continue;
-      }
-      final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-      for (ScopeToolState state : myProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-          addTool(toolWrapper,
-                  profile.getErrorLevel(key, state.getScope(myProject), myProject),
-                  isGroupedBySeverity,
-                  singleInspectionRun);
+    synchronized (myTreeStructureUpdateLock) {
+      InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
+      boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
+      boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
+      for (Tools currentTools : tools) {
+        InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
+            myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
+          continue;
+        }
+        final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
+        for (ScopeToolState state : myProvider.getTools(currentTools)) {
+          InspectionToolWrapper toolWrapper = state.getTool();
+          if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+            addTool(toolWrapper,
+                    profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                    isGroupedBySeverity,
+                    singleInspectionRun);
+          }
         }
       }
-    }
-  }
-
-  public void buildTree() {
-    final Application app = ApplicationManager.getApplication();
-    final Runnable buildAction = () -> {
-      try {
-        setUpdating(true);
-        synchronized (getTreeStructureUpdateLock()) {
-          myGroups.clear();
-          addTools(myGlobalInspectionContext.getTools().values());
-        }
-      }
-      finally {
-        setUpdating(false);
-        UIUtil.invokeLaterIfNeeded(() -> myTree.restoreExpansionAndSelection(null));
-      }
-    };
-    if (app.isUnitTestMode()) {
-      buildAction.run();
-    } else {
-      app.executeOnPooledThread(() -> app.runReadAction(buildAction));
     }
   }
 

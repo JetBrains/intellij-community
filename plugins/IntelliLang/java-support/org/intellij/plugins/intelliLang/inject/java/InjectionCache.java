@@ -48,54 +48,50 @@ public class InjectionCache {
 
   public InjectionCache(final Project project, final Configuration configuration) {
 
-    myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
-        for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
-          for (InjectionPlace place : injection.getInjectionPlaces()) {
-            if (!place.isEnabled() || place.getElementPattern() == null) continue;
-            map.put(place.getElementPattern(), injection);
-          }
+    myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
+      for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
+        for (InjectionPlace place : injection.getInjectionPlaces()) {
+          if (!place.isEnabled() || place.getElementPattern() == null) continue;
+          map.put(place.getElementPattern(), injection);
         }
-        final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-        return new Result<Collection<String>>(stringSet, configuration);
       }
+      final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
+      return new CachedValueProvider.Result<Collection<String>>(stringSet, configuration);
     }, false);
 
-    myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final String annotationClass = configuration.getAdvancedConfiguration().getLanguageAnnotationClass();
-        final Collection<String> result = new THashSet<String>();
-        final ArrayList<String> annoClasses = new ArrayList<String>(3);
-        annoClasses.add(StringUtil.getShortName(annotationClass));
-        for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-          final String annoClass = annoClasses.get(cursor);
-          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, project, GlobalSearchScope.allScope(project))) {
-            final PsiElement modList = annotation.getParent();
-            if (!(modList instanceof PsiModifierList)) continue;
-            final PsiElement element = modList.getParent();
-            if (element instanceof PsiParameter) {
-              final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
-              if (scope instanceof PsiNamedElement) {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
+    myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      final String annotationClass = configuration.getAdvancedConfiguration().getLanguageAnnotationClass();
+      final Collection<String> result = new THashSet<String>();
+      final ArrayList<String> annoClasses = new ArrayList<String>(3);
+      annoClasses.add(StringUtil.getShortName(annotationClass));
+      for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
+        final String annoClass = annoClasses.get(cursor);
+        for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, project, GlobalSearchScope.allScope(project))) {
+          final PsiElement modList = annotation.getParent();
+          if (!(modList instanceof PsiModifierList)) continue;
+          final PsiElement element = modList.getParent();
+          if (element instanceof PsiParameter) {
+            final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+            if (scope instanceof PsiNamedElement) {
+              ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
             }
-            else if (element instanceof PsiNamedElement) {
-              if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) {
-                final String s = ((PsiClass)element).getName();
-                if (!annoClasses.contains(s)) annoClasses.add(s);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
+            else {
+              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+            }
+          }
+          else if (element instanceof PsiNamedElement) {
+            if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) {
+              final String s = ((PsiClass)element).getName();
+              if (!annoClasses.contains(s)) annoClasses.add(s);
+            }
+            else {
+              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
             }
           }
         }
-        return new Result<Collection<String>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
       }
+      return new CachedValueProvider.Result<Collection<String>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
     }, false);
   }
 

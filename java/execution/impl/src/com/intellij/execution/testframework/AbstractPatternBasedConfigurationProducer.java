@@ -53,12 +53,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   }
 
   public Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
-    return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        return isTestClass(psiClass);
-      }
-    });
+    return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), psiClass -> isTestClass(psiClass));
   }
 
   public boolean isMultipleElementsSelected(ConfigurationContext context) {

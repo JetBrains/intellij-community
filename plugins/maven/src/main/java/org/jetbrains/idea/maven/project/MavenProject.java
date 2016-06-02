@@ -917,11 +917,7 @@ public class MavenProject {
   }
 
   private static List<MavenPlugin> getDeclaredPlugins(State state) {
-    return ContainerUtil.findAll(state.myPlugins, new Condition<MavenPlugin>() {
-      public boolean value(MavenPlugin mavenPlugin) {
-        return !mavenPlugin.isDefault();
-      }
-    });
+    return ContainerUtil.findAll(state.myPlugins, mavenPlugin -> !mavenPlugin.isDefault());
   }
 
   @Nullable
@@ -996,6 +992,8 @@ public class MavenProject {
 
   @Nullable
   private Element getCompilerConfig() {
+    Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
+    if(executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 

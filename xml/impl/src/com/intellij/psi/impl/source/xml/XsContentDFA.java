@@ -105,12 +105,8 @@ class XsContentDFA extends XmlContentDFA {
     for (Object o : vector) {
       if (o instanceof XSElementDecl) {
         final XSElementDecl elementDecl = (XSElementDecl)o;
-        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor elementDescriptor) {
-            return elementDecl.getName().equals(elementDescriptor.getName());
-          }
-        });
+        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
+                                                             elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
         ContainerUtil.addIfNotNull(descriptor, list);
       }
     }

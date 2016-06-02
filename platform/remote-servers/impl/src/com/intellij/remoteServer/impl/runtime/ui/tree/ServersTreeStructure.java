@@ -205,13 +205,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
       final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(ContainerUtil.filter(
         configurationManager.getDeploymentConfigurations(serverType),
-        new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings settings) {
-            DeployToServerRunConfiguration configuration =
-              (DeployToServerRunConfiguration)settings.getConfiguration();
-            return StringUtil.equals(server.getName(), configuration.getServerName());
-          }
+        settings -> {
+          DeployToServerRunConfiguration configuration =
+            (DeployToServerRunConfiguration)settings.getConfiguration();
+          return StringUtil.equals(server.getName(), configuration.getServerName());
         }
       ));
       if (canCreate) {

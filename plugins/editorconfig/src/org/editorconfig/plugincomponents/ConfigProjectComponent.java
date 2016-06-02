@@ -6,6 +6,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -43,9 +46,13 @@ public class ConfigProjectComponent implements ProjectComponent {
       }
 
       private void updateOpenEditors(VirtualFileEvent event) {
-        if (".editorconfig".equals(event.getFile().getName())) {
-          for (Editor editor : editorFactory.getAllEditors()) {
-            ((EditorEx)editor).reinitSettings();
+        final VirtualFile file = event.getFile();
+        if (".editorconfig".equals(file.getName())) {
+          if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
+              !Registry.is("editor.config.stop.at.project.root")) {
+            for (Editor editor : editorFactory.getAllEditors()) {
+              ((EditorEx)editor).reinitSettings();
+            }
           }
         }
       }

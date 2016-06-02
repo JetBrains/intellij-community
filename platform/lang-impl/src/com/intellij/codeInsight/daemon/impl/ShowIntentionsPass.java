@@ -232,12 +232,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return;
     }
     myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() || !myIntentionsInfo.notificationActionsToShow.isEmpty() ||
-      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow), new Condition<HighlightInfo.IntentionActionDescriptor>() {
-        @Override
-        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
-          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
-        }
-      });
+      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow),
+                           descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction()));
   }
 
   private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {

@@ -69,13 +69,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
-  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = new CachedValueProvider<ConcurrentMap<String, GrBindingVariable>>() {
-    @Nullable
-    @Override
-    public Result<ConcurrentMap<String, GrBindingVariable>> compute() {
-      final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
-      return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-    }
+  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = () -> {
+    final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
+    return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
   };
 
   private volatile Boolean myScript;
@@ -421,13 +417,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public PsiType getInferredScriptReturnType() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiType>() {
-      @Override
-      public Result<PsiType> compute() {
-        return Result.create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),
-                             PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
+      .create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),
+              PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

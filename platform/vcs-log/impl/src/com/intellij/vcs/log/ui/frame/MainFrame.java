@@ -140,7 +140,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     Disposer.register(ui, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
-    setFocusTraversalPolicyProvider(true);
+    setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
   }
 

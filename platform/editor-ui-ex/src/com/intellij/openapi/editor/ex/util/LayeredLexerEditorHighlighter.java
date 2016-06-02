@@ -116,10 +116,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   @Override
   public void setText(@NotNull final CharSequence text) {
-    // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    updateLayers();
-
-    super.setText(text);
+    if (updateLayers()) {
+      resetText(text);
+    } else {
+      super.setText(text);
+    }
   }
 
   @Override
@@ -181,8 +182,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (changed) {
         Document document = getDocument();
         if (document != null) {
-          myText = null;
-          super.setText(document.getImmutableCharSequence());
+          resetText(document.getImmutableCharSequence());
         }
       }
       return new LayeredHighlighterIteratorImpl(startOffset);

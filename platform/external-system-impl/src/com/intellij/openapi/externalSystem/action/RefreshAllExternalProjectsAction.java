@@ -61,12 +61,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
       return;
     }
 
-    final String name = StringUtil.join(systemIds, new Function<ProjectSystemId, String>() {
-      @Override
-      public String fun(ProjectSystemId projectSystemId) {
-        return projectSystemId.getReadableName();
-      }
-    }, ",");
+    final String name = StringUtil.join(systemIds, projectSystemId -> projectSystemId.getReadableName(), ",");
     e.getPresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", name));
     e.getPresentation().setDescription(ExternalSystemBundle.message("action.refresh.all.projects.description", name));
 

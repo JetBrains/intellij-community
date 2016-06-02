@@ -242,12 +242,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
       final AntRunConfiguration config = (AntRunConfiguration)s;
       config.mySettings.myFileUrl = myFileUrl;
       config.mySettings.myTargetName = myTargetName;
-      copyProperties(ContainerUtil.filter(myPropTable.getElements(), new Condition<BuildFileProperty>() {
-        @Override
-        public boolean value(BuildFileProperty property) {
-          return !myPropTable.isEmpty(property);
-        }
-      }), config.mySettings.myProperties);
+      copyProperties(ContainerUtil.filter(myPropTable.getElements(), property -> !myPropTable.isEmpty(property)), config.mySettings.myProperties);
     }
 
     @NotNull

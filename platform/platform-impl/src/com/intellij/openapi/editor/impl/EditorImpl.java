@@ -852,12 +852,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTabPainter = new ArrowPainter(
       ColorProvider.byColorsScheme(myScheme, EditorColors.WHITESPACES_COLOR),
       new Computable.PredefinedValueComputable<Integer>(EditorUtil.getSpaceWidth(Font.PLAIN, this)),
-      new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return getCharHeight();
-        }
-      }
+      () -> getCharHeight()
     );
   }
 
@@ -5484,54 +5479,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public Rectangle getTextLocation(final TextHitInfo offset) {
-      return execute(new Computable<Rectangle>() {
-        @Override
-        public Rectangle compute() {
-          return myDelegate.getTextLocation(offset);
-        }
-      });
+      return execute(() -> myDelegate.getTextLocation(offset));
     }
 
     @Override
     public TextHitInfo getLocationOffset(final int x, final int y) {
-      return execute(new Computable<TextHitInfo>() {
-        @Override
-        public TextHitInfo compute() {
-          return myDelegate.getLocationOffset(x, y);
-        }
-      });
+      return execute(() -> myDelegate.getLocationOffset(x, y));
     }
 
     @Override
     public int getInsertPositionOffset() {
-      return execute(new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return myDelegate.getInsertPositionOffset();
-        }
-      });
+      return execute(() -> myDelegate.getInsertPositionOffset());
     }
 
     @NotNull
     @Override
     public AttributedCharacterIterator getCommittedText(final int beginIndex, final int endIndex,
                                                         final AttributedCharacterIterator.Attribute[] attributes) {
-      return execute(new Computable<AttributedCharacterIterator>() {
-        @Override
-        public AttributedCharacterIterator compute() {
-          return myDelegate.getCommittedText(beginIndex, endIndex, attributes);
-        }
-      });
+      return execute(() -> myDelegate.getCommittedText(beginIndex, endIndex, attributes));
     }
 
     @Override
     public int getCommittedTextLength() {
-      return execute(new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return myDelegate.getCommittedTextLength();
-        }
-      });
+      return execute(() -> myDelegate.getCommittedTextLength());
     }
 
     @Override
@@ -5542,12 +5512,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public AttributedCharacterIterator getSelectedText(final AttributedCharacterIterator.Attribute[] attributes) {
-      return execute(new Computable<AttributedCharacterIterator>() {
-        @Override
-        public AttributedCharacterIterator compute() {
-          return myDelegate.getSelectedText(attributes);
-        }
-      });
+      return execute(() -> myDelegate.getSelectedText(attributes));
     }
 
     private static <T> T execute(final Computable<T> computable) {

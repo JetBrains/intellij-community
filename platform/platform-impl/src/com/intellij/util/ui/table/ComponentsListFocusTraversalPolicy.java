@@ -24,11 +24,14 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalPolicy {
+  private static final int FORWARD = 1;
+  private static final int BACKWARD = -1;
+
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) return searchShowing(components, i + 1, true);
+    if (i != -1) return searchShowing(components, i + 1, FORWARD);
     return null;
   }
 
@@ -36,43 +39,36 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
   public Component getComponentBefore(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) return searchShowing(components, i - 1, false);
+    if (i != -1) return searchShowing(components, i - 1, BACKWARD);
     return null;
   }
 
   @Override
   public Component getFirstComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : searchShowing(components, 0, true);
+    return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : searchShowing(components, -1, false);
+    return components.isEmpty() ? null : searchShowing(components, components.size() - 1, BACKWARD);
   }
 
   @Override
   public Component getDefaultComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : searchShowing(components, 0, true);
+    return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
   @NotNull
   protected abstract List<Component> getOrderedComponents();
 
-  private static Component searchShowing(@NotNull List<Component> components, int start, boolean fwd) {
-    for (int k = 0; k < components.size(); ++k) {
-      Component c = getCycled(components, start + (fwd ? 1 : -1)*k);
+  private static Component searchShowing(@NotNull List<Component> components, int start, int direction) {
+    for (int i = start; i >= 0 && i < components.size(); i += direction) {
+      Component c = components.get(i);
       if (c != null && c.isShowing()) return c;
     }
     return null;
-  }
-
-  private static Component getCycled(@NotNull List<Component> components, int i) {
-    if (components.isEmpty()) return null;
-    int s = components.size();
-    i = (s + i % s) % s;
-    return components.get(i);
   }
 }

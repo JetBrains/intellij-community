@@ -142,8 +142,7 @@ public class HighlightNamesUtil {
   @Nullable
   static HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
                                              @NotNull PsiElement elementToHighlight,
-                                             @NotNull TextAttributesScheme colorsScheme,
-                                             @Nullable RainbowHighlighter rainbowHighlighter) {
+                                             @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType == null) {
       return null;
@@ -158,14 +157,7 @@ public class HighlightNamesUtil {
     }
 
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
-    if (rainbowHighlighter != null && (varType == JavaHighlightInfoTypes.LOCAL_VARIABLE || varType == JavaHighlightInfoTypes.PARAMETER)) {
-      String name = variable.getName();
-      if (name != null) {
-        TextAttributes rainbowAttributes = rainbowHighlighter.getAttributes(name);
-        builder.textAttributes(rainbowAttributes);
-      }
-    }
-    return builder.create();
+    return RainbowHighlighter.isRainbowEnabled() ? builder.createUnconditionally() : builder.create();
   }
 
   @Nullable

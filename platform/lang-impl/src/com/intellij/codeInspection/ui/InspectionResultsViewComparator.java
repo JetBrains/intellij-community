@@ -32,11 +32,9 @@ import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiQualifiedNamedElement;
@@ -94,7 +92,7 @@ public class InspectionResultsViewComparator implements Comparator {
       final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
       final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
       if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
-      return descriptor1.getFQName().compareTo(descriptor2.getFQName());
+      return descriptor1.getFQName().compareToIgnoreCase(descriptor2.getFQName());
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
