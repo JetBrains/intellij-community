@@ -29,6 +29,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -95,7 +97,7 @@ import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements CopyProvider {
+public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
@@ -532,7 +534,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     else {
       myComments.setText("<html><head>" +
-                         UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                         UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
                          "</head><body>" +
                          html.toString() +
                          "</body></html>");
@@ -889,6 +891,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @Override
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
+  }
+
+  @Override
+  public void globalSchemeChange(EditorColorsScheme scheme) {
+    updateMessage();
   }
 
   public static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {

@@ -17,13 +17,13 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsAdapter;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
@@ -49,7 +49,7 @@ import java.util.Set;
 /**
  * @author Kirill Likhodedov
  */
-class DetailsPanel extends JPanel {
+class DetailsPanel extends JPanel implements EditorColorsListener {
   private static final int MAX_ROWS = 50;
 
   @NotNull private final VcsLogData myLogData;
@@ -132,20 +132,18 @@ class DetailsPanel extends JPanel {
     };
     myLoadingPanel.add(myScrollPane);
 
-    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        for (int i = 0; i < mySelection.size(); i++) {
-          CommitPanel commitPanel = getCommitPanel(i);
-          commitPanel.update();
-        }
-      }
-    }, parent);
-
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);
 
     myEmptyText.setText("Commit details");
+  }
+
+  @Override
+  public void globalSchemeChange(EditorColorsScheme scheme) {
+    for (int i = 0; i < mySelection.size(); i++) {
+      CommitPanel commitPanel = getCommitPanel(i);
+      commitPanel.update();
+    }
   }
 
   @Override
@@ -196,7 +194,7 @@ class DetailsPanel extends JPanel {
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(CommitPanel.getCommitDetailsFont());
+      label.setFont(VcsHistoryUtil.getCommitDetailsFont());
       label.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
                                          myColorManager.isMultipleRoots()
                                          ? VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH +

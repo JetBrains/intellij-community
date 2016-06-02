@@ -202,7 +202,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     setOpaque(true);
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
 
-    UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
     myUpdater = new ToolbarUpdater(this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {

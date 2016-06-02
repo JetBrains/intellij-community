@@ -16,8 +16,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,6 +56,8 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
 class CommitPanel extends JBPanel {
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
@@ -159,11 +159,6 @@ class CommitPanel extends JBPanel {
 
   public boolean isExpanded() {
     return myDataPanel.isExpanded();
-  }
-
-  @NotNull
-  public static Font getCommitDetailsFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 
   @NotNull

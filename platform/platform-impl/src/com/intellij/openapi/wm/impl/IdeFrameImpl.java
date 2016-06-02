@@ -101,7 +101,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
                       DataManager dataManager,
                       Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = createRootPane(actionManager, UISettings.getInstance(), dataManager, application);
+    myRootPane = createRootPane(actionManager, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
@@ -207,10 +207,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   protected IdeRootPane createRootPane(ActionManagerEx actionManager,
-                                       UISettings uiSettings,
                                        DataManager dataManager,
                                        Application application) {
-    return new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
+    return new IdeRootPane(actionManager, dataManager, application, this);
   }
 
   @NotNull

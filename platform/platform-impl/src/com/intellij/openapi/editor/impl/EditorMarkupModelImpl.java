@@ -528,7 +528,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       scrollbar.addMouseWheelListener(this);
       myErrorStripeButton.addMouseMotionListener(this);
       myErrorStripeButton.addMouseListener(this);
-      UISettings.getInstance().addUISettingsListener(this);
     }
 
     @Override
@@ -537,7 +536,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       scrollbar.removeMouseListener(this);
       myErrorStripeButton.removeMouseMotionListener(this);
       myErrorStripeButton.removeMouseListener(this);
-      UISettings.getInstance().removeUISettingsListener(this);
       super.uninstallListeners();
     }
 
