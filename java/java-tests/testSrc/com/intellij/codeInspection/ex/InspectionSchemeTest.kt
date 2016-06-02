@@ -18,8 +18,8 @@ package com.intellij.codeInspection.ex
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Computable
+import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.readText
 import com.intellij.util.write
 import org.assertj.core.api.Assertions.assertThat
@@ -33,19 +33,19 @@ internal class InspectionSchemeTest {
     @ClassRule val projectRule = ProjectRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
-  @Rule fun getTemporaryFolder() = tempDirManager
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   @Test fun loadSchemes() {
-    val schemeDir = tempDirManager.newPath()
-    val schemeFile = schemeDir.resolve("inspection/Bar.xml")
+    val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
     val schemeData = """
     <inspections profile_name="Bar" version="1.0">
       <option name="myName" value="Bar" />
       <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true" />
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
-    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(schemeDir)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = InspectionProfileManagerImpl(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
