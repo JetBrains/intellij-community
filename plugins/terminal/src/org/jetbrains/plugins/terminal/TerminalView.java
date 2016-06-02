@@ -379,29 +379,24 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   public void initDistractionFreeMode() {
-    if (!shouldMakeDistractionFree()) {
-      return;
-    }
-
-    setDistractionFree(true);
-
-    //Someone upper will call toolbar.setVisible(true), so we need to overwrite it
-    JComponent toolbar = getToolbar();
-    if (toolbar == null) return;
-    toolbar.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        if (shouldMakeDistractionFree()) {
-          setToolbarVisible(false);
+    if (isDfmSupportEnabled() && shouldMakeDistractionFree()) {
+      setDistractionFree(true);
+      JComponent toolbar = getToolbar();
+      if (toolbar == null) return;
+      //Someone upper will call toolbar.setVisible(true), so we need to overwrite it
+      toolbar.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent e) {
+          if (shouldMakeDistractionFree()) {
+            setToolbarVisible(false);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   private boolean shouldMakeDistractionFree() {
-    return isDfmSupportEnabled()
-           && !myWindow.getAnchor().isHorizontal()
-           && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
+    return !myWindow.getAnchor().isHorizontal() && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
   }
 
   private static boolean isDfmSupportEnabled() {
