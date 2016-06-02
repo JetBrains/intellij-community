@@ -2,6 +2,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -109,7 +109,7 @@ public class TerminalView {
 
   private Content createTerminalInContentPanel(@NotNull AbstractTerminalRunner terminalRunner,
                                                final @NotNull ToolWindow toolWindow) {
-    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(false, true, toolWindow);
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
@@ -133,56 +133,11 @@ public class TerminalView {
     toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
-
-
-    if (Registry.get("terminal.distraction.free").asBoolean()) {
-      initDistractionFreeSwitcher(toolWindow, toolbar);
-    }
+    panel.initDistractionFreeMode();
     
     content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
     return content;
-  }
-
-  private void initDistractionFreeSwitcher(@NotNull final ToolWindow toolWindow, final ActionToolbar toolbar) {
-    setInitialState(toolWindow, toolbar);
-    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, (source) -> {
-      if (shouldMakeToolWindowDistractionFree(toolWindow.getAnchor())) {
-        setToolWindowDistractionFree(true, toolbar, toolWindow);
-      }
-      else {
-        setToolWindowDistractionFree(false, toolbar, toolWindow);
-      }
-    });
-  }
-
-  private static void setToolWindowDistractionFree(boolean distractionFree,
-                                                   @NotNull ActionToolbar toolbar,
-                                                   @NotNull ToolWindow toolWindow) {
-    boolean isVisible = !distractionFree;
-    toolbar.getComponent().setVisible(isVisible);
-    InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
-    decorator.setHeaderVisible(isVisible);
-  }
-
-  private static void setInitialState(@NotNull final ToolWindow toolWindow, final ActionToolbar toolbar) {
-    if (shouldMakeToolWindowDistractionFree(toolWindow.getAnchor())) {
-      setToolWindowDistractionFree(true, toolbar, toolWindow);
-    }
-    
-    //Someone upper will call toolbar.setVisible(true), so we need to overwrite it
-    toolbar.getComponent().addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        if (shouldMakeToolWindowDistractionFree(toolWindow.getAnchor())) {
-          toolbar.getComponent().setVisible(false);
-        }
-      }
-    });
-  }
-
-  private static boolean shouldMakeToolWindowDistractionFree(@NotNull ToolWindowAnchor anchor) {
-    return !anchor.isHorizontal() && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
   }
 
   private FocusListener createFocusListener() {
@@ -388,3 +343,68 @@ public class TerminalView {
     }
   }
 }
+
+
+class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
+  private final ToolWindow myWindow;
+
+  public TerminalToolWindowPanel(boolean vertical, boolean borderless, ToolWindow window) {
+    super(vertical, borderless);
+    myWindow = window;
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    if (isDfmSupportEnabled()) {
+      setDistractionFree(shouldMakeDistractionFree());
+    }
+  }
+
+  private void setDistractionFree(boolean isDistractionFree) {
+    boolean isVisible = !isDistractionFree;
+    setToolbarVisible(isVisible);
+    setToolWindowHeaderVisible(isVisible);
+  }
+
+  private void setToolbarVisible(boolean value) {
+    JComponent toolbar = getToolbar();
+    if (toolbar != null) {
+      toolbar.setVisible(value);
+    }
+  }
+
+  private void setToolWindowHeaderVisible(boolean isVisible) {
+    InternalDecorator decorator = ((ToolWindowEx)myWindow).getDecorator();
+    decorator.setHeaderVisible(isVisible);
+  }
+
+  public void initDistractionFreeMode() {
+    if (!shouldMakeDistractionFree()) {
+      return;
+    }
+
+    setDistractionFree(true);
+
+    //Someone upper will call toolbar.setVisible(true), so we need to overwrite it
+    JComponent toolbar = getToolbar();
+    if (toolbar == null) return;
+    toolbar.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        if (shouldMakeDistractionFree()) {
+          setToolbarVisible(false);
+        }
+      }
+    });
+  }
+
+  private boolean shouldMakeDistractionFree() {
+    return isDfmSupportEnabled()
+           && !myWindow.getAnchor().isHorizontal()
+           && ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled();
+  }
+
+  private static boolean isDfmSupportEnabled() {
+    return Registry.get("terminal.distraction.free").asBoolean();
+  }
+} 
