@@ -23,6 +23,9 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacHostProperties
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 class MacDmgBuilder {
   private final BuildContext buildContext
   private final GantBuilder ant
@@ -42,6 +45,9 @@ class MacDmgBuilder {
     defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
 
     String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}"
+    if (remoteDir.toLowerCase().endsWith("snapshot")) {
+      remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
+    }
     def dmgBuilder = new MacDmgBuilder(buildContext, remoteDir, macHostProperties)
     if (buildContext.paths.macJreTarGz != null && new File(buildContext.paths.macJreTarGz).exists()) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, true)
