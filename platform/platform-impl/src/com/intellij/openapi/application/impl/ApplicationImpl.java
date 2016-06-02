@@ -328,7 +328,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        assert !isReadAccessAllowed() : describe(Thread.currentThread());
         try {
           return action.call();
         }
@@ -340,7 +339,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
         finally {
           Thread.interrupted(); // reset interrupted status
-          assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
         return null;
       }
