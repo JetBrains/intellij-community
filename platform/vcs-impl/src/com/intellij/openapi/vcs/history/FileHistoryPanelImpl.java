@@ -519,7 +519,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         html.append("<br/><br/>");
       }
       if (addRevisionInfo) {
-        String revisionInfo = getRevisionInfo(revision);
+        String revisionInfo = getRevisionInfo(revision.getRevision());
         html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
           .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
         original.append(revisionInfo).append("\n");
@@ -1123,6 +1123,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
+  // TODO this class should not implements VcsFileRevision (this is too confusing)
   static class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRevision, DualTreeElement {
     private final VcsFileRevision myRevision;
 
