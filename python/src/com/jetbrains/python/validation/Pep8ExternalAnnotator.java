@@ -77,6 +77,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
+  // Taken directly from the sources of pycodestyle.py
+  private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503";
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
   private static final Pattern E303_LINE_COUNT_PATTERN = Pattern.compile(".*\\((\\d+)\\)$");
 
@@ -183,8 +185,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (collectedInfo == null) return null;
     ArrayList<String> options = Lists.newArrayList();
 
-    if (collectedInfo.ignoredErrors.size() > 0) {
-      options.add("--ignore=" + StringUtil.join(collectedInfo.ignoredErrors, ","));
+    if (!collectedInfo.ignoredErrors.isEmpty()) {
+      options.add("--ignore=" + DEFAULT_IGNORED_ERRORS + "," + StringUtil.join(collectedInfo.ignoredErrors, ","));
     }
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
