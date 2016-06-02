@@ -61,84 +61,89 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
-    IndentCalculator indentCalculator = getIndent(project, editor, language, offset);
-    if (indentCalculator != null){
-      return indentCalculator.getIndentString(getPosition(editor, offset));
+    if (offset > 0) {
+      IndentCalculator indentCalculator = getIndent(project, editor, language, offset - 1);
+      if (indentCalculator != null) {
+        return indentCalculator.getIndentString(getPosition(editor, offset - 1));
+      }
+    }
+    else {
+      return "";
     }
     return super.getLineIndent(project, editor, language, offset);
   }
   
   @Nullable
   protected IndentCalculator getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
-    if (offset > 0) {
-      offset--;
+    IndentCalculatorFactory myFactory = new IndentCalculatorFactory(project, editor);
+    if (getPosition(editor, offset).matchesRule(
+      position -> position.isAt(Whitespace) &&
+                  position.isAtMultiline())) {
       if (getPosition(editor, offset).matchesRule(
-        position -> position.isAt(Whitespace) &&
-                    position.isAtMultiline())) {
-        IndentCalculatorFactory myFactory = new IndentCalculatorFactory(project, editor);
-        if (getPosition(editor, offset).matchesRule(
-          position -> position
-            .before()
-            .beforeOptional(Semicolon)
-            .beforeOptional(Whitespace)
-            .isAt(BlockClosingBrace))) {
-          return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
-        }
-        else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(ArrayOpeningBracket) || position.isAt(LeftParenthesis)
-        )) {
-          return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
-        }
-        else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(BlockOpeningBrace)
-        )) {
-          return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language), position -> {
-            position.before().beforeOptional(Whitespace);
-            return getOffsetBeforeOptionalParentheses(position);
-          });
-        }
-        else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
-        ) || getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(ElseKeyword)
-        )) {
-          return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
-        }
-        else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(BlockComment)
-        )) {
-          return myFactory.createIndentCalculator(NONE, position -> position.findStartOf(BlockComment));
-        }
-        else if (getPosition(editor, offset).matchesRule(
-          position -> position.before().isAt(DocBlockEnd)
-        )) {
-          return myFactory.createIndentCalculator(NONE, position -> position.findStartOf(DocBlockStart));
-        }
-        else {
-          SemanticEditorPosition position = getPosition(editor, offset);
-          if (position.before().isAt(RightParenthesis)) {
-            int offsetAfterParen = position.getStartOffset() + 1;
-            position.beforeParentheses(LeftParenthesis, RightParenthesis);
-            if (!position.isAtEnd()) {
-              position.beforeOptional(Whitespace);
-              if (position.isAt(IfKeyword) || position.isAt(ForKeyword)) {
-                SyntaxElement element = position.getCurrElement();
-                assert element != null;
-                final int controlKeywordOffset = position.getStartOffset();
-                Type indentType = getPosition(editor, offsetAfterParen).afterOptional(Whitespace).isAt(BlockOpeningBrace) ? NONE : NORMAL;
-                return myFactory.createIndentCalculator(indentType, baseLineOffset -> controlKeywordOffset);
-              }
+        position -> position
+          .before()
+          .beforeOptional(Semicolon)
+          .beforeOptional(Whitespace)
+          .isAt(BlockClosingBrace))) {
+        return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(ArrayOpeningBracket) || position.isAt(LeftParenthesis)
+      )) {
+        return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(BlockOpeningBrace)
+      )) {
+        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language),
+                                                JavaLikeLangLineIndentProvider::getBlockStartOffset);
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
+      ) || getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(ElseKeyword)
+      )) {
+        return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(BlockComment)
+      )) {
+        return myFactory.createIndentCalculator(NONE, position -> position.findStartOf(BlockComment));
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(DocBlockEnd)
+      )) {
+        return myFactory.createIndentCalculator(NONE, position -> position.findStartOf(DocBlockStart));
+      }
+      else {
+        SemanticEditorPosition position = getPosition(editor, offset);
+        if (position.before().isAt(RightParenthesis)) {
+          int offsetAfterParen = position.getStartOffset() + 1;
+          position.beforeParentheses(LeftParenthesis, RightParenthesis);
+          if (!position.isAtEnd()) {
+            position.beforeOptional(Whitespace);
+            if (position.isAt(IfKeyword) || position.isAt(ForKeyword)) {
+              SyntaxElement element = position.getCurrElement();
+              assert element != null;
+              final int controlKeywordOffset = position.getStartOffset();
+              Type indentType = getPosition(editor, offsetAfterParen).afterOptional(Whitespace).isAt(BlockOpeningBrace) ? NONE : NORMAL;
+              return myFactory.createIndentCalculator(indentType, baseLineOffset -> controlKeywordOffset);
             }
           }
         }
       }
     }
+    //return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_BEFORE); /* TO CHECK UNCOVERED CASES */
     return null;
   }
-  
-  
-  private static int getOffsetBeforeOptionalParentheses(@NotNull SemanticEditorPosition position) {
-    position.beforeOptional(Whitespace);
+
+
+  private static int getBlockStartOffset(@NotNull SemanticEditorPosition position) {
+    position.before().beforeOptional(BlockOpeningBrace);
+    if (position.isAt(Whitespace)) {
+      if (position.isAtMultiline()) return position.after().getStartOffset();
+      position.before();
+    }
     if (position.isAt(RightParenthesis)) {
       position.beforeParentheses(LeftParenthesis, RightParenthesis);
     }
@@ -163,17 +168,6 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   @Nullable
   protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
-
-  
-  private boolean isOnSeparateLine(@NotNull Editor editor, @NotNull SyntaxElement element, int offset) {
-    SemanticEditorPosition position = getPosition(editor, offset);
-    position.beforeOptional(Whitespace);
-    if (position.isAt(element)) {
-      position.before();
-      if (position.isAtEnd() || position.isAt(Whitespace) && position.isAtMultiline()) return true;
-    }
-    return false;
-  }
   
   
   @Nullable
