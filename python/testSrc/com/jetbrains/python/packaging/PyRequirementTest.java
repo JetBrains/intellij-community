@@ -79,7 +79,6 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   // VCS
-  // TODO: subdirectory
   // PY-6328
   public void testGit() {
     doTest("git://git.myproject.org/MyProject#egg=MyProject1");
@@ -135,6 +134,117 @@ public class PyRequirementTest extends PyTestCase {
     doTest("git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
     doTest("git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
     doTest("git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
+  }
+
+  // PY-19544
+  public void testGitWithSubdirectory() {
+    doTest("git://git.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git://git.myproject.org/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("git+git://git.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("git+https://git.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("git+ssh://git.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("git+ssh://user@git.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("git+user@git.myproject.org:MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
+    doTest("git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
+    
+    doTest("git://git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git://git.myproject.org/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("git+git://git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+git://git.myproject.org/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("git+https://git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+https://git.myproject.org/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("git+ssh://git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://git.myproject.org/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("git+ssh://user@git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+ssh://user@git.myproject.org/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("git+user@git.myproject.org:MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:MyProject.git/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:/path/MyProject.git#subdirectory=clients/python&egg=MyProject1");
+    doTest("git+user@git.myproject.org:/path/MyProject.git/#subdirectory=clients/python&egg=MyProject1");
   }
 
   public void testEditableGit() {
@@ -659,6 +769,49 @@ public class PyRequirementTest extends PyTestCase {
     doTest("hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
   }
 
+  // PY-19544
+  public void testMercurialWithSubdirectory() {
+    doTest("hg+http://hg.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+http://hg.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+http://hg.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("hg+https://hg.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+https://hg.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+https://hg.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("hg+ssh://hg.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    
+    doTest("hg+http://hg.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+http://hg.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+http://hg.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+http://hg.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("hg+https://hg.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+https://hg.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+https://hg.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+https://hg.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("hg+ssh://hg.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://hg.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://hg.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://hg.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("hg+ssh://user@hg.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://user@hg.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://user@hg.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("hg+ssh://user@hg.myproject.org/path/MyProject/#subdirectory=clients/python&egg=MyProject1");
+  }
+
   public void testEditableMercurial() {
     doTest("-e hg+http://hg.myproject.org/MyProject#egg=MyProject1");
     doTest("-e hg+http://hg.myproject.org/MyProject/#egg=MyProject1");
@@ -881,6 +1034,69 @@ public class PyRequirementTest extends PyTestCase {
     doTest("svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
     doTest("svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
     doTest("svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+  }
+
+  // PY-19544
+  public void testSubversionWithSubdirectory() {
+    doTest("svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("svn+ssh://svn.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("svn+svn://svn.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://svn.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1&subdirectory=clients/python");
+    doTest("svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1&subdirectory=clients/python");
+    
+    doTest("svn+http://svn.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+http://svn.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+http://svn.myproject.org/svn/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+http://svn.myproject.org/svn/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("svn+https://svn.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+https://svn.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+https://svn.myproject.org/svn/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+https://svn.myproject.org/svn/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("svn+ssh://svn.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://svn.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://svn.myproject.org/svn/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://svn.myproject.org/svn/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("svn+ssh://user@svn.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://user@svn.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://user@svn.myproject.org/svn/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+ssh://user@svn.myproject.org/svn/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("svn+svn://svn.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://svn.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://svn.myproject.org/svn/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://svn.myproject.org/svn/MyProject/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("svn+svn://user@svn.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://user@svn.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://user@svn.myproject.org/svn/MyProject#subdirectory=clients/python&egg=MyProject1");
+    doTest("svn+svn://user@svn.myproject.org/svn/MyProject/#subdirectory=clients/python&egg=MyProject1");
   }
 
   public void testEditableSubversion() {
@@ -1207,6 +1423,93 @@ public class PyRequirementTest extends PyTestCase {
     doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
     doTest("bzr+lp:MyProject#egg=MyProject1");
+  }
+
+  // PY-19544
+  public void testBazaarWithSubdirectory() {
+    doTest("bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1&subdirectory=clients/python");
+    doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
+
+    doTest("bzr+lp:MyProject#egg=MyProject1&subdirectory=clients/python");
+    
+    doTest("bzr+http://bzr.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+http://bzr.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+http://bzr.myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+http://bzr.myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+https://bzr.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+https://bzr.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+https://bzr.myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+https://bzr.myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+sftp://myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+sftp://user@myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://user@myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://user@myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+sftp://user@myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+ssh://myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+ssh://user@myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://user@myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://user@myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ssh://user@myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+ftp://myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+ftp://user@myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://user@myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
+    doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
+
+    doTest("bzr+lp:MyProject#subdirectory=clients/python&egg=MyProject1");
   }
 
   public void testEditableBazaar() {
