@@ -23,6 +23,8 @@
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCTaskMoveHandlerDelegate" order="first"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCTaskRenameHandler" order="first"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonRenameHandler" order="first"/>
+    <applicationService serviceInterface="com.jetbrains.edu.coursecreator.settings.CCSettings"
+                        serviceImplementation="com.jetbrains.edu.coursecreator.settings.CCSettings"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
@@ -82,5 +84,9 @@
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
   </actions>
+
+  <extensions defaultExtensionNs="Edu">
+    <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
+  </extensions>
 
 </idea-plugin>
