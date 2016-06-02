@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -169,7 +168,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   }
 
   private static void reportMissingInterpreter() {
-    LOG.info("Found no suitable interpreter to run pep8.py. Available interpreters are: [");
+    LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
     List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
@@ -190,7 +189,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    GeneralCommandLine cmd = PythonHelper.PEP8.newCommandLine(collectedInfo.interpreterPath, options);
+    GeneralCommandLine cmd = PythonHelper.PYCODESTYLE.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
@@ -199,7 +198,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
-      LOG.info("Timeout running pep8.py");
+      LOG.info("Timeout running pycodestyle.py");
     }
     else if (output.getStderrLines().isEmpty()) {
       for (String line : output.getStdoutLines()) {
@@ -210,7 +209,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
     }
     else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
-      LOG.info("Error running pep8.py: " + output.getStderr());
+      LOG.info("Error running pycodestyle.py: " + output.getStderr());
     }
     return results;
   }
@@ -253,7 +252,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
-        // So we register it only on that line where pep8.py found the problem originally.
+        // So we register it only on that line where pycodestyle.py found the problem originally.
         if (crossesLineBoundary(document, text, problemRange)) {
           final int lineEndOffset;
           if (document != null) {
@@ -371,7 +370,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return new Problem(line, column, m.group(3), m.group(4));
     }
     if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
-      LOG.info("Failed to parse problem line from pep8.py: " + s);
+      LOG.info("Failed to parse problem line from pycodestyle.py: " + s);
     }
     return null;
   }
