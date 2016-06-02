@@ -94,17 +94,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
   private List<M> findCallers() {
     if (myMethod == null) return Collections.emptyList();
     final Ref<List<M>> callers = new Ref<List<M>>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            callers.set(ContainerUtil.filter(computeCallers(), getFilter()));
-          }
-        });
-      }
-    }, RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> callers.set(ContainerUtil.filter(computeCallers(), getFilter()))), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
       myCancelCallback.run();
       return Collections.emptyList();
     }

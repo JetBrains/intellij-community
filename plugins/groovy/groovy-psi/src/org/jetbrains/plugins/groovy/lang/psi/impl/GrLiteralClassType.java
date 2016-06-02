@@ -125,12 +125,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
 
-    return name + "<" + StringUtil.join(params, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getPresentableText();
-      }
-    }, ", ") + ">";
+    return name + "<" + StringUtil.join(params, psiType -> psiType.getPresentableText(), ", ") + ">";
   }
 
   @Override
@@ -140,12 +135,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
 
-    final Function<PsiType, String> f = new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getCanonicalText();
-      }
-    };
+    final Function<PsiType, String> f = psiType -> psiType.getCanonicalText();
     return name + "<" + StringUtil.join(params, f, ", ") + ">";
   }
 

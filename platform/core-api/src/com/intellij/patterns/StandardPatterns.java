@@ -37,7 +37,7 @@ public class StandardPatterns {
   private static final FalsePattern FALSE_PATTERN = new FalsePattern();
 
   public static StringPattern string() {
-    return new StringPattern();
+    return StringPattern.STRING_PATTERN;
   }
   
   public static CharPattern character() {

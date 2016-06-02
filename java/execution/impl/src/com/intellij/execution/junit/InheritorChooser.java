@@ -61,12 +61,8 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        return psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-      }
-    });
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass,
+                                    psiClass -> psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
   public boolean runMethodInAbstractClass(final ConfigurationContext context,
@@ -86,20 +82,14 @@ public class InheritorChooser {
       }
 
       final List<PsiClass> classes = new ArrayList<PsiClass>();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final boolean isJUnit5 = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> JUnitUtil.isJUnit5(containingClass));
-          ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass aClass) {
-              if (PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
-                classes.add(aClass);
-              }
-              return true;
-            }
-          });
-        }
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final boolean isJUnit5 = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> JUnitUtil.isJUnit5(containingClass));
+        ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
+          if (PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
+            classes.add(aClass);
+          }
+          return true;
+        });
       }, "Search for " + containingClass.getQualifiedName() + " inheritors", true, containingClass.getProject())) {
         return true;
       }
@@ -149,12 +139,10 @@ public class InheritorChooser {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            final Object[] values = list.getSelectedValues();
-            if (values == null) return;
-            chooseAndPerform(values, psiMethod, context, performRunnable, classes);
-          }
+        .setItemChoosenCallback(() -> {
+          final Object[] values = list.getSelectedValues();
+          if (values == null) return;
+          chooseAndPerform(values, psiMethod, context, performRunnable, classes);
         }).createPopup().showInBestPositionFor(context.getDataContext());
       return true;
     }

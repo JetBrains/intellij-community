@@ -201,13 +201,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
     if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          ContentEntry[] entries = model.getContentEntries();
-          if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
-          model.addContentEntry(virtualFile);
-        }
+      ModuleRootModificationUtil.updateModel(module, model -> {
+        ContentEntry[] entries = model.getContentEntries();
+        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
+        model.addContentEntry(virtualFile);
       });
     }
 
@@ -220,12 +217,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
       final Project finalProject = project;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(finalProject);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(finalProject));
       return project;
     }
 
@@ -263,16 +255,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
-              if (line > 0) {
-                new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
-              }
-              else {
-                new OpenFileDescriptor(project, file).navigate(true);
-              }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
+            if (line > 0) {
+              new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
+            }
+            else {
+              new OpenFileDescriptor(project, file).navigate(true);
             }
           }
         }, ModalityState.NON_MODAL);

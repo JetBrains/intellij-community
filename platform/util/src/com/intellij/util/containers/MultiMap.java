@@ -300,12 +300,12 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  @Deprecated
-  @SuppressWarnings("unused")
-  @NotNull
   /**
    * @deprecated Use {@link #createSmart()}
    */
+  @Deprecated
+  @SuppressWarnings("unused")
+  @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return createSmart();
   }
@@ -346,6 +346,11 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createSet() {
+    return createSet(TObjectHashingStrategy.CANONICAL);
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createSet(final TObjectHashingStrategy strategy) {
     return new MultiMap<K, V>() {
       @NotNull
       @Override
@@ -362,7 +367,7 @@ public class MultiMap<K, V> implements Serializable {
       @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
-        return new THashMap<K, Collection<V>>();
+        return new THashMap<K, Collection<V>>(strategy);
       }
     };
   }

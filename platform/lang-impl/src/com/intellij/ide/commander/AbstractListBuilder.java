@@ -273,12 +273,7 @@ public abstract class AbstractListBuilder {
     myCurrentParent = parentElement;
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     alarm.addRequest(
-        new Runnable() {
-        @Override
-        public void run() {
-          myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        }
-      },
+      () -> myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)),
       200
     );
 
@@ -302,12 +297,7 @@ public abstract class AbstractListBuilder {
     final int n = alarm.cancelAllRequests();
     if (n == 0) {
       alarm.addRequest(
-          new Runnable() {
-          @Override
-          public void run() {
-            myList.setCursor(Cursor.getDefaultCursor());
-          }
-        },
+        () -> myList.setCursor(Cursor.getDefaultCursor()),
         0
       );
     }

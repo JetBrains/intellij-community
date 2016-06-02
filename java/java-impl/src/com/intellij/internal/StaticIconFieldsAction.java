@@ -74,27 +74,19 @@ public class StaticIconFieldsAction extends AnAction {
   }
 
   private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        indicator.setText("Searching for: " + allIcons.getQualifiedName());
+    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
+
+    ReferencesSearch.search(allIcons).forEach(reference -> {
+      PsiElement elt = reference.getElement();
+
+      while (elt instanceof PsiExpression) elt = elt.getParent();
+
+      if (elt instanceof PsiField) {
+        UsageInfo info = new UsageInfo(elt, false);
+        view.appendUsage(new UsageInfo2UsageAdapter(info));
       }
-    });
 
-    ReferencesSearch.search(allIcons).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        PsiElement elt = reference.getElement();
-
-        while (elt instanceof PsiExpression) elt = elt.getParent();
-
-        if (elt instanceof PsiField) {
-          UsageInfo info = new UsageInfo(elt, false);
-          view.appendUsage(new UsageInfo2UsageAdapter(info));
-        }
-
-        return true;
-      }
+      return true;
     });
   }
 }

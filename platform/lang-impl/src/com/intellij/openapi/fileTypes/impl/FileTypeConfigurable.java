@@ -115,19 +115,16 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
     myOriginalToEditedMap.clear();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-          myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
-        }
-        myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
-        for (FileNameMatcher matcher : myReassigned.keySet()) {
-          myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
-        }
-
-        TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+        myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
       }
+      myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+      for (FileNameMatcher matcher : myReassigned.keySet()) {
+        myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
+      }
+
+      TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
   }
 
@@ -444,24 +441,18 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
 
       private void initConvertors() {
-        final PairConvertor<Object, String, Boolean> simpleConvertor = new PairConvertor<Object, String, Boolean>() {
-          @Override
-          public Boolean convert(Object element, String s) {
-            String value = element.toString();
-            if (element instanceof FileType) {
-               value = ((FileType)element).getDescription();
-            }
-            return getComparator().matchingFragments(s, value) != null;
+        final PairConvertor<Object, String, Boolean> simpleConvertor = (element, s) -> {
+          String value = element.toString();
+          if (element instanceof FileType) {
+             value = ((FileType)element).getDescription();
           }
+          return getComparator().matchingFragments(s, value) != null;
         };
-        final PairConvertor<Object, String, Boolean> byExtensionsConvertor = new PairConvertor<Object, String, Boolean>() {
-          @Override
-          public Boolean convert(Object element, String s) {
-            if (element instanceof FileType && myCurrentType != null) {
-              return myCurrentType.equals(element);
-            }
-            return false;
+        final PairConvertor<Object, String, Boolean> byExtensionsConvertor = (element, s) -> {
+          if (element instanceof FileType && myCurrentType != null) {
+            return myCurrentType.equals(element);
           }
+          return false;
         };
         myOrderedConvertors.add(simpleConvertor);
         myOrderedConvertors.add(byExtensionsConvertor);

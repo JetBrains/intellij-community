@@ -2,14 +2,20 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.jetbrains.edu.learning.StudyActionListener;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -30,6 +36,9 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     if (project == null) {
       return;
     }
+    for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
+      listener.beforeCheck(e);
+    }
     final AnswerPlaceholder answerPlaceholder = getAnswerPlaceholder(e);
     if (answerPlaceholder == null) {
       return;
@@ -43,26 +52,34 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     AnswerPlaceholder.MyInitialState initialState = answerPlaceholder.getInitialState();
     int startOffset = patternDocument.getLineStartOffset(initialState.myLine) + initialState.myStart;
     final String text = patternDocument.getText(new TextRange(startOffset, startOffset + initialState.myLength));
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Document document = studyState.getEditor().getDocument();
-            int offset = answerPlaceholder.getRealStartOffset(document);
-            document.deleteString(offset, offset + answerPlaceholder.getLength());
-            document.insertString(offset, text);
-          }
-        });
-      }
-    }, NAME, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      Document document = studyState.getEditor().getDocument();
+      int offset = answerPlaceholder.getRealStartOffset(document);
+      document.deleteString(offset, offset + answerPlaceholder.getRealLength());
+      document.insertString(offset, text);
+    }), NAME, null);
   }
 
   @Override
   public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(false);
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+
+    if (!EduNames.STUDY.equals(course.getCourseMode())) {
+      presentation.setVisible(true);
+      return;
+    }
+
     if (getAnswerPlaceholder(e) == null) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
   }
 

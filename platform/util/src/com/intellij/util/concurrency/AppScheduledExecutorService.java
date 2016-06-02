@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -99,7 +100,12 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   public void shutdownAppScheduledExecutorService() {
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
-    //System.out.println("app threads counter = " + counter);
+  }
+
+  @NotNull
+  @TestOnly
+  public String statistics() {
+    return "app threads created counter = " + counter;
   }
 
   public int getBackendPoolExecutorSize() {
@@ -135,11 +141,12 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       super.shutdown();
     }
 
+    @NotNull
     private List<Runnable> doShutdownNow() {
       return super.shutdownNow();
     }
 
-    private void doSetThreadFactory(ThreadFactory threadFactory) {
+    private void doSetThreadFactory(@NotNull ThreadFactory threadFactory) {
       super.setThreadFactory(threadFactory);
     }
 

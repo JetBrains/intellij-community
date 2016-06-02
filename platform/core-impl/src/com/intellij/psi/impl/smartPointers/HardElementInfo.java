@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -54,8 +56,13 @@ class HardElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    return Comparing.equal(myElement, other.restoreElement());
+  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
+    return Comparing.equal(myElement, ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        return other.restoreElement();
+      }
+    }));
   }
 
   @Override

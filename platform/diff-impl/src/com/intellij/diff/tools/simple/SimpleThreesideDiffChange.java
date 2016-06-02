@@ -15,10 +15,9 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.MergeConflictType;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -30,17 +29,23 @@ import java.util.List;
 
 public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   @NotNull private final List<? extends EditorEx> myEditors;
-  @NotNull private final MergeLineFragment myFragment;
+  @Nullable private final MergeInnerDifferences myInnerFragments;
 
-  private int[] myLineStartShifts = new int[3];
-  private int[] myLineEndShifts = new int[3];
+  private int[] myLineStarts = new int[3];
+  private int[] myLineEnds = new int[3];
 
   public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment,
-                                   @NotNull List<? extends EditorEx> editors,
-                                   @NotNull ComparisonPolicy policy) {
-    super(fragment, editors, policy);
-    myEditors = editors;
-    myFragment = fragment;
+                                   @NotNull MergeConflictType conflictType,
+                                   @Nullable MergeInnerDifferences innerFragments,
+                                   @NotNull SimpleThreesideDiffViewer viewer) {
+    super(conflictType);
+    myEditors = viewer.getEditors();
+    myInnerFragments = innerFragments;
+
+    for (ThreeSide side : ThreeSide.values()) {
+      myLineStarts[side.getIndex()] = fragment.getStartLine(side);
+      myLineEnds[side.getIndex()] = fragment.getEndLine(side);
+    }
 
     reinstallHighlighters();
   }
@@ -66,12 +71,12 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   @Override
   public int getStartLine(@NotNull ThreeSide side) {
-    return myFragment.getStartLine(side) + side.select(myLineStartShifts);
+    return side.select(myLineStarts);
   }
 
   @Override
   public int getEndLine(@NotNull ThreeSide side) {
-    return myFragment.getEndLine(side) + side.select(myLineEndShifts);
+    return side.select(myLineEnds);
   }
 
   @Override
@@ -87,8 +92,8 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   @Nullable
   @Override
-  protected List<MergeWordFragment> getInnerFragments() {
-    return myFragment.getInnerFragments();
+  protected MergeInnerDifferences getInnerFragments() {
+    return myInnerFragments;
   }
 
   //
@@ -101,8 +106,8 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     int sideIndex = side.getIndex();
 
     DiffUtil.UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
-    myLineStartShifts[sideIndex] += newRange.startLine - line1;
-    myLineEndShifts[sideIndex] += newRange.endLine - line2;
+    myLineStarts[sideIndex] = newRange.startLine;
+    myLineEnds[sideIndex] = newRange.endLine;
 
     return newRange.damaged;
   }

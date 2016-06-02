@@ -304,7 +304,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
-    private boolean myResult = false;
+    private boolean myResult;
     @Override public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
     }
@@ -319,7 +319,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private Pair<PsiElement, String> conflict = null;
+    private Pair<PsiElement, String> conflict;
 
     public Pair<PsiElement, String> getConflict() {
       return conflict;
@@ -453,12 +453,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (isReplaceDuplicates()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          processMethodsDuplicates();
-        }
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.NON_MODAL, myProject.getDisposed());
     }
   }
 
@@ -467,19 +462,12 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private void processMethodsDuplicates() {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (!myMethodToReplaceIn.isValid()) return;
-        MethodDuplicatesHandler.invokeOnScope(myProject, Collections.<PsiMember>singleton(myMethodToReplaceIn),
-                                              new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
-      }
+    final Runnable runnable = () -> {
+      if (!myMethodToReplaceIn.isValid()) return;
+      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.<PsiMember>singleton(myMethodToReplaceIn),
+                                            new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(runnable);
-      }
-    }, "Search method duplicates...", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable), "Search method duplicates...", true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {

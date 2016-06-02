@@ -47,11 +47,6 @@ public class GenerateAccessorProviderRegistrar {
   }
 
   protected synchronized static List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
-    return ContainerUtil.concat(ourProviders, new Function<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>, Collection<? extends EncapsulatableClassMember>>() {
-      @Override
-      public Collection<? extends EncapsulatableClassMember> fun(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> s) {
-        return s.fun(psiClass);
-      }
-    });
+    return ContainerUtil.concat(ourProviders, s -> s.fun(psiClass));
   }
 }

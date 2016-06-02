@@ -105,12 +105,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<GitlabIssue> issues = fetchIssues((offset / limit) + 1, limit, !withClosed);
-    return ContainerUtil.map2Array(issues, GitlabTask.class, new Function<GitlabIssue, GitlabTask>() {
-      @Override
-      public GitlabTask fun(GitlabIssue issue) {
-        return new GitlabTask(GitlabRepository.this, issue);
-      }
-    });
+    return ContainerUtil.map2Array(issues, GitlabTask.class, issue -> new GitlabTask(GitlabRepository.this, issue));
   }
 
   @Nullable

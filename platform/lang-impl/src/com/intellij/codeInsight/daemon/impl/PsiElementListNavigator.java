@@ -77,14 +77,11 @@ public class PsiElementListNavigator {
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
                                                @Nullable final ListBackgroundUpdaterTask listUpdaterTask) {
-    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, new Consumer<Object[]>() {
-      @Override
-      public void consume(Object[] selectedElements) {
-        for (Object element : selectedElements) {
-          PsiElement selected = (PsiElement)element;
-          LOG.assertTrue(selected.isValid());
-          ((NavigatablePsiElement)selected).navigate(true);
-        }
+    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
+      for (Object element : selectedElements) {
+        PsiElement selected = (PsiElement)element;
+        LOG.assertTrue(selected.isValid());
+        ((NavigatablePsiElement)selected).navigate(true);
       }
     });
   }
@@ -139,32 +136,23 @@ public class PsiElementListNavigator {
       setTitle(title).
       setMovable(true).
       setResizable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          int[] ids = list.getSelectedIndices();
-          if (ids == null || ids.length == 0) return;
-          Object[] selectedElements = list.getSelectedValues();
-          consumer.consume(selectedElements);
-        }
+      setItemChoosenCallback(() -> {
+        int[] ids = list.getSelectedIndices();
+        if (ids == null || ids.length == 0) return;
+        Object[] selectedElements = list.getSelectedValues();
+        consumer.consume(selectedElements);
       }).
-      setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          HintUpdateSupply.hideHint(list);
-          return true;
-        }
+      setCancelCallback(() -> {
+        HintUpdateSupply.hideHint(list);
+        return true;
       });
     final Ref<UsageView> usageView = new Ref<UsageView>();
     if (findUsagesTitle != null) {
-      popupChooserBuilder = popupChooserBuilder.setCouldPin(new Processor<JBPopup>() {
-        @Override
-        public boolean process(JBPopup popup) {
-          final List<NavigatablePsiElement> items = model.getItems();
-          usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
-          popup.cancel();
-          return false;
-        }
+      popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
+        final List<NavigatablePsiElement> items = model.getItems();
+        usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
+        popup.cancel();
+        return false;
       });
     }
 

@@ -43,21 +43,11 @@ public class NormalizeDeclarationTest extends PsiTestCase{
     assertTrue(element instanceof PsiIdentifier);
     assertTrue(element.getParent() instanceof PsiVariable);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ((PsiVariable)element.getParent()).normalizeDeclaration();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ((PsiVariable)element.getParent()).normalizeDeclaration());
 
 
     String textAfter = loadFile(getTestName(false) + "_after.java");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting());
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 

@@ -66,11 +66,8 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   }
 
   private static void stripTrailingSpaces() {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
     });
   }
 
@@ -177,12 +174,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     Document document = configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
     // make any modification, so that Document and file content differ. Otherwise save won't be, and "on-save" actions won't be called.
     WriteCommandAction.runWriteCommandAction(getProject(),
-                                             new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, " ");
-      }
-    });
+                                             () -> document.insertString(0, " "));
 
 
     FileDocumentManager.getInstance().saveAllDocuments();

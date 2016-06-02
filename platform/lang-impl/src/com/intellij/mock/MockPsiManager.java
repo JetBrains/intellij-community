@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -35,7 +36,7 @@ import java.util.Map;
 
 public class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
-  private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
+  private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<>();
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
 
@@ -184,5 +185,10 @@ public class MockPsiManager extends PsiManagerEx {
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
+  }
+
+  @Override
+  public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
+
   }
 }

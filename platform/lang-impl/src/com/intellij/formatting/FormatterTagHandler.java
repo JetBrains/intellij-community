@@ -115,13 +115,7 @@ public class FormatterTagHandler {
 
     private List<TextRange> getRanges() {
       List<TextRange> enabledRanges = new ArrayList<TextRange>();
-      Collections.sort(myTagInfoList, new Comparator<FormatterTagInfo>() {
-        @Override
-        public int compare(FormatterTagInfo tagInfo1,
-                           FormatterTagInfo tagInfo2) {
-          return tagInfo1.offset - tagInfo2.offset;
-        }
-      });
+      Collections.sort(myTagInfoList, (tagInfo1, tagInfo2) -> tagInfo1.offset - tagInfo2.offset);
 
       int start = myInitialRange.getStartOffset();
       boolean formatterEnabled = true;

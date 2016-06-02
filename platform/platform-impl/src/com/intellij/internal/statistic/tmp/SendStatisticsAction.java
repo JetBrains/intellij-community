@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +34,7 @@ public class SendStatisticsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -46,14 +45,10 @@ public class SendStatisticsAction extends AnAction {
         StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
         final StatisticsResult result = service.send();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showMultilineInputDialog(project, "Result: " + result.getCode(), "Statistics Result",
-                                              StringUtil.replace(result.getDescription(), ";", "\n"),
-                                              null, null);
-          }
-        }, ModalityState.NON_MODAL, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showMultilineInputDialog(project, "Result: " + result.getCode(), "Statistics Result",
+                                                StringUtil.replace(result.getDescription(), ";", "\n"),
+                                                null, null), ModalityState.NON_MODAL, project.getDisposed());
       }
     });
   }

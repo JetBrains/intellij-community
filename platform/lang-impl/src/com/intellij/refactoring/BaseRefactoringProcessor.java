@@ -30,6 +30,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -537,22 +538,20 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      doRun();
+      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+
+      //noinspection TestOnlyProblems
       UIUtil.dispatchAllInvocationEvents();
+      //noinspection TestOnlyProblems
       UIUtil.dispatchAllInvocationEvents();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
-        @Override
-        public void run() {
-          doRun();
-        }
-      });
+      DumbService.getInstance(myProject).smartInvokeLater(() -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun));
     }
     else {
-      doRun();
+      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
     }
   }
 
@@ -566,7 +565,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @TestOnly
-    static void setTestIgnore(boolean myIgnore) {
+    public static void setTestIgnore(boolean myIgnore) {
       myTestIgnore = myIgnore;
     }
 

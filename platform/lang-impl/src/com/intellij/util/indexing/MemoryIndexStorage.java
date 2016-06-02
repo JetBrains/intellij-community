@@ -132,17 +132,14 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Set<Key> stopList = new HashSet<Key>();
 
-    Processor<Key> decoratingProcessor = new Processor<Key>() {
-      @Override
-      public boolean process(final Key key) {
-        if (stopList.contains(key)) return true;
+    Processor<Key> decoratingProcessor = key -> {
+      if (stopList.contains(key)) return true;
 
-        final UpdatableValueContainer<Value> container = myMap.get(key);
-        if (container != null && container.size() == 0) {
-          return true;
-        }
-        return processor.process(key);
+      final UpdatableValueContainer<Value> container = myMap.get(key);
+      if (container != null && container.size() == 0) {
+        return true;
       }
+      return processor.process(key);
     };
 
     for (Key key : myMap.keySet()) {

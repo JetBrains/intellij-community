@@ -82,12 +82,7 @@ final class MethodIncompleteSignatureResolver {
       }
     }
     if (filtered.size() > 1) {
-      Collections.sort(filtered, new Comparator<PsiMethod>() {
-        @Override
-        public int compare(final PsiMethod o1, final PsiMethod o2) {
-          return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
-        }
-      });
+      Collections.sort(filtered, (o1, o2) -> o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount());
     }
     return filtered.toArray(new PsiMethod[filtered.size()]);
   }

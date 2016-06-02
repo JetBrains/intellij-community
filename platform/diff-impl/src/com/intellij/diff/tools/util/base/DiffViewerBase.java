@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -43,7 +42,7 @@ import java.util.List;
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
-  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<DiffViewerListener>();
+  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<>();
 
   @Nullable protected final Project myProject;
   @NotNull protected final DiffContext myContext;
@@ -80,24 +79,19 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @CalledInAwt
   public final void dispose() {
     if (myDisposed) return;
-
-    Runnable doDispose = new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        myDisposed = true;
-
-        abortRediff();
-        updateContextHints();
-
-        fireEvent(EventType.DISPOSE);
-
-        onDispose();
-      }
-    };
-
     if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
-    UIUtil.invokeLaterIfNeeded(doDispose);
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
+      myDisposed = true;
+
+      abortRediff();
+      updateContextHints();
+
+      fireEvent(EventType.DISPOSE);
+
+      onDispose();
+    });
   }
 
   @CalledInAwt
@@ -113,12 +107,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     if (isDisposed()) return;
 
     abortRediff();
-    myTaskAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        rediff();
-      }
-    }, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
   }
 
   @CalledInAwt
@@ -145,27 +134,15 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
     myTaskExecutor.executeAndTryWait(
-      new Function<ProgressIndicator, Runnable>() {
-        @Override
-        public Runnable fun(final ProgressIndicator indicator) {
-          final Runnable callback = performRediff(indicator);
-          return new Runnable() {
-            @Override
-            public void run() {
-              callback.run();
-              onAfterRediff();
-              fireEvent(EventType.AFTER_REDIFF);
-            }
-          };
-        }
+      indicator -> {
+        final Runnable callback = performRediff(indicator);
+        return () -> {
+          callback.run();
+          onAfterRediff();
+          fireEvent(EventType.AFTER_REDIFF);
+        };
       },
-      new Runnable() {
-        @Override
-        public void run() {
-          onSlowRediff();
-        }
-      },
-      waitMillis, forceEDT
+      this::onSlowRediff, waitMillis, forceEDT
     );
   }
 
@@ -209,13 +186,13 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR)).getChildren(null));
     return group;
   }
 
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP)).getChildren(null));
     return group;
   }

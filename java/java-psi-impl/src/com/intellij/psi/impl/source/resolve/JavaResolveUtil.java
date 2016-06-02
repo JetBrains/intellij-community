@@ -28,15 +28,21 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaResolveUtil {
-  public static PsiClass getContextClass(PsiElement element) {
+  public static PsiClass getContextClass(@NotNull PsiElement element) {
+    PsiElement prev = element;
     PsiElement scope = element.getContext();
     while (scope != null) {
-      if (scope instanceof PsiClass) return (PsiClass)scope;
+      // skip the class if coming from its extends/implements list: those references only rely on the outer context for resolve
+      if (scope instanceof PsiClass && (prev instanceof PsiMember || prev instanceof PsiDocComment)) {
+        return (PsiClass)scope;
+      }
+      prev = scope;
       scope = scope.getContext();
     }
     return null;
@@ -110,15 +116,20 @@ public class JavaResolveUtil {
       if (memberClass == null) {
         return false;
       }
-      for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-        if (placeParent instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)placeParent, memberClass, true)) {
+      // if resolving supertype reference, skip its containing class with getContextClass
+      PsiClass contextClass = member instanceof PsiClass ? getContextClass(place)
+                                                         : PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
+      while (contextClass != null) {
+        if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
           if (member instanceof PsiClass ||
               modifierList.hasModifierProperty(PsiModifier.STATIC) ||
               accessObjectClass == null ||
-              InheritanceUtil.isInheritorOrSelf(accessObjectClass, (PsiClass)placeParent, true)) {
+              InheritanceUtil.isInheritorOrSelf(accessObjectClass, contextClass, true)) {
             return true;
           }
         }
+
+        contextClass = getContextClass(contextClass);
       }
       return false;
     }

@@ -32,12 +32,9 @@ public class ConfigureFileDefaultEncodingAction extends AnAction {
 
     assert project != null;
     final FileEncodingConfigurable configurable = new FileEncodingConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable(){
-      @Override
-      public void run() {
-        if (virtualFile != null) {
-          configurable.selectFile(virtualFile);
-        }
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      if (virtualFile != null) {
+        configurable.selectFile(virtualFile);
       }
     });
   }

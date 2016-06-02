@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -53,10 +53,9 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
                              final boolean hasEscalate,
                              String visibilityTitle) {
     setBorder(IdeBorderFactory.createTitledBorder(visibilityTitle, true,
-                                                  new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                                             UIUtil.DEFAULT_HGAP,
-                                                             IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
-                                                             IdeBorderFactory.TITLED_BORDER_RIGHT_INSET)));
+                                                  JBUI.insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET, UIUtil.DEFAULT_HGAP,
+                                                              IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
+                                                              IdeBorderFactory.TITLED_BORDER_RIGHT_INSET)));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 

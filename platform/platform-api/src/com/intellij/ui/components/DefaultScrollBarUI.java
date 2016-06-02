@@ -44,13 +44,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
 
-  final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
+  final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 11, 150, 125, 300, 125) {
     @Override
     void onValueUpdate() {
       repaint();
     }
   };
-  final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
+  final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 11, 150, 125, 300, 125) {
     @Override
     void onValueUpdate() {
       repaint();

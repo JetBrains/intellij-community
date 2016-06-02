@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -53,18 +54,13 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  protected String[] getExtendsNames() {
-    return new String[]{"Annotation"};
-  }
-
-  @Override
   @NotNull
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     return new PsiClassType[]{createAnnotationType()};
   }
 
   private PsiClassType createAnnotationType() {
-    return TypesUtil.createTypeByFQClassName("java.lang.annotation.Annotation", this);
+    return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, this);
   }
 
   @Override

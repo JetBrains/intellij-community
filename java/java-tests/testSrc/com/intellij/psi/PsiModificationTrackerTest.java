@@ -160,9 +160,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker modificationTracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count = modificationTracker.getJavaStructureModificationCount();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      file.getContainingDirectory().delete();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> file.getContainingDirectory().delete());
 
     assertTrue(count+":"+modificationTracker.getJavaStructureModificationCount(), modificationTracker.getJavaStructureModificationCount() > count);
   }
@@ -177,9 +175,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     long count1 = tracker.getJavaStructureModificationCount();
     PsiJavaFile psiFile = (PsiJavaFile)psiManager.findFile(file);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "class Foo {}");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
 
 
     assertEquals(count1, tracker.getJavaStructureModificationCount()); // no PSI changes yet
@@ -213,9 +209,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(0, "class Foo {}");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
     DocumentCommitThread.getInstance().waitForAllCommits();
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
@@ -240,14 +234,12 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     long count1 = tracker.getJavaStructureModificationCount();
     assertFalse(count1 == count0);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.deleteString(0, document.getTextLength());
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, document.getTextLength()));
     DocumentCommitThread.getInstance().waitForAllCommits();
 
     // gc softly-referenced file and AST
     PlatformTestUtil.tryGcSoftlyReachableObjects();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     assertNull(psiManager.getFileManager().getCachedPsiFile(file));
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
@@ -257,7 +249,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_NoDocument() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -279,7 +271,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count0 = tracker.getJavaStructureModificationCount();
 
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = createChildDirectory(getProject().getBaseDir(), "tmp");
 
     assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
@@ -296,7 +288,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count0 = tracker.getJavaStructureModificationCount();
 
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
     assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
 
@@ -310,7 +302,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_VirtualFileDeleted() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -328,7 +320,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_ParentVirtualDirectoryDeleted() throws Exception {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
@@ -347,7 +339,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testVirtualFileRename_WithPsi() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();

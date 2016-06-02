@@ -45,14 +45,6 @@ public class TestNGTestDiscoveryConfiguration extends TestDiscoveryConfiguration
           new TestNGConfiguration("", project, TestNGConfigurationType.getInstance().getConfigurationFactories()[0]));
   }
 
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    final TestNGTestDiscoveryConfigurationType configurationType =
-      ConfigurationTypeUtil.findConfigurationType(TestNGTestDiscoveryConfigurationType.class);
-    final ConfigurationFactory[] factories = configurationType.getConfigurationFactories();
-    return new TestNGTestDiscoveryConfiguration(getName(), getProject(), factories[0]);
-  }
-
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {

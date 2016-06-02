@@ -202,11 +202,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
     final Object[] duplicates = duplicateList.keys();
 
-    Arrays.sort(duplicates, new Comparator<Object>() {
-      public int compare(Object x, Object y) {
-        return ((PsiFragment[])y)[0].getCost() - ((PsiFragment[])x)[0].getCost();
-      }
-    });
+    Arrays.sort(duplicates, (x, y) -> ((PsiFragment[])y)[0].getCost() - ((PsiFragment[])x)[0].getCost());
 
     return new DupInfo() {
       private final TIntObjectHashMap<GroupNodeDescription> myPattern2Description = new TIntObjectHashMap<GroupNodeDescription>();

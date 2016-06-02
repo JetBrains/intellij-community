@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -50,7 +51,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(testFile);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
     assertNotNull(testFile.getPath(), vFile);
     FileBasedIndex.getInstance().requestReindex(vFile);
     PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);
@@ -98,6 +99,12 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("pack.MyClass", aClass.getQualifiedName());
     assertFalse(aClass.isInterface());
     assertFalse(aClass.isDeprecated());
+  }
+
+  public void testViewProviderHasJavaLanguage() {
+    PsiJavaFile file = getFile("MyClass");
+    assertEquals(JavaLanguage.INSTANCE, file.getLanguage());
+    assertEquals(JavaLanguage.INSTANCE, file.getViewProvider().getBaseLanguage());
   }
 
   public void testClassMembers() {

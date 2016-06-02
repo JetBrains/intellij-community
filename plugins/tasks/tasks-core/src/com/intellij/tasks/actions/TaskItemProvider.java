@@ -68,12 +68,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       return true;
     }
 
-    FutureTask<List<Task>> future = new FutureTask<List<Task>>(new Callable<List<Task>>() {
-      @Override
-      public List<Task> call() throws Exception {
-          return fetchFromServer(pattern, everywhere, cancelled);
-      }
-    });
+    FutureTask<List<Task>> future = new FutureTask<List<Task>>(() -> fetchFromServer(pattern, everywhere, cancelled));
 
     // Newer request always wins
     Future<List<Task>> oldFuture = myFutureReference.getAndSet(future);

@@ -33,7 +33,7 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
     super(host);
     PsiElement parent = host.getParent();
     myXmlAttribute = parent instanceof XmlAttribute ? (XmlAttribute)parent :
-                     XmlElementFactory.getInstance(host.getProject()).createXmlAttribute("a", host.getValue());
+                     XmlElementFactory.getInstance(host.getProject()).createAttribute("a", host.getValue(), parent);
   }
 
   @Override

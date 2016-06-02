@@ -32,7 +32,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestProcessor.class);
 
   @NotNull private final SoftHardCacheMap<T, DiffRequest> myRequestCache =
-    new SoftHardCacheMap<T, DiffRequest>(5, 5);
+    new SoftHardCacheMap<>(5, 5);
 
   @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
 
@@ -108,25 +107,15 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     }
 
     myQueue.executeAndTryWait(
-      new Function<ProgressIndicator, Runnable>() {
-        @Override
-        public Runnable fun(ProgressIndicator indicator) {
-          final DiffRequest request = doLoadRequest(requestProvider, indicator);
-          return new Runnable() {
-            @CalledInAwt
-            @Override
-            public void run() {
-              myRequestCache.put(requestProvider, request);
-              applyRequest(request, force, scrollToChangePolicy);
-            }
-          };
-        }
+      indicator -> {
+        final DiffRequest request = doLoadRequest(requestProvider, indicator);
+        return () -> {
+          myRequestCache.put(requestProvider, request);
+          applyRequest(request, force, scrollToChangePolicy);
+        };
       },
-      new Runnable() {
-        @Override
-        public void run() {
-          applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy);
-        }
+      () -> {
+        applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy);
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     );

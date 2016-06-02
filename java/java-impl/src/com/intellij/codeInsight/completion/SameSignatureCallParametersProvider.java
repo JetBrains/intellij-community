@@ -76,12 +76,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
     final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
-    final String lookupString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter psiParameter) {
-        return psiParameter.getName();
-      }
-    }, ", ");
+    final String lookupString = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ", ");
 
     final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);

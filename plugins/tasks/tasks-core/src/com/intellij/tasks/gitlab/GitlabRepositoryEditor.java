@@ -39,12 +39,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
 
     installListener(myProjectComboBox);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        initialize();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> initialize());
   }
 
   private void initialize() {

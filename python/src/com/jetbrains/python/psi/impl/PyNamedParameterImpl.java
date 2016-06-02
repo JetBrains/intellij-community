@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -27,10 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -170,9 +168,16 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (isPositionalContainer()) sb.append("*");
     else if (isKeywordContainer()) sb.append("**");
     sb.append(getName());
-    if (includeDefaultValue) {
-      PyExpression default_v = getDefaultValue();
-      if (default_v != null) sb.append("=").append(PyUtil.getReadableRepr(default_v, true));
+    final PyExpression defaultValue = getDefaultValue();
+    if (includeDefaultValue && defaultValue != null) {
+      String representation = PyUtil.getReadableRepr(defaultValue, true);
+      if (defaultValue instanceof PyStringLiteralExpression) {
+        final Pair<String, String> quotes = PythonStringUtil.getQuotes(defaultValue.getText());
+        if (quotes != null) {
+          representation = quotes.getFirst() + PythonStringUtil.getStringValue(defaultValue) + quotes.getSecond();
+        }
+      }
+      sb.append("=").append(representation);
     }
     return sb.toString();
   }
@@ -249,28 +254,25 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<PyType>();
-          processLocalCalls(func, new Processor<PyCallExpression>() {
-            @Override
-            public boolean process(@NotNull PyCallExpression call) {
-              final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-              final PyArgumentList argumentList = call.getArgumentList();
-              if (argumentList != null) {
-                final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
-                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-                  if (entry.getValue() == PyNamedParameterImpl.this) {
-                    final PyExpression argument = entry.getKey();
-                    if (argument != null) {
-                      final PyType type = context.getType(argument);
-                      if (type != null) {
-                        types.add(type);
-                        return true;
-                      }
+          processLocalCalls(func, call -> {
+            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+            final PyArgumentList argumentList = call.getArgumentList();
+            if (argumentList != null) {
+              final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
+              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
+                if (entry.getValue() == this) {
+                  final PyExpression argument = entry.getKey();
+                  if (argument != null) {
+                    final PyType type = context.getType(argument);
+                    if (type != null) {
+                      types.add(type);
+                      return true;
                     }
                   }
                 }
               }
-              return true;
             }
+            return true;
           });
           if (!types.isEmpty()) {
             return PyUnionType.createWeakType(PyUnionType.union(types));

@@ -17,7 +17,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,\
-    ID_TO_MEANING
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop
 import pydevd_file_utils
 
@@ -200,6 +200,20 @@ def process_net_command(py_db, cmd_id, seq, text):
                     int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
                     py_db.post_internal_command(int_cmd, thread_id)
 
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_SHOW_RETURN_VALUES:
+                try:
+                    show_return_values = text.split('\t')[1]
+                    if int(show_return_values) == 1:
+                        py_db.show_return_values = True
+                    else:
+                        if py_db.show_return_values:
+                            # We should remove saved return values
+                            py_db.remove_return_values_flag = True
+                        py_db.show_return_values = False
+                    pydev_log.debug("Show return values: %s\n" % py_db.show_return_values)
                 except:
                     traceback.print_exc()
 

@@ -26,9 +26,9 @@ public class EduAnswerPlaceholderPainter {
   }
 
   public static void drawAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder placeholder,
-                                           boolean useLength, @NotNull final JBColor color) {
+                                           @NotNull final JBColor color) {
     final Document document = editor.getDocument();
-    if (useLength && !placeholder.isValid(document)) {
+    if (!placeholder.isValid(document)) {
       return;
     }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -37,10 +37,8 @@ public class EduAnswerPlaceholderPainter {
     final Project project = editor.getProject();
     assert project != null;
     final int startOffset = placeholder.getRealStartOffset(document);
-    final int length = placeholder.getLength();
-    final int replacementLength = placeholder.getPossibleAnswerLength();
-    int highlighterLength = useLength ? length : replacementLength;
-    final int endOffset = startOffset + highlighterLength;
+    final int length = placeholder.getRealLength();
+    final int endOffset = startOffset + length;
     textAttributes.setEffectColor(color);
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, PLACEHOLDERS_LAYER,
@@ -56,20 +54,20 @@ public class EduAnswerPlaceholderPainter {
   }
 
 
-  public static void createGuardedBlocks(@NotNull final Editor editor, TaskFile taskFile, boolean useLength) {
+  public static void createGuardedBlocks(@NotNull final Editor editor, TaskFile taskFile) {
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      createGuardedBlocks(editor, answerPlaceholder, useLength);
+      createGuardedBlocks(editor, answerPlaceholder);
     }
   }
 
-  public static void createGuardedBlocks(@NotNull final Editor editor, AnswerPlaceholder placeholder, boolean useLength) {
+  public static void createGuardedBlocks(@NotNull final Editor editor, AnswerPlaceholder placeholder) {
     Document document = editor.getDocument();
     if (document instanceof DocumentImpl) {
       DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
-      if (useLength && !placeholder.isValid(document)) return;
+      if (!placeholder.isValid(document)) return;
       int start = placeholder.getRealStartOffset(document);
-      final int length = useLength ? placeholder.getLength() : placeholder.getPossibleAnswerLength();
+      final int length = placeholder.getRealLength();
       int end = start + length;
       if (start != 0) {
         createGuardedBlock(editor, blocks, start - 1, start);

@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
@@ -128,7 +127,7 @@ public class FileTypeChooser extends DialogWrapper {
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
     if (project != null && !(file instanceof FakeVirtualFile)) {
-      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findFile(file); // autodetect text file if needed
+      PsiManagerEx.getInstanceEx(project).getFileManager().findFile(file); // autodetect text file if needed
     }
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
@@ -164,12 +163,7 @@ public class FileTypeChooser extends DialogWrapper {
     final FileType type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem());
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem()));
 
     return type;
   }

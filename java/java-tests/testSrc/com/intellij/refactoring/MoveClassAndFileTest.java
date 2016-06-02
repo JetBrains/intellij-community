@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.refactoring;
-
-/**
- * User: anna
- * Date: Aug 31, 2010
- */
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -48,6 +43,10 @@ public class MoveClassAndFileTest extends RefactoringTestCase {
     doTest("leavePackageLocalClass", "t", "txt2move.txt", "s.MyClass");
   }
 
+  public void testNestedClassesInFile() throws Exception {
+    doTest("nestedClassesInFile", "t", null, "s.MyClass.F1", "s.MyClass.F2");
+  }
+
   private void doTest(String testName, String newPackageName, String fileNameNearFirstClass, String... classNames) throws Exception {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClassAndFile/" + testName;
 
@@ -64,18 +63,20 @@ public class MoveClassAndFileTest extends RefactoringTestCase {
   }
 
   private void performAction(String newPackageName, String fileName, String... classNames) {
-    final PsiElement[] elements = new PsiElement[classNames.length + 1];
+    final PsiElement[] elements = new PsiElement[classNames.length + (fileName != null ? 1 : 0)];
     for(int i = 0; i < classNames.length; i++){
       String className = classNames[i];
       elements[i] = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(getProject()));
       assertNotNull("Class " + className + " not found", elements[i]);
     }
-    elements[classNames.length] = elements[0].getContainingFile().getContainingDirectory().findFile(fileName);
+    if (fileName != null) {
+      elements[classNames.length] = elements[0].getContainingFile().getContainingDirectory().findFile(fileName);
+    }
 
     PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
     assertNotNull("Package " + newPackageName + " not found", aPackage);
     final PsiDirectory[] dirs = aPackage.getDirectories();
-    assertEquals(dirs.length, 1);
+    assertEquals(1, dirs.length);
 
     final JavaMoveFilesOrDirectoriesHandler handler = new JavaMoveFilesOrDirectoriesHandler();
     assertTrue(handler.canMove(elements, dirs[0]));

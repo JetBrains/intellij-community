@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -46,7 +47,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox reformatBox = new NonFocusableCheckBox(VcsBundle.message("checkbox.checkin.options.reformat.code"));
-
+    CheckinHandlerUtil.disableWhenDumb(myProject, reformatBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override
       public JComponent getComponent() {
@@ -89,7 +90,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
       }
     };
 
-    if (reformat(configuration, true)) {
+    if (reformat(configuration, true) && !DumbService.isDumb(myProject)) {
       new ReformatCodeProcessor(
         myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), FormatterUtil.REFORMAT_BEFORE_COMMIT_COMMAND_NAME, performCheckoutAction, true
       ).run();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,9 +56,7 @@ public class SecondaryFunctionsHelper {
     mapNumComparisons.put(FunctionExprent.FUNCTION_LE, new Integer[]{FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE, null});
   }
 
-
-  public static boolean identifySecondaryFunctions(Statement stat) {
-
+  public static boolean identifySecondaryFunctions(Statement stat, VarProcessor varProc) {
     if (stat.getExprents() == null) {
       // if(){;}else{...} -> if(!){...}
       if (stat.type == Statement.TYPE_IF) {
@@ -100,7 +98,6 @@ public class SecondaryFunctionsHelper {
       }
     }
 
-
     boolean replaced = true;
     while (replaced) {
       replaced = false;
@@ -111,13 +108,13 @@ public class SecondaryFunctionsHelper {
         Object obj = lstObjects.get(i);
 
         if (obj instanceof Statement) {
-          if (identifySecondaryFunctions((Statement)obj)) {
+          if (identifySecondaryFunctions((Statement)obj, varProc)) {
             replaced = true;
             break;
           }
         }
         else if (obj instanceof Exprent) {
-          Exprent retexpr = identifySecondaryFunctions((Exprent)obj, true);
+          Exprent retexpr = identifySecondaryFunctions((Exprent)obj, true, varProc);
           if (retexpr != null) {
             if (stat.getExprents() == null) {
               // only head expressions can be replaced!
@@ -136,9 +133,7 @@ public class SecondaryFunctionsHelper {
     return false;
   }
 
-
-  private static Exprent identifySecondaryFunctions(Exprent exprent, boolean statement_level) {
-
+  private static Exprent identifySecondaryFunctions(Exprent exprent, boolean statement_level, VarProcessor varProc) {
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
       FunctionExprent fexpr = (FunctionExprent)exprent;
 
@@ -202,7 +197,7 @@ public class SecondaryFunctionsHelper {
       replaced = false;
 
       for (Exprent expr : exprent.getAllExprents()) {
-        Exprent retexpr = identifySecondaryFunctions(expr, false);
+        Exprent retexpr = identifySecondaryFunctions(expr, false, varProc);
         if (retexpr != null) {
           exprent.replaceExprent(expr, retexpr);
           replaced = true;
@@ -301,21 +296,20 @@ public class SecondaryFunctionsHelper {
           case FunctionExprent.FUNCTION_DCMPG:
             int var = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
             VarType type = lstOperands.get(0).getExprType();
-            VarProcessor processor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 
             FunctionExprent iff = new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
-              new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new VarExprent(var, type, processor),
+              new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new VarExprent(var, type, varProc),
                 ConstExprent.getZeroConstant(type.type)), null),
               new ConstExprent(VarType.VARTYPE_INT, new Integer(-1), null),
               new ConstExprent(VarType.VARTYPE_INT, new Integer(1), null)), null);
 
             FunctionExprent head = new FunctionExprent(FunctionExprent.FUNCTION_EQ, Arrays.asList(
-              new AssignmentExprent(new VarExprent(var, type, processor), new FunctionExprent(FunctionExprent.FUNCTION_SUB,
-                                                                                              Arrays.asList(lstOperands.get(0),
-                                                                                                  lstOperands.get(1)), null), null),
+              new AssignmentExprent(new VarExprent(var, type, varProc),
+                                    new FunctionExprent(FunctionExprent.FUNCTION_SUB, Arrays.asList(lstOperands.get(0), lstOperands.get(1)), null),
+                                    null),
               ConstExprent.getZeroConstant(type.type)), null);
 
-            processor.setVarType(new VarVersionPair(var, 0), type);
+            varProc.setVarType(new VarVersionPair(var, 0), type);
 
             return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
               head, new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null), iff), fexpr.bytecode);

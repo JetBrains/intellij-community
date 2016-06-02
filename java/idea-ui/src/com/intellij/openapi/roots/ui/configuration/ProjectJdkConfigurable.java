@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -32,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static java.awt.GridBagConstraints.*;
 
 /**
  * User: anna
@@ -99,22 +100,15 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
           clearCaches();
         }
       });
-      myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
-      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, NORTHWEST, NONE, JBUI.insetsBottom(4), 0, 0));
+      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
       myCbProjectJdk.setSetupButton(setUpButton, myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem(), null, false);
-      myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-      myCbProjectJdk.setEditButton(editButton, myProject, new Computable<Sdk>() {
-        @Override
-        @Nullable
-        public Sdk compute() {
-          return myJdksModel.getProjectSdk();
-        }
-      });
+      myCbProjectJdk.setEditButton(editButton, myProject, () -> myJdksModel.getProjectSdk());
 
-      myJdkPanel.add(editButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                            GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myJdkPanel.add(editButton, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
     }
     return myJdkPanel;
   }

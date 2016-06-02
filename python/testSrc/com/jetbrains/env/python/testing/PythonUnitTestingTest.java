@@ -9,18 +9,24 @@ import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author traff
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
+  @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask(PythonUnitTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME));
   }
+
+  @Test
   public void testUTRunner() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test1.py") {
 
@@ -30,8 +36,8 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertEquals(2, runner.getAllTestsCount());
-        Assert.assertEquals(2, runner.getPassedTestsCount());
+        assertEquals(2, runner.getAllTestsCount());
+        assertEquals(2, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
     });
@@ -40,6 +46,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   /**
    * Checks <a href="https://docs.python.org/2/library/unittest.html#load-tests-protocol">Load test protocol</a>
    */
+  @Test
   public void testLoadProtocol() throws Exception {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_load_protocol.py") {
       @Override
@@ -53,7 +60,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
+        assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
     });
@@ -62,6 +69,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   /**
    * Ensures that skipped and erroneous tests do not lead to suite ignorance
    */
+  @Test
   public void testUTSkippedAndIgnored() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
 
@@ -84,6 +92,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testUTRunner2() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test2.py") {
 
@@ -102,6 +111,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   /**
    * Ensures pattern is supported
    */
+  @Test
   public void testUTRunnerByPattern() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "./_args_separator_*pattern.py") {
 
@@ -118,6 +128,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testClass() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
 
@@ -132,6 +143,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testMethod() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest::test_passes") {
 
@@ -146,6 +158,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testFolder() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_folder/") {
 
@@ -163,6 +176,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   /**
    * Ensures file references are highlighted for python traceback
    */
+  @Test
   public void testUnitTestFileReferences() {
     final String fileName = "reference_tests.py";
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", fileName) {
@@ -183,7 +197,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
-
+  @Test
   public void testDependent() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "dependentTests/test_my_class.py") {
 

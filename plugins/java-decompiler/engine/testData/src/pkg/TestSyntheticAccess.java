@@ -1,9 +1,5 @@
 package pkg;
 
-/**
- * @author Alexandru-Constantin Bledea
- * @since March 20, 2016
- */
 class TestSyntheticAccess {
 
   private static int s;

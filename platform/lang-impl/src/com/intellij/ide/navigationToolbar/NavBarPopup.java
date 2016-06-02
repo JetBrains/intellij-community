@@ -112,18 +112,12 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPanel.getUpdateQueue().rebuildUi();
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              show(item, false); // end-less loop protection
-            }
-          });
-        }
+      SwingUtilities.invokeLater(() -> {
+        myPanel.getUpdateQueue().rebuildUi();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          show(item, false); // end-less loop protection
+        });
       });
     } else {
       int offset = NavBarUIManager.getUI().getPopupOffset(item);
@@ -165,26 +159,17 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     });
     final List<Disposable> disposables = new ArrayList<Disposable>();
     list.putClientProperty(DISPOSED_OBJECTS, disposables);
-    list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
-      @NotNull
-      @Override
-      public JComponent fun(Object obj) {
-        final NavBarItem navBarItem = new NavBarItem(panel, obj, null);
-        disposables.add(navBarItem);
-        return navBarItem;
-      }
+    list.installCellRenderer(obj -> {
+      final NavBarItem navBarItem = new NavBarItem(panel, obj, null);
+      disposables.add(navBarItem);
+      return navBarItem;
     });
     list.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
     installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
     installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
-    final JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        return panel.getPresentation().getPresentableText(o);
-      }
-    });
+    final JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
     component.putClientProperty(JBLIST_KEY, list);
     return component;
   }

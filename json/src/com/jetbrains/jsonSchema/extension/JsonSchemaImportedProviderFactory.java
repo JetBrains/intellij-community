@@ -79,12 +79,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
 
           String path = pattern.getPath().replace('\\', '/');
-          final List<String> parts = ContainerUtil.filter(path.split("/"), new Condition<String>() {
-            @Override
-            public boolean value(String s) {
-              return !".".equals(s);
-            }
-          });
+          final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
           final VirtualFile relativeFile;
           if (parts.isEmpty()) {
             relativeFile = project.getBaseDir();
@@ -94,19 +89,9 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
 
           if (pattern.isDirectory()) {
-            myPatterns.add(new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile file) {
-                return VfsUtil.isAncestor(relativeFile, file, true);
-              }
-            });
+            myPatterns.add(file12 -> VfsUtil.isAncestor(relativeFile, file12, true));
           } else {
-            myPatterns.add(new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile file) {
-                return relativeFile.equals(file);
-              }
-            });
+            myPatterns.add(file1 -> relativeFile.equals(file1));
           }
         }
       }

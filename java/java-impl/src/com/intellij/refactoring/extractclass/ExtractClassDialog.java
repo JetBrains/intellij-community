@@ -143,11 +143,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    Collections.sort(enumConstants, new Comparator<MemberInfo>() {
-      public int compare(MemberInfo o1, MemberInfo o2) {
-        return o1.getMember().getTextOffset() - o2.getMember().getTextOffset();
-      }
-    });
+    Collections.sort(enumConstants, (o1, o2) -> o1.getMember().getTextOffset() - o2.getMember().getTextOffset());
     final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName,
                                                                       myDestinationFolderComboBox.selectDirectory(
                                                                         new PackageWrapper(PsiManager.getInstance(myProject), packageName),

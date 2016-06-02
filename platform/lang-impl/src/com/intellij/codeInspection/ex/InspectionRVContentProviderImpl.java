@@ -23,22 +23,17 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -88,20 +83,16 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                                  @NotNull final InspectionNode toolNode,
+                                                  @NotNull final InspectionTreeNode parentNode,
+                                                  final boolean showStructure,
+                                                  boolean groupBySeverity,
+                                                  @NotNull final Map<String, Set<RefEntity>> contents,
+                                                  @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+    InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 
-    Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
-      @Override
-      public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
-        return new RefElementContainer(refElement, problems.get(refElement));
-      }
-    };
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final Set<RefModule> moduleProblems = presentation.getModuleProblems();
     if (!moduleProblems.isEmpty()) {
@@ -116,28 +107,10 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               contents,
               false,
               toolWrapper,
-              computeContainer,
+              refElement -> new RefElementContainer(refElement, problems.get(refElement)),
               showStructure,
-              node -> merge(node, toolNode, true));
-
-    if (presentation.isOldProblemsIncluded()) {
-      final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
-      computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
-        @Override
-        public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
-          return new RefElementContainer(refElement, oldProblems != null ? oldProblems.get(refElement) : null);
-        }
-      };
-
-      buildTree(context,
-                presentation.getOldContent(),
-                true,
-                toolWrapper,
-                computeContainer,
-                showStructure,
-                node -> merge(node, toolNode, true));
-    }
-    merge(toolNode, parentNode, false);
+              node -> merge(node, mergedToolNode, true));
+    return mergedToolNode;
   }
 
   @Override
@@ -149,16 +122,12 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
     final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
     if (problems != null) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
-            continue;
-          }
-          insertByIndex(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), elemNode);
+          elemNode.insertByOrder(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), true);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
@@ -190,7 +159,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     @Nullable
     public RefElementContainer getOwner() {
       final RefEntity entity = myElement.getOwner();
-      if (entity instanceof RefElement) {
+      if (entity instanceof RefElement && !(entity instanceof RefDirectory)) {
         return new RefElementContainer(entity, myDescriptors);
       }
       return null;

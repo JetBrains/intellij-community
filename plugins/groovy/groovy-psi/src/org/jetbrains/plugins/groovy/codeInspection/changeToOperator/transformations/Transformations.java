@@ -46,7 +46,7 @@ public class Transformations {
     result.put(PREVIOUS, new UnaryTransformation(mDEC));
 
     result.put(AS_BOOLEAN, new AsBooleanTransformation());
-    result.put(CALL, new CallTransformation());
+    //result.put(CALL, new CallTransformation());
   }
 
   private void addBinary() {

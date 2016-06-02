@@ -162,9 +162,9 @@ public class JarHandler extends ZipHandler {
       String mirrorName = getSnapshotName(originalFile.getName(), sha1.digest());
       mirrorFile = new File(jarDir, mirrorName);
 
-      if (mirrorDiffers(originalAttributes, FileSystemUtil.getAttributes(mirrorFile), true)) {
+      FileAttributes mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
+      if (mirrorFileAttributes == null) {
         try {
-          FileUtil.delete(mirrorFile);
           FileUtil.rename(tempJarFile, mirrorFile);
           FileUtil.setLastModified(mirrorFile, originalAttributes.lastModified);
         }
@@ -177,7 +177,7 @@ public class JarHandler extends ZipHandler {
         FileUtil.delete(tempJarFile);
       }
 
-      info = new CacheLibraryInfo(mirrorFile.getName(), originalAttributes.lastModified, originalAttributes.length);
+      info = new CacheLibraryInfo(mirrorFile.getName(),  originalAttributes.lastModified, originalAttributes.length);
       CacheLibraryInfo.ourCachedLibraryInfo.put(path, info);
       return mirrorFile;
     }
@@ -277,7 +277,7 @@ public class JarHandler extends ZipHandler {
       for (int i = 0; i < 2; ++i) {
         try {
           info = new PersistentHashMap<String, CacheLibraryInfo>(
-            snapshotInfoFile, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
+            snapshotInfoFile, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
 
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
@@ -303,19 +303,9 @@ public class JarHandler extends ZipHandler {
 
       assert info != null;
       ourCachedLibraryInfo = info;
-      FlushingDaemon.everyFiveSeconds(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      FlushingDaemon.everyFiveSeconds(() -> flushCachedLibraryInfos());
 
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> flushCachedLibraryInfos());
     }
 
     @NotNull

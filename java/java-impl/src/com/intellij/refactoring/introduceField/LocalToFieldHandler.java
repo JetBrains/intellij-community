@@ -94,7 +94,7 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE, "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass aClass) {
           AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
@@ -131,11 +131,7 @@ public abstract class LocalToFieldHandler {
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
       new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, isStatic, occurences);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    }, REFACTORING_NAME, null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), REFACTORING_NAME, null);
     return false;
   }
 

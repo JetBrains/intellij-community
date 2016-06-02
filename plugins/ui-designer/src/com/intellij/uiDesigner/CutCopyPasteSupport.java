@@ -97,11 +97,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   public void performCut(@NotNull final DataContext dataContext) {
     if (doCopy() && myEditor.ensureEditable()) {
-      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
-        public void run() {
-          FormEditingUtil.deleteSelection(myEditor);
-        }
-      }, UIDesignerBundle.message("command.cut"), null);
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> FormEditingUtil.deleteSelection(myEditor), UIDesignerBundle.message("command.cut"), null);
     }
   }
 

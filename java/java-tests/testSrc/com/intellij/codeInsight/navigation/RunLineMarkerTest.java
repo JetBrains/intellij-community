@@ -77,12 +77,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     GutterIconsConfigurable configurable = new GutterIconsConfigurable();
     configurable.createComponent();
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
-    Set<String> strings = ContainerUtil.map2Set(descriptors, new Function<GutterIconDescriptor, String>() {
-      @Override
-      public String fun(GutterIconDescriptor descriptor) {
-        return descriptor.getId();
-      }
-    });
+    Set<String> strings = ContainerUtil.map2Set(descriptors, descriptor -> descriptor.getId());
     assertEquals(descriptors.size(), strings.size());
   }
 }

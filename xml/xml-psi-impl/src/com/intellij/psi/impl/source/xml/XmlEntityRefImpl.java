@@ -69,7 +69,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
-    synchronized(PsiLock.LOCK) {
+    synchronized(XmlEntityCache.LOCK) {
       Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCache.getCachingMap(targetElement);
 
       value = map.get(entityName);
@@ -80,12 +80,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         if(manager == null){
           return doResolveEntity(targetElement, entityName, containingFile).getValue();
         }
-        value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
-          @Override
-          public Result<XmlEntityDecl> compute() {
-            return doResolveEntity(targetElement, entityName, containingFile);
-          }
-        });
+        value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
+          () -> doResolveEntity(targetElement, entityName, containingFile));
 
 
         map.put(entityName, value);

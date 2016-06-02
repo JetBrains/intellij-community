@@ -27,6 +27,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
@@ -42,27 +43,22 @@ import java.util.*;
 public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
   private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
-  @Nullable
+  @NotNull
   private final Project myProject;
   private final Object myLock;
   private final Map<VirtualFile, JsonSchemaObjectCodeInsightWrapper> myWrappers = new HashMap<>();
-  private final Set<VirtualFile> mySchemaFiles = new HashSet<>();
+  private final Set<VirtualFile> mySchemaFiles = ContainerUtil.newConcurrentSet();
+  private volatile boolean initialized;
   private final JsonSchemaExportedDefinitions myDefinitions;
 
-  public JsonSchemaServiceImpl(@Nullable Project project) {
+  public JsonSchemaServiceImpl(@NotNull Project project) {
     myLock = new Object();
     myProject = project;
     myDefinitions = new JsonSchemaExportedDefinitions(
-      new Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>>() {
-                                                        @Override
-                                                        public void consume(PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>> consumer) {
-                                                          iterateSchemas(consumer);
-                                                        }
-                                                      });
-    if (project != null) {
-      ApplicationManager
-        .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
-    }
+      consumer -> iterateSchemas(consumer));
+    ApplicationManager
+      .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
+    ensureSchemaFiles(project);
   }
 
   @NotNull
@@ -90,21 +86,23 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Override
   public boolean isRegisteredSchemaFile(@NotNull Project project, @NotNull VirtualFile file) {
-    synchronized (myLock) {
+    if (!initialized) {
       ensureSchemaFiles(project);
-      return mySchemaFiles.contains(file);
     }
+    return mySchemaFiles.contains(file);
   }
 
   private void ensureSchemaFiles(@NotNull final Project project) {
     synchronized (myLock) {
-      if (!mySchemaFiles.isEmpty()) return;
-      final JsonSchemaProviderFactory[] factories = getProviderFactories();
-      for (JsonSchemaProviderFactory factory : factories) {
-        final List<JsonSchemaFileProvider> providers = factory.getProviders(project);
-        for (JsonSchemaFileProvider provider : providers) {
-          mySchemaFiles.add(provider.getSchemaFile());
+      if (!initialized) {
+        final JsonSchemaProviderFactory[] factories = getProviderFactories();
+        for (JsonSchemaProviderFactory factory : factories) {
+          final List<JsonSchemaFileProvider> providers = factory.getProviders(project);
+          for (JsonSchemaFileProvider provider : providers) {
+            mySchemaFiles.add(provider.getSchemaFile());
+          }
         }
+        initialized = true;
       }
     }
   }
@@ -157,19 +155,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) return null;
-    return ContainerUtil.map(wrappers, new NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>() {
-      @NotNull
-      @Override
-      public Pair<Boolean, String> fun(JsonSchemaObjectCodeInsightWrapper wrapper) {
-        return Pair.create(wrapper.isUserSchema(), wrapper.getName());
-      }
-    });
+    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
   }
 
   @Nullable
   private JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
     final JsonSchemaObject resultObject = readObject(provider, getDefinitions());
-    if (resultObject == null || myProject == null) return null;
+    if (resultObject == null) return null;
     return new JsonSchemaObjectCodeInsightWrapper(myProject, provider.getName(), provider.getSchemaType(), provider.getSchemaFile(), resultObject);
   }
 
@@ -211,8 +203,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     synchronized (myLock) {
       myWrappers.clear();
       myDefinitions.reset();
+      initialized = false;
       mySchemaFiles.clear();
     }
+    JsonSchemaFileTypeManager.getInstance().reset(myProject);
   }
 
   @Nullable
@@ -257,7 +251,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Nullable
   private List<JsonSchemaObjectCodeInsightWrapper> getWrappers(@Nullable VirtualFile file) {
-    if (file == null || myProject == null) return null;
+    if (file == null) return null;
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = new ArrayList<>();
     JsonSchemaProviderFactory[] factories = getProviderFactories();
     synchronized (myLock) {
@@ -284,18 +278,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   private static class CompositeCodeInsightProviderWithWarning implements CodeInsightProviders {
     private final List<JsonSchemaObjectCodeInsightWrapper> myWrappers;
-    private CompletionContributor myContributor;
-    private Annotator myAnnotator;
-    private DocumentationProvider myDocumentationProvider;
+    private final CompletionContributor myContributor;
+    private final Annotator myAnnotator;
+    private final DocumentationProvider myDocumentationProvider;
 
     public CompositeCodeInsightProviderWithWarning(List<JsonSchemaObjectCodeInsightWrapper> wrappers) {
       final List<JsonSchemaObjectCodeInsightWrapper> userSchemaWrappers =
-        ContainerUtil.filter(wrappers, new Condition<JsonSchemaObjectCodeInsightWrapper>() {
-          @Override
-          public boolean value(JsonSchemaObjectCodeInsightWrapper wrapper) {
-            return wrapper.isUserSchema();
-          }
-        });
+        ContainerUtil.filter(wrappers, wrapper -> wrapper.isUserSchema());
       // filter for the case when there are one system schema and one (several) user schemas
       // then do not use provided system schema: user schema will override it (maybe the user updated the version himself)
       // if there are 2 or more system schemas - just go the common way: it is unclear what happened and why
@@ -364,5 +353,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Override
   public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
     return myDefinitions.checkFileForId(id, file);
+  }
+
+  @Override
+  public Set<VirtualFile> getSchemaFiles() {
+    if (!initialized) {
+      ensureSchemaFiles(myProject);
+    }
+    return Collections.unmodifiableSet(mySchemaFiles);
   }
 }

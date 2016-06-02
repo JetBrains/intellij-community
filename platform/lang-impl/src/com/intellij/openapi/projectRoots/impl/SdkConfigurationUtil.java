@@ -117,21 +117,11 @@ public class SdkConfigurationUtil {
   }
 
   public static void addSdk(@NotNull final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
   public static void removeSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
 
   @Nullable
@@ -176,14 +166,11 @@ public class SdkConfigurationUtil {
   }
 
   public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        if (modules.length > 0) {
-          ModuleRootModificationUtil.setSdkInherited(modules[0]);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length > 0) {
+        ModuleRootModificationUtil.setSdkInherited(modules[0]);
       }
     });
   }
@@ -284,19 +271,16 @@ public class SdkConfigurationUtil {
       consumer.consume(sdk.getHomePath());
       return;
     }
-    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> chosen) {
-        final String path = chosen.get(0).getPath();
-        if (sdkType.isValidSdkHome(path)) {
-          consumer.consume(path);
-          return;
-        }
+    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), chosen -> {
+      final String path = chosen.get(0).getPath();
+      if (sdkType.isValidSdkHome(path)) {
+        consumer.consume(path);
+        return;
+      }
 
-        final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-        if (sdkType.isValidSdkHome(adjustedPath)) {
-          consumer.consume(adjustedPath);
-        }
+      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      if (sdkType.isValidSdkHome(adjustedPath)) {
+        consumer.consume(adjustedPath);
       }
     });
   }

@@ -23,7 +23,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 @Tag("build-property")
-public final class BuildFileProperty implements JDOMExternalizable {
+public final class BuildFileProperty implements JDOMExternalizable, Cloneable {
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
   private String myPropertyName;
@@ -79,5 +79,15 @@ public final class BuildFileProperty implements JDOMExternalizable {
   public int hashCode() {
     return 31 * (myPropertyName != null ? myPropertyName.hashCode() : 0)
               + (myPropertyValue != null ? myPropertyValue.hashCode() : 0);
+  }
+
+  @Override
+  public BuildFileProperty clone() {
+    try {
+      return (BuildFileProperty)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

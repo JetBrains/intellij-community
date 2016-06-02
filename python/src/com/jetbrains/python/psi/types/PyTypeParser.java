@@ -33,6 +33,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -137,7 +138,8 @@ public class PyTypeParser {
    */
   @NotNull
   public static ParseResult parse(@Nullable final PsiElement anchor, @NotNull String type) {
-    if (anchor == null || !anchor.isValid()) {
+    PyPsiUtils.assertValid(anchor);
+    if (anchor == null) {
       return EMPTY_RESULT;
     }
 
@@ -713,7 +715,7 @@ public class PyTypeParser {
 
   private static List<Token<PyElementType>> tokenize(@NotNull String s) {
     final List<Token<PyElementType>> tokens = new ArrayList<Token<PyElementType>>();
-    final PyTypeLexer lexer = new PyTypeLexer(new StringReader(s));
+    final _PyTypeLexer lexer = new _PyTypeLexer(new StringReader(s));
     lexer.reset(s, 0, s.length(), lexer.yystate());
     try {
       PyElementType type;

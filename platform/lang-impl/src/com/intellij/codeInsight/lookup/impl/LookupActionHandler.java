@@ -194,12 +194,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      if (!lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          lookup.getEditor().getSelectionModel().removeSelection();
-        }
-      })) {
+      if (!lookup.performGuardedChange(() -> lookup.getEditor().getSelectionModel().removeSelection())) {
         return;
       }
 
@@ -229,25 +224,22 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      if (!lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          CaretAction action = new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              caret.removeSelection();
-              int caretOffset = caret.getOffset();
-              if (caretOffset < seq.length()) {
-                caret.moveToOffset(caretOffset + 1);
-              }
+      if (!lookup.performGuardedChange(() -> {
+        CaretAction action = new CaretAction() {
+          @Override
+          public void perform(Caret caret1) {
+            caret1.removeSelection();
+            int caretOffset = caret1.getOffset();
+            if (caretOffset < seq.length()) {
+              caret1.moveToOffset(caretOffset + 1);
             }
-          };
-          if (caret == null) {
-            editor.getCaretModel().runForEachCaret(action);
           }
-          else {
-            action.perform(caret);
-          }
+        };
+        if (caret == null) {
+          editor.getCaretModel().runForEachCaret(action);
+        }
+        else {
+          action.perform(caret);
         }
       })) {
         return;

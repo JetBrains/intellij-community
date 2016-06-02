@@ -49,17 +49,11 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
+public class IdeNotificationArea extends JLabel implements UISettingsListener, CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
   private StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings source) {
-        updateStatus();
-      }
-    }, this);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -68,17 +62,13 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       }
     }.installOn(this);
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateStatus();
-          }
-        });
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
+                                                                                () -> ApplicationManager.getApplication().invokeLater(() -> updateStatus()));
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    updateStatus();
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {

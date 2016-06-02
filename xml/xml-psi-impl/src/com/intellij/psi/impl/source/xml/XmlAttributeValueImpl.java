@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       final String quoteChar = getTextLength() > 0 ? getText().substring(0, 1) : "";
       String contents = StringUtil.containsAnyChar(quoteChar, "'\"") ?
               StringUtil.trimEnd(StringUtil.trimStart(text, quoteChar), quoteChar) : text;
-      XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("q", contents);
+      XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createAttribute("q", contents, this);
       XmlAttributeValue newValue = newAttribute.getValueElement();
 
       CheckUtil.checkWritable(this);
@@ -245,11 +245,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       try {
         return Character.UnicodeBlock.forName(category.substring(2)) != null;
       }
-      catch (IllegalArgumentException e) {
-        return false;
-      }
+      catch (IllegalArgumentException ignore) {}
     }
-    category = StringUtil.trimStart(category, "Is");
     for (String[] name : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
       if (name[0].equals(category)) {
         return true;

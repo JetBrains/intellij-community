@@ -233,30 +233,17 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
             CopyHandler.updateSelectionInActiveProjectView(firstFile, getProject(), doClone);
             if (!(firstFile instanceof PsiBinaryFile)) {
               EditorHelper.openInEditor(firstFile);
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  ToolWindowManager.getInstance(getProject()).activateEditorComponent();
-                }
-              });
+              ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(getProject()).activateEditorComponent());
             }
           }
         }
         catch (final IncorrectOperationException ex) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
         }
         catch (final IOException ex) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
         }
       }
     }.execute();
@@ -299,12 +286,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       if (newName == null) newName = directory.getName();
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
       final PsiDirectory subdirectory = existing == null ? targetDirectory.createSubdirectory(newName) : existing;
-      EncodingRegistry.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
-        @Override
-        public VirtualFile compute() {
-          return subdirectory.getVirtualFile();
-        }
-      });
+      EncodingRegistry.doActionAndRestoreEncoding(directory.getVirtualFile(),
+                                                  (ThrowableComputable<VirtualFile, IOException>)() -> subdirectory.getVirtualFile());
 
       PsiFile firstFile = null;
       PsiElement[] children = directory.getChildren();

@@ -72,28 +72,25 @@ public class ScopeViewPane extends AbstractProjectViewPane {
       public void scopesChanged() {
         // amortize batch scope changes
         refreshProjectViewAlarm.cancelAllRequests();
-        refreshProjectViewAlarm.addRequest(new Runnable(){
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) {
-              return;
-            }
+        refreshProjectViewAlarm.addRequest(() -> {
+          if (myProject.isDisposed()) {
+            return;
+          }
 
-            final String subId = getSubId();
-            ProjectView projectView = ProjectView.getInstance(myProject);
-            final String id = projectView.getCurrentViewId();
-            projectView.removeProjectPane(ScopeViewPane.this);
-            projectView.addProjectPane(ScopeViewPane.this);
-            if (id != null) {
-              if (Comparing.strEqual(id, getId())) {
-                projectView.changeView(id, subId);
-              }
-              else {
-                projectView.changeView(id);
-              }
+          final String subId = getSubId();
+          ProjectView projectView = ProjectView.getInstance(myProject);
+          final String id = projectView.getCurrentViewId();
+          projectView.removeProjectPane(ScopeViewPane.this);
+          projectView.addProjectPane(ScopeViewPane.this);
+          if (id != null) {
+            if (Comparing.strEqual(id, getId())) {
+              projectView.changeView(id, subId);
+            }
+            else {
+              projectView.changeView(id);
             }
           }
-        },10);
+        }, 10);
       }
     };
     myDependencyValidationManager.addScopeListener(myScopeListener);
@@ -142,12 +139,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   @NotNull
   public String[] getSubIds() {
-    return ContainerUtil.map2Array(getShownScopes(), String.class, new Function<NamedScope, String>() {
-      @Override
-      public String fun(NamedScope scope) {
-        return scope.getName();
-      }
-    });
+    return ContainerUtil.map2Array(getShownScopes(), String.class, scope -> scope.getName());
   }
 
   @NotNull

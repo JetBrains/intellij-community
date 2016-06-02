@@ -6,6 +6,8 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -14,27 +16,27 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
-  public static final String TESTS = "coursecreatortests";
-  public static final String RESOURCES = "coursecreatorresources";
+  public static final String COURSE_MODE = "Course Creator";
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
@@ -68,14 +70,11 @@ public class CCUtils {
           return index > threshold;
         }
       }));
-    Collections.sort(dirsToRename, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        StudyItem item1 = getStudyItem.fun(o1);
-        StudyItem item2 = getStudyItem.fun(o2);
-        //if we delete some dir we should start increasing numbers in dir names from the end
-        return (-delta) * EduUtils.INDEX_COMPARATOR.compare(item1, item2);
-      }
+    Collections.sort(dirsToRename, (o1, o2) -> {
+      StudyItem item1 = getStudyItem.fun(o1);
+      StudyItem item2 = getStudyItem.fun(o2);
+      //if we delete some dir we should start increasing numbers in dir names from the end
+      return (-delta) * EduUtils.INDEX_COMPARATOR.compare(item1, item2);
     });
 
     for (final VirtualFile dir : dirsToRename) {
@@ -100,9 +99,9 @@ public class CCUtils {
     if (sourceDirectory == null) {
       return false;
     }
-    CCProjectService service = CCProjectService.getInstance(sourceDirectory.getProject());
-    Course course = service.getCourse();
-    if (course != null && course.getLesson(sourceDirectory.getName()) != null) {
+    Project project = sourceDirectory.getProject();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course != null && isCourseCreator(project) && course.getLesson(sourceDirectory.getName()) != null) {
       return true;
     }
     return false;
@@ -168,5 +167,75 @@ public class CCUtils {
       }
     });
     return folder.get();
+  }
+
+  public static boolean isCourseCreator(@NotNull Project project) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+
+    return COURSE_MODE.equals(course.getCourseMode());
+  }
+
+  public static boolean isTestsFile(@NotNull Project project, @NotNull VirtualFile file) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    CCLanguageManager manager = getStudyLanguageManager(course);
+    if (manager == null) {
+      return false;
+    }
+    return manager.isTestFile(file);
+  }
+
+  public static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {
+    VirtualFile lessonVF = taskVF.getParent();
+    if (lessonVF == null) {
+      return;
+    }
+
+    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskVF.getName());
+    File taskResourceFile = new File(taskResourcesPath);
+    if (!taskResourceFile.exists()) {
+      if (!taskResourceFile.mkdirs()) {
+        LOG.info("Failed to create resources for task " + taskResourcesPath);
+      }
+    }
+    try {
+      File toFile = new File(taskResourceFile, createdFile.getName());
+      FileUtil.copy(new File(createdFile.getPath()), toFile);
+    }
+    catch (IOException e) {
+      LOG.info("Failed to copy created task file to resources " + createdFile.getPath());
+    }
+  }
+
+
+  public static void createResources(Project project, Task task, VirtualFile taskDir) {
+    Map<String, TaskFile> files = task.getTaskFiles();
+    for (Map.Entry<String, TaskFile> entry : files.entrySet()) {
+      String name = entry.getKey();
+      VirtualFile child = taskDir.findChild(name);
+      if (child == null) {
+        continue;
+      }
+      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
+      Document document = FileDocumentManager.getInstance().getDocument(child);
+      if (document == null || patternDocument == null) {
+        return;
+      }
+      DocumentUtil.writeInRunUndoTransparentAction(() -> {
+        patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
+        FileDocumentManager.getInstance().saveDocument(patternDocument);
+      });
+      TaskFile target = new TaskFile();
+      TaskFile.copy(entry.getValue(), target);
+      for (AnswerPlaceholder placeholder : target.getAnswerPlaceholders()) {
+        placeholder.setUseLength(false);
+      }
+      EduUtils.createStudentDocument(project, target, child, patternDocument);
+    }
   }
 }

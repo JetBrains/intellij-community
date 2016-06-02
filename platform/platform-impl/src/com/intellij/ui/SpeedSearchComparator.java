@@ -69,7 +69,7 @@ public class SpeedSearchComparator {
 
   @NotNull
   protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-    return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(pattern).build();
   }
 
   public String getRecentSearchText() {

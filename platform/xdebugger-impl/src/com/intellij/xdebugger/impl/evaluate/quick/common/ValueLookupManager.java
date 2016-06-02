@@ -110,12 +110,9 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     myAlarm.cancelAllRequests();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (area.equals(editor.getScrollingModel().getVisibleArea())) {
-              showHint(handler, editor, point, type);
-            }
+        myAlarm.addRequest(() -> {
+          if (area.equals(editor.getScrollingModel().getVisibleArea())) {
+            showHint(handler, editor, point, type);
           }
         }, getDelay(handler));
       }
@@ -162,12 +159,9 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
       hideHint();
 
       myRequest = request;
-      myRequest.invokeHint(new Runnable() {
-        @Override
-        public void run() {
-          if (myRequest != null && myRequest == request) {
-            myRequest = null;
-          }
+      myRequest.invokeHint(() -> {
+        if (myRequest != null && myRequest == request) {
+          myRequest = null;
         }
       });
     }

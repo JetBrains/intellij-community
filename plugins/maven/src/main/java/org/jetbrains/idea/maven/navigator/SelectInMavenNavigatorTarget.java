@@ -30,11 +30,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
   }
 
   public void selectIn(final SelectInContext context, boolean requestFocus) {
-    Runnable r = new Runnable() {
-      public void run() {
-        MavenProjectsNavigator.getInstance(context.getProject()).selectInTree(getMavenProject(context));
-      }
-    };
+    Runnable r = () -> MavenProjectsNavigator.getInstance(context.getProject()).selectInTree(getMavenProject(context));
     if (requestFocus) {
       ToolWindowManager.getInstance(context.getProject()).getToolWindow(getToolWindowId()).activate(r);
     }

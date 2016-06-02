@@ -48,6 +48,11 @@ public class DanglingJavadocInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("dangling.javadoc.problem.descriptor");
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {

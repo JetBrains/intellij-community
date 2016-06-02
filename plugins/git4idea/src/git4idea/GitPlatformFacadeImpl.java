@@ -15,32 +15,22 @@
  */
 package git4idea;
 
-import com.intellij.dvcs.DvcsPlatformFacadeImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepositoryManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-class GitPlatformFacadeImpl extends DvcsPlatformFacadeImpl implements GitPlatformFacade {
+public class GitPlatformFacadeImpl implements GitPlatformFacade {
 
-  @NotNull
   @Override
-  public AbstractVcs getVcs(@NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
+  public ChangeListManagerEx getChangeListManager(@NotNull Project project) {
+    return (ChangeListManagerEx)ChangeListManager.getInstance(project);
   }
 
-  @NotNull
   @Override
-  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
-  }
-
-  @NotNull
-  @Override
-  public GitVcsSettings getSettings(@NotNull Project project) {
-    return GitVcsSettings.getInstance(project);
+  public void hardRefresh(@NotNull VirtualFile root) {
+    VfsUtil.markDirtyAndRefresh(false, true, false, root);
   }
 }

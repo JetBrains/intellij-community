@@ -14,12 +14,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.ui.CCCreateStudyItemDialog;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.ui.CCCreateStudyItemDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +34,16 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     super(text, description, icon);
   }
 
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = e.getProject();
     if (view == null || project == null) {
       return;
     }
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     if (directory == null) return;
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
     }
@@ -54,47 +53,45 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    if (!CCProjectService.setCCActionAvailable(event)) {
-      return;
-    }
     final Presentation presentation = event.getPresentation();
+    presentation.setEnabledAndVisible(false);
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (project == null || view == null) {
       presentation.setEnabledAndVisible(false);
       return;
     }
+    if (!StudyUtils.isStudyProject(project)) {
+      return;
+    }
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
-      presentation.setEnabledAndVisible(false);
       return;
     }
     final PsiDirectory sourceDirectory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null || sourceDirectory == null) {
-      presentation.setEnabledAndVisible(false);
       return;
     }
-    if (!isAddedAsLast(sourceDirectory, project, course) &&
-        getThresholdItem(course, sourceDirectory) == null) {
-      presentation.setEnabledAndVisible(false);
+    if (!isAddedAsLast(sourceDirectory, project, course) && getThresholdItem(course, sourceDirectory) == null) {
+      return;
     }
     if (CommonDataKeys.PSI_FILE.getData(event.getDataContext()) != null) {
-      presentation.setEnabledAndVisible(false);
+      return;
     }
+    presentation.setEnabledAndVisible(true);
   }
 
 
   @Nullable
   protected abstract PsiDirectory getParentDir(@NotNull final Project project,
-                                          @NotNull final Course course,
-                                          @NotNull final PsiDirectory directory);
+                                               @NotNull final Course course,
+                                               @NotNull final PsiDirectory directory);
 
 
   @Nullable
   public PsiDirectory createItem(@Nullable final IdeView view, @NotNull final Project project,
-                                             @NotNull final PsiDirectory sourceDirectory, @NotNull final Course course) {
+                                 @NotNull final PsiDirectory sourceDirectory, @NotNull final Course course) {
     StudyItem parentItem = getParentItem(course, sourceDirectory);
     final StudyItem item = getItem(sourceDirectory, project, course, view, parentItem);
     if (item == null) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,8 +34,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -71,13 +71,8 @@ public class ScratchFileActions {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
       final String text = StringUtil.notNullize(getSelectionText(editor));
-      Language language = text.isEmpty() ? null : getLanguageFromCaret(project, editor, file);
-      Consumer<Language> consumer = new Consumer<Language>() {
-        @Override
-        public void consume(Language language) {
-          doCreateNewScratch(project, false, language, text);
-        }
-      };
+      Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
+      Consumer<Language> consumer = language1 -> doCreateNewScratch(project, false, language1, text);
       if (language != null) {
         consumer.consume(language);
       }
@@ -85,6 +80,20 @@ public class ScratchFileActions {
         LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
       }
     }
+  }
+
+  @Nullable
+  private static Language detectLanguageFromSelection(Project project, Editor editor, PsiFile file, String text) {
+    Language language = getLanguageFromCaret(project, editor, file);
+    FileType fileType = LanguageUtil.getLanguageFileType(language);
+    if (fileType == null) return null;
+
+    CharSequence fileSnippet = text.subSequence(0, Math.min(text.length(), 10 * 1024));
+    PsiFileFactory fileFactory = PsiFileFactory.getInstance(file.getProject());
+    PsiFile psiFile = fileFactory.createFileFromText("a." + fileType.getDefaultExtension(), language, fileSnippet);
+    PsiErrorElement firstError = SyntaxTraverser.psiTraverser(psiFile).traverse().filter(PsiErrorElement.class).first();
+    // heuristics: first error must not be right under the file PSI
+    return firstError == null || firstError.getParent() != psiFile ? language : null;
   }
 
   public static class NewBufferAction extends DumbAwareAction {
@@ -104,7 +113,7 @@ public class ScratchFileActions {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
       String text = StringUtil.notNullize(getSelectionText(editor));
-      Language language = text.isEmpty() ? null : getLanguageFromCaret(project, editor, file);
+      Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
 
       doCreateNewScratch(project, true, ObjectUtils.notNull(language, StdLanguages.TEXT), text);
     }
@@ -185,12 +194,7 @@ public class ScratchFileActions {
 
     @NotNull
     protected Condition<VirtualFile> fileFilter(Project project) {
-      return new Condition<VirtualFile>() {
-        @Override
-        public boolean value(@NotNull VirtualFile file) {
-          return ScratchRootType.getInstance().containsFile(file);
-        }
-      };
+      return file -> ScratchRootType.getInstance().containsFile(file);
     }
 
     @NotNull

@@ -174,12 +174,7 @@ public class ExtractLightMethodObjectHandler {
     });
 
 
-    final String outputVariables = StringUtil.join(variables, new Function<PsiVariable, String>() {
-                                          @Override
-                                          public String fun(PsiVariable variable) {
-                                            return "\"variable: \" + " + variable.getName();
-                                          }
-                                        }, " +");
+    final String outputVariables = StringUtil.join(variables, variable -> "\"variable: \" + " + variable.getName(), " +");
     PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 

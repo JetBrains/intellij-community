@@ -317,13 +317,10 @@ public class EduStepicConnector {
 
   public static boolean showLoginDialog() {
     final boolean[] logged = {false};
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        final LoginDialog dialog = new LoginDialog();
-        dialog.show();
-        logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final LoginDialog dialog = new LoginDialog();
+      dialog.show();
+      logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
     }, ModalityState.defaultModalityState());
     return logged[0];
   }
@@ -435,12 +432,7 @@ public class EduStepicConnector {
         postUnit(lessonId, position, sectionId);
         position += 1;
       }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          postAdditionalFiles(project, postedCourse.id, indicator);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(project, postedCourse.id, indicator));
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -633,21 +625,18 @@ public class EduStepicConnector {
   public static void deleteTask(@NotNull final Integer task) {
     final HttpDelete request = new HttpDelete(stepicApiUrl + "step-sources/" + task);
     setHeaders(request, "application/json");
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final CloseableHttpResponse response = ourClient.execute(request);
-          final StatusLine line = response.getStatusLine();
-          if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            final HttpEntity responseEntity = response.getEntity();
-            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-            LOG.error("Failed to delete task " + responseString);
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        final CloseableHttpResponse response = ourClient.execute(request);
+        final StatusLine line = response.getStatusLine();
+        if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+          final HttpEntity responseEntity = response.getEntity();
+          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          LOG.error("Failed to delete task " + responseString);
         }
-        catch (IOException e) {
-          LOG.error(e.getMessage());
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e.getMessage());
       }
     });
   }
@@ -656,24 +645,21 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(stepicApiUrl + "step-sources");
     setHeaders(request, "application/json");
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final String requestBody = gson.toJson(new StepSourceWrapper(project, task, lessonId));
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String requestBody = gson.toJson(new StepSourceWrapper(project, task, lessonId));
+      request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try {
-          final CloseableHttpResponse response = ourClient.execute(request);
-          final StatusLine line = response.getStatusLine();
-          if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-            final HttpEntity responseEntity = response.getEntity();
-            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-            LOG.error("Failed to push " + responseString);
-          }
+      try {
+        final CloseableHttpResponse response = ourClient.execute(request);
+        final StatusLine line = response.getStatusLine();
+        if (line.getStatusCode() != HttpStatus.SC_CREATED) {
+          final HttpEntity responseEntity = response.getEntity();
+          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          LOG.error("Failed to push " + responseString);
         }
-        catch (IOException e) {
-          LOG.error(e.getMessage());
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e.getMessage());
       }
     });
   }
@@ -716,15 +702,12 @@ public class EduStepicConnector {
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         final TaskFile taskFile = new TaskFile();
         TaskFile.copy(entry.getValue(), taskFile);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile taskDir = task.getTaskDir(project);
-            assert taskDir != null;
-            VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
-            assert ideaDir != null;
-            EduUtils.createStudentFileFromAnswer(project, ideaDir, taskDir, entry.getKey(), taskFile);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          final VirtualFile taskDir = task.getTaskDir(project);
+          assert taskDir != null;
+          VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+          assert ideaDir != null;
+          EduUtils.createStudentFileFromAnswer(project, ideaDir, taskDir, entry.getKey(), taskFile);
         });
         taskFile.name = entry.getKey();
 
@@ -753,11 +736,8 @@ public class EduStepicConnector {
     private static void setTests(@NotNull final Task task, @NotNull final StepOptions source, @NotNull final Project project) {
       final Map<String, String> testsText = task.getTestsText();
       if (testsText.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
         });
       }
       else {

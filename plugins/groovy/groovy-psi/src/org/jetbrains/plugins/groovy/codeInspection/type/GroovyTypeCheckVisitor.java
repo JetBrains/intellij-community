@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,7 +379,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         });
       }
       final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-      final PsiType qualifierType = info.getQualifierInstanceType();
+      PsiType qualifierType = info.getQualifierInstanceType();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        qualifierType = ResolveUtil.unwrapClassType(qualifierType);
+      }
 
       //check methods processed by @Category(ClassWhichProcessMethod) annotation
       if (qualifierType != null &&
@@ -919,24 +921,16 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrParameter[] parameters = parameterList.getParameters();
     if (parameters.length > 0) {
       List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent);
-      final List<PsiType> paramTypes = ContainerUtil.map(parameters, new Function<GrParameter, PsiType>() {
-        @Override
-        public PsiType fun(GrParameter parameter) {
-          return parameter.getType();
-        }
-      });
+      final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> parameter.getType());
 
       if (signatures.size() > 1) {
-        final PsiType[] fittingSignature = ContainerUtil.find(signatures, new Condition<PsiType[]>() {
-          @Override
-          public boolean value(PsiType[] types) {
-            for (int i = 0; i < types.length; i++) {
-              if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
-                return false;
-              }
+        final PsiType[] fittingSignature = ContainerUtil.find(signatures, types -> {
+          for (int i = 0; i < types.length; i++) {
+            if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
+              return false;
             }
-            return true;
           }
+          return true;
         });
         if (fittingSignature == null) {
           registerError(

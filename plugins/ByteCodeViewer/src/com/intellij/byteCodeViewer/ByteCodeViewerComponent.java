@@ -108,16 +108,13 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   }
 
   public void setText(final String bytecode, final int offset) {
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        Document fragmentDoc = myEditor.getDocument();
-        fragmentDoc.setReadOnly(false);
-        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
-        fragmentDoc.setReadOnly(true);
-        myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      }
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      Document fragmentDoc = myEditor.getDocument();
+      fragmentDoc.setReadOnly(false);
+      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
+      fragmentDoc.setReadOnly(true);
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });
   }
 

@@ -216,16 +216,13 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       unlinkModuleFromExternalSystem(module);
     }
 
-    ruleOrphanModules(modules, project, projectData.getOwner(), new Consumer<List<Module>>() {
-      @Override
-      public void consume(final List<Module> modules) {
-        for (Module module : modules) {
-          if (module.isDisposed()) continue;
-          String path = module.getModuleFilePath();
-          final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
-          moduleModel.disposeModule(module);
-          ModuleBuilder.deleteModuleFile(path);
-        }
+    ruleOrphanModules(modules, project, projectData.getOwner(), modules1 -> {
+      for (Module module : modules1) {
+        if (module.isDisposed()) continue;
+        String path = module.getModuleFilePath();
+        final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
+        moduleModel.disposeModule(module);
+        ModuleBuilder.deleteModuleFile(path);
       }
     });
   }
@@ -249,62 +246,54 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
                                         @NotNull final Project project,
                                         @NotNull final ProjectSystemId externalSystemId,
                                         @NotNull final Consumer<List<Module>> result) {
-    ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
-      @Override
-      public void run() {
-        List<Module> toRemove = ContainerUtil.newSmartList();
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          toRemove.addAll(orphanModules);
-        }
-        else {
-          final JPanel content = new JPanel(new GridBagLayout());
-          content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
-                      ExternalSystemUiUtil.getFillLineConstraints(0));
-
-          final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
-          orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-          orphanModulesList.setItems(orphanModules, new Function<Module, String>() {
-            @Override
-            public String fun(Module module) {
-              return module.getName();
-            }
-          });
-          for (Module module : orphanModules) {
-            orphanModulesList.setItemSelected(module, true);
-          }
-          orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
-          content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-          content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
-
-          DialogWrapper dialog = new DialogWrapper(project) {
-            {
-              setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
-              init();
-            }
-
-            @Nullable
-            @Override
-            protected JComponent createCenterPanel() {
-              return new JBScrollPane(content);
-            }
-
-            @NotNull
-            protected Action[] createActions() {
-              return new Action[]{getOKAction()};
-            }
-          };
-
-          dialog.showAndGet();
-
-          for (int i = 0; i < orphanModules.size(); i++) {
-            Module module = orphanModules.get(i);
-            if (orphanModulesList.isItemSelected(i)) {
-              toRemove.add(module);
-            }
-          }
-        }
-        result.consume(toRemove);
+    ExternalSystemApiUtil.executeOnEdt(true, () -> {
+      List<Module> toRemove = ContainerUtil.newSmartList();
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        toRemove.addAll(orphanModules);
       }
+      else {
+        final JPanel content = new JPanel(new GridBagLayout());
+        content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
+                    ExternalSystemUiUtil.getFillLineConstraints(0));
+
+        final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
+        orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        orphanModulesList.setItems(orphanModules, module -> module.getName());
+        for (Module module : orphanModules) {
+          orphanModulesList.setItemSelected(module, true);
+        }
+        orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
+        content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        DialogWrapper dialog = new DialogWrapper(project) {
+          {
+            setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
+            init();
+          }
+
+          @Nullable
+          @Override
+          protected JComponent createCenterPanel() {
+            return new JBScrollPane(content);
+          }
+
+          @NotNull
+          protected Action[] createActions() {
+            return new Action[]{getOKAction()};
+          }
+        };
+
+        dialog.showAndGet();
+
+        for (int i = 0; i < orphanModules.size(); i++) {
+          Module module = orphanModules.get(i);
+          if (orphanModulesList.isItemSelected(i)) {
+            toRemove.add(module);
+          }
+        }
+      }
+      result.consume(toRemove);
     });
   }
 
@@ -362,12 +351,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   public void onSuccessImport(@NotNull Project project) {
     final Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
     if (orphanFiles != null && !orphanFiles.isEmpty()) {
-      ExternalSystemApiUtil.executeOnEdt(false, new Runnable() {
-        @Override
-        public void run() {
-          for (String orphanFile : orphanFiles) {
-            ModuleBuilder.deleteModuleFile(orphanFile);
-          }
+      ExternalSystemApiUtil.executeOnEdt(false, () -> {
+        for (String orphanFile : orphanFiles) {
+          ModuleBuilder.deleteModuleFile(orphanFile);
         }
       });
       project.putUserData(ORPHAN_MODULE_FILES, null);
@@ -380,14 +366,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     final int length = orderEntries.length;
     final OrderEntry[] newOrder = new OrderEntry[length];
     final PriorityQueue<Pair<OrderEntry, OrderAware>> priorityQueue = new PriorityQueue<Pair<OrderEntry, OrderAware>>(
-      11, new Comparator<Pair<OrderEntry, OrderAware>>() {
-      @Override
-      public int compare(Pair<OrderEntry, OrderAware> o1, Pair<OrderEntry, OrderAware> o2) {
+      11, (o1, o2) -> {
         int order1 = o1.second.getOrder();
         int order2 = o2.second.getOrder();
         return order1 != order2 ? order1 < order2 ? -1 : 1 : 0;
-      }
-    });
+      });
 
     int shift = 0;
     for (int i = 0; i < length; i++) {

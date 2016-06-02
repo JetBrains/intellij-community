@@ -15,11 +15,6 @@
  */
 package com.intellij.util.ui.accessibility;
 
-import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.NotNull;
-
-import javax.accessibility.AccessibleContext;
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -28,35 +23,26 @@ import java.util.Properties;
  * Expose system-wide screen reader status for accessibility features.
  */
 public class ScreenReader {
-  public static final String SYSTEM_PROPERTY_KEY = "screenreader";
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
 
+  private static boolean myActive = false;
+
   /**
-   * Components that need to customize their behavior in the presence of a external screen reader
-   * application should call this method  to determine the presence of such screen reader.
-   *
-   * For example, this can be used to determine if components should to be focusable via keyboard
-   * as opposed to accessible only via the mouse pointer.
-   *
-   * @return <code>true</code> if a screen reader is currently active, or has been active
-   * since the start of the application.
+   * Components that need to customize their behavior in the presence of an external screen reader
+   * application should call this method. For example, this can be used to determine if components
+   * should to be focusable via keyboard -- as opposed to accessible only via the mouse pointer.
    */
   public static boolean isActive() {
-    // Return system property value if it is set
-    if (SystemProperties.has(SYSTEM_PROPERTY_KEY)) {
-      return SystemProperties.is(SYSTEM_PROPERTY_KEY);
-    }
+    return myActive;
+  }
 
-    // Auto-detect if system property not set.
-    for (Frame frame: Frame.getFrames()) {
-      if (frame instanceof AccessibleContextAccessor) {
-        AccessibleContext frameContext = ((AccessibleContextAccessor)frame).getCurrentAccessibleContext();
-        if (frameContext != null)
-          return true;
-      }
-    }
-    return false;
+  /**
+   * This method should be called by a central configuration mechanism to enable screen reader
+   * support for the application.
+   */
+  public static void setActive(boolean active) {
+    myActive = active;
   }
 
   /**

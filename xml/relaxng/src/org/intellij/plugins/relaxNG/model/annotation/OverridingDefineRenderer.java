@@ -83,12 +83,7 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
       OpenSourceUtil.navigate(true, n);
     } else {
       final Define[] array = set.toArray(new Define[set.size()]);
-      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, new Function<Define, PsiElement>() {
-        @Override
-        public PsiElement fun(Define define) {
-          return define.getPsiElement();
-        }
-      }, PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, define -> define.getPsiElement(), PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
     }
   }
 

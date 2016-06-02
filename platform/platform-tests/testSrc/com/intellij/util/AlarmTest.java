@@ -54,13 +54,13 @@ public class AlarmTest extends PlatformTestCase {
   }
 
   private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
-    int N = 100000;
+    int N = 10000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
 
     for (int i = 0; i < N; i++) {
       final int finalI = i;
-      alarm.addRequest(() -> log.append(finalI+" "), 0);
+      alarm.addRequest(() -> log.append(finalI).append(" "), 0);
     }
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
@@ -87,14 +87,13 @@ public class AlarmTest extends PlatformTestCase {
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
     for (int i = 0; i < N; i++) {
-      alarm.addRequest(executed::incrementAndGet, 100);
+      alarm.addRequest(executed::incrementAndGet, 10);
     }
     while (executed.get() != N) {
       UIUtil.dispatchAllInvocationEvents();
     }
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    System.out.println("before: "+before.size()+"; after: "+after.size());
-    assertTrue(after.size() - before.size() < 10);
+    assertTrue("before: "+before.size()+"; after: "+after.size(), after.size() - before.size() < 10);
   }
 
   public void testManyAlarmsDoNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
@@ -102,7 +101,7 @@ public class AlarmTest extends PlatformTestCase {
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
     List<Alarm> alarms = Collections.nCopies(N, "").stream().map(__ -> new Alarm(getTestRootDisposable())).collect(Collectors.toList());
-    alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 100));
+    alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
 
     while (executed.get() != N) {
       UIUtil.dispatchAllInvocationEvents();

@@ -22,13 +22,20 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class InspectionGroupNode extends InspectionTreeNode {
+  @NotNull private final String[] myGroupPath;
 
-  InspectionGroupNode(@NotNull String groupTitle) {
+  InspectionGroupNode(@NotNull String groupTitle, @NotNull String[] groupPath) {
     super(groupTitle);
+    myGroupPath = groupPath;
   }
 
   String getGroupTitle() {
     return (String) getUserObject();
+  }
+
+  @NotNull
+  public String[] getGroupPath() {
+    return myGroupPath;
   }
 
   @Override

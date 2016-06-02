@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +125,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
-        if (child != null && child.isOpaque()) {
+        if (child != null) {
           try {
             myBackgroundRequested = true;
             return child.getBackground();
@@ -153,6 +154,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     else {
       super.setViewSize(newSize);
     }
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override
@@ -384,7 +390,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
     }
 
-    private boolean isAlignmentNeeded(JComponent view) {
+    private static boolean isAlignmentNeeded(JComponent view) {
       return !SystemInfo.isMac && (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
     }
   }

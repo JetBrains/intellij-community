@@ -17,12 +17,12 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogHighlighterFactory {
   @NotNull
-  VcsLogHighlighter createHighlighter(@NotNull VcsLogDataManager logDataHolder, @NotNull VcsLogUi logUi);
+  VcsLogHighlighter createHighlighter(@NotNull VcsLogData logDataHolder, @NotNull VcsLogUi logUi);
 
   @NotNull
   String getId();

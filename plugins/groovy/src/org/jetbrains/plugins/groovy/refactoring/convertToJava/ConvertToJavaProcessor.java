@@ -102,12 +102,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
         newFile = file.setName(fileName);
       }
       catch (final IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showMessageDialog(myProject, e.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showMessageDialog(myProject, e.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
         return;
       }
 

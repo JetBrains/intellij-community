@@ -139,12 +139,7 @@ public abstract class CommandLineState implements RunProfileState {
     @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
       myConsole.setOutputPaused(flag);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          update(event);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> update(event));
     }
 
     @Override
@@ -165,12 +160,7 @@ public abstract class CommandLineState implements RunProfileState {
         }
         else {
           presentation.setEnabled(true);
-          myConsole.performWhenNoDeferredOutput(new Runnable() {
-            @Override
-            public void run() {
-              update(event);
-            }
-          });
+          myConsole.performWhenNoDeferredOutput(() -> update(event));
         }
       }
     }

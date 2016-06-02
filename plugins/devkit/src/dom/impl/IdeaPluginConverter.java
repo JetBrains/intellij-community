@@ -49,12 +49,7 @@ import java.util.Set;
  */
 public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
-  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = new Condition<IdeaPlugin>() {
-    @Override
-    public boolean value(IdeaPlugin plugin) {
-      return !"com.intellij".equals(plugin.getPluginId());
-    }
-  };
+  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !"com.intellij".equals(plugin.getPluginId());
 
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
@@ -101,25 +96,16 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     if (self == null) return Collections.emptyList();
 
     final Collection<IdeaPlugin> plugins = getAllPlugins(context.getProject());
-    return ContainerUtil.filter(plugins, new Condition<IdeaPlugin>() {
-      @Override
-      public boolean value(IdeaPlugin plugin) {
-        return !Comparing.strEqual(self.getPluginId(), plugin.getPluginId());
-      }
-    });
+    return ContainerUtil.filter(plugins, plugin -> !Comparing.strEqual(self.getPluginId(), plugin.getPluginId()));
   }
 
   public static Collection<IdeaPlugin> getAllPlugins(final Project project) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
     
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Collection<IdeaPlugin>>() {
-      @Nullable
-      @Override
-      public Result<Collection<IdeaPlugin>> compute() {
-        GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
-          union(ProjectScope.getLibrariesScope(project));
-        return Result.create(getPlugins(project, scope), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
+        union(ProjectScope.getLibrariesScope(project));
+      return CachedValueProvider.Result.create(getPlugins(project, scope), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     });
   }
 
@@ -128,10 +114,6 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-    return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
-      public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
-        return ideaPluginDomFileElement.getRootElement();
-      }
-    });
+    return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 }

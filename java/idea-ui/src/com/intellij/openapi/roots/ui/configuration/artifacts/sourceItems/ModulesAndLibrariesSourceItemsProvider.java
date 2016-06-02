@@ -125,15 +125,12 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   private static List<? extends Library> getNotAddedLibraries(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
                                                              List<Library> librariesList) {
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
-      @Override
-      public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
-        final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
-        if (root != null) {
-          roots.add(root);
-        }
-        return true;
+    ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, fileCopyPackagingElement -> {
+      final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
+      if (root != null) {
+        roots.add(root);
       }
+      return true;
     }, context, true);
     final List<Library> result = new ArrayList<Library>();
     for (Library library : librariesList) {

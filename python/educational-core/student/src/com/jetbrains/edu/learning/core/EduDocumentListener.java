@@ -18,28 +18,18 @@ import java.util.List;
 public class EduDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private final boolean myTrackLength;
-  private final boolean usePossibleAnswerLength;
   private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholderWrapper>();
 
 
   public EduDocumentListener(TaskFile taskFile) {
     myTaskFile = taskFile;
     myTrackLength = true;
-    usePossibleAnswerLength = false;
   }
 
   public EduDocumentListener(TaskFile taskFile, boolean trackLength) {
     myTaskFile = taskFile;
     myTrackLength = trackLength;
-    usePossibleAnswerLength = false;
   }
-
-  public EduDocumentListener(TaskFile taskFile, boolean trackLength, boolean usePossibleAnswerLength) {
-    myTaskFile = taskFile;
-    myTrackLength = trackLength;
-    this.usePossibleAnswerLength = usePossibleAnswerLength;
-  }
-
 
   //remembering old end before document change because of problems
   // with fragments containing "\n"
@@ -53,7 +43,7 @@ public class EduDocumentListener extends DocumentAdapter {
     myAnswerPlaceholders.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getRealStartOffset(document);
-      int length = usePossibleAnswerLength ? answerPlaceholder.getPossibleAnswerLength() : answerPlaceholder.getLength();
+      int length = answerPlaceholder.getRealLength();
       int twEnd = twStart + length;
       myAnswerPlaceholders.add(new AnswerPlaceholderWrapper(answerPlaceholder, twStart, twEnd));
     }
@@ -85,7 +75,7 @@ public class EduDocumentListener extends DocumentAdapter {
         int length = twEnd - twStart;
         answerPlaceholder.setLine(line);
         answerPlaceholder.setStart(start);
-        if (usePossibleAnswerLength) {
+        if (!answerPlaceholder.getUseLength()) {
           answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
         }
         else if (myTrackLength) {

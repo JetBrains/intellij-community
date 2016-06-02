@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
@@ -53,22 +54,25 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
       return;
     }
     JTree tree = (JTree) component;
-    final TreePath[] selection = tree.getSelectionPaths();
-    if (selection == null) {
+    final TreePath[] selection = TreeUtil.selectMaximals(tree.getSelectionPaths());
+    if (selection.length == 0) {
       presentation.setEnabledAndVisible(false);
       return;
     }
-    boolean isEnabled = false;
+    final boolean[] isEnabled = {false};
     for (TreePath path : selection) {
       final T node = (T)path.getLastPathComponent();
-      final Boolean isNodeExcluded = exclusionProcessor.isNodeExcluded(node);
-      if (myIsExclude != isNodeExcluded) {
-        isEnabled = true;
-        break;
-      }
+      TreeUtil.traverse(node, n -> {
+        final Boolean isNodeExcluded = exclusionProcessor.isNodeExcluded((T)n);
+        if (myIsExclude != isNodeExcluded) {
+          isEnabled[0] = true;
+          return false;
+        }
+        return true;
+      });
     }
-    presentation.setEnabledAndVisible(isEnabled);
-    if (isEnabled) {
+    presentation.setEnabledAndVisible(isEnabled[0]);
+    if (isEnabled[0]) {
       String text = getActionText();
       if (selection.length > 1) {
         text += " All";
@@ -87,13 +91,16 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
     LOG.assertTrue(exclusionProcessor != null);
     for (TreePath path : paths) {
       final T node = (T)path.getLastPathComponent();
-      if (Boolean.valueOf(myIsExclude) != exclusionProcessor.isNodeExcluded(node)) {
-        if (myIsExclude) {
-          exclusionProcessor.excludeNode(node);
-        } else {
-          exclusionProcessor.includeNode(node);
+      TreeUtil.traverse(node, n -> {
+        if (Boolean.valueOf(myIsExclude) != exclusionProcessor.isNodeExcluded((T)n)) {
+          if (myIsExclude) {
+            exclusionProcessor.excludeNode(node);
+          } else {
+            exclusionProcessor.includeNode(node);
+          }
         }
-      }
+        return true;
+      });
     }
     exclusionProcessor.onDone(myIsExclude);
   }

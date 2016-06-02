@@ -54,7 +54,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
+public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
   private final IdeFrameImpl myFrame;
@@ -86,7 +86,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
   private final ArrayList<Stripe> myStripes = new ArrayList<Stripe>();
 
-  private final MyUISettingsListenerImpl myUISettingsListener;
   private final ToolWindowManagerImpl myManager;
 
   private boolean myStripesOverlayed;
@@ -104,7 +103,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     myId2Decorator = new HashMap<String, InternalDecorator>();
     myButton2Info = new HashMap<StripeButton, WindowInfoImpl>();
     myDecorator2Info = new HashMap<InternalDecorator, WindowInfoImpl>();
-    myUISettingsListener = new MyUISettingsListenerImpl();
     myId2SplitProportion = new HashMap<String, Float>();
 
     // Splitters
@@ -197,9 +195,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
    */
   public final void addNotify() {
     super.addNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      UISettings.getInstance().addUISettingsListener(myUISettingsListener, myDisposable);
-    }
   }
 
   /**
@@ -214,6 +209,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
   public Project getProject() {
     return myFrame.getProject();
+  }
+
+  public final void uiSettingsChanged(final UISettings source) {
+    updateToolStripesVisibility();
+    updateLayout();
   }
 
   /**
@@ -447,6 +447,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
   public int getBottomHeight() {
     return myBottomStripe.isVisible() ? myBottomStripe.getHeight() : 0;
+  }
+
+  public boolean isBottomSideToolWindowsVisible() {
+    return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
   }
 
   @Nullable
@@ -782,31 +786,20 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       try {
         float newWeight;
         final ToolWindowAnchor anchor = myInfo.getAnchor();
-        final Disposable splitterDisposable = new Disposable() {
+        class MySplitter extends Splitter implements UISettingsListener {
           @Override
-          public void dispose() {
-          }
-        };
-        Disposer.register(myDisposable, splitterDisposable);
-        final Splitter splitter = new Splitter(anchor.isSplitVertically()) {
-          @Override
-          public void removeNotify() {
-            super.removeNotify();
-            Disposer.dispose(splitterDisposable);
-          }
-        };
-        if (!anchor.isHorizontal()) {
-          UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-            @Override
-            public void uiSettingsChanged(UISettings source) {
-              if (anchor == ToolWindowAnchor.LEFT) {
-                splitter.setOrientation(!source.LEFT_HORIZONTAL_SPLIT);
-              }
-              if (anchor == ToolWindowAnchor.RIGHT) {
-                splitter.setOrientation(!source.RIGHT_HORIZONTAL_SPLIT);
-              }
+          public void uiSettingsChanged(UISettings source) {
+            if (anchor == ToolWindowAnchor.LEFT) {
+              setOrientation(!source.LEFT_HORIZONTAL_SPLIT);
             }
-          }, splitterDisposable);
+            else if (anchor == ToolWindowAnchor.RIGHT) {
+              setOrientation(!source.RIGHT_HORIZONTAL_SPLIT);
+            }
+          }
+        }
+        Splitter splitter = new MySplitter();
+        splitter.setOrientation(anchor.isSplitVertically());
+        if (!anchor.isHorizontal()) {
           splitter.setAllowSwitchOrientationByMouseClick(true);
           splitter.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -1211,12 +1204,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     }
   }
 
-  private final class MyUISettingsListenerImpl implements UISettingsListener {
-    public final void uiSettingsChanged(final UISettings source) {
-      updateToolStripesVisibility();
-      updateLayout();
-    }
-  }
   private final class MyLayeredPane extends JBLayeredPane {
     /*
      * These images are used to perform animated showing and hiding of components.

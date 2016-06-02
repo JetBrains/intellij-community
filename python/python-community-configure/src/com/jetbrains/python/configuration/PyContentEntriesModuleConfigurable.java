@@ -107,12 +107,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
     final boolean editorWasModified = myEditor.isModified();
     myEditor.apply();
     if (editorWasModified) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myModifiableModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myModifiableModel.commit());
       resetEditor();
     }
   }

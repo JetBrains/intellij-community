@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,4 +46,9 @@ public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Val
   Lock getWriteLock();
   
   void dispose();
+
+  void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
+  void resetIndexedStateForFile(int fileId);
+
+  boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file);
 }

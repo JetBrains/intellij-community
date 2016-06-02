@@ -143,7 +143,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public boolean isDeprecated() {
-    return getStub().isDeprecated();
+    return getStub().isDeprecated() || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override

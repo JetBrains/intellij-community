@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType7() { doTypeParserTest("Diamond<>"); }
   public void testType8() { doTypeParserTest("A|"); }
   public void testType9() { doTypeParserTest("A|B"); }
+  public void testType10() { doTypeParserTest("Diamond<@TA>"); }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }

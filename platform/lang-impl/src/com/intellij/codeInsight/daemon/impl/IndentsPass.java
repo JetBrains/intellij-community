@@ -61,15 +61,12 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   private final EditorEx myEditor;
   private final PsiFile  myFile;
-  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      if (o1.getStartOffset() == o2.getStartOffset()) {
-        return o1.getEndOffset() - o2.getEndOffset();
-      }
-
-      return o1.getStartOffset() - o2.getStartOffset();
+  public static final Comparator<TextRange> RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.getStartOffset() == o2.getStartOffset()) {
+      return o1.getEndOffset() - o2.getEndOffset();
     }
+
+    return o1.getStartOffset() - o2.getStartOffset();
   };
 
   private static final CustomHighlighterRenderer RENDERER = new CustomHighlighterRenderer() {
@@ -278,12 +275,9 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     final int startRangeIndex = curRange;
     assert myDocument != null;
-    DocumentUtil.executeInBulk(myDocument, myRanges.size() > 10000, new Runnable() {
-      @Override
-      public void run() {
-        for (int i = startRangeIndex; i < myRanges.size(); i++) {
-          newHighlighters.add(createHighlighter(mm, myRanges.get(i)));
-        }
+    DocumentUtil.executeInBulk(myDocument, myRanges.size() > 10000, () -> {
+      for (int i = startRangeIndex; i < myRanges.size(); i++) {
+        newHighlighters.add(createHighlighter(mm, myRanges.get(i)));
       }
     });
 

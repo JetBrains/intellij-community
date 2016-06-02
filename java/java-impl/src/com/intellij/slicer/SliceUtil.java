@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -113,10 +114,10 @@ class SliceUtil {
       PsiVariable variable = (PsiVariable)expression;
       Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
       if (values == null) {
-        SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent, parentSubstitutor);
+        SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent);
         return processor.process(stopUsage);
       }
-      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(values);
+      final Set<PsiExpression> expressions = new THashSet<>(values);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
       boolean initializerReported = false;
@@ -139,7 +140,7 @@ class SliceUtil {
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-      Flow anno = isMethodFlowAnnotated(method);
+      Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;
@@ -183,19 +184,18 @@ class SliceUtil {
 
       // check for constructor put arguments
       if (expression instanceof PsiNewExpression &&
-          !processContainerPutArguments((PsiNewExpression)expression, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
+          !processContainerPutArguments((PsiNewExpression)expression, parent, parentSubstitutor, indexNesting, syntheticField, processor)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Flow isMethodFlowAnnotated(PsiMethod method) {
-    if (method == null) return null;
+  private static Flow isMethodFlowAnnotated(@NotNull PsiMethod method) {
     return AnnotationUtil.findAnnotationInHierarchy(method, Flow.class);
   }
 
-  private static Flow isParamFlowAnnotated(PsiMethod method, int paramIndex) {
+  private static Flow isParamFlowAnnotated(@NotNull PsiMethod method, int paramIndex) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length <= paramIndex) {
       if (parameters.length != 0 && parameters[parameters.length-1].isVarArgs()) {
@@ -250,7 +250,8 @@ class SliceUtil {
 
     final PsiType parentType = parentSubstitutor.substitute(methodCallExpr.getType());
     final PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
-    Collection<PsiMethod> overrides = new THashSet<PsiMethod>(OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).findAll());
+    Collection<PsiMethod> overrides =
+      new THashSet<>(OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).findAll());
     overrides.add(methodCalled);
 
     final boolean[] result = {true};
@@ -303,16 +304,14 @@ class SliceUtil {
       }
     }
     SearchScope searchScope = parent.getScope().toSearchScope();
-    return ReferencesSearch.search(field, searchScope).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(final PsiReference reference) {
-        ProgressManager.checkCanceled();
-        PsiElement element = reference.getElement();
-        if (!(element instanceof PsiReferenceExpression)) return true;
-        if (element instanceof PsiCompiledElement) {
-          element = element.getNavigationElement();
-          if (!parent.getScope().contains(element)) return true;
-        }
+    return ReferencesSearch.search(field, searchScope).forEach(reference -> {
+      ProgressManager.checkCanceled();
+      PsiElement element = reference.getElement();
+      if (element instanceof PsiCompiledElement) {
+        element = element.getNavigationElement();
+        if (!parent.getScope().contains(element)) return true;
+      }
+      if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
@@ -333,8 +332,9 @@ class SliceUtil {
           PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
           return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
         }
-        return true;
       }
+
+      return processIfInForeignLanguage(parent, parentSubstitutor, 0, "", processor, element);
     });
   }
 
@@ -348,9 +348,7 @@ class SliceUtil {
   }
 
   @NotNull
-  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element,
-                                                     @NotNull SliceUsage parent,
-                                                     @NotNull PsiSubstitutor substitutor) {
+  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     return new SliceTooComplexDFAUsage(simplify(element), parent);
   }
 
@@ -378,108 +376,123 @@ class SliceUtil {
     final int paramSeqNo = ArrayUtilRt.find(actualParameters, parameter);
     assert paramSeqNo != -1;
 
-    Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
+    Collection<PsiMethod> superMethods = new THashSet<>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
 
-    final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
+    final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
     for (final PsiMethod superMethod : superMethods) {
-      if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(final PsiReference reference) {
-          ProgressManager.checkCanceled();
-          synchronized (processed) {
-            if (!processed.add(reference)) return true;
+      if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(reference -> {
+        ProgressManager.checkCanceled();
+        synchronized (processed) {
+          if (!processed.add(reference)) return true;
+        }
+        PsiElement refElement = reference.getElement();
+        PsiExpressionList argumentList;
+        JavaResolveResult result;
+        if (refElement instanceof PsiCall) {
+          // the case of enum constant decl
+          PsiCall call = (PsiCall)refElement;
+          argumentList = call.getArgumentList();
+          result = call.resolveMethodGenerics();
+        }
+        else {
+          PsiElement element = refElement.getParent();
+          if (element instanceof PsiCompiledElement) return true;
+          if (element instanceof PsiAnonymousClass) {
+            PsiAnonymousClass anon = (PsiAnonymousClass)element;
+            argumentList = anon.getArgumentList();
+            PsiElement callExp = element.getParent();
+            if (!(callExp instanceof PsiCallExpression)) return true;
+            result = ((PsiCall)callExp).resolveMethodGenerics();
           }
-          PsiElement refElement = reference.getElement();
-          PsiExpressionList argumentList;
-          JavaResolveResult result;
-          if (refElement instanceof PsiCall) {
-            // the case of enum constant decl
-            PsiCall call = (PsiCall)refElement;
-            argumentList = call.getArgumentList();
-            result = call.resolveMethodGenerics();
-          }
-          else {
-            PsiElement element = refElement.getParent();
-            if (element instanceof PsiCompiledElement) return true;
-            if (element instanceof PsiAnonymousClass) {
-              PsiAnonymousClass anon = (PsiAnonymousClass)element;
-              argumentList = anon.getArgumentList();
-              PsiElement callExp = element.getParent();
-              if (!(callExp instanceof PsiCallExpression)) return true;
-              result = ((PsiCall)callExp).resolveMethodGenerics();
-            }
-            else {
-              if (!(element instanceof PsiCall)) return true;
+          else if (element instanceof PsiCall) {
               PsiCall call = (PsiCall)element;
               argumentList = call.getArgumentList();
               result = call.resolveMethodGenerics();
-            }
-          }
-          PsiSubstitutor substitutor = result.getSubstitutor();
-
-          PsiExpression[] expressions = argumentList.getExpressions();
-          if (paramSeqNo >= expressions.length) {
-            return true;
-          }
-          PsiElement passExpression;
-          PsiType actualExpressionType;
-          if (actualParameterType instanceof PsiEllipsisType) {
-            passExpression = argumentList;
-            actualExpressionType = expressions[paramSeqNo].getType();
           }
           else {
-            passExpression = expressions[paramSeqNo];
-            actualExpressionType = ((PsiExpression)passExpression).getType();
+            return processIfInForeignLanguage(parent, parentSubstitutor, indexNesting, syntheticField, processor, refElement);
           }
-
-          Project project = argumentList.getProject();
-          PsiElement element = result.getElement();
-          if (element instanceof PsiCompiledElement) {
-            element = element.getNavigationElement();
-          }
-
-          // for erased method calls for which we cannot determine target substitutor,
-          // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
-          if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
-            PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
-
-            PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-            substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList,
-                                                           DefaultParameterTypeInferencePolicy.INSTANCE);
-          }
-
-          substitutor = removeRawMappingsLeftFromResolve(substitutor);
-
-          PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
-          if (combined == null) return true;
-          //PsiType substituted = combined.substitute(passExpression.getType());
-          PsiType substituted = combined.substitute(actualExpressionType);
-          if (substituted instanceof PsiPrimitiveType) {
-            final PsiClassType boxedType = ((PsiPrimitiveType)substituted).getBoxedType(argumentList);
-            substituted = boxedType != null ? boxedType : substituted;
-          }
-          if (substituted == null) return true;
-          PsiType typeToCheck;
-          if (actualParameterType instanceof PsiEllipsisType) {
-            // there may be the case of passing the vararg argument to the other vararg method: foo(int... ints) { bar(ints); } bar(int... ints) {}
-            if (TypeConversionUtil.areTypesConvertible(substituted, actualParameterType)) {
-              return handToProcessor(expressions[paramSeqNo], processor, parent, combined, indexNesting, syntheticField);
-            }
-            typeToCheck = ((PsiEllipsisType)actualParameterType).getComponentType();
-          }
-          else {
-            typeToCheck = actualParameterType;
-          }
-          if (!TypeConversionUtil.areTypesConvertible(substituted, typeToCheck)) return true;
-
-          return handToProcessor(passExpression, processor, parent, combined, indexNesting, syntheticField);
         }
+        PsiSubstitutor substitutor = result.getSubstitutor();
+
+        PsiExpression[] expressions = argumentList.getExpressions();
+        if (paramSeqNo >= expressions.length) {
+          return true;
+        }
+        PsiElement passExpression;
+        PsiType actualExpressionType;
+        if (actualParameterType instanceof PsiEllipsisType) {
+          passExpression = argumentList;
+          actualExpressionType = expressions[paramSeqNo].getType();
+        }
+        else {
+          passExpression = expressions[paramSeqNo];
+          actualExpressionType = ((PsiExpression)passExpression).getType();
+        }
+
+        Project project = argumentList.getProject();
+        PsiElement element = result.getElement();
+        if (element instanceof PsiCompiledElement) {
+          element = element.getNavigationElement();
+        }
+
+        // for erased method calls for which we cannot determine target substitutor,
+        // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
+        if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
+          PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
+
+          PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+          substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList,
+                                                         DefaultParameterTypeInferencePolicy.INSTANCE);
+        }
+
+        substitutor = removeRawMappingsLeftFromResolve(substitutor);
+
+        PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
+        if (combined == null) return true;
+        //PsiType substituted = combined.substitute(passExpression.getType());
+        PsiType substituted = combined.substitute(actualExpressionType);
+        if (substituted instanceof PsiPrimitiveType) {
+          final PsiClassType boxedType = ((PsiPrimitiveType)substituted).getBoxedType(argumentList);
+          substituted = boxedType != null ? boxedType : substituted;
+        }
+        if (substituted == null) return true;
+        PsiType typeToCheck;
+        if (actualParameterType instanceof PsiEllipsisType) {
+          // there may be the case of passing the vararg argument to the other vararg method: foo(int... ints) { bar(ints); } bar(int... ints) {}
+          if (TypeConversionUtil.areTypesConvertible(substituted, actualParameterType)) {
+            return handToProcessor(expressions[paramSeqNo], processor, parent, combined, indexNesting, syntheticField);
+          }
+          typeToCheck = ((PsiEllipsisType)actualParameterType).getComponentType();
+        }
+        else {
+          typeToCheck = actualParameterType;
+        }
+        if (!TypeConversionUtil.areTypesConvertible(substituted, typeToCheck)) return true;
+
+        return handToProcessor(passExpression, processor, parent, combined, indexNesting, syntheticField);
       })) {
         return false;
       }
     }
 
+    return true;
+  }
+
+  private static boolean processIfInForeignLanguage(@NotNull SliceUsage parent,
+                                                    @NotNull PsiSubstitutor parentSubstitutor,
+                                                    int indexNesting,
+                                                    @NotNull String syntheticField,
+                                                    @NotNull Processor<SliceUsage> processor,
+                                                    @NotNull PsiElement foreignElement) {
+    PsiFile file = foreignElement.getContainingFile();
+    if (file != null && file.getLanguage() != JavaLanguage.INSTANCE) {
+      // show foreign language usage as leaf to warn about possible (but unknown to us) flow.
+      if (!handToProcessor(foreignElement, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -490,16 +503,13 @@ class SliceUtil {
                                              final int indexNesting,
                                              @NotNull final String syntheticField) {
     if (indexNesting != 0) {
-      ReferencesSearch.search(variable).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          PsiElement element = reference.getElement();
-          if (element instanceof PsiExpression && !element.getManager().areElementsEquivalent(element, parent.getElement())) {
-            PsiExpression expression = (PsiExpression)element;
-            if (!addContainerItemModification(expression, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
-          }
-          return true;
+      ReferencesSearch.search(variable).forEach(reference -> {
+        PsiElement element = reference.getElement();
+        if (element instanceof PsiExpression && !element.getManager().areElementsEquivalent(element, parent.getElement())) {
+          PsiExpression expression = (PsiExpression)element;
+          if (!addContainerItemModification(expression, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
         }
+        return true;
       });
     }
   }
@@ -522,17 +532,17 @@ class SliceUtil {
     }
     PsiElement grand = parentElement == null ? null : parentElement.getParent();
     if (grand instanceof PsiCallExpression) {
-      if (!processContainerPutArguments((PsiCallExpression)grand, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
+      if (!processContainerPutArguments((PsiCallExpression)grand, parent, parentSubstitutor, indexNesting, syntheticField, processor)) return false;
     }
     return true;
   }
 
-  private static boolean processContainerPutArguments(PsiCallExpression call,
-                                                      Processor<SliceUsage> processor,
-                                                      SliceUsage parent,
-                                                      PsiSubstitutor parentSubstitutor,
+  private static boolean processContainerPutArguments(@NotNull PsiCallExpression call,
+                                                      @NotNull SliceUsage parent,
+                                                      @NotNull PsiSubstitutor parentSubstitutor,
                                                       int indexNesting,
-                                                      @NotNull String syntheticField) {
+                                                      @NotNull String syntheticField,
+                                                      @NotNull Processor<SliceUsage> processor) {
     assert indexNesting != 0;
     JavaResolveResult result = call.resolveMethodGenerics();
     PsiMethod method = (PsiMethod)result.getElement();
@@ -591,7 +601,7 @@ class SliceUtil {
     return true;
   }
 
-  private static int calcNewIndexNesting(int indexNesting, Flow anno) {
+  private static int calcNewIndexNesting(int indexNesting, @NotNull Flow anno) {
     int nestingDelta = (anno.sourceIsContainer() ? 1 : 0) - (anno.targetIsContainer() ? 1 : 0);
     return indexNesting + nestingDelta;
   }
@@ -601,19 +611,19 @@ class SliceUtil {
     Map<PsiTypeParameter, PsiType> map = null;
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       if (entry.getValue() == null) {
-        if (map == null) map = new THashMap<PsiTypeParameter, PsiType>();
+        if (map == null) map = new THashMap<>();
         map.put(entry.getKey(), entry.getValue());
       }
     }
     if (map == null) return substitutor;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
     return PsiSubstitutorImpl.createSubstitutor(newMap);
   }
 
   @Nullable
   private static PsiSubstitutor unify(@NotNull PsiSubstitutor substitutor, @NotNull PsiSubstitutor parentSubstitutor, @NotNull Project project) {
-    Map<PsiTypeParameter,PsiType> newMap = new THashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+    Map<PsiTypeParameter,PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
 
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       PsiTypeParameter typeParameter = entry.getKey();

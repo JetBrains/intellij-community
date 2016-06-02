@@ -78,22 +78,19 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
     if (!myInvocationHandler.exists()) return true;
 
-    return ourGuard.doPreventingRecursion(myInvocationHandler, false, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        DomExtensionsRegistrarImpl registrar = runDomExtenders();
+    return ourGuard.doPreventingRecursion(myInvocationHandler, false, () -> {
+      DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (myInvocationHandler) {
-          if (!myInitialized) {
-            if (registrar != null) {
-              applyExtensions(registrar);
-            }
-            myInitialized = true;
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (myInvocationHandler) {
+        if (!myInitialized) {
+          if (registrar != null) {
+            applyExtensions(registrar);
           }
+          myInitialized = true;
         }
-        return Boolean.TRUE;
       }
+      return Boolean.TRUE;
     }) == Boolean.TRUE;
   }
 
@@ -130,12 +127,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     }
 
     final List<DomExtensionImpl> customs = registrar.getCustoms();
-    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, new Function<DomExtensionImpl, CustomDomChildrenDescriptionImpl>() {
-      @Override
-      public CustomDomChildrenDescriptionImpl fun(DomExtensionImpl extension) {
-        return new CustomDomChildrenDescriptionImpl(extension);
-      }
-    });
+    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, extension -> new CustomDomChildrenDescriptionImpl(extension));
   }
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
@@ -275,12 +267,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @Override
   public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
     final Set<AttributeChildDescriptionImpl> visited = new THashSet<AttributeChildDescriptionImpl>();
-    if (!myStaticGenericInfo.processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
-      @Override
-      public boolean process(AttributeChildDescriptionImpl attributeChildDescription) {
-        visited.add(attributeChildDescription);
-        return processor.process(attributeChildDescription);
-      }
+    if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
+      visited.add(attributeChildDescription);
+      return processor.process(attributeChildDescription);
     })) {
       return false;
     }

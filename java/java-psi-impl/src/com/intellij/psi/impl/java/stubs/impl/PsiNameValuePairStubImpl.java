@@ -30,12 +30,10 @@ import org.jetbrains.annotations.Nullable;
 public class PsiNameValuePairStubImpl extends StubBase<PsiNameValuePair> implements PsiNameValuePairStub {
 
   @Nullable private final StringRef myName;
-  @Nullable private final StringRef myValue;
 
-  public PsiNameValuePairStubImpl(StubElement parent, @Nullable StringRef name, @Nullable StringRef value) {
+  public PsiNameValuePairStubImpl(StubElement parent, @Nullable StringRef name) {
     super(parent, JavaStubElementTypes.NAME_VALUE_PAIR);
     myName = name;
-    myValue = value;
   }
 
   @Override
@@ -45,6 +43,6 @@ public class PsiNameValuePairStubImpl extends StubBase<PsiNameValuePair> impleme
 
   @Override
   public String getValue() {
-    return myValue == null ? null : myValue.getString();
+    return null;
   }
 }

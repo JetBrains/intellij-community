@@ -70,12 +70,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
         final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
-        final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
-          @Override
-          public String fun(PyParameter pyParameter) {
-            return pyParameter.getName();
-          }
-        }, ", ");
+        final String params = StringUtil.join(parameters, pyParameter -> pyParameter.getName(), ", ");
         item = item.withTailText("(" + params + ")");
       }
       else if (element instanceof PyClass) {

@@ -6,9 +6,12 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 
 /**
  * @author traff
@@ -17,7 +20,11 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
   private static final List<String> BASE_TAGS =
     ImmutableList.<String>builder().add("python3", "django", "jython", "ipython", "ipython011", "ipython012", "nose", "pytest").build();
 
+  @Test
+  @Staging
   public void testSufficiency() {
+    checkStaging();
+    
     if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
       Set<String> tags = Sets.newHashSet();
       List<String> roots = getPythonRoots();

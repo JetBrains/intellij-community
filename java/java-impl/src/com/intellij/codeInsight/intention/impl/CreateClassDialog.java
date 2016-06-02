@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
@@ -47,6 +46,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +148,7 @@ public class CreateClassDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
 
@@ -156,7 +156,7 @@ public class CreateClassDialog extends DialogWrapper {
       gbConstraints.weightx = 0;
       gbConstraints.gridwidth = 1;
       panel.add(myInformationLabel, gbConstraints);
-      gbConstraints.insets = new Insets(4, 8, 4, 8);
+      gbConstraints.insets = JBUI.insets(4, 8);
       gbConstraints.gridx = 1;
       gbConstraints.weightx = 1;
       gbConstraints.gridwidth = 1;
@@ -240,28 +240,25 @@ public class CreateClassDialog extends DialogWrapper {
     final String packageName = getPackageName();
 
     final String[] errorString = new String[1];
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
-          final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
-          if (destination == null) return;
-          myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-            @Override
-            public PsiDirectory compute() {
-              return destination.getTargetDirectory(getBaseDir(packageName));
-            }
-          });
-          if (myTargetDirectory == null) {
-            errorString[0] = ""; // message already reported by PackageUtil
-            return;
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
+        final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
+        if (destination == null) return;
+        myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return destination.getTargetDirectory(getBaseDir(packageName));
           }
-          errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+        });
+        if (myTargetDirectory == null) {
+          errorString[0] = ""; // message already reported by PackageUtil
+          return;
         }
-        catch (IncorrectOperationException e) {
-          errorString[0] = e.getMessage();
-        }
+        errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+      }
+      catch (IncorrectOperationException e) {
+        errorString[0] = e.getMessage();
       }
     }, CodeInsightBundle.message("create.directory.command"), null);
 

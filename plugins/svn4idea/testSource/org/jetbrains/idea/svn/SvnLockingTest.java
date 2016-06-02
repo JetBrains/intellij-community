@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -188,7 +189,7 @@ public class SvnLockingTest extends TestCase {
     }
   }*/
 
-  @Bombed(user="irengrig", year = 2020, month = 1, day = 1,
+  @Bombed(user="irengrig", year = 2020, month = Calendar.FEBRUARY, day = 1,
     description = "not clear. by specification, read should not get access if write lock is taken; sometimes it is not the case.")
   public void testReadInBetweenWrites() throws Exception {
     final HangInWrite operation1 = new HangInWrite("one1");

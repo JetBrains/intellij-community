@@ -280,21 +280,11 @@ public class ProjectSettingsPanel {
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           final List<CopyrightProfile> copyrights = new ArrayList<CopyrightProfile>(myProfilesModel.getAllProfiles().values());
-          Collections.sort(copyrights, new Comparator<CopyrightProfile>() {
-            @Override
-            public int compare(CopyrightProfile o1, CopyrightProfile o2) {
-              return o1.getName().compareToIgnoreCase(o2.getName());
-            }
-          });
+          Collections.sort(copyrights, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
           myProfilesChooser.setCell(table, row, column);
           myProfilesChooser.setOptions(copyrights.toArray());
           myProfilesChooser.setDefaultValue(scopeSetting.getProfile());
-          myProfilesChooser.setToString(new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              return ((CopyrightProfile)o).getName();
-            }
-          });
+          myProfilesChooser.setToString(o -> ((CopyrightProfile)o).getName());
           return myProfilesChooser;
         }
       };

@@ -229,7 +229,9 @@ public class LowLevelSearchUtil {
     LOG.error(msg);
   }
 
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap();
+  // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
+  // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
@@ -241,12 +243,17 @@ public class LowLevelSearchUtil {
     }
     Map<StringSearcher, int[]> cachedMap = cache.get(text);
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
-    if (cachedOccurrences == null) {
+    boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
+    if (!hasCachedOccurrences) {
       TIntArrayList occurrences = new TIntArrayList();
-      for (int index = 0; index < text.length(); index++) {
+      int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
+      int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
+      occurrences.add(newStart);
+      occurrences.add(newEnd);
+      for (int index = newStart; index < newEnd; index++) {
         if (progress != null) progress.checkCanceled();
         //noinspection AssignmentToForLoopParameter
-        index = searcher.scan(text, index, text.length());
+        index = searcher.scan(text, index, newEnd);
         if (index < 0) break;
         if (checkJavaIdentifier(text, 0, text.length(), searcher, index)) {
           occurrences.add(index);
@@ -258,9 +265,10 @@ public class LowLevelSearchUtil {
       }
       cachedMap.put(searcher, cachedOccurrences);
     }
-    for (int index : cachedOccurrences) {
-      if (index >= endOffset) break;
-      if (index >= startOffset && !processor.execute(index)) {
+    for (int i = 2; i < cachedOccurrences.length; i++) {
+      int occurrence = cachedOccurrences[i];
+      if (occurrence > endOffset - searcher.getPatternLength()) break;
+      if (occurrence >= startOffset && !processor.execute(occurrence)) {
         return false;
       }
     }

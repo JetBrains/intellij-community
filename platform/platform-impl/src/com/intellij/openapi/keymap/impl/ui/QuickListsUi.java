@@ -145,14 +145,11 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     itemPanel.apply();
 
     editor.ensureNonEmptyNames("Quick list should have non empty name");
-    editor.processModifiedItems(new PairProcessor<QuickList, QuickList>() {
-      @Override
-      public boolean process(QuickList newItem, QuickList oldItem) {
-        if (!oldItem.getName().equals(newItem.getName())) {
-          keymapListener.quickListRenamed(oldItem, newItem);
-        }
-        return true;
+    editor.processModifiedItems((newItem, oldItem) -> {
+      if (!oldItem.getName().equals(newItem.getName())) {
+        keymapListener.quickListRenamed(oldItem, newItem);
       }
+      return true;
     });
 
     if (isModified(settings)) {

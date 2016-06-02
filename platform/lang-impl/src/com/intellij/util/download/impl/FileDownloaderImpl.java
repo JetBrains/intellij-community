@@ -124,15 +124,12 @@ public class FileDownloaderImpl implements FileDownloader {
     final Ref<List<Pair<File, DownloadableFileDescription>>> localFiles = Ref.create(null);
     final Ref<IOException> exceptionRef = Ref.create(null);
 
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          localFiles.set(download(targetDir));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        localFiles.set(download(targetDir));
+      }
+      catch (IOException e) {
+        exceptionRef.set(e);
       }
     }, myDialogTitle, true, project, parentComponent);
     if (!completed) {
@@ -171,46 +168,43 @@ public class FileDownloaderImpl implements FileDownloader {
       List<Future<Void>> results = new ArrayList<Future<Void>>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFileDescriptions) {
-        results.add(executor.submit(new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            SubTaskProgressIndicator indicator = progressManager.createSubTaskIndicator();
-            indicator.checkCanceled();
+        results.add(executor.submit(() -> {
+          SubTaskProgressIndicator indicator = progressManager.createSubTaskIndicator();
+          indicator.checkCanceled();
 
-            final File existing = new File(targetDir, description.getDefaultFileName());
-            final String url = description.getDownloadUrl();
-            if (url.startsWith(LIB_SCHEMA)) {
-              final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
-              final File file = PathManager.findFileInLibDirectory(path);
+          final File existing = new File(targetDir, description.getDefaultFileName());
+          final String url = description.getDownloadUrl();
+          if (url.startsWith(LIB_SCHEMA)) {
+            final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
+            final File file = PathManager.findFileInLibDirectory(path);
+            existingFiles.add(Pair.create(file, description));
+          }
+          else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+            String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
+            File file = new File(path);
+            if (file.exists()) {
               existingFiles.add(Pair.create(file, description));
             }
-            else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-              String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
-              File file = new File(path);
-              if (file.exists()) {
-                existingFiles.add(Pair.create(file, description));
-              }
+          }
+          else {
+            File downloaded;
+            try {
+              downloaded = downloadFile(description, existing, indicator);
+            }
+            catch (IOException e) {
+              throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(),
+                                                      e.getMessage()), e);
+            }
+            if (FileUtil.filesEqual(downloaded, existing)) {
+              existingFiles.add(Pair.create(existing, description));
             }
             else {
-              File downloaded;
-              try {
-                downloaded = downloadFile(description, existing, indicator);
-              }
-              catch (IOException e) {
-                throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(),
-                                                        e.getMessage()), e);
-              }
-              if (FileUtil.filesEqual(downloaded, existing)) {
-                existingFiles.add(Pair.create(existing, description));
-              }
-              else {
-                totalSize.addAndGet(downloaded.length());
-                downloadedFiles.add(Pair.create(downloaded, description));
-              }
+              totalSize.addAndGet(downloaded.length());
+              downloadedFiles.add(Pair.create(downloaded, description));
             }
-            indicator.finished();
-            return null;
           }
+          indicator.finished();
+          return null;
         }));
       }
 
@@ -260,12 +254,7 @@ public class FileDownloaderImpl implements FileDownloader {
     List<Pair<File, DownloadableFileDescription>> result = new ArrayList<Pair<File, DownloadableFileDescription>>();
     for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
       final DownloadableFileDescription description = pair.getSecond();
-      final String fileName = description.generateFileName(new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return !new File(targetDir, s).exists();
-        }
-      });
+      final String fileName = description.generateFileName(s -> !new File(targetDir, s).exists());
       final File toFile = new File(targetDir, fileName);
       FileUtil.rename(pair.getFirst(), toFile);
       result.add(Pair.create(toFile, description));

@@ -300,14 +300,11 @@ public class PyRefactoringUtil {
     Collections.addAll(elementsToProcess, handler.getPrimaryElements());
     Collections.addAll(elementsToProcess, handler.getSecondaryElements());
     for (PsiElement e : elementsToProcess) {
-      handler.processElementUsages(e, new Processor<UsageInfo>() {
-        @Override
-        public boolean process(UsageInfo usageInfo) {
-          if (!usageInfo.isNonCodeUsage) {
-            usages.add(usageInfo);
-          }
-          return true;
+      handler.processElementUsages(e, usageInfo -> {
+        if (!usageInfo.isNonCodeUsage) {
+          usages.add(usageInfo);
         }
+        return true;
       }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
     }
     return usages;

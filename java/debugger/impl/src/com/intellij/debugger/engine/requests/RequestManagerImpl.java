@@ -193,12 +193,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void registerRequest(Requestor requestor, EventRequest request) {
-    Set<EventRequest> reqSet = myRequestorToBelongedRequests.get(requestor);
-    if(reqSet == null) {
-      reqSet = new HashSet<>();
-      myRequestorToBelongedRequests.put(requestor, reqSet);
-    }
-    reqSet.add(request);
+    myRequestorToBelongedRequests.computeIfAbsent(requestor, r -> new HashSet<>()).add(request);
   }
 
   // requests creation
@@ -277,10 +272,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           // the same request may be assigned to more than one requestor, but
           // there is only one 'targetRequestor' for each request, so if target requestor and requestor being processed are different,
           // should clear also the mapping targetRequestor->request
-          final Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
+          Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
           if (allTargetRequestorRequests != null) {
             allTargetRequestorRequests.remove(request);
-            if (allTargetRequestorRequests.size() == 0) {
+            if (allTargetRequestorRequests.isEmpty()) {
               myRequestorToBelongedRequests.remove(targetRequestor);
             }
           }

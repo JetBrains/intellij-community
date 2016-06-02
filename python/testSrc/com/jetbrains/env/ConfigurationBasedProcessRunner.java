@@ -104,12 +104,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       @Override
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            prepareConsoleAfterProcessEnd();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.NON_MODAL);
       }
     };
 

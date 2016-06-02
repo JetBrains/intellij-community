@@ -114,5 +114,6 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public static class Capture extends XmlTagPattern<Capture> {
+    static final Capture XML_TAG_PATTERN = new Capture();
   }
 }

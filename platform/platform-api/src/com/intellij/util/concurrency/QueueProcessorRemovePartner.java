@@ -36,16 +36,13 @@ public class QueueProcessorRemovePartner<Key, Task> {
     myConsumer = consumer;
     myMap = new HashMap<Key, Task>();
     myLock = new Object();
-    myProcessor = new QueueProcessor<Key>(new Consumer<Key>() {
-      @Override
-      public void consume(Key key) {
-        final Task task;
-        synchronized (myLock) {
-          task = myMap.remove(key);
-        }
-        if (task != null) {
-          myConsumer.consume(task);
-        }
+    myProcessor = new QueueProcessor<Key>(key -> {
+      final Task task;
+      synchronized (myLock) {
+        task = myMap.remove(key);
+      }
+      if (task != null) {
+        myConsumer.consume(task);
       }
     }, project.getDisposed(), true);
   }

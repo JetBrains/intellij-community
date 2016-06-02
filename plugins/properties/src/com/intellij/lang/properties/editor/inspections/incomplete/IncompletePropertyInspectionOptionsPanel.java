@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class IncompletePropertyInspectionOptionsPanel {
     }).createPanel();
     myList.setCellRenderer(new ColoredListCellRenderer<String>() {
       @Override
-      protected void customizeCellRenderer(JList list, String suffix, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, String suffix, int index, boolean selected, boolean hasFocus) {
         append(suffix);
         final Locale locale = PropertiesUtil.getLocale("_" + suffix + ".properties");
         if (locale != PropertiesUtil.DEFAULT_LOCALE) {

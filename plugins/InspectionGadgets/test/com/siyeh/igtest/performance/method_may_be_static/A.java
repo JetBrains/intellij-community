@@ -25,7 +25,7 @@ public class A implements Serializable {
         return null;
     }
     native void f();
-    void g() {
+    void <warning descr="Method 'g()' may be 'static'">g</warning>() {
         System.out.println("boo!");
     }
 }
@@ -39,7 +39,16 @@ interface Surprise {
 }
 
 interface FromJava8 {
-  default void foo() {
+  default void <warning descr="Method 'foo()' may be 'static'">foo</warning>() {
     System.out.println();
   }
+}
+class B {
+  public void accept(String t) {
+    System.out.println(t);
+  }
+}
+class V extends B implements Consumer<String> {}
+interface Consumer<T> {
+  void accept(T t);
 }

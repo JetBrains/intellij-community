@@ -29,13 +29,11 @@ import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -69,27 +67,25 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
     for (TreePath selectionPath : treePaths) {
-      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {
-          if (!((InspectionTreeNode)node).isValid()) return true;
-          if (node instanceof OfflineProblemDescriptorNode) {
-            final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
-            final RefEntity element = descriptorNode.getElement();
-            selectedElements.add(element);
-            CommonProblemDescriptor[] descriptors = actions.get(element);
-            final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
-                                                                                   : new CommonProblemDescriptor[]{descriptor};
-            actions.put(element, descriptors == null ?
-                                 descriptorAsArray :
-                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
-          }
-          else if (node instanceof RefElementNode) {
-            selectedElements.add(((RefElementNode)node).getElement());
-          }
-          return true;
+      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+        if (!((InspectionTreeNode)node).isValid()) return true;
+        if (node instanceof OfflineProblemDescriptorNode) {
+          if (((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
+          final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
+          final RefEntity element = descriptorNode.getElement();
+          selectedElements.add(element);
+          CommonProblemDescriptor[] descriptors = actions.get(element);
+          final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
+          final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                 : new CommonProblemDescriptor[]{descriptor};
+          actions.put(element, descriptors == null ?
+                               descriptorAsArray :
+                               DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
         }
+        else if (node instanceof RefElementNode) {
+          selectedElements.add(((RefElementNode)node).getElement());
+        }
+        return true;
       });
     }
 
@@ -108,25 +104,23 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                              @NotNull final InspectionNode toolNode,
+                                              @NotNull final InspectionTreeNode parentNode,
+                                              final boolean showStructure,
+                                              boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
+                                              @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
-      final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
-        new Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>>() {
-          @Override
-          public UserObjectContainer<OfflineProblemDescriptor> fun(final OfflineProblemDescriptor descriptor) {
-            return new OfflineProblemDescriptorContainer(descriptor);
-          }
-        };
       parentNode.add(toolNode);
-      buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
+      buildTree(context, filteredContent, false, toolWrapper, OfflineProblemDescriptorContainer::new, showStructure,
+                (newChild) -> {
+                  toolNode.add(newChild);
+                  return newChild;
+                });
     }
+    return toolNode;
   }
 
   @Nullable
@@ -179,7 +173,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       final OfflineProblemDescriptorNode child =
         OfflineProblemDescriptorNode.create(((OfflineProblemDescriptorContainer)container).getUserObject(),
                                             (LocalInspectionToolWrapper)toolWrapper, presentation);
-      insertByIndex(child, elemNode);
+      elemNode.insertByOrder(child, true);
     }
   }
 

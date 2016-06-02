@@ -78,23 +78,20 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       @Override
       public void run(AnActionButton button) {
         // show choose file dialog, add certificate
-        FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            String path = file.getPath();
-            X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
-            if (certificate == null) {
-              Messages.showErrorDialog(myRootPanel, "Malformed X509 server certificate", "Not Imported");
-            }
-            else if (myCertificates.contains(certificate)) {
-              Messages.showWarningDialog(myRootPanel, "Certificate already exists", "Not Imported");
-            }
-            else {
-              myCertificates.add(certificate);
-              myTreeBuilder.addCertificate(certificate);
-              addCertificatePanel(certificate);
-              myTreeBuilder.selectCertificate(certificate);
-            }
+        FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null, file -> {
+          String path = file.getPath();
+          X509Certificate certificate = CertificateUtil.loadX509Certificate(path);
+          if (certificate == null) {
+            Messages.showErrorDialog(myRootPanel, "Malformed X509 server certificate", "Not Imported");
+          }
+          else if (myCertificates.contains(certificate)) {
+            Messages.showWarningDialog(myRootPanel, "Certificate already exists", "Not Imported");
+          }
+          else {
+            myCertificates.add(certificate);
+            myTreeBuilder.addCertificate(certificate);
+            addCertificatePanel(certificate);
+            myTreeBuilder.selectCertificate(certificate);
           }
         });
       }
@@ -248,26 +245,21 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public void certificateAdded(final X509Certificate certificate) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myTreeBuilder != null && !myCertificates.contains(certificate)) {
-          myCertificates.add(certificate);
-          myTreeBuilder.addCertificate(certificate);
-          addCertificatePanel(certificate);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myTreeBuilder != null && !myCertificates.contains(certificate)) {
+        myCertificates.add(certificate);
+        myTreeBuilder.addCertificate(certificate);
+        addCertificatePanel(certificate);
       }
     });
   }
 
   @Override
   public void certificateRemoved(final X509Certificate certificate) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (myTreeBuilder != null && myCertificates.contains(certificate)) {
-          myCertificates.remove(certificate);
-          myTreeBuilder.removeCertificate(certificate);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myTreeBuilder != null && myCertificates.contains(certificate)) {
+        myCertificates.remove(certificate);
+        myTreeBuilder.removeCertificate(certificate);
       }
     });
   }

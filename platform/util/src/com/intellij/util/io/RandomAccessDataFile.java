@@ -31,7 +31,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
 
   private static final OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
-  private static int ourFilesCount = 0;
+  private static int ourFilesCount;
 
   private final int myCount = ourFilesCount++;
   private final File myFile;
@@ -43,8 +43,8 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   private final FileWriter log;
 
   private volatile long mySize;
-  private volatile boolean myIsDirty = false;
-  private volatile boolean myIsDisposed = false;
+  private volatile boolean myIsDirty;
+  private volatile boolean myIsDisposed;
 
   private static final boolean DEBUG = false;
 
@@ -243,12 +243,12 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
-  public static int totalReads = 0;
-  public static long totalReadBytes = 0;
+  public static int totalReads;
+  public static long totalReadBytes;
 
-  public static int seekcount = 0;
-  public static int totalWrites = 0;
-  public static long totalWriteBytes = 0;
+  public static int seekcount;
+  public static int totalWrites;
+  public static long totalWriteBytes;
 
   void loadPage(final Page page) {
     assertNotDisposed();

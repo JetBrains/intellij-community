@@ -64,12 +64,7 @@ public class GrTraitType extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return myExprType.getPresentableText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType type) {
-        return type.getPresentableText();
-      }
-    }), ", ");
+    return myExprType.getPresentableText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, type -> type.getPresentableText()), ", ");
   }
 
   @NotNull
@@ -81,12 +76,7 @@ public class GrTraitType extends PsiType {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return myExprType.getCanonicalText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType type) {
-        return type.getInternalCanonicalText();
-      }
-    }), ", ");
+    return myExprType.getCanonicalText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, type -> type.getInternalCanonicalText()), ", ");
   }
 
   @Override

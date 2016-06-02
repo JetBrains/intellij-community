@@ -207,8 +207,10 @@ public class AnalysisScope {
     return fileIndex;
   }
 
-  private static String displayProjectRelativePath(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), project, false, false);
+  private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
+    VirtualFile virtualFile = item.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), item.getProject(), true, false);
   }
 
   public boolean contains(@NotNull PsiElement psiElement) {
@@ -275,17 +277,14 @@ public class AnalysisScope {
     final boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileIndex fileIndex = getFileIndex();
-    accept(new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        if (file.isDirectory()) return true;
-        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-        if (fileIndex.isInContent(file) && !isFiltered(file, fileIndex)
-            && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-          return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
-        }
-        return true;
+    accept(file -> {
+      if (file.isDirectory()) return true;
+      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
+      if (fileIndex.isInContent(file) && !isFiltered(file, fileIndex)
+          && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+        return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
       }
+      return true;
     });
   }
 
@@ -379,12 +378,7 @@ public class AnalysisScope {
                                      @NotNull final PsiManager psiManager,
                                      final boolean needReadAction, 
                                      final boolean clearResolveCache) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        doProcessFile(visitor, psiManager, vFile, clearResolveCache);
-      }
-    };
+    final Runnable runnable = () -> doProcessFile(visitor, psiManager, vFile, clearResolveCache);
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
       commitAndRunInSmartMode(runnable, psiManager.getProject());
     }
@@ -399,13 +393,10 @@ public class AnalysisScope {
     while (true) {
       final DumbService dumbService = DumbService.getInstance(project);
       dumbService.waitForSmartMode();
-      boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (dumbService.isDumb()) return false;
-          runnable.run();
-          return true;
-        }
+      boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+        if (dumbService.isDumb()) return false;
+        runnable.run();
+        return true;
       });
       if (passed) {
         break;
@@ -492,12 +483,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
 
       case MODULES:
-        String modules = StringUtil.join(myModules, new Function<Module, String>() {
-          @Override
-          public String fun(@NotNull final Module module) {
-            return pathToName(module.getModuleFilePath());
-          }
-        }, ", ");
+        String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
 
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
@@ -505,23 +491,15 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", getPresentableUrl((PsiFileSystemItem)myElement));
-
+        return AnalysisScopeBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", getPresentableUrl((PsiFileSystemItem)myElement));
+        return AnalysisScopeBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.virtual.files");
     }
 
     return "";
-  }
-
-  @NotNull
-  private static String getPresentableUrl(@NotNull final PsiFileSystemItem element) {
-    final VirtualFile virtualFile = element.getVirtualFile();
-    assert virtualFile != null : element;
-    return virtualFile.getPresentableUrl();
   }
 
   @NotNull
@@ -534,13 +512,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", myModule.getName());
 
       case MODULES:
-        String modules = StringUtil.join(myModules, new Function<Module, String>() {
-          @Override
-          @NotNull
-          public String fun(@NotNull final Module module) {
-            return module.getName();
-          }
-        }, ", ");
+        String modules = StringUtil.join(myModules, module -> module.getName(), ", ");
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
@@ -548,12 +520,11 @@ public class AnalysisScope {
 
       case FILE:
         final String relativePath = getRelativePath();
-        return relativePath != null ? AnalysisScopeBundle.message("scope.file", relativePath) : "Current File";
+        return AnalysisScopeBundle.message("scope.file", relativePath);
 
       case DIRECTORY:
         final String relativeDirPath = getRelativePath();
-        return relativeDirPath != null ? AnalysisScopeBundle.message("scope.directory", relativeDirPath) : "Current Directory";
-
+        return AnalysisScopeBundle.message("scope.directory", relativeDirPath);
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.selected.files");
@@ -564,9 +535,9 @@ public class AnalysisScope {
 
   @Nullable
   private String getRelativePath() {
-    final String relativePath = displayProjectRelativePath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject());
+    final String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
-      return null;
+      return ((PsiFileSystemItem)myElement).getName();
     }
     return relativePath;
   }

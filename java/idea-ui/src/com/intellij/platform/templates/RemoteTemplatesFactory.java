@@ -52,9 +52,6 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
-  public static final String TEMPLATE = "template";
-  public static final String INPUT_DEFAULT = "default";
-
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
@@ -111,7 +108,8 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement) {
-    return ContainerUtil.mapNotNull(groupElement.getChildren(TEMPLATE), (NullableFunction<Element, ArchivedProjectTemplate>)element -> {
+    List<Element> children = groupElement.getChildren(ArchivedProjectTemplate.TEMPLATE);
+    return ContainerUtil.mapNotNull(children, (NullableFunction<Element, ArchivedProjectTemplate>)element -> {
       if (!checkRequiredPlugins(element)) {
         return null;
       }

@@ -74,12 +74,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         newText.append("/** @see #").append(method.getName()).append('(');
         final List<PsiParameter> parameters = new ArrayList<PsiParameter>(Arrays.asList(method.getParameterList().getParameters()));
         parameters.remove(parameter);
-        newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return psiParameter.getType().getCanonicalText();
-          }
-        }, ","));
+        newText.append(StringUtil.join(parameters, psiParameter -> psiParameter.getType().getCanonicalText(), ","));
         newText.append(")*/");
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
           public void deleteElement() throws IncorrectOperationException {

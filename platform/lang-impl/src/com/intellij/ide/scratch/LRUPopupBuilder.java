@@ -69,23 +69,13 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project, @NotNull Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
     final VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
-    Arrays.sort(filesCopy, new Comparator<VirtualFile>() {
+    Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
+    return forFileLanguages(project, null, t -> new WriteCommandAction(project, "Change Language") {
       @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive());
+      protected void run(@NotNull Result result) throws Throwable {
+        changeLanguageWithUndo(project, t, filesCopy, mappings);
       }
-    });
-    return forFileLanguages(project, null, new Consumer<Language>() {
-      @Override
-      public void consume(final Language t) {
-        new WriteCommandAction(project, "Change Language") {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            changeLanguageWithUndo(project, t, filesCopy, mappings);
-          }
-        }.execute();
-      }
-    });
+    }.execute());
   }
 
   @NotNull
@@ -169,12 +159,7 @@ public abstract class LRUPopupBuilder<T> {
       Collections.sort(items, myComparator);
     }
     if (!lru.isEmpty()) {
-      Collections.sort(lru, new Comparator<T>() {
-        @Override
-        public int compare(T o1, T o2) {
-          return ContainerUtil.indexOf(ids, getStorageId(o1)) - ContainerUtil.indexOf(ids, getStorageId(o2));
-        }
-      });
+      Collections.sort(lru, (o1, o2) -> ContainerUtil.indexOf(ids, getStorageId(o1)) - ContainerUtil.indexOf(ids, getStorageId(o2)));
     }
     final T separator1 = !lru.isEmpty() && !items.isEmpty()? items.get(0) : null;
     final T separator2 = !lru.isEmpty() || !items.isEmpty()? ContainerUtil.getFirstItem(extra) : null;

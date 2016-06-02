@@ -78,17 +78,17 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   public Options INNER_CLASS_OPTIONS = new Options("none", "");
   public Options METHOD_OPTIONS = new Options("none", "@return@param@throws or @exception");
   public Options FIELD_OPTIONS = new Options("none", "");
-  public boolean IGNORE_DEPRECATED = false;
+  public boolean IGNORE_DEPRECATED;
   public boolean IGNORE_JAVADOC_PERIOD = true;
   @SuppressWarnings("unused") @Deprecated
-  public boolean IGNORE_DUPLICATED_THROWS = false;
-  public boolean IGNORE_POINT_TO_ITSELF = false;
+  public boolean IGNORE_DUPLICATED_THROWS;
+  public boolean IGNORE_POINT_TO_ITSELF;
 
   public String myAdditionalJavadocTags = "";
 
   private boolean myIgnoreDuplicatedThrows = true;
-  private boolean myIgnoreEmptyDescriptions = false;
-  private boolean myIgnoreSimpleAccessors = false;
+  private boolean myIgnoreEmptyDescriptions;
+  private boolean myIgnoreSimpleAccessors;
 
   public void setPackageOption(String modifier, String tags) {
     PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = modifier;
@@ -451,7 +451,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   private class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
     private final InspectionManager myManager;
     private final boolean myOnTheFly;
-    private List<ProblemDescriptor> myProblems = null;
+    private List<ProblemDescriptor> myProblems;
 
     private ProblemHolderImpl(InspectionManager manager, boolean onTheFly) {
       myManager = manager;

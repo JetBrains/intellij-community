@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -184,27 +183,25 @@ public final class RequestProcessor implements IRequestProcessor {
                                    final IConnectionStreams connectionStreams,
                                    final IRequestsProgressHandler communicationProgressHandler)
       throws CommandException, IOCommandException {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            checkCanceled();
-            sendRequests(requests, connectionStreams, communicationProgressHandler);
-            checkCanceled();
+      final Runnable runnable = () -> {
+        try {
+          checkCanceled();
+          sendRequests(requests, connectionStreams, communicationProgressHandler);
+          checkCanceled();
 
-            sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-            connectionStreams.flushForReading();
+          sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+          connectionStreams.flushForReading();
 
-            myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
-          }
-          catch (IOException e) {
-            myIOException = e;
-          }
-          catch (CommandException e) {
-            myCommandException = e;
-          }
-          finally {
-            afterInRunnable();
-          }
+          myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
+        }
+        catch (IOException e) {
+          myIOException = e;
+        }
+        catch (CommandException e) {
+          myCommandException = e;
+        }
+        finally {
+          afterInRunnable();
         }
       };
 
@@ -233,7 +230,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
     @Override
     protected void callRunnable(Runnable runnable) {
-      myFuture = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("CVS request")).submit(runnable);
+      myFuture = ConcurrencyUtil.newSingleThreadExecutor("CVS request").submit(runnable);
 
       final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
       while (true) {

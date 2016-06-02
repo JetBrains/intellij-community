@@ -97,7 +97,7 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     result.deprecation = options.deprecation
     result.encoding = options.encoding
     result.failOnError = options.failOnError
-    result.force = options.force
+    result.force = String.valueOf(options.force)
     result.fork = options.fork
     result.forkOptions = create(options.forkOptions)
     result.listFiles = options.listFiles

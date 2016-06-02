@@ -213,8 +213,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            TemplateImpl def = getDefaultTemplate(t);
-            templateSetElement.addContent(serializeTemplate(t, def == null ? null : def.getTemplateContext()));
+            templateSetElement.addContent(serializeTemplate(t));
           }
         }
 
@@ -482,7 +481,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
 
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template = readTemplateFromElement(groupName, child, classLoader);
+      TemplateImpl template;
+      try {
+        template = readTemplateFromElement(groupName, child, classLoader);
+      }
+      catch (Exception e) {
+        LOG.info("failed to load template " + element.getAttributeValue(NAME), e);
+        continue;
+      }
+
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }
@@ -569,7 +576,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateContext defaultContext) {
+  static Element serializeTemplate(@NotNull TemplateImpl template) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -609,7 +616,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     try {
       Element contextElement = new Element(CONTEXT);
-      template.getTemplateContext().writeTemplateContext(contextElement, defaultContext);
+      template.getTemplateContext().writeTemplateContext(contextElement);
       element.addContent(contextElement);
     } catch (WriteExternalException ignore) {
     }

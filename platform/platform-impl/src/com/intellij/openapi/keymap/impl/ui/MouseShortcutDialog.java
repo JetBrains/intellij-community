@@ -70,10 +70,7 @@ final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
     }
     else {
       myText.setForeground(UIUtil.getLabelForeground());
-      myText.setText(KeyMapBundle.message("dialog.mouse.pad.shortcut.text", KeymapUtil.getMouseShortcutText(
-        shortcut.getButton(),
-        shortcut.getModifiers(),
-        shortcut.getClickCount())));
+      myText.setText(KeyMapBundle.message("dialog.mouse.pad.shortcut.text", KeymapUtil.getMouseShortcutText(shortcut)));
     }
   }
 

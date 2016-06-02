@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,13 +122,10 @@ public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestPro
 
   @NotNull
   private AnAction createGoToChangeAction() {
-    return GoToChangePopupBuilder.create(myRequestChain, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer index) {
-        if (index >= 0 && index != myRequestChain.getIndex()) {
-          myRequestChain.setIndex(index);
-          updateRequest();
-        }
+    return GoToChangePopupBuilder.create(myRequestChain, index -> {
+      if (index >= 0 && index != myRequestChain.getIndex()) {
+        myRequestChain.setIndex(index);
+        updateRequest();
       }
     });
   }

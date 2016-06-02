@@ -143,11 +143,9 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
   private static MultiMap<DependencyConflictId, MavenDomDependency> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
     final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = MultiMap.createSet();
 
-    Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
-      public boolean process(MavenDomProjectModel model) {
-        collect(allDependencies, model.getDependencies());
-        return false;
-      }
+    Processor<MavenDomProjectModel> collectProcessor = model -> {
+      collect(allDependencies, model.getDependencies());
+      return false;
     };
 
     MavenDomProjectProcessorUtils.processChildrenRecursively(projectModel, collectProcessor, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,19 @@ public abstract class ColorChooserService {
     return ServiceManager.getService(ColorChooserService.class);
   }
 
-  @Nullable
-  @Deprecated
   /**
    * @deprecated Use {@link #showDialog(Component, String, Color, boolean, java.util.List, boolean)}
    */
+  @Nullable
+  @Deprecated
   public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
                                    ColorPickerListener[] listeners);
 
-  @Nullable
-  @Deprecated
   /**
    * @deprecated Use {@link #showDialog(Component, String, Color, boolean, java.util.List, boolean)}
    */
+  @Nullable
+  @Deprecated
   public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
                                    ColorPickerListener[] listeners, boolean opacityInPercent);
 

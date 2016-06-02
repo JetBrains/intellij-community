@@ -166,22 +166,18 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (resources.size() == 1) return resources.get(0);
     final String fileName = schemaLocation == null ? null : new File(schemaLocation).getName();
     IndexedRelevantResource<String, XsdNamespaceBuilder> resource =
-      Collections.max(resources, new Comparator<IndexedRelevantResource<String, XsdNamespaceBuilder>>() {
-        @Override
-        public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
-                           IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
-          if (fileName != null) {
-            int i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
-            if (i != 0) return i;
-          }
-          if (tagName != null) {
-            int i = Comparing.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
-            if (i != 0) return i;
-          }
-          int i = o1.compareTo(o2);
+      Collections.max(resources, (o1, o2) -> {
+        if (fileName != null) {
+          int i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
           if (i != 0) return i;
-          return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
         }
+        if (tagName != null) {
+          int i = Comparing.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
+          if (i != 0) return i;
+        }
+        int i = o1.compareTo(o2);
+        if (i != 0) return i;
+        return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
       });
     if (tagName != null && !resource.getValue().hasTag(tagName)) {
       return null;

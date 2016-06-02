@@ -402,9 +402,70 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
+  public static class MatcherBuilder {
+    private String pattern;
+    private String separators = "";
+    private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+
+    public MatcherBuilder(String pattern) {
+      this.pattern = pattern;
+    }
+
+    public MatcherBuilder withCaseSensitivity(MatchingCaseSensitivity caseSensitivity) {
+      this.caseSensitivity = caseSensitivity;
+      return this;
+    }
+
+    public MatcherBuilder withSeparators(String separators) {
+      this.separators = separators;
+      return this;
+    }
+
+    public MinusculeMatcher build() {
+      return new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+    }
+  }
+
+  @NotNull
+  public static MatcherBuilder buildMatcher(@NotNull String pattern) {
+    return new MatcherBuilder(pattern);
+  }
+
   @NotNull
   public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return new FixingLayoutMatcher(pattern, options);
+    return buildMatcher(pattern).withCaseSensitivity(options).build();
+  }
+
+  @NotNull
+  public static String capitalizeAndUnderscore(@NotNull String name) {
+    return splitWords(name, '_', new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return StringUtil.toUpperCase(s);
+      }
+    });
+  }
+
+  @NotNull
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<String, String> transformWord) {
+    final String[] words = nameToWords(text);
+    boolean insertSeparator = false;
+    final StringBuilder buf = new StringBuilder();
+    for (String word : words) {
+      if (!Character.isLetterOrDigit(word.charAt(0))) {
+        buf.append(separator);
+        insertSeparator = false;
+        continue;
+      }
+      if (insertSeparator) {
+        buf.append(separator);
+      } else {
+        insertSeparator = true;
+      }
+      buf.append(transformWord.fun(word));
+    }
+    return buf.toString();
+
   }
 
   public enum MatchingCaseSensitivity {

@@ -52,10 +52,6 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
     if (module == null) return;
     final SphinxBaseCommand action = new SphinxBaseCommand();
     final Module finalModule = module;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        action.execute(finalModule);
-      }
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> action.execute(finalModule), ModalityState.NON_MODAL);
   }
 }

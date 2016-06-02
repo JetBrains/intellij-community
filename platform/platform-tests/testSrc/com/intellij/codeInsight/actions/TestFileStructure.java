@@ -100,30 +100,24 @@ public class TestFileStructure {
 
   public static PsiDirectory createDirectory(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) throws IOException {
     final VirtualFile[] dir = new VirtualFile[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          dir[0] = parent.createChildDirectory(null, name);
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        dir[0] = parent.createChildDirectory(null, name);
+      }
+      catch (IOException e) {
+        e.printStackTrace();
       }
     });
     return PsiDirectoryFactory.getInstance(project).createDirectory(dir[0]);
   }
 
   public static void delete(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          file.delete(null);
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        file.delete(null);
+      }
+      catch (IOException e) {
+        e.printStackTrace();
       }
     });
   }

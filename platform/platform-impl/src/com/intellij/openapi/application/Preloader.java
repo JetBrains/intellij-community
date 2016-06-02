@@ -61,27 +61,22 @@ public class Preloader implements ApplicationComponent {
       return;
     }
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (final PreloadingActivity activity : PreloadingActivity.EP_NAME.getExtensions()) {
-      myExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
-          if (myIndicator.isCanceled()) return;
+      myExecutor.execute(() -> {
+        if (myIndicator.isCanceled()) return;
 
-          checkHeavyProcessRunning();
-          if (myIndicator.isCanceled()) return;
+        checkHeavyProcessRunning();
+        if (myIndicator.isCanceled()) return;
 
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                activity.preload(myWrappingIndicator);
-              }
-              catch (ProcessCanceledException ignore) {
-              }
-              LOG.info("Finished preloading " + activity);
-            }
-          }, myIndicator);
-        }
+        progressManager.runProcess(() -> {
+          try {
+            activity.preload(myWrappingIndicator);
+          }
+          catch (ProcessCanceledException ignore) {
+          }
+          LOG.info("Finished preloading " + activity);
+        }, myIndicator);
       });
     }
   }

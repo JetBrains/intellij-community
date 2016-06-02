@@ -18,12 +18,13 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.util.BuildNumber;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class PluginManagerTest {
   @Test
-  public void compatibilityBranchBased() throws Exception {
+  public void compatibilityBranchBased() {
     assertCompatible("145.2", null, null);
     assertCompatible("145.2.2", null, null);
 
@@ -61,7 +62,7 @@ public class PluginManagerTest {
   }
 
   @Test
-  public void compatibilityBranchBasedStar() throws Exception {
+  public void compatibilityBranchBasedStar() {
     assertCompatible("145.10", "144.*", null);
     assertIncompatible("145.10", "145.*", null);
     assertIncompatible("145.10", "146.*", null);
@@ -76,60 +77,34 @@ public class PluginManagerTest {
   }
   
   @Test
-  public void compatibilityYearBased() throws Exception {
-    assertCompatible("2016.2", "2016.1", "2016.3");
-    assertCompatible("2016.2", "145.*", "2016.3");
-    assertCompatible("2016.2", null, "2016.10");
-    assertIncompatible("2016.2", null, "2015.10");
-  }
-  
-  @Test
-  public void compatibilityYearBasedStar() throws Exception {
-    assertCompatible("2016.2", "2016.1.*", null);
-    assertIncompatible("2016.2", "2016.2.*", null);
-    assertIncompatible("2016.2", "2016.2.*", null);
-    assertIncompatible("2016.2", null, "2016.1.*");
-    assertCompatible("2016.2", null, "2016.2.*");
-    assertCompatible("2016.2", null, "20163.*");
-    
-    assertCompatible("2016.2.1", null, "2016.2.*");
-    assertCompatible("2016.2.1", "2016.2", "2016.2.*");
-
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.2.*");
-
-    assertCompatible("2016.2", "2016", null);
-    assertCompatible("2015", null, "2016");
-    assertIncompatible("2016.1", null, "2016");
-  }
-
-  @Test
-  public void compatibilityBranchBasedSnapshots() throws Exception {
+  public void compatibilitySnapshots() {
     assertIncompatible("145.SNAPSHOT", "146", null);
     assertIncompatible("145.2.SNAPSHOT", "145.3", null);
 
     assertCompatible("145.SNAPSHOT", "145.2", null);
 
-    // snapshot ignore until build (special case)
-    assertCompatible("145.SNAPSHOT", null, "145");
-    assertCompatible("145.SNAPSHOT", null, "144");
-    assertCompatible("145.2.SNAPSHOT", null, "145");
-    assertCompatible("145.2.SNAPSHOT", null, "144");
+    assertCompatible("145.SNAPSHOT", null, "146");
+    assertIncompatible("145.SNAPSHOT", null, "145");
+    assertIncompatible("145.SNAPSHOT", null, "144");
+    assertIncompatible("145.2.SNAPSHOT", null, "145");
+    assertIncompatible("145.2.SNAPSHOT", null, "144");
   }
 
   @Test
-  public void compatibilityYearBasedSnapshots() throws Exception {
-    assertIncompatible("2016.2.SNAPSHOT", "2016.3", null);
-    assertIncompatible("2016.2.2.SNAPSHOT", "2016.2.3", null);
+  public void convertExplicitBigNumberInUntilBuildToStar() {
+    assertConvertsTo(null, null);
+    assertConvertsTo("145", "145");
+    assertConvertsTo("145.999", "145.999");
+    assertConvertsTo("145.9999", "145.*");
+    assertConvertsTo("145.99999", "145.*");
+    assertConvertsTo("145.9999.1", "145.9999.1");
+    assertConvertsTo("145.1000", "145.1000");
+    assertConvertsTo("145.10000", "145.*");
+    assertConvertsTo("145.100000", "145.*");
+  }
 
-    assertCompatible("2016.2.SNAPSHOT", "2016.2.2", null);
-
-    // snapshot ignore until build (special case)
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.2");
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.1");
-    assertCompatible("2016.2.SNAPSHOT", null, "2017.2");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.2");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.1");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "144");
+  private static void assertConvertsTo(String untilBuild, String result) {
+    assertEquals(result, IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {

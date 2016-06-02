@@ -134,7 +134,7 @@ fun Path.createFile() {
 fun Path.refreshVfs() {
   LocalFileSystem.getInstance()?.let { fs ->
     // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-    val virtualFile = fs.findFileByPath(systemIndependentPath)
+    val virtualFile = fs.refreshAndFindFileByPath(systemIndependentPath)
     if (virtualFile != null) {
       VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     }

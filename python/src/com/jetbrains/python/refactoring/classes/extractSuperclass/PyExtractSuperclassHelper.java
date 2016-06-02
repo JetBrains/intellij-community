@@ -71,12 +71,8 @@ public final class PyExtractSuperclassHelper {
     selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
 
     final RefactoringEventData beforeData = new RefactoringEventData();
-    beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(new Function<PyMemberInfo<PyElement>, PsiElement>() {
-      @Override
-      public PsiElement fun(PyMemberInfo<PyElement> info) {
-        return info.getMember();
-      }
-    }).toList());
+    beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(
+      (Function<PyMemberInfo<PyElement>, PsiElement>)info -> info.getMember()).toList());
 
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(getRefactoringId(), beforeData);

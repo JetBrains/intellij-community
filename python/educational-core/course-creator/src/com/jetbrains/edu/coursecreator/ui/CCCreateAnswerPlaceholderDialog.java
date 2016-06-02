@@ -43,7 +43,6 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   private void setHintText(AnswerPlaceholder answerPlaceholder) {
     String hintText = answerPlaceholder.getHint();
 
-    myPanel.doClick();
     myPanel.setHintText(hintText);
   }
 

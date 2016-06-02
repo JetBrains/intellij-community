@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
@@ -24,6 +27,7 @@ import com.sun.jna.platform.win32.WinNT;
  * @author Alexey.Ushakov
  */
 public class WinProcessManager {
+  private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() {}
 
@@ -47,6 +51,59 @@ public class WinProcessManager {
       }
     } else {
       throw new IllegalStateException("Unknown Process implementation");
+    }
+  }
+
+  /**
+   * Force kill a process (tree)
+   * @param process Windows process
+   * @param tree true to also kill all subprocesses
+   */
+  public static boolean kill(Process process, boolean tree) {
+    return kill(-1, process, tree);
+  }
+
+  public static boolean kill(int pid, boolean tree) {
+    return kill(pid, null, tree);
+  }
+
+  private static boolean kill(int pid, Process process, boolean tree) {
+    LOG.assertTrue(pid > 0 || process != null);
+    try {
+      if (process != null) {
+        pid = getProcessPid(process);
+      }
+      String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(StringUtil.join(cmdArray, " "));
+      }
+      Process p = new ProcessBuilder(cmdArray).redirectErrorStream(true).start();
+      String output = FileUtil.loadTextAndClose(p.getInputStream());
+      int res = p.waitFor();
+
+      if (res != 0 && (process == null || isAlive(process))) {
+        LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
+        return false;
+      }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug(output);
+      }
+
+      return true;
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+    return false;
+  }
+
+  // todo replace with Process.isAlive when available (in 1.8)
+  private static boolean isAlive(Process process) {
+    try {
+      process.exitValue();
+      return false;
+    } catch(IllegalThreadStateException e) {
+      return true;
     }
   }
 }

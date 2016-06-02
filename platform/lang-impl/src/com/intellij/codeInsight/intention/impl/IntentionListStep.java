@@ -305,16 +305,13 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     result.addAll(myCachedGutters);
     result.addAll(myCachedNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
-    Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
-      @Override
-      public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-        int weight1 = getWeight(o1);
-        int weight2 = getWeight(o2);
-        if (weight1 != weight2) {
-          return weight2 - weight1;
-        }
-        return o1.compareTo(o2);
+    Collections.sort(result, (o1, o2) -> {
+      int weight1 = getWeight(o1);
+      int weight2 = getWeight(o2);
+      if (weight1 != weight2) {
+        return weight2 - weight1;
       }
+      return o1.compareTo(o2);
     });
     return result;
   }

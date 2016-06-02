@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,10 +166,12 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 
+  @Override
   public void setFileToImport(String path) {
     setBaseProjectPath(path);
   }
 
+  @Override
   public List<Module> commit(@NotNull final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final boolean fromProjectStructure = model != null;
     ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
@@ -306,6 +308,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     myUpdaters.add(updater);
   }
 
+  @Override
   public boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector) {
     for (ProjectStructureDetector projectStructureDetector : Extensions.getExtensions(ProjectStructureDetector.EP_NAME)) {
       if (projectStructureDetector != thisDetector && !getProjectRoots(projectStructureDetector).isEmpty()) {
@@ -321,7 +324,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
       List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
       for (DetectedProjectRoot root : roots) {
         if (root instanceof DetectedContentRoot) {
-          modules.add(new ModuleDescriptor(root.getDirectory(), ((DetectedContentRoot)root).getModuleType(), Collections.<DetectedSourceRoot>emptyList()));
+          modules.add(new ModuleDescriptor(root.getDirectory(), ((DetectedContentRoot)root).getModuleType(), Collections.emptyList()));
         }
       }
       projectDescriptor.setModules(modules);
@@ -405,10 +408,10 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   }
 
   private static boolean isTestRootName(final String name) {
-    return "test".equalsIgnoreCase(name) || 
-           "tests".equalsIgnoreCase(name) || 
-           "testSource".equalsIgnoreCase(name) || 
-           "testSources".equalsIgnoreCase(name) || 
+    return "test".equalsIgnoreCase(name) ||
+           "tests".equalsIgnoreCase(name) ||
+           "testSource".equalsIgnoreCase(name) ||
+           "testSources".equalsIgnoreCase(name) ||
            "testSrc".equalsIgnoreCase(name) ||
            "tst".equalsIgnoreCase(name);
   }
@@ -437,7 +440,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     if (moduleDescriptor.isReuseExistingElement()) {
       final File file = new File(moduleDescriptor.computeModuleFilePath());
       if (file.exists()) {
-        final Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
+        final Element rootElement = JDOMUtil.load(file);
         final String type = rootElement.getAttributeValue("type");
         if (type != null) {
           return ModuleTypeManager.getInstance().findByID(type);

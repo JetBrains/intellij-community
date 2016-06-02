@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 24, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -216,13 +212,15 @@ public class MoveInnerDialog extends MoveDialogBase {
         final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);
         final VirtualFile targetSourceRoot;
         if (contentSourceRoots.size() > 1) {
+          PsiPackage targetPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetName);
           PsiDirectory initialDir = null;
-          if (oldPackage != null) {
-            final PsiDirectory[] directories = oldPackage.getDirectories();
-            final VirtualFile root = projectRootManager.getFileIndex().getContentRootForFile(psiDirectory.getVirtualFile());
+          if (targetPackage != null) {
+            final PsiDirectory[] directories = targetPackage.getDirectories();
+            final VirtualFile root = projectRootManager.getFileIndex().getSourceRootForFile(psiDirectory.getVirtualFile());
             for(PsiDirectory dir: directories) {
-              if (Comparing.equal(projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()), root)) {
+              if (Comparing.equal(projectRootManager.getFileIndex().getSourceRootForFile(dir.getVirtualFile()), root)) {
                 initialDir = dir;
+                break;
               }
             }
           }

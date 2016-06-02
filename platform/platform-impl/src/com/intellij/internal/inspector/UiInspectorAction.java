@@ -884,16 +884,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           final Method finalGetter = getter;
           final Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
           setter.setAccessible(true);
-          return new Function<Object, Object>() {
-            @Override
-            public Object fun(Object o) {
-              try {
-                setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
-                return finalGetter.invoke(myComponent);
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+          return o -> {
+            try {
+              setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
+              return finalGetter.invoke(myComponent);
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
             }
           };
         }
@@ -902,16 +899,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
             return null;
           }
-          return new Function<Object, Object>() {
-            @Override
-            public Object fun(Object o) {
-              try {
-                field.set(myComponent, fromObject(o, field.getType()));
-                return field.get(myComponent);
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+          return o -> {
+            try {
+              field.set(myComponent, fromObject(o, field.getType()));
+              return field.get(myComponent);
+            }
+            catch (Exception e1) {
+              throw new RuntimeException(e1);
             }
           };
         }
@@ -990,27 +984,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void processMouseEvent(MouseEvent me) {
-      if (me.isAltDown() && me.isControlDown()) {
-        switch (me.getID()) {
-          case MouseEvent.MOUSE_CLICKED:
-            if (me.getClickCount() == 1 && !me.isPopupTrigger()) {
-              Object source = me.getSource();
-              if (source instanceof Component) {
-                showInspector((Component)source);
-              }
-              else {
-                Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                if (owner != null) {
-                  showInspector(owner);
-                }
-              }
-              me.consume();
-            }
+      if (!me.isAltDown() || !me.isControlDown()) return;
+      if (me.getClickCount() != 1 || me.isPopupTrigger()) return;
+      me.consume();
+      if (me.getID() != MouseEvent.MOUSE_RELEASED) return;
+      Component component = me.getComponent();
 
-            break;
-          default:
-            break;
-        }
+      if (component instanceof Container) {
+        component = ((Container)component).findComponentAt(me.getPoint());
+      }
+      else if (component == null) {
+        component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      }
+      if (component != null) {
+        showInspector(component);
       }
     }
 

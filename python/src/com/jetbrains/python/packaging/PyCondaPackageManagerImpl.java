@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
@@ -87,17 +90,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final ProcessOutput result;
-    if (indicator != null) {
-      result = handler.runProcessWithProgressIndicator(indicator);
-    }
-    else {
-      result = handler.runProcess();
-    }
-    if (result.isCancelled()) {
-      throw new RunCanceledByUserException();
-    }
+    final ProcessOutput result = handler.runProcess();
     final int exitCode = result.getExitCode();
     if (exitCode != 0) {
       final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
@@ -156,7 +149,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.parse(requiresSpec));
+        requirements.addAll(PyRequirement.fromText(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));

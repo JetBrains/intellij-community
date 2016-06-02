@@ -99,6 +99,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myChildren.clear();
   }
 
+  public void computeWatches() {
+    myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
+  }
+
   /**
    * @deprecated Use {@link #addWatchExpression(XStackFrame, XExpression, int, boolean)}
    */

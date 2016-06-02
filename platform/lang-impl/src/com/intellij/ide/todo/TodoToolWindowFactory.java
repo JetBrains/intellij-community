@@ -29,11 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class TodoToolWindowFactory implements ToolWindowFactory {
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
-    DumbService.getInstance(project).runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        ServiceManager.getService(project, TodoView.class).initToolWindow(toolWindow);
-      }
-    });
+    DumbService.getInstance(project).runWhenSmart(() -> ServiceManager.getService(project, TodoView.class).initToolWindow(toolWindow));
   }
 }

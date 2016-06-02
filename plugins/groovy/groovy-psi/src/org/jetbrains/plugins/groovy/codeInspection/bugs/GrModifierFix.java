@@ -29,22 +29,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
  * @author Max Medvedev
  */
 public class GrModifierFix extends GroovyFix {
-  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST = new Function<ProblemDescriptor, PsiModifierList>() {
-    @Override
-    public PsiModifierList fun(ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      assert element instanceof PsiModifierList : element;
-      return (PsiModifierList)element;
-    }
+  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST = descriptor -> {
+    final PsiElement element = descriptor.getPsiElement();
+    assert element instanceof PsiModifierList : element;
+    return (PsiModifierList)element;
   };
 
-  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST_OWNER = new Function<ProblemDescriptor, PsiModifierList>() {
-    @Override
-    public PsiModifierList fun(ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      assert element instanceof PsiModifierListOwner : element;
-      return ((PsiModifierListOwner)element).getModifierList();
-    }
+  public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST_OWNER = descriptor -> {
+    final PsiElement element = descriptor.getPsiElement();
+    assert element instanceof PsiModifierListOwner : element;
+    return ((PsiModifierListOwner)element).getModifierList();
   };
 
 

@@ -233,12 +233,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public void reset() {
-    UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
-      @Override
-      public void run() {
-        requireShutdown = false;
-        TableUtil.ensureSelectionExists(getPluginTable());
-      }
+    UiNotifyConnector.doWhenFirstShown(getPluginTable(), () -> {
+      requireShutdown = false;
+      TableUtil.ensureSelectionExists(getPluginTable());
     });
   }
 
@@ -248,12 +245,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   @NotNull
   public static List<PluginId> mapToPluginIds(List<IdeaPluginDescriptor> plugins) {
-    return ContainerUtil.map(plugins, new Function<IdeaPluginDescriptor, PluginId>() {
-      @Override
-      public PluginId fun(IdeaPluginDescriptor descriptor) {
-        return descriptor.getPluginId();
-      }
-    });
+    return ContainerUtil.map(plugins, descriptor -> descriptor.getPluginId());
   }
 
   private static String getTextPrefix() {
@@ -335,65 +327,59 @@ public abstract class PluginManagerMain implements Disposable {
   protected void loadPluginsFromHostInBackground() {
     setDownloadStatus(true);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-        final Map<String, String> errors = ContainerUtil.newLinkedHashMap();
-        ProgressIndicator indicator = new EmptyProgressIndicator();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
+      final Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        List<String> hosts = RepositoryHelper.getPluginHosts();
-        Set<PluginId> unique = ContainerUtil.newHashSet();
-        for (String host : hosts) {
-          try {
-            if (host == null || acceptHost(host)) {
-              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, indicator);
-              for (IdeaPluginDescriptor plugin : plugins) {
-                if (unique.add(plugin.getPluginId())) {
-                  list.add(plugin);
-                }
+      List<String> hosts = RepositoryHelper.getPluginHosts();
+      Set<PluginId> unique = ContainerUtil.newHashSet();
+      for (String host : hosts) {
+        try {
+          if (host == null || acceptHost(host)) {
+            List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, indicator);
+            for (IdeaPluginDescriptor plugin : plugins) {
+              if (unique.add(plugin.getPluginId())) {
+                list.add(plugin);
               }
-            }
-          }
-          catch (FileNotFoundException e) {
-            LOG.info(host, e);
-          }
-          catch (IOException e) {
-            LOG.info(host, e);
-            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
-              errors.put(host, String.format("'%s' for '%s'", e.getMessage(), host));
             }
           }
         }
-
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            setDownloadStatus(false);
-
-            if (!list.isEmpty()) {
-              InstalledPluginsState state = InstalledPluginsState.getInstance();
-              for (IdeaPluginDescriptor descriptor : list) {
-                state.onDescriptorDownload(descriptor);
-              }
-
-              modifyPluginsList(list);
-              propagateUpdates(list);
-            }
-
-            if (!errors.isEmpty()) {
-              String message = IdeBundle.message("error.list.of.plugins.was.not.loaded",
-                                                 StringUtil.join(errors.keySet(), ", "),
-                                                 StringUtil.join(errors.values(), ",\n"));
-              String title = IdeBundle.message("title.plugins");
-              String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
-              if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
-                loadPluginsFromHostInBackground();
-              }
-            }
+        catch (FileNotFoundException e) {
+          LOG.info(host, e);
+        }
+        catch (IOException e) {
+          LOG.info(host, e);
+          if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
+            errors.put(host, String.format("'%s' for '%s'", e.getMessage(), host));
           }
-        });
+        }
       }
+
+      UIUtil.invokeLaterIfNeeded(() -> {
+        setDownloadStatus(false);
+
+        if (!list.isEmpty()) {
+          InstalledPluginsState state = InstalledPluginsState.getInstance();
+          for (IdeaPluginDescriptor descriptor : list) {
+            state.onDescriptorDownload(descriptor);
+          }
+
+          modifyPluginsList(list);
+          propagateUpdates(list);
+        }
+
+        if (!errors.isEmpty()) {
+          String message = IdeBundle.message("error.list.of.plugins.was.not.loaded",
+                                             StringUtil.join(errors.keySet(), ", "),
+                                             StringUtil.join(errors.values(), ",\n"));
+          String title = IdeBundle.message("title.plugins");
+          String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
+          if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
+            loadPluginsFromHostInBackground();
+          }
+        }
+      });
     });
   }
 
@@ -671,12 +657,7 @@ public abstract class PluginManagerMain implements Disposable {
         message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
       }
       else if (!disabled.isEmpty()) {
-        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
-          @Override
-          public String fun(IdeaPluginDescriptor pluginDescriptor) {
-            return pluginDescriptor.getName();
-          }
-        }, ", ") + " are disabled.";
+        message += "Updated plugins " + StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", ") + " are disabled.";
       }
 
       if (!disabledDependants.isEmpty()) {
@@ -686,12 +667,7 @@ public abstract class PluginManagerMain implements Disposable {
           message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
         }
         else {
-          message += " plugins " + StringUtil.join(disabledDependants, new Function<IdeaPluginDescriptor, String>() {
-            @Override
-            public String fun(IdeaPluginDescriptor pluginDescriptor) {
-              return pluginDescriptor.getName();
-            }
-          }, ", ") + ".";
+          message += " plugins " + StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", ") + ".";
         }
       }
       message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";

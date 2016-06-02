@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -77,6 +80,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(CommonDataKeys.PROJECT.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

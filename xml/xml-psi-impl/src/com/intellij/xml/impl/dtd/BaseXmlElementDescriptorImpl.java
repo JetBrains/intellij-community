@@ -26,7 +26,7 @@ import com.intellij.xml.XmlElementsGroup;
 import java.util.HashMap;
 
 public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescriptor {
-  private volatile XmlElementDescriptor[] myElementDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
   private volatile HashMap<String,XmlElementDescriptor> myElementDescriptorsMap;
   private volatile HashMap<String,XmlAttributeDescriptor> attributeDescriptorsMap;

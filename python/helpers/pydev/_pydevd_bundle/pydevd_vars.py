@@ -21,11 +21,6 @@ from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, quote, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
-try:
-    import types
-    frame_type = types.FrameType
-except:
-    frame_type = type(sys._getframe())
 
 
 #-------------------------------------------------------------------------- defining true and false for earlier versions

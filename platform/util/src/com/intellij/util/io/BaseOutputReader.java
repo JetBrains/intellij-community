@@ -52,6 +52,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
   private final Options myOptions;
   private final char[] myInputBuffer = new char[8192];
   private final StringBuilder myLineBuffer = new StringBuilder();
+  private boolean myCarry = false;
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(createInputStreamReader(inputStream, charset));
@@ -105,6 +106,10 @@ public abstract class BaseOutputReader extends BaseDataReader {
       }
     }
     finally {
+      if (myCarry) {
+        myLineBuffer.append('\r');
+        myCarry = false;
+      }
       if (myLineBuffer.length() > 0) {
         sendText(myLineBuffer);
       }
@@ -138,6 +143,10 @@ public abstract class BaseOutputReader extends BaseDataReader {
       }
     }
     finally {
+      if (myCarry) {
+        myLineBuffer.append('\r');
+        myCarry = false;
+      }
       if (myLineBuffer.length() > 0) {
         sendText(myLineBuffer);
       }
@@ -146,13 +155,28 @@ public abstract class BaseOutputReader extends BaseDataReader {
     return read;
   }
 
+  @SuppressWarnings("AssignmentToForLoopParameter")
   private void processInput(char[] buffer, StringBuilder line, int n) {
     if (myOptions.splitToLines()) {
       for (int i = 0; i < n; i++) {
-        char c = buffer[i];
+        char c;
+        if (i == 0 && myCarry) {
+          c = '\r';
+          i--;
+          myCarry = false;
+        }
+        else {
+          c = buffer[i];
+        }
 
-        if (c == '\r' && i + 1 < n && buffer[i + 1] == '\n') {
-          continue;
+        if (c == '\r') {
+          if (i + 1 == n) {
+            myCarry = true;
+            continue;
+          }
+          else if (buffer[i + 1] == '\n') {
+            continue;
+          }
         }
 
         if (c != '\n' || myOptions.sendIncompleteLines() || myOptions.withSeparators()) {
@@ -179,23 +203,8 @@ public abstract class BaseOutputReader extends BaseDataReader {
   }
 
   @Override
-  protected boolean readAvailable() throws IOException {
-    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
-  }
-
-  @Override
   protected void close() throws IOException {
     myReader.close();
-  }
-
-  @Override
-  public void stop() {
-    super.stop();
-    if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
-      // we can't count on super.stop() since it only sets 'isRunning = false', and blocked Reader.read won't wake up.
-      try { close(); }
-      catch (IOException ignore) { }
-    }
   }
 
   protected void onBufferExhaustion() { }

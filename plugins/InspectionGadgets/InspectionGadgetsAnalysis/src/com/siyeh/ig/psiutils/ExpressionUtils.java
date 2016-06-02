@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2015 Bas Leijdekkers
+ * Copyright 2005-20164 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,29 +31,23 @@ public class ExpressionUtils {
   private ExpressionUtils() {}
 
   @Nullable
-  public static Object computeConstantExpression(
-    @Nullable PsiExpression expression) {
+  public static Object computeConstantExpression(@Nullable PsiExpression expression) {
     return computeConstantExpression(expression, false);
   }
 
   @Nullable
-  public static Object computeConstantExpression(
-    @Nullable PsiExpression expression,
-    boolean throwConstantEvaluationOverflowException) {
+  public static Object computeConstantExpression(@Nullable PsiExpression expression, boolean throwConstantEvaluationOverflowException) {
     if (expression == null) {
       return null;
     }
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiConstantEvaluationHelper constantEvaluationHelper =
-      psiFacade.getConstantEvaluationHelper();
-    return constantEvaluationHelper.computeConstantExpression(expression,
-                                                              throwConstantEvaluationOverflowException);
+    final PsiConstantEvaluationHelper constantEvaluationHelper = psiFacade.getConstantEvaluationHelper();
+    return constantEvaluationHelper.computeConstantExpression(expression, throwConstantEvaluationOverflowException);
   }
 
   public static boolean isConstant(PsiField field) {
-    if (!field.hasModifierProperty(PsiModifier.FINAL) ||
-        !field.hasModifierProperty(PsiModifier.STATIC)) {
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
     if (CollectionUtils.isEmptyArray(field)) {

@@ -24,9 +24,14 @@ public class Course {
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
-  private String myLanguage="Python";
+  private String myLanguage = "Python";
 
-  private String courseType="PyCharm";
+  //this field is used to distinguish ordinary and CheckIO projects
+  //"PyCharm" is used here for historical reasons
+  private String courseType = EduNames.PYCHARM;
+
+  //this field is used to distinguish study and course creator modes
+  private String courseMode = EduNames.STUDY;
 
   /**
    * Initializes state of course
@@ -72,12 +77,7 @@ public class Course {
   }
 
   public static String getAuthorsString(@NotNull List<CourseInfo.Author> authors) {
-    return StringUtil.join(authors, new Function<CourseInfo.Author, String>() {
-      @Override
-      public String fun(CourseInfo.Author author) {
-        return author.getName();
-      }
-    }, ", ");
+    return StringUtil.join(authors, author -> author.getName(), ", ");
   }
 
   public void setAuthors(String[] authors) {
@@ -144,5 +144,13 @@ public class Course {
 
   public void setCourseType(String courseType) {
     this.courseType = courseType;
+  }
+
+  public String getCourseMode() {
+    return courseMode;
+  }
+
+  public void setCourseMode(String courseMode) {
+    this.courseMode = courseMode;
   }
 }

@@ -372,12 +372,8 @@ public class PyCodeFragmentUtil {
 
   private static boolean isUsedOutside(@NotNull PsiNamedElement element, @NotNull List<Instruction> subGraph) {
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
-    return ContainerUtil.exists(PyRefactoringUtil.findUsages(element, false), new Condition<UsageInfo>() {
-      @Override
-      public boolean value(UsageInfo usageInfo) {
-        return !subGraphElements.contains(usageInfo.getElement());
-      }
-    });
+    return ContainerUtil.exists(PyRefactoringUtil.findUsages(element, false),
+                                usageInfo -> !subGraphElements.contains(usageInfo.getElement()));
   }
 
   @NotNull

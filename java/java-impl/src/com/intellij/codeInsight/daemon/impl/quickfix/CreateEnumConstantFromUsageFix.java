@@ -60,12 +60,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
       final PsiMethod constructor = constructors[0];
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
       if (parameters.length > 0) {
-        final String params = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return psiParameter.getName();
-          }
-        }, ",");
+        final String params = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ",");
         enumConstant = (PsiEnumConstant)enumConstant.replace(elementFactory.createEnumConstantFromText(name + "(" + params + ")", null));
         final TemplateBuilderImpl builder = new TemplateBuilderImpl(enumConstant);
 

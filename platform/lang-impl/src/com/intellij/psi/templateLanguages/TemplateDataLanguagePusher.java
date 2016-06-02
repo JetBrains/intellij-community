@@ -23,7 +23,9 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.VfsDependentEnum;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,12 @@ import java.io.IOException;
 public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> {
 
   public static final Key<Language> KEY = Key.create("TEMPLATE_DATA_LANGUAGE");
+
+  private static final VfsDependentEnum<String> ourLanguagesEnumerator = new VfsDependentEnum<>(
+    "languages",
+    EnumeratorStringDescriptor.INSTANCE,
+    1
+  );
 
   @Override
   public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
@@ -83,7 +91,7 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     return true;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 1, true);
+  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 2, true);
 
   @Override
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull Language value) throws IOException {
@@ -91,7 +99,8 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     if (iStream != null) {
       try {
         final int oldLanguage = DataInputOutputUtil.readINT(iStream);
-        if (value.getID().hashCode() == oldLanguage) return;
+        String oldLanguageId = ourLanguagesEnumerator.getById(oldLanguage);
+        if (value.getID().equals(oldLanguageId)) return;
       }
       finally {
         //noinspection ThrowFromFinallyBlock
@@ -101,7 +110,7 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
     if (value != Language.ANY || iStream != null) {
       final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-      DataInputOutputUtil.writeINT(oStream, value.getID().hashCode());
+      DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
       oStream.close();
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir);
     }

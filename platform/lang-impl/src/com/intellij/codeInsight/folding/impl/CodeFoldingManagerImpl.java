@@ -186,7 +186,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-    PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
     if (otherEditors.length == 0 && !editor.isDisposed()) {
@@ -250,21 +249,18 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   private void initFolding(@NotNull final Editor editor) {
     final Document document = editor.getDocument();
-    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-        for (Editor otherEditor : editors) {
-          if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
-          documentFoldingInfo.loadFromEditor(otherEditor);
-          break;
-        }
-        documentFoldingInfo.setToEditor(editor);
-        documentFoldingInfo.clear();
-
-        editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
+    editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+      Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+      for (Editor otherEditor : editors) {
+        if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
+        documentFoldingInfo.loadFromEditor(otherEditor);
+        break;
       }
+      documentFoldingInfo.setToEditor(editor);
+      documentFoldingInfo.clear();
+
+      editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
     });
   }
 
@@ -306,15 +302,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
-        for (FoldRegion region : regions) {
-          PsiElement element = foldingInfo.getPsiElement(region);
-          if (element != null) {
-            region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
-          }
+    editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
+      for (FoldRegion region : regions) {
+        PsiElement element = foldingInfo.getPsiElement(region);
+        if (element != null) {
+          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
         }
       }
     });
@@ -325,15 +318,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public Runnable updateFoldRegionsAsync(@NotNull final Editor editor, final boolean firstTime) {
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) return null;
     final Runnable runnable = updateFoldRegions(editor, firstTime, false);
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (runnable != null) {
-          runnable.run();
-        }
-        if (firstTime && !isFoldingsInitializedInEditor(editor)) {
-          initFolding(editor);
-        }
+    return () -> {
+      if (runnable != null) {
+        runnable.run();
+      }
+      if (firstTime && !isFoldingsInitializedInEditor(editor)) {
+        initFolding(editor);
       }
     };
   }

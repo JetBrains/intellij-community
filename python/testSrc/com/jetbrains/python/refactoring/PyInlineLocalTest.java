@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -151,12 +152,8 @@ public class PyInlineLocalTest extends PyTestCase {
 
   private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) throws Exception {
     myFixture.configureByFile("/refactoring/inlinelocal/operatorPrecedence/template.py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getDocument().insertString(0, firstLine + "\n");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> myFixture.getEditor().getDocument().insertString(0, firstLine + "\n"));
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     performRefactoring(null);
     myFixture.checkResultByFile("/refactoring/inlinelocal/operatorPrecedence/" + resultPrefix + ".after.py");
     FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,23 +29,25 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
 
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
   private JBDimension myMinimumButtonSize;
-  private PropertyChangeListener myActionButtonSynchronizer;
+  private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   private Icon myIcon;
   protected final Presentation myPresentation;
@@ -70,8 +72,29 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myAction = action;
     myPresentation = presentation;
     myPlace = place;
-    setFocusable(false);
+    // Button should be focusable if screen reader is active
+    setFocusable(ScreenReader.isActive());
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+    // Pressing the SPACE key is the same as clicking the button
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (e.getModifiers() == 0 && e.getKeyCode() == VK_SPACE) {
+          click();
+        }
+      }
+    });
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
@@ -97,8 +120,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && myPresentation.isEnabled();
+  }
+
   protected boolean isButtonEnabled() {
-    return isEnabled() && myPresentation.isEnabled();
+    return isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
@@ -134,7 +162,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void actionPerformed(final AnActionEvent event) {
-    if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
+    if (myAction instanceof ActionGroup &&
+        !(myAction instanceof CustomComponentAction) &&
+        ((ActionGroup)myAction).isPopup() &&
+        !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
       final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
       ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
         @Override
@@ -145,12 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           }
         }
       });
-      popupMenu.setDataContextProvider(new Getter<DataContext>() {
-        @Override
-        public DataContext get() {
-          return ActionButton.this.getDataContext();
-        }
-      });
+      popupMenu.setDataContextProvider(() -> ActionButton.this.getDataContext());
       if (ActionPlaces.isToolbarPlace(event.getPlace())) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
@@ -164,18 +190,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void removeNotify() {
-    if (myActionButtonSynchronizer != null) {
-      myPresentation.removePropertyChangeListener(myActionButtonSynchronizer);
-      myActionButtonSynchronizer = null;
+    if (myPresentationListener != null) {
+      myPresentation.removePropertyChangeListener(myPresentationListener);
+      myPresentationListener = null;
     }
     super.removeNotify();
   }
 
   public void addNotify() {
     super.addNotify();
-    if (myActionButtonSynchronizer == null) {
-      myActionButtonSynchronizer = new ActionButtonSynchronizer();
-      myPresentation.addPropertyChangeListener(myActionButtonSynchronizer);
+    if (myPresentationListener == null) {
+      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
     AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
@@ -322,8 +347,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
       return PUSHED;
     }
+    else if (myRollover && isButtonEnabled()) {
+      return POPPED;
+    }
+    else if (isFocusOwner()) {
+      return SELECTED;
+    }
     else {
-      return !myRollover || !isButtonEnabled() ? NORMAL : POPPED;
+      return NORMAL;
     }
   }
 
@@ -331,32 +362,27 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myAction;
   }
 
-  private class ActionButtonSynchronizer implements PropertyChangeListener {
-    @NonNls protected static final String SELECTED_PROPERTY_NAME = "selected";
-
-    public void propertyChange(PropertyChangeEvent e) {
-      String propertyName = e.getPropertyName();
-      if (Presentation.PROP_TEXT.equals(propertyName)) {
-        updateToolTipText();
-        revalidate(); // recalc preferred size & repaint instantly
-      }
-      else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_ICON.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-        setDisabledIcon(myPresentation.getDisabledIcon());
-        repaint();
-      }
-      else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
-      }
-      else if (SELECTED_PROPERTY_NAME.equals(propertyName)) {
-        repaint();
-      }
+  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+    String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName)) {
+      updateToolTipText();
+    }
+    else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_ICON.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
+      setDisabledIcon(myPresentation.getDisabledIcon());
+      repaint();
+    }
+    else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
+    }
+    else if ("selected".equals(propertyName)) {
+      repaint();
     }
   }
 

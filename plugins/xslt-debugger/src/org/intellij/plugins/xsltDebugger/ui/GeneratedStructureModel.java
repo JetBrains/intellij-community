@@ -79,11 +79,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
 
   public void update(final List<OutputEventQueue.NodeEvent> eventQueue) {
     if (!SwingUtilities.isEventDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          updateImpl(eventQueue);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> updateImpl(eventQueue));
       return;
     }
     updateImpl(eventQueue);
@@ -242,15 +238,13 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   public void finalUpdate(final List<OutputEventQueue.NodeEvent> events) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        myListenersDisabled = true;
-        try {
-          updateImpl(events);
-        } finally {
-          myListenersDisabled = false;
-          nodeStructureChanged((TreeNode)getRoot());
-        }
+    Runnable runnable = () -> {
+      myListenersDisabled = true;
+      try {
+        updateImpl(events);
+      } finally {
+        myListenersDisabled = false;
+        nodeStructureChanged((TreeNode)getRoot());
       }
     };
     ApplicationManager.getApplication().invokeLater(runnable);

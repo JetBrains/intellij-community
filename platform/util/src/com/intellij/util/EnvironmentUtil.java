@@ -140,7 +140,7 @@ public class EnvironmentUtil {
     return flattenEnvironment(getEnvironmentMap());
   }
 
-  public static String[] flattenEnvironment(Map<String, String> environment) {
+  public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
     for (Map.Entry<String, String> entry : environment.entrySet()) {
@@ -167,7 +167,7 @@ public class EnvironmentUtil {
 
     File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
-      String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);

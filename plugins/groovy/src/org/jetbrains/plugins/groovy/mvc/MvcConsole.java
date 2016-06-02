@@ -276,29 +276,23 @@ public class MvcConsole implements Disposable {
         public void processTerminated(ProcessEvent event) {
           final int exitCode = event.getExitCode();
           if (exitCode == 0 && !gotError.get().booleanValue()) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (myProject.isDisposed() || !closeOnDone) return;
-                myToolWindow.hide(null);
-              }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (myProject.isDisposed() || !closeOnDone) return;
+              myToolWindow.hide(null);
             }, modalityState);
           }
         }
       });
     }
     catch (final Exception e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(e.getMessage(), "Cannot Start Process");
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showErrorDialog(e.getMessage(), "Cannot Start Process");
 
-          try {
-            if (onDone != null && !module.isDisposed()) onDone.run();
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        try {
+          if (onDone != null && !module.isDisposed()) onDone.run();
+        }
+        catch (Exception e1) {
+          LOG.error(e1);
         }
       }, modalityState);
       return;
@@ -313,40 +307,34 @@ public class MvcConsole implements Disposable {
     myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");
     myConsole.scrollToEnd();
     myConsole.attachToProcess(handler);
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        handler.startNotify();
-        handler.waitFor();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      handler.startNotify();
+      handler.waitFor();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
 
-            module.putUserData(UPDATING_BY_CONSOLE_PROCESS, true);
-            LocalFileSystem.getInstance().refresh(false);
-            module.putUserData(UPDATING_BY_CONSOLE_PROCESS, null);
+        module.putUserData(UPDATING_BY_CONSOLE_PROCESS, true);
+        LocalFileSystem.getInstance().refresh(false);
+        module.putUserData(UPDATING_BY_CONSOLE_PROCESS, null);
 
-            try {
-              if (onDone != null && !module.isDisposed()) onDone.run();
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
-            myConsole.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-            myKillAction.setHandler(null);
-            myContent.setDisplayName("");
+        try {
+          if (onDone != null && !module.isDisposed()) onDone.run();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+        myConsole.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        myKillAction.setHandler(null);
+        myContent.setDisplayName("");
 
-            myExecuting = false;
+        myExecuting = false;
 
-            final MyProcessInConsole pic = myProcessQueue.poll();
-            if (pic != null) {
-              executeProcessImpl(pic, false);
-            }
-          }
-        }, modalityState);
-      }
+        final MyProcessInConsole pic1 = myProcessQueue.poll();
+        if (pic1 != null) {
+          executeProcessImpl(pic1, false);
+        }
+      }, modalityState);
     });
   }
 

@@ -37,12 +37,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,24 +62,23 @@ public class CCShowPreview extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!CCProjectService.setCCActionAvailable(e)) {
-      return;
-    }
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(false);
     Project project = e.getProject();
     if (project == null) {
       return;
     }
-    Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(false);
+    if (!CCUtils.isCourseCreator(project)) {
+      return;
+    }
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (file != null && CCProjectService.getInstance(project).getTaskFile(file.getVirtualFile()) != null) {
+    if (file != null && StudyUtils.getTaskFile(project, file.getVirtualFile()) != null) {
       presentation.setEnabledAndVisible(true);
     }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    //TODO: need to rewrite this action using new GENERATED_ROOT_FOLDER
     final Project project = e.getProject();
     Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (project == null || module == null) {
@@ -88,13 +88,12 @@ public class CCShowPreview extends DumbAwareAction {
     if (file == null) {
       return;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    Course course = service.getCourse();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    TaskFile taskFile = service.getTaskFile(virtualFile);
+    TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
     if (taskFile == null) {
       return;
     }
@@ -122,12 +121,7 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy));
 
     VirtualFile userFile = generatedFilesFolder.findChild(virtualFile.getName());
     if (userFile == null) {
@@ -149,7 +143,7 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));

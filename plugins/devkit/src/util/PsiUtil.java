@@ -137,15 +137,11 @@ public class PsiUtil {
   }
 
   public static boolean isPluginProject(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        boolean foundMarkerClass =
-          JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
-                                                       GlobalSearchScope.allScope(project)) != null;
-        return Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(project));
-      }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      boolean foundMarkerClass =
+        JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
+                                                     GlobalSearchScope.allScope(project)) != null;
+      return CachedValueProvider.Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(project));
     });
   }
 

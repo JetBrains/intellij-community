@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
+  public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
+  private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
+  private boolean myTurnEditingMode = false;
 
   private StudyTaskManager() {
   }
@@ -207,18 +211,16 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
         myInvisibleFiles = taskManager.myInvisibleFiles;
         myTaskStatusMap = taskManager.myTaskStatusMap;
         myStudyStatusMap = taskManager.myStudyStatusMap;
+        myShouldUseJavaFx = taskManager.myShouldUseJavaFx;
       }
     }
     final Element oldCourseElement = state.getChild(COURSE_ELEMENT);
     if (oldCourseElement != null) {
       myOldCourse = XmlSerializer.deserialize(oldCourseElement, OldCourse.class);
       if (myOldCourse != null) {
-        myCourse = EduUtils.transformOldCourse(myOldCourse, new Function<Pair<AnswerPlaceholder, StudyStatus>, Void>() {
-          @Override
-          public Void fun(Pair<AnswerPlaceholder, StudyStatus> pair) {
-            setStatus(pair.first, pair.second);
-            return null;
-          }
+        myCourse = EduUtils.transformOldCourse(myOldCourse, pair -> {
+          setStatus(pair.first, pair.second);
+          return null;
         });
         myOldCourse = null;
       }
@@ -249,5 +251,29 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public boolean isInvisibleFile(String path) {
     return myInvisibleFiles.contains(path);
+  }
+
+  public boolean shouldUseJavaFx() {
+    return myShouldUseJavaFx;
+  }
+
+  public void setShouldUseJavaFx(boolean shouldUseJavaFx) {
+    this.myShouldUseJavaFx = shouldUseJavaFx;
+  }
+
+  public StudyToolWindow.StudyToolWindowMode getToolWindowMode() {
+    return myToolWindowMode;
+  }
+
+  public void setToolWindowMode(StudyToolWindow.StudyToolWindowMode toolWindowMode) {
+    myToolWindowMode = toolWindowMode;
+  }
+
+  public boolean isTurnEditingMode() {
+    return myTurnEditingMode;
+  }
+
+  public void setTurnEditingMode(boolean turnEditingMode) {
+    myTurnEditingMode = turnEditingMode;
   }
 }

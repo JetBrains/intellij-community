@@ -24,5 +24,5 @@ public class UnnecessaryLocalVariableInspectionTest extends LightInspectionTestC
     return new UnnecessaryLocalVariableInspection();
   }
 
-  public void test() { doNamedTest("C"); }
+  public void testC() { doTest(); }
 }

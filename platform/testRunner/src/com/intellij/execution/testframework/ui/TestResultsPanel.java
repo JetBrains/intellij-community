@@ -16,15 +16,12 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -46,12 +43,9 @@ import java.awt.*;
  */
 public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
   private JScrollPane myLeftPane;
-  private JComponent myStatisticsComponent;
-  private Splitter myStatisticsSplitter;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
   private final String mySplitterProportionProperty;
-  private final String myStatisticsSplitterProportionProperty;
   private final float mySplitterDefaultProportion;
   protected final AnAction[] myConsoleActions;
   protected final TestConsoleProperties myProperties;
@@ -66,7 +60,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     myProperties = properties;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
-    myStatisticsSplitterProportionProperty = mySplitterProportionProperty + "_Statistics";
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
       @Override
       public void toolWindowRegistered(@NotNull String id) {
@@ -87,7 +80,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
-    myStatisticsComponent = createStatisticsPanel();
     myStatusLine = createStatusLine();
     JComponent testTreeView = createTestTreeView();
     myToolbarPanel = createToolbarPanel();
@@ -99,13 +91,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
                                 mySplitterDefaultProportion,
                                 splitVertically);
     if (mySplitter instanceof OnePixelSplitter) {
-      ((OnePixelSplitter)mySplitter).setBlindZone(new Producer<Insets>() {
-        @Nullable
-        @Override
-        public Insets produce() {
-          return new Insets(myToolbarPanel.getHeight(), 0, 0, 0);
-        }
-      });
+      ((OnePixelSplitter)mySplitter).setBlindZone(() -> new Insets(myToolbarPanel.getHeight(), 0, 0, 0));
     }
     Disposer.register(this, new Disposable(){
       @Override
@@ -123,25 +109,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    myStatisticsSplitter = createSplitter(myStatisticsSplitterProportionProperty, 0.5f, false);
-    myStatisticsSplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-        showStatistics();
-      }
-      myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
-        @Override
-        public void onChanged(Boolean value) {
-          if (value.booleanValue()) {
-            showStatistics();
-          }
-          else {
-            myStatisticsSplitter.setSecondComponent(null);
-          }
-        }
-      });
-    }
-    rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
+    rightPanel.add(createOutputTab(myConsole, myConsoleActions), BorderLayout.CENTER);
     mySplitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
@@ -158,11 +126,10 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return splitVertically;
   }
 
-  private void showStatistics() {
-    myStatisticsSplitter.setSecondComponent(myStatisticsComponent);
+  @Deprecated
+  protected JComponent createStatisticsPanel() {
+    return null;
   }
-
-  protected abstract JComponent createStatisticsPanel();
 
   protected ToolbarPanel createToolbarPanel() {
     return new ToolbarPanel(myProperties, this);

@@ -1,6 +1,6 @@
 // "Replace with qualifier" "false"
 class Test {
-  nterface A {
+  interface A {
     void m();
   }
 

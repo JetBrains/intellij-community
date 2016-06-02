@@ -19,8 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,19 +66,13 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       mySettingButton = myBalloon.new ActionButton(
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
         "Configure Notification",
-        new Consumer<MouseEvent>() {
-          @Override
-          public void consume(MouseEvent event) {
-            final NotificationsConfigurable configurable = new NotificationsConfigurable();
-            ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, new Runnable() {
-              @Override
-              public void run() {
-                //noinspection ConstantConditions
-                configurable.enableSearch(myDisplayGroupId).run();
-              }
-            });
-          }
-        }) {
+        event -> myBalloon.runWithSmartFadeoutPause(() -> {
+          final NotificationsConfigurable configurable = new NotificationsConfigurable();
+          ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
+            //noinspection ConstantConditions
+            configurable.enableSearch(myDisplayGroupId).run();
+          });
+        })) {
         @Override
         public void repaint() {
           super.repaint();
@@ -93,16 +84,13 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       myActions.add(mySettingButton);
 
       if (myRepaintPanel != null) {
-        myLayoutData.showActions = new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            for (BalloonImpl.ActionButton action : myActions) {
-              if (!action.isShowing() || !action.hasPaint()) {
-                return Boolean.FALSE;
-              }
+        myLayoutData.showActions = () -> {
+          for (BalloonImpl.ActionButton action : myActions) {
+            if (!action.isShowing() || !action.hasPaint()) {
+              return Boolean.FALSE;
             }
-            return Boolean.TRUE;
           }
+          return Boolean.TRUE;
         };
       }
     }
@@ -110,23 +98,17 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
       "Close Notification (Alt-Click close all notifications)",
-      new Consumer<MouseEvent>() {
-        @Override
-        public void consume(MouseEvent event) {
-          final int modifiers = event.getModifiers();
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if ((modifiers & InputEvent.ALT_MASK) != 0) {
-                myLayoutData.closeAll.run();
-              }
-              else {
-                myBalloon.hide();
-              }
-            }
-          });
-        }
+      event -> {
+        final int modifiers = event.getModifiers();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          if ((modifiers & InputEvent.ALT_MASK) != 0) {
+            myLayoutData.closeAll.run();
+          }
+          else {
+            myBalloon.hide();
+          }
+        });
       }) {
       @Override
       protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {

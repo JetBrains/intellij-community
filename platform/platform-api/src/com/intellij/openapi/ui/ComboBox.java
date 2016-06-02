@@ -106,17 +106,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
         final JBList list = createJBList(getModel());
         myJBPopup = JBPopupFactory.getInstance()
           .createListPopupBuilder(list)
-          .setItemChoosenCallback(new Runnable() {
-            @Override
-            public void run() {
-              final Object value = list.getSelectedValue();
-              if (value != null) {
-                configureEditor(getEditor(), value);
-                IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
-                assert myJBPopup != null;
-                ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
-                myJBPopup.cancel();
-              }
+          .setItemChoosenCallback(() -> {
+            final Object value = list.getSelectedValue();
+            if (value != null) {
+              configureEditor(getEditor(), value);
+              IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+              assert myJBPopup != null;
+              ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
+              myJBPopup.cancel();
             }
           })
           .setFocusOwners(new Component[]{this})

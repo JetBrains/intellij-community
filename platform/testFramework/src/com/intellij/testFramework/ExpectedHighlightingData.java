@@ -190,12 +190,7 @@ public class ExpectedHighlightingData {
       assert element != null : value;
       TextRange range = new TextRange(startOffset, endOffset);
       final String tooltip = value.getLineMarkerTooltip();
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, new Function<PsiElement, String>() {
-        @Override
-        public String fun(PsiElement e) {
-          return tooltip;
-        }
-      }, null, GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
       entry.setValue(markerInfo);
     }
   }
@@ -475,18 +470,16 @@ public class ExpectedHighlightingData {
 
   public static String composeText(final Map<String, ExpectedHighlightingSet> types, Collection<HighlightInfo> infos, String text) {
     // filter highlighting data and map each highlighting to a tag name
-    List<Pair<String, HighlightInfo>> list = ContainerUtil.mapNotNull(infos, new NullableFunction<HighlightInfo, Pair<String,HighlightInfo>>() {
-      @Override
-      public Pair<String, HighlightInfo> fun(HighlightInfo info) {
-        for (Map.Entry<String, ExpectedHighlightingSet> entry : types.entrySet()) {
-          final ExpectedHighlightingSet set = entry.getValue();
-          if (set.enabled && set.severity == info.getSeverity() && set.endOfLine == info.isAfterEndOfLine()) {
-            return Pair.create(entry.getKey(), info);
-          }
-        }
-        return null;
-      }
-    });
+    List<Pair<String, HighlightInfo>> list = ContainerUtil.mapNotNull(infos,
+                                                                      (NullableFunction<HighlightInfo, Pair<String, HighlightInfo>>)info -> {
+                                                                        for (Map.Entry<String, ExpectedHighlightingSet> entry : types.entrySet()) {
+                                                                          final ExpectedHighlightingSet set = entry.getValue();
+                                                                          if (set.enabled && set.severity == info.getSeverity() && set.endOfLine == info.isAfterEndOfLine()) {
+                                                                            return Pair.create(entry.getKey(), info);
+                                                                          }
+                                                                        }
+                                                                        return null;
+                                                                      });
 
     boolean showAttributesKeys = false;
     for (ExpectedHighlightingSet eachSet : types.values()) {
@@ -499,29 +492,26 @@ public class ExpectedHighlightingData {
     }
 
     // sort filtered highlighting data by end offset in descending order
-    Collections.sort(list, new Comparator<Pair<String, HighlightInfo>>() {
-      @Override
-      public int compare(Pair<String, HighlightInfo> o1, Pair<String, HighlightInfo> o2) {
-        HighlightInfo i1 = o1.second;
-        HighlightInfo i2 = o2.second;
+    Collections.sort(list, (o1, o2) -> {
+      HighlightInfo i1 = o1.second;
+      HighlightInfo i2 = o2.second;
 
-        int byEnds = i2.endOffset - i1.endOffset;
-        if (byEnds != 0) return byEnds;
+      int byEnds = i2.endOffset - i1.endOffset;
+      if (byEnds != 0) return byEnds;
 
-        if (!i1.isAfterEndOfLine() && !i2.isAfterEndOfLine()) {
-          int byStarts = i1.startOffset - i2.startOffset;
-          if (byStarts != 0) return byStarts;
-        }
-        else {
-          int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
-          if (byEOL != 0) return byEOL;
-        }
-
-        int bySeverity = i2.getSeverity().compareTo(i1.getSeverity());
-        if (bySeverity != 0) return bySeverity;
-
-        return Comparing.compare(i1.getDescription(), i2.getDescription());
+      if (!i1.isAfterEndOfLine() && !i2.isAfterEndOfLine()) {
+        int byStarts = i1.startOffset - i2.startOffset;
+        if (byStarts != 0) return byStarts;
       }
+      else {
+        int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
+        if (byEOL != 0) return byEOL;
+      }
+
+      int bySeverity = i2.getSeverity().compareTo(i1.getSeverity());
+      if (bySeverity != 0) return bySeverity;
+
+      return Comparing.compare(i1.getDescription(), i2.getDescription());
     });
 
     // combine highlighting data with original text

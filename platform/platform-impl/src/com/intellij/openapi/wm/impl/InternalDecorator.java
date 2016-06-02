@@ -103,15 +103,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
-      @Override
-      public ActionGroup produce() {
-        return /*createGearPopupGroup()*/createPopupGroup(true);
-      }
+    myHeader = new ToolWindowHeader(toolWindow, info, () -> {
+      return /*createGearPopupGroup()*/createPopupGroup(true);
     }) {
       @Override
       protected boolean isActive() {
-        return isFocused();
+        return myToolWindow.isActive();
       }
 
       @Override

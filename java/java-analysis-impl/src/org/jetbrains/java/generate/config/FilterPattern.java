@@ -51,10 +51,10 @@ public class FilterPattern {
     private boolean transientModifier;
     private boolean enumField;
     private boolean loggers;
-    private Pattern methodNamePattern = null;
-    private Pattern methodTypePattern = null;
-    private Pattern fieldNamePattern = null;
-    private Pattern fieldTypePattern = null;
+    private Pattern methodNamePattern;
+    private Pattern methodTypePattern;
+    private Pattern fieldNamePattern;
+    private Pattern fieldTypePattern;
 
   public boolean fieldMatches(PsiField field) {
     if (isConstantField() && PsiAdapter.isConstantField(field)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiMethod getFunctionalInterfaceMethod(PsiClassType.ClassResolveResult result) {
+  public static PsiMethod getFunctionalInterfaceMethod(@NotNull PsiClassType.ClassResolveResult result) {
     return getFunctionalInterfaceMethod(result.getElement());
   }
 
@@ -682,13 +682,11 @@ public class LambdaUtil {
   @Nullable
   public static PsiType getLambdaParameterFromType(PsiType functionalInterfaceType, int parameterIndex) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    if (resolveResult != null) {
-      final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameterIndex < parameters.length) {
-          return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-        }
+    final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (method != null) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameterIndex < parameters.length) {
+        return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
       }
     }
     return null;
@@ -741,7 +739,7 @@ public class LambdaUtil {
         break;
       }
 
-      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class);
+      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class, false, PsiMember.class);
       if (psiCall == null) {
         break;
       }
@@ -773,6 +771,28 @@ public class LambdaUtil {
 
     LOG.assertTrue(MethodCandidateInfo.getCurrentMethod(argumentList) == null);
     return top;
+  }
+
+  public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
+    PsiCall copyCall = (PsiCall)call.copy();
+    if (call instanceof PsiEnumConstant) {
+      PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
+      if (containingClass == null) {
+        return null;
+      }
+      String enumName = containingClass.getName();
+      if (enumName == null) {
+        return null;
+      }
+      PsiMethod resolveMethod = call.resolveMethod();
+      if (resolveMethod == null) {
+        return null;
+      }
+      PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
+      anEnum.add(resolveMethod);
+      return  (PsiCall)anEnum.add(copyCall);
+    }
+    return copyCall;
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
@@ -856,10 +876,7 @@ public class LambdaUtil {
 
     private boolean check(PsiTypeParameter check) {
       final PsiTypeParameterListOwner owner = check.getOwner();
-      if (owner == myMethod) {
-        return true;
-      }
-      else if (owner == myClass) {
+      if (owner == myMethod || owner == myClass) {
         return true;
       }
       return false;

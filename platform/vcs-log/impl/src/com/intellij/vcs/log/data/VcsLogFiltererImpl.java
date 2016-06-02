@@ -21,10 +21,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -40,7 +38,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
@@ -48,33 +46,28 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
-  private boolean myIsValid = true;
+  private volatile boolean myIsValid = true;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
-                            @NotNull VcsLogDataManager dataManager,
+                            @NotNull VcsLogData logData,
                             @NotNull PermanentGraph.SortType initialSortType) {
-    myDataManager = dataManager;
-    myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
+    myLogData = logData;
+    myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
-    myTaskController = new SingleTaskController<Request, VisiblePack>(new Consumer<VisiblePack>() {
-      @Override
-      public void consume(@NotNull VisiblePack visiblePack) {
-        myVisiblePack = visiblePack;
-        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
-          listener.onVisiblePackChange(visiblePack);
-        }
+    myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePack -> {
+      myVisiblePack = visiblePack;
+      for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
+        listener.onVisiblePackChange(visiblePack);
       }
     }) {
       @Override
       protected void startNewBackgroundTask() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance())
-              .runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
-          }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          MyTask task = new MyTask(project, "Applying filters...");
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
+                                                                             myLogData.getProgress().createProgressIndicator(task));
         });
       }
     };
@@ -96,8 +89,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Override
-  public void invalidate() {
-    myTaskController.request(new InvalidateRequest());
+  public void setValid(boolean validate) {
+    myTaskController.request(new ValidateRequest(validate));
   }
 
   @Override
@@ -149,12 +142,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
         myRequestsToRun = ContainerUtil.newArrayList();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            for (MoreCommitsRequest request : requestsToRun) {
-              request.onLoaded.run();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          for (MoreCommitsRequest request : requestsToRun) {
+            request.onLoaded.run();
           }
         });
       }
@@ -162,9 +152,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
-      int invalidateRequest = ContainerUtil.lastIndexOfInstance(requests, InvalidateRequest.class);
-      int refreshRequest = ContainerUtil.lastIndexOfInstance(requests, RefreshRequest.class);
-
+      ValidateRequest validateRequest = ContainerUtil.findLastInstance(requests, ValidateRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
@@ -177,28 +165,43 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         mySortType = sortTypeRequest.sortType;
       }
 
+      // On validate requests vs refresh requests.
+      // Validate just changes validity (myIsValid field). If myIsValid is already what it needs to be it does nothing.
+      // Refresh just tells that new data pack arrived. It does not make this filterer valid (or invalid).
+      // So, this two requests bring here two completely different pieces of information.
+      // Refresh requests are not explicitly used in this code. Basically what is done is a check that there are some requests apart from
+      // instances of ValidateRequest (also we get into this method only when there are some requests in the queue).
+      // Refresh request does not carry inside any additional information since current DataPack is just taken from VcsLogDataManager.
+
       if (!myIsValid) {
-        if (refreshRequest > invalidateRequest) {
+        if (validateRequest != null && validateRequest.validate) {
           myIsValid = true;
           return refresh(visiblePack, filterRequest, moreCommitsRequests);
         }
-        else {
+        else { // validateRequest == null || !validateRequest.validate
           // remember filters
           return visiblePack;
         }
       }
       else {
-        if (refreshRequest >= invalidateRequest) {
-          return refresh(visiblePack, filterRequest, moreCommitsRequests);
-        }
-        else {
+        if (validateRequest != null && !validateRequest.validate) {
           myIsValid = false;
           // invalidate
           VisiblePack frozenVisiblePack = visiblePack == null ? myVisiblePack : visiblePack;
           if (filterRequest != null) {
             frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
           }
-          return new FakeVisiblePackBuilder(myDataManager.getHashMap()).build(frozenVisiblePack);
+          return new FakeVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
+        }
+
+        Request nonValidateRequest = ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest));
+
+        if (nonValidateRequest != null) {
+          // only doing something if there are some other requests
+          return refresh(visiblePack, filterRequest, moreCommitsRequests);
+        }
+        else {
+          return visiblePack;
         }
       }
     }
@@ -206,7 +209,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     private VisiblePack refresh(@Nullable VisiblePack visiblePack,
                                 @Nullable FilterRequest filterRequest,
                                 @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
-      DataPack dataPack = myDataManager.getDataPack();
+      DataPack dataPack = myLogData.getDataPack();
 
       if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;
@@ -233,7 +236,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   private static final class RefreshRequest implements Request {
   }
 
-  private static final class InvalidateRequest implements Request {
+  private static final class ValidateRequest implements Request {
+    private final boolean validate;
+
+    private ValidateRequest(boolean validate) {
+      this.validate = validate;
+    }
   }
 
   private static final class FilterRequest implements Request {

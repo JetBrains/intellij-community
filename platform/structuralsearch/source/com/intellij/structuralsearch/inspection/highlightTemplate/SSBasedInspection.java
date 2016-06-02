@@ -100,17 +100,14 @@ public class SSBasedInspection extends LocalInspectionTool {
 
     return new PsiElementVisitor() {
       final Matcher matcher = new Matcher(holder.getManager().getProject());
-      final PairProcessor<MatchResult, Configuration> processor = new PairProcessor<MatchResult, Configuration>() {
-        @Override
-        public boolean process(MatchResult matchResult, Configuration configuration) {
-          PsiElement element = matchResult.getMatch();
-          String name = configuration.getName();
-          LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
-          holder.registerProblem(
-            holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
-          );
-          return true;
-        }
+      final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
+        PsiElement element = matchResult.getMatch();
+        String name = configuration.getName();
+        LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
+        holder.registerProblem(
+          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
+        );
+        return true;
       };
 
       @Override

@@ -86,16 +86,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     DefaultActionGroup actions = new DefaultActionGroup(
-      ContainerUtil.map(languages, new NotNullFunction<String, AnAction>() {
-        @NotNull
+      ContainerUtil.map(languages, (NotNullFunction<String, AnAction>)language -> new DumbAwareAction(language) {
         @Override
-        public AnAction fun(final String language) {
-          return new DumbAwareAction(language) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              runConsole(e, language);
-            }
-          };
+        public void actionPerformed(@NotNull AnActionEvent e1) {
+          runConsole(e1, language);
         }
       })
     );
@@ -140,12 +134,14 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     prepareEngine(project, engine, descriptor);
     try {
+      long ts = System.currentTimeMillis();
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       String script = profile == null ? command : profile + "\n" + command;
       Object o = engine.eval(script);
-      consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
+      String prefix = "["+(StringUtil.formatDuration(System.currentTimeMillis() - ts))+"]";
+      consoleView.print(prefix + "=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Throwable e) {

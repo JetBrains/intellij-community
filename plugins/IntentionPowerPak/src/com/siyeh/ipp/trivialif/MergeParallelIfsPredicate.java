@@ -76,8 +76,8 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
     final PsiExpression firstCondition = statement1.getCondition();
     final PsiExpression secondCondition = statement2.getCondition();
-    if (!EquivalenceChecker.expressionsAreEquivalent(firstCondition,
-                                                     secondCondition)) {
+    if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstCondition,
+                                                                                  secondCondition)) {
       return false;
     }
     final PsiStatement nextThenBranch = statement2.getThenBranch();

@@ -45,13 +45,10 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
     Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
-      place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
-      @Override
-      public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
-        final Map<List<Map>, NonCodeMembersHolder> map = ContainerUtil.createConcurrentSoftMap();
-        return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+      place, () -> {
+        final Map<List<Map>, NonCodeMembersHolder> map1 = ContainerUtil.createConcurrentSoftMap();
+        return CachedValueProvider.Result.create(map1, PsiModificationTracker.MODIFICATION_COUNT);
+      });
 
     NonCodeMembersHolder result = map.get(methods);
     if (result == null) {

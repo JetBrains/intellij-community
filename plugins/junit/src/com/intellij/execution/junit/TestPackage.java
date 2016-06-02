@@ -88,13 +88,8 @@ public class TestPackage extends TestObject {
         myFoundTests = !myClasses.isEmpty();
 
         try {
-          addClassesListToJavaParameters(myClasses, new Function<PsiClass, String>() {
-            @Override
-            @Nullable
-            public String fun(final PsiClass psiClass) {
-              return psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null;
-            }
-          }, getPackageName(data), createTempFiles(), getJavaParameters());
+          addClassesListToJavaParameters(myClasses,
+                                         psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }

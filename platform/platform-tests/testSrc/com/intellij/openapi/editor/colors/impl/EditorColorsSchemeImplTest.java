@@ -190,6 +190,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
+    root.removeChildren("metaInfo");
     assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\" />", root);
   }
 
@@ -200,6 +201,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
+    root.removeChildren("metaInfo");
     assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Darcula\" />", root);
   }
 

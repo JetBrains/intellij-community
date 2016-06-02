@@ -145,13 +145,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
     final String paramStr = "(" +
                             StringUtil.join(parameters,
-                                            new Function<PyParameter, String>() {
-                                              @NotNull
-                                              @Override
-                                              public String fun(PyParameter parameter) {
-                                                return PyUtil.getReadableRepr(parameter, false);
-                                              }
-                                            },
+                                            parameter -> PyUtil.getReadableRepr(parameter, false),
                                             ", ") +
                             ")";
     cat.addItem(escaper.apply(paramStr));
@@ -468,17 +462,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final Project project = element.getProject();
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, element);
     if (qName != null && qName.getComponentCount() > 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final int rc = Messages.showOkCancelDialog(project,
-                                                     "No external documentation URL configured for module " + qName.getComponents().get(0) +
-                                                     ".\nWould you like to configure it now?",
-                                                     "Python External Documentation",
-                                                     Messages.getQuestionIcon());
-          if (rc == Messages.OK) {
-            ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final int rc = Messages.showOkCancelDialog(project,
+                                                   "No external documentation URL configured for module " + qName.getComponents().get(0) +
+                                                   ".\nWould you like to configure it now?",
+                                                   "Python External Documentation",
+                                                   Messages.getQuestionIcon());
+        if (rc == Messages.OK) {
+          ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
         }
       }, ModalityState.NON_MODAL);
     }

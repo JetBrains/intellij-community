@@ -23,7 +23,9 @@ import java.util.ArrayDeque;
  * @author Sergey.Malenkov
  */
 public final class TreeModelListenerList implements TreeModelListener {
+  private static final TreeModelListener[] EMPTY_ARRAY = new TreeModelListener[0];
   private final ArrayDeque<TreeModelListener> myDeque = new ArrayDeque<TreeModelListener>();
+  private volatile boolean myDequeEmpty = true;
 
   /**
    * Adds a listener for changes in a tree model.
@@ -35,6 +37,7 @@ public final class TreeModelListenerList implements TreeModelListener {
     if (listener != null) {
       synchronized (myDeque) {
         myDeque.addFirst(listener);
+        myDequeEmpty = myDeque.isEmpty();
       }
     }
   }
@@ -49,6 +52,7 @@ public final class TreeModelListenerList implements TreeModelListener {
     if (listener != null) {
       synchronized (myDeque) {
         myDeque.remove(listener);
+        myDequeEmpty = myDeque.isEmpty();
       }
     }
   }
@@ -60,9 +64,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @return {@code true} if no listeners have been added, or {@code false} otherwise
    */
   public boolean isEmpty() {
-    synchronized (myDeque) {
-      return myDeque.isEmpty();
-    }
+    return myDequeEmpty;
   }
 
   /**
@@ -72,8 +74,9 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @return all added listeners
    */
   public TreeModelListener[] get() {
+    if (myDequeEmpty) return EMPTY_ARRAY;
     synchronized (myDeque) {
-      return myDeque.toArray(new TreeModelListener[0]);
+      return myDeque.toArray(EMPTY_ARRAY);
     }
   }
 

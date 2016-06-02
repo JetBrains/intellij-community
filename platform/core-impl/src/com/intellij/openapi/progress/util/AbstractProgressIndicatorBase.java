@@ -30,14 +30,11 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
-  @Nullable private final CoreProgressManager myProgressManager =
-    ApplicationManager.getApplication() == null ? null : (CoreProgressManager)ProgressManager.getInstance();
 
   private volatile String myText;
   private volatile double myFraction;
@@ -130,7 +127,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
     }
-    if (myProgressManager != null && myProgressManager.sleepIfNeeded()) {
+    if (CoreProgressManager.sleepIfNeeded()) {
       if (isCanceled() && isCancelable()) {
         throw new ProcessCanceledException();
       }

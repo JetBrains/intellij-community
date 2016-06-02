@@ -59,24 +59,21 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
       return null;
     }
 
-    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<XValueHint>() {
-      @Override
-      public XValueHint compute() {
-        int offset = AbstractValueHint.calculateOffset(editor, point);
-        ExpressionInfo expressionInfo = getExpressionInfo(evaluator, project, type, editor, offset);
-        if (expressionInfo == null) {
-          return null;
-        }
-
-        int textLength = editor.getDocument().getTextLength();
-        TextRange range = expressionInfo.getTextRange();
-        if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
-          LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
-          return null;
-        }
-
-        return new XValueHint(project, editor, point, type, expressionInfo, evaluator, session);
+    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      int offset = AbstractValueHint.calculateOffset(editor, point);
+      ExpressionInfo expressionInfo = getExpressionInfo(evaluator, project, type, editor, offset);
+      if (expressionInfo == null) {
+        return null;
       }
+
+      int textLength = editor.getDocument().getTextLength();
+      TextRange range = expressionInfo.getTextRange();
+      if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
+        LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
+        return null;
+      }
+
+      return new XValueHint(project, editor, point, type, expressionInfo, evaluator, session);
     });
   }
 

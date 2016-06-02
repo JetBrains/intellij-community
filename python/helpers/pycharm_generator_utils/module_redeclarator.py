@@ -898,6 +898,9 @@ class ModuleRedeclarator(object):
                                 break
                         imported_path = (getattr(imported, '__file__', False) or "").lower()
                         want_to_import = not (imported_path.endswith('.py') or imported_path.endswith('.pyc'))
+                        imported_name = getattr(imported, "__name__", None)
+                        if imported_name == p_name:
+                            want_to_import = False
                         note("path of %r is %r, want? %s", mod_name, imported_path, want_to_import)
                 except ImportError:
                     want_to_import = False

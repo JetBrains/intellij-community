@@ -59,12 +59,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
 
   @Override
   public void accept(@NotNull final RefVisitor refVisitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        refVisitor.visitModule(RefModuleImpl.this);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitModule(RefModuleImpl.this));
   }
 
   @Override

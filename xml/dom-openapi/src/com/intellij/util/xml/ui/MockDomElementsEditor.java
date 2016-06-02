@@ -49,15 +49,12 @@ public class MockDomElementsEditor {
 
   protected final <T extends DomElement> T addEditedElement(final Class<T> aClass, final EditedElementDescription<T> description) {
     final DomManager domManager = DomManager.getDomManager(myModule.getProject());
-    final T t = domManager.createStableValue(new Factory<T>() {
-      @Override
-      public T create() {
-        T t = description.find();
-        if (t == null) {
-          return createMockElement(aClass);
-        }
-        return t;
+    final T t = domManager.createStableValue(() -> {
+      T t1 = description.find();
+      if (t1 == null) {
+        return createMockElement(aClass);
       }
+      return t1;
     });
     myDomElements.put(description, t);
     return t;
@@ -68,12 +65,7 @@ public class MockDomElementsEditor {
   }
 
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
-    initFileEditor(component.getProject(), virtualFile, name, new Factory<BasicDomElementComponent>() {
-      @Override
-      public BasicDomElementComponent create() {
-        return component;
-      }
-    });
+    initFileEditor(component.getProject(), virtualFile, name, () -> component);
     Disposer.register(myFileEditor, component);
     return myFileEditor;
   }
@@ -151,12 +143,9 @@ public class MockDomElementsEditor {
 
   private <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
     final Project project = module.getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myFileEditor.isInitialised()) {
-          myContents.reset();
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myFileEditor.isInitialised()) {
+        myContents.reset();
       }
     });
     final DomManager domManager = DomManager.getDomManager(project);

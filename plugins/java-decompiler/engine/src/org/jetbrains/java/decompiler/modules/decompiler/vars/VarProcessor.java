@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,38 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
 
 public class VarProcessor {
-
+  private final StructMethod method;
+  private final MethodDescriptor methodDescriptor;
   private Map<VarVersionPair, String> mapVarNames = new HashMap<VarVersionPair, String>();
   private VarVersionsProcessor varVersions;
   private final Map<VarVersionPair, String> thisVars = new HashMap<VarVersionPair, String>();
   private final Set<VarVersionPair> externalVars = new HashSet<VarVersionPair>();
 
+  public VarProcessor(StructMethod mt, MethodDescriptor md) {
+    method = mt;
+    methodDescriptor = md;
+  }
+
   public void setVarVersions(RootStatement root) {
-    varVersions = new VarVersionsProcessor();
+    varVersions = new VarVersionsProcessor(method, methodDescriptor);
     varVersions.setVarVersions(root);
   }
 
   public void setVarDefinitions(Statement root) {
     mapVarNames = new HashMap<VarVersionPair, String>();
-
-    StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
-    new VarDefinitionHelper(root, mt, this).setVarDefinitions();
+    new VarDefinitionHelper(root, method, this).setVarDefinitions();
   }
 
   public void setDebugVarNames(Map<Integer, String> mapDebugVarNames) {
@@ -52,12 +57,7 @@ public class VarProcessor {
     Map<Integer, Integer> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
 
     List<VarVersionPair> listVars = new ArrayList<VarVersionPair>(mapVarNames.keySet());
-    Collections.sort(listVars, new Comparator<VarVersionPair>() {
-      @Override
-      public int compare(VarVersionPair o1, VarVersionPair o2) {
-        return o1.var - o2.var;
-      }
-    });
+    Collections.sort(listVars, (o1, o2) -> o1.var - o2.var);
 
     Map<String, Integer> mapNames = new HashMap<String, Integer>();
 
@@ -65,8 +65,11 @@ public class VarProcessor {
       String name = mapVarNames.get(pair);
 
       Integer index = mapOriginalVarIndices.get(pair.var);
-      if (index != null && mapDebugVarNames.containsKey(index)) {
-        name = mapDebugVarNames.get(index);
+      if (index != null) {
+        String debugName = mapDebugVarNames.get(index);
+        if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getClassStruct().getBytecodeVersion())) {
+          name = debugName;
+        }
       }
 
       Integer counter = mapNames.get(name);

@@ -615,9 +615,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(actionId, editor, getProject());
   }
   public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      EditorTestUtil.executeAction(editor, actionId);
-    }, "", null, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId), "", null, editor.getDocument());
   }
 
   @NotNull
@@ -647,9 +645,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
    * file parameterized tests support
    * @see FileBasedTestCaseHelperEx
-   */
-
-  /**
    * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
   @Parameterized.Parameter(0)

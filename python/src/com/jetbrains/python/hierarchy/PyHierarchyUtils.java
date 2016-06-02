@@ -30,11 +30,7 @@ import java.util.Comparator;
  * Time: 8:30:36 PM
  */
 public class PyHierarchyUtils {
-  private static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR = new Comparator<NodeDescriptor>() {
-    public int compare(final NodeDescriptor first, final NodeDescriptor second) {
-      return first.getIndex() - second.getIndex();
-    }
-  };
+  private static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR = (first, second) -> first.getIndex() - second.getIndex();
 
   private PyHierarchyUtils() {
   }

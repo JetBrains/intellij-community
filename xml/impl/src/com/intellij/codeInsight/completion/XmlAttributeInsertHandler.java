@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -34,6 +35,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlNamespaceHelper;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,14 +68,20 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final PsiFile file = context.getFile();
 
     final CharSequence chars = document.getCharsSequence();
-    final boolean insertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue();
-    final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"");
-    if (!hasQuotes && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
+    final String quote = getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
+    final boolean insertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue() && StringUtil.isNotEmpty(quote);
+    final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"") ||
+                              CharArrayUtil.regionMatches(chars, caretOffset, "='");
+    if (!hasQuotes) {
       PsiElement fileContext = file.getContext();
-      String toInsert= "=\"\"";
+      String toInsert = null;
 
       if(fileContext != null) {
         if (fileContext.getText().startsWith("\"")) toInsert = "=''";
+        if (fileContext.getText().startsWith("\'")) toInsert = "=\"\"";
+      }
+      if (toInsert == null) {
+        toInsert = "=" + quote + quote;
       }
 
       if (!insertQuotes) toInsert = "=";
@@ -116,6 +124,10 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
         }
       }
     }
+  }
+
+  public static String getAttributeQuote(boolean html) {
+    return html ? CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE.quote : "\"";
   }
 
   private static void qualifyWithPrefix(@NotNull String namespacePrefix, @NotNull PsiElement context) {

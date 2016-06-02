@@ -234,32 +234,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-7389
   public void testComprehensionScope27() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest());
   }
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-7516
@@ -706,6 +691,36 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
     myFixture.copyDirectoryToProject("typing", "");
+    doTest();
+  }
+  
+  // PY-19084
+  public void testPercentStringPositionalListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalDictArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordTupleArgument() {
     doTest();
   }
 

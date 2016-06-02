@@ -28,10 +28,10 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -94,13 +94,9 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
   private static Project generateProject(@NotNull final Project project,
                                          @NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-    return AbstractNewProjectStep.doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                    new Function<VirtualFile, Object>() {
-                                                         @Override
-                                                         public Object fun(VirtualFile file) {
-                                                           return computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings);
-                                                         }
-                                                       });
+    final String location = FileUtil.expandUserHome(settings.getProjectLocation());
+    return AbstractNewProjectStep.doGenerateProject(project, location, generator,
+                                                    file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 
   public static Object computeProjectSettings(DirectoryProjectGenerator generator, ProjectSpecificSettingsStep settings) {

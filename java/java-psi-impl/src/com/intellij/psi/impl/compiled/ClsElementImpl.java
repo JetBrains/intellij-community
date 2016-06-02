@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
-  private volatile TreeElement myMirror;
+  private volatile PsiElement myMirror;
 
   @Override
   @NotNull
@@ -156,12 +155,12 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @Override
   public PsiElement getMirror() {
-    TreeElement mirror = myMirror;
+    PsiElement mirror = myMirror;
     if (mirror == null) {
       ((ClsFileImpl)getContainingFile()).getMirror();
       mirror = myMirror;
     }
-    return SourceTreeToPsiMap.treeElementToPsi(mirror);
+    return mirror;
   }
 
   @Override
@@ -300,8 +299,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       throw new InvalidMirrorException(element.getElementType() + " != " + type);
     }
 
-    element.getPsi().putUserData(COMPILED_ELEMENT, this);
-    myMirror = element;
+    PsiElement psi = element.getPsi();
+    psi.putUserData(COMPILED_ELEMENT, this);
+    myMirror = psi;
   }
 
   protected static <T extends  PsiElement> void setMirror(@Nullable T stub, @Nullable T mirror) throws InvalidMirrorException {
@@ -338,7 +338,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected static class InvalidMirrorException extends RuntimeException {
-    public InvalidMirrorException(@NotNull @NonNls String message) {
+    public InvalidMirrorException(@NotNull String message) {
       super(message);
     }
 

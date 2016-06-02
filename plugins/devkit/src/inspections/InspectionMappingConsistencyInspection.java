@@ -90,17 +90,13 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
 
   private static void registerProblem(DomElement element, ProblemsHolder holder, String message, String... createAttrs) {
     final Pair<TextRange, PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
-    holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs, new Function<String, LocalQuickFix>() {
-      @Override
-      public LocalQuickFix fun(final String s) {
-        return new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
-          @NotNull
-          @Override
-          public String getText() {
-            return MessageFormat.format("Insert ''{0}'' attribute", s);
-          }
-        };
-      }
-    }, new LocalQuickFix[createAttrs.length]));
+    holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs,
+                                                                                 s -> new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
+                                                                                   @NotNull
+                                                                                   @Override
+                                                                                   public String getText() {
+                                                                                     return MessageFormat.format("Insert ''{0}'' attribute", s);
+                                                                                   }
+                                                                                 }, new LocalQuickFix[createAttrs.length]));
   }
 }

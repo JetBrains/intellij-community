@@ -82,15 +82,12 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final int errors = myContext.getMessageCount(CompilerMessageCategory.ERROR);
         final int warnings = myContext.getMessageCount(CompilerMessageCategory.WARNING);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) {
-              return;
-            }
-            final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
-            publisher.automakeCompilationFinished(errors, warnings, myContext);
+        SwingUtilities.invokeLater(() -> {
+          if (myProject.isDisposed()) {
+            return;
           }
+          final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+          publisher.automakeCompilationFinished(errors, warnings, myContext);
         });
         return;
 

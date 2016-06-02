@@ -90,25 +90,22 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new ConcurrentFactoryMap<String, CachedValue<CanContainAttributeType>>() {
     @Override
     protected CachedValue<CanContainAttributeType> create(final String key) {
-      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(new CachedValueProvider<CanContainAttributeType>() {
-        @Override
-        public Result<CanContainAttributeType> compute() {
-          THashSet<Object> dependencies = new THashSet<Object>();
-          CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
-          if (dependencies.isEmpty()) {
-            dependencies.add(myTag.getContainingFile());
-          }
-          if (DumbService.isDumb(myTag.getProject())) {
-            dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
-          }
-          return Result.create(type, ArrayUtil.toObjectArray(dependencies));
+      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
+        THashSet<Object> dependencies = new THashSet<Object>();
+        CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
+        if (dependencies.isEmpty()) {
+          dependencies.add(myTag.getContainingFile());
         }
+        if (DumbService.isDumb(myTag.getProject())) {
+          dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
+        }
+        return CachedValueProvider.Result.create(type, ArrayUtil.toObjectArray(dependencies));
       }, false);
     }
   };
 
-  private volatile XmlElementDescriptor[] myElementDescriptors = null;
-  private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors;
+  private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
   @NonNls
   private static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls

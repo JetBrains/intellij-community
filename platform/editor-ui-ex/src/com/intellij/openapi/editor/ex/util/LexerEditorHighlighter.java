@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.ImmutableText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private final SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
   private final int myInitialState;
+  protected CharSequence myText;
 
   public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
@@ -112,7 +114,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
           ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
         }
-        doSetText(document.getCharsSequence());
+        doSetText(document.getImmutableCharSequence());
       }
 
       final int latestValidOffset = mySegments.getLastValidOffset();
@@ -147,18 +149,20 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public synchronized void documentChanged(DocumentEvent e) {
     try {
       final Document document = e.getDocument();
+      CharSequence text = document.getImmutableCharSequence();
 
       if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+        myText = null;
         mySegments.removeAll();
         return;
       }
 
       if(mySegments.getSegmentCount() == 0) {
-        setText(document.getCharsSequence());
+        setText(text);
         return;
       }
 
-      CharSequence text = document.getCharsSequence();
+      myText = text;
       int oldStartOffset = e.getOffset();
 
       final int segmentIndex = mySegments.findSegmentIndex(oldStartOffset) - 2;
@@ -295,6 +299,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor;
   }
 
+  protected final synchronized void resetText(@NotNull CharSequence text) {
+    myText = null;
+    doSetText(text);
+  }
+
   @Override
   public void setText(@NotNull CharSequence text) {
     synchronized (this) {
@@ -312,6 +321,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   private void doSetText(final CharSequence text) {
+    if (Comparing.equal(myText, text)) return;
+    myText = ImmutableCharSequence.asImmutable(text);
+
     final TokenProcessor processor = createTokenProcessor(0);
     final int textLength = text.length();
     myLexer.start(text, 0, textLength, myInitialState);

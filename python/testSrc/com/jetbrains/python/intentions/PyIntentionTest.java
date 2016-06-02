@@ -415,11 +415,7 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testDocStubKeywordOnly() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      public void run() {
-        doDocStubTest(DocStringFormat.REST);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doDocStubTest(DocStringFormat.REST));
   }
 
   // PY-16765
@@ -700,39 +696,23 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
-        doTest(PyBundle.message("INTN.doc.string.stub"), true);
-      }
+    runWithDocStringFormat(format, () -> {
+      CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
+      doTest(PyBundle.message("INTN.doc.string.stub"), true);
     });
   }
 
   private void doDocParamTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      public void run() {
-        doTest(PyBundle.message("INTN.specify.type"));
-      }
-    });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.type")));
   }
 
   private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-        public void run() {
-          doTest(PyBundle.message("INTN.specify.return.type"));
-        }
-      });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.return.type")));
 
   }
 
   public void doDocAddMissingParamsTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        doTest(PyBundle.message("INTN.add.parameters.to.docstring"));
-      }
-    });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.add.parameters.to.docstring")));
 
   }
 }

@@ -82,7 +82,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
-  private static final String DEFAULT_VM_OPTIONS = "-Xmx512m";
+  private static final String DEFAULT_VM_OPTIONS = "-Xmx768m";
 
   private static final String FORCE_MAVEN2_OPTION = "-Didea.force.maven2";
 
@@ -314,7 +314,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
         else {
           if (!xmxSet) {
-            params.getVMParametersList().add("-Xmx512m");
+            params.getVMParametersList().add("-Xmx768m");
           }
         }
 
@@ -444,12 +444,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
     addDir(classpath, new File(mavenHome, "lib"));
     File bootFolder = new File(mavenHome, "boot");
-    File[] classworldsJars = bootFolder.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return StringUtil.contains(name, "classworlds");
-      }
-    });
+    File[] classworldsJars = bootFolder.listFiles((dir, name) -> StringUtil.contains(name, "classworlds"));
     if (classworldsJars != null) {
       Collections.addAll(classpath, classworldsJars);
     }

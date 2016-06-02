@@ -52,40 +52,26 @@ public class StdErrorReporter extends ErrorReporter {
 
   @Override
   public void startProcessing() {
-    final Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              StdErrorReporter.super.startProcessing();
-            }
-          });
+    final Runnable task = () -> {
+      try {
+        ApplicationManager.getApplication().runReadAction(() -> StdErrorReporter.super.startProcessing());
 
-          SwingUtilities.invokeLater(
-            new Runnable() {
-              @Override
-              public void run() {
-                if (!myErrorsDetected) {
-                  SwingUtilities.invokeLater(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        removeCompileContents(null);
-                        WindowManager.getInstance().getStatusBar(myProject).setInfo(
-                          XmlBundle.message("xml.validate.no.errors.detected.status.message"));
-                      }
-                    }
-                  );
+        SwingUtilities.invokeLater(
+          () -> {
+            if (!myErrorsDetected) {
+              SwingUtilities.invokeLater(
+                () -> {
+                  removeCompileContents(null);
+                  WindowManager.getInstance().getStatusBar(myProject).setInfo(
+                    XmlBundle.message("xml.validate.no.errors.detected.status.message"));
                 }
-              }
+              );
             }
-          );
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted
-        }
+          }
+        );
+      }
+      finally {
+        Thread.interrupted(); // reset interrupted
       }
     };
 
@@ -100,21 +86,18 @@ public class StdErrorReporter extends ErrorReporter {
   private void openMessageView() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-        myProject, new Runnable() {
-          @Override
-          public void run() {
-            MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-            final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
-            content.putUserData(KEY, myErrorsView);
-            messageView.getContentManager().addContent(content);
-            messageView.getContentManager().setSelectedContent(content);
-            messageView.getContentManager().addContentManagerListener(new CloseListener(content, messageView.getContentManager()));
-            removeCompileContents(content);
-            messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
-          }
-        },
-        XmlBundle.message("validate.xml.open.message.view.command.name"),
-        null
+      myProject, () -> {
+        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+        final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
+        content.putUserData(KEY, myErrorsView);
+        messageView.getContentManager().addContent(content);
+        messageView.getContentManager().setSelectedContent(content);
+        messageView.getContentManager().addContentManagerListener(new CloseListener(content, messageView.getContentManager()));
+        removeCompileContents(content);
+        messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
+      },
+      XmlBundle.message("validate.xml.open.message.view.command.name"),
+      null
     );
   }
   private void removeCompileContents(Content notToRemove) {
@@ -144,20 +127,17 @@ public class StdErrorReporter extends ErrorReporter {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(
-          new Runnable() {
-            @Override
-            public void run() {
-              final VirtualFile file = myHandler.getProblemFile(ex);
-              myErrorsView.addMessage(
-                  problemType == ValidateXmlActionHandler.ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
-                  new String[]{ex.getLocalizedMessage()},
-                  file,
-                  ex.getLineNumber() - 1,
-                  ex.getColumnNumber() - 1,
-                  null
-              );
-            }
-          }
+        () -> {
+          final VirtualFile file = myHandler.getProblemFile(ex);
+          myErrorsView.addMessage(
+              problemType == ValidateXmlActionHandler.ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
+              new String[]{ex.getLocalizedMessage()},
+              file,
+              ex.getLineNumber() - 1,
+              ex.getColumnNumber() - 1,
+              null
+          );
+        }
       );
     }
   }

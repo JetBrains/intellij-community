@@ -566,12 +566,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         for (int i=0; i<100;i++) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-            TimeoutUtil.sleep(20);
-          }));
-          ApplicationManager.getApplication().runReadAction(() -> {
-            TimeoutUtil.sleep(20);
-          });
+          SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> TimeoutUtil.sleep(20)));
+          ApplicationManager.getApplication().runReadAction(() -> TimeoutUtil.sleep(20));
         }
       }
       catch (Exception e) {

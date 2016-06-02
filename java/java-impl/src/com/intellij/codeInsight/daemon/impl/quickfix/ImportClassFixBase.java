@@ -193,20 +193,17 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
     final String memberName = getRequiredMemberName(myElement);
     if (memberName != null) {
-      List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          PsiField field = psiClass.findFieldByName(memberName, true);
-          if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myElement)) return true;
+      List<PsiClass> filtered = ContainerUtil.findAll(classList, psiClass -> {
+        PsiField field = psiClass.findFieldByName(memberName, true);
+        if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myElement)) return true;
 
-          PsiClass inner = psiClass.findInnerClassByName(memberName, true);
-          if (inner != null && isAccessible(inner, myElement)) return true;
+        PsiClass inner = psiClass.findInnerClassByName(memberName, true);
+        if (inner != null && isAccessible(inner, myElement)) return true;
 
-          for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-            if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myElement)) return true;
-          }
-          return false;
+        for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
+          if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myElement)) return true;
         }
+        return false;
       });
       if (!filtered.isEmpty()) {
         classList = filtered;
@@ -269,23 +266,15 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         if (method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null) {
           PsiClass aClass = method.getContainingClass();
           final Set<PsiClass> probableTypes = new HashSet<PsiClass>();
-          InheritanceUtil.processSupers(aClass, false, new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
-                for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
-                  ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
-                }
+          InheritanceUtil.processSupers(aClass, false, psiClass -> {
+            for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
+              for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
+                ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
               }
-              return true;
             }
+            return true;
           });
-          List<PsiClass> filtered = ContainerUtil.filter(candidates, new Condition<PsiClass>() {
-            @Override
-            public boolean value(PsiClass psiClass) {
-              return probableTypes.contains(psiClass);
-            }
-          });
+          List<PsiClass> filtered = ContainerUtil.filter(candidates, psiClass -> probableTypes.contains(psiClass));
           if (!filtered.isEmpty()) {
             return filtered;
           }
@@ -339,12 +328,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         !LaterInvocator.isInModalContext() &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          action.execute();
-        }
-      });
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return Result.CLASS_AUTO_IMPORTED;
     }
 
@@ -435,16 +419,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        List<PsiClass> classesToImport = getClassesToImport(true);
-        PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
-        if (classes.length == 0) return;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      List<PsiClass> classesToImport = getClassesToImport(true);
+      PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+      if (classes.length == 0) return;
 
-        AddImportAction action = createAddImportAction(classes, project, editor);
-        action.execute();
-      }
+      AddImportAction action = createAddImportAction(classes, project, editor);
+      action.execute();
     });
   }
 

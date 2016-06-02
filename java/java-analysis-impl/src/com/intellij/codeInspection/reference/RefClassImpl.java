@@ -289,12 +289,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this));
     } else {
       super.accept(visitor);
     }
@@ -435,13 +430,10 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public String getExternalName() {
     final String[] result = new String[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {//todo synthetic JSP
-        final PsiClass psiClass = getElement();
-        LOG.assertTrue(psiClass != null);
-        result[0] = PsiFormatUtil.getExternalName(psiClass);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {//todo synthetic JSP
+      final PsiClass psiClass = getElement();
+      LOG.assertTrue(psiClass != null);
+      result[0] = PsiFormatUtil.getExternalName(psiClass);
     });
     return result[0];
   }

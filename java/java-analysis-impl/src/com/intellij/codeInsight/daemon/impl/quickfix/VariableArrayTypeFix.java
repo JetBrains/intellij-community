@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,8 +160,8 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     final PsiArrayInitializerExpression myInitializer = (PsiArrayInitializerExpression)startElement;
     final PsiVariable myVariable = getVariableLocal(myInitializer);
     if (myVariable == null) return;
-    /**
-     * only for the case when in same statement with initialization
+    /*
+      only for the case when in same statement with initialization
      */
     final PsiNewExpression myNewExpression = getNewExpressionLocal(myInitializer);
 

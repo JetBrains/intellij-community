@@ -215,7 +215,7 @@ public final class FontInfo {
       Rectangle bounds = font.getStringBounds(new char[]{ch}, 0, 1, DEFAULT_CONTEXT).getBounds();
       if (!bounds.isEmpty()) return bounds.width;
     }
-    throw new IllegalArgumentException(Integer.toHexString(ch) + " cannot be rendered by " + font);
+    return 0;
   }
 
   private static final class LazyListByName {

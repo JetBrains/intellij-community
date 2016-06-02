@@ -102,19 +102,16 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
             }
           };
 
-          myWaitFor.setTerminationCallback(new Consumer<Integer>() {
-            @Override
-            public void consume(Integer exitCode) {
+          myWaitFor.setTerminationCallback(exitCode -> {
+            try {
               try {
-                try {
-                  stderrReader.waitFor();
-                  stdoutReader.waitFor();
-                }
-                catch (InterruptedException ignore) { }
+                stderrReader.waitFor();
+                stdoutReader.waitFor();
               }
-              finally {
-                onOSProcessTerminated(exitCode);
-              }
+              catch (InterruptedException ignore) { }
+            }
+            finally {
+              onOSProcessTerminated(exitCode);
             }
           });
         }
@@ -146,14 +143,11 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
 
   @Override
   protected void detachProcessImpl() {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        closeStreams();
+    final Runnable runnable = () -> {
+      closeStreams();
 
-        myWaitFor.detach();
-        notifyProcessDetached();
-      }
+      myWaitFor.detach();
+      notifyProcessDetached();
     };
 
     executeOnPooledThread(runnable);

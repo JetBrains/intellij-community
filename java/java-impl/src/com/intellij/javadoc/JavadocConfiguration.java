@@ -32,15 +32,15 @@ public class JavadocConfiguration {
   public boolean OPTION_NAVIGATOR = true;
   public boolean OPTION_INDEX = true;
   public boolean OPTION_SEPARATE_INDEX = true;
-  public boolean OPTION_DOCUMENT_TAG_USE = false;
-  public boolean OPTION_DOCUMENT_TAG_AUTHOR = false;
-  public boolean OPTION_DOCUMENT_TAG_VERSION = false;
+  public boolean OPTION_DOCUMENT_TAG_USE;
+  public boolean OPTION_DOCUMENT_TAG_AUTHOR;
+  public boolean OPTION_DOCUMENT_TAG_VERSION;
   public boolean OPTION_DOCUMENT_TAG_DEPRECATED = true;
   public boolean OPTION_DEPRECATED_LIST = true;
   public String OTHER_OPTIONS = "";
   public String HEAP_SIZE;
   public String LOCALE;
   public boolean OPEN_IN_BROWSER = true;
-  public boolean OPTION_INCLUDE_LIBS = false;
-  public boolean OPTION_LINK_TO_JDK_DOCS = false;
+  public boolean OPTION_INCLUDE_LIBS;
+  public boolean OPTION_LINK_TO_JDK_DOCS;
 }

@@ -75,10 +75,7 @@ final class ShortcutFilteringPanel extends JPanel {
         }
         else {
           MouseShortcut shortcut = value instanceof MouseShortcut ? (MouseShortcut)value : null;
-          String text = shortcut == null ? null : KeymapUtil.getMouseShortcutText(
-            shortcut.getButton(),
-            shortcut.getModifiers(),
-            shortcut.getClickCount());
+          String text = shortcut == null ? null : KeymapUtil.getMouseShortcutText(shortcut);
           myMousePanel.setShortcut(shortcut);
           myKeyboardPanel.setShortcut(null);
           myKeyboardPanel.myFirstStroke.setText(text);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,8 +75,8 @@ class MyDiffContainer extends JBLayeredPane implements Disposable {
   private class MyOverlayLayout extends AbstractLayoutManager {
     @Override
     public void layoutContainer(Container parent) {
-      /**
-       * Propogate bound to all children
+      /*
+        Propogate bound to all children
        */
       for(int i = 0; i< getComponentCount(); i++) {
         getComponent(i).setBounds(0, 0, getWidth(), getHeight());

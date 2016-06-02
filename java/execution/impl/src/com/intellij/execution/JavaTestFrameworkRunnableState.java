@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -67,11 +68,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends
+  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  & CommonJavaRunConfigurationParameters
+  & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
+
+  private RemoteConnectionCreator remoteConnectionCreator;
+
+  public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
+    this.remoteConnectionCreator = remoteConnectionCreator;
+  }
+
+  @Nullable
+  @Override
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+  }
+
+  @Override
+  public boolean isPollConnection() {
+    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+  }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -115,6 +136,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+    handler.putUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY, getConfiguration().getName());
+    
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -124,18 +147,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       @Override
       public void startNotified(ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
-          root.setOutputFilePath(getConfiguration().getOutputFilePath());
+          final File file = OutputFileUtil.getOutputFile(getConfiguration());
+          root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
         }
       }
 
       @Override
       public void processTerminated(ProcessEvent event) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            root.flush();
-            deleteTempFiles();
-            clear();
-          }
+        Runnable runnable = () -> {
+          root.flush();
+          deleteTempFiles();
+          clear();
         };
         UIUtil.invokeLaterIfNeeded(runnable);
         handler.removeProcessListener(this);
@@ -144,12 +166,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
     LOG.assertTrue(rerunFailedTestsAction != null);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return viewer;
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);
@@ -369,7 +386,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
-    if (perModule != null && perModule.size() > 1) {
+    if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 

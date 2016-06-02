@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -461,6 +462,7 @@ public class PyCallExpressionHelper {
         final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
         final List<PyType> members = new ArrayList<PyType>();
         for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
+          PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
           if (target != null) {
             final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
             if (typeRef != null) {

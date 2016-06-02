@@ -71,86 +71,82 @@ public final class SwingCleanuper implements ApplicationComponent{
         public void projectClosed(final Project project){
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(
-            new Runnable() {
-              public void run() {
-                // request focus into some focusable component inside IdeFrame
-                final IdeFrameImpl frame;
-                final Window window=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-                if(window instanceof IdeFrameImpl){
-                  frame=(IdeFrameImpl)window;
-                }else{
-                  frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
+            () -> {
+              // request focus into some focusable component inside IdeFrame
+              final IdeFrameImpl frame;
+              final Window window=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+              if(window instanceof IdeFrameImpl){
+                frame=(IdeFrameImpl)window;
+              }else{
+                frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
+              }
+              if(frame!=null){
+                final Application app = ApplicationManager.getApplication();
+                if (app != null && app.isActive()) {
+                  StatusBar statusBar = frame.getStatusBar();
+                  if (statusBar != null) ((JComponent)statusBar).requestFocus();
                 }
-                if(frame!=null){
-                  final Application app = ApplicationManager.getApplication();
-                  if (app != null && app.isActive()) {
-                    StatusBar statusBar = frame.getStatusBar();
-                    if (statusBar != null) ((JComponent)statusBar).requestFocus();
-                  }
-                }
+              }
 
-                //noinspection SSBasedInspection
-                SwingUtilities.invokeLater(
-                  new Runnable() {
-                    public void run() {
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(
+                () -> {
 
-                      // KeyboardFocusManager.newFocusOwner
-                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
+                  // KeyboardFocusManager.newFocusOwner
+                  ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
 
-                      // Clear "realOppositeComponent", "realOppositeWindow"
-                      final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-                      resetField(focusManager, Component.class, "realOppositeComponent");
-                      resetField(focusManager, Window.class, "realOppositeWindow");
+                  // Clear "realOppositeComponent", "realOppositeWindow"
+                  final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+                  resetField(focusManager, Component.class, "realOppositeComponent");
+                  resetField(focusManager, Window.class, "realOppositeWindow");
 
 
-                      // Memory leak on static field in BasicPopupMenuUI
+                  // Memory leak on static field in BasicPopupMenuUI
 
-                      try {
-                        Object helperObject = ReflectionUtil.getStaticFieldValue(BasicPopupMenuUI.class, Object.class, "menuKeyboardHelper");
-                        if (helperObject != null) {
-                          resetField(helperObject, Component.class, "lastFocused");
-                        }
-                      }
-                      catch (Exception e) {
-                        // Ignore
-                      }
-
-                      // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
-
-                      try{
-                        DragGestureRecognizer recognizer = ReflectionUtil.getStaticFieldValue(TransferHandler.class, DragGestureRecognizer.class, "recognizer");
-
-                        if (recognizer != null) { // that is memory leak
-                          recognizer.setComponent(null);
-                        }
-                      }
-                      catch (Exception e){
-                        // Ignore
-                      }
-                      try {
-                        fixJTextComponentMemoryLeak();
-                      }
-                      catch(Exception e) {
-                        // Ignore
-                      }
-
-                      focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
-
-                      try {
-                        final Method m = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,"setGlobalFocusOwner", Component.class);
-                        m.invoke(focusManager, new Object[]{null});
-                      }
-                      catch (Exception e) {
-                        // Ignore
-                      }
-
-                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
-                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
-                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
+                  try {
+                    Object helperObject = ReflectionUtil.getStaticFieldValue(BasicPopupMenuUI.class, Object.class, "menuKeyboardHelper");
+                    if (helperObject != null) {
+                      resetField(helperObject, Component.class, "lastFocused");
                     }
                   }
-                );
-              }
+                  catch (Exception e) {
+                    // Ignore
+                  }
+
+                  // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
+
+                  try{
+                    DragGestureRecognizer recognizer = ReflectionUtil.getStaticFieldValue(TransferHandler.class, DragGestureRecognizer.class, "recognizer");
+
+                    if (recognizer != null) { // that is memory leak
+                      recognizer.setComponent(null);
+                    }
+                  }
+                  catch (Exception e){
+                    // Ignore
+                  }
+                  try {
+                    fixJTextComponentMemoryLeak();
+                  }
+                  catch(Exception e) {
+                    // Ignore
+                  }
+
+                  focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
+
+                  try {
+                    final Method m = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,"setGlobalFocusOwner", Component.class);
+                    m.invoke(focusManager, new Object[]{null});
+                  }
+                  catch (Exception e) {
+                    // Ignore
+                  }
+
+                  ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
+                  ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
+                  ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
+                }
+              );
             },
             2500
           );

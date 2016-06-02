@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,6 @@ public class CoreProjectLoader {
 
   @NotNull
   public static TreeMap<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    return FileStorageCoreUtil.load(JDOMUtil.loadDocument(modulesXml.contentsToByteArray()).getRootElement(), PathMacroManager.getInstance(componentManager), false);
+    return FileStorageCoreUtil.load(JDOMUtil.load(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
   }
 }

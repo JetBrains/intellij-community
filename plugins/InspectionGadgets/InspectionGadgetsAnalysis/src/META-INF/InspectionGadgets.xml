@@ -1214,10 +1214,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="connection.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.ConnectionResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="FieldRepeatedlyAccessedInMethod" shortName="FieldRepeatedlyAccessed"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="field.repeatedly.accessed.in.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.FieldRepeatedlyAccessedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InterfaceWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="interface.one.inheritor.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues"
                      enabledByDefault="false" level="WARNING"
@@ -1276,7 +1272,7 @@
     <!--group.names.javadoc.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="DanglingJavadoc" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dangling.javadoc.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.DanglingJavadocInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
@@ -2001,9 +1997,6 @@
                      key="instantiating.object.to.get.class.object.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.InstantiatingObjectToGetClassObjectInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JavaLangReflect" bundle="com.siyeh.InspectionGadgetsBundle" key="java.lang.reflect.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.JavaLangReflectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="KeySetIterationMayUseEntrySet" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="key.set.iteration.may.use.entry.set.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
@@ -2038,6 +2031,10 @@
                      key="object.allocation.in.loop.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ObjectAllocationInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectInstantiationInEqualsHashCode" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="object.instantiation.inside.equals.or.hashcode.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.performance.ObjectInstantiationInEqualsHashCodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="UsingRandomNextDoubleForRandomInteger" shortName="RandomDoubleForRandomInteger"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="random.double.for.random.integer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"

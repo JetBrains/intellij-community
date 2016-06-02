@@ -34,10 +34,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ExcludingTraversalPolicy;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.SearchTextFieldWithStoredHistory;
+import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -57,6 +54,7 @@ import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private ChangesTreeList<Change> myChangesTree;
+  private JScrollPane myChangesTreeScrollPane;
   private ActionToolbar myToolBar;
 
   public DirectoryHistoryDialog(Project p, IdeaGateway gw, VirtualFile f) {
@@ -89,7 +87,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     p.add(toolBarPanel, BorderLayout.NORTH);
-    p.add(myChangesTree, BorderLayout.CENTER);
+    p.add(myChangesTreeScrollPane = ScrollPaneFactory.createScrollPane(myChangesTree), BorderLayout.CENTER);
 
     return Pair.create((JComponent)p, toolBarPanel.getPreferredSize());
   }
@@ -100,7 +98,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected void setDiffBorder(Border border) {
-    myChangesTree.setScrollPaneBorder(border);
+    myChangesTreeScrollPane.setBorder(border);
   }
 
   private SearchTextField createSearchBox(JPanel root) {
@@ -108,11 +106,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        scheduleRevisionsUpdate(new Consumer<DirectoryHistoryDialogModel>() {
-          public void consume(DirectoryHistoryDialogModel m) {
-            m.setFilter(field.getText());
-            field.addCurrentTextToHistory();
-          }
+        scheduleRevisionsUpdate(m -> {
+          m.setFilter(field.getText());
+          field.addCurrentTextToHistory();
         });
       }
     });
@@ -129,11 +125,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private void initChangesTree(JComponent root) {
     myChangesTree = createChangesTree();
-    myChangesTree.setDoubleClickHandler(new Runnable() {
-      public void run() {
-        new ShowDifferenceAction().performIfEnabled();
-      }
-    });
+    myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
     myChangesTree.installPopupHandler(createChangesTreeActions(root));
   }
 
@@ -179,11 +171,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   @Override
   protected Runnable doUpdateDiffs(DirectoryHistoryDialogModel model) {
     final List<Change> changes = model.getChanges();
-    return new Runnable() {
-      public void run() {
-        myChangesTree.setChangesToDisplay(changes);
-      }
-    };
+    return () -> myChangesTree.setChangesToDisplay(changes);
   }
 
   @Override
@@ -219,11 +207,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     private Iterable<DirectoryChange> iterFileChanges() {
-      return ContainerUtil.iterate(getChanges(), new Condition<DirectoryChange>() {
-        public boolean value(DirectoryChange each) {
-          return each.canShowFileDifference();
-        }
-      });
+      return ContainerUtil.iterate(getChanges(), each -> each.canShowFileDifference());
     }
 
     @Override

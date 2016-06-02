@@ -319,6 +319,10 @@ public abstract class AnAction implements PossiblyDumbAware {
     return this instanceof DumbAware;
   }
 
+  public boolean startInTransaction() {
+    return true;
+  }
+
   public interface TransparentUpdate {
   }
 

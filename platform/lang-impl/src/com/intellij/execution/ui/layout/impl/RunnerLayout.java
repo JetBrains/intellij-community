@@ -43,12 +43,7 @@ public class RunnerLayout  {
   protected Map<String, ViewImpl> myViews = new LinkedHashMap<String, ViewImpl>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<TabImpl>(new Comparator<TabImpl>() {
-    @Override
-    public int compare(final TabImpl o1, final TabImpl o2) {
-      return o1.getIndex() - o2.getIndex();
-    }
-  });
+  protected Set<TabImpl> myTabs = new TreeSet<TabImpl>((o1, o2) -> o1.getIndex() - o2.getIndex());
   private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
 
   protected General myGeneral = new General();

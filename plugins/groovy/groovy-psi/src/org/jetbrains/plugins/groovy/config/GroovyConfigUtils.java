@@ -102,12 +102,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @Nullable
   public String getSDKVersion(@NotNull final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<String>() {
-      @Override
-      public Result<String> compute() {
-        final String path = LibrariesUtil.getGroovyHomePath(module);
-        return Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
-      }
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      final String path = LibrariesUtil.getGroovyHomePath(module);
+      return CachedValueProvider.Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
     });
   }
 
@@ -154,11 +151,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, new Function<Library, String>() {
-      @Override
-      public String fun(Library library) {
-        return getSDKLibVersion(library);
-      }
-    });
+    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
   }
 }

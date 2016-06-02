@@ -52,12 +52,7 @@ class GrClosableSignatureImpl implements GrClosureSignature {
   public GrClosureParameter[] getParameters() {
     GrParameter[] parameters = myBlock.getAllParameters();
 
-    return ContainerUtil.map(parameters, new Function<GrParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(final GrParameter parameter) {
-        return createClosureParameter(parameter);
-      }
-    }, new GrClosureParameter[parameters.length]);
+    return ContainerUtil.map(parameters, parameter -> createClosureParameter(parameter), new GrClosureParameter[parameters.length]);
   }
 
   @NotNull

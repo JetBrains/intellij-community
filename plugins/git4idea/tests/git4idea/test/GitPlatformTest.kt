@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.*
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.vcs.test.VcsPlatformTest
 import git4idea.DialogManager
-import git4idea.GitPlatformFacade
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -37,7 +36,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected lateinit var myGitRepositoryManager: GitRepositoryManager
   protected lateinit var myGitSettings: GitVcsSettings
-  protected lateinit var myPlatformFacade: GitPlatformFacade
   protected lateinit var myGit: TestGitImpl
   protected lateinit var myVcs: GitVcs
   protected lateinit var myDialogManager: TestDialogManager
@@ -54,7 +52,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade::class.java)
     myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
     myVcs = GitVcs.getInstance(myProject)!!
     myVcs.doActivate()
@@ -79,7 +76,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun getDebugLogCategories(): Collection<String> {
     return super.getDebugLogCategories().plus(listOf("#" + Executor::class.java.name,
                                                      "#" + GitHandler::class.java.name,
-                                                     GitHandler::class.java.name))
+                                                     "#output." + GitHandler::class.java.name))
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {

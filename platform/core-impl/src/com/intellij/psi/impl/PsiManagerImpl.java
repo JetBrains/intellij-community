@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     return false;
   }
 
+  @Override
   @TestOnly
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
     // Find something to ensure there's no changed files waiting to be processed in repository indices.

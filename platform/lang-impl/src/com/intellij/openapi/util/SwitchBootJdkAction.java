@@ -155,30 +155,27 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               }
             };
 
-            FileChooser.chooseFiles(descriptor, null, null, new Consumer<List<VirtualFile>>() {
-              @Override
-              public void consume(final List<VirtualFile> files) {
-                if (files.size() > 0) {
-                  final File jdkFile = new File(files.get(0).getPath());
-                  JdkBundle selectedJdk = pathsList.getBundle(jdkFile.getPath());
-                  if (selectedJdk == null) {
-                    selectedJdk = JdkBundle.createBundle(jdkFile, false, false);
-                    if (selectedJdk != null) {
-                      pathsList.addBundle(selectedJdk, true);
-                      if (model.getSize() > 0) {
-                        model.insertElementAt(selectedJdk, model.getSize() - 1);
-                      }
-                      else {
-                        model.addElement(selectedJdk);
-                      }
+            FileChooser.chooseFiles(descriptor, null, null, files -> {
+              if (files.size() > 0) {
+                final File jdkFile = new File(files.get(0).getPath());
+                JdkBundle selectedJdk = pathsList.getBundle(jdkFile.getPath());
+                if (selectedJdk == null) {
+                  selectedJdk = JdkBundle.createBundle(jdkFile, false, false);
+                  if (selectedJdk != null) {
+                    pathsList.addBundle(selectedJdk, true);
+                    if (model.getSize() > 0) {
+                      model.insertElementAt(selectedJdk, model.getSize() - 1);
                     }
                     else {
-                      LOG.error("Cannot create bundle for path: " + jdkFile.getPath());
-                      return;
+                      model.addElement(selectedJdk);
                     }
                   }
-                  myComboBox.setSelectedItem(selectedJdk);
+                  else {
+                    LOG.error("Cannot create bundle for path: " + jdkFile.getPath());
+                    return;
+                  }
                 }
+                myComboBox.setSelectedItem(selectedJdk);
               }
             });
           }

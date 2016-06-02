@@ -15,6 +15,9 @@
  */
 package com.intellij.testFramework
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
@@ -32,12 +35,14 @@ class EdtTestUtil {
   }
 }
 
-
-// Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
-// The problem is - Application logs errors, but not throws. But in tests must be thrown.
-// In any case name "runInEdtAndWait" is better than "invokeAndWait".
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
+  val application = ApplicationManager.getApplication()
+  if (application is ApplicationImpl) {
+    application.invokeAndWait(runnable, ModalityState.defaultModalityState())
+    return
+  }
+
   if (SwingUtilities.isEventDispatchThread()) {
     runnable()
   }

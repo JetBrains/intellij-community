@@ -19,9 +19,9 @@ import com.intellij.diff.contents.*;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.ThreesideMergeRequest;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +37,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -106,11 +109,8 @@ public class ExternalDiffToolUtil {
     Charset charset = content.getCharset();
     if (charset == null) charset = Charset.defaultCharset();
 
-    String contentData = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return content.getDocument().getText();
-      }
+    String contentData = ReadAction.compute(() -> {
+      return content.getDocument().getText();
     });
     if (separator != LineSeparator.LF) {
       contentData = StringUtil.convertLineSeparators(contentData, separator.getSeparatorString());
@@ -182,40 +182,25 @@ public class ExternalDiffToolUtil {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
-    List<InputFile> files = new ArrayList<InputFile>();
+    List<InputFile> files = new ArrayList<>();
     for (int i = 0; i < contents.size(); i++) {
       files.add(createFile(contents.get(i), titles.get(i), windowTitle));
     }
 
-    CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getDiffParameters(), true);
-
-    List<String> args = new ArrayList<String>();
-    while (parameterTokenizer.hasMoreTokens()) {
-      String arg = parameterTokenizer.nextToken();
-      if ("%1".equals(arg)) {
-        args.add(files.get(0).getPath());
-      }
-      else if ("%2".equals(arg)) {
-        if (files.size() == 3) {
-          args.add(files.get(2).getPath());
-        }
-        else {
-          args.add(files.get(1).getPath());
-        }
-      }
-      else if ("%3".equals(arg)) {
-        if (files.size() == 3) args.add(files.get(1).getPath());
-      }
-      else {
-        args.add(arg);
-      }
+    Map<String, String> patterns = ContainerUtil.newHashMap();
+    if (files.size() == 2) {
+      patterns.put("%1", files.get(0).getPath());
+      patterns.put("%2", files.get(1).getPath());
+      patterns.put("%3", "");
+    }
+    else {
+      patterns.put("%1", files.get(0).getPath());
+      patterns.put("%2", files.get(2).getPath());
+      patterns.put("%3", files.get(1).getPath());
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(settings.getDiffExePath());
 
-    commandLine.addParameters(args);
-    commandLine.createProcess();
+    execute(settings.getDiffExePath(), settings.getDiffParameters(), patterns);
   }
 
   public static void executeMerge(@Nullable Project project,
@@ -224,7 +209,7 @@ public class ExternalDiffToolUtil {
     throws IOException, ExecutionException {
     boolean success = false;
     OutputFile outputFile = null;
-    List<InputFile> inputFiles = new ArrayList<InputFile>();
+    List<InputFile> inputFiles = new ArrayList<>();
     try {
       DiffContent outputContent = request.getOutputContent();
       List<? extends DiffContent> contents = request.getContents();
@@ -240,36 +225,16 @@ public class ExternalDiffToolUtil {
 
       outputFile = createOutputFile(outputContent, windowTitle);
 
-      CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getMergeParameters(), true);
+      Map<String, String> patterns = new HashMap<>();
+      patterns.put("%1", inputFiles.get(0).getPath());
+      patterns.put("%2", inputFiles.get(2).getPath());
+      patterns.put("%3", inputFiles.get(1).getPath());
+      patterns.put("%4", outputFile.getPath());
 
-      List<String> args = new ArrayList<String>();
-      while (parameterTokenizer.hasMoreTokens()) {
-        String arg = parameterTokenizer.nextToken();
-        if ("%1".equals(arg)) {
-          args.add(inputFiles.get(0).getPath());
-        }
-        else if ("%2".equals(arg)) {
-          args.add(inputFiles.get(2).getPath());
-        }
-        else if ("%3".equals(arg)) {
-          args.add(inputFiles.get(1).getPath());
-        }
-        else if ("%4".equals(arg)) {
-          args.add(outputFile.getPath());
-        }
-        else {
-          args.add(arg);
-        }
-      }
-
-      GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(settings.getMergeExePath());
-
-      commandLine.addParameters(args);
-      final Process process = commandLine.createProcess();
+      final Process process = execute(settings.getMergeExePath(), settings.getMergeParameters(), patterns);
 
       if (settings.isMergeTrustExitCode()) {
-        final Ref<Boolean> resultRef = new Ref<Boolean>();
+        final Ref<Boolean> resultRef = new Ref<>();
 
         ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
           @Override
@@ -333,6 +298,30 @@ public class ExternalDiffToolUtil {
     }
   }
 
+  @NotNull
+  private static Process execute(@NotNull String exePath, @NotNull String parametersTemplate, @NotNull Map<String, String> patterns)
+    throws ExecutionException {
+    List<String> parameters = ParametersListUtil.parse(parametersTemplate, true);
+
+    List<String> from = new ArrayList<>();
+    List<String> to = new ArrayList<>();
+    for (Map.Entry<String, String> entry : patterns.entrySet()) {
+      from.add(entry.getKey());
+      to.add(entry.getValue());
+    }
+
+    List<String> args = new ArrayList<>();
+    for (String parameter : parameters) {
+      String arg = StringUtil.replace(parameter, from, to);
+      if (!StringUtil.isEmptyOrSpaces(arg)) args.add(arg);
+    }
+
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(exePath);
+    commandLine.addParameters(args);
+    return commandLine.createProcess();
+  }
+
   //
   // Helpers
   //
@@ -388,11 +377,8 @@ public class ExternalDiffToolUtil {
     @Override
     public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myDocument.setText(content);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDocument.setText(content);
       });
     }
   }

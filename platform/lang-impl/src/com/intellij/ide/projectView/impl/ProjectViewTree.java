@@ -110,17 +110,14 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
-    return getColorForObject(object, getProject(), new NullableFunction<Object, PsiElement>() {
-      @Override
-      public PsiElement fun(Object object) {
-        if (object instanceof AbstractTreeNode) {
-          final Object element = ((AbstractTreeNode)object).getValue();
-          if (element instanceof PsiElement) {
-            return (PsiElement)element;
-          }
+    return getColorForObject(object, getProject(), (NullableFunction<Object, PsiElement>)object1 -> {
+      if (object1 instanceof AbstractTreeNode) {
+        final Object element = ((AbstractTreeNode)object1).getValue();
+        if (element instanceof PsiElement) {
+          return (PsiElement)element;
         }
-        return null;
       }
+      return null;
     });
   }
 

@@ -28,6 +28,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -126,12 +127,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
   }
 
-  public void addListener(NodeRendererSettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeListener(NodeRendererSettingsListener listener) {
-    myDispatcher.removeListener(listener);
+  public void addListener(NodeRendererSettingsListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -386,11 +383,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
-    private static final Computable<String> NULL_LABEL_COMPUTABLE = new Computable<String>() {
-      public String compute() {
-        return "null";
-      }
-    };
+    private static final Computable<String> NULL_LABEL_COMPUTABLE = () -> "null";
 
     private final MyCachedEvaluator myKeyExpression = new MyCachedEvaluator();
     private final MyCachedEvaluator myValueExpression = new MyCachedEvaluator();
@@ -426,11 +419,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       if (eval != null) {
         final WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(evaluationContext.getProject(), evaluator.getReferenceExpression(), eval);
         evalDescriptor.setShowIdLabel(false);
-        return new Pair<>(new Computable<String>() {
-          public String compute() {
-            evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
-            return evalDescriptor.getValueLabel();
-          }
+        return new Pair<>(() -> {
+          evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
+          return evalDescriptor.getValueLabel();
         }, evalDescriptor);
       }
       return new Pair<>(NULL_LABEL_COMPUTABLE, null);

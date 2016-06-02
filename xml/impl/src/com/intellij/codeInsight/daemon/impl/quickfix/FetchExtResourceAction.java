@@ -155,12 +155,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           try {
             HttpConfigurable.getInstance().prepareURL(url);
             fetchDtd(project, uri, url, indicator);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                DaemonCodeAnalyzer.getInstance(project).restart(file);
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(file));
             return;
           }
           catch (IOException ex) {
@@ -188,19 +183,16 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     LOG.assertTrue(extResources.mkdirs() || extResources.exists(), extResources);
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        @SuppressWarnings("deprecation")
-        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
-        try {
-          final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
-          final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          LOG.assertTrue(vFile != null, path);
-        }
-        finally {
-          token.finish();
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      @SuppressWarnings("deprecation")
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
+      try {
+        final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
+        final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        LOG.assertTrue(vFile != null, path);
+      }
+      finally {
+        token.finish();
       }
     }, indicator.getModalityState());
 
@@ -278,20 +270,12 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
   private static VirtualFile findFileByPath(final String resPath, @Nullable final String dtdUrl, ProgressIndicator indicator) {
     final Ref<VirtualFile> ref = new Ref<VirtualFile>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
-            if (dtdUrl != null) {
-              ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
-            }
-          }
-        });
+    ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
+      if (dtdUrl != null) {
+        ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
       }
-    }, indicator.getModalityState());
+    }), indicator.getModalityState());
     return ref.get();
   }
 
@@ -334,12 +318,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                                      String extResourcesPath,
                                      @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          indicator.setText(XmlBundle.message("fetching.progress.indicator", resourceUrl));
-        }
-      }
+      () -> indicator.setText(XmlBundle.message("fetching.progress.indicator", resourceUrl))
     );
 
     FetchResult result = fetchData(project, resourceUrl, indicator);
@@ -390,15 +369,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         result.contentType != null &&
         result.contentType.contains(HTML_MIME) &&
         new String(result.bytes).contains("<html")) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showMessageDialog(project,
-                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                     XmlBundle.message("invalid.url.title"),
-                                     Messages.getErrorIcon());
-        }
-      }, indicator.getModalityState());
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                                                                     XmlBundle.message("invalid.url.title"),
+                                                                                     Messages.getErrorIcon()), indicator.getModalityState());
       return false;
     }
     return true;
@@ -518,15 +492,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showMessageDialog(project,
-                                       XmlBundle.message("invalid.url.message", dtdUrl),
-                                       XmlBundle.message("invalid.url.title"),
-                                       Messages.getErrorIcon());
-          }
-        }, indicator.getModalityState());
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                       XmlBundle.message("invalid.url.message", dtdUrl),
+                                                                                       XmlBundle.message("invalid.url.title"),
+                                                                                       Messages.getErrorIcon()), indicator.getModalityState());
       }
     }
 

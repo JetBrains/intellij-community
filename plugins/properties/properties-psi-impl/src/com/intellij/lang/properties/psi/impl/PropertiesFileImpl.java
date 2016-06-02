@@ -31,6 +31,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -42,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
@@ -79,15 +83,29 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   private void ensurePropertiesLoaded() {
     if (myPropertiesMap != null) return;
-
-    final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
+    final StubTree stubTree = getStubTree();
+    List<IProperty> properties;
     MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
-    List<IProperty> properties = new ArrayList<IProperty>(props.length);
-    for (final ASTNode prop : props) {
-      final Property property = (Property)prop.getPsi();
-      String key = property.getUnescapedKey();
-      propertiesMap.add(key, property);
-      properties.add(property);
+    if (stubTree != null) {
+      final PsiFileStub root = stubTree.getRoot();
+      final StubElement propertiesList = root.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
+      if (propertiesList != null) {
+        properties = Arrays.stream(propertiesList.getChildrenByType(PropertiesElementTypes.PROPERTY, Property[]::new))
+          .map(IProperty.class::cast)
+          .peek(p -> propertiesMap.add(p.getKey(), p))
+          .collect(Collectors.toList());
+      } else {
+        properties = Collections.emptyList();
+      }
+    } else {
+      final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
+      properties = new ArrayList<IProperty>(props.length);
+      for (final ASTNode prop : props) {
+        final Property property = (Property)prop.getPsi();
+        String key = property.getUnescapedKey();
+        propertiesMap.add(key, property);
+        properties.add(property);
+      }
     }
     final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(properties);
     synchronized (lock) {
@@ -150,14 +168,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
         return null;
       }
       if (myAlphaSorted) {
-        final int insertIndex = Collections.binarySearch(myProperties, property, new Comparator<IProperty>() {
-          @Override
-          public int compare(IProperty p1, IProperty p2) {
-            final String k1 = p1.getKey();
-            final String k2 = p2.getKey();
-            LOG.assertTrue(k1 != null && k2 != null);
-            return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
-          }
+        final int insertIndex = Collections.binarySearch(myProperties, property, (p1, p2) -> {
+          final String k1 = p1.getKey();
+          final String k2 = p2.getKey();
+          LOG.assertTrue(k1 != null && k2 != null);
+          return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
         });
         return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);
       }

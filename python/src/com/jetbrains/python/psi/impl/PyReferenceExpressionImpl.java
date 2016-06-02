@@ -235,8 +235,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           continue;
         }
         if (!target.isValid()) {
-          LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
-          continue;
+          /*LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
+          continue;*/
+          throw new PsiInvalidElementAccessException(this);
         }
         members.add(getTypeFromTarget(target, context, this));
       }

@@ -350,6 +350,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testStopFoldingForArrayWriteAccessInConsequentUsages() throws Exception {
+    doTest();
+  }
+
   public void testStopFoldingPostfixInside() throws Exception {
     doTest();
   }
@@ -497,6 +501,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testArrayAccessWithLocalIndex() throws Exception {
+    doTest();
+  }
+
+  public void testArrayAccessWithTopExpression() throws Exception {
     doTest();
   }
 
@@ -740,6 +748,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.INT);
   }
 
+  public void testShortenClassRefsInNewReturnType() throws Exception {
+    doTestReturnTypeChanged(PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_COLLECTION, getProject(), GlobalSearchScope.allScope(getProject())));
+  }
+
   public void testPassFieldAsParameterAndMakeStatic() throws Exception {
     doTestPassFieldsAsParams();
   }
@@ -954,11 +966,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
         for (final Match match : duplicates) {
           if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              processor.processMatch(match);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            processor.processMatch(match);
           });
         }
       }

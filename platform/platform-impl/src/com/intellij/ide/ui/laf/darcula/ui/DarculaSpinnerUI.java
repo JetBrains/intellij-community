@@ -58,21 +58,35 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     return new DarculaSpinnerUI();
   }
 
+  private void addEditorFocusListener(JComponent editor) {
+    if (editor != null) {
+      editor.getComponents()[0].addFocusListener(myFocusListener);
+    }
+  }
+
+  private void removeEditorFocusListener(JComponent editor) {
+    if (editor != null) {
+      editor.getComponents()[0].removeFocusListener(myFocusListener);
+    }
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    super.uninstallListeners();
+    removeEditorFocusListener(spinner.getEditor());
+  }
+
   @Override
   protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
     super.replaceEditor(oldEditor, newEditor);
-    if (oldEditor != null) {
-      oldEditor.getComponents()[0].removeFocusListener(myFocusListener);
-    }
-    if (newEditor != null) {
-      newEditor.getComponents()[0].addFocusListener(myFocusListener);
-    }
+    removeEditorFocusListener(oldEditor);
+    addEditorFocusListener(newEditor);
   }
 
   @Override
   protected JComponent createEditor() {
     final JComponent editor = super.createEditor();
-    editor.getComponents()[0].addFocusListener(myFocusListener);
+    addEditorFocusListener(editor);
     return editor;
   }
 

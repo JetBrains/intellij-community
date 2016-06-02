@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -106,45 +107,37 @@ public abstract class ModuleJdkConfigurable implements Disposable {
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
-                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
+                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                          JBUI.insets(12, 6, 12, 0), 0, 0));
     myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                         new Insets(6, 6, 12, 0), 0, 0));
+                                                         JBUI.insets(6, 6, 12, 0), 0, 0));
     final Project project = getRootModel().getModule().getProject();
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     myCbModuleJdk
-      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>() {
-        @Override
-        public boolean value(Sdk jdk) {
-          final Sdk projectJdk = myJdksModel.getProjectSdk();
-          if (projectJdk == null) {
-            final int res =
-              Messages.showYesNoDialog(myJdkPanel,
-                                       ProjectBundle.message("project.roots.no.jdk.on.project.message"),
-                                       ProjectBundle.message("project.roots.no.jdk.on.project.title"),
-                                       Messages.getInformationIcon());
-            if (res == Messages.YES) {
-              myJdksModel.setProjectSdk(jdk);
-              return true;
-            }
+      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), jdk -> {
+        final Sdk projectJdk = myJdksModel.getProjectSdk();
+        if (projectJdk == null) {
+          final int res =
+            Messages.showYesNoDialog(myJdkPanel,
+                                     ProjectBundle.message("project.roots.no.jdk.on.project.message"),
+                                     ProjectBundle.message("project.roots.no.jdk.on.project.title"),
+                                     Messages.getInformationIcon());
+          if (res == Messages.YES) {
+            myJdksModel.setProjectSdk(jdk);
+            return true;
           }
-          return false;
         }
+        return false;
       }, true);
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                       new Insets(0, 4, 7, 0), 0, 0));
+                                                       JBUI.insets(0, 4, 7, 0), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-    myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), new Computable<Sdk>() {
-      @Override
-      @Nullable
-      public Sdk compute() {
-        return getRootModel().getSdk();
-      }
-    });
+    myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), () -> getRootModel().getSdk());
     myJdkPanel.add(editButton,
                    new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          new Insets(0, 4, 7, 0), 0, 0));
+                                          JBUI.insets(0, 4, 7, 0), 0, 0));
   }
 
   private void clearCaches() {

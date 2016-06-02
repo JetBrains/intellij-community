@@ -8,6 +8,9 @@ import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * User : catherine
@@ -16,11 +19,13 @@ import org.jetbrains.annotations.NotNull;
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
 
+  @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask(PythonNoseTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME));
   }
 
+  @Test
   public void testNoseRunner() {
 
     runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
@@ -42,6 +47,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testNoseRunner2() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
       @NotNull

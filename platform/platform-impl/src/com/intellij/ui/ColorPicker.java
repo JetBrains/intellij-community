@@ -231,7 +231,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public Color getColor() {
-    return myColor;
+    if (myColorWheelPanel.myColorWheel.myOpacity == 255) {
+      return myColor;
+    } else {
+      //noinspection UseJBColor
+      return new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), myColorWheelPanel.myColorWheel.myOpacity);
+    }
   }
 
   @Override
@@ -241,12 +246,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private void update(final JTextField src) {
     myUpdateQueue.cancelAllRequests();
-    myUpdateQueue.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        validateAndUpdatePreview(src);
-      }
-    }, 300);
+    myUpdateQueue.addRequest(() -> validateAndUpdatePreview(src), 300);
   }
 
   @Override
@@ -454,12 +454,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       myBrightnessComponent = new SlideComponent("Brightness", true);
       myBrightnessComponent.setToolTipText("Brightness");
-      myBrightnessComponent.addListener(new Consumer<Integer>() {
-        @Override
-        public void consume(Integer value) {
-          myColorWheel.setBrightness(1f - (value / 255f));
-          myColorWheel.repaint();
-        }
+      myBrightnessComponent.addListener(value -> {
+        myColorWheel.setBrightness(1f - (value / 255f));
+        myColorWheel.repaint();
       });
 
       add(myBrightnessComponent, BorderLayout.EAST);
@@ -468,12 +465,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         myOpacityComponent = new SlideComponent("Opacity", false);
         myOpacityComponent.setUnits(opacityInPercent ? SlideComponent.Unit.PERCENT : SlideComponent.Unit.LEVEL);
         myOpacityComponent.setToolTipText("Opacity");
-        myOpacityComponent.addListener(new Consumer<Integer>() {
-          @Override
-          public void consume(Integer integer) {
-            myColorWheel.setOpacity(integer.intValue());
-            myColorWheel.repaint();
-          }
+        myOpacityComponent.addListener(integer -> {
+          myColorWheel.setOpacity(integer.intValue());
+          myColorWheel.repaint();
         });
 
         add(myOpacityComponent, BorderLayout.SOUTH);

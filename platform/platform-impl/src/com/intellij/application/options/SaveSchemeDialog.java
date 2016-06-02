@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.application.options;
 
 import com.intellij.CommonBundle;

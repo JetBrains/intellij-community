@@ -84,12 +84,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiVariable) {
-        return RecursionManager.doPreventingRecursion(expression, true, new Computable<Color>() {
-          @Override
-          public Color compute() {
-            return getExpressionColor(((PsiVariable)target).getInitializer());
-          }
-        });
+        return RecursionManager.doPreventingRecursion(expression, true, () -> getExpressionColor(((PsiVariable)target).getInitializer()));
       }
     }
     return JavaColorProvider.getJavaColorFromExpression(expression);
@@ -203,7 +198,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':') {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
       context.setAddCompletionChar(false);
       TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
     }

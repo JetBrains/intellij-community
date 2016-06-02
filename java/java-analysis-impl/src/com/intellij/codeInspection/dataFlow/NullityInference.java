@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -24,7 +23,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,19 +42,10 @@ public class NullityInference {
       return Nullness.UNKNOWN;
     }
 
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Nullness>() {
-      @Nullable
-      @Override
-      public Result<Nullness> compute() {
-        Nullness result = RecursionManager.doPreventingRecursion(method, true, new Computable<Nullness>() {
-          @Override
-          public Nullness compute() {
-            return doInferNullity(method);
-          }
-        });
-        if (result == null) result = Nullness.UNKNOWN;
-        return Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      Nullness result = RecursionManager.doPreventingRecursion(method, true, () -> doInferNullity(method));
+      if (result == null) result = Nullness.UNKNOWN;
+      return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

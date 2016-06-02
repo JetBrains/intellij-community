@@ -19,6 +19,11 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -52,18 +57,37 @@ public class BalloonLayoutData {
 
   public Runnable lafHandler;
 
+  public long fadeoutTime;
+
+  public Color fillColor;
+  public Color borderColor;
+
   @NotNull
   public MergeInfo merge() {
-    return mergeData == null ? new MergeInfo(id, 1) : new MergeInfo(mergeData.linkId, mergeData.count + 1);
+    return new MergeInfo(mergeData, id);
+  }
+
+  @NotNull
+  public List<String> getMergeIds() {
+    List<String> ids = new ArrayList<>(mergeData.linkIds);
+    ids.add(id);
+    return ids;
   }
 
   public static class MergeInfo {
-    public String linkId;
+    public List<String> linkIds;
     public int count;
 
-    public MergeInfo(@NotNull String linkId, int count) {
-      this.linkId = linkId;
-      this.count = count;
+    public MergeInfo(@Nullable MergeInfo info, @NotNull String linkId) {
+      if (info == null) {
+        linkIds = new ArrayList<>();
+        count = 1;
+      }
+      else {
+        linkIds = info.linkIds;
+        count = info.count + 1;
+      }
+      linkIds.add(linkId);
     }
   }
 }

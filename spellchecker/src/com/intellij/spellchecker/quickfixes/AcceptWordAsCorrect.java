@@ -44,7 +44,7 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("spelling");
+    return SpellCheckerBundle.message("add.to.dictionary");
   }
 
   @NotNull

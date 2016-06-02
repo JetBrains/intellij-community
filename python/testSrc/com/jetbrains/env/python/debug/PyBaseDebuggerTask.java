@@ -297,12 +297,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
     final ExecutionResult result = myExecutionResult;
     if (myExecutionResult != null) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(result.getExecutionConsole());
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(result.getExecutionConsole()));
       myExecutionResult = null;
     }
   }
@@ -359,12 +354,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     private Thread myThread;
 
     public void start() {
-      myThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          doJob();
-        }
-      },"py debugger job");
+      myThread = new Thread(() -> doJob(), "py debugger job");
       myThread.setDaemon(true);
       myThread.start();
     }

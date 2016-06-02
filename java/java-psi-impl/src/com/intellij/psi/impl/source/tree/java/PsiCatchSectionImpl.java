@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
 
   private final Object myTypesCacheLock = new Object();
-  private CachedValue<List<PsiType>> myTypesCache = null;
+  private CachedValue<List<PsiType>> myTypesCache;
 
   public PsiCatchSectionImpl() {
     super(CATCH_SECTION);

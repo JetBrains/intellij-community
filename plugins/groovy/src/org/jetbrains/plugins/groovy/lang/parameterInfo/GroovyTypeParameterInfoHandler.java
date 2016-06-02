@@ -155,12 +155,7 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     buffer.append(p.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");
-    buffer.append(StringUtil.join(p.getSuperTypes(), new Function<PsiClassType, String>() {
-      @Override
-      public String fun(final PsiClassType t) {
-        return t.getPresentableText();
-      }
-    }, ", "));
+    buffer.append(StringUtil.join(p.getSuperTypes(), t -> t.getPresentableText(), ", "));
 
     context.setupUIComponentPresentation(buffer.toString(), 0, highlightEndOffset, false, false, false, context.getDefaultParameterColor());
   }

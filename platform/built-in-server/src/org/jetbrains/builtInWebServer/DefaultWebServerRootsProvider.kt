@@ -72,47 +72,48 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
-    runReadAction {
+    return runReadAction {
       val directoryIndex = DirectoryIndex.getInstance(project)
       val info = directoryIndex.getInfoForFile(file)
       // we serve excluded files
       if (!info.isExcluded && !info.isInProject) {
         // javadoc jars is "not under project", but actually is, so, let's check library or SDK
-        return if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
-      }
-
-      var root = info.sourceRoot
-      val isRootNameOptionalInPath: Boolean
-      val isLibrary: Boolean
-      if (root == null) {
-        isRootNameOptionalInPath = false
-        root = info.contentRoot
-        if (root == null) {
-          root = info.libraryClassRoot
-          isLibrary = true
-
-          assert(root != null) { file.presentableUrl }
-        }
-        else {
-          isLibrary = false
-        }
+        if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
       else {
-        isLibrary = info.isInLibrarySource
-        isRootNameOptionalInPath = !isLibrary
-      }
+        var root = info.sourceRoot
+        val isRootNameOptionalInPath: Boolean
+        val isLibrary: Boolean
+        if (root == null) {
+          isRootNameOptionalInPath = false
+          root = info.contentRoot
+          if (root == null) {
+            root = info.libraryClassRoot
+            isLibrary = true
 
-      var module = info.module
-      if (isLibrary && module == null) {
-        for (entry in directoryIndex.getOrderEntries(info)) {
-          if (entry is ModuleLibraryOrderEntryImpl) {
-            module = entry.ownerModule
-            break
+            assert(root != null) { file.presentableUrl }
+          }
+          else {
+            isLibrary = false
           }
         }
-      }
+        else {
+          isLibrary = info.isInLibrarySource
+          isRootNameOptionalInPath = !isLibrary
+        }
 
-      return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
+        var module = info.module
+        if (isLibrary && module == null) {
+          for (entry in directoryIndex.getOrderEntries(info)) {
+            if (entry is ModuleLibraryOrderEntryImpl) {
+              module = entry.ownerModule
+              break
+            }
+          }
+        }
+
+        PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
+      }
     }
   }
 }

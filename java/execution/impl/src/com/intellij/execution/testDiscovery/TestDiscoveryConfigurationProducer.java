@@ -59,12 +59,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       try {
         final Collection<String> testsByMethodName = TestDiscoveryIndex
           .getInstance(configuration.getProject()).getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null || ContainerUtil.filter(testsByMethodName, new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return s.startsWith(configuration.getFrameworkPrefix());
-          }
-        }).isEmpty()) return false;
+        if (testsByMethodName == null || ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) return false;
         
       }
       catch (IOException e) {

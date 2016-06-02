@@ -193,7 +193,7 @@ public class IdeaApplication {
       ApplicationManagerEx.getApplicationEx().load();
       myLoaded = true;
 
-      myStarter.main(myArgs);
+      ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
       myStarter = null; //GC it
     }
     catch (Exception e) {
@@ -331,13 +331,10 @@ public class IdeaApplication {
         windowManager.showFrame();
       }
 
-      app.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (mySplash != null) {
-            mySplash.dispose();
-            mySplash = null; // Allow GC collect the splash window
-          }
+      app.invokeLater(() -> {
+        if (mySplash != null) {
+          mySplash.dispose();
+          mySplash = null; // Allow GC collect the splash window
         }
       }, ModalityState.any());
 

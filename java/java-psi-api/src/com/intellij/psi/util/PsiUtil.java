@@ -47,6 +47,7 @@ import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,7 +275,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLocalClass(@NotNull PsiClass psiClass) {
     PsiElement parent = psiClass.getParent();
-    return parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock;
+    if (parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock) {
+      return true;
+    }
+
+    if (parent instanceof PsiClass) {
+      return isLocalOrAnonymousClass((PsiClass)parent);
+    }
+    return false;
   }
 
   public static boolean isAbstractClass(@NotNull PsiClass clazz) {
@@ -453,6 +461,7 @@ public final class PsiUtil extends PsiUtilCore {
     return type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
+  @NotNull
   public static PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType) type;
@@ -1068,12 +1077,14 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType, final boolean eraseTypeParameter) {
     final PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0, eraseTypeParameter);
     return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, eraseTypeParameter);
   }
 
+  @Contract("null, _, _, _ -> null")
   @Nullable
   public static PsiType substituteTypeParameter(@Nullable final PsiType psiType, @NotNull final String superClass, final int typeParamIndex,
                                                 final boolean eraseTypeParameter) {

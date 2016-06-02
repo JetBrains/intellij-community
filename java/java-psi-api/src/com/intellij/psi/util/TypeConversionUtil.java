@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -839,7 +836,7 @@ public class TypeConversionUtil {
       return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
-      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
+      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<PsiClassType>());
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
@@ -880,7 +877,20 @@ public class TypeConversionUtil {
     return isAssignable(wildcardType.getExtendsBound(), right);
   }
 
-  private static boolean isUnboxable(@NotNull PsiPrimitiveType left, @NotNull PsiClassType right) {
+  private static boolean isUnboxable(@NotNull PsiPrimitiveType left, @NotNull PsiClassType right, @NotNull Set<PsiClassType> types) {
+    if (!right.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return false;
+    final PsiClass psiClass = right.resolve();
+    if (psiClass == null) return false;
+
+    if (psiClass instanceof PsiTypeParameter) {
+      for (PsiClassType bound : psiClass.getExtendsListTypes()) {
+        if (types.add(bound) && isUnboxable(left, bound, types)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     final PsiPrimitiveType rightUnboxedType = PsiPrimitiveType.getUnboxedType(right);
     return rightUnboxedType != null && isAssignable(left, rightUnboxedType);
   }
@@ -1357,10 +1367,8 @@ public class TypeConversionUtil {
   public static Object computeCastTo(final Object operand, final PsiType castType) {
     if (operand == null || castType == null) return null;
     Object value;
-    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING)) {
-      value = operand;
-    }
-    else if (operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
+    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING) ||
+        operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
       value = operand;
     }
     else {

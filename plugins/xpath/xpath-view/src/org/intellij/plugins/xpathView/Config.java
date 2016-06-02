@@ -34,8 +34,8 @@ public class Config {
   public SearchScope SEARCH_SCOPE = new SearchScope();
   public boolean MATCH_RECURSIVELY = false;
 
-  public TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, 0);
-  public TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, 0);
+  public TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, Font.PLAIN);
+  public TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, Font.PLAIN);
   public boolean scrollToFirst = true;
   public boolean bUseContextAtCursor = true;
   public boolean bHighlightStartTagOnly = true;

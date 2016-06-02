@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-/**
- * class ViewerTreeBuilder
- * created Aug 25, 2001
- * @author Jeka
- */
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.IndexComparator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ViewerTreeBuilder extends AbstractTreeBuilder {
   public ViewerTreeBuilder(Project project, JTree tree) {

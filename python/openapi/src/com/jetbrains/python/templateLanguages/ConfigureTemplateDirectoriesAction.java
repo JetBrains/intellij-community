@@ -18,8 +18,6 @@ package com.jetbrains.python.templateLanguages;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +40,11 @@ public class ConfigureTemplateDirectoriesAction implements LocalQuickFix, LowPri
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Structure");
-      }
-    }, ModalityState.NON_MODAL);
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Structure");
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

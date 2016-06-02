@@ -251,12 +251,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       for (Object object : objects) {
         if (object.toString().equalsIgnoreCase(text)) return true;
       }
-      error("Value should be one of: [" + StringUtil.join(objects, new Function<Object, String>() {
-        @Override
-        public String fun(Object o) {
-          return o.toString();
-        }
-      }, ", ") + "]", value);
+      error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value);
       return false;
     }
 

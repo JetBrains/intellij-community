@@ -180,31 +180,29 @@ class ReloadClassesWorker {
     final Semaphore waitSemaphore = new Semaphore();
     waitSemaphore.down();
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        try {
-          if (!project.isDisposed()) {
-            final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-            breakpointManager.reloadBreakpoints();
-            debugProcess.getRequestsManager().clearWarnings();
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("requests updated");
-              LOG.debug("time stamp set");
-            }
-            myDebuggerSession.refresh(false);
+    SwingUtilities.invokeLater(() -> {
+      try {
+        if (!project.isDisposed()) {
+          final BreakpointManager breakpointManager1 = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+          breakpointManager1.reloadBreakpoints();
+          debugProcess.getRequestsManager().clearWarnings();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("requests updated");
+            LOG.debug("time stamp set");
+          }
+          myDebuggerSession.refresh(false);
 
-            XDebugSession session = myDebuggerSession.getXDebugSession();
-            if (session != null) {
-              session.rebuildViews();
-            }
+          XDebugSession session = myDebuggerSession.getXDebugSession();
+          if (session != null) {
+            session.rebuildViews();
           }
         }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        finally {
-          waitSemaphore.up();
-        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      finally {
+        waitSemaphore.up();
       }
     });
 

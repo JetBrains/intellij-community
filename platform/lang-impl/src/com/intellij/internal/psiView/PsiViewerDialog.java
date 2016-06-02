@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
@@ -232,12 +233,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       doOKAction();
 
       if (!initOffset.isNull()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myEditor.getCaretModel().moveToOffset(initOffset.get());
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myEditor.getCaretModel().moveToOffset(initOffset.get());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         });
       }
     }
@@ -912,13 +910,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (myBlockTreeBuilder == null) return;
     if (currentBlockNode != null) {
       myIgnoreBlockTreeSelectionMarker++;
-      myBlockTreeBuilder.select(currentBlockNode, new Runnable() {
-        @Override
-        public void run() {
-          // hope this is always called!
-          assert myIgnoreBlockTreeSelectionMarker > 0;
-          myIgnoreBlockTreeSelectionMarker--;
-        }
+      myBlockTreeBuilder.select(currentBlockNode, () -> {
+        // hope this is always called!
+        assert myIgnoreBlockTreeSelectionMarker > 0;
+        myIgnoreBlockTreeSelectionMarker--;
       });
     }
     else {
@@ -1207,7 +1202,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     else {
       return;
     }
-    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile));
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile);
+    try {
+      myEditor.setHighlighter(highlighter);
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+    }
   }
 
   private class EditorListener extends CaretAdapter implements SelectionListener, DocumentListener {

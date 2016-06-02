@@ -66,23 +66,20 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (icon == null) return null;
 
     final DefaultActionGroup finalActionGroup = actionGroup;
-    Function<PsiElement, String> tooltipProvider = new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        final StringBuilder tooltip = new StringBuilder();
-        for (RunLineMarkerContributor.Info info : infos) {
-          if (info.tooltipProvider != null) {
-            String string = info.tooltipProvider.fun(element);
-            if (string == null) continue;
-            if (tooltip.length() != 0) {
-              tooltip.append("\n");
-            }
-            tooltip.append(string);
+    Function<PsiElement, String> tooltipProvider = element1 -> {
+      final StringBuilder tooltip = new StringBuilder();
+      for (RunLineMarkerContributor.Info info : infos) {
+        if (info.tooltipProvider != null) {
+          String string = info.tooltipProvider.fun(element1);
+          if (string == null) continue;
+          if (tooltip.length() != 0) {
+            tooltip.append("\n");
           }
+          tooltip.append(string);
         }
-
-        return tooltip.length() == 0 ? null : tooltip.toString();
       }
+
+      return tooltip.length() == 0 ? null : tooltip.toString();
     };
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL,
                                           tooltipProvider, null,

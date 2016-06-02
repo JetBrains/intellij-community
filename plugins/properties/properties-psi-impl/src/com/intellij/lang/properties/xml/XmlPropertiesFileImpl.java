@@ -164,13 +164,10 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
       if (myAlphaSorted) {
         final XmlProperty dummyProperty = new XmlProperty(entry, this);
         final int insertIndex =
-          Collections.binarySearch(myProperties, dummyProperty, new Comparator<IProperty>() {
-            @Override
-            public int compare(IProperty p1, IProperty p2) {
-              final String k1 = p1.getKey();
-              final String k2 = p2.getKey();
-              return k1.compareTo(k2);
-            }
+          Collections.binarySearch(myProperties, dummyProperty, (p1, p2) -> {
+            final String k1 = p1.getKey();
+            final String k2 = p2.getKey();
+            return k1.compareTo(k2);
           });
         final IProperty insertPosition;
         final IProperty inserted;
@@ -203,15 +200,12 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
     if (file instanceof XmlFile) {
       return manager.getCachedValue(file, KEY,
-                                    new CachedValueProvider<PropertiesFile>() {
-                                      @Override
-                                      public Result<PropertiesFile> compute() {
-                                        PropertiesFile value =
-                                          XmlPropertiesIndex.isPropertiesFile((XmlFile)file)
-                                          ? new XmlPropertiesFileImpl((XmlFile)file)
-                                          : null;
-                                        return Result.create(value, file);
-                                      }
+                                    () -> {
+                                      PropertiesFile value =
+                                        XmlPropertiesIndex.isPropertiesFile((XmlFile)file)
+                                        ? new XmlPropertiesFileImpl((XmlFile)file)
+                                        : null;
+                                      return CachedValueProvider.Result.create(value, file);
                                     }, false
       );
     }

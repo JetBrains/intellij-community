@@ -21,11 +21,12 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,10 +42,11 @@ import java.util.stream.Collectors;
  * @author Dmitry Batkovich
  */
 public class ProblemPreviewEditorPresentation {
+  private final static int VIEW_ADDITIONAL_OFFSET = 4;
   private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
-  private final Project myProject;
+  private final InspectionResultsView myView;
   private final Set<CommonProblemDescriptor> myDescriptors = new HashSet<>();
   private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(new Comparator<PreviewEditorFoldingRegion>() {
     @Override
@@ -57,19 +59,21 @@ public class ProblemPreviewEditorPresentation {
   });
   private final DocumentEx myDocument;
 
-  public ProblemPreviewEditorPresentation(EditorEx editor, Project project) {
+  public ProblemPreviewEditorPresentation(EditorEx editor, InspectionResultsView view, CommonProblemDescriptor[] descriptors) {
     myEditor = editor;
-    myProject = project;
+    myView = view;
     myDocument = editor.getDocument();
     myFoldedRegions.add(new PreviewEditorFoldingRegion(0, myDocument.getLineCount()));
+    appendFoldings(descriptors);
   }
 
-  void appendFoldings(CommonProblemDescriptor[] descriptors) {
+  private void appendFoldings(CommonProblemDescriptor[] descriptors) {
     final boolean[] isUpdated = new boolean[]{false};
     final List<UsageInfo> elements = Arrays.stream(descriptors)
       .filter(myDescriptors::add)
-      .filter(d -> d instanceof ProblemDescriptorBase)
-      .map(d -> ((ProblemDescriptorBase)d).getPsiElement())
+      .filter(ProblemDescriptorBase.class::isInstance)
+      .map(ProblemDescriptorBase.class::cast)
+      .map(ProblemDescriptorBase::getPsiElement)
       .filter(e -> e != null && e.isValid())
       .map(ProblemPreviewEditorPresentation::getWholeElement)
       .map((e) -> {
@@ -81,7 +85,25 @@ public class ProblemPreviewEditorPresentation {
     if (isUpdated[0]) {
       updateFoldings();
     }
-    UsagePreviewPanel.highlight(elements, myEditor, myProject, false, HighlighterLayer.SELECTION);
+
+    PsiDocumentManager.getInstance(myView.getProject()).performLaterWhenAllCommitted(() -> {
+      if (!myEditor.isDisposed()) {
+        myView.invalidate();
+        myView.validate();
+        UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
+        if (elements.size() == 1) {
+          final PsiElement element = elements.get(0).getElement();
+          LOG.assertTrue(element != null);
+          final DocumentEx document = myEditor.getDocument();
+          final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+                                      document.getLineEndOffset(document.getLineNumber(element.getTextRange().getEndOffset())));
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.CENTER);
+        } else {
+          myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(0), ScrollType.CENTER_UP);
+        }
+      }
+    });
+
   }
 
   /**

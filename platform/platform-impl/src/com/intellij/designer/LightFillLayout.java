@@ -67,22 +67,12 @@ public class LightFillLayout implements LayoutManager2 {
 
   @Override
   public Dimension preferredLayoutSize(Container parent) {
-    return layoutSize(parent, myVertical, new Function<Component, Dimension>() {
-      @Override
-      public Dimension fun(Component component) {
-        return component.getPreferredSize();
-      }
-    });
+    return layoutSize(parent, myVertical, component -> component.getPreferredSize());
   }
 
   @Override
   public Dimension minimumLayoutSize(Container parent) {
-    return layoutSize(parent, myVertical, new Function<Component, Dimension>() {
-      @Override
-      public Dimension fun(Component component) {
-        return component.getMinimumSize();
-      }
-    });
+    return layoutSize(parent, myVertical, component -> component.getMinimumSize());
   }
 
   private static Dimension layoutSize(Container parent, boolean vertical, Function<Component, Dimension> getSize) {

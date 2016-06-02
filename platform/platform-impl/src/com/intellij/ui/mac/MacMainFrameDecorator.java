@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -157,24 +156,19 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
 
-  public static final Runnable TOOLBAR_SETTER = new Runnable() {
-    @Override
-    public void run() {
-      final UISettings settings = UISettings.getInstance();
-      settings.SHOW_MAIN_TOOLBAR = SHOWN;
-      settings.fireUISettingsChanged();
-    }
+  public static final Runnable TOOLBAR_SETTER = () -> {
+    final UISettings settings = UISettings.getInstance();
+    settings.SHOW_MAIN_TOOLBAR = SHOWN;
+    settings.fireUISettingsChanged();
   };
 
-  public static final Runnable NAVBAR_SETTER = new Runnable() {
-    @Override
-    public void run() {
-      final UISettings settings = UISettings.getInstance();
-      settings.SHOW_NAVIGATION_BAR = SHOWN;
-      settings.fireUISettingsChanged();
-    }
+  public static final Runnable NAVBAR_SETTER = () -> {
+    final UISettings settings = UISettings.getInstance();
+    settings.SHOW_NAVIGATION_BAR = SHOWN;
+    settings.fireUISettingsChanged();
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
@@ -182,6 +176,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     }
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
@@ -273,12 +268,9 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
 
-        Foundation.executeOnMainThread(new Runnable() {
-          @Override
-          public void run() {
-            invoke(window, "setToolbar:", toolbar);
-            invoke(window, "setShowsToolbarButton:", 1);
-          }
+        Foundation.executeOnMainThread(() -> {
+          invoke(window, "setToolbar:", toolbar);
+          invoke(window, "setShowsToolbarButton:", 1);
         }, true, true);
       }
     }
@@ -356,48 +348,16 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       }
     });
 
-    myFullscreenQueue.runOrEnqueue( new Runnable() {
-      @Override
-      public void run() {
-        try {
-          requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
-      }
-    });
+    myFullscreenQueue.runOrEnqueue(() -> toggleFullScreenNow());
     return callback;
   }
 
-  @Override
-  public void dispose() {
-    UISettings.getInstance().removeUISettingsListener(this);
-    super.dispose();
-  }
-
-  public void exitFullScreenAndDispose() {
-
-    LOG.assertTrue(isInFullScreen());
+  public void toggleFullScreenNow() {
     try {
       requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
-    catch (IllegalAccessException e) {
+    catch (Exception e) {
       LOG.error(e);
     }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-
-    myDispatcher.addListener(new FSAdapter() {
-      @Override
-      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        myFrame.disposeImpl();
-        myDispatcher.removeListener(this);
-      }
-    });
   }
 }

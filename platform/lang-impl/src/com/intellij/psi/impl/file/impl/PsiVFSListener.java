@@ -78,7 +78,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
         // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
         for (Project project : projects) {
-          ((PushedFilePropertiesUpdaterImpl)PushedFilePropertiesUpdater.getInstance(project)).processAfterVfsChanges(events);
+          PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(project);
+          if (updater instanceof PushedFilePropertiesUpdaterImpl) { // false in upsource
+            ((PushedFilePropertiesUpdaterImpl)updater).processAfterVfsChanges(events);
+          }
         }
         for (Project project : projects) {
           PsiVFSListener listener = project.getComponent(PsiVFSListener.class);
@@ -100,19 +103,16 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     myConnection = project.getMessageBus().connect(project);
 
-    StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
-          @Override
-          public void fileTypesChanged(@NotNull FileTypeEvent e) {
-            myFileManager.processFileTypesChanged();
-          }
-        });
-        myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
-        myFileManager.markInitialized();
-      }
+    StartupManager.getInstance(project).registerPreStartupActivity(() -> {
+      myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+      myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
+        @Override
+        public void fileTypesChanged(@NotNull FileTypeEvent e) {
+          myFileManager.processFileTypesChanged();
+        }
+      });
+      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+      myFileManager.markInitialized();
     });
   }
 
@@ -610,8 +610,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   private class MyModuleRootListener implements ModuleRootListener {
-    private VirtualFile[] myOldContentRoots = null;
-    private volatile int depthCounter = 0;
+    private VirtualFile[] myOldContentRoots;
+    private volatile int depthCounter;
     @Override
     public void beforeRootsChange(final ModuleRootEvent event) {
       if (!myFileManager.isInitialized()) return;

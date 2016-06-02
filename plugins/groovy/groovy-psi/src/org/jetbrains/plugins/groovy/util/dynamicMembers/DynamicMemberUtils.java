@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class DynamicMemberUtils {
       myStaticFieldMap = new HashMap<String, PsiField[]>();
       myNonStaticFieldMap = new HashMap<String, PsiField[]>();
 
-      GrField[] fields = myClass.getFields();
+      GrField[] fields = myClass.getCodeFields();
 
       PsiField[] allFields = new PsiField[fields.length];
 
@@ -249,10 +249,10 @@ public class DynamicMemberUtils {
       return myClass;
     }
 
-    private static void checkDuplicatedMethods(PsiClass psiClass) {
+    private static void checkDuplicatedMethods(GrTypeDefinition psiClass) {
       Set<String> existingMethods = new HashSet<String>();
 
-      for (PsiMethod psiMethod : psiClass.getMethods()) {
+      for (PsiMethod psiMethod : psiClass.getCodeMethods()) {
         if (!(psiMethod instanceof GrAccessorMethod) &&
             !(psiMethod instanceof GrReflectedMethod) &&
             !existingMethods.add(psiMethod.getText())) {

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +30,6 @@ import java.util.List;
  * @author Irina.Chernushina on 2/24/2016.
  */
 public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory");
   public static final String SCHEMA_JSON_FILE_NAME = "schema.json";
   private final List<JsonSchemaFileProvider> myProviders;
 
@@ -61,7 +59,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public VirtualFile getSchemaFile() {
-      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "jsonSchema/schema.json");
+      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/schema.json");
     }
 
     @Override

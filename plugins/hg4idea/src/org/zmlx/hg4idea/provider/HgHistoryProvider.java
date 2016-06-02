@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -168,7 +169,8 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     List<String> argsForCmd = ContainerUtil.newArrayList();
     String relativePath = originalHgFile.getRelativePath();
     argsForCmd.add("--rev");
-    argsForCmd.add("reverse(follow(" + relativePath + "))");
+    argsForCmd
+      .add(String.format("reverse(follow(%s))", relativePath != null ? "'" + FileUtil.toSystemIndependentName(relativePath) + "'" : ""));
     HgCommandResult result = logCommand.execute(vcsRoot, template, limit, relativePath != null ? null : originalHgFile, argsForCmd);
     return HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, originalHgFile, version));
   }

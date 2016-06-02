@@ -57,7 +57,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
     if (cached == null) {
       cached = compute(method, project);
-      HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)method::isPhysical)) {
+        HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
+      }
     }
 
     for (final PsiMethod subMethod : cached) {
@@ -134,10 +137,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   @Nullable
-  private static PsiMethod findOverridingMethod(@NotNull Project project,
-                                                @NotNull PsiClass inheritor,
-                                                @NotNull PsiMethod method,
-                                                @NotNull PsiClass methodContainingClass) {
+  static PsiMethod findOverridingMethod(@NotNull Project project,
+                                        @NotNull PsiClass inheritor,
+                                        @NotNull PsiMethod method,
+                                        @NotNull PsiClass methodContainingClass) {
     String name = method.getName();
     if (inheritor.findMethodsByName(name, false).length > 0) {
       PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, getSuperSignature(inheritor, methodContainingClass, method), false);

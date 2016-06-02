@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: igork
- * Date: Nov 25, 2002
- * Time: 2:05:49 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.psi.scope.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +23,12 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -133,8 +128,7 @@ public class PsiScopesUtil {
       processTypeDeclarations(lub, place, processor);
     }
     else if (type instanceof PsiCapturedWildcardType) {
-      final PsiType upperBound =
-        PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), place.getResolveScope());
+      final PsiType upperBound = getUpperBound((PsiCapturedWildcardType)type, place);
       if (upperBound != null) {
         processTypeDeclarations(PsiUtil.captureToplevelWildcards(upperBound, place), place, processor);
       }
@@ -146,6 +140,15 @@ public class PsiScopesUtil {
         clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), clazz, place);
       }
     }
+  }
+
+  private static PsiType getUpperBound(PsiCapturedWildcardType type, PsiElement place) {
+    GlobalSearchScope placeResolveScope = place.getResolveScope();
+    PsiType upperBound = PsiClassImplUtil.correctType(type.getUpperBound(), placeResolveScope);
+    while (upperBound instanceof PsiCapturedWildcardType) {
+      upperBound = PsiClassImplUtil.correctType(((PsiCapturedWildcardType)upperBound).getUpperBound(), placeResolveScope);
+    }
+    return upperBound;
   }
 
   public static boolean resolveAndWalk(@NotNull PsiScopeProcessor processor,
@@ -322,23 +325,19 @@ public class PsiScopesUtil {
           PsiType type = ((PsiExpression)qualifier).getType();
           if (type != null && qualifier instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
-            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
+            if (resolve instanceof PsiEnumConstant) {
+              final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)resolve).getInitializingClass();
+              if (hasDesiredMethod(methodCall, type, initializingClass)) {
+                processQualifierResult(new ClassCandidateInfo(initializingClass, PsiSubstitutor.EMPTY), processor, methodCall);
+                return;
+              }
+            }
+            else if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
               final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
-                if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
-                  final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
-                  if (refMethods.length > 0) {
-                    final PsiClass baseClass = PsiUtil.resolveClassInType(type);
-                    if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
-                      for (PsiMethod method : refMethods) {
-                        if (method.findSuperMethods(baseClass).length > 0) {
-                          type = initializer.getType();
-                          break;
-                        }
-                      }
-                    }
-                  }
+                if (hasDesiredMethod(methodCall, type, anonymousClass)) {
+                  type = initializer.getType();
                 }
               }
             }
@@ -365,8 +364,7 @@ public class PsiScopesUtil {
             processQualifierType(((PsiDisjunctionType)type).getLeastUpperBound(), processor, manager, methodCall);
           }
           else if (type instanceof PsiCapturedWildcardType) {
-            final PsiType upperBound =
-              PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), methodCall.getResolveScope());
+            final PsiType upperBound = getUpperBound((PsiCapturedWildcardType)type, methodCall);
             if (upperBound != null) {
               processQualifierType(PsiUtil.captureToplevelWildcards(upperBound, methodCall), processor, manager, methodCall);
             }
@@ -406,6 +404,23 @@ public class PsiScopesUtil {
         processDummyConstructor(processor, aClass);
       }
     }
+  }
+
+  private static boolean hasDesiredMethod(PsiMethodCallExpression methodCall, PsiType type, PsiAnonymousClass anonymousClass) {
+    if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
+      final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
+      if (refMethods.length > 0) {
+        final PsiClass baseClass = PsiUtil.resolveClassInType(type);
+        if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
+          for (PsiMethod method : refMethods) {
+            if (method.findSuperMethods(baseClass).length > 0) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean hasCovariantOverridingOrNotPublic(PsiClass baseClass, PsiMethod[] refMethods) {

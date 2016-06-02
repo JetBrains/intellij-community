@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -51,17 +52,24 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
   }
 
-  @Override
-  public void paint(Graphics g, JComponent c) {
+  /**
+   * Paints additional buttons decorations
+   * @param g Graphics
+   * @param c button component
+   * @return <code>true</code> if it is allowed to continue painting,
+   *         <code>false</code> if painting should be stopped
+   */
+  protected boolean paintDecorations(Graphics2D g, JComponent c) {
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
-      ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
       int off = JBUI.scale(22);
       int x = (w - off) / 2;
       int y = (h - off) / 2;
       g.fillOval(x, y, off, off);
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
+      return false;
     } else {
       final Border border = c.getBorder();
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
@@ -71,16 +79,23 @@ public class DarculaButtonUI extends BasicButtonUI {
         final int yOff = (ins.top + ins.bottom) / 4;
         if (!square) {
           if (isDefaultButton(c)) {
-            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
+            g.setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
           }
           else {
-            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+            g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
           }
         }
         int rad = JBUI.scale(square ? 3 : 5);
         g.fillRoundRect(JBUI.scale(square ? 2 : 4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
       }
       config.restore();
+      return true;
+    }
+  }
+
+  @Override
+  public void paint(Graphics g, JComponent c) {
+    if (paintDecorations((Graphics2D)g, c)) {
       super.paint(g, c);
     }
   }
@@ -100,6 +115,8 @@ public class DarculaButtonUI extends BasicButtonUI {
       }
     }
     g.setColor(fg);
+
+    //UISettings.setupAntialiasing(g);
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
     int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
@@ -145,15 +162,21 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void update(Graphics g, JComponent c) {
     super.update(g, c);
-    if (isDefaultButton(c) && !SystemInfo.isMac) {
-      if (!c.getFont().isBold()) {
-       c.setFont(new FontUIResource(c.getFont().deriveFont(Font.BOLD)));
+    if (isDefaultButton(c)) {
+      setupDefaultButton((JButton)c);
+    }
+  }
+
+  protected void setupDefaultButton(JButton button) {
+    if (!SystemInfo.isMac) {
+      if (!button.getFont().isBold()) {
+       button.setFont(new FontUIResource(button.getFont().deriveFont(Font.BOLD)));
       }
     }
   }
-  
+
   public static boolean isHelpButton(JComponent button) {
-    return SystemInfo.isMac 
+    return (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))
            && button instanceof JButton 
            && "help".equals(button.getClientProperty("JButton.buttonType"));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,12 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
 
 class AbstractValues {
   static final class ParamValue extends BasicValue {
@@ -213,7 +216,7 @@ abstract class Analysis<Res> {
   final protected List<State>[] computed;
   final Key aKey;
 
-  Res earlyResult = null;
+  Res earlyResult;
 
   protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     this.richControlFlow = richControlFlow;

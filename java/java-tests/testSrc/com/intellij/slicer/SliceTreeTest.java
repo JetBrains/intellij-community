@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class SliceTreeTest extends SliceTestCase {
       if (node.getDuplicate() != null) {
         PsiElement element = node.getValue().getElement();
         hasDups.add(element.getTextRange().getStartOffset());
-        assertTrue(element instanceof PsiParameter && ((PsiParameter)element).getName().equals("i") || element instanceof PsiLiteralExpression);
+        assertTrue(element instanceof PsiParameter && "i".equals(((PsiParameter)element).getName()) || element instanceof PsiLiteralExpression);
       }
     }
 
@@ -121,7 +121,7 @@ public class SliceTreeTest extends SliceTestCase {
         int i = hasDups.indexOf(offset);
         assertTrue(i != -1);
         hasDups.remove(i);
-        assertTrue(element instanceof PsiParameter && ((PsiParameter)element).getName().equals("i") || element instanceof PsiLiteralExpression);
+        assertTrue(element instanceof PsiParameter && "i".equals(((PsiParameter)element).getName()) || element instanceof PsiLiteralExpression);
       }
     }
     assertTrue(hasDups.isEmpty());

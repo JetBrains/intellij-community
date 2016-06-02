@@ -27,13 +27,10 @@ import org.jetbrains.annotations.NotNull;
 */
 public class ReferenceDescriptor {
   @NotNull
-  public static final Function<PsiReference, ReferenceDescriptor> MAPPER = new Function<PsiReference, ReferenceDescriptor>() {
-    @Override
-    public ReferenceDescriptor fun(PsiReference psiReference) {
-      final PsiElement element = psiReference.getElement();
-      final PsiFile file = element.getContainingFile();
-      return new ReferenceDescriptor(file.getViewProvider().getVirtualFile(), element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
-    }
+  public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
+    final PsiElement element = psiReference.getElement();
+    final PsiFile file1 = element.getContainingFile();
+    return new ReferenceDescriptor(file1.getViewProvider().getVirtualFile(), element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
   };
   private final VirtualFile file;
   private final int offset;

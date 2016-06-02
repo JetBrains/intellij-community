@@ -156,7 +156,13 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       if (name == null) {
         name = "";
       }
-      final String comment = getCommentText(variable) + getCommentText(initializer);
+      final String comment;
+      if (initializer == null || initializer.getParent() == variable) {
+        comment = getCommentText(variable);
+      }
+      else {
+        comment = getCommentText(variable) + getCommentText(initializer);
+      }
       final PsiType type = variable.getType();
       @NonNls final String statementText;
       final String typeText = type.getCanonicalText();

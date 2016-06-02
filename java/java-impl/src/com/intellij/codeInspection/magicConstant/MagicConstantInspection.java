@@ -37,6 +37,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,6 +48,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -391,17 +394,16 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : annotations) {
-      AllowedValues values;
-      if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
-        //PsiAnnotation magic = AnnotationUtil.findAnnotationInHierarchy(element, Collections.singleton(MagicConstant.class.getName()));
-        values = getAllowedValuesFromMagic(type, annotation, manager);
-        if (values != null) return values;
-      }
-
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
       PsiClass aClass = (PsiClass)resolved;
+      AllowedValues values;
+      if (type != null && MagicConstant.class.getName().equals(aClass.getQualifiedName())) {
+        values = getAllowedValuesFromMagic(type, annotation, manager);
+        if (values != null) return values;
+      }
+
       if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;
       values = getAllowedValues(aClass, type, visited);
@@ -419,6 +421,14 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
+    PsiFile containingFile = owner.getContainingFile();
+    if (containingFile != null) {
+      GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
+      if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
+        // optimisation: do not parse library sources if there are no "beaninfo" text in the file
+        return null;
+      }
+    }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
@@ -563,7 +573,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         if (flags.size() > 1) {
           for (int i = flags.size() - 1; i >= 0; i--) {
             PsiAnnotationMemberValue flag = flags.get(i);
-            if (evaluateLongConstant((PsiExpression)flag) == 0) {
+            Long flagValue = evaluateLongConstant((PsiExpression)flag);
+            if (flagValue != null && flagValue == 0) {
               // no sense in ORing with '0'
               flags.remove(i);
             }

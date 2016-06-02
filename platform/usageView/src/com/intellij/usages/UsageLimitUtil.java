@@ -48,14 +48,11 @@ public class UsageLimitUtil {
   public static Result showTooManyUsagesWarning(@NotNull final Project project,
                                                 @NotNull final String message,
                                                 @NotNull final UsageViewPresentation usageViewPresentation) {
-    int result = runOrInvokeAndWait(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
-        return Messages.showOkCancelDialog(project, message,
-                                           title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
-                                           Messages.getWarningIcon());
-      }
+    int result = runOrInvokeAndWait(() -> {
+      String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
+      return Messages.showOkCancelDialog(project, message,
+                                         title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
+                                         Messages.getWarningIcon());
     });
     return result == Messages.OK ? Result.CONTINUE : Result.ABORT;
   }
@@ -63,12 +60,7 @@ public class UsageLimitUtil {
   private static int runOrInvokeAndWait(@NotNull final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          answer[0] = f.compute();
-        }
-      });
+      GuiUtils.runOrInvokeAndWait(() -> answer[0] = f.compute());
     }
     catch (Exception e) {
       answer[0] = 0;

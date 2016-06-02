@@ -149,12 +149,7 @@ public class UsageViewUtil {
 
   @NotNull
   public static PsiElement[] toElements(@NotNull UsageInfo[] usageInfos) {
-    return ContainerUtil.map2Array(usageInfos, PsiElement.class, new Function<UsageInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(UsageInfo info) {
-        return info.getElement();
-      }
-    });
+    return ContainerUtil.map2Array(usageInfos, PsiElement.class, info -> info.getElement());
   }
 
   public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {

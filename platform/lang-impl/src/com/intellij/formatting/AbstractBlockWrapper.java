@@ -337,7 +337,7 @@ public abstract class AbstractBlockWrapper {
    *
    * @return    object that encapsulates information about number of symbols before the current block
    */
-  protected abstract IndentData getNumberOfSymbolsBeforeBlock();
+  public abstract IndentData getNumberOfSymbolsBeforeBlock();
 
   /**
    * @return    previous block for the current block if any; <code>null</code> otherwise

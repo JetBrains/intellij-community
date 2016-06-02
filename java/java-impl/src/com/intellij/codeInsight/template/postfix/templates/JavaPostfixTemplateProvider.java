@@ -83,13 +83,11 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (isSemicolonNeeded(file, editor)) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        CommandProcessor.getInstance().runUndoTransparentAction(
-          () -> {
-            EditorModificationUtil.insertStringAtCaret(editor, ";", false, false);
-            PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-          });
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(
+        () -> {
+          EditorModificationUtil.insertStringAtCaret(editor, ";", false, false);
+          PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+        }));
     }
   }
 

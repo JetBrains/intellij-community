@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -183,7 +184,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       } else {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
         for (PsiClass aClass : classes) {
-          final PsiFile containingFile = aClass.getContainingFile();
+          final PsiFile containingFile = ReadAction.compute(aClass::getContainingFile);
           if (psiFile.equals(containingFile)) {
             return true;
           }
@@ -204,26 +205,22 @@ public class JavaCoverageEngine extends CoverageEngine {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          if (Messages.showOkCancelDialog(
-            "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-            "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
-            final CompilerManager compilerManager = CompilerManager.getInstance(project);
-            compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
-              public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
-                if (aborted || errors != 0) return;
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (project.isDisposed()) return;
-                    CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-                  }
-                });
-              }
-            });
-          } else if (!project.isDisposed()) {
-            CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
-          }
+      final Runnable runnable = () -> {
+        if (Messages.showOkCancelDialog(
+          "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+          "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
+          final CompilerManager compilerManager = CompilerManager.getInstance(project);
+          compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+            public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+              if (aborted || errors != 0) return;
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (project.isDisposed()) return;
+                CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+              });
+            }
+          });
+        } else if (!project.isDisposed()) {
+          CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }
       };
       ApplicationManager.getApplication().invokeLater(runnable);
@@ -594,12 +591,10 @@ public class JavaCoverageEngine extends CoverageEngine {
           builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
           final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
-              return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<String>() {
-                public String compute() {
-                  if (project.isDisposed()) return "";
-                  final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-                  return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
-                }
+              return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+                if (project.isDisposed()) return "";
+                final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
+                return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
               });
             }
           };
@@ -613,11 +608,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                 final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(new Computable<PsiClass>() {
-                    public PsiClass compute() {
-                      if (project.isDisposed()) return null;
-                      return psiFacade.findClass(aClass.getFQName(), productionScope);
-                    }
+                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+                    if (project.isDisposed()) return null;
+                    return psiFacade.findClass(aClass.getFQName(), productionScope);
                   });
                   if (psiClass == null) {
                     iterator.remove();

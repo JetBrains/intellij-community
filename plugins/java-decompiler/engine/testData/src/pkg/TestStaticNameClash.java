@@ -1,9 +1,5 @@
 package pkg;
 
-/**
- * @author Alexandru-Constantin Bledea
- * @since March 07, 2016
- */
 public class TestStaticNameClash {
 
     public static String property;

@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -308,5 +309,24 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertNotSame(depsTests, depsTests2);
     assertEquals(deps, deps2);
     assertEquals(depsTests, depsTests2);
+  }
+
+  public void testHonorExportsWhenCalculatingLibraryScope() throws IOException {
+    Module a = createModule("a.iml", StdModuleTypes.JAVA);
+    Module b = createModule("b.iml", StdModuleTypes.JAVA);
+    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+    ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
+
+    final VirtualFile libFile1 = myFixture.createFile("lib1/a.txt", "");
+    final VirtualFile libFile2 = myFixture.createFile("lib2/a.txt", "");
+
+    ModuleRootModificationUtil.addModuleLibrary(a, "l", Collections.singletonList(libFile1.getParent().getUrl()),
+                                                Collections.emptyList(), Collections.emptyList(), DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addModuleLibrary(c, "l", Collections.singletonList(libFile2.getParent().getUrl()),
+                                                Collections.emptyList(), Collections.emptyList(), DependencyScope.COMPILE, true);
+
+    assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile1)).contains(libFile2));
+    assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile2)).contains(libFile1));
   }
 }

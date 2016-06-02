@@ -73,12 +73,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
-    myParentProjectForm = new GradleParentProjectForm(context, new NullableConsumer<ProjectData>() {
-      @Override
-      public void consume(@Nullable ProjectData parentProject) {
-        updateComponents();
-      }
-    });
+    myParentProjectForm = new GradleParentProjectForm(context, parentProject -> updateComponents());
     initComponents();
     loadSettings();
   }
@@ -138,12 +133,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true));
       throw new ConfigurationException("Please, specify artifactId");
     }
 
@@ -254,6 +245,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (StringUtil.isEmpty(field.getText())) {
       field.setText(StringUtil.notNullize(text));
     }
+  }
+
+  @Override
+  public String getHelpId() {
+    return "Gradle_Archetype_Dialog";
   }
 }
 

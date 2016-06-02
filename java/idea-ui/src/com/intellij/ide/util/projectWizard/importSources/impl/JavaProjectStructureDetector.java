@@ -63,11 +63,6 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
 
   @NotNull
   protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
-    return new NullableFunction<CharSequence, String>() {
-      @Override
-      public String fun(CharSequence charSequence) {
-        return JavaSourceRootDetectionUtil.getPackageName(charSequence);
-      }
-    };
+    return charSequence -> JavaSourceRootDetectionUtil.getPackageName(charSequence);
   }
 }

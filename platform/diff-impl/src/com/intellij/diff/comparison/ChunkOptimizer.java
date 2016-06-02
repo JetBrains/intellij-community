@@ -53,7 +53,7 @@ abstract class ChunkOptimizer<T> {
     myIterable = iterable;
     myIndicator = indicator;
 
-    myRanges = new ArrayList<Range>();
+    myRanges = new ArrayList<>();
   }
 
   @NotNull

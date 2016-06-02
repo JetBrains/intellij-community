@@ -46,9 +46,12 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IReparseableLeafElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -253,7 +256,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
                              ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
       if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
-        reparseParallelTrees(containingFileByTree);
+        reparseParallelTrees(containingFileByTree, synchronizer);
         if (docSynced) {
           containingFileByTree.getViewProvider().contentsSynchronized();
         }
@@ -263,7 +266,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
 
-  private void reparseParallelTrees(PsiFile changedFile) {
+  private void reparseParallelTrees(PsiFile changedFile, PsiToDocumentSynchronizer synchronizer) {
     List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
     if (allFiles.size() <= 1) {
       return;
@@ -271,40 +274,70 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     CharSequence newText = changedFile.getNode().getChars();
     for (final PsiFile file : allFiles) {
-      if (file != changedFile) {
-        FileElement fileElement = ((PsiFileImpl)file).getTreeElement();
-        if (fileElement != null) {
-          reparseFile(file, fileElement, newText);
-        }
+      FileElement fileElement = file == changedFile ? null : ((PsiFileImpl)file).getTreeElement();
+      Runnable changeAction = fileElement == null ? null : reparseFile(file, fileElement, newText);
+      if (changeAction == null) continue;
+
+      synchronizer.setIgnorePsiEvents(true);
+      try {
+        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(changeAction);
+      }
+      finally {
+        synchronizer.setIgnorePsiEvents(false);
       }
     }
   }
 
-  private void reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
-    PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
+  @Nullable
+  private Runnable reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
     TextRange changedPsiRange = DocumentCommitThread.getChangedPsiRange(file, treeElement, newText);
-    if (changedPsiRange == null) return;
+    if (changedPsiRange == null) return null;
+
+    Runnable reparseLeaf = tryReparseOneLeaf(treeElement, newText, changedPsiRange);
+    if (reparseLeaf != null) return reparseLeaf;
 
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, treeElement, changedPsiRange, newText, new EmptyProgressIndicator(),
                                                                          treeElement.getText());
-    synchronizer.setIgnorePsiEvents(true);
-    try {
-      CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-        @Override
-        public void run() {
-          runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
-            @Nullable
-            @Override
-            public PomModelEvent runInner() throws IncorrectOperationException {
-              return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
-            }
-          });
-        }
-      });
+    return new Runnable() {
+      @Override
+      public void run() {
+        runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
+          @Nullable
+          @Override
+          public PomModelEvent runInner() throws IncorrectOperationException {
+            return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
+          }
+        });
+      }
+    };
+  }
+
+  @Nullable
+  private static Runnable tryReparseOneLeaf(@NotNull FileElement treeElement, @NotNull CharSequence newText, @NotNull TextRange changedPsiRange) {
+    final LeafElement leaf = treeElement.findLeafElementAt(changedPsiRange.getStartOffset());
+    IElementType leafType = leaf == null ? null : leaf.getElementType();
+    if (!(leafType instanceof IReparseableLeafElementType)) return null;
+
+    CharSequence newLeafText = getLeafChangedText(leaf, treeElement, newText, changedPsiRange);
+    //noinspection unchecked
+    final ASTNode copy = newLeafText == null ? null : ((IReparseableLeafElementType)leafType).reparseLeaf(leaf, newLeafText);
+    return copy == null ? null : new Runnable() {
+      @Override
+      public void run() {
+        leaf.getTreeParent().replaceChild(leaf, copy);
+      }
+    };
+  }
+
+  private static CharSequence getLeafChangedText(LeafElement leaf, FileElement treeElement, CharSequence newFileText, TextRange changedPsiRange) {
+    if (leaf.getTextRange().getEndOffset() >= changedPsiRange.getEndOffset()) {
+      int leafStart = leaf.getTextRange().getStartOffset();
+      int newLeafEnd = newFileText.length() - (treeElement.getTextLength() - leaf.getTextRange().getEndOffset());
+      if (newLeafEnd > leafStart) {
+        return newFileText.subSequence(leafStart, newLeafEnd);
+      }
     }
-    finally {
-      synchronizer.setIgnorePsiEvents(false);
-    }
+    return null;
   }
 
   private void startTransaction(@NotNull PomTransaction transaction) {
@@ -313,7 +346,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    LOG.assertTrue(changeScope != null);
 
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
     boolean physical = changeScope.isPhysical();
@@ -332,6 +364,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     if (containingFileByTree != null) {
       ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(containingFileByTree.getViewProvider().getVirtualFile());
+      if (containingFileByTree instanceof PsiFileImpl) {
+        ((PsiFileImpl)containingFileByTree).beforeAstChange();
+      }
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);

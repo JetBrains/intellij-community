@@ -40,11 +40,6 @@ public class PyFileStubBuilder extends DefaultStubBuilder {
   }
 
   @Override
-  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
-    return parent instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)parent);
-  }
-
-  @Override
   public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
     PsiElement psi = parent.getPsi();
     return psi instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)psi);

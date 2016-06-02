@@ -21,6 +21,7 @@ import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.extensions.Extensions;
@@ -146,11 +147,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
-          importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
-            @Override
-            public void consume(EditorColorsScheme scheme) {
-              if (scheme != null) myOptions.addImportedScheme(scheme);
-            }
+          importHandler.performImport(button, scheme -> {
+            if (scheme != null) myOptions.addImportedScheme(scheme);
           });
         }
       });
@@ -233,8 +231,9 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
                 importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, myOptions.getSelectedScheme(),
                                       name -> {
                                         String newName = myOptions.getUniqueName(name);
-                                        EditorColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
+                                        AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
                                         newScheme.setName(newName);
+                                        newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
                                         return newScheme;
                                       });
               if (imported != null) {

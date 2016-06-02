@@ -117,4 +117,19 @@ public class TooBroadScope
             }
         }
     }
+
+
+    final int NON_STATIC_CONSTANT = value();
+
+    private int value() {
+        return 1;
+    }
+
+    void useConstant() {
+        int <warning descr="Scope of variable 'yes' is too broad">yes</warning> = NON_STATIC_CONSTANT;
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(yes);
+    }
 }

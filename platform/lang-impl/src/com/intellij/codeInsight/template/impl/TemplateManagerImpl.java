@@ -174,22 +174,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (listener != null) {
       templateState.addTemplateStateListener(listener);
     }
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        if (selectionString != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              EditorModificationUtil.deleteSelectedText(editor);
-            }
-          });
-        }
-        else {
-          editor.getSelectionModel().removeSelection();
-        }
-        templateState.start((TemplateImpl)template, processor, predefinedVarValues);
+    Runnable r = () -> {
+      if (selectionString != null) {
+        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
       }
+      else {
+        editor.getSelectionModel().removeSelection();
+      }
+      templateState.start((TemplateImpl)template, processor, predefinedVarValues);
     };
     if (inSeparateCommand) {
       CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
@@ -379,18 +371,15 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       return null;
     }
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (template2argument.size() == 1) {
-          TemplateImpl template = template2argument.keySet().iterator().next();
-          String argument = template2argument.get(template);
-          int templateStart = getTemplateStart(template, argument, caretOffset, text);
-          startTemplateWithPrefix(editor, template, templateStart, processor, argument);
-        }
-        else {
-          ListTemplatesHandler.showTemplatesLookup(myProject, editor, template2argument);
-        }
+    return () -> {
+      if (template2argument.size() == 1) {
+        TemplateImpl template = template2argument.keySet().iterator().next();
+        String argument = template2argument.get(template);
+        int templateStart = getTemplateStart(template, argument, caretOffset, text);
+        startTemplateWithPrefix(editor, template, templateStart, processor, argument);
+      }
+      else {
+        ListTemplatesHandler.showTemplatesLookup(myProject, editor, template2argument);
       }
     };
   }
@@ -444,20 +433,17 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     final int caretOffset = editor.getCaretModel().getOffset();
     final TemplateState templateState = initTemplateState(editor);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        editor.getDocument().deleteString(templateStart, caretOffset);
-        editor.getCaretModel().moveToOffset(templateStart);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().removeSelection();
-        Map<String, String> predefinedVarValues = null;
-        if (argument != null) {
-          predefinedVarValues = new HashMap<String, String>();
-          predefinedVarValues.put(TemplateImpl.ARG, argument);
-        }
-        templateState.start(template, processor, predefinedVarValues);
+    commandProcessor.executeCommand(myProject, () -> {
+      editor.getDocument().deleteString(templateStart, caretOffset);
+      editor.getCaretModel().moveToOffset(templateStart);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
+      Map<String, String> predefinedVarValues = null;
+      if (argument != null) {
+        predefinedVarValues = new HashMap<String, String>();
+        predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
+      templateState.start(template, processor, predefinedVarValues);
     }, CodeInsightBundle.message("insert.code.template.command"), null);
   }
 

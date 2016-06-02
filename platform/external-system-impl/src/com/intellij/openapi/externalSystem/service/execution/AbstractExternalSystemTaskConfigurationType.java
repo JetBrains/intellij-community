@@ -50,8 +50,9 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   protected AbstractExternalSystemTaskConfigurationType(@NotNull final ProjectSystemId externalSystemId) {
     myExternalSystemId = externalSystemId;
     myFactories[0] = new ConfigurationFactory(this) {
+      @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return doCreateConfiguration(myExternalSystemId, project, this, "");
       }
     };

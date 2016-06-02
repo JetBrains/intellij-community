@@ -30,6 +30,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class StubBasedPsiElementBaseGetParentInspection extends DevKitInspection
     final ProblemDescriptor descriptor =
       manager.createProblemDescriptor(ObjectUtils.assertNotNull(psiClass.getNameIdentifier()),
                                       "Default getParent() implementation is slow",
-                                      new InsertGetParentByStubOverrideQuickFix(psiClass),
+                                      new InsertGetParentByStubOverrideQuickFix(psiClass, isOnTheFly),
                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
     return new ProblemDescriptor[]{descriptor};
   }
@@ -80,8 +81,11 @@ public class StubBasedPsiElementBaseGetParentInspection extends DevKitInspection
 
   private static class InsertGetParentByStubOverrideQuickFix extends LocalQuickFixOnPsiElement {
 
-    private InsertGetParentByStubOverrideQuickFix(@NotNull PsiClass psiClass) {
+    private final boolean myOnTheFly;
+
+    private InsertGetParentByStubOverrideQuickFix(@NotNull PsiClass psiClass, boolean isOnTheFly) {
       super(psiClass);
+      myOnTheFly = isOnTheFly;
     }
 
     @NotNull
@@ -125,8 +129,14 @@ public class StubBasedPsiElementBaseGetParentInspection extends DevKitInspection
 
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(stubBasedPsiElementClass, psiClass, PsiSubstitutor.EMPTY);
       final PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, methodToOverride, substitutor);
-      GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor,
-                                                    Collections.singletonList(new PsiGenerationInfo<PsiMethod>(getParentMethod)));
+      final List<PsiGenerationInfo<PsiMethod>> generationInfos =
+        GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor,
+                                                      Collections.singletonList(new PsiGenerationInfo<PsiMethod>(getParentMethod)));
+
+      if (myOnTheFly) {
+        final PsiGenerationInfo<PsiMethod> item = ContainerUtil.getFirstItem(generationInfos);
+        if (item != null) PsiNavigateUtil.navigate(item.getPsiMember());
+      }
     }
   }
 }

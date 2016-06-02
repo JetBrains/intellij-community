@@ -41,23 +41,8 @@ class HttpFileEditor extends BaseRemoteFileEditor {
     RemoteFileInfo fileInfo = virtualFile.getFileInfo();
     assert fileInfo != null;
     fileInfo.download()
-      .done(new Consumer<VirtualFile>() {
-        @Override
-        public void consume(VirtualFile file) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              contentLoaded();
-            }
-          }, myProject.getDisposed());
-        }
-      })
-      .rejected(new Consumer<Throwable>() {
-        @Override
-        public void consume(Throwable throwable) {
-          contentRejected();
-        }
-      });
+      .done(file -> ApplicationManager.getApplication().invokeLater(() -> contentLoaded(), myProject.getDisposed()))
+      .rejected(throwable -> contentRejected());
   }
 
   @Override

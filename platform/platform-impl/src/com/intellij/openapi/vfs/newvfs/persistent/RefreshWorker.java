@@ -59,7 +59,7 @@ public class RefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<Pair<NewVirtualFile, FileAttributes>>(100);
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
-  private volatile boolean myCancelled = false;
+  private volatile boolean myCancelled;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     myIsRecursive = isRecursive;
@@ -418,7 +418,7 @@ public class RefreshWorker {
     }
   }
 
-  private static Function<VirtualFile, Boolean> ourCancellingCondition = null;
+  private static Function<VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
   public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {

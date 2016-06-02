@@ -22,10 +22,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,6 @@ public class CCFromCourseArchive extends DumbAwareAction {
     }
     final String basePath = project.getBasePath();
     if (basePath == null) return;
-    final CCProjectService service = CCProjectService.getInstance(project);
     Reader reader = null;
     try {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
@@ -77,7 +77,8 @@ public class CCFromCourseArchive extends DumbAwareAction {
         course = EduUtils.transformOldCourse(oldCourse);
       }
 
-      service.setCourse(course);
+      StudyTaskManager.getInstance(project).setCourse(course);
+      course.setCourseMode(CCUtils.COURSE_MODE);
       project.getBaseDir().refresh(false, true);
       int index = 1;
       int taskIndex = 1;
@@ -91,18 +92,14 @@ public class CCFromCourseArchive extends DumbAwareAction {
           task.setLesson(lesson);
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                createAnswerFile(project, taskDir, taskDir, entry);
-              }
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> createAnswerFile(project, taskDir, entry));
           }
           taskIndex += 1;
         }
         index += 1;
         taskIndex = 1;
       }
+      course.initCourse(true);
     }
     catch (FileNotFoundException e) {
       LOG.error(e.getMessage());
@@ -128,7 +125,6 @@ public class CCFromCourseArchive extends DumbAwareAction {
 
   public static void createAnswerFile(@NotNull final Project project,
                                       @NotNull final VirtualFile userFileDir,
-                                      @NotNull final VirtualFile answerFileDir,
                                       @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
     final String name = taskFileEntry.getKey();
     final TaskFile taskFile = taskFileEntry.getValue();
@@ -141,17 +137,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(0, document.getTextLength(), originDocument.getCharsSequence());
-          }
-        });
-      }
-    }, "Create answer document", "Create answer document");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), originDocument.getCharsSequence())), "Create answer document", "Create answer document");
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
     taskFile.sortAnswerPlaceholders();
@@ -159,17 +145,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "x", "qwe");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document)), "x", "qwe");
     document.removeDocumentListener(listener);
   }
 
@@ -177,33 +153,26 @@ public class CCFromCourseArchive extends DumbAwareAction {
                                                @NotNull final Document document,
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
     final int offset = answerPlaceholder.getRealStartOffset(document);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getLength()));
-            answerPlaceholder.setTaskText(text);
-            final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
-            if (hints != null) {
-              final String hintFile = answerPlaceholder.getHint();
-              final VirtualFile virtualFile = hints.findChild(hintFile);
-              if (virtualFile != null) {
-                final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
-                if (hintDocument != null) {
-                  final String hintText = hintDocument.getText();
-                  answerPlaceholder.setHint(hintText);
-                }
-              }
-            }
-
-            document.replaceString(offset, offset + answerPlaceholder.getLength(), answerPlaceholder.getPossibleAnswer());
-            FileDocumentManager.getInstance().saveDocument(document);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getRealLength()));
+      answerPlaceholder.setTaskText(text);
+      answerPlaceholder.init();
+      final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
+      if (hints != null) {
+        final String hintFile = answerPlaceholder.getHint();
+        final VirtualFile virtualFile = hints.findChild(hintFile);
+        if (virtualFile != null) {
+          final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
+          if (hintDocument != null) {
+            final String hintText = hintDocument.getText();
+            answerPlaceholder.setHint(hintText);
           }
-        });
+        }
       }
-    }, "x", "qwe");
+
+      document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
+      FileDocumentManager.getInstance().saveDocument(document);
+    }), "x", "qwe");
   }
 
   private static void synchronize(@NotNull final Project project) {

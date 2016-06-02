@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import java.io.IOException;
  * @author peter
  */
 public abstract class LexerTestCase extends UsefulTestCase {
-
   protected void doTest(@NonNls String text) {
     doTest(text, null);
   }
@@ -97,19 +96,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   public static String printTokens(CharSequence text, int start, Lexer lexer) {
     lexer.start(text, start, text.length());
-    String result = "";
-    while (true) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) {
-        break;
-      }
-      String tokenText = getTokenText(lexer);
-      String tokenTypeName = tokenType.toString();
-      String line = tokenTypeName + " ('" + tokenText + "')\n";
-      result += line;
+    StringBuilder result = new StringBuilder();
+    IElementType tokenType;
+    while ((tokenType = lexer.getTokenType()) != null) {
+      result.append(tokenType).append(" ('").append(getTokenText(lexer)).append("')\n");
       lexer.advance();
     }
-    return result;
+    return result.toString();
   }
 
   protected void doFileTest(@NonNls String fileExt) {

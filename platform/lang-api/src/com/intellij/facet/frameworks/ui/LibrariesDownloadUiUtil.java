@@ -72,26 +72,20 @@ public class LibrariesDownloadUiUtil {
                                 final String groupId,
                                 final URL... localUrls) {
     final ModalityState state = ModalityState.current();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final List<Object> newItems = new ArrayList<Object>();
-        newItems.addAll(Arrays.asList(LibrariesDownloadAssistant.getVersions(groupId, localUrls)));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final List<Object> newItems = new ArrayList<Object>();
+      newItems.addAll(Arrays.asList(LibrariesDownloadAssistant.getVersions(groupId, localUrls)));
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            items.clear();
-            if (!newItems.isEmpty()) {
-              items.addAll(newItems);
-              final CollectionComboBoxModel model = (CollectionComboBoxModel)jComboBox.getModel();
-              model.update();
-              jComboBox.setSelectedIndex(0);
-            }
-            jComboBox.setEnabled(true);
-          }
-        }, state);
-      }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        items.clear();
+        if (!newItems.isEmpty()) {
+          items.addAll(newItems);
+          final CollectionComboBoxModel model = (CollectionComboBoxModel)jComboBox.getModel();
+          model.update();
+          jComboBox.setSelectedIndex(0);
+        }
+        jComboBox.setEnabled(true);
+      }, state);
     }
 
     );

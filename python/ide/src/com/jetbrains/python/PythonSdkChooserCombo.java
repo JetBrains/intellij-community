@@ -78,26 +78,23 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private void showOptions(final Project project) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
-    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), new NullableConsumer<Sdk>() {
-      @Override
-      public void consume(@Nullable Sdk sdk) {
-        if (sdk == null) return;
-        final PySdkService sdkService = PySdkService.getInstance();
-        sdkService.restoreSdk(sdk);
+    PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), sdk -> {
+      if (sdk == null) return;
+      final PySdkService sdkService = PySdkService.getInstance();
+      sdkService.restoreSdk(sdk);
 
-        final ProjectSdksModel projectSdksModel = interpreterList.getModel();
-        if (projectSdksModel.findSdk(sdk) == null) {
-          projectSdksModel.addSdk(sdk);
-          try {
-            projectSdksModel.apply();
-          }
-          catch (ConfigurationException e) {
-            LOG.error("Error adding new python interpreter " + e.getMessage());
-          }
+      final ProjectSdksModel projectSdksModel = interpreterList.getModel();
+      if (projectSdksModel.findSdk(sdk) == null) {
+        projectSdksModel.addSdk(sdk);
+        try {
+          projectSdksModel.apply();
         }
-        //noinspection unchecked
-        getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
+        catch (ConfigurationException e) {
+          LOG.error("Error adding new python interpreter " + e.getMessage());
+        }
       }
+      //noinspection unchecked
+      getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
     }, true);
   }
 

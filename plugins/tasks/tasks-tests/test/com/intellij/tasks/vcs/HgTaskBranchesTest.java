@@ -58,6 +58,9 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     hg("commit -m another -u abc");
     hg("up -r 0");
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    HgVcs hgVcs = HgVcs.getInstance(myProject);
+    assert hgVcs != null;
+    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
     HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(file);
@@ -86,6 +89,5 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     return ((HgRepository)repository).getOpenedBranches().size() +
            ((HgRepository)repository).getBookmarks().size();
   }
-
 }
 

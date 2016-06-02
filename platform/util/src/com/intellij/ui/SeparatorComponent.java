@@ -88,15 +88,29 @@ public class SeparatorComponent extends JComponent {
 
   @Override
   public Dimension getPreferredSize() {
-    if (myOrientation != SeparatorOrientation.VERTICAL)
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
       return new Dimension(0, myVGap * 2 + 1);
-    else
+    }
+    else {
       return new Dimension(myHGap * 2 + 1, 1 + ((myShadow != null) ? 1 : 0));
+    }
   }
 
   @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
+  }
+
+  @Override
+  public Dimension getMaximumSize() {
+    Dimension size = getPreferredSize();
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
+      size.width = Integer.MAX_VALUE;
+    }
+    else {
+      size.height = Integer.MAX_VALUE;
+    }
+    return size;
   }
 
   /**

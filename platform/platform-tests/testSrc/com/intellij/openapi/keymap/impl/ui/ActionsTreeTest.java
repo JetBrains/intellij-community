@@ -102,7 +102,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       @Override
       public ShortcutRestrictions getForActionId(String actionId) {
         return ACTION_WITH_FIXED_SHORTCUTS.equals(actionId)
-               ? new ShortcutRestrictions(false, false, false, false, false) : ShortcutRestrictions.NO_RESTRICTIONS;
+               ? new ShortcutRestrictions(false, false, false, false, false, false) : ShortcutRestrictions.NO_RESTRICTIONS;
       }
     });
 

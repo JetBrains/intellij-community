@@ -158,12 +158,9 @@ public class FindManagerImpl extends FindManager {
 
   @Override
   public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    final Consumer<FindModel> handler = new Consumer<FindModel>(){
-      @Override
-      public void consume(FindModel findModel) {
-        changeGlobalSettings(findModel);
-        okHandler.run();
-      }
+    final Consumer<FindModel> handler = findModel -> {
+      changeGlobalSettings(findModel);
+      okHandler.run();
     };
     if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
       myFindDialog = new FindDialog(myProject, model, handler) {
@@ -175,7 +172,9 @@ public class FindManagerImpl extends FindManager {
       };
       myFindDialog.setModal(true);
     }
-    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
+    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState() ||
+             !Comparing.equal(myFindDialog.getModel().getStringToFind(), model.getStringToFind())
+            ) {
       myFindDialog.setModel(model);
       myFindDialog.setOkHandler(handler);
       return;
@@ -1061,16 +1060,13 @@ public class FindManagerImpl extends FindManager {
     if (regions == null) {
       return;
     }
-    int i = Arrays.binarySearch(regions, null, new Comparator<FoldRegion>() {
-      @Override
-      public int compare(FoldRegion o1, FoldRegion o2) {
-        // Find the first region that ends after the given start offset
-        if (o1 == null) {
-          return startOffset - o2.getEndOffset();
-        }
-        else {
-          return o1.getEndOffset() - startOffset;
-        }
+    int i = Arrays.binarySearch(regions, null, (o1, o2) -> {
+      // Find the first region that ends after the given start offset
+      if (o1 == null) {
+        return startOffset - o2.getEndOffset();
+      }
+      else {
+        return o1.getEndOffset() - startOffset;
       }
     });
     if (i < 0) {
@@ -1095,12 +1091,9 @@ public class FindManagerImpl extends FindManager {
     if (toExpand.isEmpty()) {
       return;
     }
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        for (FoldRegion region : toExpand) {
-          region.setExpanded(true);
-        }
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : toExpand) {
+        region.setExpanded(true);
       }
     });
   }

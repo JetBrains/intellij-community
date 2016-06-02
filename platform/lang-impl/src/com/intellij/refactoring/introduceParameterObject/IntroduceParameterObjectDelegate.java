@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -38,19 +39,6 @@ import java.util.List;
  */
 public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>> {
 
-  /**
-   * If language does not provide implicit accessors, then accessors must be generated based on usages of parameters inside method and it's overriders
-   */
-  public enum Accessor {
-    /**
-     * Only read usages were detected
-     */
-    Getter,
-    /**
-     * Write usages were detected. Currently it's assumed that if field requires setter, getter would be generated unconditionally
-     */
-    Setter
-  }
 
   public static final LanguageExtension<IntroduceParameterObjectDelegate> EP_NAME = new LanguageExtension<IntroduceParameterObjectDelegate>("com.intellij.refactoring.introduceParameterObject");
 
@@ -100,10 +88,12 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
   /**
    * Call site should be updated according to the selected parameters, which correspond to the parameters to merge ({@link IntroduceParameterObjectClassDescriptor#getParamsToMerge()})
    * E.g. for the call foo(a, b, c) and parameter class which corresponds to the first 2 parameters, actual value should represent foo(new P(a, b), c)
+   * @param substitutor should contain call substitutor before change signature replaced parameters
    */
   public abstract PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
                                                                      IntroduceParameterObjectClassDescriptor descriptor,
-                                                                     List<? extends ParameterInfo> oldMethodParameters);
+                                                                     List<? extends ParameterInfo> oldMethodParameters,
+                                                                     Object substitutor);
 
   /**
    * Pass new parameter infos to the change info constructor which corresponds to the language of this delegate
@@ -126,29 +116,37 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * @param <M1>               method type of the original delegate
    * @param <P1>               parameter info type of the original delegate
    *
-   * @return                   access level which is required for a parameter (@link {@link Accessor})
+   * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}. If write access is needed, both accessors are expected.
    */
   @Nullable
   public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
-  Accessor collectInternalUsages(Collection<FixableUsageInfo> usages,
-                                 M overridingMethod,
-                                 IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
-                                 P1 parameterInfo,
-                                 String mergedParamName);
+  ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+                                                       M overridingMethod,
+                                                       IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
+                                                       P1 parameterInfo,
+                                                       String mergedParamName);
 
   /**
-   * Collect in usages accessibility fixes.
+   * Collect in <code>usages</code> fixes to generate field's accessors.
    * If {@link #collectInternalUsages(Collection, PsiNamedElement, IntroduceParameterObjectClassDescriptor, ParameterInfo, String)}
-   * did return @NotNull value, corresponding parameter requires some accessor. If current language doesn't provide implicitly accessors,
-   * then they should be generated according to the accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]
+   * returns @NotNull value, corresponding to the parameter field requires an accessor.
+   *
+   * To detect what accessor is required, use <code>accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]</code>
    */
-  public abstract void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
-                                                  M method,
-                                                  C descriptor,
-                                                  Accessor[] accessors);
+  public abstract void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+                                                                   M method,
+                                                                   C descriptor,
+                                                                   ReadWriteAccessDetector.Access[] accessors);
 
   /**
-   * Collect conflicts in conflicts
+   * Collect in <code>usages</code> necessary fixes to change visibility, javadocs, etc
+   */
+  public abstract void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+                                              M method,
+                                              C descriptor);
+
+  /**
+   * Collect conflicts in <code>conflicts</code>
    */
   public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
 }

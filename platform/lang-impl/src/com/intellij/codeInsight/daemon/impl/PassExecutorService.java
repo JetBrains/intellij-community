@@ -352,31 +352,23 @@ class PassExecutorService implements Disposable {
   }
 
   private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
-    return ContainerUtil.find(textEditorHighlightingPasses, new Condition<TextEditorHighlightingPass>() {
-      @Override
-      public boolean value(TextEditorHighlightingPass pass) {
-        return pass.getId() == id;
-      }
-    });
+    return ContainerUtil.find(textEditorHighlightingPasses, pass -> pass.getId() == id);
   }
 
   private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass, new Consumer<Future>() {
-        @Override
-        public void consume(Future future) {
-          try {
-            if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
-              future.get();
-            }
+      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass, future -> {
+        try {
+          if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
+            future.get();
           }
-          catch (CancellationException ignored) {
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (ExecutionException e) {
-            LOG.error(e.getCause());
-          }
+        }
+        catch (CancellationException ignored) {
+        }
+        catch (InterruptedException ignored) {
+        }
+        catch (ExecutionException e) {
+          LOG.error(e.getCause());
         }
       });
       mySubmittedPasses.put(pass, job);
@@ -429,44 +421,38 @@ class PassExecutorService implements Disposable {
         }
       }
 
-      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-        @Override
-        public void run() {
-          boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
-                  return;
-                }
-
-                if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-                  myPass.collectInformation(myUpdateProgress);
-                }
-              }
-              catch (ProcessCanceledException e) {
-                log(myUpdateProgress, myPass, "Canceled ");
-
-                if (!myUpdateProgress.isCanceled()) {
-                  myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
-                }
-              }
-              catch (RuntimeException e) {
-                myUpdateProgress.cancel(e);
-                LOG.error(e);
-                throw e;
-              }
-              catch (Error e) {
-                myUpdateProgress.cancel(e);
-                LOG.error(e);
-                throw e;
-              }
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          try {
+            if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
+              return;
             }
-          });
 
-          if (!success) {
-            myUpdateProgress.cancel();
+            if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
+              myPass.collectInformation(myUpdateProgress);
+            }
           }
+          catch (ProcessCanceledException e) {
+            log(myUpdateProgress, myPass, "Canceled ");
+
+            if (!myUpdateProgress.isCanceled()) {
+              myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+            }
+          }
+          catch (RuntimeException e) {
+            myUpdateProgress.cancel(e);
+            LOG.error(e);
+            throw e;
+          }
+          catch (Error e) {
+            myUpdateProgress.cancel(e);
+            LOG.error(e);
+            throw e;
+          }
+        });
+
+        if (!success) {
+          myUpdateProgress.cancel();
         }
       }, myUpdateProgress);
 
@@ -552,12 +538,7 @@ class PassExecutorService implements Disposable {
   }
 
   private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
-    ContainerUtil.quickSort(result, new Comparator<TextEditorHighlightingPass>() {
-      @Override
-      public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
-        return o1.getId() - o2.getId();
-      }
-    });
+    ContainerUtil.quickSort(result, (o1, o2) -> o1.getId() - o2.getId());
   }
 
   private static int getThreadNum() {

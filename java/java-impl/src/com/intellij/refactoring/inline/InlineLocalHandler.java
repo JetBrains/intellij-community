@@ -88,27 +88,25 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class);
     final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
     final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
-    query.forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference psiReference) {
-        final PsiElement element = psiReference.getElement();
-        PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
-        while (innerClass != containingClass && innerClass != null) {
-          final PsiClass parentPsiClass = PsiTreeUtil.getParentOfType(innerClass, PsiClass.class, true);
-          if (parentPsiClass == containingClass) {
-            if (innerClass instanceof PsiLambdaExpression) {
-              if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
-                innerClassesWithUsages.add(element);
-                innerClass = parentPsiClass;
-                continue;
-              } 
+    query.forEach(psiReference -> {
+      final PsiElement element = psiReference.getElement();
+      PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
+      while (innerClass != containingClass && innerClass != null) {
+        final PsiClass parentPsiClass = PsiTreeUtil.getParentOfType(innerClass, PsiClass.class, true);
+        if (parentPsiClass == containingClass) {
+          if (innerClass instanceof PsiLambdaExpression) {
+            if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
+              innerClassesWithUsages.add(element);
+              innerClass = parentPsiClass;
+              continue;
             }
-            innerClassesWithUsages.add(innerClass);
-            innerClassUsages.add(element);
           }
-          innerClass = parentPsiClass;
+          innerClassesWithUsages.add(innerClass);
+          innerClassUsages.add(element);
         }
-        return true;
+        innerClass = parentPsiClass;
       }
+      return true;
     });
 
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
@@ -230,65 +228,55 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final String refactoringId = "refactoring.inline.local.variable";
-        try{
-          SmartPsiElementPointer<PsiExpression>[] exprs = new SmartPsiElementPointer[refsToInline.length];
+    final Runnable runnable = () -> {
+      final String refactoringId = "refactoring.inline.local.variable";
+      try{
+        SmartPsiElementPointer<PsiExpression>[] exprs = new SmartPsiElementPointer[refsToInline.length];
 
-          RefactoringEventData beforeData = new RefactoringEventData();
-          beforeData.addElements(refsToInline);
-          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+        RefactoringEventData beforeData = new RefactoringEventData();
+        beforeData.addElements(refsToInline);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
 
-          final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-          for(int idx = 0; idx < refsToInline.length; idx++){
-            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
-            exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
+        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+        for(int idx = 0; idx < refsToInline.length; idx++){
+          PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
+          exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
+        }
+
+        if (inlineAll.get()) {
+          if (!isInliningVariableInitializer(defToInline)) {
+            defToInline.getParent().delete();
+          } else {
+            defToInline.delete();
           }
 
-          if (inlineAll.get()) {
-            if (!isInliningVariableInitializer(defToInline)) {
-              defToInline.getParent().delete();
-            } else {
-              defToInline.delete();
-            }
-
-            if (ReferencesSearch.search(local).findFirst() == null) {
-              QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
-            }
-          }
-
-
-          if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-            highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length], new Function<SmartPsiElementPointer<PsiExpression>, PsiExpression>() {
-              @Override
-              public PsiExpression fun(SmartPsiElementPointer<PsiExpression> pointer) {
-                return pointer.getElement();
-              }
-            }), attributes, true, null);
-            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-          }
-
-          for (final SmartPsiElementPointer<PsiExpression> expr : exprs) {
-            InlineUtil.tryToInlineArrayCreationForVarargs(expr.getElement());
+          if (ReferencesSearch.search(local).findFirst() == null) {
+            QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
           }
         }
-        catch (IncorrectOperationException e){
-          LOG.error(e);
+
+
+        if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+          highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length],
+                                                                                 pointer -> pointer.getElement()), attributes, true, null);
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }
-        finally {
-          final RefactoringEventData afterData = new RefactoringEventData();
-          afterData.addElement(containingClass);
-          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
+
+        for (final SmartPsiElementPointer<PsiExpression> expr : exprs) {
+          InlineUtil.tryToInlineArrayCreationForVarargs(expr.getElement());
         }
+      }
+      catch (IncorrectOperationException e){
+        LOG.error(e);
+      }
+      finally {
+        final RefactoringEventData afterData = new RefactoringEventData();
+        afterData.addElement(containingClass);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    }, RefactoringBundle.message("inline.command", localName), null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(runnable), RefactoringBundle.message("inline.command", localName), null);
   }
 
   @Nullable

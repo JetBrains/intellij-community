@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,11 +79,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   };
 
   public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor) {
-    this(aClass, substitutor, null, PsiAnnotation.EMPTY_ARRAY);
+    this(aClass, substitutor, null, TypeAnnotationProvider.EMPTY);
   }
 
   public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel level) {
-    this(aClass, substitutor, level, PsiAnnotation.EMPTY_ARRAY);
+    this(aClass, substitutor, level, TypeAnnotationProvider.EMPTY);
   }
 
   public PsiImmediateClassType(@NotNull PsiClass aClass,
@@ -96,11 +96,12 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     mySubstitutor = substitutor;
     assert substitutor.isValid();
   }
+
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
-                               @NotNull TypeAnnotationProvider annotations) {
-    super(level, annotations);
+                               @NotNull TypeAnnotationProvider provider) {
+    super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
@@ -116,6 +117,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public String getClassName() {
     return myClass.getName();
   }
+
   @Override
   @NotNull
   public PsiType[] getParameters() {
@@ -127,12 +129,10 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     List<PsiType> lst = new ArrayList<PsiType>();
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
-      if (substituted != null) {
-        lst.add(substituted);
-      }
-      else {
+      if (substituted == null) {
         return PsiType.EMPTY_ARRAY;
       }
+      lst.add(substituted);
     }
     return lst.toArray(createArray(lst.size()));
   }

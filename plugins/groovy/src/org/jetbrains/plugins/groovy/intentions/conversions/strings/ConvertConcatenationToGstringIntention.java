@@ -123,12 +123,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
                                              invokeImpl(selectedValue, document);
                                            }
                                          },
-                                         new Function<GrExpression, String>() {
-                                           @Override
-                                           public String fun(GrExpression grExpression) {
-                                             return grExpression.getText();
-                                           }
-                                         }
+                                         grExpression -> grExpression.getText()
       );
     }
   }
@@ -151,19 +146,16 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
 
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        final AccessToken accessToken = WriteAction.start();
-        try {
-          final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
-          if (expression instanceof GrString) {
-            GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
-          }
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
+      final AccessToken accessToken = WriteAction.start();
+      try {
+        final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
+        if (expression instanceof GrString) {
+          GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
         }
-        finally {
-          accessToken.finish();
-        }
+      }
+      finally {
+        accessToken.finish();
       }
     }, null, null, document);
   }

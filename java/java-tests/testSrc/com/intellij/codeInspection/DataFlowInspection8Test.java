@@ -47,6 +47,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveInVoidLambda() { doTest(); }
+  public void testNotNullLambdaParameter() { doTest(); }
 
   public void testNullableArrayComponent() {
     setupCustomAnnotations();

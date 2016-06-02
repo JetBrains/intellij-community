@@ -34,25 +34,23 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
   @SuppressWarnings("deprecation")
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
-    private final ConstructorAccessor myConstructor;
+    private final Constructor<? extends ASTNode> myConstructor;
 
     private JavaDocCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
       super(debugName);
-      Constructor<? extends ASTNode> constructor = ReflectionUtil.getDefaultConstructor(nodeClass);
-      myConstructor = ReflectionUtil.getConstructorAccessor(constructor);
+      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstanceViaConstructorAccessor(myConstructor);
+      return ReflectionUtil.createInstance(myConstructor);
     }
   }
 

@@ -94,32 +94,19 @@ public class BackgroundTaskUtil {
       }
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-            @Override
-            public void run() {
-              final Runnable callback = backgroundTask.fun(indicator);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        final Runnable callback = backgroundTask.fun(indicator);
 
-              if (indicator.isCanceled()) {
-                semaphore.release();
-                return;
-              }
-
-              if (!resultRef.compareAndSet(null, callback)) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    finish(callback, indicator);
-                  }
-                }, modality);
-              }
-              semaphore.release();
-            }
-          }, indicator);
+        if (indicator.isCanceled()) {
+          semaphore.release();
+          return;
         }
-      });
+
+        if (!resultRef.compareAndSet(null, callback)) {
+          ApplicationManager.getApplication().invokeLater(() -> finish(callback, indicator), modality);
+        }
+        semaphore.release();
+      }, indicator));
 
       try {
         semaphore.tryAcquire(waitMillis, TimeUnit.MILLISECONDS);
@@ -150,17 +137,9 @@ public class BackgroundTaskUtil {
   public static <T> T tryComputeFast(@NotNull final Function<ProgressIndicator, T> backgroundTask,
                                      final int waitMillis) {
     final Ref<T> resultRef = new Ref<T>();
-    ProgressIndicator indicator = executeAndTryWait(new Function<ProgressIndicator, Runnable>() {
-      @Override
-      public Runnable fun(final ProgressIndicator indicator) {
-        final T result = backgroundTask.fun(indicator);
-        return new Runnable() {
-          @Override
-          public void run() {
-            resultRef.set(result);
-          }
-        };
-      }
+    ProgressIndicator indicator = executeAndTryWait(indicator1 -> {
+      final T result = backgroundTask.fun(indicator1);
+      return () -> resultRef.set(result);
     }, null, waitMillis, false);
     indicator.cancel();
 
@@ -177,12 +156,7 @@ public class BackgroundTaskUtil {
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull final Runnable runnable, @NotNull Disposable parent) {
-    return executeOnPooledThread(new Consumer<ProgressIndicator>() {
-      @Override
-      public void consume(@Nullable ProgressIndicator indicator) {
-        runnable.run();
-      }
-    }, parent, ModalityState.NON_MODAL);
+    return executeOnPooledThread(indicator -> runnable.run(), parent, ModalityState.NON_MODAL);
   }
 
   @NotNull
@@ -207,23 +181,15 @@ public class BackgroundTaskUtil {
     Disposer.register(parent, disposable);
     indicator.start();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              task.consume(indicator);
-            }
-            finally {
-              indicator.stop();
-              Disposer.dispose(disposable);
-            }
-          }
-        }, indicator);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        task.consume(indicator);
       }
-    });
+      finally {
+        indicator.stop();
+        Disposer.dispose(disposable);
+      }
+    }, indicator));
 
     return indicator;
   }

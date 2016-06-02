@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
+import com.intellij.psi.impl.java.stubs.JavaClassElementType;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.util.BitUtil;
+
 import java.util.Arrays;
 
 public class IndexTree {
@@ -28,9 +32,9 @@ public class IndexTree {
   public static final int COMPILED     = 1 << 7;
   public static final int MEMBER       = 1 << 8;
 
-  public static byte BYTECODE = 0;
-  public static byte JAVA = 1;
-  public static byte GROOVY = 2;
+  public static final byte BYTECODE = 0;
+  public static final byte JAVA = 1;
+  public static final byte GROOVY = 2;
 
   public static class Unit {
     public final int myFileId;
@@ -133,6 +137,13 @@ public class IndexTree {
       this.myMods = mods;
       this.myName = name;
       this.mySupers = supers;
+    }
+
+    public IStubElementType getStubElementType() {
+      boolean isEnum = BitUtil.isSet(myMods, IndexTree.ENUM);
+      boolean isAnonymous = false;
+
+      return JavaClassElementType.typeForClass(isAnonymous, isEnum);
     }
 
     @Override

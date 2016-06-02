@@ -119,18 +119,16 @@ public class FacetLibraryConfigurator {
 
   public static void detachPythonLibrary(final Module module, final String libraryName) {
     final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        // remove the library
-        final ModifiableRootModel model = modelsProvider.getModuleModifiableModel(module);
-        OrderEntry entry = OrderEntryUtil.findLibraryOrderEntry(model, libraryName);
-        if (entry == null) {
-          modelsProvider.disposeModuleModifiableModel(model);
-        }
-        else {
-          model.removeOrderEntry(entry);
-          modelsProvider.commitModuleModifiableModel(model);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // remove the library
+      final ModifiableRootModel model = modelsProvider.getModuleModifiableModel(module);
+      OrderEntry entry = OrderEntryUtil.findLibraryOrderEntry(model, libraryName);
+      if (entry == null) {
+        modelsProvider.disposeModuleModifiableModel(model);
+      }
+      else {
+        model.removeOrderEntry(entry);
+        modelsProvider.commitModuleModifiableModel(model);
       }
     });
   }

@@ -178,28 +178,26 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       }
     }
     final Ref<String> ref = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        PasswordSafeSettings.ProviderType type = ps.getSettings().getProviderType();
-        final PasswordPromptComponent component = new PasswordPromptComponent(type, message, false, promptLabel, checkboxLabel);
-        PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PasswordSafeSettings.ProviderType type = ps.getSettings().getProviderType();
+      final PasswordPromptComponent component = new PasswordPromptComponent(type, message, false, promptLabel, checkboxLabel);
+      PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
 
-        d.setErrorText(error);
-        if (d.showAndGet()) {
-          ref.set(new String(component.getPassword()));
-          try {
-            if (component.isRememberSelected()) {
-              ps.storePassword(project, requestor, key, ref.get());
-            }
-            else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-              ps.getMemoryProvider().storePassword(project, requestor, key, ref.get());
-            }
+      d.setErrorText(error);
+      if (d.showAndGet()) {
+        ref.set(new String(component.getPassword()));
+        try {
+          if (component.isRememberSelected()) {
+            ps.storePassword(project, requestor, key, ref.get());
           }
-          catch (PasswordSafeException e) {
-            Messages.showErrorDialog(project, e.getMessage(), "Failed to Store Password");
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Failed to store password", e);
-            }
+          else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+            ps.getMemoryProvider().storePassword(project, requestor, key, ref.get());
+          }
+        }
+        catch (PasswordSafeException e) {
+          Messages.showErrorDialog(project, e.getMessage(), "Failed to Store Password");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Failed to store password", e);
           }
         }
       }

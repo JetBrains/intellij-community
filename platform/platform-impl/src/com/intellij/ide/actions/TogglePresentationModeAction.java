@@ -82,13 +82,10 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     tweakUIDefaults(settings, inPresentation);
 
     ActionCallback callback = project == null ? ActionCallback.DONE : tweakFrameFullScreen(project, inPresentation);
-    callback.doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        tweakEditorAndFireUpdateUI(settings, inPresentation);
+    callback.doWhenProcessed(() -> {
+      tweakEditorAndFireUpdateUI(settings, inPresentation);
 
-        restoreToolWindows(project, layoutStored, inPresentation);
-      }
+      restoreToolWindows(project, layoutStored, inPresentation);
     });
   }
 

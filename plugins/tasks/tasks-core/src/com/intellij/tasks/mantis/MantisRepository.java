@@ -124,13 +124,11 @@ public class MantisRepository extends BaseRepositoryImpl {
       IssueHeaderData[] headers = fetchProjectIssues(soap, project, myCurrentFilter, pageNumber, pageSize);
       ContainerUtil.addAll(collectedHeaders, headers);
     }
-    return ContainerUtil.mapNotNull(collectedHeaders, new NullableFunction<IssueHeaderData, Task>() {
-      public Task fun(IssueHeaderData issueData) {
-        if (issueData.getId() == null || issueData.getSummary() == null) {
-          return null;
-        }
-        return new MantisTask(issueData, MantisRepository.this);
+    return ContainerUtil.mapNotNull(collectedHeaders, (NullableFunction<IssueHeaderData, Task>)issueData -> {
+      if (issueData.getId() == null || issueData.getSummary() == null) {
+        return null;
       }
+      return new MantisTask(issueData, MantisRepository.this);
     });
   }
 
@@ -183,12 +181,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = checkAllProjectsAvailable(soap);
 
     List<MantisProject> projects =
-      new ArrayList<MantisProject>(ContainerUtil.map(fetchUserProjects(soap), new Function<ProjectData, MantisProject>() {
-        @Override
-        public MantisProject fun(final ProjectData data) {
-          return new MantisProject(data);
-        }
-      }));
+      new ArrayList<MantisProject>(ContainerUtil.map(fetchUserProjects(soap), data -> new MantisProject(data)));
     List<MantisFilter> commonFilters = new LinkedList<MantisFilter>();
     for (MantisProject project : projects) {
       FilterData[] rawFilters = fetchProjectFilters(soap, project);
@@ -205,12 +198,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    Collections.sort(commonFilters, new Comparator<MantisFilter>() {
-      @Override
-      public int compare(MantisFilter f1, MantisFilter f2) {
-          return f1.getName().compareTo(f2.getName());
-      }
-    });
+    Collections.sort(commonFilters, (f1, f2) -> f1.getName().compareTo(f2.getName()));
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();

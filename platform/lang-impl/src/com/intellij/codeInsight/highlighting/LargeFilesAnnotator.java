@@ -29,9 +29,13 @@ import org.jetbrains.annotations.NotNull;
 public class LargeFilesAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof PsiFile && element.getTextLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) {
-      holder.createWarningAnnotation(element, "File size exceeds configured limit (" + PersistentFSConstants.getMaxIntellisenseFileSize() + "). " +
-                                              "Code insight features are not available.").setFileLevelAnnotation(true);
+    if (element instanceof PsiFile) {
+      int length = element.getTextLength();
+      if (length > PersistentFSConstants.getMaxIntellisenseFileSize()) {
+        holder.createWarningAnnotation(element, "The file size (" + length +" bytes) " +
+                                                "exceeds configured limit (" + PersistentFSConstants.getMaxIntellisenseFileSize() + " bytes). " +
+                                                "Code insight features are not available.").setFileLevelAnnotation(true);
+      }
     }
   }
 }

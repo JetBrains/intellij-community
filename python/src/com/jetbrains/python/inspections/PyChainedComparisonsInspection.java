@@ -257,14 +257,11 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyChainedComparisonsInspection tool =
-            (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
-                                                                   file);
-          tool.ignoreConstantInTheMiddle = false;
-        }
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(model -> {
+        PyChainedComparisonsInspection tool =
+          (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
+                                                                 file);
+        tool.ignoreConstantInTheMiddle = false;
       });
     }
   }

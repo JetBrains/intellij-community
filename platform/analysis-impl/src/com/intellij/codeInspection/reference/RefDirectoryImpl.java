@@ -51,12 +51,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        visitor.visitDirectory(RefDirectoryImpl.this);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> visitor.visitDirectory(RefDirectoryImpl.this));
   }
 
   @Override

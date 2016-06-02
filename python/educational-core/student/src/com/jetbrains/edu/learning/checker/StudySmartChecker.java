@@ -54,15 +54,13 @@ public class StudySmartChecker {
         EduDocumentListener listener = new EduDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = placeholder.getRealStartOffset(windowDocument);
-        int end = start + placeholder.getLength();
+        int end = start + placeholder.getRealLength();
         final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(placeholder.getIndex());
         int userStart = userAnswerPlaceholder.getRealStartOffset(usersDocument);
-        int userEnd = userStart + userAnswerPlaceholder.getLength();
+        int userEnd = userStart + userAnswerPlaceholder.getRealLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          documentManager.saveDocument(windowDocument);
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(windowDocument));
         VirtualFile fileWindows = EduUtils.flushWindows(windowTaskFile, windowCopy, true);
         Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess, null, windowCopy.getPath());

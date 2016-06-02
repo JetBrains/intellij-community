@@ -279,21 +279,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       runnable.run();
     }
     myDisposeActions.clear();
-    Runnable disposer = new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(myDialog);
-        myProject = null;
+    Runnable disposer = () -> {
+      Disposer.dispose(myDialog);
+      myProject = null;
 
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myDialog != null && myDialog.getRootPane() != null) {
-              myDialog.remove(myDialog.getRootPane());
-            }
-          }
-        });
-      }
+      SwingUtilities.invokeLater(() -> {
+        if (myDialog != null && myDialog.getRootPane() != null) {
+          myDialog.remove(myDialog.getRootPane());
+        }
+      });
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);
@@ -435,12 +429,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
-    myDisposeActions.add(new Runnable() {
-      @Override
-      public void run() {
-        anCancelAction.unregisterCustomShortcutSet(rootPane);
-      }
-    });
+    myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
     if (!myCanBeParent && myWindowManager != null) {
       myWindowManager.doNotSuggestAsParent(myDialog.getWindow());
@@ -481,12 +470,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     if (!SystemInfo.isMac) return;
 
     StackingPopupDispatcher.getInstance().hidePersistentPopups();
-    myDisposeActions.add(new Runnable() {
-      @Override
-      public void run() {
-        StackingPopupDispatcher.getInstance().restorePersistentPopups();
-      }
-    });
+    myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
   }
 
   @Override
@@ -495,6 +479,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   private class AnCancelAction extends AnAction implements DumbAware {
+
+    @Override
+    public boolean startInTransaction() {
+      return false;
+    }
+
     @Override
     public void update(AnActionEvent e) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -739,12 +729,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             Project project = getProject();
             if (project != null && !project.isDisposed()) {
               focusManager.set(getFocusManager());
-              focusManager.get().doWhenFocusSettlesDown(new Runnable() {
-                @Override
-                public void run() {
-                  disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
-                }
-              });
+              focusManager.get().doWhenFocusSettlesDown(() -> disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get()));
             }
             else {
               disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
@@ -838,12 +823,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.setWillBeSheduledForRestore();
         IdeFocusManager mgr = getFocusManager();
-        Runnable r = new Runnable() {
-          @Override
-          public void run() {
-            if (myFocusTrackback != null)  myFocusTrackback.restoreFocus();
-            myFocusTrackback = null;
-          }
+        Runnable r = () -> {
+          if (myFocusTrackback != null)  myFocusTrackback.restoreFocus();
+          myFocusTrackback = null;
         };
         mgr.doWhenFocusSettlesDown(r);
       }
@@ -955,61 +937,55 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       @Override
       public void windowOpened(final WindowEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myOpened = true;
-            final DialogWrapper activeWrapper = getActiveWrapper();
-            for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
-              c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
-            }
-            if (activeWrapper == null) {
-              myFocusedCallback.setRejected();
-              myTypeAheadDone.setRejected();
-            }
+        SwingUtilities.invokeLater(() -> {
+          myOpened = true;
+          final DialogWrapper activeWrapper = getActiveWrapper();
+          for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
+            c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+          }
+          if (activeWrapper == null) {
+            myFocusedCallback.setRejected();
+            myTypeAheadDone.setRejected();
           }
         });
       }
 
       @Override
       public void windowActivated(final WindowEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final DialogWrapper wrapper = getActiveWrapper();
-            if (wrapper == null && !myFocusedCallback.isProcessed()) {
-              myFocusedCallback.setRejected();
-              myTypeAheadDone.setRejected();
-              return;
-            }
+        SwingUtilities.invokeLater(() -> {
+          final DialogWrapper wrapper = getActiveWrapper();
+          if (wrapper == null && !myFocusedCallback.isProcessed()) {
+            myFocusedCallback.setRejected();
+            myTypeAheadDone.setRejected();
+            return;
+          }
 
-            if (myActivated) {
-              return;
-            }
-            myActivated = true;
-            JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-            if (getRootPane() != null && toFocus == null) {
-              toFocus = getRootPane().getDefaultButton();
-            }
+          if (myActivated) {
+            return;
+          }
+          myActivated = true;
+          JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
+          if (getRootPane() != null && toFocus == null) {
+            toFocus = getRootPane().getDefaultButton();
+          }
 
-            if (getRootPane() != null) {
-              IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
-            }
-            setupSelectionOnPreferredComponent(toFocus);
+          if (getRootPane() != null) {
+            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+          }
+          setupSelectionOnPreferredComponent(toFocus);
 
-            if (toFocus != null) {
-              if (isShowing() && isActive()) {
-                getFocusManager().requestFocus(toFocus, true);
-                notifyFocused(wrapper);
-              }
-            } else {
-              if (isShowing()) {
-                notifyFocused(wrapper);
-              }
+          if (toFocus != null) {
+            if (isShowing() && isActive()) {
+              getFocusManager().requestFocus(toFocus, true);
+              notifyFocused(wrapper);
             }
-            if (myTypeAheadCallback != null) {
-              myTypeAheadCallback.setDone();
+          } else {
+            if (isShowing()) {
+              notifyFocused(wrapper);
             }
+          }
+          if (myTypeAheadCallback != null) {
+            myTypeAheadCallback.setDone();
           }
         });
       }

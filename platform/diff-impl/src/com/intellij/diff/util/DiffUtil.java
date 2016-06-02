@@ -29,24 +29,30 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -62,41 +68,50 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import gnu.trove.Equality;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class DiffUtil {
@@ -108,6 +123,10 @@ public class DiffUtil {
   //
   // Editor
   //
+
+  public static boolean isDiffEditor(@NotNull Editor editor) {
+    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+  }
 
   @Nullable
   public static EditorHighlighter initEditorHighlighter(@Nullable Project project,
@@ -127,7 +146,7 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
+  private static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
     FileType type = content.getContentType();
     VirtualFile file = content.getHighlightFile();
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
@@ -137,18 +156,19 @@ public class DiffUtil {
       SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
-    else if ((file != null && file.getFileType() == type) || file instanceof LightVirtualFile) {
-      return highlighterFactory.createEditorHighlighter(project, file);
+    if (file != null) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
+        return highlighterFactory.createEditorHighlighter(project, file);
+      }
     }
     if (type != null) {
       return highlighterFactory.createEditorHighlighter(project, type);
     }
-
     return null;
   }
 
   @NotNull
-  public static EditorHighlighter createEmptyEditorHighlighter() {
+  private static EditorHighlighter createEmptyEditorHighlighter() {
     return new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
   }
 
@@ -217,6 +237,12 @@ public class DiffUtil {
   //
   // Scrolling
   //
+
+  public static void disableBlitting(@NotNull EditorEx editor) {
+    if (Registry.is("diff.divider.repainting.disable.blitting")) {
+      editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    }
+  }
 
   public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
@@ -349,6 +375,30 @@ public class DiffUtil {
     return result.toString();
   }
 
+  public static void showSuccessPopup(@NotNull String message,
+                                      @NotNull RelativePoint point,
+                                      @NotNull Disposable disposable,
+                                      @Nullable Runnable hyperlinkHandler) {
+    HyperlinkListener listener = null;
+    if (hyperlinkHandler != null) {
+      listener = new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          hyperlinkHandler.run();
+        }
+      };
+    }
+
+    Color bgColor = MessageType.INFO.getPopupBackground();
+
+    Balloon balloon = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, null, bgColor, listener)
+      .setAnimationCycle(200)
+      .createBalloon();
+    balloon.show(point, Balloon.Position.below);
+    Disposer.register(disposable, balloon);
+  }
+
   //
   // Titles
   //
@@ -362,7 +412,7 @@ public class DiffUtil {
       return Collections.nCopies(titles.size(), null);
     }
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.size());
+    List<JComponent> components = new ArrayList<>(titles.size());
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
       title = createTitleWithNotifications(title, contents.get(i));
@@ -380,7 +430,7 @@ public class DiffUtil {
     boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(contents);
     boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(contents);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.size());
+    List<JComponent> result = new ArrayList<>(contents.size());
 
     if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
@@ -401,7 +451,7 @@ public class DiffUtil {
     List<JComponent> notifications = getCustomNotifications(content);
     if (notifications.isEmpty()) return title;
 
-    List<JComponent> components = new ArrayList<JComponent>();
+    List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
     components.addAll(notifications);
     return createStackedComponents(components, TITLE_GAP);
@@ -424,7 +474,7 @@ public class DiffUtil {
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, true);
+    return createTitle(title, null, null, false);
   }
 
   @NotNull
@@ -493,7 +543,7 @@ public class DiffUtil {
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
     if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
-    List<JComponent> result = new ArrayList<JComponent>();
+    List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
       result.add(new SyncHeightComponent(components, i));
     }
@@ -564,42 +614,65 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static List<MergeWordFragment> compareThreesideInner(@NotNull CharSequence[] chunks,
-                                                              @NotNull ComparisonPolicy comparisonPolicy,
-                                                              @NotNull ProgressIndicator indicator) {
-    if (chunks[0] == null && chunks[1] == null && chunks[2] == null) return null; // ---
+  public static MergeInnerDifferences compareThreesideInner(@NotNull List<CharSequence> chunks,
+                                                            @NotNull ComparisonPolicy comparisonPolicy,
+                                                            @NotNull ProgressIndicator indicator) {
+    if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
 
     if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
-      if (isChunksEquals(chunks[0], chunks[1], comparisonPolicy) &&
-          isChunksEquals(chunks[0], chunks[2], comparisonPolicy)) {
-        return Collections.emptyList(); // whitespace-only changes, ex: empty lines added/removed
+      if (isChunksEquals(chunks.get(0), chunks.get(1), comparisonPolicy) &&
+          isChunksEquals(chunks.get(0), chunks.get(2), comparisonPolicy)) {
+        // whitespace-only changes, ex: empty lines added/removed
+        return new MergeInnerDifferences(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
       }
     }
 
-    if (chunks[0] == null && chunks[1] == null ||
-        chunks[0] == null && chunks[2] == null ||
-        chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
+    if (chunks.get(0) == null && chunks.get(1) == null ||
+        chunks.get(0) == null && chunks.get(2) == null ||
+        chunks.get(1) == null && chunks.get(2) == null) { // =--, -=-, --=
       return null;
     }
 
-    if (chunks[0] != null && chunks[1] != null && chunks[2] != null) { // ===
-      return ByWord.compare(chunks[0], chunks[1], chunks[2], comparisonPolicy, indicator);
+    if (chunks.get(0) != null && chunks.get(1) != null && chunks.get(2) != null) { // ===
+      List<DiffFragment> fragments1 = ByWord.compare(chunks.get(1), chunks.get(0), comparisonPolicy, indicator);
+      List<DiffFragment> fragments2 = ByWord.compare(chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
+
+      List<TextRange> left = new ArrayList<TextRange>();
+      List<TextRange> base = new ArrayList<TextRange>();
+      List<TextRange> right = new ArrayList<TextRange>();
+
+      for (DiffFragment wordFragment : fragments1) {
+        base.add(new TextRange(wordFragment.getStartOffset1(), wordFragment.getEndOffset1()));
+        left.add(new TextRange(wordFragment.getStartOffset2(), wordFragment.getEndOffset2()));
+      }
+
+      for (DiffFragment wordFragment : fragments2) {
+        base.add(new TextRange(wordFragment.getStartOffset1(), wordFragment.getEndOffset1()));
+        right.add(new TextRange(wordFragment.getStartOffset2(), wordFragment.getEndOffset2()));
+      }
+
+      return new MergeInnerDifferences(left, base, right);
     }
 
     // ==-, =-=, -==
-    final ThreeSide side1 = chunks[0] != null ? ThreeSide.LEFT : ThreeSide.BASE;
-    final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
+    final ThreeSide side1 = chunks.get(0) != null ? ThreeSide.LEFT : ThreeSide.BASE;
+    final ThreeSide side2 = chunks.get(2) != null ? ThreeSide.RIGHT : ThreeSide.BASE;
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
 
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
-    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(DiffFragment fragment) {
-        return new MyWordFragment(side1, side2, fragment);
+    List<List<TextRange>> textRanges = ThreeSide.map(side -> {
+      if (side == side1) {
+        return ContainerUtil.map(wordConflicts, fragment -> new TextRange(fragment.getStartOffset1(), fragment.getEndOffset1()));
       }
+      if (side == side2) {
+        return ContainerUtil.map(wordConflicts, fragment -> new TextRange(fragment.getStartOffset2(), fragment.getEndOffset2()));
+      }
+      return null;
     });
+
+    return new MergeInnerDifferences(textRanges.get(0), textRanges.get(1), textRanges.get(2));
   }
 
   private static boolean isChunksEquals(@Nullable CharSequence chunk1,
@@ -608,6 +681,31 @@ public class DiffUtil {
     if (chunk1 == null) chunk1 = "";
     if (chunk2 == null) chunk2 = "";
     return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
+  }
+
+  @NotNull
+  public static <T> int[] getSortedIndexes(@NotNull List<T> values, @NotNull Comparator<T> comparator) {
+    final List<Integer> indexes = new ArrayList<>(values.size());
+    for (int i = 0; i < values.size(); i++) {
+      indexes.add(i);
+    }
+
+    ContainerUtil.sort(indexes, (i1, i2) -> {
+      T val1 = values.get(indexes.get(i1));
+      T val2 = values.get(indexes.get(i2));
+      return comparator.compare(val1, val2);
+    });
+
+    return ArrayUtil.toIntArray(indexes);
+  }
+
+  @NotNull
+  public static int[] invertIndexes(@NotNull int[] indexes) {
+    int[] inverted = new int[indexes.length];
+    for (int i = 0; i < indexes.length; i++) {
+      inverted[indexes[i]] = i;
+    }
+    return inverted;
   }
 
   //
@@ -687,6 +785,22 @@ public class DiffUtil {
     document.replaceString(offset1, offset2, text);
   }
 
+  public static void applyModification(@NotNull Document document,
+                                       int line1,
+                                       int line2,
+                                       @NotNull List<? extends CharSequence> newLines) {
+    if (line1 == line2 && newLines.isEmpty()) return;
+    if (line1 == line2) {
+      insertLines(document, line1, StringUtil.join(newLines, "\n"));
+    }
+    else if (newLines.isEmpty()) {
+      deleteLines(document, line1, line2);
+    }
+    else {
+      replaceLines(document, line1, line2, StringUtil.join(newLines, "\n"));
+    }
+  }
+
   public static void applyModification(@NotNull Document document1,
                                        int line1,
                                        int line2,
@@ -760,7 +874,7 @@ public class DiffUtil {
                                                         startLine, endLine, document.getLineCount()));
     }
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (int i = startLine; i < endLine; i++) {
       int start = document.getLineStartOffset(i);
       int end = document.getLineEndOffset(i);
@@ -772,6 +886,13 @@ public class DiffUtil {
   //
   // Updating ranges on change
   //
+
+  @NotNull
+  public static LineRange getAffectedLineRange(@NotNull DocumentEvent e) {
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    return new LineRange(line1, line2);
+  }
 
   public static int countLinesShift(@NotNull DocumentEvent e) {
     return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
@@ -833,119 +954,146 @@ public class DiffUtil {
   public static TextDiffType getLineDiffType(@NotNull LineFragment fragment) {
     boolean left = fragment.getStartLine1() != fragment.getEndLine1();
     boolean right = fragment.getStartLine2() != fragment.getEndLine2();
-    return getType(left, right);
+    return getDiffType(left, right);
   }
 
   @NotNull
   public static TextDiffType getDiffType(@NotNull DiffFragment fragment) {
     boolean left = fragment.getEndOffset1() != fragment.getStartOffset1();
     boolean right = fragment.getEndOffset2() != fragment.getStartOffset2();
-    return getType(left, right);
+    return getDiffType(left, right);
   }
 
-  private static TextDiffType getType(boolean left, boolean right) {
-    if (left && right) {
+  @NotNull
+  public static TextDiffType getDiffType(boolean hasDeleted, boolean hasInserted) {
+    if (hasDeleted && hasInserted) {
       return TextDiffType.MODIFIED;
     }
-    else if (left) {
+    else if (hasDeleted) {
       return TextDiffType.DELETED;
     }
-    else if (right) {
+    else if (hasInserted) {
       return TextDiffType.INSERTED;
     }
     else {
-      LOG.error("DiffFragment should not be empty");
+      LOG.error("Diff fragment should not be empty");
       return TextDiffType.MODIFIED;
     }
+  }
+
+  @NotNull
+  public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
+                                               @NotNull Equality<ThreeSide> equality) {
+    boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
+    boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
+    boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
+    assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
+
+    if (isBaseEmpty) {
+      if (isLeftEmpty) { // --=
+        return new MergeConflictType(TextDiffType.INSERTED, false, true);
+      }
+      else if (isRightEmpty) { // =--
+        return new MergeConflictType(TextDiffType.INSERTED, true, false);
+      }
+      else { // =-=
+        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        return new MergeConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
+      }
+    }
+    else {
+      if (isLeftEmpty && isRightEmpty) { // -=-
+        return new MergeConflictType(TextDiffType.DELETED);
+      }
+      else { // -==, ==-, ===
+        boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
+        if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
+
+        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        return new MergeConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
+      }
+    }
+  }
+
+  @NotNull
+  public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
+                                                   @NotNull List<? extends Document> documents,
+                                                   @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareLineMergeContents(fragment, documents, policy, side1, side2));
+  }
+
+  private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
+                                                  @NotNull List<? extends Document> documents,
+                                                  @NotNull ComparisonPolicy policy,
+                                                  @NotNull ThreeSide side1,
+                                                  @NotNull ThreeSide side2) {
+    int start1 = fragment.getStartLine(side1);
+    int end1 = fragment.getEndLine(side1);
+    int start2 = fragment.getStartLine(side2);
+    int end2 = fragment.getEndLine(side2);
+
+    if (end2 - start2 != end1 - start1) return false;
+
+    Document document1 = side1.select(documents);
+    Document document2 = side2.select(documents);
+
+    for (int i = 0; i < end1 - start1; i++) {
+      int line1 = start1 + i;
+      int line2 = start2 + i;
+
+      CharSequence content1 = getLinesContent(document1, line1, line1 + 1);
+      CharSequence content2 = getLinesContent(document2, line2, line2 + 1);
+      if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
+    }
+
+    return true;
+  }
+
+  private static boolean isLineMergeIntervalEmpty(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {
+    return fragment.getStartLine(side) == fragment.getEndLine(side);
   }
 
   //
   // Writable
   //
 
-  public static abstract class DiffCommandAction implements Runnable {
-    @Nullable protected final Project myProject;
-    @NotNull protected final Document myDocument;
-    @Nullable private final String myCommandName;
-    @Nullable private final String myCommandGroupId;
-    @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
-    private final boolean myUnderBulkUpdate;
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName) {
-      this(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT);
+  @CalledInAwt
+  public static void executeWriteCommand(@Nullable Project project,
+                                         @NotNull Document document,
+                                         @Nullable String commandName,
+                                         @Nullable String commandGroupId,
+                                         @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                         boolean underBulkUpdate,
+                                         @NotNull Runnable task) {
+    if (!makeWritable(project, document)) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+      return;
     }
 
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName,
-                             @Nullable String commandGroupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
-      this(project, document, commandName, commandGroupId, confirmationPolicy, false);
-    }
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName,
-                             @Nullable String commandGroupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
-                             boolean underBulkUpdate) {
-      myDocument = document;
-      myProject = project;
-      myCommandName = commandName;
-      myCommandGroupId = commandGroupId;
-      myConfirmationPolicy = confirmationPolicy;
-      myUnderBulkUpdate = underBulkUpdate;
-    }
-
-    @Override
-    @CalledInAwt
-    public final void run() {
-      if (!makeWritable(myProject, myDocument)) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
-        LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
-        return;
-      }
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              if (myUnderBulkUpdate) {
-                DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-                  @Override
-                  public void run() {
-                    execute();
-                  }
-                });
-              }
-              else {
-                execute();
-              }
-            }
-          }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        if (underBulkUpdate) {
+          DocumentUtil.executeInBulk(document, true, task);
         }
-      });
-    }
-
-    @CalledWithWriteLock
-    protected abstract void execute();
+        else {
+          task.run();
+        }
+      }, commandName, commandGroupId, confirmationPolicy, document);
+    });
   }
 
   @CalledInAwt
   public static void executeWriteCommand(@NotNull final Document document,
                                          @Nullable final Project project,
-                                         @Nullable final String name,
+                                         @Nullable final String commandName,
                                          @NotNull final Runnable task) {
-    new DiffCommandAction(project, document, name) {
-      @Override
-      protected void execute() {
-        task.run();
-      }
-    }.run();
+    executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
 
   public static boolean isEditable(@NotNull Editor editor) {
@@ -966,17 +1114,32 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
-    if (document.isWritable()) return true;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null || !file.isValid()) return false;
+    if (file == null || !file.isValid()) return document.isWritable();
     return makeWritable(project, file) && document.isWritable();
   }
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.isWritable()) return true;
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
     return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
+  }
+
+  public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {
+    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+    if (undoManager != null) {
+      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+      undoManager.nonundoableActionPerformed(ref, false);
+    }
+  }
+
+  /**
+   * Difference with {@link VfsUtil#markDirtyAndRefresh} is that refresh from VfsUtil will be performed with ModalityState.NON_MODAL.
+   */
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
+    ModalityState modalityState = ApplicationManager.getApplication().getDefaultModalityState();
+    VfsUtil.markDirty(recursive, reloadChildren, files);
+    RefreshQueue.getInstance().refresh(async, recursive, null, modalityState, files);
   }
 
   //
@@ -1061,14 +1224,10 @@ public class DiffUtil {
     return null;
   }
 
-  public static void addNotification(@NotNull JComponent component, @NotNull UserDataHolder holder) {
-    List<JComponent> components = holder.getUserData(DiffUserDataKeys.NOTIFICATIONS);
-    if (components == null) {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, Collections.singletonList(component));
-    }
-    else {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(components, component));
-    }
+  public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
+    if (component == null) return;
+    List<JComponent> oldComponents = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+    holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(oldComponents, component));
   }
 
   @NotNull
@@ -1149,7 +1308,7 @@ public class DiffUtil {
   public static <T extends DiffTool> List<T> filterSuppressedTools(@NotNull List<T> tools) {
     if (tools.size() < 2) return tools;
 
-    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
+    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<>();
     for (T tool : tools) {
       try {
         if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
@@ -1161,13 +1320,7 @@ public class DiffUtil {
 
     if (suppressedTools.isEmpty()) return tools;
 
-    List<T> filteredTools = ContainerUtil.filter(tools, new Condition<T>() {
-      @Override
-      public boolean value(T tool) {
-        return !suppressedTools.contains(tool.getClass());
-      }
-    });
-
+    List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
   }
 
@@ -1191,35 +1344,6 @@ public class DiffUtil {
     public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
       this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
-    }
-  }
-
-  private static class MyWordFragment implements MergeWordFragment {
-    @NotNull private final ThreeSide mySide1;
-    @NotNull private final ThreeSide mySide2;
-    @NotNull private final DiffFragment myFragment;
-
-    public MyWordFragment(@NotNull ThreeSide side1,
-                          @NotNull ThreeSide side2,
-                          @NotNull DiffFragment fragment) {
-      assert side1 != side2;
-      mySide1 = side1;
-      mySide2 = side2;
-      myFragment = fragment;
-    }
-
-    @Override
-    public int getStartOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getStartOffset1();
-      if (side == mySide2) return myFragment.getStartOffset2();
-      return 0;
-    }
-
-    @Override
-    public int getEndOffset(@NotNull ThreeSide side) {
-      if (side == mySide1) return myFragment.getEndOffset1();
-      if (side == mySide2) return myFragment.getEndOffset2();
-      return 0;
     }
   }
 

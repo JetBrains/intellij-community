@@ -224,35 +224,21 @@ public class PythonTask {
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)
       .withTitle(myRunTabTitle)
-      .withRerun(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            process.destroyProcess(); // Stop process before rerunning it
-            if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
-              PythonTask.this.run(env, consoleView);
-            }
-            else {
-              Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
-            }
+      .withRerun(() -> {
+        try {
+          process.destroyProcess(); // Stop process before rerunning it
+          if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
+            PythonTask.this.run(env, consoleView);
           }
-          catch (ExecutionException e) {
-            Messages.showErrorDialog(e.getMessage(), myRunTabTitle);
+          else {
+            Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
           }
         }
+        catch (ExecutionException e) {
+          Messages.showErrorDialog(e.getMessage(), myRunTabTitle);
+        }
       })
-      .withStop(new Runnable() {
-                  @Override
-                  public void run() {
-                    process.destroyProcess();
-                  }
-                }, new Computable<Boolean>() {
-
-                  @Override
-                  public Boolean compute() {
-                    return !process.isProcessTerminated();
-                  }
-                }
+      .withStop(() -> process.destroyProcess(), () -> !process.isProcessTerminated()
       )
       .withAfterCompletion(myAfterCompletion)
       .withHelpId(myHelpId)

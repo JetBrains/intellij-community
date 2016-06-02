@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,27 +47,24 @@ class CatchTypeProvider extends CompletionProvider<CompletionParameters> {
     final PsiCodeBlock tryBlock = tryStatement == null ? null : tryStatement.getTryBlock();
     if (tryBlock == null) return;
 
-    final InheritorsHolder holder = new InheritorsHolder(result);
+    final JavaCompletionSession session = new JavaCompletionSession(result);
 
     for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
       PsiClass typeClass = type.resolve();
       if (typeClass != null) {
         result.addElement(createCatchTypeVariant(tryBlock, type));
-        holder.registerClass(typeClass);
+        session.registerClass(typeClass);
       }
     }
 
     final Collection<PsiClassType> expectedClassTypes = Collections.singletonList(JavaPsiFacade.getElementFactory(
       tryBlock.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE));
-    JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType type) {
-        final PsiClass psiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
-        if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
+    JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), type -> {
+      final PsiClass psiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+      if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
 
-        if (!holder.alreadyProcessed(psiClass)) {
-          result.addElement(createCatchTypeVariant(tryBlock, (PsiClassType)type));
-        }
+      if (!session.alreadyProcessed(psiClass)) {
+        result.addElement(createCatchTypeVariant(tryBlock, (PsiClassType)type));
       }
     });
   }

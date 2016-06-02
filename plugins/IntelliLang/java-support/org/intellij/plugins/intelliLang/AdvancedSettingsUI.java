@@ -148,29 +148,17 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     private final ReferenceEditorWithBrowseButton mySubstField;
 
     public AdvancedSettingsPanel() {
-      myAnnotationField = new ReferenceEditorWithBrowseButton(null, myProject, new Function<String, Document>() {
-        public Document fun(String s) {
-          return PsiUtilEx.createDocument(s, myProject);
-        }
-      }, myConfiguration.getLanguageAnnotationClass());
+      myAnnotationField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getLanguageAnnotationClass());
       myAnnotationField.addActionListener(new BrowseClassListener(myProject, myAnnotationField));
       myAnnotationField.setEnabled(!myProject.isDefault());
       addField(myLanguageAnnotationPanel, myAnnotationField);
 
-      myPatternField = new ReferenceEditorWithBrowseButton(null, myProject, new Function<String, Document>() {
-        public Document fun(String s) {
-          return PsiUtilEx.createDocument(s, myProject);
-        }
-      }, myConfiguration.getPatternAnnotationClass());
+      myPatternField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getPatternAnnotationClass());
       myPatternField.addActionListener(new BrowseClassListener(myProject, myPatternField));
       myPatternField.setEnabled(!myProject.isDefault());
       addField(myPatternAnnotationPanel, myPatternField);
 
-      mySubstField = new ReferenceEditorWithBrowseButton(null, myProject, new Function<String, Document>() {
-        public Document fun(String s) {
-          return PsiUtilEx.createDocument(s, myProject);
-        }
-      }, myConfiguration.getPatternAnnotationClass());
+      mySubstField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getPatternAnnotationClass());
       mySubstField.addActionListener(new BrowseClassListener(myProject, mySubstField));
       mySubstField.setEnabled(!myProject.isDefault());
       addField(mySubstAnnotationPanel, mySubstField);

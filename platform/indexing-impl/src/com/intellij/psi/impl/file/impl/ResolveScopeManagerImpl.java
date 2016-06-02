@@ -19,9 +19,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -69,13 +67,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        myDefaultResolveScopesCache.clear();
-      }
-    });
-
+    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
@@ -132,7 +124,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (containingFile == null) {
         return GlobalSearchScope.allScope(myProject);
       }
-      else if (contextFile instanceof FileResolveScopeProvider) {
+      if (contextFile instanceof FileResolveScopeProvider) {
         return ((FileResolveScopeProvider) contextFile).getFileResolveScope();
       }
       vFile = contextFile.getOriginalFile().getVirtualFile();

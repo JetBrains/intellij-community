@@ -97,13 +97,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (!problemsSet.isEmpty()) {
         Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(
           problemsSet,
-          new Comparator<Map<PyExpression, Pair<String, ProblemHighlightType>>>() {
-            @Override
-            public int compare(Map<PyExpression, Pair<String, ProblemHighlightType>> o1,
-                               Map<PyExpression, Pair<String, ProblemHighlightType>> o2) {
-              return o1.size() - o2.size();
-            }
-          }
+          (o1, o2) -> o1.size() - o2.size()
         );
         for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
           registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
@@ -174,12 +168,7 @@ public class PyTypeCheckerInspection extends PyInspection {
               else {
                 msg = String.format("Type '%s' doesn't have expected attributes %s",
                                     actualName,
-                                    StringUtil.join(missingAttributes, new Function<String, String>() {
-                                      @Override
-                                      public String fun(String s) {
-                                        return String.format("'%s'", s);
-                                      }
-                                    }, ", "));
+                                    StringUtil.join(missingAttributes, s -> String.format("'%s'", s), ", "));
               }
             }
           }

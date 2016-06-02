@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SoftWrapsEditorCustomization;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
@@ -99,12 +98,9 @@ class MultilinePopupBuilder {
 
   @NotNull
   Collection<String> getSelectedValues() {
-    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), new Function<String, String>() {
-      @Override
-      public String fun(String value) {
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-      }
+    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), value -> {
+      String trimmed = value.trim();
+      return trimmed.isEmpty() ? null : trimmed;
     });
   }
 

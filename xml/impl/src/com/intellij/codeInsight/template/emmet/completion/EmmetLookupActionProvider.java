@@ -46,17 +46,14 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
           @Override
           public Result performLookupAction() {
             final Project project = lookup.getProject();
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) return;
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (project.isDisposed()) return;
 
-                final Configurable generatorSpecificConfigurable = generator.createConfigurable();
-                EmmetCompositeConfigurable configurable = generatorSpecificConfigurable != null
-                                                          ? new EmmetCompositeConfigurable(generatorSpecificConfigurable)
-                                                          : new EmmetCompositeConfigurable(new XmlEmmetConfigurable());
-                ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-              }
+              final Configurable generatorSpecificConfigurable = generator.createConfigurable();
+              EmmetCompositeConfigurable configurable = generatorSpecificConfigurable != null
+                                                        ? new EmmetCompositeConfigurable(generatorSpecificConfigurable)
+                                                        : new EmmetCompositeConfigurable(new XmlEmmetConfigurable());
+              ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
             });
             return Result.HIDE_LOOKUP;
           }
@@ -65,12 +62,7 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
         consumer.consume(new LookupElementAction(AllIcons.Actions.Delete, "Disable Emmet") {
           @Override
           public Result performLookupAction() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                generator.disableEmmet();
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> generator.disableEmmet());
             return Result.HIDE_LOOKUP;
           }
         });

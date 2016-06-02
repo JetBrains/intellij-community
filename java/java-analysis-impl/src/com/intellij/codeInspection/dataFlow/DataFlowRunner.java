@@ -37,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -247,12 +246,9 @@ public class DataFlowRunner {
       }
     }
     // and still in queue
-    if (!queue.processAll(new Processor<DfaInstructionState>() {
-      @Override
-      public boolean process(DfaInstructionState state) {
-        Instruction instruction = state.getInstruction();
-        return !inSameLoop(prevInstruction, instruction, loopNumber);
-      }
+    if (!queue.processAll(state -> {
+      Instruction instruction = state.getInstruction();
+      return !inSameLoop(prevInstruction, instruction, loopNumber);
     })) return;
 
     // now remove obsolete memory states

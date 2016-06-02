@@ -104,21 +104,14 @@ public abstract class CloudSourceApplicationConfigurable<
 
           @Override
           public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {
-            connection.computeDeployments(new Runnable() {
-
-              @Override
-              public void run() {
-                result.set(connection.getDeployments());
-                semaphore.up();
-                UIUtil.invokeLaterIfNeeded(new Runnable() {
-                  @Override
-                  public void run() {
-                    if (!Disposer.isDisposed(myParentDisposable)) {
-                      setupExistingApplications(result.get());
-                    }
-                  }
-                });
-              }
+            connection.computeDeployments(() -> {
+              result.set(connection.getDeployments());
+              semaphore.up();
+              UIUtil.invokeLaterIfNeeded(() -> {
+                if (!Disposer.isDisposed(myParentDisposable)) {
+                  setupExistingApplications(result.get());
+                }
+              });
             });
           }
 

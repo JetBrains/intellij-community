@@ -27,12 +27,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,22 +141,24 @@ public class JUnitUtil {
         }
       }
     }
-    final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null) return false;
-    final boolean hasJUnit5 = isJUnit5(modifierList);
+    boolean hasJUnit5 = isJUnit5(psiClass);
     if (!PsiClassUtil.isRunnableClass(psiClass, !hasJUnit5, checkAbstract)) return false;
 
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
     if (checkForTestCaseInheritance && (!hasJUnit5 || psiClass.hasModifierProperty(PsiModifier.PUBLIC)) && isTestCaseInheritor(psiClass)) return true;
 
+    return CachedValuesManager.getCachedValue(psiClass, () ->
+      CachedValueProvider.Result.create(hasTestOrSuiteMethods(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static boolean hasTestOrSuiteMethods(@NotNull PsiClass psiClass) {
     for (final PsiMethod method : psiClass.getAllMethods()) {
-      ProgressManager.checkCanceled();
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
     }
-    
-    if (hasJUnit5) {
+
+    if (isJUnit5(psiClass)) {
       for (PsiClass innerClass : psiClass.getInnerClasses()) {
         for (PsiMethod method : innerClass.getAllMethods()) {
           if (isTestAnnotated(method)) return true;
@@ -260,15 +259,12 @@ public class JUnitUtil {
       assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
-        ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass psiClass) {
-            if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              foundNonAbstractInheritor[0] = true;
-              return false;
-            }
-            return true;
+        ClassInheritorsSearch.search(containingClass).forEach(psiClass -> {
+          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            foundNonAbstractInheritor[0] = true;
+            return false;
           }
+          return true;
         });
         if (foundNonAbstractInheritor[0]) {
           return true;

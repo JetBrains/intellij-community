@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,38 @@ class Test extends Base<String> {
 
     def fix = fixes[0]
     fix.invoke(myFixture.project, myFixture.editor, myFixture.file)
+  }
+
+  void 'test abstract final trait properties'() {
+    myFixture.addFileToProject('T.groovy', '''\
+trait T {
+  abstract foo
+  abstract final bar
+}
+''')
+    myFixture.configureByText('classes.groovy', '''\
+class <caret>A implements T {
+}
+''')
+    myFixture.launchAction myFixture.findSingleIntention('Implement methods')
+    myFixture.checkResult('''\
+class A implements T {
+    @Override
+    Object getFoo() {
+        return null
+    }
+
+    @Override
+    void setFoo(Object foo) {
+
+    }
+
+    @Override
+    Object getBar() {
+        return null
+    }
+}
+''')
   }
 
   private def generateImplementation(PsiMethod method) {

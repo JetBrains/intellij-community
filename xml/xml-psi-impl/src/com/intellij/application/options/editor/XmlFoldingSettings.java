@@ -45,12 +45,21 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
     return COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }
 
+  public boolean isCollapseEntities() {
+    return COLLAPSE_ENTITIES;
+  }
+
+  public void setCollapseEntities(boolean COLLAPSE_ENTITIES) {
+    this.COLLAPSE_ENTITIES = COLLAPSE_ENTITIES;
+  }
+
   public void setCollapseHtmlStyleAttribute(boolean value) {
     this.COLLAPSE_HTML_STYLE_ATTRIBUTE = value;
   }
 
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ENTITIES = true;
 
   @Override
   public XmlFoldingSettings getState() {

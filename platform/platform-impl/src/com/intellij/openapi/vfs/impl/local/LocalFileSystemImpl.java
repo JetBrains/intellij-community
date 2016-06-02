@@ -158,24 +158,18 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
         if (currentNode.watchRequest.isToWatchRecursively() && !currentNode.nodes.isEmpty()) {
           // since we are watching this node recursively, we can remove it's children
-          visitTree(currentNode, new Consumer<TreeNode>() {
-            @Override
-            public void consume(final TreeNode node) {
-              if (node.watchRequest != null) {
-                node.watchRequest.myDominated = true;
-              }
+          visitTree(currentNode, node -> {
+            if (node.watchRequest != null) {
+              node.watchRequest.myDominated = true;
             }
           });
           currentNode.nodes.clear();
         }
       }
 
-      visitTree(rootNode, new Consumer<TreeNode>() {
-        @Override
-        public void consume(final TreeNode node) {
-          if (node.watchRequest != null) {
-            result.add(node.watchRequest);
-          }
+      visitTree(rootNode, node -> {
+        if (node.watchRequest != null) {
+          result.add(node.watchRequest);
         }
       });
       myNormalizedTree = rootNode;

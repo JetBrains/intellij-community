@@ -90,9 +90,6 @@ public class MavenDomUtil {
   public static boolean isSettingsFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
-    String name = file.getName();
-    if (!name.equals(MavenConstants.SETTINGS_XML)) return false;
-
     XmlTag rootTag = ((XmlFile)file).getRootTag();
     if (rootTag == null || !"settings".equals(rootTag.getName())) return false;
 

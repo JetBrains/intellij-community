@@ -1,5 +1,5 @@
 Types:
-PsiMethodCallExpression:p.set(0, new Integer(8)) : java.lang.Object
+PsiMethodCallExpression:p.set(0, new Integer(8)) : ? super java.lang.Integer
 PsiParameter:p : java.util.ArrayList<? super java.lang.Integer>
 PsiReferenceExpression:p : java.util.ArrayList<? super java.lang.Integer>
 

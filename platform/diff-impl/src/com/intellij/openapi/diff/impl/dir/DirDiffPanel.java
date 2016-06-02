@@ -539,7 +539,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private OpenFileDescriptor[] getOpenFileDescriptorsArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
-    List<OpenFileDescriptor> descriptors = new ArrayList<OpenFileDescriptor>();
+    List<OpenFileDescriptor> descriptors = new ArrayList<>();
     for (DirDiffElementImpl element : elements) {
       DiffElement source = element.getSource();
       DiffElement target = element.getTarget();

@@ -93,12 +93,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
     });
 
-    mySourceListModel = new SortedComboBoxModel<DeploymentSource>(new Comparator<DeploymentSource>() {
-      @Override
-      public int compare(DeploymentSource o1, DeploymentSource o2) {
-        return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-      }
-    });
+    mySourceListModel = new SortedComboBoxModel<DeploymentSource>(
+      (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
     mySourceComboBox = new ComboBox(mySourceListModel);
     mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -49,6 +46,7 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -183,7 +181,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
           }
 
           DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-          OpenSourceUtil.openSourcesFrom(dataContext, false);
+          OpenSourceUtil.openSourcesFrom(dataContext, ScreenReader.isActive());
         }
         else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
@@ -208,15 +206,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      afterUpdate = new Runnable() {
-        @Override
-        public void run() {
-          if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
-            myTree.setSelectionPaths(new TreePath[0]);
-            TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
-          }
-          cb.setDone();
+      afterUpdate = () -> {
+        if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
+          myTree.setSelectionPaths(new TreePath[0]);
+          TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
         }
+        cb.setDone();
       };
     }
     else {

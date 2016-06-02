@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.ElementClassFilter;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.*;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -37,9 +33,9 @@ import org.jetbrains.annotations.NotNull;
 public class VariableResolverProcessor extends ConflictFilterProcessor implements ElementClassHint {
   private static final ElementFilter ourFilter = ElementClassFilter.VARIABLE;
 
-  private boolean myStaticScopeFlag = false;
+  private boolean myStaticScopeFlag;
   private final PsiClass myAccessClass;
-  private PsiElement myCurrentFileContext = null;
+  private PsiElement myCurrentFileContext;
 
   public VariableResolverProcessor(@NotNull PsiJavaCodeReferenceElement place, @NotNull PsiFile placeFile) {
     super(place.getReferenceName(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place, placeFile);
@@ -70,7 +66,11 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   @Override
   public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
-    super.handleEvent(event, associated);
+    // do not resolve conflicts on CHANGE_LEVEL if VisibilityChecker is present
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL &&
+        (!(myPlaceFile instanceof JavaCodeFragment) || ((JavaCodeFragment)myPlaceFile).getVisibilityChecker() == null)) {
+      super.handleEvent(event, associated);
+    }
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStaticScopeFlag = true;
     }

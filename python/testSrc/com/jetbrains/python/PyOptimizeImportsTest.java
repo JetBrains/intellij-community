@@ -17,12 +17,26 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.actions.OptimizeImportsAction;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
  * @author yole
  */
 public class PyOptimizeImportsTest extends PyTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // importsFromTypingUnusedInTypeComments depends on registered TokenSetContributors
+    PythonDialectsTokenSetProvider.reset();
+  }
+
   public void testSimple() {
     doTest();
   }
@@ -85,6 +99,38 @@ public class PyOptimizeImportsTest extends PyTestCase {
   public void testImportsFromTypingUnusedInTypeComments() {
     myFixture.copyDirectoryToProject("../typing", "");
     doTest();
+  }
+
+  // PY-18970
+  public void testLibraryRootInsideProject() {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    final VirtualFile libDir = myFixture.findFileInTempDir("lib");
+    assertNotNull(libDir);
+
+    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.addRoot(libDir, OrderRootType.CLASSES);
+      modificator.commitChanges();
+    });
+
+    try {
+      myFixture.configureByFile("main.py");
+      OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+      myFixture.checkResultByFile(testName + "/main.after.py");
+    }
+    finally {
+      //noinspection ThrowFromFinallyBlock
+      WriteAction.run(() -> {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        assertNotNull(modificator);
+        modificator.removeRoot(libDir, OrderRootType.CLASSES);
+        modificator.commitChanges();
+      });
+    }
   }
 
   private void doTest() {

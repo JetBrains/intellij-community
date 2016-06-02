@@ -140,59 +140,33 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
-  public static final Condition<PsiElement> IS_NUMBER = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
-    }
-  };
+  public static final Condition<PsiElement> IS_NUMBER =
+    element -> element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
 
-  public static final Condition<PsiElement> IS_BOOLEAN = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
-    }
-  };
+  public static final Condition<PsiElement> IS_BOOLEAN =
+    element -> element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
 
-  public static final Condition<PsiElement> IS_THROWABLE = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
-    }
-  };
+  public static final Condition<PsiElement> IS_THROWABLE =
+    element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
 
-  public static final Condition<PsiElement> IS_NON_VOID = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return element instanceof PsiExpression && isNonVoid(((PsiExpression)element).getType());
-    }
-  };
+  public static final Condition<PsiElement> IS_NON_VOID =
+    element -> element instanceof PsiExpression && isNonVoid(((PsiExpression)element).getType());
 
-  public static final Condition<PsiElement> IS_NOT_PRIMITIVE = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
-    }
-  };
+  public static final Condition<PsiElement> IS_NOT_PRIMITIVE =
+    element -> element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
   
-  public static final Condition<PsiElement> IS_ARRAY = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      if (!(element instanceof PsiExpression)) return false;
+  public static final Condition<PsiElement> IS_ARRAY = element -> {
+    if (!(element instanceof PsiExpression)) return false;
 
-      PsiType type = ((PsiExpression)element).getType();
-      return isArray(type);
-    }
+    PsiType type = ((PsiExpression)element).getType();
+    return isArray(type);
   };
 
-  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      if (!(element instanceof PsiExpression)) return false;
+  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
+    if (!(element instanceof PsiExpression)) return false;
 
-      PsiType type = ((PsiExpression)element).getType();
-      return isArray(type) || isIterable(type);
-    }
+    PsiType type = ((PsiExpression)element).getType();
+    return isArray(type) || isIterable(type);
   };
 
   @Contract("null -> false")
@@ -244,12 +218,9 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @NotNull
   public static Function<PsiElement, String> getRenderer() {
-    return new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        assert element instanceof PsiExpression;
-        return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
-      }
+    return element -> {
+      assert element instanceof PsiExpression;
+      return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
     };
   }
 

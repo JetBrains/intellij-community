@@ -107,7 +107,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
     };
     KeymapManager.getInstance().addKeymapManagerListener(keymapListener, this);
-    UISettings.getInstance().addUISettingsListener(this, this);
   }
   
   public FileEditorManagerImpl getManager() {
@@ -369,15 +368,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private void updateFileIconLater(VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
     myIconUpdaterAlarm.cancelAllRequests();
-    myIconUpdaterAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myManager.getProject().isDisposed()) return;
-        for (VirtualFile file : myFilesToUpdateIconsFor) {
-          updateFileIconImmediately(file);
-        }
-        myFilesToUpdateIconsFor.clear();
+    myIconUpdaterAlarm.addRequest(() -> {
+      if (myManager.getProject().isDisposed()) return;
+      for (VirtualFile file1 : myFilesToUpdateIconsFor) {
+        updateFileIconImmediately(file1);
       }
+      myFilesToUpdateIconsFor.clear();
     }, 200, ModalityState.stateForComponent(this));
   }
 
@@ -411,10 +407,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  void updateFileName(final VirtualFile updatedFile) {
+  void updateFileName(@Nullable final VirtualFile updatedFile) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
-      windows [i].updateFileName(updatedFile);
+      for (VirtualFile file : windows[i].getFiles()) {
+        if (updatedFile == null || file.getName().equals(updatedFile.getName())) {
+          windows[i].updateFileName(file);
+        }
+      }
     }
 
     Project project = myManager.getProject();
@@ -621,12 +621,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
-    Runnable fireRunnable = new Runnable() {
-      @Override
-      public void run() {
-        getManager().fireSelectionChanged(newEditor);
-      }
-    };
+    Runnable fireRunnable = () -> getManager().fireSelectionChanged(newEditor);
 
     setCurrentWindow(window);
 

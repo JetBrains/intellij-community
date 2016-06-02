@@ -32,7 +32,7 @@ import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static git4idea.crlf.GitCrlfUtil.*;
+import static git4idea.crlf.GitCrlfUtil.RECOMMENDED_VALUE;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.

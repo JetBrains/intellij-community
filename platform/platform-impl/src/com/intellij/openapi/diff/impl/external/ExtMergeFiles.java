@@ -101,12 +101,8 @@ public class ExtMergeFiles extends BaseExternalTool {
                                                    "Merge In External Tool", "Mark as Resolved", "Revert", null)) {
         result = DialogWrapper.OK_EXIT_CODE;
       }
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);
-        }
-      });
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                              () -> ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false));
       // We can actually check exit code of external tool, but some of them could work with tabs -> do not close at all
     }
     catch (Exception e) {

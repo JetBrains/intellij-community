@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +33,9 @@ public class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(context);
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    final Editor editor = context.getData(CommonDataKeys.EDITOR);
+    final Project project = context.getData(CommonDataKeys.PROJECT);
+    final VirtualFile file = context.getData(CommonDataKeys.VIRTUAL_FILE);
     if (editor == null || file == null || project == null) {
       return Collections.emptyList();
     }
@@ -46,11 +45,6 @@ public class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
       return Collections.emptyList();
     }
     
-    return ContainerUtil.map(locations, new Function<Location, GotoRelatedItem>() {
-      @Override
-      public GotoRelatedItem fun(Location location) {
-        return new GotoRelatedItem(location.getPsiElement());
-      }
-    });
+    return ContainerUtil.map(locations, location -> new GotoRelatedItem(location.getPsiElement()));
   }
 }

@@ -31,9 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 public class LocalDescriptorsUtil {
-  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT = new TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement>() {
-    @Override
-    public RefElement fun(LocalInspectionTool tool, PsiElement element, GlobalInspectionContext context) {
+  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT =
+    (tool, element, context) -> {
       final PsiNamedElement problemElement = tool.getProblemElement(element);
 
       RefElement refElement = context.getRefManager().getReference(problemElement);
@@ -41,8 +40,7 @@ public class LocalDescriptorsUtil {
         refElement = GlobalInspectionContextUtil.retrieveRefElement(element, context);
       }
       return refElement;
-    }
-  };
+    };
 
   static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
                                     boolean filterSuppressed,

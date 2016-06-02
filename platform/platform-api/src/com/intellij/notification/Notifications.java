@@ -49,13 +49,10 @@ public interface Notifications {
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Application app = ApplicationManager.getApplication();
-          if (!app.isDisposed()) {
-            app.getMessageBus().syncPublisher(TOPIC).register(group_id, defaultDisplayType);
-          }
+      SwingUtilities.invokeLater(() -> {
+        Application app = ApplicationManager.getApplication();
+        if (!app.isDisposed()) {
+          app.getMessageBus().syncPublisher(TOPIC).register(group_id, defaultDisplayType);
         }
       });
     }
@@ -69,12 +66,7 @@ public interface Notifications {
         doNotify(notification, project);
       }
       else {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            doNotify(notification, project);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> doNotify(notification, project));
       }
     }
 

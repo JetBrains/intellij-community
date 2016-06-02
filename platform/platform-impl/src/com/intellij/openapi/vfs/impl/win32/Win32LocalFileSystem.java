@@ -54,7 +54,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    return myFsCache.list(file.getPath());
+    return myFsCache.list(file);
   }
 
   @Override

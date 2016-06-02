@@ -351,14 +351,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     if (psiClass != null && psiClass.getContainingClass() != null) {
-      InheritanceUtil.processSupers(psiClass, false, new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass superClass) {
-          if (PsiTreeUtil.isAncestor(superClass, psiClass, true)) {
-            ContainerUtil.addAll(suggestions, getSuggestionsByName(superClass.getName(), variableKind, false, correctKeywords));
-          }
-          return false;
+      InheritanceUtil.processSupers(psiClass, false, superClass -> {
+        if (PsiTreeUtil.isAncestor(superClass, psiClass, true)) {
+          ContainerUtil.addAll(suggestions, getSuggestionsByName(superClass.getName(), variableKind, false, correctKeywords));
         }
+        return false;
       });
     }
 
@@ -666,12 +663,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     PsiMethod method = expr.resolveMethod();
     if (method == null) return false;
 
-    return isJavaUtilMethod(method) || !MethodDeepestSuperSearcher.processDeepestSuperMethods(method, new Processor<PsiMethod>() {
-      @Override
-      public boolean process(PsiMethod method) {
-        return !isJavaUtilMethod(method);
-      }
-    });
+    return isJavaUtilMethod(method) || !MethodDeepestSuperSearcher.processDeepestSuperMethods(method, method1 -> !isJavaUtilMethod(method1));
   }
 
   private static boolean isJavaUtilMethod(@NotNull PsiMethod method) {
@@ -1017,13 +1009,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
 
-    Comparator<String> comparator = new Comparator<String>() {
-      @Override
-      public int compare(@NotNull String s1, @NotNull String s2) {
-        int count1 = JavaStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
-        int count2 = JavaStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
-        return count2 - count1;
-      }
+    Comparator<String> comparator = (s1, s2) -> {
+      int count1 = JavaStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
+      int count2 = JavaStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
+      return count2 - count1;
     };
     Arrays.sort(names, comparator);
   }

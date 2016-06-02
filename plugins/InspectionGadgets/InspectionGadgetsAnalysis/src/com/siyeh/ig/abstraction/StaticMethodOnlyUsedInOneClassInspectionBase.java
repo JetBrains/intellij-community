@@ -118,13 +118,10 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
           == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
         return null;
       }
-      progressManager.runProcess(new Runnable() {
-        @Override
-        public void run() {
-          final Query<PsiReference> query = MethodReferencesSearch.search(method);
-          if (!query.forEach(UsageProcessor.this)) {
-            foundClass.set(null);
-          }
+      progressManager.runProcess(() -> {
+        final Query<PsiReference> query = MethodReferencesSearch.search(method);
+        if (!query.forEach(UsageProcessor.this)) {
+          foundClass.set(null);
         }
       }, null);
       return foundClass.get();

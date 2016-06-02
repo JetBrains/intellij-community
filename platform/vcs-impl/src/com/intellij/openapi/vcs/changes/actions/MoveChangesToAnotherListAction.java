@@ -201,9 +201,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     LocalChangeList activeChangeList = ContainerUtil.find(lists, LocalChangeList::isDefault);
     if (activeChangeList != null) return activeChangeList;
 
-    LocalChangeList emptyList = ContainerUtil.find(lists, list -> {
-      return list.getChanges().isEmpty();
-    });
+    LocalChangeList emptyList = ContainerUtil.find(lists, list -> list.getChanges().isEmpty());
 
     return ObjectUtils.chooseNotNull(emptyList, ContainerUtil.getFirstItem(lists));
   }

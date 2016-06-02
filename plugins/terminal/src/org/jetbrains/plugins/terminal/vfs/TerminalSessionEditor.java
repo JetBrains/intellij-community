@@ -39,7 +39,6 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * @author traff
@@ -71,19 +70,13 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
       }
     });
 
-    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminal().getTtyConnector(), Executors.newSingleThreadExecutor(
-      ConcurrencyUtil.newNamedThreadFactory("Terminal session")));
+    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminal().getTtyConnector(), ConcurrencyUtil.newSingleThreadExecutor("Terminal session"));
 
     myWaitFor
       .setTerminationCallback(new Predicate<Integer>() {
         @Override
         public boolean apply(Integer integer) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile));
 
           return true;
         }

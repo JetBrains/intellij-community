@@ -28,13 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface CommonProblemDescriptor {
   CommonProblemDescriptor[] EMPTY_ARRAY = new CommonProblemDescriptor[0];
-  ArrayFactory<CommonProblemDescriptor> ARRAY_FACTORY = new ArrayFactory<CommonProblemDescriptor>() {
-    @NotNull
-    @Override
-    public CommonProblemDescriptor[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new CommonProblemDescriptor[count];
-    }
-  };
+  ArrayFactory<CommonProblemDescriptor> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new CommonProblemDescriptor[count];
 
   /**
    * Returns the template from which the problem description is built. The template may

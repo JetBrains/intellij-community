@@ -72,33 +72,30 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       }
     }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
 
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof MouseEvent) {
-          MouseEvent mouseEvent = (MouseEvent)e;
-          if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(ToolWindowsWidget.this))) {
-            return false;
-          }
-
-          if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
-            Point p = mouseEvent.getLocationOnScreen();
-            Point screen = ToolWindowsWidget.this.getLocationOnScreen();
-            if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
-              mouseEntered();
-              wasExited = false;
-            } else {
-              if (!wasExited) {
-                wasExited = mouseExited(p);
-              }
-            }
-          } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-            //mouse exits WND
-            mouseExited(mouseEvent.getLocationOnScreen());
-          }
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof MouseEvent) {
+        MouseEvent mouseEvent = (MouseEvent)e;
+        if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(ToolWindowsWidget.this))) {
+          return false;
         }
-        return false;
+
+        if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
+          Point p = mouseEvent.getLocationOnScreen();
+          Point screen = ToolWindowsWidget.this.getLocationOnScreen();
+          if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
+            mouseEntered();
+            wasExited = false;
+          } else {
+            if (!wasExited) {
+              wasExited = mouseExited(p);
+            }
+          }
+        } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+          //mouse exits WND
+          mouseExited(mouseEvent.getLocationOnScreen());
+        }
       }
+      return false;
     }, parent);
 
     UISettings.getInstance().addUISettingsListener(this, this);
@@ -113,12 +110,9 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       final Rectangle popupScreenRect = new Rectangle(screen.x, screen.y, popup.getSize().width, popup.getSize().height);
       if (! popupScreenRect.contains(currentLocationOnScreen)) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (popup != null && popup.isVisible()) {
-              popup.cancel();
-            }
+        myAlarm.addRequest(() -> {
+          if (popup != null && popup.isVisible()) {
+            popup.cancel();
           }
         }, 300);
         return true;
@@ -129,74 +123,63 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
   public void mouseEntered() {
     if (myAlarm.getActiveRequestCount() == 0) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
-          if (frame == null) return;
+      myAlarm.addRequest(() -> {
+        final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
+        if (frame == null) return;
 
-          List<ToolWindow> toolWindows = new ArrayList<ToolWindow>();
-          final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
-          for (String id : toolWindowManager.getToolWindowIds()) {
-            final ToolWindow tw = toolWindowManager.getToolWindow(id);
-            if (tw.isAvailable() && tw.isShowStripeButton()) {
-              toolWindows.add(tw);
-            }
+        List<ToolWindow> toolWindows = new ArrayList<ToolWindow>();
+        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
+        for (String id : toolWindowManager.getToolWindowIds()) {
+          final ToolWindow tw = toolWindowManager.getToolWindow(id);
+          if (tw.isAvailable() && tw.isShowStripeButton()) {
+            toolWindows.add(tw);
           }
-          Collections.sort(toolWindows, new Comparator<ToolWindow>() {
-            @Override
-            public int compare(ToolWindow o1, ToolWindow o2) {
-              return StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle());
-            }
-          });
-
-          final JBList list = new JBList(toolWindows);
-          list.setCellRenderer(new ListCellRenderer() {
-            final JBLabel label = new JBLabel();
-
-            @Override
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-              final ToolWindow toolWindow = (ToolWindow)value;
-              label.setText(toolWindow.getStripeTitle());
-              label.setIcon(toolWindow.getIcon());
-              label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
-              label.setForeground(UIUtil.getListForeground(isSelected));
-              label.setBackground(UIUtil.getListBackground(isSelected));
-              final JPanel panel = new JPanel(new BorderLayout());
-              panel.add(label, BorderLayout.CENTER);
-              panel.setBackground(UIUtil.getListBackground(isSelected));
-              return panel;
-            }
-          });
-
-          final Dimension size = list.getPreferredSize();
-          final JComponent c = ToolWindowsWidget.this;
-          final Insets padding = UIUtil.getListViewportPadding();
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac ? 2 : 0)));
-
-          if (popup != null && popup.isVisible()) {
-            return;
-          }
-
-          list.setSelectedIndex(list.getItemsCount() - 1);
-          PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
-          popup = builder
-            .setAutoselectOnMouseMove(true)
-            .setRequestFocus(false)
-            .setItemChoosenCallback(new Runnable() {
-              @Override
-              public void run() {
-                if (popup != null) popup.closeOk(null);
-                final Object value = list.getSelectedValue();
-                if (value instanceof ToolWindow) {
-                  ((ToolWindow)value).activate(null, true, true);
-                }
-              }
-            })
-            .createPopup();
-
-          popup.show(point);
         }
+        Collections.sort(toolWindows, (o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
+
+        final JBList list = new JBList(toolWindows);
+        list.setCellRenderer(new ListCellRenderer() {
+          final JBLabel label = new JBLabel();
+
+          @Override
+          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            final ToolWindow toolWindow = (ToolWindow)value;
+            label.setText(toolWindow.getStripeTitle());
+            label.setIcon(toolWindow.getIcon());
+            label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
+            label.setForeground(UIUtil.getListForeground(isSelected));
+            label.setBackground(UIUtil.getListBackground(isSelected));
+            final JPanel panel = new JPanel(new BorderLayout());
+            panel.add(label, BorderLayout.CENTER);
+            panel.setBackground(UIUtil.getListBackground(isSelected));
+            return panel;
+          }
+        });
+
+        final Dimension size = list.getPreferredSize();
+        final JComponent c = ToolWindowsWidget.this;
+        final Insets padding = UIUtil.getListViewportPadding();
+        final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac ? 2 : 0)));
+
+        if (popup != null && popup.isVisible()) {
+          return;
+        }
+
+        list.setSelectedIndex(list.getItemsCount() - 1);
+        PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+        popup = builder
+          .setAutoselectOnMouseMove(true)
+          .setRequestFocus(false)
+          .setItemChoosenCallback(() -> {
+            if (popup != null) popup.closeOk(null);
+            final Object value = list.getSelectedValue();
+            if (value instanceof ToolWindow) {
+              ((ToolWindow)value).activate(null, true, true);
+            }
+          })
+          .createPopup();
+
+        popup.show(point);
       }, 300);
     }
   }
@@ -208,15 +191,12 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
       PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
       final Alarm alarm = new Alarm();
-      alarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          GotItMessage.createMessage(UIBundle.message("tool.window.quick.access.title"), UIBundle.message(
-            "tool.window.quick.access.message"))
-            .setDisposable(ToolWindowsWidget.this)
-            .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
-          Disposer.dispose(alarm);
-        }
+      alarm.addRequest(() -> {
+        GotItMessage.createMessage(UIBundle.message("tool.window.quick.access.title"), UIBundle.message(
+          "tool.window.quick.access.message"))
+          .setDisposable(ToolWindowsWidget.this)
+          .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+        Disposer.dispose(alarm);
       }, 20000);
     }
   }

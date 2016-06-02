@@ -69,7 +69,7 @@ class CallbackData {
     }
     else {
       if (mode.isSynchronous()) {
-        final Waiter waiter = new Waiter(project, afterUpdate, state,
+        final Waiter waiter = new Waiter(project, afterUpdate,
                                          VcsBundle.message("change.list.manager.wait.lists.synchronization", title), mode.isCancellable());
         return new CallbackData(
           new Runnable() {

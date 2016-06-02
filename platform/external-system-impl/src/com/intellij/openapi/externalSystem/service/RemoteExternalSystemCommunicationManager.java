@@ -65,6 +65,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import kotlin.Unit;
+import kotlin.reflect.KotlinReflectionInternalError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,11 +113,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       }
     };
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      public void run() {
-        shutdown(false);
-      }
-    });
+    ShutDownTracker.getInstance().registerShutdownTask(() -> shutdown(false));
   }
 
   public synchronized void shutdown(boolean wait) {
@@ -150,6 +148,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ModuleType.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(EmptyModuleType.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
+
+        // add Kotlin runtime
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Unit.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(KotlinReflectionInternalError.class), classPath);
 
         // External system module jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);

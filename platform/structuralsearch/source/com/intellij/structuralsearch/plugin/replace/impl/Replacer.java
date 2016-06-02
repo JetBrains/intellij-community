@@ -190,17 +190,11 @@ public class Replacer {
     //noinspection HardCodedStringLiteral
     CommandProcessor.getInstance().executeCommand(
       project,
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                doReplace(element, replacementInfo);
-              }
-            }
-          );
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
+      () -> {
+        ApplicationManager.getApplication().runWriteAction(
+          () -> doReplace(element, replacementInfo)
+        );
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
       },
       "ssreplace",
       "test"
@@ -215,33 +209,27 @@ public class Replacer {
 
   private void reformatAndPostProcess(final PsiElement elementParent) {
     if (elementParent == null) return;
-    final Runnable action = new Runnable() {
-      public void run() {
-        final PsiFile containingFile = elementParent.getContainingFile();
+    final Runnable action = () -> {
+      final PsiFile containingFile = elementParent.getContainingFile();
 
-        if (containingFile != null && options.isToReformatAccordingToStyle()) {
-          if (containingFile.getVirtualFile() != null) {
-            PsiDocumentManager.getInstance(project)
-              .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
-          }
+      if (containingFile != null && options.isToReformatAccordingToStyle()) {
+        if (containingFile.getVirtualFile() != null) {
+          PsiDocumentManager.getInstance(project)
+            .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
+        }
 
-          final int parentOffset = elementParent.getTextRange().getStartOffset();
-          CodeStyleManager.getInstance(project)
-            .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
-        }
-        if (replaceHandler != null) {
-          replaceHandler.postProcess(elementParent, options);
-        }
+        final int parentOffset = elementParent.getTextRange().getStartOffset();
+        CodeStyleManager.getInstance(project)
+          .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
+      }
+      if (replaceHandler != null) {
+        replaceHandler.postProcess(elementParent, options);
       }
     };
 
     CommandProcessor.getInstance().executeCommand(
       project,
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
-      },
+      () -> ApplicationManager.getApplication().runWriteAction(action),
       "reformat and shorten refs after ssr",
       "test"
     );

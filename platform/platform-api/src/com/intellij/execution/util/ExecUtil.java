@@ -193,12 +193,7 @@ public class ExecUtil {
 
     GeneralCommandLine sudoCommandLine;
     if (SystemInfo.isMac) {
-      String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return escapeAppleScriptArgument(s);
-        }
-      }, " & \" \" & ");
+      String escapedCommandLine = StringUtil.join(command, s -> escapeAppleScriptArgument(s), " & \" \" & ");
       String escapedScript = "tell current application\n" +
                              "   activate\n" +
                              "   do shell script " + escapedCommandLine + " with administrator privileges without altering line endings\n" +
@@ -222,12 +217,7 @@ public class ExecUtil {
       sudoCommandLine = new GeneralCommandLine(command);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
-      String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return escapeUnixShellArgument(s);
-        }
-      }, " ");
+      String escapedCommandLine = StringUtil.join(command, s -> escapeUnixShellArgument(s), " ");
       File script = createTempExecutableScript(
         "sudo", ".sh",
         "#!/bin/sh\n" +

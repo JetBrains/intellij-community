@@ -63,7 +63,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Queue;
@@ -91,6 +90,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
+
+import com.intellij.util.containers.Queue;
 
 /**
  * User: anna
@@ -157,6 +158,22 @@ public class SingleInspectionProfilePanel extends JPanel {
       DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)profile.getProfileManager();
       return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(profile);
     }
+  }
+
+  private static InspectionConfigTreeNode findGroupNodeByPath(@NotNull String[] path, int idx, @NotNull InspectionConfigTreeNode node) {
+    if (path.length == idx) {
+      return node;
+    }
+
+    final String currentKey = path[idx];
+    for (int i = 0; i < node.getChildCount(); i++) {
+      final InspectionConfigTreeNode currentNode = (InspectionConfigTreeNode)node.getChildAt(i);
+      if (Comparing.equal(currentNode.getGroupName(), currentKey)) {
+        return findGroupNodeByPath(path, ++idx, currentNode);
+      }
+    }
+
+    return null;
   }
 
   @Nullable
@@ -313,13 +330,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void stateChanged() {
         //invoke after all other listeners
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (mySelectedProfile == null) return; //panel was disposed
-            updateProperSettingsForSelection();
-            wereToolSettingsModified();
-          }
+        SwingUtilities.invokeLater(() -> {
+          if (mySelectedProfile == null) return; //panel was disposed
+          updateProperSettingsForSelection();
+          wereToolSettingsModified();
         });
       }
     });
@@ -403,12 +417,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     Element newConfig = Descriptor.createConfigElement(state.getTool());
     if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myTreeTable.repaint();
-        }
-      }, 300);
+      myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
       myModified = true;
       return true;
     }
@@ -424,12 +433,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final boolean properSetting = mySelectedProfile.isProperSetting(descriptor.getKey().toString());
         if (node.isProperSetting() != properSetting) {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              myTreeTable.repaint();
-            }
-          }, 300);
+          myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
           node.dropCache();
           updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
         }
@@ -559,7 +563,18 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void selectInspectionTool(String name) {
-    final InspectionConfigTreeNode node = findNodeByKey(name, myRoot);
+    selectNode(findNodeByKey(name, myRoot));
+  }
+
+  public void selectInspectionGroup(String[] path) {
+    final InspectionConfigTreeNode node = findGroupNodeByPath(path, 0, myRoot);
+    selectNode(node);
+    if (node != null) {
+      myTreeTable.getTree().expandPath(new TreePath(node.getPath()));
+    }
+  }
+
+  private void selectNode(InspectionConfigTreeNode node) {
     if (node != null) {
       TreeUtil.selectNode(myTreeTable.getTree(), node);
       final int rowForPath = myTreeTable.getTree().getRowForPath(new TreePath(node.getPath()));
@@ -754,10 +769,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
-      if (!emptyFilter && !myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project))) {
+      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);
+      if (!emptyFilter && !myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project), node)) {
         continue;
       }
-      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
       myRoot.dropCache();
     }
@@ -856,20 +871,10 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           };
         final HighlightSeverity severity =
-          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, ScopeToolState>() {
-            @Override
-            public ScopeToolState fun(InspectionConfigTreeNode node) {
-              return node.getDefaultDescriptor().getState();
-            }
-          }));
+          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
         severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, Descriptor>() {
-          @Override
-          public Descriptor fun(final InspectionConfigTreeNode node) {
-            return node.getDefaultDescriptor();
-          }
-        }), mySelectedProfile, project, null) {
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), mySelectedProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
             myTreeTable.updateUI();

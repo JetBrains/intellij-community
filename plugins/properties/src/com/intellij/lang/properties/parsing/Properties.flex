@@ -10,10 +10,8 @@ import com.intellij.psi.tree.IElementType;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
-CRLF= \n | \r | \r\n
+CRLF=\R
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
 VALUE_CHARACTER=[^\n\r\f\\] | "\\"{CRLF} | "\\".
 END_OF_LINE_COMMENT=("#"|"!")[^\r\n]*
@@ -47,4 +45,4 @@ VALUE_CHARACTERS_AFTER_SEP=([^\ \t\n\r\f\\] | "\\"{CRLF} | "\\".)({VALUE_CHARACT
 <IN_VALUE> {VALUE_CHARACTER}+            { yybegin(YYINITIAL); return PropertiesTokenTypes.VALUE_CHARACTERS; }
 <IN_VALUE> {CRLF}{WHITE_SPACE_CHAR}*     { yybegin(YYINITIAL); return PropertiesTokenTypes.WHITE_SPACE; }
 {WHITE_SPACE_CHAR}+                      { return PropertiesTokenTypes.WHITE_SPACE; }
-.                                        { return PropertiesTokenTypes.BAD_CHARACTER; }
+[^]                                      { return PropertiesTokenTypes.BAD_CHARACTER; }

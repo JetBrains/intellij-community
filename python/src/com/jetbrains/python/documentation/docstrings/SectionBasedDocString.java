@@ -307,12 +307,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getParameters() {
-    return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
-      @Override
-      public String fun(Substring substring) {
-        return substring.toString();
-      }
-    });
+    return ContainerUtil.map(getParameterSubstrings(), substring -> substring.toString());
   }
 
   @NotNull
@@ -358,12 +353,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   public SectionField getFirstFieldForParameter(@NotNull final String name) {
-    return ContainerUtil.find(getParameterFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return field.getNames().contains(name);
-      }
-    });
+    return ContainerUtil.find(getParameterFields(), field -> field.getNames().contains(name));
   }
 
   @NotNull
@@ -423,12 +413,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   private SectionField getFirstFieldForKeywordArgument(@NotNull final String name) {
-    return ContainerUtil.find(getKeywordArgumentFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return field.getNames().contains(name);
-      }
-    });
+    return ContainerUtil.find(getKeywordArgumentFields(), field -> field.getNames().contains(name));
   }
 
   @Nullable
@@ -470,12 +455,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getRaisedExceptions() {
-    return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {
-      @Override
-      public String fun(SectionField field) {
-        return StringUtil.nullize(field.getType());
-      }
-    });
+    return ContainerUtil.mapNotNull(getExceptionFields(), field -> StringUtil.nullize(field.getType()));
   }
 
   @Nullable
@@ -501,12 +481,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   private SectionField getFirstFieldForException(@NotNull final String exceptionType) {
-    return ContainerUtil.find(getExceptionFields(), new Condition<SectionField>() {
-      @Override
-      public boolean value(SectionField field) {
-        return exceptionType.equals(field.getType());
-      }
-    });
+    return ContainerUtil.find(getExceptionFields(), field -> exceptionType.equals(field.getType()));
   }
 
   @NotNull
@@ -520,12 +495,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<Section> getSectionsWithNormalizedTitle(@NotNull final String title) {
-    return ContainerUtil.mapNotNull(mySections, new Function<Section, Section>() {
-      @Override
-      public Section fun(Section section) {
-        return section.getNormalizedTitle().equals(getNormalizedSectionTitle(title)) ? section : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(mySections,
+                                    section -> section.getNormalizedTitle().equals(getNormalizedSectionTitle(title)) ? section : null);
   }
 
   @Nullable
@@ -631,12 +602,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull
     public List<String> getNames() {
-      return ContainerUtil.map(myNames, new Function<Substring, String>() {
-        @Override
-        public String fun(Substring substring) {
-          return substring.toString();
-        }
-      });
+      return ContainerUtil.map(myNames, substring -> substring.toString());
     }
 
     @Nullable

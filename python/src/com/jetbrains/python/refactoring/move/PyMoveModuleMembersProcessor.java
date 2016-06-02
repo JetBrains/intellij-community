@@ -89,12 +89,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (final PsiNamedElement element : myElements) {
-      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), new Function<UsageInfo, MyUsageInfo>() {
-        @Override
-        public MyUsageInfo fun(UsageInfo usageInfo) {
-          return new MyUsageInfo(usageInfo, element);
-        }
-      }));
+      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
     }
     return result.toArray(new UsageInfo[result.size()]);
   }
@@ -105,45 +100,36 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
-    CommandProcessor.getInstance().executeCommand(myElements[0].getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
-            CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
-            for (final PsiNamedElement e : myElements) {
-              // TODO: Check for resulting circular imports
-              CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
-              assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
-              if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.class.$0", e.getName()));
-              }
-              if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.function.$0", e.getName()));
-              }
-              if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(e.getName()) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.global.variable.$0", e.getName()));
-              }
-              final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
-              final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
-                @Override
-                public boolean value(UsageInfo usageInfo) {
-                  final PsiElement element = usageInfo.getElement();
-                  return element != null && !PsiTreeUtil.isAncestor(e, element, false);
-                }
-              });
-              if (usedFromOutside) {
-                checkValidImportableFile(e, destination.getVirtualFile());
-              }
-              new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
-            }
-          }
+    CommandProcessor.getInstance().executeCommand(myElements[0].getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
+      CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
+      for (final PsiNamedElement e : myElements) {
+        // TODO: Check for resulting circular imports
+        CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
+        assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
+        if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.module.members.error.destination.file.contains.class.$0", e.getName()));
+        }
+        if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.module.members.error.destination.file.contains.function.$0", e.getName()));
+        }
+        if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(e.getName()) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.module.members.error.destination.file.contains.global.variable.$0", e.getName()));
+        }
+        final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
+        final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
+          final PsiElement element = usageInfo.getElement();
+          return element != null && !PsiTreeUtil.isAncestor(e, element, false);
         });
+        if (usedFromOutside) {
+          checkValidImportableFile(e, destination.getVirtualFile());
+        }
+        new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
       }
-    }, REFACTORING_NAME, null);
+    }), REFACTORING_NAME, null);
   }
 
   @NotNull

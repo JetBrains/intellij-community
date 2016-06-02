@@ -184,12 +184,10 @@ public class Mappings {
     }
   }
 
-  private void compensateRemovedContent(final Collection<File> compiled) {
-    if (compiled != null) {
-      for (final File file : compiled) {
-        if (!mySourceFileToClasses.containsKey(file)) {
-          mySourceFileToClasses.put(file, new HashSet<ClassRepr>());
-        }
+  private void compensateRemovedContent(final @NotNull Collection<File> compiled, final @NotNull Collection<File> compiledWithErrors) {
+    for (final File file : compiled) {
+      if (!compiledWithErrors.contains(file) && !mySourceFileToClasses.containsKey(file)) {
+        mySourceFileToClasses.put(file, new HashSet<ClassRepr>());
       }
     }
   }
@@ -944,6 +942,7 @@ public class Mappings {
     final Mappings myDelta;
     final Collection<File> myFilesToCompile;
     final Collection<File> myCompiledFiles;
+    final Collection<File> myCompiledWithErrors;
     final Collection<File> myAffectedFiles;
     @Nullable
     final DependentFilesFilter myFilter;
@@ -1067,6 +1066,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = null;
       this.myCompiledFiles = null;
+      this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
       this.myConstantSearch = null;
@@ -1087,6 +1087,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = null;
+      this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
       this.myConstantSearch = null;
@@ -1101,6 +1102,7 @@ public class Mappings {
     private Differential(final Mappings delta,
                          final Collection<String> removed,
                          final Collection<File> filesToCompile,
+                         final Collection<File> compiledWithErrors,
                          final Collection<File> compiledFiles,
                          final Collection<File> affectedFiles,
                          @NotNull final DependentFilesFilter filter,
@@ -1110,6 +1112,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = compiledFiles;
+      this.myCompiledWithErrors = compiledWithErrors;
       this.myAffectedFiles = affectedFiles;
       this.myFilter = filter;
       this.myConstantSearch = constantSearch;
@@ -1123,7 +1126,11 @@ public class Mappings {
     }
 
     private void processDisappearedClasses() {
-      myDelta.compensateRemovedContent(myFilesToCompile);
+      if (myFilesToCompile != null) {
+        myDelta.compensateRemovedContent(
+          myFilesToCompile, myCompiledWithErrors != null ? myCompiledWithErrors : Collections.<File>emptySet()
+        );
+      }
 
       if (!myEasyMode) {
         final Collection<String> removed = myDelta.myRemovedFiles;
@@ -2164,6 +2171,31 @@ public class Mappings {
             }
           }
 
+          // Now that the list of added classes is complete,
+          // check that super-classes of compiled classes are among newly added ones.
+          // Even if compiled class did not change, we should register 'added' superclass
+          // Consider situation for class B extends A:
+          // 1. file A is removed, make fails with error in file B
+          // 2. A is added back, B and A are compiled together in the second make session
+          // 3. Even if B did not change, A is considered as newly added and should be registered again in ClassToSubclasses dependencies
+          //    Without this code such registration will not happen because list of B's parents did not change
+          final Set<ClassRepr> addedClasses = myDelta.getAddedClasses();
+          if (!addedClasses.isEmpty()) {
+            final TIntHashSet addedNames = new TIntHashSet();
+            for (ClassRepr repr : addedClasses) {
+              addedNames.add(repr.name);
+            }
+            for (FileClasses compiledFile : newClasses) {
+              for (ClassRepr aClass : compiledFile.myFileClasses) {
+                for (int parent : aClass.getSupers()) {
+                  if (addedNames.contains(parent)) {
+                    myDelta.registerAddedSuperClass(aClass.name, parent);
+                  }
+                }
+              }
+            }
+          }
+
           debug("End of Differentiate.");
 
           if (myEasyMode) {
@@ -2206,11 +2238,12 @@ public class Mappings {
     (final Mappings delta,
      final Collection<String> removed,
      final Collection<File> filesToCompile,
+     final Collection<File> compiledWithErrors,
      final Collection<File> compiledFiles,
      final Collection<File> affectedFiles,
      @NotNull final DependentFilesFilter filter,
      @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
-    return new Differential(delta, removed, filesToCompile, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
+    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
   }
 
   private void cleanupBackDependency(final int className,

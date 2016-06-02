@@ -57,12 +57,7 @@ public class XmlIncludeHandler {
 
     List<PsiReference> references = Arrays.asList(xmlAttributeValue.getReferences());
     if (references.size() > 0) {
-      Collections.sort(references, new Comparator<PsiReference>() {
-        @Override
-        public int compare(PsiReference reference1, PsiReference reference2) {
-          return reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset();
-        }
-      });
+      Collections.sort(references, (reference1, reference2) -> reference2.getRangeInElement().getStartOffset() - reference1.getRangeInElement().getStartOffset());
       PsiElement target = references.get(0).resolve();
       if (target instanceof XmlFile) {
         return (XmlFile) target;

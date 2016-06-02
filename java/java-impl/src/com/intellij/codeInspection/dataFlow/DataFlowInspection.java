@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
-      gc.insets = new Insets(0, 0, 0, 0);
+      gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
 

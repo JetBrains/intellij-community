@@ -470,7 +470,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
-    GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
+    GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
 
     assertSuccessfulNotification("Checked out feature and rebased it on master")
     myRepo.`assert feature rebased on master`()

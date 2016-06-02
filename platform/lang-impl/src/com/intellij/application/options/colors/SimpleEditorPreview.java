@@ -178,16 +178,13 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
   private void updateHighlighters() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myEditor.isDisposed()) return;
-        myEditor.getMarkupModel().removeAllHighlighters();
-        HighlightData[] datum = myHighlightData;
-        final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
-        for (final HighlightData data : datum) {
-          data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myEditor.isDisposed()) return;
+      myEditor.getMarkupModel().removeAllHighlighters();
+      HighlightData[] datum = myHighlightData;
+      final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
+      for (final HighlightData data : datum) {
+        data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
       }
     });
   }
@@ -282,12 +279,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(page);
 
     // sort highlights to avoid overlappings
-    Collections.sort(highlights, new Comparator<HighlightData>() {
-      @Override
-      public int compare(HighlightData highlightData1, HighlightData highlightData2) {
-        return highlightData1.getStartOffset() - highlightData2.getStartOffset();
-      }
-    });
+    Collections.sort(highlights, (highlightData1, highlightData2) -> highlightData1.getStartOffset() - highlightData2.getStartOffset());
     for (int i = highlights.size() - 1; i >= 0; i--) {
       HighlightData highlightData = highlights.get(i);
       int startOffset = highlightData.getStartOffset();
@@ -302,12 +294,7 @@ public class SimpleEditorPreview implements PreviewPanel{
       }
     }
     alarm.cancelAllRequests();
-    alarm.addComponentRequest(new Runnable() {
-      @Override
-      public void run() {
-        startBlinkingHighlights(editor, highlightDatum, attrKey, highlighter, !show, alarm, count - 1, page);
-      }
-    }, 400);
+    alarm.addComponentRequest(() -> startBlinkingHighlights(editor, highlightDatum, attrKey, highlighter, !show, alarm, count - 1, page), 400);
     return matchingHighlights;
   }
 

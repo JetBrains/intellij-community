@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,26 +106,27 @@ public final class DefaultRegExpPropertiesProvider {
     {"D", "nondigit: [^0-9]"},
     {"h", "horizontal whitespace character: [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]"},
     {"H", "non-horizontal whitespace character: [^\\h]"},
-    {"s", "whitespace [ \\t\\n\\x0B\\f\\r]"},
-    {"S", "non-whitespace [^\\s]"},
+    {"s", "whitespace: [ \\t\\n\\x0B\\f\\r]"},
+    {"S", "non-whitespace: [^\\s]"},
     {"v", "vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]"},
     {"V", "non-vertical whitespace character: [^\\v]"},
-    {"w", "word character [a-zA-Z_0-9]"},
-    {"W", "nonword character [^\\w]"},
+    {"w", "word character: [a-zA-Z_0-9]"},
+    {"W", "nonword character: [^\\w]"},
     {"b", "word boundary"},
     {"B", "non-word boundary"},
     {"A", "beginning of the input"},
     {"G", "end of the previous match"},
     {"Z", "end of the input but for the final terminator, if any"},
     {"z", "end of input"},
-    {"Q", "Nothing, but quotes all characters until \\E"},
-    {"E", " \tNothing, but ends quoting started by \\Q"},
+    {"Q", "nothing, but quotes all characters until \\E"},
+    {"E", "nothing, but ends quoting started by \\Q"},
     {"t", "tab character ('\\u0009')"},
     {"n", "newline (line feed) character ('\\u000A')"},
     {"r", "carriage-return character ('\\u000D')"},
     {"f", "form-feed character ('\\u000C')"},
     {"a", "alert (bell) character ('\\u0007')"},
-    {"e", "escape character ('\\u001B')"}
+    {"e", "escape character ('\\u001B')"},
+    {"R", "unicode line ending: \\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029]"}
   };
 
   private final String[][] myPosixCharacterClasses = {

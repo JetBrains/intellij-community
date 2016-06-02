@@ -107,12 +107,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        invokeImpl(targetClass);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
   }
 
   @Nullable
@@ -123,7 +118,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     final Project project = firstClass.getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -134,20 +129,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       list.setSelectedValue(preselection, true);
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass) list.getSelectedValue();
-        AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            doInvoke(project, aClass);
-          }
-        }, getText(), null);
-      }
+    Runnable runnable = () -> {
+      int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final PsiClass aClass = (PsiClass) list.getSelectedValue();
+      AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
+      CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
     };
 
     builder.
@@ -428,17 +415,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       @NotNull final Project project,
                                       final TemplateEditingListener listener,
                                       final String commandName) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed() || editor.isDisposed()) return;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            TemplateManager.getInstance(project).startTemplate(editor, template, listener);
-          }
-        }, commandName, commandName);
-      }
+    Runnable runnable = () -> {
+      if (project.isDisposed() || editor.isDisposed()) return;
+      CommandProcessor.getInstance().executeCommand(project,
+                                                    () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener), commandName, commandName);
     };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();

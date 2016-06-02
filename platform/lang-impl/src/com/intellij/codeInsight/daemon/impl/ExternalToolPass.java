@@ -159,15 +159,12 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         }
         doAnnotate();
 
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-              return;
-            }
-            applyRelevant();
-            doFinish(getHighlights(), modificationStampBefore);
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+            return;
           }
+          applyRelevant();
+          doFinish(getHighlights(), modificationStampBefore);
         });
       }
     };
@@ -198,16 +195,13 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private void doFinish(@NotNull final List<HighlightInfo> highlights, final long modificationStampBefore) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          return;
-        }
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), highlights, getColorsScheme(), getId());
-        DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-        daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+        return;
       }
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), highlights, getColorsScheme(), getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
     }, ModalityState.stateForComponent(getEditor().getComponent()));
   }
 

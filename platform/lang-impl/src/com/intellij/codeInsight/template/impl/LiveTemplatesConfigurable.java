@@ -80,12 +80,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   @Override
   @Nullable
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myPanel.selectNode(option);
-      }
-    };
+    return () -> myPanel.selectNode(option);
   }
 
   public TemplateListPanel getTemplateListPanel() {

@@ -581,7 +581,7 @@ public class StringUtil extends StringUtilRt {
                                                      @NotNull @NonNls StringBuilder buffer) {
     return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
   }
-  
+
   @NotNull
   public static StringBuilder escapeStringCharacters(int length,
                                                      @NotNull String str,
@@ -639,7 +639,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  private static boolean isPrintableUnicode(char c) {
+  public static boolean isPrintableUnicode(char c) {
     int t = Character.getType(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
            t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
@@ -796,7 +796,7 @@ public class StringUtil extends StringUtilRt {
               buffer.append("\\u");
             }
             break;
-          
+
           case '0':
           case '1':
           case '2':
@@ -817,7 +817,7 @@ public class StringUtil extends StringUtilRt {
             //noinspection AssignmentToForLoopParameter
             idx = escapeEnd - 1;
             break;
-          
+
           default:
             buffer.append(ch);
             break;
@@ -1133,6 +1133,20 @@ public class StringUtil extends StringUtilRt {
       return s.substring(prefix.length());
     }
     return s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtension(@NotNull String name) {
+    int index = name.lastIndexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtensions(@NotNull String name) {
+    int index = name.indexOf('.');
+    return index < 0 ? name : name.substring(0, index);
   }
 
   @NotNull
@@ -2101,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "..." + text.subSequence(text.length() - length / 2, text.length())
+           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -2313,12 +2327,19 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
+    return replace(text, Arrays.asList(from), Arrays.asList(to));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
+    assert from.size() == to.size();
     final StringBuilder result = new StringBuilder(text.length());
     replace:
     for (int i = 0; i < text.length(); i++) {
-      for (int j = 0; j < from.length; j += 1) {
-        String toReplace = from[j];
-        String replaceWith = to[j];
+      for (int j = 0; j < from.size(); j += 1) {
+        String toReplace = from.get(j);
+        String replaceWith = to.get(j);
 
         final int len = toReplace.length();
         if (text.regionMatches(i, toReplace, 0, len)) {
@@ -3178,6 +3199,11 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseBoolean(string, defaultValue);
   }
 
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    return StringUtilRt.parseEnum(string, defaultValue, clazz);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {
@@ -3194,6 +3220,24 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
+  }
+
+  /**
+   * Strips class name from Object#toString if present.
+   * To be used as custom data type renderer for java.lang.Object.
+   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * expression in <em>Settings | Debugger | Data Views</em>.
+   */
+  @Contract("null->null;!null->!null")
+  @SuppressWarnings("UnusedDeclaration")
+  static String toShortString(@Nullable Object o) {
+    if (o == null) return null;
+    if (o instanceof CharSequence) return o.toString();
+    String className = o.getClass().getName();
+    String s = o.toString();
+    if (!s.startsWith(className)) return s;
+    return s.length() > className.length() && !Character.isLetter(s.charAt(className.length())) ?
+           trimStart(s, className) : s;
   }
 
   @NotNull
@@ -3226,64 +3270,6 @@ public class StringUtil extends StringUtilRt {
   public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
     final String s = string.toLowerCase();
     return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
-  }
-
-  @Contract(pure = true)
-  public static String getShortened(@NotNull String s, int maxWidth) {
-    int length = s.length();
-    if (isEmpty(s) || length <= maxWidth) return s;
-    ArrayList<String> words = new ArrayList<String>();
-
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < length; i++) {
-      char ch = s.charAt(i);
-
-      if (i == length - 1) {
-        builder.append(ch);
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-        continue;
-      }
-
-      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || ch == '-' || Character.isUpperCase(ch))) {
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-      }
-      builder.append(ch);
-    }
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
-      if (i < words.size() - 1 && word.length() == 1) {
-        words.remove(i);
-        words.set(i, word + words.get(i));
-      }
-    }
-
-    int removedLength = 0;
-
-    String toPaste = "...";
-    int index;
-    while (true) {
-      index = max(0, (words.size() - 1) / 2);
-      String aWord = words.get(index);
-      words.remove(index);
-      int toCut = length - removedLength - maxWidth + 3;
-      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
-        int pos = (aWord.length() - toCut) / 2;
-        toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
-        break;
-      }
-      removedLength += aWord.length();
-      if (length - removedLength <= maxWidth - 3) {
-        break;
-      }
-    }
-    for (int i = 0; i < max(1, words.size()); i++) {
-      String word = words.isEmpty() ? "" : words.get(i);
-      if (i == index || words.size() == 1) builder.append(toPaste);
-      builder.append(word);
-    }
-    return builder.toString().replaceAll("\\.{4,}", "...");
   }
 
   /**
@@ -3321,7 +3307,7 @@ public class StringUtil extends StringUtilRt {
 
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
-    
+
     final Matcher matcher = UNICODE_CHAR.matcher(text);
     if (!matcher.find()) return text; // fast path
 
@@ -3337,7 +3323,7 @@ public class StringUtil extends StringUtilRt {
     sb.append(text.substring(lastEnd, text.length()));
     return sb.toString();
   }
-  
+
   /**
    * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
@@ -3383,6 +3369,16 @@ public class StringUtil extends StringUtilRt {
       check();
       return delegate.subSequence(i, i1);
     }
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  @SuppressWarnings("SpellCheckingInspection")
+  public static String toHexString(@NotNull byte[] bytes) {
+    String digits = "0123456789abcdef";
+    StringBuilder sb = new StringBuilder(2 * bytes.length);
+    for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    return sb.toString();
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */

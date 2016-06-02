@@ -139,12 +139,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     configureByText(FileTypes.PLAIN_TEXT, threeNotoriousRussianLetters);
     VirtualFile virtualFile = getFile().getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, " ");
-        document.deleteString(0, 1);
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.insertString(0, " ");
+      document.deleteString(0, 1);
     });
 
 
@@ -176,6 +173,18 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
+  }
+
+  public void testSurrogateUTF8() throws Exception {
+    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
+    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    configureByExistingFile(virtualFile);
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+
+    assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
+    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+
+    assertEmpty(doHighlighting());
   }
 
   public void testInconsistentLineSeparators() throws Exception {

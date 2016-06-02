@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.util.NotNullComputable;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -24,13 +25,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
 
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard(NotNullCachedComputableWrapper.class.getName());
+
   private volatile NotNullComputable<T> myComputable;
-  private final @NotNull T myDefaultValue;
   private final AtomicReference<T> myValueRef = new AtomicReference<>();
 
-  public NotNullCachedComputableWrapper(@NotNull NotNullComputable<T> computable, @NotNull T defaultValue) {
+  public NotNullCachedComputableWrapper(@NotNull NotNullComputable<T> computable) {
     myComputable = computable;
-    myDefaultValue = defaultValue;
   }
 
   @NotNull
@@ -43,15 +44,18 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
       final NotNullComputable<T> computable = myComputable;
       if (computable == null) continue;                 // computable is null only after some thread succeeds CAS
 
-      value = RecursionManager.doPreventingRecursion(this, false, computable);
-      if (value == null) {                              // recursion detected
-        return myDefaultValue;
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      value = computable.compute();
+      if (stamp.mayCacheNow()) {
+        if (myValueRef.compareAndSet(null, value)) {    // try to cache value
+          myComputable = null;                          // if ok, allow gc to clean computable
+          return value;
+        }
+        // if CAS failed then other thread already set this value => loop & get value from reference
       }
-      else if (myValueRef.compareAndSet(null, value)) { // try to cache value
-        myComputable = null;                            // if ok, allow gc to clean computable
-        return value;
+      else {
+        return value;                                   // recursion detected
       }
-      // if value is not null and CAS failed then other thread already set this value -> get value from reference
     }
   }
 

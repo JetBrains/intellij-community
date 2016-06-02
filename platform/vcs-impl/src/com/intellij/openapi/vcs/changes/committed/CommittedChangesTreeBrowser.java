@@ -113,7 +113,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setExpandableItemsEnabled(false);
 
     myDetailsView = new RepositoryChangesBrowser(project, Collections.<CommittedChangeList>emptyList());
-    myDetailsView.getViewer().setScrollPaneBorder(RIGHT_BORDER);
+    myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {

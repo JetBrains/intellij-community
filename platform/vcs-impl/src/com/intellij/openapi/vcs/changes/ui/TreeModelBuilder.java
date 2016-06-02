@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -43,6 +43,8 @@ import java.util.*;
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
   public static final String LOCALLY_DELETED_NODE = VcsBundle.message("changes.nodetitle.locally.deleted.files");
+
+  private static final int UNVERSIONED_MAX_SIZE = 50;
 
   @NotNull private final Project myProject;
   private final boolean showFlatten;
@@ -83,17 +85,16 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@NotNull Trinity<List<VirtualFile>, Integer, Integer> unversioned) {
-    boolean manyUnversioned = unversioned.getSecond() > unversioned.getFirst().size();
-    if (manyUnversioned || !unversioned.getFirst().isEmpty()) {
+  public TreeModelBuilder setUnversioned(@NotNull List<VirtualFile> unversionedFiles, @NotNull Couple<Integer> sizes) {
+    if (!unversionedFiles.isEmpty()) {
       resetGrouping();
 
-      if (manyUnversioned) {
-        ChangesBrowserNode node = new ChangesBrowserManyUnversionedFilesNode(myProject, unversioned.getSecond(), unversioned.getThird());
-        model.insertNodeInto(node, root, root.getChildCount());
-      }
-      else {
-        buildVirtualFiles(unversioned.getFirst(), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+      ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(
+        myProject, sizes.getFirst(), sizes.getSecond(), unversionedFiles.size() > UNVERSIONED_MAX_SIZE);
+      model.insertNodeInto(node, root, root.getChildCount());
+
+      if (!node.isManyUnversioned()) {
+        insertFilesIntoNode(unversionedFiles, node);
       }
     }
 
@@ -146,15 +147,14 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public DefaultTreeModel buildModel(@NotNull List<? extends ChangeList> changeLists,
-                                     @NotNull Trinity<List<VirtualFile>, Integer, Integer> unversionedFiles,
-                                     @NotNull List<LocallyDeletedChange> locallyDeletedFiles,
-                                     @NotNull List<VirtualFile> modifiedWithoutEditing,
-                                     @NotNull MultiMap<String, VirtualFile> switchedFiles,
-                                     @Nullable Map<VirtualFile, String> switchedRoots,
-                                     @Nullable List<VirtualFile> ignoredFiles,
-                                     @Nullable List<VirtualFile> lockedFolders,
-                                     @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+  public TreeModelBuilder set(@NotNull List<? extends ChangeList> changeLists,
+                              @NotNull List<LocallyDeletedChange> locallyDeletedFiles,
+                              @NotNull List<VirtualFile> modifiedWithoutEditing,
+                              @NotNull MultiMap<String, VirtualFile> switchedFiles,
+                              @Nullable Map<VirtualFile, String> switchedRoots,
+                              @Nullable List<VirtualFile> ignoredFiles,
+                              @Nullable List<VirtualFile> lockedFolders,
+                              @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     resetGrouping();
     buildModel(changeLists);
 
@@ -162,7 +162,6 @@ public class TreeModelBuilder {
       resetGrouping();
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
-    setUnversioned(unversionedFiles);
     if (switchedRoots != null && ! switchedRoots.isEmpty()) {
       resetGrouping();
       buildSwitchedRoots(switchedRoots);
@@ -191,7 +190,7 @@ public class TreeModelBuilder {
       buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
     }
 
-    return build();
+    return this;
   }
 
   @NotNull

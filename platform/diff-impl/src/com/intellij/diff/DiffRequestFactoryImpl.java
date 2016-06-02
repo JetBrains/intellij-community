@@ -213,7 +213,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     DocumentContent outputContent = myContentFactory.create(project, outputDocument, fileType);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
 
-    List<DocumentContent> contents = new ArrayList<DocumentContent>(3);
+    List<DocumentContent> contents = new ArrayList<>(3);
     for (String text : textContents) {
       contents.add(myContentFactory.create(text, fileType));
     }
@@ -258,7 +258,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     DocumentContent outputContent = myContentFactory.create(project, outputDocument);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
 
-    List<DocumentContent> contents = new ArrayList<DocumentContent>(3);
+    List<DocumentContent> contents = new ArrayList<>(3);
     for (byte[] bytes : byteContents) {
       contents.add(FileAwareDocumentContent.create(project, bytes, output));
     }
@@ -282,7 +282,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       if (outputContent == null) throw new InvalidDiffRequestException("Can't process file: " + output);
       byte[] originalContent = output.contentsToByteArray();
 
-      List<DiffContent> contents = new ArrayList<DiffContent>(3);
+      List<DiffContent> contents = new ArrayList<>(3);
       for (byte[] bytes : byteContents) {
         contents.add(myContentFactory.createFromBytes(project, output, bytes));
       }
@@ -332,7 +332,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                           @Nullable String title,
                                                           @NotNull List<String> contentTitles,
                                                           @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
-    List<byte[]> byteContents = new ArrayList<byte[]>(3);
+    List<byte[]> byteContents = new ArrayList<>(3);
     for (VirtualFile file : fileContents) {
       try {
         byteContents.add(file.contentsToByteArray());
@@ -361,8 +361,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       if (outputContent == null) throw new InvalidDiffRequestException("Can't process file: " + output.getPresentableUrl());
       byte[] originalContent = output.contentsToByteArray();
 
-      List<DiffContent> contents = new ArrayList<DiffContent>(3);
-      List<byte[]> byteContents = new ArrayList<byte[]>(3);
+      List<DiffContent> contents = new ArrayList<>(3);
+      List<byte[]> byteContents = new ArrayList<>(3);
       for (VirtualFile file : fileContents) {
         FileContent content = myContentFactory.createFile(project, file);
         if (content == null) throw new InvalidDiffRequestException("Can't process file: " + file.getPresentableUrl());

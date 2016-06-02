@@ -114,12 +114,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         if (path != null) {
           final MethodNodeBase<M> node = (MethodNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              updateEditorTexts(node);
-            }
-          }, 300);
+          myAlarm.addRequest(() -> updateEditorTexts(node), 300);
         }
       }
     };
@@ -150,12 +145,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : getEmptyCalleeText();
     final Document calleeDocument = myCalleeEditor.getDocument();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        callerDocument.setText(callerText);
-        calleeDocument.setText(calleeText);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      callerDocument.setText(callerText);
+      calleeDocument.setText(calleeText);
     });
 
     final M caller = callerNode.getMethod();
@@ -182,12 +174,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
-    return ContainerUtil.mapNotNull(references, new Function<PsiReference, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiReference psiReference) {
-        return psiReference.getElement();
-      }
-    });
+    return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());
   }
 
   @Override
@@ -243,15 +230,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   }
 
   private Tree createTree() {
-    final Runnable cancelCallback = new Runnable() {
-      @Override
-      public void run() {
-        if (myInitDone) {
-          close(CANCEL_EXIT_CODE);
-        }
-        else {
-          throw new ProcessCanceledException();
-        }
+    final Runnable cancelCallback = () -> {
+      if (myInitDone) {
+        close(CANCEL_EXIT_CODE);
+      }
+      else {
+        throw new ProcessCanceledException();
       }
     };
     final CheckedTreeNode root = createTreeNode(null, new HashSet<M>(), cancelCallback);

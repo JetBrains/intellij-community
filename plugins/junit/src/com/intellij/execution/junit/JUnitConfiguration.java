@@ -63,6 +63,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String FORK_NONE = "none";
   @NonNls public static final String FORK_METHOD = "method";
   @NonNls public static final String FORK_KLASS = "class";
+  @NonNls public static final String FORK_REPEAT = "repeat";
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
@@ -140,7 +141,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return TestObject.fromString(myData.TEST_OBJECT, this, env);
   }
 
@@ -160,13 +161,13 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = myData.getTestObject(this).getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element, this);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    myData.getTestObject(this).checkConfiguration();
+    getTestObject().checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
@@ -176,7 +177,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
-      myData.getTestObject(this).checkConfiguration();
+      getTestObject().checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
@@ -186,11 +187,6 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     return JavaRunConfigurationModule.getModulesForClass(getProject(), myData.getMainClassName());
-  }
-
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new JUnitConfiguration(getName(), getProject(), myData.clone(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);// throw new RuntimeException("Should not call");
   }
 
   @Override

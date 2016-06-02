@@ -71,7 +71,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
     final long start = System.currentTimeMillis();
     final boolean result = super.runProcessWithProgressSynchronously(task, parentComponent);
     if (result) {
@@ -118,34 +118,28 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
 
     TaskContainer action = new TaskContainer(task) {
-
-      @Override
-      public String toString() {
-        return task.toString();
-      }
-
       @Override
       public void run() {
-        boolean canceled = false;
+        boolean processCanceled = false;
+        Exception exception = null;
+
         final long start = System.currentTimeMillis();
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
-          canceled = true;
+          processCanceled = true;
+        }
+        catch (Exception e) {
+          exception = e;
         }
         final long end = System.currentTimeMillis();
         final long time = end - start;
 
-        if (canceled || progressIndicator.isCanceled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onCancel();
-            }
-          }, modalityState);
-        }
-        else {
+        final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+        final Exception finalException = exception;
+
+        if (!finalCanceled) {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
@@ -153,13 +147,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
               systemNotify(notificationInfo);
             }
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onSuccess();
-            }
-          }, modalityState);
         }
+
+        ApplicationManager.getApplication().invokeLater(() -> finishTask(task, finalCanceled, finalException), modalityState);
       }
     };
 

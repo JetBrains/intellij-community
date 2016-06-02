@@ -32,6 +32,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,8 +120,10 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       return false;
     }
     final PsiElement element = getStartElement();
+    PyPsiUtils.assertValid(element);
     if (element == null || !element.isValid() || (element instanceof PsiNamedElement && ((PsiNamedElement)element).getName() == null)
         || myImports.size() <= 0) {
+      PyPsiUtils.assertValid(element);
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
     }
     if (ImportFromExistingAction.isResolved(myReference)) {
@@ -136,11 +139,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       ImportCandidateHolder.getQualifiedName(myInitialName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = new ImportFromExistingAction(element, myImports, myInitialName, myUseQualifiedImport, false);
-    action.onDone(new Runnable() {
-      public void run() {
-        myExpended = true;
-      }
-    });
+    action.onDone(() -> myExpended = true);
     HintManager.getInstance().showQuestionHint(
       editor, message,
       element.getTextOffset(),
@@ -149,7 +148,12 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   public boolean isAvailable() {
-    return !myExpended && getStartElement() != null && getStartElement().isValid() && myImports.size() > 0;
+    final PsiElement element = getStartElement();
+    if (element == null) {
+      return false;
+    }
+    PyPsiUtils.assertValid(element);
+    return !myExpended && element.isValid() && !myImports.isEmpty();
   }
 
   @Override
@@ -159,7 +163,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   public void invoke(PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
-    if (!myReference.getElement().isValid()) return;
+    PyPsiUtils.assertValid(myReference.getElement());
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (ImportFromExistingAction.isResolved(myReference)) return;
     // act

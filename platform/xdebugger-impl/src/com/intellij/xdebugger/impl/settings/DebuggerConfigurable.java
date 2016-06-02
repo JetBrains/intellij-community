@@ -124,12 +124,9 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
     Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
     // move unnamed to top
-    Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
-      @Override
-      public int compare(@NotNull Configurable o1, @NotNull Configurable o2) {
-        boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
-        return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
-      }
+    Arrays.sort(mergedRootConfigurables, (o1, o2) -> {
+      boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
+      return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
     });
     return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
   }

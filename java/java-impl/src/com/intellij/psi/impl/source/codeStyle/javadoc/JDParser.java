@@ -34,7 +34,7 @@ import java.util.StringTokenizer;
  * @author Dmitry Skavish
  */
 public class JDParser {
-
+  private static final String JAVADOC_HEADER = "/**";
   private static final String PRE_TAG_START = "<pre>";
   private static final String PRE_TAG_END = "</pre>";
   private static final String P_END_TAG = "</p>";
@@ -51,7 +51,9 @@ public class JDParser {
 
   public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
     CommentInfo info = getElementsCommentInfo(element);
-    JDComment comment = info != null ? parse(info, formatter) : null;
+    if (info == null || !isJavadoc(info)) return;
+
+    JDComment comment = parse(info, formatter);
     if (comment != null) {
       String indent = formatter.getIndent(info.getCommentOwner());
       String commentText = comment.generate(indent);
@@ -59,7 +61,11 @@ public class JDParser {
     }
   }
 
-  private CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
+  private static boolean isJavadoc(CommentInfo info) {
+    return JAVADOC_HEADER.equals(info.commentHeader);
+  }
+
+  private static CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
     CommentInfo info = null;
     if (psiElement instanceof PsiDocComment) {
       final PsiDocComment docComment = (PsiDocComment)psiElement;
@@ -101,7 +107,7 @@ public class JDParser {
     return comment;
   }
 
-  private JDComment createComment(@NotNull PsiElement psiElement, @NotNull CommentFormatter formatter) {
+  private static JDComment createComment(@NotNull PsiElement psiElement, @NotNull CommentFormatter formatter) {
     if (psiElement instanceof PsiClass) {
       return new JDClassComment(formatter);
     }
@@ -114,11 +120,10 @@ public class JDParser {
     return null;
   }
 
-  @NotNull
   private void parse(@Nullable String text, @NotNull JDComment comment) {
     if (text == null) return;
 
-    List<Boolean> markers = new ArrayList<Boolean>();
+    List<Boolean> markers = new ArrayList<>();
     List<String> l = toArray(text, "\n", markers);
 
     //if it is - we are dealing with multiline comment:
@@ -230,7 +235,7 @@ public class JDParser {
     s = s.trim();
     if (s.isEmpty()) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES;
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     StringTokenizer st = new StringTokenizer(s, separators, true);
     boolean first = true;
     int preCount = 0;
@@ -311,7 +316,7 @@ public class JDParser {
    */
   @Nullable
   private List<String> toArrayWrapping(@Nullable String s, int width) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
     if (pairs == null) {
       return null;
@@ -375,10 +380,10 @@ public class JDParser {
     s = s.trim();
     if (s.isEmpty()) return null;
 
-    List<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
+    List<Pair<String, Boolean>> result = new ArrayList<>();
 
     StringBuilder sb = new StringBuilder();
-    List<Boolean> markers = new ArrayList<Boolean>();
+    List<Boolean> markers = new ArrayList<>();
     List<String> list = toArray(s, "\n", markers);
     Boolean[] marks = markers.toArray(new Boolean[markers.size()]);
     markers.clear();
@@ -387,7 +392,7 @@ public class JDParser {
       String s1 = list.get(i);
       if (marks[i].booleanValue()) {
         if (sb.length() != 0) {
-          result.add(new Pair<String, Boolean>(sb.toString(), false));
+          result.add(new Pair<>(sb.toString(), false));
           sb.setLength(0);
         }
         result.add(Pair.create(s1, marks[i]));
@@ -395,7 +400,7 @@ public class JDParser {
       else {
         if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG)) {
           if (sb.length() != 0) {
-            result.add(new Pair<String, Boolean>(sb.toString(), false));
+            result.add(new Pair<>(sb.toString(), false));
             sb.setLength(0);
           }
           result.add(Pair.create(s1, marks[i]));
@@ -410,7 +415,7 @@ public class JDParser {
       }
     }
     if (!mySettings.JD_PRESERVE_LINE_FEEDS && sb.length() != 0) {
-      result.add(new Pair<String, Boolean>(sb.toString(), false));
+      result.add(new Pair<>(sb.toString(), false));
     }
     return result;
   }
@@ -588,7 +593,7 @@ public class JDParser {
           && list != null && !list.isEmpty()
           && list.get(0).length() > rightMargin - firstLinePrefixLength)
       {
-        list = new ArrayList<String>();
+        list = new ArrayList<>();
         //want the first line to be shorter, according to it's prefix
         String firstLine = toArrayWrapping(str, rightMargin - firstLinePrefixLength).get(0);
         //so now first line is exactly same width we need
@@ -612,7 +617,7 @@ public class JDParser {
       }
     }
     else {
-      list = toArray(str, "\n", new ArrayList<Boolean>());
+      list = toArray(str, "\n", new ArrayList<>());
     }
 
     if (list == null) {

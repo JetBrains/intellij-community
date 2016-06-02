@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -33,13 +32,12 @@ public class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull private final String myNewName;
 
   public GitRenameBranchOperation(@NotNull Project project,
-                                  @NotNull GitPlatformFacade facade,
                                   @NotNull Git git,
                                   @NotNull GitBranchUiHandler uiHandler,
                                   @NotNull String currentName,
                                   @NotNull String newName,
                                   @NotNull List<GitRepository> repositories) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
     myNewName = newName;
     myNotifier = VcsNotifier.getInstance(myProject);

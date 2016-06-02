@@ -30,18 +30,8 @@ public class GenericValueUtil {
   private GenericValueUtil() {
   }
 
-  public static NullableFunction<GenericValue, String> STRING_VALUE = new NullableFunction<GenericValue, String>() {
-    @Override
-    public String fun(final GenericValue genericValue) {
-      return genericValue.getStringValue();
-    }
-  };
-  public static NullableFunction<GenericValue, Object> OBJECT_VALUE = new NullableFunction<GenericValue, Object>() {
-    @Override
-    public Object fun(final GenericValue genericValue) {
-      return genericValue.getValue();
-    }
-  };
+  public static NullableFunction<GenericValue, String> STRING_VALUE = genericValue -> genericValue.getStringValue();
+  public static NullableFunction<GenericValue, Object> OBJECT_VALUE = genericValue -> genericValue.getValue();
 
 
   public static boolean containsString(final Collection<? extends GenericValue<?>> collection, String value) {

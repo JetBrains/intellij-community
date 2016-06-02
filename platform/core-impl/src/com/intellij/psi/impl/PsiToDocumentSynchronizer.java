@@ -46,7 +46,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private final MessageBus myBus;
   private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
 
-  private volatile Document mySyncDocument = null;
+  private volatile Document mySyncDocument;
 
   public PsiToDocumentSynchronizer(PsiDocumentManagerBase psiDocumentManager, MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;

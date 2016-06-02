@@ -52,12 +52,7 @@ public final class LanguageReference extends StringLiteralReference {
   @NotNull
   public Object[] getVariants() {
     List<Injectable> list = InjectLanguageAction.getAllInjectables();
-    return ContainerUtil.map2Array(list, LookupElement.class, new Function<Injectable, LookupElement>() {
-      @Override
-      public LookupElement fun(Injectable injectable) {
-        return LookupElementBuilder.create(injectable.getId()).withIcon(injectable.getIcon()).withTailText(
-          "(" + injectable.getDisplayName() + ")", true);
-      }
-    });
+    return ContainerUtil.map2Array(list, LookupElement.class, (Function<Injectable, LookupElement>)injectable -> LookupElementBuilder.create(injectable.getId()).withIcon(injectable.getIcon()).withTailText(
+      "(" + injectable.getDisplayName() + ")", true));
   }
 }

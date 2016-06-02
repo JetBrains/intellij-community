@@ -38,7 +38,8 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
   // Labels and colors
   private static final String LABELS_AND_COLORS_BOARD_NAME = "Labels and Colors";
   private static final String COLORED_CARD_ID = "548591e00f3d598512ced37b";
-
+  private static final String CARD_WITH_COLORLESS_LABELS_ID = "5714ccd9f6ab69c4de522346";
+  
   // State updates
   private static final String STATE_UPDATES_BOARD_NAME = "State Updates";
   private static final String STATE_UPDATES_BOARD_ID = "54b3e0e3b4f415b3c9d03449";
@@ -144,12 +145,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     List<TrelloCard> allCards = fetchCards(BASIC_FUNCTIONALITY_BOARD_ID, LIST_1_1_NAME, true);
     assertObjectsNamed("All cards of the list should be included", allCards, "Card 1-1-1", "Card 1-1-2", "Archived Card");
 
-    TrelloCard card = ContainerUtil.find(allCards, new Condition<TrelloCard>() {
-      @Override
-      public boolean value(TrelloCard card) {
-        return card.getName().equals("Archived Card");
-      }
-    });
+    TrelloCard card = ContainerUtil.find(allCards, card1 -> card1.getName().equals("Archived Card"));
     assertNotNull(card);
     assertTrue(card.isClosed());
     assertFalse(card.isVisible());
@@ -170,15 +166,21 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     final List<TrelloLabel> labels = card.getLabels();
 
     assertEquals(6, labels.size());
-    final Set<String> labelNames = ContainerUtil.map2Set(labels, new Function<TrelloLabel, String>() {
-      @Override
-      public String fun(TrelloLabel label) {
-        return label.getName();
-      }
-    });
-    assertEquals(ContainerUtil.newHashSet("Sky colored label", "Boring label", "Dull label", ""), labelNames);
+    final Set<String> labelNames = ContainerUtil.map2Set(labels, TrelloLabel::getName);
+    assertSameElements(labelNames, "Sky colored label", "Boring label", "Dull label", "");
 
     assertEquals(EnumSet.of(SKY, LIME, PINK, BLACK), card.getColors());
+  }
+  
+  // EA-81551
+  public void testAllLabelsWithoutColor() throws Exception {
+    final TrelloCard card = myRepository.fetchCardById(CARD_WITH_COLORLESS_LABELS_ID);
+    assertNotNull(card);
+    final List<TrelloLabel> labels = card.getLabels();
+    assertSize(2, labels);
+    final List<String> labelNames = ContainerUtil.map(labels, TrelloLabel::getName);
+    assertSameElements(labelNames, "Boring label", "Dull label");
+    assertEmpty(card.getColors());
   }
 
   public void testStateUpdates() throws Exception {
@@ -226,7 +228,9 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertEquals(CARD_1_1_1_NUMBER, new TrelloTask(card, myRepository).getNumber());
   }
 
-  static void assertObjectsNamed(@NotNull String message, @NotNull Collection<? extends TrelloModel> objects, @NotNull String... names) {
+  private static void assertObjectsNamed(@NotNull String message,
+                                         @NotNull Collection<? extends TrelloModel> objects,
+                                         @NotNull String... names) {
     assertEquals(message, ContainerUtil.newHashSet(names), ContainerUtil.map2Set(objects, new Function<TrelloModel, String>() {
       @Override
       public String fun(TrelloModel model) {

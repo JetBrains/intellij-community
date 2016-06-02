@@ -428,12 +428,7 @@ public class PyDocstringGenerator {
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
       }
-      final List<DocstringParam> parameters = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
-        @Override
-        public boolean value(DocstringParam param) {
-          return !param.isReturnValue();
-        }
-      });
+      final List<DocstringParam> parameters = ContainerUtil.findAll(myAddedParams, param -> !param.isReturnValue());
       if (!parameters.isEmpty()) {
         sectionBuilder.startParametersSection();
         for (DocstringParam param : parameters) {
@@ -441,12 +436,7 @@ public class PyDocstringGenerator {
         }
       }
 
-      final List<DocstringParam> returnValues = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
-        @Override
-        public boolean value(DocstringParam param) {
-          return param.isReturnValue();
-        }
-      });
+      final List<DocstringParam> returnValues = ContainerUtil.findAll(myAddedParams, param -> param.isReturnValue());
 
       if (!returnValues.isEmpty()) {
         sectionBuilder.startReturnsSection();

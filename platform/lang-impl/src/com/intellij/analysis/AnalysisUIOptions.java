@@ -41,15 +41,13 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   public boolean AUTOSCROLL_TO_SOURCE = false;
   public float SPLITTER_PROPORTION = 0.5f;
-  public boolean GROUP_BY_SEVERITY = false;
-  public boolean FILTER_RESOLVED_ITEMS = true;
+  public volatile boolean GROUP_BY_SEVERITY = false;
+  public volatile boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
-  public boolean SHOW_DIFF_WITH_PREVIOUS_RUN = false;
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  public boolean SHOW_ONLY_DIFF = false;
-  public boolean SHOW_STRUCTURE = false;
+  public volatile boolean SHOW_STRUCTURE = false;
   public String FILE_MASK;
 
   public boolean ANALYSIS_IN_BACKGROUND = true;
@@ -122,28 +120,6 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     };
   }
 
-  public AnAction createShowOutdatedProblemsAction(final InspectionResultsView view) {
-    return new InspectionResultsViewToggleAction(view,
-                                                 InspectionsBundle.message("inspection.filter.show.diff.action.text"),
-                                                 InspectionsBundle.message("inspection.filter.show.diff.action.text"),
-                                                 AllIcons.Actions.Diff) {
-
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return SHOW_DIFF_WITH_PREVIOUS_RUN;
-      }
-
-      @Override
-      public void setSelected(boolean state) {
-        SHOW_DIFF_WITH_PREVIOUS_RUN = state;
-        if (!SHOW_DIFF_WITH_PREVIOUS_RUN) {
-          SHOW_ONLY_DIFF = false;
-        }
-      }
-    };
-  }
-
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
     return new InspectionResultsViewToggleAction(view,
                                                  "Group by directory",
@@ -158,31 +134,6 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       @Override
       public void setSelected(boolean state) {
         SHOW_STRUCTURE = state;
-      }
-    };
-  }
-
-  public AnAction createShowDiffOnlyAction(final InspectionResultsView view) {
-    return new InspectionResultsViewToggleAction(view,
-                                                 InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
-                                                 InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
-                                                 AllIcons.Actions.ShowChangesOnly) {
-
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return SHOW_ONLY_DIFF;
-      }
-
-      @Override
-      public void setSelected(boolean state) {
-        SHOW_ONLY_DIFF = state;
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabled(SHOW_DIFF_WITH_PREVIOUS_RUN);
       }
     };
   }

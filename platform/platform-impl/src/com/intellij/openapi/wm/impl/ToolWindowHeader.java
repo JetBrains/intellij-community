@@ -202,7 +202,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     setOpaque(true);
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
 
-    UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
     myUpdater = new ToolbarUpdater(this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
@@ -211,7 +210,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       @Override
       protected void updateActionTooltips() {
-        for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
+        for (ActionButton actionButton : UIUtil.uiTraverser(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
           actionButton.updateTooltip();
         }
       }
@@ -227,12 +226,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     westPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
-        Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
-          }
-        };
+        Runnable runnable =
+          () -> ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(runnable);
       }

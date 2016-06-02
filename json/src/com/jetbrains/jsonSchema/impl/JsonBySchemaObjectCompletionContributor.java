@@ -61,12 +61,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
 
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema, @NotNull final PsiElement position) {
     final List<LookupElement> result = new ArrayList<LookupElement>();
-    new Worker(schema, position, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        result.add(element);
-      }
-    }).work();
+    new Worker(schema, position, element -> result.add(element)).work();
     return result;
   }
 

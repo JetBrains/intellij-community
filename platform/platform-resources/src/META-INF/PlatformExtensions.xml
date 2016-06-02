@@ -98,7 +98,7 @@
                         serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceInterface="com.intellij.diff.tools.external.ExternalDiffSettings"
                         serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
-    <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff"
+    <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff &amp; Merge"
                              instance="com.intellij.diff.settings.DiffSettingsConfigurable">
       <configurable id="diff.external" displayName="External Diff Tools"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
@@ -131,11 +131,15 @@
                         serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.InstalledPluginsState"
                         serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
+    <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
+                        serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
+
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
@@ -296,6 +300,7 @@
     <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
     <postStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
@@ -379,6 +384,8 @@
     <patch.extension implementation="com.intellij.openapi.diff.impl.patch.CharsetEP"/>
 
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
+
+    <enterHandlerDelegate implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentNotifier"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>

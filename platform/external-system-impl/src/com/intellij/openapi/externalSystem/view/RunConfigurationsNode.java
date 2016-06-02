@@ -37,7 +37,7 @@ import java.util.Set;
  * @author Vladislav.Soroka
  * @since 11/7/2014
  */
-@Order(3)
+@Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
 public class RunConfigurationsNode extends ExternalSystemNode<Void> {
 
   private final ModuleData myModuleData;

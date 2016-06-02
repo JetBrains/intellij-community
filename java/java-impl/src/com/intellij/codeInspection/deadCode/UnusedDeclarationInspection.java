@@ -21,6 +21,7 @@ import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       GridBagConstraints gc = new GridBagConstraints();
       gc.weightx = 1;
       gc.weighty = 0;
-      gc.insets = new Insets(0, 20, 2, 0);
+      gc.insets = JBUI.insets(0, 20, 2, 0);
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 

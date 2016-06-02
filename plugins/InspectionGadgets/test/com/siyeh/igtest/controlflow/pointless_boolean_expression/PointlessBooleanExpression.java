@@ -1,4 +1,4 @@
-public class Bug {
+class Bug {
   interface I1{}
   interface I2{}
   class C1 {}
@@ -14,24 +14,24 @@ public class Bug {
 
     }
 
-    if (!true){
+    if (<warning descr="'!true' can be simplified to 'false'">!true</warning>){
 
     }
   }
 }
 class PointlessBooleanExpression {
   void foo(boolean a, boolean b) {
-    boolean c = !(b && false);
-    boolean d = a ^ b ^ true;
-    boolean x = a ^ !true ^ b;
+    boolean c = <warning descr="'!(b && false)' can be simplified to 'true'">!(b && false)</warning>;
+    boolean d = <warning descr="'a ^ b ^ true' can be simplified to '!(a ^ b )'">a ^ b ^ true</warning>;
+    boolean x = <warning descr="'a ^ !true ^ b' can be simplified to 'a ^ b'">a ^ !true ^ b</warning>;
 
-    boolean y = false || c;
-    boolean z = b != true;
+    boolean y = <warning descr="'false || c' can be simplified to 'c'">false || c</warning>;
+    boolean z = <warning descr="'b != true' can be simplified to '!b'">b != true</warning>;
   }
 }
 class Presley {
   void elvis(Object king) {
-    if (true && king != null && king.hashCode() > 1) {
+    if (<warning descr="'true && king != null && king.hashCode() > 1' can be simplified to 'king != null && king.hashCode() > 1'">true && king != null && king.hashCode() > 1</warning>) {
       // blah
     }
   }

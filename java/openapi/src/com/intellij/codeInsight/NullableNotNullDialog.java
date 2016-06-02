@@ -97,7 +97,7 @@ public class NullableNotNullDialog extends DialogWrapper {
       myList = new JBList(annotations);
       myList.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (value.equals(myDefaultAnnotation)) {
             setIcon(AllIcons.Diff.CurrentLine);
@@ -162,12 +162,7 @@ public class NullableNotNullDialog extends DialogWrapper {
           if (e.getValueIsAdjusting()) return;
           final String selectedValue = (String)myList.getSelectedValue();
           if (myDefaultAnnotations.contains(selectedValue)) {
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                removeButton.setEnabled(false);
-              }
-            });
+            SwingUtilities.invokeLater(() -> removeButton.setEnabled(false));
           }
         }
       });

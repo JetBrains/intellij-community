@@ -101,12 +101,7 @@ public class RncCompletionData extends CompletionData {
 
     @Override
     public Object[] get(PsiElement context, CompletionContext completionContext) {
-      return ContainerUtil.map2Array(doGetKeywords(context), LookupElement.class, new Function<String, LookupElement>() {
-        @Override
-        public LookupElement fun(String s) {
-          return TailTypeDecorator.withTail(LookupElementBuilder.create(s).bold(), TailType.SPACE);
-        }
-      });
+      return ContainerUtil.map2Array(doGetKeywords(context), LookupElement.class, (Function<String, LookupElement>)s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s).bold(), TailType.SPACE));
     }
 
     private String[] doGetKeywords(PsiElement context) {

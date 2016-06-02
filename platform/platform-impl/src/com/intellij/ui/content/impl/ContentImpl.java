@@ -92,12 +92,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public void setPreferredFocusableComponent(final JComponent c) {
-    setPreferredFocusedComponent(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return c;
-      }
-    });
+    setPreferredFocusedComponent(() -> c);
   }
 
   @Override

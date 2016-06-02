@@ -15,7 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +40,10 @@ import static git4idea.GitUtil.*;
 public class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
   private final GitVcsSettings mySettings;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
 
   public GitUpdateEnvironment(@NotNull Project project, @NotNull GitVcsSettings settings) {
     myProject = project;
     mySettings = settings;
-    myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {
@@ -58,7 +54,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
     Set<VirtualFile> roots = gitRoots(Arrays.asList(filePaths));
     GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
-    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, myPlatformFacade,
+    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject,
                                                                    progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
                                                                    updatedFiles, true);
     boolean result = gitUpdateProcess.update(mySettings.getUpdateType()).isSuccess();

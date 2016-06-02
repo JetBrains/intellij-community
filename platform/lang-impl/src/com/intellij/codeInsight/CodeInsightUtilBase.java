@@ -52,13 +52,10 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     if (ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
       return true;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-        if (editor != null && editor.getComponent().isDisplayable()) {
-          HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+      if (editor != null && editor.getComponent().isDisplayable()) {
+        HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
       }
     }, project.getDisposed());
 

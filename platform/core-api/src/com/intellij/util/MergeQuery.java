@@ -54,7 +54,7 @@ public class MergeQuery<T> implements Query<T>{
 
   @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return processSubQuery(consumer, myQuery1) && processSubQuery(consumer, myQuery2);
+    return processSubQuery(myQuery1, consumer) && processSubQuery(myQuery2, consumer);
   }
 
   @NotNull
@@ -62,13 +62,13 @@ public class MergeQuery<T> implements Query<T>{
   public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<T> consumer) {
     final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
 
-    final AsyncFuture<Boolean> fq = processSubQueryAsync(consumer, myQuery1);
+    final AsyncFuture<Boolean> fq = processSubQueryAsync(myQuery1, consumer);
 
     fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
       @Override
       public void onSuccess(Boolean value) {
         if (value.booleanValue()) {
-          final AsyncFuture<Boolean> fq2 = processSubQueryAsync(consumer, myQuery2);
+          final AsyncFuture<Boolean> fq2 = processSubQueryAsync(myQuery2, consumer);
           fq2.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result));
         }
         else {
@@ -80,12 +80,12 @@ public class MergeQuery<T> implements Query<T>{
   }
 
 
-  private <V extends T> boolean processSubQuery(@NotNull final Processor<T> consumer, @NotNull Query<V> query1) {
+  private <V extends T> boolean processSubQuery(@NotNull Query<V> subQuery, @NotNull final Processor<T> consumer) {
     // Query.forEach(Processor<T> consumer) should be actually Query.forEach(Processor<? super T> consumer) but it is too late now
-    return query1.forEach((Processor<V>)consumer);
+    return subQuery.forEach((Processor<V>)consumer);
   }
 
-  private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(@NotNull final Processor<T> consumer, @NotNull Query<V> query1) {
+  private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(@NotNull Query<V> query1, @NotNull final Processor<T> consumer) {
     return query1.forEachAsync((Processor<V>)consumer);
   }
 

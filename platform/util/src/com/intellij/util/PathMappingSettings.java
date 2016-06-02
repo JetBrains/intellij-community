@@ -166,7 +166,9 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
     path = norm(path);
     String remotePrefix = norm(remoteRoot);
-    path = path.replace(remotePrefix, norm(localRoot));
+    if (canReplaceRemote(path, remotePrefix)) {
+      path = norm(localRoot) + path.substring(remotePrefix.length());
+    }
     return path;
   }
 
@@ -311,9 +313,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
         return false;
       }
 
-      path = norm(path);
-      String remotePrefix = norm(myRemoteRoot);
-      return !myRemoteRoot.isEmpty() && path.startsWith(remotePrefix);
+      return PathMappingSettings.canReplaceRemote(path, myRemoteRoot);
     }
 
     @Override
@@ -340,5 +340,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       result = 31 * result + (myRemoteRoot != null ? myRemoteRoot.hashCode() : 0);
       return result;
     }
+  }
+
+  private static boolean canReplaceRemote(@NotNull String path, @NotNull String remotePrefix) {
+    path = norm(path);
+    remotePrefix = norm(remotePrefix);
+    return path.startsWith(remotePrefix) &&
+           (path.length() == remotePrefix.length() || remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
   }
 }

@@ -167,20 +167,17 @@ public class UnusedSymbolUtil {
 
     final PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
 
-    boolean sure = processUsages(project, containingFile, member, progress, ignoreFile, new Processor<UsageInfo>() {
-      @Override
-      public boolean process(UsageInfo info) {
-        PsiFile psiFile = info.getFile();
-        if (psiFile == ignoreFile || psiFile == null) {
-          return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
-        }
-        int offset = info.getNavigationOffset();
-        if (offset == -1) return true;
-        PsiElement element = psiFile.findElementAt(offset);
-        boolean inComment = element instanceof PsiComment;
-        log("*     "+member.getName()+": usage :"+element);
-        return inComment; // ignore comments
+    boolean sure = processUsages(project, containingFile, member, progress, ignoreFile, info -> {
+      PsiFile psiFile = info.getFile();
+      if (psiFile == ignoreFile || psiFile == null) {
+        return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
       }
+      int offset = info.getNavigationOffset();
+      if (offset == -1) return true;
+      PsiElement element = psiFile.findElementAt(offset);
+      boolean inComment = element instanceof PsiComment;
+      log("*     "+member.getName()+": usage :"+element);
+      return inComment; // ignore comments
     });
     log("*     "+member.getName()+": result:"+sure);
     return sure;

@@ -49,7 +49,6 @@ import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -66,7 +65,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
-  private PsiElement myPrimaryElement;
+  private @NotNull PsiElement myPrimaryElement;
   private String myNewName = null;
 
   private boolean mySearchInComments;
@@ -81,7 +80,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<UnresolvableCollisionUsageInfo>();
 
   public RenameProcessor(Project project,
-                         PsiElement element,
+                         @NotNull PsiElement element,
                          @NotNull @NonNls String newName,
                          boolean isSearchInComments,
                          boolean isSearchTextOccurrences) {
@@ -95,11 +94,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     mySearchTextOccurrences = isSearchTextOccurrences;
 
     setNewName(newName);
-  }
-
-  @Deprecated
-  public RenameProcessor(Project project) {
-    this(project, null, "", false, false);
   }
 
   public Set<PsiElement> getElements() {
@@ -187,19 +181,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
           assertNonCompileElement(element);
         }
         myAllRenames.putAll(renames);
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
-              final UsageInfo[] usages =
-                ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
-                  @Override
-                  public UsageInfo[] compute() {
-                    return RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
-                  }
-                });
-              Collections.addAll(variableUsages, usages);
-            }
+        final Runnable runnable = () -> {
+          for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
+            final UsageInfo[] usages =
+              ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
+                @Override
+                public UsageInfo[] compute() {
+                  return RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
+                }
+              });
+            Collections.addAll(variableUsages, usages);
           }
         };
         if (!ProgressManager.getInstance()
@@ -238,19 +229,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final AutomaticRenamer renamer : myRenamers) {
-              renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
-            }
-          }
-        });
+    final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      for (final AutomaticRenamer renamer : myRenamers) {
+        renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
       }
-    };
+    });
 
     return ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject);
@@ -273,11 +256,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void setNewName(@NotNull String newName) {
-    if (myPrimaryElement == null) {
-      myCommandName = RefactoringBundle.message("renaming.something");
-      return;
-    }
-
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
     myCommandName = RefactoringBundle
@@ -329,9 +307,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length > 0);
-    if (myPrimaryElement != null) {
-      myPrimaryElement = elements[0];
-    }
+    myPrimaryElement = elements[0];
 
     final Iterator<String> newNames = myAllRenames.values().iterator();
     LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<PsiElement, String>();
@@ -434,29 +410,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-            if (ideFrame != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+          if (ideFrame != null) {
 
-              StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-              HyperlinkListener listener = new HyperlinkListener() {
-                @Override
-                public void hyperlinkUpdate(HyperlinkEvent e) {
-                  if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-                  Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
-                                             StringUtil.join(mySkippedUsages, new Function<UnresolvableCollisionUsageInfo, String>() {
-                                               @Override
-                                               public String fun(UnresolvableCollisionUsageInfo unresolvableCollisionUsageInfo) {
-                                                 return unresolvableCollisionUsageInfo.getDescription();
-                                               }
-                                             }, "<br>") +
-                                             "</html>", "Not All Usages Were Renamed", null);
-                }
-              };
-              statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
-            }
+            StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+            HyperlinkListener listener = new HyperlinkListener() {
+              @Override
+              public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+                Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
+                                           StringUtil.join(mySkippedUsages, unresolvableCollisionUsageInfo -> unresolvableCollisionUsageInfo.getDescription(), "<br>") +
+                                           "</html>", "Not All Usages Were Renamed", null);
+              }
+            };
+            statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
           }
         }, ModalityState.NON_MODAL);
       }

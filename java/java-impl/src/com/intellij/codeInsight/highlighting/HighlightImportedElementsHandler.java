@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   private final PsiElement myTarget;
   private final PsiImportStatementBase myImportStatement;
   private final boolean myImportStatic;
-  private Map<PsiMember,List<PsiElement>> myClassReferenceListMap = null;
+  private Map<PsiMember,List<PsiElement>> myClassReferenceListMap;
 
   public HighlightImportedElementsHandler(Editor editor, PsiFile file, PsiElement target, PsiImportStatementBase importStatement) {
     super(editor, file);
@@ -100,31 +100,25 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     final ListCellRenderer renderer = new NavigationItemListCellRenderer();
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof PsiMember) {
-          final PsiMember member = (PsiMember)o;
-          return member.getName();
-        }
-        return o.toString();
+    builder.setFilteringEnabled(o -> {
+      if (o instanceof PsiMember) {
+        final PsiMember member = (PsiMember)o;
+        return member.getName();
       }
+      return o.toString();
     });
     if (myImportStatic) {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.members.chooser.title"));
     } else {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.classes.chooser.title"));
     }
-    builder.setItemChoosenCallback(new Runnable() {
-      @Override
-      public void run() {
-        final int index= list.getSelectedIndex();
-        if (index == 0) {
-          selectionConsumer.consume(targets);
-        }
-        else {
-          selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
-        }
+    builder.setItemChoosenCallback(() -> {
+      final int index= list.getSelectedIndex();
+      if (index == 0) {
+        selectionConsumer.consume(targets);
+      }
+      else {
+        selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
       }
     });
     final JBPopup popup = builder.createPopup();

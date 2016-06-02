@@ -67,13 +67,11 @@ public class ChangeFormComponentTypeFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    CommandProcessor.getInstance().executeCommand(file.getProject(), new Runnable() {
-      public void run() {
-        final ReadonlyStatusHandler readOnlyHandler = ReadonlyStatusHandler.getInstance(myFormFile.getProject());
-        final ReadonlyStatusHandler.OperationStatus status = readOnlyHandler.ensureFilesWritable(myFormFile.getVirtualFile());
-        if (!status.hasReadonlyFiles()) {
-          FormReferenceProvider.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
-        }
+    CommandProcessor.getInstance().executeCommand(file.getProject(), () -> {
+      final ReadonlyStatusHandler readOnlyHandler = ReadonlyStatusHandler.getInstance(myFormFile.getProject());
+      final ReadonlyStatusHandler.OperationStatus status = readOnlyHandler.ensureFilesWritable(myFormFile.getVirtualFile());
+      if (!status.hasReadonlyFiles()) {
+        FormReferenceProvider.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
       }
     }, getText(), null);
   }

@@ -610,12 +610,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     }
 
     protected Condition<PsiMethod> getFilter(PsiClass testClass) {
-      return new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return TestNGUtil.hasTest(method);
-        }
-      };
+      return method -> TestNGUtil.hasTest(method);
     }
 
     @Override

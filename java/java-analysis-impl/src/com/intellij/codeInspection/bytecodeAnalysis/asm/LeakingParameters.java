@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,8 +299,8 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
   static final IParamsValue val2 = new IParamsValue(0, 2);
-  int leaking = 0;
-  int nullableLeaking = 0;
+  int leaking;
+  int nullableLeaking;
   int called = -1;
   final int rangeStart;
   final int rangeEnd;

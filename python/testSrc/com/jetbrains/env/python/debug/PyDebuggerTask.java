@@ -142,10 +142,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
 
                 @Override
-                public void onTextAvailable(ProcessEvent event, Key outputType) {
-                }
-
-                @Override
                 public void processTerminated(ProcessEvent event) {
                   myTerminateSemaphore.release();
                   if (event.getExitCode() != 0 && !myProcessCanTerminate) {

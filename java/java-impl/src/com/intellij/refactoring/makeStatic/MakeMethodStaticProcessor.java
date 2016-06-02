@@ -67,12 +67,8 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         }
       }
       else {
-        final JavaCallerChooser chooser = new MakeStaticJavaCallerChooser(myMember, myProject, new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> methods) {
-            myAdditionalMethods.addAll(methods);
-          }
-        }) {
+        final JavaCallerChooser chooser = new MakeStaticJavaCallerChooser(myMember, myProject,
+                                                                          methods -> myAdditionalMethods.addAll(methods)) {
           @Override
           protected ArrayList<UsageInfo> getTopLevelItems() {
             return new ArrayList<UsageInfo>(toMakeStatic);

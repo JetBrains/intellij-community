@@ -43,14 +43,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
   public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema";
 
-  private final static Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo> COMPARATOR = new Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo>() {
-    @Override
-    public int compare(JsonSchemaMappingsConfigurationBase.SchemaInfo o1, JsonSchemaMappingsConfigurationBase.SchemaInfo o2) {
-      if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
-        return o1.isApplicationLevel() ? -1 : 1;
-      }
-      return o1.getName().compareToIgnoreCase(o2.getName());
+  private final static Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo> COMPARATOR = (o1, o2) -> {
+    if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
+      return o1.isApplicationLevel() ? -1 : 1;
     }
+    return o1.getName().compareToIgnoreCase(o2.getName());
   };
   public static final String READ_JSON_SCHEMA = "Read JSON Schema";
   public static final String ADD_PROJECT_SCHEMA = "Add Project Schema";
@@ -58,12 +55,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Nullable
   private Project myProject;
-  private Runnable myTreeUpdater = new Runnable() {
-    @Override
-    public void run() {
-      TREE_UPDATER.run();
-      updateWarningText();
-    }
+  private Runnable myTreeUpdater = () -> {
+    TREE_UPDATER.run();
+    updateWarningText();
   };
 
   public JsonSchemaMappingsConfigurable(@Nullable final Project project) {
@@ -282,14 +276,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Override
   protected Comparator<MyNode> getNodeComparator() {
-    return new Comparator<MyNode>() {
-      @Override
-      public int compare(MyNode o1, MyNode o2) {
-        if (o1.getConfigurable() instanceof JsonSchemaConfigurable && o2.getConfigurable() instanceof JsonSchemaConfigurable) {
-          return COMPARATOR.compare(getSchemaInfo(o1), getSchemaInfo(o2));
-        }
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+    return (o1, o2) -> {
+      if (o1.getConfigurable() instanceof JsonSchemaConfigurable && o2.getConfigurable() instanceof JsonSchemaConfigurable) {
+        return COMPARATOR.compare(getSchemaInfo(o1), getSchemaInfo(o2));
       }
+      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     };
   }
 

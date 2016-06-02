@@ -371,12 +371,7 @@ public class ProcessorProfilePanel extends JPanel {
         for (Map.Entry<String, String> entry : options.entrySet()) {
           myRows.add(new KeyValuePair(entry.getKey(), entry.getValue()));
         }
-        Collections.sort(myRows, new Comparator<KeyValuePair>() {
-          @Override
-          public int compare(KeyValuePair o1, KeyValuePair o2) {
-            return o1.key.compareToIgnoreCase(o2.key);
-          }
-        });
+        Collections.sort(myRows, (o1, o2) -> o1.key.compareToIgnoreCase(o2.key));
         fireTableRowsInserted(0, options.size()-1);
       }
     }
@@ -482,11 +477,7 @@ public class ProcessorProfilePanel extends JPanel {
         for (String processor : processors) {
           myRows.add(processor);
         }
-        Collections.sort(myRows, new Comparator<String>() {
-          public int compare(String o1, String o2) {
-            return o1.compareToIgnoreCase(o2);
-          }
-        });
+        Collections.sort(myRows, (o1, o2) -> o1.compareToIgnoreCase(o2));
         fireTableRowsInserted(0, processors.size()-1);
       }
     }

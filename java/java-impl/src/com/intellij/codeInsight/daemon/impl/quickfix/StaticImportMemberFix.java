@@ -89,13 +89,10 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final List<T> methodsToImport = getMembersToImport(false);
-        if (methodsToImport.isEmpty()) return;
-        createQuestionAction(methodsToImport, project, editor).execute();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final List<T> methodsToImport = getMembersToImport(false);
+      if (methodsToImport.isEmpty()) return;
+      createQuestionAction(methodsToImport, project, editor).execute();
     });
   }
 
@@ -121,12 +118,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
          CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
         !LaterInvocator.isInModalContext()) {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          action.execute();
-        }
-      });
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
     }
 

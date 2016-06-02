@@ -43,7 +43,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -106,54 +106,52 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       findUsagesInExtendsList(usages, myCurrentInheritor.getImplementsList());
     }
     else {
-      ReferencesSearch.search(mySuperClass).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiJavaCodeReferenceElement) {
-            final PsiImportStaticStatement staticImportStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
-            if (staticImportStatement != null) {
-              usages.add(new ReplaceStaticImportUsageInfo(staticImportStatement, myTargetClasses));
-            } else {
-              final PsiImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
-              if (importStatement != null) {
-                usages.add(new RemoveImportUsageInfo(importStatement));
-              }
-              else {
-                final PsiElement parent = element.getParent();
-                if (parent instanceof PsiReferenceList) {
-                  final PsiElement pparent = parent.getParent();
-                  if (pparent instanceof PsiClass) {
-                    final PsiClass inheritor = (PsiClass)pparent;
-                    if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
-                      usages.add(new ReplaceExtendsListUsageInfo((PsiJavaCodeReferenceElement)element, mySuperClass, inheritor));
-                    }
+      ReferencesSearch.search(mySuperClass).forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiJavaCodeReferenceElement) {
+          final PsiImportStaticStatement staticImportStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
+          if (staticImportStatement != null) {
+            usages.add(new ReplaceStaticImportUsageInfo(staticImportStatement, myTargetClasses));
+          } else {
+            final PsiImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
+            if (importStatement != null) {
+              usages.add(new RemoveImportUsageInfo(importStatement));
+            }
+            else {
+              final PsiElement parent = element.getParent();
+              if (parent instanceof PsiReferenceList) {
+                final PsiElement pparent = parent.getParent();
+                if (pparent instanceof PsiClass) {
+                  final PsiClass inheritor = (PsiClass)pparent;
+                  if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
+                    usages.add(new ReplaceExtendsListUsageInfo((PsiJavaCodeReferenceElement)element, mySuperClass, inheritor));
                   }
-                } else {
-                  final PsiClass targetClass = myTargetClasses[0];
-                  final PsiClassType targetClassType = elementFactory
-                    .createType(targetClass, TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, targetClass, PsiSubstitutor.EMPTY));
+                }
+              } else {
+                final PsiClass targetClass = myTargetClasses[0];
+                final PsiClassType targetClassType = elementFactory
+                  .createType(targetClass, TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, targetClass, PsiSubstitutor.EMPTY));
 
-                  if (parent instanceof PsiTypeElement) {
-                    final PsiType superClassType = ((PsiTypeElement)parent).getType();
-                    PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper, targetClass);
-                    usages.add(new ReplaceWithSubtypeUsageInfo(((PsiTypeElement)parent), elementFactory.createType(targetClass, subst), myTargetClasses));
-                  }
-                  else if (parent instanceof PsiNewExpression) {
-                    final PsiClassType newType = elementFactory.createType(targetClass,
-                                                                           getSuperClassSubstitutor(((PsiNewExpression)parent).getType(),
-                                                                                                    targetClassType, resolveHelper,
-                                                                                                    targetClass));
-                    usages.add(new ReplaceConstructorUsageInfo(((PsiNewExpression)parent), newType, myTargetClasses));
-                  }
-                  else if (parent instanceof PsiJavaCodeReferenceElement) {
-                    usages.add(new ReplaceReferenceUsageInfo(((PsiJavaCodeReferenceElement)parent).getQualifier(), myTargetClasses));
-                  }
+                if (parent instanceof PsiTypeElement) {
+                  final PsiType superClassType = ((PsiTypeElement)parent).getType();
+                  PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper, targetClass);
+                  usages.add(new ReplaceWithSubtypeUsageInfo(((PsiTypeElement)parent), elementFactory.createType(targetClass, subst), myTargetClasses));
+                }
+                else if (parent instanceof PsiNewExpression) {
+                  final PsiClassType newType = elementFactory.createType(targetClass,
+                                                                         getSuperClassSubstitutor(((PsiNewExpression)parent).getType(),
+                                                                                                  targetClassType, resolveHelper,
+                                                                                                  targetClass));
+                  usages.add(new ReplaceConstructorUsageInfo(((PsiNewExpression)parent), newType, myTargetClasses));
+                }
+                else if (parent instanceof PsiJavaCodeReferenceElement) {
+                  usages.add(new ReplaceReferenceUsageInfo(((PsiJavaCodeReferenceElement)parent).getQualifier(), myTargetClasses));
                 }
               }
             }
           }
-          return true;
         }
+        return true;
       });
     }
     for (PsiClass targetClass : myTargetClasses) {
@@ -250,22 +248,19 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
     }
     if (myCurrentInheritor != null) {
-      ReferencesSearch.search(myCurrentInheritor).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element != null) {
-            final PsiElement parent = element.getParent();
-            if (parent instanceof PsiNewExpression) {
-              final PsiClass aClass = PsiUtil.resolveClassInType(getPlaceExpectedType(parent));
-              if (aClass == mySuperClass) {
-                conflicts.putValue(parent, "Instance of target type is passed to a place where super class is expected.");
-                return false;
-              }
+      ReferencesSearch.search(myCurrentInheritor).forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (element != null) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiNewExpression) {
+            final PsiClass aClass = PsiUtil.resolveClassInType(getPlaceExpectedType(parent));
+            if (aClass == mySuperClass) {
+              conflicts.putValue(parent, "Instance of target type is passed to a place where super class is expected.");
+              return false;
             }
           }
-          return true;
         }
+        return true;
       });
     }
     checkConflicts(refUsages, conflicts);
@@ -306,13 +301,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
-      final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, new Function<PsiClass, UsageInfo>() {
-        @Override
-        public UsageInfo fun(PsiClass psiClass) {
-          return new UsageInfo(psiClass);
-        }
-      });
-      new PushDownProcessor(mySuperClass, myMemberInfos, new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
+      final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
+      new PushDownProcessor<MemberInfo, PsiMember, PsiClass>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
 
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
       for (UsageInfo usageInfo : usages) {

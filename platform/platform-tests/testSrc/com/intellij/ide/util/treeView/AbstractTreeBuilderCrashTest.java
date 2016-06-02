@@ -20,22 +20,16 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
   }
 
   public void testElementMovedButNodeIsStillInStructure() throws Exception {
-    assertNodeMove(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
-        getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
-      }
+    assertNodeMove(() -> {
+      getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
+      getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
     });
   }
 
   public void testElementMovedButNodeIsStillInStructure2() throws Exception {
-    assertNodeMove(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
-        getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
-      }
+    assertNodeMove(() -> {
+      getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder2"));
+      getBuilder().addSubtreeToUpdateByElement(myRoot.getChild("folder1"));
     });
   }
 

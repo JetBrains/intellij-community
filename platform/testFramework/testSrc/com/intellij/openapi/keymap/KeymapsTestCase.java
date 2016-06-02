@@ -431,12 +431,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
     }
     List<Shortcut> sorted = new ArrayList<Shortcut>(shortcuts);
-    Collections.sort(sorted, new Comparator<Shortcut>() {
-      @Override
-      public int compare(Shortcut o1, Shortcut o2) {
-        return getText(o1).compareTo(getText(o2));
-      }
-    });
+    Collections.sort(sorted, (o1, o2) -> getText(o1).compareTo(getText(o2)));
 
     if (OUTPUT_TEST_DATA) {
       System.out.println("put(\"" + keymap.getName() + "\", new String[][] {");
@@ -583,12 +578,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     Map<String, Map<String, List<String>>> duplicates = getKnownDuplicates();
 
     THashSet<String> allMaps =
-      new THashSet<String>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), new Function<Keymap, String>() {
-        @Override
-        public String fun(Keymap keymap) {
-          return keymap.getName();
-        }
-      }));
+      new THashSet<String>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
     TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were added: " +
                         ContainerUtil.subtract(allMaps, duplicates.keySet()),
                         ContainerUtil.subtract(allMaps, duplicates.keySet()).isEmpty()
@@ -650,12 +640,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
           .append(". Please modify known duplicates list:\n");
         for (Shortcut eachShortcut : keymapToShortcuts.getValue()) {
           message.append(" { ").append(StringUtil.wrapWithDoubleQuote(getText(eachShortcut))).append(",\t")
-            .append(StringUtil.join(keymap.getActionIds(eachShortcut), new Function<String, String>() {
-              @Override
-              public String fun(String s) {
-                return StringUtil.wrapWithDoubleQuote(s);
-              }
-            }, ", "))
+            .append(StringUtil.join(keymap.getActionIds(eachShortcut), s -> StringUtil.wrapWithDoubleQuote(s), ", "))
             .append("},\n");
         }
       }

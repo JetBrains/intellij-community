@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
@@ -44,6 +43,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
       File pluginXmlFile = JpsPathUtil.urlToFile(pluginXmlUrl);
       if (pluginXmlFile.exists()) {
         try {
-          Element rootElement = JDOMUtil.loadDocument(pluginXmlFile).getRootElement();
+          Element rootElement = JDOMUtil.load(pluginXmlFile);
           for (Element dependsElement : JDOMUtil.getChildren(rootElement, "depends")) {
             String relativePath = dependsElement.getAttributeValue("config-file");
             if (relativePath != null) {

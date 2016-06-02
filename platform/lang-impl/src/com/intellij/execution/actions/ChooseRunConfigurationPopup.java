@@ -207,12 +207,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          itemWrapper.perform(project, executor, dataContext);
-        }
-      });
+      itemWrapper.perform(project, executor, dataContext);
     }
   }
 
@@ -480,25 +475,17 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              myAction.editConfiguration(myProject, (RunnerAndConfigurationSettings)o);
-            }
-          });
+          return doFinalStep(() -> myAction.editConfiguration(myProject, (RunnerAndConfigurationSettings)o));
         }
       }
 
       if (finalChoice && wrapper.available(myAction.getExecutor())) {
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            if (myAction.getExecutor() == myAction.myAlternativeExecutor) {
-              PropertiesComponent.getInstance().setValue(myAction.myAddKey, Boolean.toString(true));
-            }
-
-            wrapper.perform(myProject, myAction.getExecutor(), DataManager.getInstance().getDataContext());
+        return doFinalStep(() -> {
+          if (myAction.getExecutor() == myAction.myAlternativeExecutor) {
+            PropertiesComponent.getInstance().setValue(myAction.myAddKey, Boolean.toString(true));
           }
+
+          wrapper.perform(myProject, myAction.getExecutor(), DataManager.getInstance().getDataContext());
         });
       }
       else {
@@ -625,12 +612,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     @Override
     public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
-      return doFinalStep(new Runnable() {
-        @Override
-        public void run() {
-          selectedValue.perform();
-        }
-      });
+      return doFinalStep(() -> selectedValue.perform());
     }
 
     @Override
@@ -754,12 +736,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         return;
       for (final Object item : myListPopup.getListStep().getValues()) {
         if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
-          myListPopup.setFinalRunnable(new Runnable() {
-            @Override
-            public void run() {
-              execute((ItemWrapper)item, myExecutor);
-            }
-          });
+          myListPopup.setFinalRunnable(() -> execute((ItemWrapper)item, myExecutor));
           myListPopup.closeOk(null);
         }
       }
@@ -908,21 +885,13 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (finalChoice) {
         if (myPopup.myEditConfiguration) {
           final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              myPopup.editConfiguration(myProject, settings);
-            }
-          });
+          return doFinalStep(() -> myPopup.editConfiguration(myProject, settings));
         }
 
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            RunnerAndConfigurationSettings settings = selectedValue.getSettings();
-            RunManagerEx.getInstanceEx(myProject).setSelectedConfiguration(settings);
-            ExecutionUtil.runConfiguration(settings, myExecutorProvider.getExecutor());
-          }
+        return doFinalStep(() -> {
+          RunnerAndConfigurationSettings settings = selectedValue.getSettings();
+          RunManagerEx.getInstanceEx(myProject).setSelectedConfiguration(settings);
+          ExecutionUtil.runConfiguration(settings, myExecutorProvider.getExecutor());
         });
       } else {
         return selectedValue;
@@ -972,13 +941,10 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
               super.init();
             }
           }.showAndGet()) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-                if (configuration != null) {
-                  ExecutionUtil.runConfiguration(configuration, executor);
-                }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+              if (configuration != null) {
+                ExecutionUtil.runConfiguration(configuration, executor);
               }
             }, project.getDisposed());
           }

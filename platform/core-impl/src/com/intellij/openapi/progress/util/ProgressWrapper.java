@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
@@ -32,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator, StandardProgressIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWrapper");
-
   private final ProgressIndicator myOriginal;
   private final boolean myCheckCanceledForMe;
   private final int nested;

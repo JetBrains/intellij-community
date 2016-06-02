@@ -136,7 +136,7 @@ public class ByChar {
                                                       @NotNull CharSequence text1,
                                                       @NotNull CharSequence text2,
                                                       @NotNull FairDiffIterable changes) {
-    final List<Range> ranges = new ArrayList<Range>();
+    final List<Range> ranges = new ArrayList<>();
 
     for (Range ch : changes.iterateChanges()) {
       int startOffset1;

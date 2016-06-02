@@ -65,16 +65,13 @@ class StateMerger {
         final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
         
         final Set<DfaVariableValue> unknowns = getAllUnknownVariables(group);
-        replacements.stripAndMerge(group, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
-          @Override
-          public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
-            DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
-            fact.removeFromState(copy);
-            if (fact.myType == FactType.equality) {
-              restoreOtherInequalities(fact, group, copy);
-            }
-            return copy;
+        replacements.stripAndMerge(group, original -> {
+          DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
+          fact.removeFromState(copy);
+          if (fact.myType == FactType.equality) {
+            restoreOtherInequalities(fact, group, copy);
           }
+          return copy;
         });
       }
 
@@ -95,12 +92,7 @@ class StateMerger {
 
   @NotNull
   private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
-    return new LinkedHashSet<Fact>(ContainerUtil.filter(getFacts(state), new Condition<Fact>() {
-      @Override
-      public boolean value(Fact another) {
-        return !fact.invalidatesFact(another);
-      }
-    }));
+    return new LinkedHashSet<Fact>(ContainerUtil.filter(getFacts(state), another -> !fact.invalidatesFact(another)));
   }
 
   private void restoreOtherInequalities(@NotNull Fact removedFact, @NotNull Collection<DfaMemoryStateImpl> mergedGroup, @NotNull DfaMemoryStateImpl state) {
@@ -171,12 +163,7 @@ class StateMerger {
       
       for (final DfaMemoryStateImpl state1 : similarStates) {
         ProgressManager.checkCanceled();
-        List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
-          @Override
-          public boolean value(DfaMemoryStateImpl state2) {
-            return state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2);
-          }
-        });
+        List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, state2 -> state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2));
         if (mergeUnknowns(replacements, complementary)) break;
       }
     }
@@ -205,14 +192,9 @@ class StateMerger {
             continue;
           }
           
-          List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
-            @Override
-            public boolean value(DfaMemoryStateImpl state2) {
-              return state1.equalsByRelations(state2) &&
-                     areEquivalentModuloVar(state1, state2, var) &&
-                     areVarStatesEqualModuloNullability(state1, state2, var);
-            }
-          });
+          List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, state2 -> state1.equalsByRelations(state2) &&
+                                                                                             areEquivalentModuloVar(state1, state2, var) &&
+                                                                                             areVarStatesEqualModuloNullability(state1, state2, var));
           if (mergeUnknowns(replacements, complementary)) break groupLoop;
         }
       }
@@ -227,12 +209,7 @@ class StateMerger {
     final Set<DfaVariableValue> toFlush = getAllUnknownVariables(complementary);
     if (toFlush.isEmpty()) return false;
 
-    return replacements.stripAndMerge(complementary, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
-      @Override
-      public DfaMemoryStateImpl fun(DfaMemoryStateImpl original) {
-        return withUnknownVariables(original, toFlush);
-      }
-    });
+    return replacements.stripAndMerge(complementary, original -> withUnknownVariables(original, toFlush));
   }
 
   private boolean areEquivalentModuloVar(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {

@@ -33,6 +33,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -91,13 +92,8 @@ public class ProjectBytecodeAnalysis {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation[]> compute() {
-        return Result.create(collectInferredAnnotations(listOwner), listOwner);
-      }
-    });
+    return CachedValuesManager.getCachedValue(listOwner,
+                                              () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
   /**
@@ -218,27 +214,27 @@ public class ProjectBytecodeAnalysis {
   }
 
   public PsiAnnotation getNotNullAnnotation() {
-    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, new CachedValueProvider<PsiAnnotation>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation> compute() {
-        return Result.create(createAnnotationFromText("@" + AnnotationUtil.NOT_NULL), ModificationTracker.NEVER_CHANGED);
-      }
-    });
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
+      CachedValueProvider.Result.create(createAnnotationFromText("@" + AnnotationUtil.NOT_NULL), ModificationTracker.NEVER_CHANGED));
   }
 
   public PsiAnnotation getNullableAnnotation() {
-    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, new CachedValueProvider<PsiAnnotation>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation> compute() {
-        return Result.create(createAnnotationFromText("@" + AnnotationUtil.NULLABLE), ModificationTracker.NEVER_CHANGED);
-      }
-    });
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
+      CachedValueProvider.Result.create(createAnnotationFromText("@" + AnnotationUtil.NULLABLE), ModificationTracker.NEVER_CHANGED));
   }
 
   public PsiAnnotation createContractAnnotation(String contractValue) {
-    return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")");
+    Map<String, PsiAnnotation> cache = CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
+      Map<String, PsiAnnotation> map = new ConcurrentFactoryMap<String, PsiAnnotation>() {
+        @Nullable
+        @Override
+        protected PsiAnnotation create(String attrs) {
+          return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + attrs + ")");
+        }
+      };
+      return CachedValueProvider.Result.create(map, ModificationTracker.NEVER_CHANGED);
+    });
+    return cache.get(contractValue);
   }
 
   @Nullable

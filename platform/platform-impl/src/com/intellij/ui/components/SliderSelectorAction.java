@@ -100,12 +100,9 @@ public class SliderSelectorAction extends DumbAwareAction {
       result.add(slider, BorderLayout.CENTER);
     }
 
-    final Runnable saveSelection = new Runnable() {
-      @Override
-      public void run() {
-        int value = slider.getModel().getValue();
-        myConfiguration.getResultConsumer().consume(value);
-      }
+    final Runnable saveSelection = () -> {
+      int value = slider.getModel().getValue();
+      myConfiguration.getResultConsumer().consume(value);
     };
     final Ref<JBPopup> popupRef = new Ref<JBPopup>(null);
     final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider)

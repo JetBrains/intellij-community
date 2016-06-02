@@ -420,21 +420,18 @@ public class AbstractFileTreeTable<T> extends TreeTable {
         setUserObject(myObject);
         final List<ConvenientNode> children = new ArrayList<ConvenientNode>();
         appendChildrenTo(children);
-        Collections.sort(children, new Comparator<ConvenientNode>() {
-          @Override
-          public int compare(final ConvenientNode node1, final ConvenientNode node2) {
-            Object o1 = node1.getObject();
-            Object o2 = node2.getObject();
-            if (o1 == o2) return 0;
-            if (o1 instanceof Project) return -1;
-            if (o2 instanceof Project) return 1;
-            VirtualFile file1 = (VirtualFile)o1;
-            VirtualFile file2 = (VirtualFile)o2;
-            if (file1.isDirectory() != file2.isDirectory()) {
-              return file1.isDirectory() ? -1 : 1;
-            }
-            return file1.getName().compareTo(file2.getName());
+        Collections.sort(children, (node1, node2) -> {
+          Object o1 = node1.getObject();
+          Object o2 = node2.getObject();
+          if (o1 == o2) return 0;
+          if (o1 instanceof Project) return -1;
+          if (o2 instanceof Project) return 1;
+          VirtualFile file1 = (VirtualFile)o1;
+          VirtualFile file2 = (VirtualFile)o2;
+          if (file1.isDirectory() != file2.isDirectory()) {
+            return file1.isDirectory() ? -1 : 1;
           }
+          return file1.getName().compareTo(file2.getName());
         });
         int i = 0;
         for (ConvenientNode child : children) {

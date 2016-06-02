@@ -24,12 +24,7 @@ public class ReplaceCommand extends SearchCommand {
   }
 
   protected UsageViewContext createUsageViewContext() {
-    final Runnable searchStarter = new Runnable() {
-      @Override
-      public void run() {
-        new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
-      }
-    };
+    final Runnable searchStarter = () -> new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
     myReplaceUsageViewContext = new ReplaceUsageViewContext(mySearchContext, myConfiguration, searchStarter);
     return myReplaceUsageViewContext;
   }

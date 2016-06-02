@@ -25,7 +25,6 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 abstract class DocumentsSynchronizer {
@@ -51,11 +50,8 @@ abstract class DocumentsSynchronizer {
     }
   };
 
-  private final PropertyChangeListener myROListener = new PropertyChangeListener() {
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      if (Document.PROP_WRITABLE.equals(evt.getPropertyName())) getDocument2().setReadOnly(!getDocument1().isWritable());
-    }
+  private final PropertyChangeListener myROListener = event -> {
+    if (Document.PROP_WRITABLE.equals(event.getPropertyName())) getDocument2().setReadOnly(!getDocument1().isWritable());
   };
 
   protected DocumentsSynchronizer(@Nullable Project project, @NotNull Document document1, @NotNull Document document2) {
@@ -85,17 +81,10 @@ abstract class DocumentsSynchronizer {
                                @NotNull final CharSequence newText) {
     try {
       myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          assert endOffset <= document.getTextLength();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              document.replaceString(startOffset, endOffset, newText);
-            }
-          });
-        }
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          document.replaceString(startOffset, endOffset, newText);
+        });
       }, "Synchronize document and its fragment", document);
     }
     finally {

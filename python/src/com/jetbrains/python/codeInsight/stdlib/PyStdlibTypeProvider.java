@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -291,9 +292,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static String getQualifiedName(@NotNull PyFunction f, @Nullable PsiElement callSite) {
-    if (!f.isValid()) {
-      return null;
-    }
+    PyPsiUtils.assertValid(f);
     String result = f.getName();
     final PyClass c = f.getContainingClass();
     final VirtualFile vfile = f.getContainingFile().getVirtualFile();

@@ -44,8 +44,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -115,10 +113,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
     Side.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
 
-    if (Registry.is("diff.divider.repainting.disable.blitting")) {
-      for (TextEditorHolder holder : holders) {
-        holder.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-      }
+    for (TextEditorHolder holder : holders) {
+      DiffUtil.disableBlitting(holder.getEditor());
     }
 
     return holders;
@@ -167,6 +163,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     SyncScrollSupport.SyncScrollable scrollable = getSyncScrollable();
     if (scrollable != null) {
       mySyncScrollSupport = new TwosideSyncScrollSupport(getEditors(), scrollable);
+      myEditorSettingsAction.setSyncScrollSupport(mySyncScrollSupport);
     }
   }
 
@@ -203,12 +200,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @NotNull
   public List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
-      myEditors = ContainerUtil.map(getEditorHolders(), new Function<TextEditorHolder, EditorEx>() {
-        @Override
-        public EditorEx fun(TextEditorHolder holder) {
-          return holder.getEditor();
-        }
-      });
+      myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }
@@ -329,7 +321,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
       }
 
       setCurrentSide(targetSide);
-      currentEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      targetEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
       DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
@@ -369,12 +361,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
-      if (Registry.is("diff.divider.repainting.fix")) {
-        myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider();
-      }
+      myContentPanel.repaint();
     }
   }
 

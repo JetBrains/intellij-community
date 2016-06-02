@@ -25,6 +25,7 @@ public class AnswerPlaceholder {
   private MyInitialState myInitialState;
   private StudyStatus myStatus = StudyStatus.Uninitialized;
   private boolean mySelected = false;
+  private boolean myUseLength = true;
 
   @Transient private TaskFile myTaskFile;
 
@@ -45,6 +46,9 @@ public class AnswerPlaceholder {
     myIndex = index;
   }
 
+  /**
+   * in actions {@link AnswerPlaceholder#getRealLength()} should be used
+   */
   public int getLength() {
     return length;
   }
@@ -138,6 +142,9 @@ public class AnswerPlaceholder {
     line = myInitialState.myLine;
     start = myInitialState.myStart;
     length = myInitialState.myLength;
+    if (!getUseLength()) {
+      possibleAnswer = myTaskText;
+    }
   }
 
   public StudyStatus getStatus() {
@@ -154,6 +161,29 @@ public class AnswerPlaceholder {
 
   public void setSelected(boolean selected) {
     mySelected = selected;
+  }
+
+  public void init() {
+    setInitialState(new MyInitialState(line, myTaskText.length(), start));
+  }
+
+  public boolean getUseLength() {
+    return myUseLength;
+  }
+
+  /**
+   * @return length or possible answer length
+   */
+  public int getRealLength() {
+    return myUseLength ? getLength() : getPossibleAnswerLength();
+  }
+
+  public void setUseLength(boolean useLength) {
+    myUseLength = useLength;
+  }
+
+  public void setInitialState(AnswerPlaceholder placeholder) {
+    setInitialState(new MyInitialState(placeholder.line, placeholder.length, placeholder.start));
   }
 
   public static class MyInitialState {

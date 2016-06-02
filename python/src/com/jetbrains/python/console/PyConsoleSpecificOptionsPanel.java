@@ -73,12 +73,7 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   public void reset() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myEditorTextField.setText(myConsoleSettings.myCustomStartScript);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myEditorTextField.setText(myConsoleSettings.myCustomStartScript));
 
     myConsoleSettings.reset(myProject, myCommonOptionsForm);
   }

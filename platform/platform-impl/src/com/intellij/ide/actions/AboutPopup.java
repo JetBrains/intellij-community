@@ -44,9 +44,12 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -67,19 +70,12 @@ public class AboutPopup {
   public static void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
-    final JPanel panel = new JPanel(new BorderLayout());
+    final PopupPanel panel = new PopupPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     if (appInfo.showLicenseeInfo()) {
       final InfoSurface infoSurface = new InfoSurface(image);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
-      panel.add(infoSurface, BorderLayout.NORTH);
-
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          copyInfoToClipboard(infoSurface.getText());
-        }
-      }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), panel);
+      panel.setInfoSurface(infoSurface);
     }
     else {
       panel.add(new JLabel(image), BorderLayout.NORTH);
@@ -199,7 +195,7 @@ public class AboutPopup {
 
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
             if (COPY_URL.equals(myActiveLink.myUrl)) {
@@ -333,7 +329,13 @@ public class AboutPopup {
       }
       final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
       final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
-      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", copyrightX, copyrightY);
+      g2.drawString(getCopyrightText(), copyrightX, copyrightY);
+    }
+
+    @NotNull
+    private String getCopyrightText() {
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      return "\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.";
     }
 
     @NotNull
@@ -434,12 +436,27 @@ public class AboutPopup {
       private void renderWord(final String s, final int indentX) throws OverflowException {
         for (int j = 0; j != s.length(); ++j) {
           final char c = s.charAt(j);
-          final int cW = fontmetrics.charWidth(c);
-          if (x + cW >= w) {
-            lineFeed(indentX, s);
+          Font f = null;
+          FontMetrics fm = null;
+          try {
+            if (!g2.getFont().canDisplay(c)) {
+              f = g2.getFont();
+              fm = fontmetrics;
+              g2.setFont(new Font("Monospaced", f.getStyle(), f.getSize()));
+              fontmetrics = g2.getFontMetrics();
+            }
+            final int cW = fontmetrics.charWidth(c);
+            if (x + cW >= w) {
+              lineFeed(indentX, s);
+            }
+            g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+            x += cW;
+          } finally {
+            if (f != null) {
+              g2.setFont(f);
+              fontmetrics = fm;
+            }
           }
-          g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-          x += cW;
         }
       }
 
@@ -512,6 +529,94 @@ public class AboutPopup {
       private Link(Rectangle rectangle, String url) {
         myRectangle = rectangle;
         myUrl = url;
+      }
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleInfoSurface();
+      }
+      return accessibleContext;
+    }
+
+    protected class AccessibleInfoSurface extends AccessibleJPanel {
+      @Override
+      public String getAccessibleName() {
+        String text = "System Information\n" + getText() + "\n" + getCopyrightText();
+        return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
+      }
+    }
+  }
+
+  public static class PopupPanel extends JPanel {
+
+    private InfoSurface myInfoSurface;
+
+    public PopupPanel(LayoutManager layout) {
+      super(layout);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessiblePopupPanel();
+      }
+      return accessibleContext;
+    }
+
+    public void setInfoSurface(InfoSurface infoSurface) {
+      myInfoSurface = infoSurface;
+      add(infoSurface, BorderLayout.NORTH);
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          copyInfoToClipboard(myInfoSurface.getText());
+        }
+      }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), this);
+    }
+
+    protected class AccessiblePopupPanel extends AccessibleJPanel implements AccessibleAction {
+      @Override
+      public String getAccessibleName() {
+        ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+        return "About " + appInfo.getFullApplicationName();
+      }
+
+      @Override
+      public String getAccessibleDescription() {
+        if (myInfoSurface != null) {
+          return "Press Copy key to copy system information to clipboard";
+        }
+        return null;
+      }
+
+      @Override
+      public AccessibleAction getAccessibleAction() {
+        return this;
+      }
+
+      @Override
+      public int getAccessibleActionCount() {
+        if(myInfoSurface != null)
+          return 1;
+        return 0;
+      }
+
+      @Override
+      public String getAccessibleActionDescription(int i) {
+        if (i == 0 && myInfoSurface != null)
+          return "Copy system information to clipboard";
+        return null;
+      }
+
+      @Override
+      public boolean doAccessibleAction(int i) {
+        if (i == 0 && myInfoSurface != null) {
+          copyInfoToClipboard(myInfoSurface.getText());
+          return true;
+        }
+        return false;
       }
     }
   }

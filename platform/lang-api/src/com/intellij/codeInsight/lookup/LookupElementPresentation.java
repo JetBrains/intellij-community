@@ -133,12 +133,7 @@ public class LookupElementPresentation {
   @Nullable
   public String getTailText() {
     if (myTail == null) return null;
-    return StringUtil.join(myTail, new Function<TextFragment, String>() {
-      @Override
-      public String fun(TextFragment fragment) {
-        return fragment.text;
-      }
-    }, "");
+    return StringUtil.join(myTail, fragment -> fragment.text, "");
   }
 
   @Nullable

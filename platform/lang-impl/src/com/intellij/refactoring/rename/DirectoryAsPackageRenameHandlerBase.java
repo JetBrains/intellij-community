@@ -232,12 +232,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         source.add(directory);
       }
     }
-    final Function<PsiDirectory, String> directoryPresentation = new Function<PsiDirectory, String>() {
-      @Override
-      public String fun(PsiDirectory directory) {
-        return directory.getVirtualFile().getPresentableUrl();
-      }
-    };
+    final Function<PsiDirectory, String> directoryPresentation = directory -> directory.getVirtualFile().getPresentableUrl();
     message.append(StringUtil.join(source, directoryPresentation, "\n"));
     if (!generated.isEmpty()) {
       message.append("\n\nalso generated:\n");

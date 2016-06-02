@@ -215,12 +215,6 @@ public class ExpressionGenerator extends Generator {
       builder = this.builder;
     }
 
-    final GrExpression qualifier = newExpression.getQualifier();
-    if (qualifier != null) {
-      qualifier.accept(this);
-      builder.append('.');
-    }
-
     final GrTypeElement typeElement = newExpression.getTypeElement();
     final GrArrayDeclaration arrayDeclaration = newExpression.getArrayDeclaration();
     final GrCodeReferenceElement referenceElement = newExpression.getReferenceElement();

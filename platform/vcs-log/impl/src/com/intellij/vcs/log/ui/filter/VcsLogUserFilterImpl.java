@@ -1,9 +1,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -52,12 +50,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     for (String user : myUsers) {
       Set<VcsUser> users = getUsers(root, user);
       if (!users.isEmpty()) {
-        result.addAll(ContainerUtil.map(users, new Function<VcsUser, String>() {
-          @Override
-          public String fun(VcsUser user) {
-            return VcsUserUtil.toExactString(user);
-          }
-        }));
+        result.addAll(ContainerUtil.map(users, user1 -> VcsUserUtil.toExactString(user1)));
       }
       else if (!user.equals(ME)) {
         result.add(user);
@@ -92,24 +85,21 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
   @Override
   public boolean matches(@NotNull final VcsCommitMetadata commit) {
-    return ContainerUtil.exists(myUsers, new Condition<String>() {
-      @Override
-      public boolean value(String name) {
-        Set<VcsUser> users = getUsers(commit.getRoot(), name);
-        if (!users.isEmpty()) {
-          return users.contains(commit.getAuthor());
-        }
-        else if (!name.equals(ME)) {
-          String lowerUser = VcsUserUtil.nameToLowerCase(name);
-          boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
-                      VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
-          if (result) {
-            LOG.warn("Unregistered author " + commit.getAuthor() + " for commit " + commit.getId().asString() + "; search pattern " + name);
-          }
-          return result;
-        }
-        return false;
+    return ContainerUtil.exists(myUsers, name -> {
+      Set<VcsUser> users = getUsers(commit.getRoot(), name);
+      if (!users.isEmpty()) {
+        return users.contains(commit.getAuthor());
       }
+      else if (!name.equals(ME)) {
+        String lowerUser = VcsUserUtil.nameToLowerCase(name);
+        boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
+                         VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");
+        if (result) {
+          LOG.warn("Unregistered author " + commit.getAuthor() + " for commit " + commit.getId().asString() + "; search pattern " + name);
+        }
+        return result;
+      }
+      return false;
     });
   }
 

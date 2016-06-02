@@ -53,17 +53,7 @@ public class SelectedTextFormatter {
     final int start = myEditor.getSelectionModel().getSelectionStart();
     final int end = myEditor.getSelectionModel().getSelectionEnd();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(start, end, myTextBefore);
-          }
-        }, "Configure code style on selected fragment: restore text before", null);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> document.replaceString(start, end, myTextBefore), "Configure code style on selected fragment: restore text before", null));
 
     myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
   }
@@ -87,17 +77,7 @@ public class SelectedTextFormatter {
 
   private static void reformatRange(final @NotNull PsiFile file, final @NotNull TextRange range) {
     final Project project = file.getProject();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset());
-          }
-        });
-      }
-    }, "Reformat", null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset())), "Reformat", null);
   }
 
   @NotNull

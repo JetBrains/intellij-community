@@ -17,8 +17,6 @@ import com.intellij.psi.tree.IElementType;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 ALPHA=[A-Za-z_]
 DIGIT=[0-9]

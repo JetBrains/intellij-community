@@ -39,9 +39,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -51,7 +51,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @State(
   name = "EditorColorsManagerImpl",
@@ -64,7 +67,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NonNls private static final String SCHEME_NODE_NAME = "scheme";
   private static final String DEFAULT_NAME = "Default";
 
-  private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
+  private final EventDispatcher<EditorColorsListener> myDispatcher = EventDispatcher.create(EditorColorsListener.class);
+  private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final DefaultColorSchemesManager myDefaultColorSchemeManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemeManager;
@@ -147,12 +151,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
       for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, new ThrowableConvertor<Element, EditorColorsScheme, Throwable>() {
-          @Override
-          public EditorColorsScheme convert(Element element) throws Throwable {
-            return new ReadOnlyColorsSchemeImpl(element);
-          }
-        });
+        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, ReadOnlyColorsSchemeImpl::new);
       }
     }
   }
@@ -163,6 +162,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
+    // we need to push events to components that use editor font, e.g. HTML editor panes
+    EditorColorsManagerImpl instance = (EditorColorsManagerImpl)getInstance();
+    instance.myTreeDispatcher.getMulticaster().globalSchemeChange(instance.getGlobalScheme());
   }
 
   static class ReadOnlyColorsSchemeImpl extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
@@ -232,15 +234,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme[] getAllSchemes() {
     EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
-    Arrays.sort(result, new Comparator<EditorColorsScheme>() {
-      @Override
-      public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
-        if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
-        if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
-        if (s1.getName().equals(DEFAULT_NAME)) return -1;
-        if (s2.getName().equals(DEFAULT_NAME)) return 1;
-        return s1.getName().compareToIgnoreCase(s2.getName());
-      }
+    Arrays.sort(result, (s1, s2) -> {
+      if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
+      if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
+      if (s1.getName().equals(DEFAULT_NAME)) return -1;
+      if (s2.getName().equals(DEFAULT_NAME)) return 1;
+      return s1.getName().compareToIgnoreCase(s2.getName());
     });
     return result;
   }
@@ -282,22 +281,23 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void fireChanges(EditorColorsScheme scheme) {
-    myListeners.getMulticaster().globalSchemeChange(scheme);
+    myDispatcher.getMulticaster().globalSchemeChange(scheme);
+    myTreeDispatcher.getMulticaster().globalSchemeChange(scheme);
   }
 
   @Override
   public void addEditorColorsListener(@NotNull EditorColorsListener listener) {
-    myListeners.addListener(listener);
+    myDispatcher.addListener(listener);
   }
 
   @Override
   public void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
-    myListeners.addListener(listener, disposable);
+    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
   public void removeEditorColorsListener(@NotNull EditorColorsListener listener) {
-    myListeners.removeListener(listener);
+    myDispatcher.removeListener(listener);
   }
 
   @Override

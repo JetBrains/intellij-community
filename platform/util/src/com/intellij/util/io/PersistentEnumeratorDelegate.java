@@ -39,6 +39,15 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
                    new PersistentEnumerator<Data>(file, dataDescriptor, initialSize);
   }
 
+  public PersistentEnumeratorDelegate(@NotNull final File file,
+                                      @NotNull KeyDescriptor<Data> dataDescriptor,
+                                      final int initialSize,
+                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      int version) throws IOException {
+    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize, lockContext, version) :
+                   new PersistentEnumerator<Data>(file, dataDescriptor, initialSize, null, version);
+  }
+
   static boolean useBtree() {
     String property = System.getProperty("idea.use.btree");
     return !"false".equals(property);

@@ -28,5 +28,6 @@ public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSe
     super(XmlFoldingSettings.getInstance());
     checkBox("COLLAPSE_XML_TAGS", ApplicationBundle.message("checkbox.collapse.xml.tags"));
     checkBox("COLLAPSE_HTML_STYLE_ATTRIBUTE", ApplicationBundle.message("checkbox.collapse.html.style.attribute"));
+    checkBox("COLLAPSE_ENTITIES", ApplicationBundle.message("checkbox.collapse.entities"));
   }
 }

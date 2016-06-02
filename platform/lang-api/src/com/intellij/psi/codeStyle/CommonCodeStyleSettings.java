@@ -1026,13 +1026,5 @@ public class CommonCodeStyleSettings {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
-
-    boolean isRecalculateForCommittedDocument() {
-      return myInaccurate;
-    }
-
-    void setRecalculateForCommittedDocument(boolean value) {
-      myInaccurate = value;
-    }
   }
 }

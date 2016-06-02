@@ -23,14 +23,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -138,13 +137,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(false);
 
-      myPanel.setChanges(ContainerUtil.filter(changes, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return change.getBeforeRevision() != null && change.getAfterRevision() != null;
-        }
-      }));
-      myPanel.showTextStoreOption();
       JComponent panel = myPanel.getPanel();
       panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, "Patch File Settings");
       return panel;
@@ -189,13 +181,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }, ModalityState.NON_MODAL, myProject);
         return;
       }
-      myPanel.onOk();
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, myPanel.isStoreTexts());
-      final List<FilePath> list = new ArrayList<FilePath>();
-      for (Change change : myPanel.getIncludedChanges()) {
-        list.add(ChangesUtil.getFilePath(change));
-      }
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, list);
 
       int binaryCount = 0;
       for(Change change: changes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class JavaSharedImplUtil {
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
     for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType(annotations);
+      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
     }
 
     return type;

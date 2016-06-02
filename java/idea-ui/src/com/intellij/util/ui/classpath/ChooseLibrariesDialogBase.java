@@ -136,12 +136,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
-    myBuilder.queueUpdate().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myBuilder.select(library);
-      }
-    });
+    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.select(library));
   }
 
   private boolean processSelection(final Processor<Library> processor) {

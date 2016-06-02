@@ -2,6 +2,7 @@ package com.intellij.javadoc;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,13 +30,17 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
 
   @Override
   public Result postProcessEnter(@NotNull final PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
-    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
-        || !CodeStyleSettingsManager.getSettings(file.getProject()).JD_ALIGN_PARAM_COMMENTS)
-    {
+    if (!(file instanceof PsiJavaFile)
+        || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
+        || !CodeStyleSettingsManager.getSettings(file.getProject()).JD_ALIGN_PARAM_COMMENTS) {
       return Result.Continue;
     }
     final CaretModel caretModel = editor.getCaretModel();
     final int caretOffset = caretModel.getOffset();
+    if (!isInJavaDoc(editor, caretOffset)) {
+      return Result.Continue;
+    }
+    
     final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair
       = myHelper.parse(file, editor, caretOffset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition == null) {
@@ -55,16 +61,24 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
     if (editor.offsetToLogicalPosition(offsetAfterLastWs).column < desiredPosition.column) {
       final int lineStartOffset = document.getLineStartOffset(desiredPosition.line);
       final String toInsert = StringUtil.repeat(" ", desiredPosition.column - (offsetAfterLastWs - lineStartOffset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          document.insertString(caretOffset, toInsert);
-          PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        document.insertString(caretOffset, toInsert);
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       });
     } 
 
     myHelper.navigate(desiredPosition, editor, file.getProject());
     return Result.Stop;
+  }
+  
+  private static boolean isInJavaDoc(@NotNull Editor editor, int offset) {
+    Document document = editor.getDocument();
+    CharSequence docChars = document.getCharsSequence();
+    int i = CharArrayUtil.lastIndexOf(docChars, "/**", offset);
+    if (i >= 0) {
+      i = CharArrayUtil.indexOf(docChars, "*/", i);
+      return i > offset;
+    }
+    return false;
   }
 }

@@ -44,18 +44,15 @@ public class SearchAgainAction extends AnAction implements DumbAware {
     if (editor == null || project == null) return;
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-        project, new Runnable() {
-        @Override
-        public void run() {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          FindManager findManager = FindManager.getInstance(project);
-          if(!findManager.selectNextOccurrenceWasPerformed() && findManager.findNextUsageInEditor(editor)) {
-            return;
-          }
-
-          FindUtil.searchAgain(project, editor, e.getDataContext());
+      project, () -> {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+        FindManager findManager = FindManager.getInstance(project);
+        if(!findManager.selectNextOccurrenceWasPerformed() && findManager.findNextUsageInEditor(editor)) {
+          return;
         }
+
+        FindUtil.searchAgain(project, editor, e.getDataContext());
       },
       IdeBundle.message("command.find.next"),
       null

@@ -112,12 +112,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
         new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
-      myPopupBalloon.setHideListener(new Runnable() {
-        @Override
-        public void run() {
-          myPopupBalloon.getComponent().setVisible(false);
-        }
-      });
+      myPopupBalloon.setHideListener(() -> myPopupBalloon.getComponent().setVisible(false));
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 
@@ -165,9 +160,13 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private void layoutPopup() {
     Dimension layeredSize = myLayeredPane.getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
+    Point location = myButtonLocation.compute();
     int x = layeredSize.width - size.width - 5;
-    int fullHeight = myButtonLocation.compute().y;
+    int fullHeight = location.y;
 
+    if (x > location.x) {
+      x = location.x - 20;
+    }
     if (size.height > fullHeight) {
       size.height = fullHeight;
     }

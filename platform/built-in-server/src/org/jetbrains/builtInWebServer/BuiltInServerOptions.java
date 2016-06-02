@@ -36,6 +36,9 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   @Attribute
   public boolean builtInServerAvailableExternally = false;
 
+  @Attribute
+  public boolean allowUnsignedRequests = false;
+
   public static BuiltInServerOptions getInstance() {
     return ServiceManager.getService(BuiltInServerOptions.class);
   }

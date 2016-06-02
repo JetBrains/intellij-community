@@ -45,11 +45,20 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
     if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], false, false)) {
       return false;
     }
+    return canAnnotate(owner);
+  }
+
+  static boolean canAnnotate(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiMethod) {
       PsiType returnType = ((PsiMethod)owner).getReturnType();
-
       return returnType != null && !(returnType instanceof PsiPrimitiveType);
     }
+
+    if (owner instanceof PsiClass) {
+      return false;
+    }
+
     return true;
   }
+
 }

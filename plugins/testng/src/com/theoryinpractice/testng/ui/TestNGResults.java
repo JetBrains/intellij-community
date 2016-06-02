@@ -37,7 +37,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
@@ -52,11 +51,9 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.List;
 
 public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
   @NonNls private static final String TESTNG_SPLITTER_PROPERTY = "TestNG.Splitter.Proportion";
@@ -154,12 +151,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public TestConsoleProperties getProperties() {
     return myProperties;
-  }
-
-  protected JComponent createStatisticsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout()); //do not remove wrapper panel 
-    panel.add(ScrollPaneFactory.createScrollPane(resultsTable), BorderLayout.CENTER);
-    return panel;
   }
 
   private void updateStatusLine() {
@@ -324,11 +315,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     //look up the psiclass now
     if (owner.getPsiElement() == null) {
       final TestProxy finalOwner = owner;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass())));
     }
     return owner;
   }
@@ -369,34 +356,32 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     LvcsHelper.addLabel(this);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        animator.stopMovie();
-        updateStatusLine();
-        if (total > count || myStatus == MessageHelper.SKIPPED_TEST) {
-          myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
+    SwingUtilities.invokeLater(() -> {
+      animator.stopMovie();
+      updateStatusLine();
+      if (total > count || myStatus == MessageHelper.SKIPPED_TEST) {
+        myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
+      }
+      else if (myStatus == MessageHelper.FAILED_TEST) {
+        myStatusLine.setStatusColor(ColorProgressBar.RED);
+      }
+      else {
+        myStatusLine.setStatusColor(ColorProgressBar.GREEN);
+      }
+      rootNode.setInProgress(false);
+      if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
+        selectTest(rootNode.getFirstDefect());
+      }
+      else {
+        final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
+        if (node != null && myLastSelected == null) {
+          tree.getSelectionModel().setSelectionPath(new TreePath(node));
         }
-        else if (myStatus == MessageHelper.FAILED_TEST) {
-          myStatusLine.setStatusColor(ColorProgressBar.RED);
-        }
-        else {
-          myStatusLine.setStatusColor(ColorProgressBar.GREEN);
-        }
-        rootNode.setInProgress(false);
-        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
-          selectTest(rootNode.getFirstDefect());
-        }
-        else {
-          final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
-          if (node != null && myLastSelected == null) {
-            tree.getSelectionModel().setSelectionPath(new TreePath(node));
-          }
-        }
-        tree.repaint();
-        if (total > 0 ||
-            !ResetConfigurationModuleAdapter.tryWithAnotherModule(configuration, getProperties().isDebug())) {
-          TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
-        }
+      }
+      tree.repaint();
+      if (total > 0 ||
+          !ResetConfigurationModuleAdapter.tryWithAnotherModule(configuration, getProperties().isDebug())) {
+        TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
       }
     });
   }

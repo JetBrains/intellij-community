@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -188,12 +189,7 @@ public class IndexInfrastructure {
                                                                    CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {
-          taskExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-              executeNestedInitializationTask(callable, proceedLatch);
-            }
-          });
+          taskExecutor.submit(() -> executeNestedInitializationTask(callable, proceedLatch));
         }
 
         proceedLatch.await();
@@ -206,6 +202,9 @@ public class IndexInfrastructure {
     }
 
     private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) return;
+
       try {
         callable.run();
       } catch(Throwable t) {

@@ -191,11 +191,7 @@ public class DomHelper {
         lstPosts.add(stt.id);
       }
 
-      Collections.sort(lstPosts, new Comparator<Integer>() {
-        public int compare(Integer o1, Integer o2) {
-          return mapSortOrder.get(o1).compareTo(mapSortOrder.get(o2));
-        }
-      });
+      Collections.sort(lstPosts, (o1, o2) -> mapSortOrder.get(o1).compareTo(mapSortOrder.get(o2)));
 
       if (lstPosts.size() > 1 && lstPosts.get(0).intValue() == st.id) {
         lstPosts.add(lstPosts.remove(0));

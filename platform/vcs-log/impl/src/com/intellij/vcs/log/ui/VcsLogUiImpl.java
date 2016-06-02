@@ -49,7 +49,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private VisiblePack myVisiblePack;
 
-  public VcsLogUiImpl(@NotNull VcsLogDataManager logDataManager,
+  public VcsLogUiImpl(@NotNull VcsLogData logData,
                       @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
                       @NotNull VcsLogUiProperties uiProperties,
@@ -57,30 +57,22 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myProject = project;
     myColorManager = manager;
     myUiProperties = uiProperties;
-    Disposer.register(logDataManager, this);
+    Disposer.register(logData, this);
 
     myFilterer = filterer;
-    myLog = new VcsLogImpl(logDataManager, this);
+    myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
-    myMainFrame = new MainFrame(logDataManager, this, project, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
+      getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
 
-    myVisiblePackChangeListener = new VisiblePackChangeListener() {
-      @Override
-      public void onVisiblePackChange(@NotNull final VisiblePack visiblePack) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!Disposer.isDisposed(VcsLogUiImpl.this)) {
-              setVisiblePack(visiblePack);
-            }
-          }
-        });
+    myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
+      if (!Disposer.isDisposed(VcsLogUiImpl.this)) {
+        setVisiblePack(visiblePack);
       }
-    };
+    });
     myFilterer.addVisiblePackChangeListener(myVisiblePackChangeListener);
   }
 
@@ -88,12 +80,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     // todo fix selection
     final VcsLogGraphTable graphTable = myMainFrame.getGraphTable();
     if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          graphTable.setRowSelectionInterval(0, 0);
-        }
-      });
+      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(() -> graphTable.setRowSelectionInterval(0, 0));
     }
   }
 
@@ -120,25 +107,19 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
-        final Runnable updater = answer.getGraphUpdater();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            assert updater != null : "Action:" +
-                                     title +
-                                     "\nController: " +
-                                     myVisiblePack.getVisibleGraph().getActionController() +
-                                     "\nAnswer:" +
-                                     answer;
-            updater.run();
-            getTable().handleAnswer(answer, true, null, null);
-          }
-        });
-      }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
+      final Runnable updater = answer.getGraphUpdater();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        assert updater != null : "Action:" +
+                                 title +
+                                 "\nController: " +
+                                 myVisiblePack.getVisibleGraph().getActionController() +
+                                 "\nAnswer:" +
+                                 answer;
+        updater.run();
+        getTable().handleAnswer(answer, true, null, null);
+      });
     }, title, false, null, getMainFrame().getMainComponent());
   }
 
@@ -214,24 +195,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull final VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
-      @Override
-      public Integer fun(GraphTableModel model, Hash hash) {
-        return model.getRowOfCommit(hash, root);
-      }
-    }, future);
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
     return future;
   }
 
   @NotNull
   public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, new PairFunction<GraphTableModel, String, Integer>() {
-      @Override
-      public Integer fun(GraphTableModel model, String hash) {
-        return model.getRowOfCommitByPartOfHash(hash);
-      }
-    }, future);
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommitByPartOfHash(hash), future);
     return future;
   }
 
@@ -248,20 +219,10 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       future.set(true);
     }
     else if (model.canRequestMore()) {
-      model.requestToLoadMore(new Runnable() {
-        @Override
-        public void run() {
-          jumpTo(commitId, rowGetter, future);
-        }
-      });
+      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future));
     }
     else if (!myVisiblePack.isFull()) {
-      invokeOnChange(new Runnable() {
-        @Override
-        public void run() {
-          jumpTo(commitId, rowGetter, future);
-        }
-      });
+      invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
     }
     else {
       commitNotFound(commitId.toString());

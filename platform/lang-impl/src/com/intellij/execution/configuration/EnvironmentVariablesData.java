@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class EnvironmentVariablesData {
 
-  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.<String, String>of(), true);
+  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true);
   @NonNls private static final String ENVS = "envs";
   @NonNls private static final String PASS_PARENT_ENVS = "pass-parent-envs";
   @NonNls private static final String ENV = EnvironmentVariablesComponent.ENV;
@@ -75,6 +75,11 @@ public class EnvironmentVariablesData {
     int result = myEnvs.hashCode();
     result = 31 * result + (myPassParentEnvs ? 1 : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs;
   }
 
   @NotNull

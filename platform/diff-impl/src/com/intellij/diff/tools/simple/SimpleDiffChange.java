@@ -41,8 +41,8 @@ public class SimpleDiffChange {
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
   private int[] myLineStartShifts = new int[2];
@@ -257,22 +257,16 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), new Runnable() {
-      @Override
-      public void run() {
-        myViewer.replaceChange(SimpleDiffChange.this, side);
-      }
+    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), () -> {
+      myViewer.replaceChange(this, side);
     });
   }
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), new Runnable() {
-      @Override
-      public void run() {
-        UsageTrigger.trigger("diff.SimpleDiffChange.Append");
-        myViewer.appendChange(SimpleDiffChange.this, side);
-      }
+    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> {
+      UsageTrigger.trigger("diff.SimpleDiffChange.Append");
+      myViewer.appendChange(this, side);
     });
   }
 
@@ -288,12 +282,7 @@ public class SimpleDiffChange {
         if (!myIsValid) return;
         final Project project = e.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
-        DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
-          @Override
-          public void run() {
-            perform.run();
-          }
-        });
+        DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
       }
     };
   }

@@ -103,12 +103,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     else {
       HighlightInfo.IntentionActionDescriptor first = list.get(0);
       List<IntentionAction> options = ContainerUtil.map(list.subList(1, list.size()),
-                                                        new Function<HighlightInfo.IntentionActionDescriptor, IntentionAction>() {
-                                                          @Override
-                                                          public IntentionAction fun(HighlightInfo.IntentionActionDescriptor descriptor) {
-                                                            return descriptor.getAction();
-                                                          }
-                                                        });
+                                                        descriptor -> descriptor.getAction());
       descriptors.add(new HighlightInfo.IntentionActionDescriptor(first.getAction(), options, null, first.getIcon()));
     }
   }

@@ -73,12 +73,7 @@ import java.util.concurrent.ConcurrentMap;
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
-  private static final Condition<PsiFile> FILE_FILTER = new Condition<PsiFile>() {
-    @Override
-    public boolean value(PsiFile file) {
-      return HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file);
-    }
-  };
+  private static final Condition<PsiFile> FILE_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
   private final ConcurrentMap<PsiFile, List<InspectionResult>> result = ContainerUtil.newConcurrentMap();
@@ -253,13 +248,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Set<String>>>(toolToSpecifiedLanguageIds.entrySet());
 
     Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor =
-      new Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>>() {
-        @Override
-        public boolean process(final Map.Entry<LocalInspectionToolWrapper, Set<String>> pair) {
-          LocalInspectionToolWrapper toolWrapper = pair.getKey();
-          Set<String> dialectIdsSpecifiedForTool = pair.getValue();
-          return runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
-        }
+      pair -> {
+        LocalInspectionToolWrapper toolWrapper = pair.getKey();
+        Set<String> dialectIdsSpecifiedForTool = pair.getValue();
+        return runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
       };
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) throw new ProcessCanceledException();
@@ -312,22 +304,19 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                            @NotNull List<InspectionContext> init,
                                            @NotNull final Set<String> elementDialectIds) {
     Processor<InspectionContext> processor =
-      new Processor<InspectionContext>() {
-        @Override
-        public boolean process(InspectionContext context) {
-          indicator.checkCanceled();
-          ApplicationManager.getApplication().assertReadAccessAllowed();
-          InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
-          advanceProgress(1);
-          context.tool.getTool().inspectionFinished(session, context.holder);
+      context -> {
+        indicator.checkCanceled();
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
+        advanceProgress(1);
+        context.tool.getTool().inspectionFinished(session, context.holder);
 
-          if (context.holder.hasResults()) {
-            List<ProblemDescriptor> allProblems = context.holder.getResults();
-            List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSize, allProblems.size());
-            appendDescriptors(getFile(), restProblems, context.tool);
-          }
-          return true;
+        if (context.holder.hasResults()) {
+          List<ProblemDescriptor> allProblems = context.holder.getResults();
+          List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSize, allProblems.size());
+          appendDescriptors(getFile(), restProblems, context.tool);
         }
+        return true;
       };
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) {
@@ -351,12 +340,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       });
     }
     if (injected.isEmpty()) return;
-    Processor<PsiFile> processor = new Processor<PsiFile>() {
-      @Override
-      public boolean process(final PsiFile injectedPsi) {
-        doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
-        return true;
-      }
+    Processor<PsiFile> processor = injectedPsi -> {
+      doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
+      return true;
     };
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, processor)) {
       throw new ProcessCanceledException();

@@ -285,4 +285,14 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testStrFormat() {
     doTest();
   }
+
+  // PY-9924
+  public void testTupleGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-9924
+  public void testListGetItemWithSlice() {
+    doTest();
+  }
 }

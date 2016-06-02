@@ -38,12 +38,7 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
       final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
-      return element.getName() + "(" + StringUtil.join(parameters, new Function<PyParameter, String>() {
-        @Override
-        public String fun(PyParameter parameter) {
-          return PyUtil.getReadableRepr(parameter, false);
-        }
-      }, ", ") + ")";
+      return element.getName() + "(" + StringUtil.join(parameters, parameter -> PyUtil.getReadableRepr(parameter, false), ", ") + ")";
     }
     if (element instanceof PyClass && PyNames.FAKE_OLD_BASE.equals(element.getName())) {
       return "<old-style class>";

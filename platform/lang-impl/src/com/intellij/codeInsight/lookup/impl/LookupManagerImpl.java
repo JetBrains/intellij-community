@@ -136,20 +136,17 @@ public class LookupManagerImpl extends LookupManager {
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
 
     final Alarm alarm = new Alarm();
-    final Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (myActiveLookup != lookup) return;
-        
-        LookupElement currentItem = lookup.getCurrentItem();
-        if (currentItem != null && currentItem.isValid()) {
-          final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-          if (completion != null && !completion.isAutopopupCompletion()) {
-            try {
-              DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
-            }
-            catch (IndexNotReadyException ignored) {
-            }
+    final Runnable request = () -> {
+      if (myActiveLookup != lookup) return;
+
+      LookupElement currentItem = lookup.getCurrentItem();
+      if (currentItem != null && currentItem.isValid()) {
+        final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+        if (completion != null && !completion.isAutopopupCompletion()) {
+          try {
+            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+          }
+          catch (IndexNotReadyException ignored) {
           }
         }
       }

@@ -117,12 +117,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         }
         checkModified(oldConfigurable);
         ActionCallback result = myEditor.select(configurable);
-        result.doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            myLoadingDecorator.stopLoading();
-          }
-        });
+        result.doWhenDone(() -> myLoadingDecorator.stopLoading());
         return result;
       }
 
@@ -261,24 +256,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
-    myTreeView.select(configurable).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myFilter.update(filter, false, true);
-      }
-    });
+    myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
     mySearch.getTextEditor().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            JComponent component = myEditor.getPreferredFocusedComponent();
-            if (component != null) {
-              IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
-            }
+        myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(() -> {
+          JComponent component1 = myEditor.getPreferredFocusedComponent();
+          if (component1 != null) {
+            IdeFocusManager.findInstanceByComponent(component1).requestFocus(component1, true);
           }
         });
       }
@@ -373,12 +360,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myEditor.revalidate();
     }
     if (configurable != null) {
-      new Alarm().addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!myDisposed && mySpotlightPainter != null) {
-            mySpotlightPainter.updateNow();
-          }
+      new Alarm().addRequest(() -> {
+        if (!myDisposed && mySpotlightPainter != null) {
+          mySpotlightPainter.updateNow();
         }
       }, 300);
     }

@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.TestEnv;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
@@ -27,7 +28,9 @@ import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -43,9 +46,11 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Simply ensure tox runner works
    */
-  public void testToxSimpleRun() {
+  @Test
+  public void testToxSimpleRun() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(2,
-                                                     new MyTestProcessRunner("/testData/toxtest/toxSimpleRun/"),
+                                                     new MyTestProcessRunner(wrapPathWithSandbox(
+                                                       PythonHelpersLocator.getPythonCommunityPath() + "/testData/toxtest/toxSimpleRun/")),
                                                      Arrays.asList(
                                                        // Should fail, no skip in 26
                                                        Pair.create("py26", new InterpreterExpectations(
@@ -58,9 +63,12 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox nose runner
    */
-  public void testToxNose() {
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testToxNose() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
-                                                     new MyTestProcessRunner("/testData/toxtest/toxNose/"),
+                                                     new MyTestProcessRunner(wrapPathWithSandbox(
+                                                       PythonHelpersLocator.getPythonCommunityPath() + "/testData/toxtest/toxNose/")),
                                                      Arrays.asList(
                                                        Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
@@ -75,9 +83,12 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox pytest runner
    */
-  public void testToxPyTest() {
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testToxPyTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
-                                                     new MyTestProcessRunner("/testData/toxtest/toxPyTest/"),
+                                                     new MyTestProcessRunner(wrapPathWithSandbox(
+                                                       PythonHelpersLocator.getPythonCommunityPath() + "/testData/toxtest/toxPyTest/")),
                                                      Arrays.asList(
                                                        Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
@@ -92,9 +103,12 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox unit runner
    */
-  public void testToxUnitTest() {
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testToxUnitTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
-                                                     new MyTestProcessRunner("/testData/toxtest/toxUnitTest/"),
+                                                     new MyTestProcessRunner(wrapPathWithSandbox(
+                                                       PythonHelpersLocator.getPythonCommunityPath() + "/testData/toxtest/toxUnitTest/")),
                                                      Arrays.asList(
                                                        Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
@@ -109,9 +123,12 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Big test which should run on any interpreter and check its output
    */
-  public void testToxSuccessTest() {
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testToxSuccessTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
-                                                     new MyTestProcessRunner("/testData/toxtest/toxSuccess/"),
+                                                     new MyTestProcessRunner(wrapPathWithSandbox(
+                                                       PythonHelpersLocator.getPythonCommunityPath() + "/testData/toxtest/toxSuccess/")),
                                                      Arrays.asList(
                                                        Pair.create("py26", new InterpreterExpectations("I am 2.6", true)),
                                                        Pair.create("py27", new InterpreterExpectations("I am 2.7", true)),
@@ -138,7 +155,7 @@ public final class PyToxTest extends PyEnvTestCase {
     private MyPyProcessWithConsoleTestTask(final int minimumSuccessTestCount,
                                            @NotNull final MyTestProcessRunner runner,
                                            @NotNull final Collection<Pair<String, InterpreterExpectations>> interpreterExpectations) {
-      super(SdkCreationType.SDK_PACKAGES_ONLY);
+      super(SdkCreationType.EMPTY_SDK);
       myMinimumSuccessTestCount = minimumSuccessTestCount;
       myRunner = runner;
       for (final Pair<String, InterpreterExpectations> interpreterExpectation : interpreterExpectations) {
@@ -193,10 +210,13 @@ public final class PyToxTest extends PyEnvTestCase {
                           Matchers.greaterThanOrEqualTo(myMinimumSuccessTestCount));
 
         // Check expected output
+        final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
+                               String.format("All: %s \n", all) +
+                               String.format("Error: %s \n", stderr);
+
+
         Assert
-          .assertThat(String.format("Interpreter %s does not have expected string in output. \n " +
-                                    "All : " + all + "\n" +
-                                    "Error:" + stderr, interpreterName),
+          .assertThat(message,
                       getTestOutput(interpreterSuite), Matchers.containsString(myInterpreters.get(interpreterName).myExpectedOutput));
       }
 
@@ -231,7 +251,7 @@ public final class PyToxTest extends PyEnvTestCase {
      */
     private MyTestProcessRunner(@NotNull final String testPath) {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class,
-            PythonHelpersLocator.getPythonCommunityPath() + testPath, 0);
+            testPath, 0);
     }
   }
 

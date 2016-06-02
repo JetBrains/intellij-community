@@ -145,39 +145,33 @@ public class InspectionValidatorWrapper implements Validator {
     }
     final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
     final List<ProcessingItem> items =
-      DumbService.getInstance(project).runReadActionInSmartMode(new Computable<List<ProcessingItem>>() {
-        @Override
-        public List<ProcessingItem> compute() {
-          final CompileScope compileScope = context.getCompileScope();
-          if (!myValidator.isAvailableOnScope(compileScope)) return null;
+      DumbService.getInstance(project).runReadActionInSmartMode((Computable<List<ProcessingItem>>)() -> {
+        final CompileScope compileScope = context.getCompileScope();
+        if (!myValidator.isAvailableOnScope(compileScope)) return null;
 
-          final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
+        final ArrayList<ProcessingItem> items1 = new ArrayList<ProcessingItem>();
 
-          final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-            @Override
-            public boolean process(VirtualFile file) {
-              if (!file.isValid()) {
-                return true;
-              }
+        final Processor<VirtualFile> processor = file -> {
+          if (!file.isValid()) {
+            return true;
+          }
 
-              if (myCompilerManager.isExcludedFromCompilation(file) ||
-                  excludesConfiguration.isExcluded(file)) {
-                return true;
-              }
+          if (myCompilerManager.isExcludedFromCompilation(file) ||
+              excludesConfiguration.isExcluded(file)) {
+            return true;
+          }
 
-              final Module module = context.getModuleByFile(file);
-              if (module != null) {
-                final PsiFile psiFile = myPsiManager.findFile(file);
-                if (psiFile != null) {
-                  items.add(new MyValidatorProcessingItem(psiFile));
-                }
-              }
-              return true;
+          final Module module = context.getModuleByFile(file);
+          if (module != null) {
+            final PsiFile psiFile = myPsiManager.findFile(file);
+            if (psiFile != null) {
+              items1.add(new MyValidatorProcessingItem(psiFile));
             }
-          };
-          ContainerUtil.process(myValidator.getFilesToProcess(myPsiManager.getProject(), context), processor);
-          return items;
-        }
+          }
+          return true;
+        };
+        ContainerUtil.process(myValidator.getFilesToProcess(myPsiManager.getProject(), context), processor);
+        return items1;
       });
     if (items == null) return ProcessingItem.EMPTY_ARRAY;
 
@@ -223,24 +217,16 @@ public class InspectionValidatorWrapper implements Validator {
 
   private boolean checkFile(List<LocalInspectionTool> inspections, final MyValidatorProcessingItem item, final CompileContext context) {
     boolean hasErrors = false;
-    if (!checkUnderReadAction(item, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
-      @Override
-      public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
-        return myValidator.checkAdditionally(item.getPsiFile());
-      }
-    })) {
+    if (!checkUnderReadAction(item, context, () -> myValidator.checkAdditionally(item.getPsiFile()))) {
       hasErrors = true;
     }
 
-    if (!checkUnderReadAction(item, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
-      @Override
-      public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
-        final PsiFile file = item.getPsiFile();
-        if (file instanceof XmlFile) {
-          return runXmlFileSchemaValidation((XmlFile)file);
-        }
-        return Collections.emptyMap();
+    if (!checkUnderReadAction(item, context, () -> {
+      final PsiFile file = item.getPsiFile();
+      if (file instanceof XmlFile) {
+        return runXmlFileSchemaValidation((XmlFile)file);
       }
+      return Collections.emptyMap();
     })) {
       hasErrors = true;
     }
@@ -248,16 +234,13 @@ public class InspectionValidatorWrapper implements Validator {
 
     final InspectionProfile inspectionProfile = myProfileManager.getInspectionProfile();
     for (final LocalInspectionTool inspectionTool : inspections) {
-      if (!checkUnderReadAction(item, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
-        @Override
-        public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
-          final PsiFile file = item.getPsiFile();
-          if (file != null && getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
-            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file)
-            );
-          }
-          return Collections.emptyMap();
+      if (!checkUnderReadAction(item, context, () -> {
+        final PsiFile file = item.getPsiFile();
+        if (file != null && getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
+          return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file)
+          );
         }
+        return Collections.emptyMap();
       })) {
         hasErrors = true;
       }
@@ -266,22 +249,19 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private boolean checkUnderReadAction(final MyValidatorProcessingItem item, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
-    return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final PsiFile file = item.getPsiFile();
-        if (file == null) return false;
+    return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(() -> {
+      final PsiFile file = item.getPsiFile();
+      if (file == null) return false;
 
-        final Document document = myPsiDocumentManager.getCachedDocument(file);
-        if (document != null && myPsiDocumentManager.isUncommited(document)) {
-          final String url = file.getViewProvider().getVirtualFile().getUrl();
-          context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
-          return false;
-        }
-
-        if (reportProblems(context, runnable.compute())) return false;
-        return true;
+      final Document document = myPsiDocumentManager.getCachedDocument(file);
+      if (document != null && myPsiDocumentManager.isUncommited(document)) {
+        final String url = file.getViewProvider().getVirtualFile().getUrl();
+        context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
+        return false;
       }
+
+      if (reportProblems(context, runnable.compute())) return false;
+      return true;
     });
   }
 

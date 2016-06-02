@@ -20,6 +20,8 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -30,14 +32,18 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class HotSwapProgressImpl extends HotSwapProgress{
@@ -47,6 +53,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private final ProgressWindow myProgressWindow;
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
+  private XDebugSession mySessionToRestartOnFail;
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -75,8 +82,21 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     final List<String> errors = getMessages(MessageCategory.ERROR);
     final List<String> warnings = getMessages(MessageCategory.WARNING);
     if (!errors.isEmpty()) {
-      NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors),
-                                                              NotificationType.ERROR, null).notify(getProject());
+      String message = DebuggerBundle.message("status.hot.swap.completed.with.errors");
+      if (mySessionToRestartOnFail != null) {
+        message += " " + DebuggerBundle.message("status.hot.swap.completed.with.errors.restart");
+      }
+      NOTIFICATION_GROUP.createNotification(message, buildMessage(errors), NotificationType.ERROR,
+                                            (notification, event) -> {
+                                              if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && mySessionToRestartOnFail != null) {
+                                                notification.expire();
+                                                ExecutionEnvironment environment = ((XDebugSessionImpl)mySessionToRestartOnFail).getExecutionEnvironment();
+                                                if (environment != null) {
+                                                  ExecutionUtil.restart(environment);
+                                                }
+                                              }
+                                            }
+      ).setImportant(false).notify(getProject());
     }
     else if (!warnings.isEmpty()){
       NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
@@ -91,9 +111,12 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     }
   }
 
+  public void setSessionToRestartOnFail(@NotNull DebuggerSession sessionToRestartOnFail) {
+    mySessionToRestartOnFail = sessionToRestartOnFail.getXDebugSession();
+  }
+
   private List<String> getMessages(int category) {
-    final List<String> messages = myMessages.get(category);
-    return messages == null ? Collections.emptyList() : messages;
+    return ContainerUtil.notNullize(myMessages.get(category));
   }
     
   private static String buildMessage(List<String> messages) {
@@ -103,28 +126,19 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
     if (messages == null) {
-      messages = new ArrayList<>();
+      messages = new SmartList<>();
       myMessages.put(type, messages);
     }
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(session.getSessionName()).append(": ").append(text).append(";");
-      messages.add(builder.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    messages.add(session.getSessionName() + ": " + text + ";");
   }
 
   public void setText(final String text) {
     myUpdateQueue.queue(new Update("Text") {
       @Override
       public void run() {
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-          public void run() {
-            if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-              myProgressWindow.setText(text);
-            }
+        DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+          if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+            myProgressWindow.setText(text);
           }
         }, myProgressWindow.getModalityState());
       }
@@ -132,22 +146,18 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   public void setTitle(final String text) {
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      public void run() {
-        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-        myProgressWindow.setTitle(text);
-        }
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+      myProgressWindow.setTitle(text);
       }
     }, myProgressWindow.getModalityState());
 
   }
 
   public void setFraction(final double v) {
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      public void run() {
-        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-        myProgressWindow.setFraction(v);
-        }
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+      myProgressWindow.setFraction(v);
       }
     }, myProgressWindow.getModalityState());
   }

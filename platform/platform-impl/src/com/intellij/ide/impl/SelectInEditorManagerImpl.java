@@ -75,12 +75,9 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     openEditor(file, endOffset);
     final Editor editor = openEditor(file, textRange.getStartOffset());
 
-    SwingUtilities.invokeLater(new Runnable(){ // later to let focus listener chance to handle events
-      @Override
-      public void run() {
-        if (editor != null && !editor.isDisposed()) {
-          doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (editor != null && !editor.isDisposed()) {
+        doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
       }
     });
   }

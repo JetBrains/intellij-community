@@ -36,13 +36,7 @@ public class BrowserStarter {
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
                         @NotNull final ProcessHandler serverProcessHandler) {
-    this(runConfiguration, settings, new Computable<Boolean>() {
-
-      @Override
-      public Boolean compute() {
-        return serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated();
-      }
-    });
+    this(runConfiguration, settings, () -> serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated());
   }
 
   public void start() {
@@ -75,12 +69,7 @@ public class BrowserStarter {
   }
 
   private void checkAndOpenPageLater(@NotNull final HostAndPort hostAndPort, final int attemptNumber, int delayMillis) {
-    JobScheduler.getScheduler().schedule(new Runnable() {
-      @Override
-      public void run() {
-        checkAndOpenPage(hostAndPort, attemptNumber);
-      }
-    }, delayMillis, TimeUnit.MILLISECONDS);
+    JobScheduler.getScheduler().schedule(() -> checkAndOpenPage(hostAndPort, attemptNumber), delayMillis, TimeUnit.MILLISECONDS);
   }
 
   private void checkAndOpenPage(@NotNull final HostAndPort hostAndPort, final int attemptNumber) {
@@ -107,12 +96,7 @@ public class BrowserStarter {
   }
 
   private void openPageLater(int millis) {
-    JobScheduler.getScheduler().schedule(new Runnable() {
-      @Override
-      public void run() {
-        openPageNow();
-      }
-    }, millis, TimeUnit.MILLISECONDS);
+    JobScheduler.getScheduler().schedule(() -> openPageNow(), millis, TimeUnit.MILLISECONDS);
   }
 
   private void openPageNow() {

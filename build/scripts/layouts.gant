@@ -238,6 +238,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("forms-compiler")
         module("forms_rt")
         module("instrumentation-util")
+        module("instrumentation-util-8")
       }
 
       jar("jps-model.jar") {
@@ -684,8 +685,9 @@ def setPluginVersionAndSince(String moduleName, String version) {
     def text = file.text
     if (!text.contains("<version>")) {
       def dotIndex = version.indexOf('.')
-      def untilBuild = dotIndex > 0 ? (Integer.parseInt(version.substring(0, dotIndex)) + 1).toString() + ".0" : version
-      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
+      def untilBuild = dotIndex > 0 ? Integer.parseInt(version.substring(0, dotIndex)) + ".*" : version
+      def anchor = text.contains("</id>") ? "</id>" : "</name>"
+      file.text = text.replace(anchor, "${anchor}\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 }
@@ -721,7 +723,12 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
   }
 
   if (setPluginAndIDEVersionInPluginXml()) {
-    setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
+    def version = requireProperty("buildNumber", requireProperty("build.number", snapshot))
+    //do not set 'until-build' for snapshot builds compiled locally. Otherwise if you build from sources of e.g. 145 branch you'll get
+    // 'until-build=146.0' in plugin.xml in module outputs and won't be able to run IDE from sources of 'master' branch.
+    if (!version.toLowerCase().endsWith("snapshot")) {
+      setPluginVersionAndSince(moduleName, version)
+    }
   }
 
   dir(pluginName) {
@@ -838,6 +845,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("manifest-merger.jar") {
         module("manifest-merger")
       }
+      jar("repository.jar") {
+        module("repository")
+      }
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("ddmlib")
@@ -851,6 +861,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("chartlib")
         module("builder-model")
         module("builder-test-api")
+        module("instant-run-common")
+        module("instant-run-client")
+        module("instant-run-runtime")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")
@@ -895,6 +908,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("forms_rt")
         module("forms-compiler")
         module("instrumentation-util")
+        module("instrumentation-util-8")
         module("jps-builders")
         module("jps-standalone-builder")
         module("java-runtime")

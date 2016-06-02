@@ -77,7 +77,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   final List<EntryPoint> myExtensions = ContainerUtil.createLockFreeCopyOnWriteList();
   final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
-  private Set<RefElement> myProcessedSuspicious = null;
+  private Set<RefElement> myProcessedSuspicious;
   private int myPhase;
   private GlobalInspectionContext myContext;
   private final boolean myEnabledInEditor;
@@ -100,12 +100,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         LOG.error(e);
       }
     }
-    Collections.sort(deadCodeAddIns, new Comparator<EntryPoint>() {
-      @Override
-      public int compare(final EntryPoint o1, final EntryPoint o2) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-      }
-    });
+    Collections.sort(deadCodeAddIns, (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
     myExtensions.addAll(deadCodeAddIns);
     myEnabledInEditor = enabledInEditor;
   }
@@ -736,12 +731,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        boolean alreadyAdded = ContainerUtil.find(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return point.getClass().equals(extension.getClass());
-          }
-        }) != null;
+        boolean alreadyAdded = ContainerUtil.find(myExtensions, point1 -> point1.getClass().equals(extension.getClass())) != null;
         if (!alreadyAdded) {
           try {
             myExtensions.add(extension.clone());
@@ -754,12 +744,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
       @Override
       public void extensionRemoved(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ContainerUtil.retainAll(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return !point.getClass().equals(extension.getClass());
-          }
-        });
+        ContainerUtil.retainAll(myExtensions, point12 -> !point12.getClass().equals(extension.getClass()));
       }
     }, getEntryPointsManager());
   }

@@ -90,12 +90,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
       if (!matchers.isEmpty()) {
         final Element child = new Element("pattern");
         state.addContent(child);
-        child.setAttribute("value", StringUtil.join(matchers, new Function<FileNameMatcher, String>() {
-          @Override
-          public String fun(FileNameMatcher fileNameMatcher) {
-            return fileNameMatcher.getPresentableString();
-          }
-        }, SEPARATOR));
+        child.setAttribute("value", StringUtil.join(matchers, fileNameMatcher -> fileNameMatcher.getPresentableString(), SEPARATOR));
         child.setAttribute("lang", language.getID());
       }
     }

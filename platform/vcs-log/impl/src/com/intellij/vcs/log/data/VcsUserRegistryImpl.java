@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.io.*;
@@ -45,12 +44,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   private static final File USER_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-users");
   private static final Logger LOG = Logger.getInstance(VcsUserRegistryImpl.class);
   private static final int STORAGE_VERSION = 1;
-  private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = new PersistentEnumeratorBase.DataFilter() {
-    @Override
-    public boolean accept(int id) {
-      return true;
-    }
-  };
+  private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = id -> true;
 
   @Nullable private final PersistentEnumerator<VcsUser> myPersistentEnumerator;
   @NotNull private final Interner<VcsUser> myInterner;
@@ -64,12 +58,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   @Nullable
   private PersistentEnumerator<VcsUser> initEnumerator(@NotNull final File mapFile) {
     try {
-      return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<VcsUser>, IOException>() {
-        @Override
-        public PersistentEnumerator<VcsUser> compute() throws IOException {
-          return new PersistentEnumerator<VcsUser>(mapFile, new MyDescriptor(), Page.PAGE_SIZE);
-        }
-      }, mapFile);
+      return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<VcsUser>(mapFile, new MyDescriptor(), Page.PAGE_SIZE), mapFile);
     }
     catch (IOException e) {
       LOG.warn(e);

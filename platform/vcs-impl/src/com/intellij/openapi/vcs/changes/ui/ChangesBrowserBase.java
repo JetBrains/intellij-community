@@ -17,11 +17,14 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -31,7 +34,9 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -40,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -47,16 +53,18 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
+import static java.util.stream.Collectors.toList;
+
 public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowserBase.class);
 
   // for backgroundable rollback to mark
   private boolean myDataIsDirty;
-  // this field is used to workaround issues connected to virtual method calls (like rebuildList()) in ChangesBrowserBase constructor
-  // so inheritors are not fully initialized yet when such methods are called from constructor
-  protected final boolean myIsInitialized;
   protected final Class<T> myClass;
   protected final ChangesTreeList<T> myViewer;
+  protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
   protected Collection<T> myChangesToDisplay;
   protected final Project myProject;
@@ -71,6 +79,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public static DataKey<ChangesBrowserBase> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
   private AnAction myDiffAction;
   private final VirtualFile myToSelect;
+  @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
 
   public void setChangesToDisplay(final List<T> changes) {
     myChangesToDisplay = changes;
@@ -82,9 +91,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected ChangesBrowserBase(final Project project,
-                               List<? extends ChangeList> changeLists,
                                @NotNull List<T> changes,
-                               ChangeList initialListSelection,
                                final boolean capableOfExcludingChanges,
                                final boolean highlightProblems,
                                @Nullable final Runnable inclusionListener,
@@ -116,16 +123,19 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       protected T getLeadSelectedObject(final ChangesBrowserNode node) {
         return ChangesBrowserBase.this.getLeadSelectedObject(node);
       }
+
+      @Override
+      public void setScrollPaneBorder(Border border) {
+        myViewerScrollPane.setBorder(border);
+      }
     };
-
-    myViewer.setDoubleClickHandler(getDoubleClickHandler());
-
-    setInitialSelection(changeLists, changes, initialListSelection);
-    rebuildList();
-
-    add(myViewer, BorderLayout.CENTER);
-
+    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
     myHeaderPanel = new JPanel(new BorderLayout());
+  }
+
+  protected void init() {
+    add(myViewerScrollPane, BorderLayout.CENTER);
+
     myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     add(myHeaderPanel, BorderLayout.NORTH);
 
@@ -133,7 +143,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     add(myBottomPanel, BorderLayout.SOUTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myIsInitialized = true;
+    myViewer.setDoubleClickHandler(getDoubleClickHandler());
   }
 
   @NotNull
@@ -183,6 +193,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     return myViewer;
   }
 
+  @NotNull
+  public JScrollPane getViewerScrollPane() {
+    return myViewerScrollPane;
+  }
+
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
@@ -214,6 +229,12 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
       final List<Change> selectedChanges = getSelectedChanges();
       sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
+    }
+    else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList()));
+    }
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
+      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
     }
   }
 
@@ -329,7 +350,8 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     myViewer.setAlwaysExpandList(value);
   }
 
-  private JComponent createToolbar() {
+  @NotNull
+  protected JComponent createToolbar() {
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();
     toolbarGroups.add(myToolBarGroup);
@@ -342,7 +364,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       treeActionsGroup.add(action);
     }
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroups, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarGroups, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
@@ -357,7 +379,8 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
         showDiff();
       }
     };
-    EmptyAction.setupAction(myDiffAction, "ChangesView.Diff", myViewer);
+    ActionUtil.copyFrom(myDiffAction, "ChangesView.Diff");
+    myDiffAction.registerCustomShortcutSet(myViewer, null);
     toolBarGroup.add(myDiffAction);
   }
 
@@ -434,9 +457,14 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   public abstract List<Change> getAllChanges();
 
+  @NotNull
   private VirtualFile[] getSelectedFiles() {
-    final List<Change> changes = getSelectedChanges();
-    return ChangesUtil.getFilesFromChanges(changes);
+    Set<VirtualFile> result = ContainerUtil.newHashSet();
+
+    result.addAll(ChangesUtil.getAfterRevisionsFiles(getSelectedChanges()));
+    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null).collect(toList()));
+
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   public AnAction getDiffAction() {
@@ -462,6 +490,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   static boolean isUnderUnversioned(@NotNull ChangesBrowserNode node) {
-    return ChangesListView.isUnderTag(new TreePath(node.getPath()), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    return isUnderTag(new TreePath(node.getPath()), UNVERSIONED_FILES_TAG);
   }
 }

@@ -31,11 +31,6 @@ public interface FileTypeIdentifiableByVirtualFile extends FileType {
   boolean isMyFileType(@NotNull VirtualFile file);
 
   FileTypeIdentifiableByVirtualFile[] EMPTY_ARRAY = new FileTypeIdentifiableByVirtualFile[0];
-  ArrayFactory<FileTypeIdentifiableByVirtualFile> ARRAY_FACTORY = new ArrayFactory<FileTypeIdentifiableByVirtualFile>() {
-    @NotNull
-    @Override
-    public FileTypeIdentifiableByVirtualFile[] create(int count) {
-      return count == 0 ? EMPTY_ARRAY : new FileTypeIdentifiableByVirtualFile[count];
-    }
-  };
+  ArrayFactory<FileTypeIdentifiableByVirtualFile> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new FileTypeIdentifiableByVirtualFile[count];
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnAmbiguousClosureContainer;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -187,18 +188,16 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   @Override
   protected boolean processImports(PsiScopeProcessor processor,
                                    @NotNull ResolveState state,
-                                   PsiElement lastParent,
+                                   @Nullable PsiElement lastParent,
                                    @NotNull PsiElement place,
                                    @NotNull GrImportStatement[] importStatements,
-                                   boolean onDemand) {
-    if (!super.processImports(processor, state, lastParent, place, importStatements, onDemand)) {
-      return false;
-    }
-    if (!processPseudoImports(processor, state, lastParent, place, onDemand)) {
-      return false;
-    }
-
-    return true;
+                                   @NotNull ImportKind kind,
+                                   @Nullable Boolean processStatic) {
+    return super.processImports(processor, state, lastParent, place, importStatements, kind, processStatic) && (
+      kind == ImportKind.ON_DEMAND
+      ? processImportsOnDemand(processor, state, lastParent, place, processStatic)
+      : !(kind == ImportKind.ALIAS && !processSingleImports(processor, state, lastParent, place, processStatic))
+    );
   }
 
   @Override
@@ -216,26 +215,11 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return clone;
   }
 
-  protected boolean processPseudoImports(PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         PsiElement lastParent,
-                                         PsiElement place,
-                                         boolean onDemand) {
-    if (onDemand) {
-      if (!processImportsOnDemand(processor, state, lastParent, place)) {
-        return false;
-      }
-    }
-    else {
-      if (!processSingleImports(processor, state, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean processImportsOnDemand(PsiScopeProcessor processor, ResolveState state, PsiElement parent, PsiElement place) {
+  private boolean processImportsOnDemand(PsiScopeProcessor processor, ResolveState state, PsiElement parent, PsiElement place, Boolean processStatic) {
+    if (processStatic == null) return processImportsOnDemand(processor, state, parent, place, false) &&
+                                      processImportsOnDemand(processor, state, parent, place, true);
     for (GrImportStatement anImport : myOnDemandImports) {
+      if (processStatic != anImport.isStatic()) continue;
       if (!anImport.processDeclarations(processor, state, parent, place)) {
         return false;
       }
@@ -243,13 +227,19 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return true;
   }
 
-  private boolean processSingleImports(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, PsiElement place) {
+  private boolean processSingleImports(PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       PsiElement lastParent,
+                                       PsiElement place,
+                                       Boolean processStatic) {
+    if (processStatic == null) return processSingleImports(processor, state, lastParent, place, false) &&
+                                      processSingleImports(processor, state, lastParent, place, true);
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint != null ? nameHint.getName(state) : null;
 
     if (name != null) {
       final GrImportStatement anImport = myPseudoImports.get(name);
-      if (anImport != null) {
+      if (anImport != null && processStatic == anImport.isStatic()) {
         if (!anImport.processDeclarations(processor, state, lastParent, place)) {
           return false;
         }
@@ -257,6 +247,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     }
     else {
       for (GrImportStatement anImport : myPseudoImports.values()) {
+        if (processStatic != anImport.isStatic()) continue;
         if (!anImport.processDeclarations(processor, state, lastParent, place)) {
           return false;
         }

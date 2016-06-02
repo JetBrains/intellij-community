@@ -223,25 +223,22 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected final void doRemove() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final int[] selected = myCollectionPanel.getTable().getSelectedRows();
-        if (selected == null || selected.length == 0) return;
-        final List<T> selectedElements = new ArrayList<T>(selected.length);
-        for (final int i : selected) {
-          selectedElements.add(myCollectionElements.get(sortAdjustedIndex(i)));
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final int[] selected = myCollectionPanel.getTable().getSelectedRows();
+      if (selected == null || selected.length == 0) return;
+      final List<T> selectedElements = new ArrayList<T>(selected.length);
+      for (final int i : selected) {
+        selectedElements.add(myCollectionElements.get(sortAdjustedIndex(i)));
+      }
 
-        doRemove(selectedElements);
-        reset();
-        int selection = selected[0];
-        if (selection >= myCollectionElements.size()) {
-          selection = myCollectionElements.size() - 1;
-        }
-        if (selection >= 0) {
-          myCollectionPanel.getTable().setRowSelectionInterval(selection, selection);
-        }
+      doRemove(selectedElements);
+      reset();
+      int selection = selected[0];
+      if (selection >= myCollectionElements.size()) {
+        selection = myCollectionElements.size() - 1;
+      }
+      if (selection >= 0) {
+        myCollectionPanel.getTable().setRowSelectionInterval(selection, selection);
       }
     });
   }

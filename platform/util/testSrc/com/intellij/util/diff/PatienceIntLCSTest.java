@@ -93,9 +93,43 @@ public class PatienceIntLCSTest extends TestCase {
   }
 
   public void testInnerChunks4() throws FilesTooBigForDiffException {
-    BitSet[] change =
-      buildChange(new int[]{15, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 15}, new int[]{13, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 13});
+    BitSet[] change = buildChange(new int[]{15, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 15},
+                                  new int[]{13, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 13});
     checkChange(change, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+  }
+
+  public void testNotAbortedEqual() throws FilesTooBigForDiffException {
+    checkAborted(false, new int[]{1, 2, 3}, new int[]{1, 2, 3});
+  }
+
+  public void testNotAbortedSimple() throws FilesTooBigForDiffException {
+    checkAborted(false, new int[]{100, 1, 2, 3, 4, 5, 100}, new int[]{1, 2, 3, 4});
+  }
+
+  public void testAbortedNoMatches() throws FilesTooBigForDiffException {
+    checkAborted(true, new int[]{4, 1, 2, 3}, new int[]{500, 100, 600,});
+  }
+
+  public void testAbortedSimple() throws FilesTooBigForDiffException {
+    checkAborted(true, new int[]{4, 1, 2, 3, 100}, new int[]{5, 1, 6, 8, 9, 10});
+  }
+
+  public void testNotAbortedSecondStep() throws FilesTooBigForDiffException {
+    checkAborted(false,
+                 new int[]{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 100},
+                 new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
+  }
+
+  public void testNotAbortedThirdStep() throws FilesTooBigForDiffException {
+    checkAborted(false,
+                 new int[]{100, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},
+                 new int[]{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2});
+  }
+
+  public void testAbortedForthStep() throws FilesTooBigForDiffException {
+    checkAborted(true,
+                 new int[]{100, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},
+                 new int[]{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 0, 2});
   }
 
   private static BitSet[] buildChange(int[] first, int[] second) throws FilesTooBigForDiffException {
@@ -110,6 +144,17 @@ public class PatienceIntLCSTest extends TestCase {
     }
     for (int i = 0; i < expected2.length; i++) {
       assertEquals(change[1].get(i), expected2[i] == 1);
+    }
+  }
+
+  private static void checkAborted(boolean shouldBeAborted, int[] first, int[] second) {
+    PatienceIntLCS patienceIntLCS = new PatienceIntLCS(first, second);
+    try {
+      patienceIntLCS.execute(true);
+      assertFalse(shouldBeAborted);
+    }
+    catch (FilesTooBigForDiffException e) {
+      assertTrue(shouldBeAborted);
     }
   }
 }

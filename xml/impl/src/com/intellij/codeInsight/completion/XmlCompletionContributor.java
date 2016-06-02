@@ -100,15 +100,12 @@ public class XmlCompletionContributor extends CompletionContributor {
 
                final Set<String> usedWords = new THashSet<String>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
-               result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-                 @Override
-                 public void consume(CompletionResult r) {
-                   if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
-                     addWordVariants.set(false);
-                   }
-                   usedWords.add(r.getLookupElement().getLookupString());
-                   result.passResult(r.withLookupElement(LookupElementDecorator.withInsertHandler(r.getLookupElement(), QUOTE_EATER)));
+               result.runRemainingContributors(parameters, r -> {
+                 if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
+                   addWordVariants.set(false);
                  }
+                 usedWords.add(r.getLookupElement().getLookupString());
+                 result.passResult(r.withLookupElement(LookupElementDecorator.withInsertHandler(r.getLookupElement(), QUOTE_EATER)));
                });
                if (addWordVariants.get().booleanValue()) {
                  addWordVariants.set(attributeValue.getReferences().length == 0);

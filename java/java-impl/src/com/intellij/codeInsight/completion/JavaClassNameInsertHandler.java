@@ -36,7 +36,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
 /**
@@ -175,7 +174,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (!(obj instanceof PsiClass) || !((PsiClass)obj).isAnnotationType()) return false;
 
     PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
-    return psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(leaf);
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(leaf, PsiAnnotation.class);
+    return anno != null && PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), leaf, false);
   }
 
   static boolean shouldHaveAnnotationParameters(PsiClass annoClass) {

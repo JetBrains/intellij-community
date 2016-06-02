@@ -33,11 +33,11 @@ class VarianceTesting {
         VarianceTesting z = x.field;
         VarianceTesting[] v = x.arrayField;
         VarianceTesting v1 = x.arrayField[0];
-        x.arrayField[0] = new VarianceTesting();
+        <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.arrayField[0] = new VarianceTesting()</error>;
         <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.field = new VarianceTesting()</error>;
         VarianceTesting[] k = x.method();
         k[0] = new VarianceTesting();
-        x.method()[0] = new VarianceTesting();
+        <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.method()[0] = new VarianceTesting()</error>;
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
         l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
         <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
@@ -280,6 +280,6 @@ class C67675<T extends B67675<?>>
 {
     void foo(T x)
     {
-        x.foo()[0] = "";
+        <error descr="Incompatible types. Found: 'java.lang.String', required: 'capture<?>'">x.foo()[0] = ""</error>;
     }
 }

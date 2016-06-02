@@ -921,12 +921,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           return false;
         }
         final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            result.set(setSelectionValue(property, newValue));
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          result.set(setSelectionValue(property, newValue));
 
-            editor.refreshAndSave(false);
-          }
+          editor.refreshAndSave(false);
         }, UIDesignerBundle.message("command.set.property.value"), null);
 
         retVal = result.get().booleanValue();
@@ -1330,7 +1328,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(editor != null){
         editor.updateUI();
       }
-      final Property[] children = getPropChildren(property);
+      final Property[] children = property.getChildren(null);
       for (int i = children.length - 1; i >= 0; i--) {
         final Property child = children[i];
         if(!(child instanceof IntrospectedProperty)){

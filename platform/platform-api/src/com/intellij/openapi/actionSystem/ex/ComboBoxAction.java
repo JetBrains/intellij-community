@@ -65,12 +65,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
       if (rootPane != null) {
         button = (ComboBoxButton)
-          UIUtil.uiTraverser().withRoot(rootPane).bfsTraversal().filter(new Condition<Component>() {
-            @Override
-            public boolean value(Component component) {
-              return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
-            }
-          }).first();
+          UIUtil.uiTraverser(rootPane).bfsTraversal().filter(
+            component -> component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this).first();
       }
       if (button == null) return;
     }
@@ -168,12 +164,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           @Override
           public void actionPerformed(ActionEvent e) {
             if (!myForcePressed) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-                @Override
-                public void run() {
-                  showPopup();
-                }
-              });
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
             }
           }
         }
@@ -251,20 +242,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myForcePressed = true;
       repaint();
 
-      return new Runnable() {
-        @Override
-        public void run() {
-          // give the button a chance to handle action listener
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myForcePressed = false;
-              myPopup = null;
-            }
-          }, ModalityState.any());
-          repaint();
-          fireStateChanged();
-        }
+      return () -> {
+        // give the button a chance to handle action listener
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myForcePressed = false;
+          myPopup = null;
+        }, ModalityState.any());
+        repaint();
+        fireStateChanged();
       };
     }
 

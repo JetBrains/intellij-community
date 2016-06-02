@@ -10,13 +10,23 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Url;
+import com.intellij.util.UrlImpl;
+import com.intellij.util.net.NetUtils;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInServerOptions;
+import org.jetbrains.builtInWebServer.BuiltInWebServerKt;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.SubServer;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URLConnection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,31 +92,28 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       return null;
     }
 
-    return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          BuiltInServer mainServer = StartupUtil.getServer();
-          if (mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup) {
-            server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
-          }
-          else {
-            server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
-          }
-          bindCustomPorts(server);
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        BuiltInServer mainServer = StartupUtil.getServer();
+        if (mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup) {
+          server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
         }
-        catch (Throwable e) {
-          LOG.info(e);
-          NOTIFICATION_GROUP.getValue().createNotification("Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
-                                                           "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                           NotificationType.ERROR).notify(null);
-          return;
+        else {
+          server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
         }
-
-        LOG.info("built-in server started, port " + server.getPort());
-
-        Disposer.register(ApplicationManager.getApplication(), server);
+        bindCustomPorts(server);
       }
+      catch (Throwable e) {
+        LOG.info(e);
+        NOTIFICATION_GROUP.getValue().createNotification("Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
+                                                         "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                         NotificationType.ERROR).notify(null);
+        return;
+      }
+
+      LOG.info("built-in server started, port " + server.getPort());
+
+      Disposer.register(ApplicationManager.getApplication(), server);
     });
   }
 
@@ -114,6 +121,25 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   public Disposable getServerDisposable() {
     return server;
+  }
+
+  @Override
+  public boolean isOnBuiltInWebServer(@Nullable Url url) {
+    return url != null && !StringUtil.isEmpty(url.getAuthority()) && isOnBuiltInWebServerByAuthority(url.getAuthority());
+  }
+
+  @Override
+  public Url addAuthToken(@NotNull Url url) {
+    if (url.getParameters() != null) {
+      // built-in server url contains query only if token specified
+      return url;
+    }
+    return new UrlImpl(url.getScheme(), url.getAuthority(), url.getPath(), "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken());
+  }
+
+  @Override
+  public void configureRequestToWebServer(@NotNull URLConnection connection) {
+    connection.setRequestProperty(BuiltInWebServerKt.TOKEN_HEADER_NAME, BuiltInWebServerKt.acquireToken());
   }
 
   private static void bindCustomPorts(@NotNull BuiltInServer server) {
@@ -128,6 +154,39 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       catch (Throwable e) {
         LOG.error(e);
       }
+    }
+  }
+
+  public static boolean isOnBuiltInWebServerByAuthority(@NotNull String authority) {
+    int portIndex = authority.indexOf(':');
+    if (portIndex < 0 || portIndex == authority.length() - 1) {
+      return false;
+    }
+
+    int port = StringUtil.parseInt(authority.substring(portIndex + 1), -1);
+    if (port == -1) {
+      return false;
+    }
+
+    BuiltInServerOptions options = BuiltInServerOptions.getInstance();
+    int idePort = BuiltInServerManager.getInstance().getPort();
+    if (options.builtInServerPort != port && idePort != port) {
+      return false;
+    }
+
+    String host = authority.substring(0, portIndex);
+    if (NetUtils.isLocalhost(host)) {
+      return true;
+    }
+
+    try {
+      InetAddress inetAddress = InetAddress.getByName(host);
+      return inetAddress.isLoopbackAddress() ||
+             inetAddress.isAnyLocalAddress() ||
+             (options.builtInServerAvailableExternally && idePort != port && NetworkInterface.getByInetAddress(inetAddress) != null);
+    }
+    catch (IOException e) {
+      return false;
     }
   }
 }

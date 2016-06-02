@@ -118,11 +118,6 @@ public class DarculaTest {
         }
       }
     }, AWTEvent.KEY_EVENT_MASK);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        frame.setVisible(true);
-      }
-    });
+    SwingUtilities.invokeLater(() -> frame.setVisible(true));
   }
 }

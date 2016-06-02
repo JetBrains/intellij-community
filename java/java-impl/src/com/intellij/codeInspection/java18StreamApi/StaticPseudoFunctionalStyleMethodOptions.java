@@ -63,12 +63,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
 
   @NotNull
   public Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
-    return ContainerUtil.filter(myElements, new Condition<PipelineElement>() {
-      @Override
-      public boolean value(PipelineElement element) {
-        return methodName.equals(element.getMethodName());
-      }
-    });
+    return ContainerUtil.filter(myElements, element -> methodName.equals(element.getMethodName()));
   }
 
   public void readExternal(final @NotNull Element xmlElement) {
@@ -123,7 +118,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     final JBList list = new JBList(myElements);
     list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
       @Override
-      protected void customizeCellRenderer(JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
         final String classFQName = element.getHandlerClass();
         final String[] split = classFQName.split("\\.");
         final int classShortNameIndex = classFQName.length() - split[split.length - 1].length();

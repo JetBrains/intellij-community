@@ -21,9 +21,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
@@ -58,11 +61,38 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
 
     @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isEnabled()) {
+        final InspectionResultsView view = getInvoker(e);
+        boolean permanentFound = false;
+        boolean nonPermanentFound = false;
+        for (RefEntity point : view.getTree().getSelectedElements()) {
+          if (point instanceof RefJavaElement && ((RefJavaElement)point).isEntry()) {
+            if (((RefJavaElement)point).isPermanentEntry()) {
+              permanentFound = true;
+            }
+            else {
+              nonPermanentFound = true;
+            }
+          }
+        }
+
+        if (permanentFound && nonPermanentFound) {
+          e.getPresentation().setText(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"));
+        }
+        else if (nonPermanentFound || !permanentFound) {
+          e.getPresentation().setEnabled(false);
+        }
+      }
+    }
+
+    @Override
     protected boolean applyFix(@NotNull RefEntity[] refElements) {
       final EntryPointsManager entryPointsManager =
         getContext().getExtension(GlobalJavaInspectionContext.CONTEXT).getEntryPointsManager(getContext().getRefManager());
       for (RefEntity refElement : refElements) {
-        if (refElement instanceof RefElement) {
+        if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isEntry() && ((RefJavaElement)refElement).isPermanentEntry()) {
           entryPointsManager.removeEntryPoint((RefElement)refElement);
         }
       }
@@ -76,7 +106,8 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure) {
+                                       boolean showStructure,
+                                       boolean groupByStructure) {
     return node;
   }
 
@@ -84,5 +115,10 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   @NotNull
   public DeadHTMLComposer getComposer() {
     return new DeadHTMLComposer(this);
+  }
+
+  @Override
+  public boolean isDummy() {
+    return true;
   }
 }

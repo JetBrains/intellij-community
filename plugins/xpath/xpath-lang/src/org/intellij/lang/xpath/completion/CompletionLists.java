@@ -69,14 +69,11 @@ public class CompletionLists {
           "self"
   ));
 
-  private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = new com.intellij.util.Function<String, Lookup>() {
-    @Override
-    public Lookup fun(String s) {
-      if (s.equals("processing-instruction")) {
-        return new FunctionLookup(s, s + "(pi-target?)");
-      } else {
-        return new FunctionLookup(s, s + "()");
-      }
+  private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = s -> {
+    if (s.equals("processing-instruction")) {
+      return new FunctionLookup(s, s + "(pi-target?)");
+    } else {
+      return new FunctionLookup(s, s + "()");
     }
   };
 

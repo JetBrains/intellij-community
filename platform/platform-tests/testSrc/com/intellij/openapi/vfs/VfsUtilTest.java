@@ -54,77 +54,56 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindFileByUrl() throws IOException {
-    File file1 = new File(PathManagerEx.getTestDataPath());
-    file1 = new File(file1, "vfs");
-    file1 = new File(file1, "findFileByUrl");
-    VirtualFile file0 = VfsUtil.findFileByURL(file1.toURI().toURL());
-    assertNotNull(file0);
-    assertTrue(file0.isDirectory());
-    List<VirtualFile> list = VfsUtil.getChildren(file0, file -> !file.getName().endsWith(".new"));
-    assertEquals(2, list.size());     // "CVS" dir ignored
+    File testDataDir = new File(PathManagerEx.getTestDataPath(), "vfs/findFileByUrl");
 
-    File file2 = new File(file1, "test.zip");
-    URL url2 = file2.toURI().toURL();
+    VirtualFile vDir = VfsUtil.findFileByURL(testDataDir.toURI().toURL());
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+    List<VirtualFile> list = VfsUtil.getChildren(vDir, file -> !file.getName().endsWith(".new"));
+    assertEquals(2, list.size());
 
-    url2 = new URL("jar", "", url2.toExternalForm() + "!/");
-    file0 = VfsUtil.findFileByURL(url2);
-    assertNotNull(file0);
-    assertTrue(file0.isDirectory());
+    File zip = new File(testDataDir, "test.zip");
+    URL jarUrl = new URL("jar", "", zip.toURI().toURL().toExternalForm() + "!/");
+    VirtualFile vZipRoot = VfsUtil.findFileByURL(jarUrl);
+    assertNotNull(vZipRoot);
+    assertTrue(vZipRoot.isDirectory());
 
-    url2 = new URL(url2, "com/intellij/installer");
-    file0 = VfsUtil.findFileByURL(url2);
-    assertNotNull(file0);
-    assertTrue(file0.isDirectory());
+    VirtualFile vZipDir = VfsUtil.findFileByURL(new URL(jarUrl, "com/intellij/installer"));
+    assertNotNull(vZipDir);
+    assertTrue(vZipDir.isDirectory());
 
-    File file3 = new File(file1, "1.txt");
-    file0 = VfsUtil.findFileByURL(file3.toURI().toURL());
-    assertNotNull(file0);
-    String content = VfsUtilCore.loadText(file0);
-    assertNotNull(file0);
-    assertFalse(file0.isDirectory());
-    assertEquals("test text", content);
+    File file = new File(testDataDir, "1.txt");
+    VirtualFile vFile = VfsUtil.findFileByURL(file.toURI().toURL());
+    assertNotNull(vFile);
+    assertFalse(vFile.isDirectory());
+    assertEquals("test text", VfsUtilCore.loadText(vFile));
   }
 
   @Test
   public void testFindRelativeFile() throws IOException {
-    File ioTestDataDir = new File(PathManagerEx.getTestDataPath());
-    VirtualFile testDataDir = LocalFileSystem.getInstance().findFileByIoFile(ioTestDataDir);
-    assertNotNull(testDataDir);
-    assertEquals(testDataDir, VfsUtilCore.findRelativeFile(VfsUtilCore.convertFromUrl(ioTestDataDir.toURI().toURL()), null));
-    assertEquals(testDataDir, VfsUtilCore.findRelativeFile(ioTestDataDir.getAbsolutePath(), null));
-
-    File ioVfsDir = new File(ioTestDataDir, "vfs");
-    VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByIoFile(ioVfsDir);
-    assertNotNull(vfsDir);
-    assertEquals(vfsDir, VfsUtilCore.findRelativeFile(ioVfsDir.getAbsolutePath(), null));
-    assertEquals(vfsDir, VfsUtilCore.findRelativeFile("vfs", testDataDir));
+    File testDataDir = new File(PathManagerEx.getTestDataPath(), "vfs");
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(testDataDir);
+    assertNotNull(vDir);
+    assertEquals(vDir, VfsUtilCore.findRelativeFile(VfsUtilCore.convertFromUrl(testDataDir.toURI().toURL()), null));
+    assertEquals(vDir, VfsUtilCore.findRelativeFile(testDataDir.getAbsolutePath(), null));
+    assertEquals(vDir, VfsUtilCore.findRelativeFile("vfs", vDir.getParent()));
   }
 
   @Test
   public void testRelativePath() {
-    File root = new File(PathManagerEx.getTestDataPath());
-    File testRoot = new File(new File(root, "vfs"), "relativePath");
-    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(testRoot);
-    assertNotNull(vTestRoot);
-    assertTrue(vTestRoot.isDirectory());
-
-    File subDir = new File(testRoot, "subDir");
-    VirtualFile vSubDir = LocalFileSystem.getInstance().findFileByIoFile(subDir);
-    assertNotNull(vSubDir);
-
-    File subSubDir = new File(subDir, "subSubDir");
-    VirtualFile vSubSubDir = LocalFileSystem.getInstance().findFileByIoFile(subSubDir);
-    assertNotNull(vSubSubDir);
-
+    File testDataDir = new File(PathManagerEx.getTestDataPath(), "vfs/relativePath/subDir/subSubDir");
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(testDataDir);
+    assertNotNull(vDir);
+    VirtualFile vSubDir = vDir.getParent(), vTestRoot = vSubDir.getParent();
     assertEquals("subDir", VfsUtilCore.getRelativePath(vSubDir, vTestRoot, '/'));
-    assertEquals("subDir/subSubDir", VfsUtilCore.getRelativePath(vSubSubDir, vTestRoot, '/'));
+    assertEquals("subDir/subSubDir", VfsUtilCore.getRelativePath(vDir, vTestRoot, '/'));
     assertEquals("", VfsUtilCore.getRelativePath(vTestRoot, vTestRoot, '/'));
   }
 
   @Test
   public void testFindChildWithTrailingSpace() throws IOException {
     File tempDir = myTempDir.newFolder();
-    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
@@ -160,7 +139,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testPresentableUrlSurvivesDeletion() throws IOException {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.newFile("file.txt"));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.newFile("file.txt"));
     assertNotNull(file);
     String url = file.getPresentableUrl();
     assertNotNull(url);
@@ -240,7 +219,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void testFindRootWithDenormalizedPath() throws IOException {
     File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
-    VirtualFile jar = LocalFileSystem.getInstance().findFileByIoFile(tempJar);
+    VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
     JarFileSystem fs = JarFileSystem.getInstance();
@@ -257,7 +236,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertTrue(new File(tempDir, "CssInvalidElement").createNewFile());
     assertTrue(new File(tempDir, "extFiles").createNewFile());
 
-    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
@@ -287,7 +266,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     File tempDir = myTempDir.newFolder();
     assertTrue(new File(tempDir, "child").createNewFile());
 
-    VirtualFile parent = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
+    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(parent);
     if (full) {
       assertEquals(1, parent.getChildren().length);

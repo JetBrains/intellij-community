@@ -42,22 +42,19 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     super.start();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          if (ApplicationManager.getApplication().isDisposed()) return;
-          WindowManager windowManager = WindowManager.getInstance();
-          if (windowManager == null) return;
+      () -> {
+        if (ApplicationManager.getApplication().isDisposed()) return;
+        WindowManager windowManager = WindowManager.getInstance();
+        if (windowManager == null) return;
 
-          Project[] projects = ProjectManager.getInstance().getOpenProjects();
-          if (projects.length == 0) projects = new Project[]{null};
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        if (projects.length == 0) projects = new Project[]{null};
 
-          for (Project project : projects) {
-            StatusBar statusBar = windowManager.getStatusBar(project);
-            if (statusBar != null) {
-              String info = notNull(statusBar.getInfo(), "");
-              myStatusBar2SavedText.put(statusBar, pair(info, info));  // initial value
-            }
+        for (Project project : projects) {
+          StatusBar statusBar = windowManager.getStatusBar(project);
+          if (statusBar != null) {
+            String info = notNull(statusBar.getInfo(), "");
+            myStatusBar2SavedText.put(statusBar, pair(info, info));  // initial value
           }
         }
       }
@@ -69,15 +66,12 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     super.stop();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
-            String textToRestore = updateRestoreText(statusBar);
-            statusBar.setInfo(textToRestore);
-          }
-          myStatusBar2SavedText.clear();
+      () -> {
+        for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
+          String textToRestore = updateRestoreText(statusBar);
+          statusBar.setInfo(textToRestore);
         }
+        myStatusBar2SavedText.clear();
       }
     );
   }
@@ -109,12 +103,9 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     final String _text = text;
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          for (StatusBar statusBarEx : myStatusBar2SavedText.keySet()) {
-            setStatusBarText(statusBarEx, _text);
-          }
+      () -> {
+        for (StatusBar statusBarEx : myStatusBar2SavedText.keySet()) {
+          setStatusBarText(statusBarEx, _text);
         }
       }
     );

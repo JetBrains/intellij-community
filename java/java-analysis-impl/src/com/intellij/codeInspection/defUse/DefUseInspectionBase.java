@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.List;
 
 public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
-  public boolean REPORT_PREFIX_EXPRESSIONS = false;
+  public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
 
@@ -63,17 +63,14 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
-      Collections.sort(unusedDefs, new Comparator<DefUseUtil.Info>() {
-        @Override
-        public int compare(DefUseUtil.Info o1, DefUseUtil.Info o2) {
-          int offset1 = o1.getContext().getTextOffset();
-          int offset2 = o2.getContext().getTextOffset();
+      Collections.sort(unusedDefs, (o1, o2) -> {
+        int offset1 = o1.getContext().getTextOffset();
+        int offset2 = o2.getContext().getTextOffset();
 
-          if (offset1 == offset2) return 0;
-          if (offset1 < offset2) return -1;
+        if (offset1 == offset2) return 0;
+        if (offset1 < offset2) return -1;
 
-          return 1;
-        }
+        return 1;
       });
 
       for (DefUseUtil.Info info : unusedDefs) {

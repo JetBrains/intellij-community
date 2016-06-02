@@ -89,4 +89,22 @@ internal class HeavyBuiltInWebServerTest {
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND)
     }
   }
+
+  @Test
+  fun `file in hidden folder`() {
+    val projectDir = tempDirManager.newPath().resolve("foo/bar")
+    val projectDirPath = projectDir.systemIndependentPath
+    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+      projectDir.createDirectories()
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
+      createModule(projectDirPath, project)
+
+      val dir = projectDir.resolve(".coverage")
+      dir.createDirectories()
+      val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
+      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
+      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK)
+    }
+  }
 }

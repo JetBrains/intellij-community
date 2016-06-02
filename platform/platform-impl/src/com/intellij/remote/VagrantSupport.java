@@ -42,13 +42,8 @@ public abstract class VagrantSupport {
                                                                              @Nullable String machineName);
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(project, "Enable Vagrant Support plugin",
-                                 "Vagrant Support Disabled");
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, "Enable Vagrant Support plugin",
+                                                          "Vagrant Support Disabled"));
   }
 
   @NotNull

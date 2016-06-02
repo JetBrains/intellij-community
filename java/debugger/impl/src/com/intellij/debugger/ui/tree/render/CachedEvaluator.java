@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -75,8 +76,8 @@ public abstract class CachedEvaluator {
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);
-      cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
-      cache.myEvaluator = myDefaultFragmentFactory.getEvaluatorBuilder().build(cache.myPsiChildrenExpression, null);
+      cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
+      cache.myEvaluator = myDefaultFragmentFactory.getEvaluatorBuilder().build(codeFragment, null);
     }
     catch (EvaluateException e) {
       cache.myException = e;
@@ -89,11 +90,7 @@ public abstract class CachedEvaluator {
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {
     Cache cache = myCache.get();
     if(cache == null) {
-      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Cache>() {
-        public Cache compute() {
-          return initEvaluatorAndChildrenExpression(project);
-        }
-      });
+      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> initEvaluatorAndChildrenExpression(project));
     }
 
     if(cache.myException != null) {
@@ -103,9 +100,10 @@ public abstract class CachedEvaluator {
     return cache.myEvaluator;
   }
 
+  @Nullable
   protected PsiExpression getPsiExpression(final Project project) {
     Cache cache = myCache.get();
-    if(cache == null) {
+    if (cache == null) {
       cache = initEvaluatorAndChildrenExpression(project);
     }
 

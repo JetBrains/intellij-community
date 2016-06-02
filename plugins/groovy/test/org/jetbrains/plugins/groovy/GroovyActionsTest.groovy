@@ -39,6 +39,12 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
   public void testSWInArgLabel2() {doTestForSelectWord(2)}
   public void testSWInArgLabel3() {doTestForSelectWord(2)}
 
+  public void testSWEscapesInString() {
+    doTestForSelectWord 1,
+      "String s = \"abc\\nd<caret>ef\"",
+      "String s = \"abc\\n<selection>d<caret>ef</selection>\""
+  }
+
   public void testSWListLiteralArgument() {
     doTestForSelectWord 2,
 "foo([a<caret>], b)",

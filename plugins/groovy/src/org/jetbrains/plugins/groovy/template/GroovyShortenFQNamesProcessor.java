@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -72,7 +74,7 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor 
   }
 
   @Override
-  public boolean isVisible(Template template) {
+  public boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
     return false;
   }
 }

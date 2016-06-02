@@ -48,12 +48,10 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
 
             public void addNotify() {
                 super.addNotify();
-                Runnable runnable = new Runnable() {
-                    public void run() {
-                        final Editor editor = getEditor();
-                        if (editor != null) {
-                            editor.getContentComponent().requestFocus();
-                        }
+                Runnable runnable = () -> {
+                    final Editor editor = getEditor();
+                    if (editor != null) {
+                        editor.getContentComponent().requestFocus();
                     }
                 };
                 SwingUtilities.invokeLater(runnable);

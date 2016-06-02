@@ -38,7 +38,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ExpressionConverter;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -97,15 +96,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 
 import java.util.*;
 
@@ -115,24 +111,9 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
-  public static final Condition<PsiClass> IS_INTERFACE = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return aClass.isInterface();
-    }
-  };
-  private static final Condition<PsiClass> IS_NOT_INTERFACE = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return !aClass.isInterface();
-    }
-  };
-  public static final Condition<PsiClass> IS_TRAIT = new Condition<PsiClass>() {
-    @Override
-    public boolean value(PsiClass aClass) {
-      return GrTraitUtil.isTrait(aClass);
-    }
-  };
+  public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
+  private static final Condition<PsiClass> IS_NOT_INTERFACE = aClass -> !aClass.isInterface();
+  public static final Condition<PsiClass> IS_TRAIT = aClass -> GrTraitUtil.isTrait(aClass);
 
   private final AnnotationHolder myHolder;
 
@@ -430,7 +411,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
     checkTypeDefinition(myHolder, typeDefinition);
 
-    checkDuplicateMethod(typeDefinition, myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
 
@@ -485,7 +465,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final PsiClass superClass = typeDefinition.getSuperClass();
     if (superClass == null) return;
 
-    if (GrInheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
+    if (InheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
 
     PsiMethod defConstructor = getDefaultConstructor(superClass);
     boolean hasImplicitDefConstructor = superClass.getConstructors().length == 0;
@@ -610,6 +590,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(GrMethod method) {
+    checkDuplicateMethod(method);
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
     checkOptionalParametersInAbstractMethod(myHolder, method);
@@ -1240,12 +1221,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
                            : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
           myHolder.createErrorAnnotation(refElement, message);
         }
-        return;
-      }
-      if (newExpression.getQualifier() != null) {
-        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
-          myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
-        }
       }
     }
   }
@@ -1484,8 +1459,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitFile(GroovyFileBase file) {
     final PsiClass scriptClass = file.getScriptClass();
     if (scriptClass != null) {
-      checkDuplicateMethod(scriptClass, myHolder);
-      checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getCodeMethods());
+      checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getMethods());
     }
   }
 
@@ -1706,12 +1680,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
         if (elementType == GroovyTokenTypes.kSUPER && containingClass != null && GrTraitUtil.isTrait((PsiClass)resolved)) {
           PsiClassType[] superTypes = containingClass.getSuperTypes();
-          if (ContainerUtil.find(superTypes, new Condition<PsiClassType>() {
-            @Override
-            public boolean value(PsiClassType type) {
-              return ref.getManager().areElementsEquivalent(type.resolve(), resolved);
-            }
-          }) != null) {
+          if (ContainerUtil.find(superTypes, type -> ref.getManager().areElementsEquivalent(type.resolve(), resolved)) != null) {
             holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
             return; // reference to trait method
           }
@@ -1992,29 +1961,29 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkDuplicateMethod(PsiClass clazz, AnnotationHolder holder) {
-    MultiMap<MethodSignature, PsiMethod> map = GrClosureSignatureUtil.findRawMethodSignatures(clazz.getMethods(), clazz);
-    processMethodDuplicates(map, holder);
-  }
-
-  protected static void processMethodDuplicates(MultiMap<MethodSignature, PsiMethod> map, AnnotationHolder holder) {
-    for (MethodSignature signature : map.keySet()) {
-      Collection<PsiMethod> methods = map.get(signature);
-      if (methods.size() > 1) {
-        for (Iterator<PsiMethod> iterator = methods.iterator(); iterator.hasNext(); ) {
-          PsiMethod method = iterator.next();
-          if (method instanceof LightElement) iterator.remove();
-        }
-
-        if (methods.size() < 2) continue;
-        String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
-        for (PsiMethod method : methods) {
-          //noinspection ConstantConditions
-          holder.createErrorAnnotation(GrHighlightUtil.getMethodHeaderTextRange(method), GroovyBundle
-            .message("method.duplicate", signaturePresentation, method.getContainingClass().getName()));
-        }
+  private void checkDuplicateMethod(@NotNull GrMethod method) {
+    PsiClass clazz = method.getContainingClass();
+    if (clazz == null) return;
+    GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+    if (reflectedMethods.length == 0) {
+      doCheckDuplicateMethod(method, clazz);
+    }
+    else {
+      for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+        doCheckDuplicateMethod(reflectedMethod, clazz);
       }
     }
+  }
+
+  private void doCheckDuplicateMethod(@NotNull GrMethod method, @NotNull PsiClass clazz) {
+    MethodSignature signature = GrClassImplUtil.getDuplicatedMethods(clazz).get(method);
+    if (signature == null) return;
+    String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
+    GrMethod original = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
+    myHolder.createErrorAnnotation(
+      GrHighlightUtil.getMethodHeaderTextRange(original),
+      GroovyBundle.message("method.duplicate", signaturePresentation, clazz.getName())
+    );
   }
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {

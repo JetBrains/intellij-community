@@ -109,34 +109,31 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     public void visitPyClass(final PyClass node) {
       super.visitPyClass(node);
       // check property() and @property
-      node.scanProperties(new Processor<Property>() {
-        @Override
-        public boolean process(Property property) {
-          PyTargetExpression target = property.getDefinitionSite();
-          if (target != null) {
-            // target = property(); args may be all funny
-            PyCallExpression call = (PyCallExpression)target.findAssignedValue();
-            assert call != null : "Property has a null call assigned to it";
-            final PyArgumentList arglist = call.getArgumentList();
-            assert arglist != null : "Property call has null arglist";
-            // we assume fget, fset, fdel, doc names
-            final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(getResolveContext());
-            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-              final String paramName = entry.getValue().getName();
-              PyExpression argument = PyUtil.peelArgument(entry.getKey());
-              checkPropertyCallArgument(paramName, argument, node.getContainingFile());
-            }
+      node.scanProperties(property -> {
+        PyTargetExpression target = property.getDefinitionSite();
+        if (target != null) {
+          // target = property(); args may be all funny
+          PyCallExpression call = (PyCallExpression)target.findAssignedValue();
+          assert call != null : "Property has a null call assigned to it";
+          final PyArgumentList arglist = call.getArgumentList();
+          assert arglist != null : "Property call has null arglist";
+          // we assume fget, fset, fdel, doc names
+          final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(getResolveContext());
+          for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
+            final String paramName = entry.getValue().getName();
+            PyExpression argument = PyUtil.peelArgument(entry.getKey());
+            checkPropertyCallArgument(paramName, argument, node.getContainingFile());
           }
-          else {
-            // @property; we only check getter, others are checked by visitPyFunction
-            // getter is always present with this form
-            final PyCallable callable = property.getGetter().valueOrNull();
-            if (callable instanceof PyFunction) {
-              checkGetter(callable, getFunctionMarkingElement((PyFunction)callable));
-            }
-          }
-          return false;  // always want more
         }
+        else {
+          // @property; we only check getter, others are checked by visitPyFunction
+          // getter is always present with this form
+          final PyCallable callable = property.getGetter().valueOrNull();
+          if (callable instanceof PyFunction) {
+            checkGetter(callable, getFunctionMarkingElement((PyFunction)callable));
+          }
+        }
+        return false;  // always want more
       }, false);
     }
 

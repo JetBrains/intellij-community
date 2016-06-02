@@ -56,12 +56,9 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      selectRunningProcess(e.getDataContext(), project, new Consumer<PythonDebugLanguageConsoleView>() {
-        @Override
-        public void consume(PythonDebugLanguageConsoleView view) {
-          view.enableConsole(false);
-          IdeFocusManager.getInstance(project).requestFocus(view.getPydevConsoleView().getComponent(), true);
-        }
+      selectRunningProcess(e.getDataContext(), project, view -> {
+        view.enableConsole(false);
+        IdeFocusManager.getInstance(project).requestFocus(view.getPydevConsoleView().getComponent(), true);
       });
     }
   }
@@ -72,24 +69,16 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper
-      .selectContentDescriptor(dataContext, project, consoles, "Select running python process", new Consumer<RunContentDescriptor>() {
-        @Override
-        public void consume(RunContentDescriptor descriptor) {
-          if (descriptor != null && descriptor.getExecutionConsole() instanceof PythonDebugLanguageConsoleView) {
-            consumer.consume((PythonDebugLanguageConsoleView)descriptor.getExecutionConsole());
-          }
+      .selectContentDescriptor(dataContext, project, consoles, "Select running python process", descriptor -> {
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PythonDebugLanguageConsoleView) {
+          consumer.consume((PythonDebugLanguageConsoleView)descriptor.getExecutionConsole());
         }
       });
   }
 
   private static Collection<RunContentDescriptor> getConsoles(Project project) {
-    return ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(RunContentDescriptor dom) {
-        return dom.getExecutionConsole() instanceof PythonDebugLanguageConsoleView && isAlive(dom);
-      }
-    });
+    return ExecutionHelper.findRunningConsole(project,
+                                              dom -> dom.getExecutionConsole() instanceof PythonDebugLanguageConsoleView && isAlive(dom));
   }
 
   private static boolean isAlive(RunContentDescriptor dom) {

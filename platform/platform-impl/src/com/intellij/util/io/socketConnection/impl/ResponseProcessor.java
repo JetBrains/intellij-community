@@ -35,31 +35,29 @@ public class ResponseProcessor<R extends AbstractResponse> {
   }
 
   public void startReading(final ResponseReader<R> reader) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        myThread = Thread.currentThread();
-        try {
-          while (true) {
-            final R r = reader.readResponse();
-            if (r == null) break;
-            if (r instanceof ResponseToRequest) {
-              final int requestId = ((ResponseToRequest)r).getRequestId();
-              processResponse(requestId, r);
-            }
-            else {
-              processResponse(r);
-            }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myThread = Thread.currentThread();
+      try {
+        while (true) {
+          final R r = reader.readResponse();
+          if (r == null) break;
+          if (r instanceof ResponseToRequest) {
+            final int requestId = ((ResponseToRequest)r).getRequestId();
+            processResponse(requestId, r);
+          }
+          else {
+            processResponse(r);
           }
         }
-        catch (InterruptedException ignored) {
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-        finally {
-          synchronized (myLock) {
-            myStopped = true;
-          }
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      finally {
+        synchronized (myLock) {
+          myStopped = true;
         }
       }
     });
@@ -162,11 +160,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     LOG.debug("schedule timeout check in " + delay + "ms");
     if (delay > 10) {
       myTimeoutAlarm.cancelAllRequests();
-      myTimeoutAlarm.addRequest(new Runnable() {
-        public void run() {
-          checkTimeout();
-        }
-      }, delay);
+      myTimeoutAlarm.addRequest(() -> checkTimeout(), delay);
     }
     else {
       checkTimeout();

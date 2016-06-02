@@ -473,7 +473,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$CapitalizeAndUnderscoreMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
@@ -523,8 +523,10 @@
              order="after sameDirectory"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule"
              order="after sameLogicalRoot"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.InResolveScopeWeigher" id="inResolveScope"
              order="after sameModule"/>
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
+             order="after inResolveScope"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
@@ -626,7 +628,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler" id="afterUnmatchedBrace"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler"
                           id="EnterBetweenBracesHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>
@@ -712,7 +714,7 @@
 
     <!-- TemplateManagerActions -->
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"
-                         id="templateEscape" order="after hide-hints"/>
+                         id="templateEscape" order="before hide-hints"/>
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EnterHandler"
                          id="templateEnter" order="before editorEnter"/>
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.TemplateLineStartHandler"/>
@@ -727,8 +729,6 @@
     <!-- HighlightManagerActions -->
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"
                          order="after hide-hints" id="hide-search"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.rename.inplace.EscapeHandler"
-                         order="before hide-hints"/>
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"
@@ -936,7 +936,7 @@
     
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
-    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
+    <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
@@ -953,6 +953,7 @@
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
+    <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"/>
   </extensions>
 </idea-plugin>
 

@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ShowHiddensAction extends ToggleAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
+    super.update(e);
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
     e.getPresentation().setEnabled(tree != null);
   }

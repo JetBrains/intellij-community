@@ -98,6 +98,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
   }
 
   @Nullable
@@ -235,12 +236,12 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
               final PyType returnType = StringUtil.isNotEmpty(memberTypeName) ? parseNumpyDocType(function, memberTypeName) : null;
               final boolean isOptional = StringUtil.isNotEmpty(memberTypeName) && memberTypeName.contains("optional");
 
-              if (isOptional) {
-                if (i != 0) {
-                  if(members.size() > 1)
-                    unionMembers.add(facade.createTupleType(members, function));
-                   else
-                    unionMembers.add(returnType);
+              if (isOptional && i != 0) {
+                if (members.size() > 1) {
+                  unionMembers.add(facade.createTupleType(members, function));
+                }
+                else if (members.size() == 1) {
+                  unionMembers.add(members.get(0));
                 }
               }
               members.add(returnType);
@@ -274,7 +275,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private static boolean isInsideNumPy(@NotNull PsiElement element) {
+  public static boolean isInsideNumPy(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
 
@@ -283,7 +284,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final String name = facade.findShortestImportableName(virtualFile, element);
-        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib."));
+        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib.") || name.startsWith("scipy."));
       }
     }
     return false;
@@ -375,7 +376,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return getPsiFacade(anchor).createUnionType(types);
   }
 
-  private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
+  public static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : getNumpyUnionType(typeString)) {
       if (anchor instanceof PyFunction && isInsideNumPy(anchor) && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
           ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
@@ -398,7 +399,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
       if (paramType != null) {
         if (isUfuncType(function, paramType)) {
-          return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
+          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
         }
         final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {

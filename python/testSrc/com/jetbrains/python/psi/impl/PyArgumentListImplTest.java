@@ -61,29 +61,22 @@ public class PyArgumentListImplTest extends PyClassRefactoringTest {
     myFixture.configureByFile(getMultiFileBaseName() + "/addArgumentFile.py");
 
     //TODO: newly created expressions has no indent info, it leads to errors in postprocessing formatting. Need to investigate.
-    PostprocessReformattingAspect.getInstance(myFixture.getProject()).disablePostprocessFormattingInside(new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-          @Override
-          public void run() {
+    PostprocessReformattingAspect.getInstance(myFixture.getProject()).disablePostprocessFormattingInside(
+      () -> WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
 
 
-            for (final PyClass aClass : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PyClass.class)) {
-              final PyArgumentList superClassExpressionList = aClass.getSuperClassExpressionList();
-              assert superClassExpressionList != null : "Class has no expression list!";
-              superClassExpressionList.addArgument(superClassExpression);
-            }
+        for (final PyClass aClass : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PyClass.class)) {
+          final PyArgumentList superClassExpressionList = aClass.getSuperClassExpressionList();
+          assert superClassExpressionList != null : "Class has no expression list!";
+          superClassExpressionList.addArgument(superClassExpression);
+        }
 
-            for (final PyCallExpression expression : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PyCallExpression.class)) {
-              final PyArgumentList list = expression.getArgumentList();
-              assert list != null : "Callable statement has no argument list?";
-              list.addArgument(functionExpression);
-            }
-          }
-        });
-      }
-    });
+        for (final PyCallExpression expression : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PyCallExpression.class)) {
+          final PyArgumentList list = expression.getArgumentList();
+          assert list != null : "Callable statement has no argument list?";
+          list.addArgument(functionExpression);
+        }
+      }));
     myFixture.checkResultByFile(getMultiFileBaseName() + "/addArgumentFile.after.py");
   }
 }

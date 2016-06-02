@@ -200,14 +200,11 @@ public class SafeDeleteDialog extends DialogWrapper {
       return;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        if (myCallback != null && isSafeDelete()) {
-          myCallback.run(SafeDeleteDialog.this);
-        } else {
-          SafeDeleteDialog.super.doOKAction();
-        }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
+      if (myCallback != null && isSafeDelete()) {
+        myCallback.run(SafeDeleteDialog.this);
+      } else {
+        SafeDeleteDialog.super.doOKAction();
       }
     });
 

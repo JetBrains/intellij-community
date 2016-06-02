@@ -44,12 +44,7 @@ import java.io.File;
 
     FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                                                             @Override
-                                                             public void run() {
-                                                               setupContentRoot();
-                                                             }
-                                                           });
+    ApplicationManager.getApplication().runWriteAction(() -> setupContentRoot());
     ProjectViewTestUtil.setupImpl(getProject(), true);
   }
 

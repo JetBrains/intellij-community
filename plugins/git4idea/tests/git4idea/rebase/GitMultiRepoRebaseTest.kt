@@ -212,7 +212,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     try {
-      GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
+      GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
     }
     finally {
       myGit.setShouldRebaseFail { false }

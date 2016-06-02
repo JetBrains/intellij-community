@@ -48,11 +48,6 @@ public class TestComparisonFailedStates extends TestFailedState {
 
   @NotNull
   public List<DiffHyperlink> getHyperlinks() {
-    return ContainerUtil.map(myStates, new Function<TestComparisionFailedState, DiffHyperlink>() {
-      @Override
-      public DiffHyperlink fun(TestComparisionFailedState state) {
-        return state.getHyperlink();
-      }
-    });
+    return ContainerUtil.map(myStates, state -> state.getHyperlink());
   }
 }

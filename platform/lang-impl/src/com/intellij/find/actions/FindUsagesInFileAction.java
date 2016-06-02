@@ -35,7 +35,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 
 public class FindUsagesInFileAction extends AnAction {
-
   public FindUsagesInFileAction() {
     setInjectedContext(true);
   }
@@ -75,11 +74,9 @@ public class FindUsagesInFileAction extends AnAction {
 
   private static boolean isEnabled(DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      return false;
-    }
-
-    if (EditorGutter.KEY.getData(dataContext) != null) {
+    if (project == null ||
+        EditorGutter.KEY.getData(dataContext) != null ||
+        Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
 

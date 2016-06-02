@@ -15,10 +15,12 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +90,7 @@ public class LogMessage extends AbstractMessage {
 
   @Override
   public String getThrowableText() {
-    return StringUtil.getThrowableText(getThrowable());
+    return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(getThrowable()), Layout.LINE_SEP);
   }
 
   public void addAttachment(Attachment attachment) {

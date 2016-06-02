@@ -33,11 +33,6 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   protected Editor myEditor;
 
   @Override
-  protected void beforeTest() throws Exception {
-    createProjectFiles();
-  }
-
-  @Override
   protected void afterTest() throws Exception {
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);

@@ -289,12 +289,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
-      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), new Condition<Sdk>() {
-        @Override
-        public boolean value(Sdk sdk) {
-          return sdk.getSdkType() instanceof JavaSdkType;
-        }
-      });
+      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(),
+                                                     sdk -> sdk.getSdkType() instanceof JavaSdkType);
       myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
       if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);
@@ -377,11 +373,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           Logger.getInstance(XsltRunSettingsEditor.class.getName()).info("Encountered incompatible FileType: " + fileType.getName(), e);
         }
       }
-      Collections.sort(v, new Comparator<FileType>() {
-        public int compare(FileType o1, FileType o2) {
-          return o1.getDescription().compareTo(o2.getDescription());
-        }
-      });
+      Collections.sort(v, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
 
       // off
       v.insertElementAt(null, 0);

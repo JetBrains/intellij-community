@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiEnumConstantInitializer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl");
-  private PsiClassType myCachedBaseType = null;
+  private PsiClassType myCachedBaseType;
 
   public PsiEnumConstantInitializerImpl(final PsiClassStub stub) {
     super(stub, JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);

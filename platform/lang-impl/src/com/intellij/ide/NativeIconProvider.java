@@ -80,33 +80,30 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
     if (icon != null) {
       return icon;
     }
-    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, new Function<VirtualFile, Icon>() {
-      @Override
-      public Icon fun(VirtualFile virtualFile) {
-        final File f = new File(filePath);
-        if (!f.exists()) {
-          return null;
-        }
-        Icon icon;
-        try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
-          assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
-          icon = getNativeIcon(f);
-        }
-        catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
-          return null;
-        }
-        if (ext != null) {
-          synchronized (myIconCache) {
-            if (!myCustomIconExtensions.contains(ext)) {
-              myIconCache.put(ext, icon);
-            }
-            else if (filePath != null) {
-              myCustomIconCache.put(filePath, icon);
-            }
+    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, virtualFile -> {
+      final File f = new File(filePath);
+      if (!f.exists()) {
+        return null;
+      }
+      Icon icon1;
+      try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
+        assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
+        icon1 = getNativeIcon(f);
+      }
+      catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
+        return null;
+      }
+      if (ext != null) {
+        synchronized (myIconCache) {
+          if (!myCustomIconExtensions.contains(ext)) {
+            myIconCache.put(ext, icon1);
+          }
+          else if (filePath != null) {
+            myCustomIconCache.put(filePath, icon1);
           }
         }
-        return icon;
       }
+      return icon1;
     });
   }
 

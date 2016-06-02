@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class FilteredRequestorImpl
- * @author Jeka
- */
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;

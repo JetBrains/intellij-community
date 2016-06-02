@@ -64,17 +64,15 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     final String defaultPluginXMLLocation = resourceRootPath + "/META-INF/plugin.xml";
     final Module module = rootModel.getModule();
     final Project project = module.getProject();
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
-        if (buildConfiguration != null) {
-          buildConfiguration.setPluginXmlPathAndCreateDescriptorIfDoesntExist(defaultPluginXMLLocation);
-        }
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+      final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
+      if (buildConfiguration != null) {
+        buildConfiguration.setPluginXmlPathAndCreateDescriptorIfDoesntExist(defaultPluginXMLLocation);
+      }
 
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation);
-        if (file != null) {
-          FileEditorManager.getInstance(project).openFile(file, true);
-        }
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation);
+      if (file != null) {
+        FileEditorManager.getInstance(project).openFile(file, true);
       }
     });
   }

@@ -47,48 +47,35 @@ public class RerunTestsNotification {
     String lastActionId = ActionManagerEx.getInstanceEx().getPrevPreformedActionId();
     boolean showNotification = !RerunTestsAction.ID.equals(lastActionId);
     if (showNotification && !PropertiesComponent.getInstance().isTrueValue(KEY)) {
-      UiNotifyConnector.doWhenFirstShown(executionConsole.getComponent(), new Runnable() {
-        @Override
-        public void run() {
-          doShow(executionConsole);
-        }
-      });
+      UiNotifyConnector.doWhenFirstShown(executionConsole.getComponent(), () -> doShow(executionConsole));
     }
   }
 
   private static void doShow(@NotNull final ExecutionConsole executionConsole) {
     final Alarm alarm = new Alarm();
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(
-          ActionManager.getInstance().getAction(RerunTestsAction.ID)
-        );
-        if (shortcutText.isEmpty()) {
-          return;
-        }
-
-        GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
-        message.setDisposable(executionConsole);
-        message.setCallback(new Runnable() {
-          @Override
-          public void run() {
-            PropertiesComponent.getInstance().setValue(KEY, true);
-          }
-        });
-        message.setShowCallout(false);
-        Dimension consoleSize = executionConsole.getComponent().getSize();
-
-        message.show(
-          new RelativePoint(
-            executionConsole.getComponent(),
-            new Point(consoleSize.width - 185, consoleSize.height - 60)
-          ),
-          Balloon.Position.below
-        );
-
-        Disposer.dispose(alarm);
+    alarm.addRequest(() -> {
+      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(
+        ActionManager.getInstance().getAction(RerunTestsAction.ID)
+      );
+      if (shortcutText.isEmpty()) {
+        return;
       }
+
+      GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
+      message.setDisposable(executionConsole);
+      message.setCallback(() -> PropertiesComponent.getInstance().setValue(KEY, true));
+      message.setShowCallout(false);
+      Dimension consoleSize = executionConsole.getComponent().getSize();
+
+      message.show(
+        new RelativePoint(
+          executionConsole.getComponent(),
+          new Point(consoleSize.width - 185, consoleSize.height - 60)
+        ),
+        Balloon.Position.below
+      );
+
+      Disposer.dispose(alarm);
     }, 1000);
   }
 

@@ -352,7 +352,7 @@ public class BreakpointsDialog extends DialogWrapper {
     JPanel decoratedTree = decorator.createPanel();
     decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
 
-    JScrollPane pane = UIUtil.findParentByClass(tree, JScrollPane.class);
+    JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
     if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
 
     myTreeController.setTreeView(tree);
@@ -413,19 +413,9 @@ public class BreakpointsDialog extends DialogWrapper {
   private void saveBreakpointsDialogState() {
     final XBreakpointsDialogState dialogState = new XBreakpointsDialogState();
     saveTreeState(dialogState);
-    final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, new Condition<XBreakpointGroupingRule>() {
-      @Override
-      public boolean value(XBreakpointGroupingRule rule) {
-        return !rule.isAlwaysEnabled();
-      }
-    });
+    final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, new Function<XBreakpointGroupingRule, String>() {
-      @Override
-      public String fun(XBreakpointGroupingRule rule) {
-        return rule.getId();
-      }
-    })));
+    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 

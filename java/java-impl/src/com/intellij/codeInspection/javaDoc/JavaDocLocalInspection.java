@@ -68,7 +68,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       super(new GridBagLayout());
       GridBagConstraints gc =
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 0, 0, 0), 0, 0);
+                               JBUI.emptyInsets(), 0, 0);
 
       String title = InspectionsBundle.message("inspection.javadoc.dialog.title");
       FieldPanel additionalTagsPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.label.text"), title, null, null);
@@ -339,12 +339,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       final PsiDocCommentOwner owner = docComment.getOwner();
       if (!(owner instanceof PsiMethod)) return null;
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
-      PsiParameter myParam = ContainerUtil.find(parameters, new Condition<PsiParameter>() {
-        @Override
-        public boolean value(PsiParameter psiParameter) {
-          return myName.equals(psiParameter.getName());
-        }
-      });
+      PsiParameter myParam = ContainerUtil.find(parameters, psiParameter -> myName.equals(psiParameter.getName()));
       if (myParam == null) return null;
 
       PsiDocTag[] tags = docComment.findTagsByName("param");

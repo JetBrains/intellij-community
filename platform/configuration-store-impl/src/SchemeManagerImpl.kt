@@ -218,7 +218,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
         val info = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
-        info.hash = JDOMUtil.getTreeHash(element, true)
+        info.hash = element.getTreeHash()
         info.schemeName = scheme.name
         val oldInfo = schemeToInfo.put(scheme, info)
         LOG.assertTrue(oldInfo == null)
@@ -344,7 +344,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     override fun read(): Element {
       val element = loadElement(bytes.inputStream().reader())
       if (externalInfo.hash == 0) {
-        externalInfo.hash = JDOMUtil.getTreeHash(element, true)
+        externalInfo.hash = element.getTreeHash()
       }
       return element
     }
@@ -397,7 +397,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       element?.let {
-        info.hash = JDOMUtil.getTreeHash(it, true)
+        info.hash = it.getTreeHash()
       }
       info.schemeName = schemeName
       return info
@@ -563,7 +563,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
       fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.name, false))
     }
 
-    val newHash = JDOMUtil.getTreeHash(element!!, true)
+    val newHash = element!!.getTreeHash()
     if (externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && newHash == externalInfo.hash) {
       return
     }

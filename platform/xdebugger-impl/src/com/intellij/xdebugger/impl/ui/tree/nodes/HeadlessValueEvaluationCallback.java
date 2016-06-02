@@ -30,12 +30,7 @@ public class HeadlessValueEvaluationCallback implements XFullValueEvaluator.XFul
   public void startFetchingValue(@NotNull XFullValueEvaluator fullValueEvaluator) {
     fullValueEvaluator.startEvaluation(this);
 
-    new Alarm().addRequest(new Runnable() {
-      @Override
-      public void run() {
-        showProgress();
-      }
-    }, 500);
+    new Alarm().addRequest(() -> showProgress(), 500);
   }
 
   @Override

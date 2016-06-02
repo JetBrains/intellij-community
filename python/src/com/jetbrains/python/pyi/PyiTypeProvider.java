@@ -160,14 +160,11 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
     final String name = function.getName();
     final List<PyFunction> overloads = new ArrayList<PyFunction>();
-    final Processor<PyFunction> overloadsProcessor = new Processor<PyFunction>() {
-      @Override
-      public boolean process(@NotNull PyFunction f) {
-        if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
-          overloads.add(f);
-        }
-        return true;
+    final Processor<PyFunction> overloadsProcessor = f -> {
+      if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
+        overloads.add(f);
       }
+      return true;
     };
     if (owner instanceof PyClass) {
       final PyClass cls = (PyClass)owner;

@@ -69,12 +69,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator implement
                                (RemoteSdkCredentials)((RemoteProjectSettings)settings).getSdk().getSdkAdditionalData());
     }
     else if (settings instanceof PyNewProjectSettings) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModuleRootModificationUtil.setModuleSdk(module, ((PyNewProjectSettings)settings).getSdk());
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.setModuleSdk(module, ((PyNewProjectSettings)settings).getSdk()));
     }
   }
 

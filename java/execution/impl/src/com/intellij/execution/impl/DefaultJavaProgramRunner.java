@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -165,7 +168,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
-                                                     new WiseDumpThreadsListener(CommonDataKeys.PROJECT.getData(e.getDataContext()), myProcessHandler) : null;
+                                                     new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
 
         proxy.sendBreak();
 
@@ -194,40 +197,31 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         myProcessHandler.removeProcessListener(myListener);
         return;
       }
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          if (myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) return;
-          List<ThreadState> threadStates = null;
-          final long start = System.currentTimeMillis();
-          while ((System.currentTimeMillis() - start) < 1000) {
-            final String stdout = myListener.getOutput().getStdout();
-            threadStates = ThreadDumpParser.parse(stdout);
-            if (threadStates == null || threadStates.isEmpty()) {
-              TimeoutUtil.sleep(50);
-              threadStates = null;
-              continue;
-            }
-            break;
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) return;
+        List<ThreadState> threadStates = null;
+        final long start = System.currentTimeMillis();
+        while ((System.currentTimeMillis() - start) < 1000) {
+          final String stdout = myListener.getOutput().getStdout();
+          threadStates = ThreadDumpParser.parse(stdout);
+          if (threadStates == null || threadStates.isEmpty()) {
+            TimeoutUtil.sleep(50);
+            threadStates = null;
+            continue;
           }
-          myProcessHandler.removeProcessListener(myListener);
-          if (threadStates != null && ! threadStates.isEmpty()) {
-            showThreadDump(myListener.getOutput().getStdout(), threadStates);
-          }
+          break;
         }
-
+        myProcessHandler.removeProcessListener(myListener);
+        if (threadStates != null && ! threadStates.isEmpty()) {
+          showThreadDump(myListener.getOutput().getStdout(), threadStates);
+        }
       });
     }
 
     private void showThreadDump(final String out, final List<ThreadState> threadStates) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
-                                                    new ThreadDumpConsoleFactory(myProject, threadStates) : null,
-                                           "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out);
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
+                                                                                                      new ThreadDumpConsoleFactory(myProject, threadStates) : null,
+                                       "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out), ModalityState.NON_MODAL);
     }
   }
 

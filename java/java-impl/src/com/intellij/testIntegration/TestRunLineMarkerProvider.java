@@ -39,12 +39,7 @@ import javax.swing.*;
  */
 public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
-  private static final Function<PsiElement, String> TOOLTIP_PROVIDER = new Function<PsiElement, String>() {
-    @Override
-    public String fun(PsiElement element) {
-      return "Run Test";
-    }
-  };
+  private static final Function<PsiElement, String> TOOLTIP_PROVIDER = element -> "Run Test";
 
   @Nullable
   @Override

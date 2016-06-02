@@ -50,12 +50,8 @@ public class NotificationsConfigurationImpl
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
 
-  private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR = new Comparator<NotificationSettings>() {
-    @Override
-    public int compare(@NotNull NotificationSettings o1, @NotNull NotificationSettings o2) {
-      return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
-    }
-  };
+  private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
+    (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<String, NotificationSettings>();
   private final Map<String, String> myToolWindowCapable = new THashMap<String, String>();

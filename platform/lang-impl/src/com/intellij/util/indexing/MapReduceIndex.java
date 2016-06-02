@@ -19,11 +19,13 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -94,6 +96,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
+    SharedIndicesData.registerIndex(myIndexId, extension);
     myIndexer = extension.getIndexer();
     myStorage = storage;
     myHasSnapshotMapping = extension instanceof FileBasedIndexExtension &&
@@ -325,6 +328,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @Override
+  public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  }
+
+  @Override
+  public void resetIndexedStateForFile(int fileId) {
+    IndexingStamp.setFileIndexedStateOutdated(fileId, myIndexId);
+  }
+
+  @Override
+  public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+    return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
+  }
+
   private static void doClose(PersistentHashMap<?, ?> index) {
     if (index != null) {
       try {
@@ -461,26 +479,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final int savedInputId;
     if (myHasSnapshotMapping) {
       try {
-        final NotNullComputable<Collection<Key>> keysForGivenInputId = new NotNullComputable<Collection<Key>>() {
-          @NotNull
-          @Override
-          public Collection<Key> compute() {
-            try {
-              Integer currentHashId = readInputHashId(inputId);
-              Collection<Key> currentKeys;
-              if (currentHashId != null) {
-                ByteSequence byteSequence = readContents(currentHashId);
-                currentKeys = byteSequence != null ? deserializeSavedPersistentData(byteSequence).keySet() : Collections.<Key>emptyList();
-              }
-              else {
-                currentKeys = Collections.emptyList();
-              }
+        final NotNullComputable<Collection<Key>> keysForGivenInputId = () -> {
+          try {
+            Integer currentHashId = readInputHashId(inputId);
+            Collection<Key> currentKeys;
+            if (currentHashId != null) {
+              ByteSequence byteSequence = readContents(currentHashId);
+              currentKeys = byteSequence != null ? deserializeSavedPersistentData(byteSequence).keySet() : Collections.<Key>emptyList();
+            }
+            else {
+              currentKeys = Collections.emptyList();
+            }
 
-              return currentKeys;
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+            return currentKeys;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
         };
 
@@ -522,20 +536,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             };
           }
         } else {
-          oldKeysGetter = new NotNullComputable<Collection<Key>>() {
-            @NotNull
-            @Override
-            public Collection<Key> compute() {
-              try {
-                Collection<Key> oldKeys = readInputKeys(inputId);
-                if (oldKeys == null) {
-                  return keysForGivenInputId.compute();
-                }
-                return oldKeys;
+          oldKeysGetter = () -> {
+            try {
+              Collection<Key> oldKeys = readInputKeys(inputId);
+              if (oldKeys == null) {
+                return keysForGivenInputId.compute();
               }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              return oldKeys;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
             }
           };
           savedInputId = NULL_MAPPING;
@@ -544,50 +554,37 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         throw new RuntimeException(ex);
       }
     } else {
-      oldKeysGetter = new NotNullComputable<Collection<Key>>() {
-        @NotNull
-        @Override
-        public Collection<Key> compute() {
-          try {
-            Collection<Key> oldKeys = readInputKeys(inputId);
-            return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      oldKeysGetter = () -> {
+        try {
+          Collection<Key> oldKeys = readInputKeys(inputId);
+          return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
       };
       savedInputId = inputId;
     }
 
     // do not depend on content!
-    final UpdateData<Key, Value> updateData = optimizedUpdateData != null ? optimizedUpdateData : new SimpleUpdateData(myIndexId, savedInputId, data, oldKeysGetter);
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final Ref<StorageException> exRef = new Ref<StorageException>(null);
-        ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              updateWithMap(inputId, updateData);
-            }
-            catch (StorageException ex) {
-              exRef.set(ex);
-            }
-          }
-        });
+    final UpdateData<Key, Value> updateData = optimizedUpdateData != null ? optimizedUpdateData : buildUpdateData(data, oldKeysGetter, savedInputId);
+    return () -> {
 
-        //noinspection ThrowableResultOfMethodCallIgnored
-        StorageException nestedException = exRef.get();
-        if (nestedException != null) {
-          LOG.info("Exception during updateWithMap:" + nestedException);
-          FileBasedIndex.getInstance().requestRebuild(myIndexId, nestedException);
-          return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
+      try {
+        updateWithMap(inputId, updateData);
       }
+      catch (StorageException|ProcessCanceledException ex) {
+        LOG.info("Exception during updateWithMap:" + ex);
+        FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+        return Boolean.FALSE;
+      }
+
+      return Boolean.TRUE;
     };
+  }
+
+  protected UpdateData<Key, Value> buildUpdateData(Map<Key, Value> data, NotNullComputable<Collection<Key>> oldKeysGetter, int savedInputId) {
+    return new SimpleUpdateData(myIndexId, savedInputId, data, oldKeysGetter);
   }
 
   private ByteSequence readContents(Integer hashId) throws IOException {
@@ -656,12 +653,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private void saveInputHashId(int inputId, int savedInputId) throws IOException {
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       SharedIndicesData.associateFileData(inputId, myIndexId, savedInputId, EnumeratorIntegerDescriptor.INSTANCE);
-      //if (DebugAssertions.DEBUG) {
-      //  Integer recalledSavedInputId = SharedIndicesData.recallFileData(inputId, myIndexId, EnumeratorIntegerDescriptor.INSTANCE);
-      //  if (!Comparing.equal(recalledSavedInputId, savedInputId)) {
-      //    assert false:myIndexId + "," + savedInputId + "," + recalledSavedInputId;
-      //  }
-      //}
     }
 
     if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.put(inputId, savedInputId);
@@ -724,14 +715,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           Set<Key> newKeys = newData.keySet();
           if (newKeys.size() == 0) newKeys = null;
           SharedIndicesData.associateFileData(inputId, myIndexId, newKeys, mySnapshotIndexExternalizer);
-
-          //if (DebugAssertions.DEBUG && myInputsIndex != null) {   //
-          //  Collection<Key> recall = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
-          //  Collection<Key> recall2 = myInputsIndex.get(inputId);
-          //  if (!DebugAssertions.equals(recall, recall2, myExtension.getKeyDescriptor())) {
-          //    assert false:myIndexId + ", " + recall2 + "," + recall;
-          //  }
-          //}
         }
       }
     }
@@ -754,7 +737,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             myValueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
 
           if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + myIndexId.toString() + " violates equals / hashCode contract for Value parameter");
+            LOG.error("Index " + myIndexId.toString() + " deserialization violates equals / hashCode contract for Value parameter");
           }
         } catch (IOException ex) {
           LOG.error(ex);
@@ -812,6 +795,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private Integer getHashOfContent(FileContent content) throws IOException {
+    FileType fileType = content.getFileType();
     if (myIsPsiBackedIndex && myHasSnapshotMapping && content instanceof FileContentImpl) {
       // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
@@ -830,7 +814,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             if (file != null) {
               previouslyCalculatedUncommittedHashId = ContentHashesSupport
                 .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
-                                               content.getFileType());
+                                               fileType);
               content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
             }
           }
@@ -843,9 +827,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
       if (hash == null) {
-        Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
-        previouslyCalculatedContentHashId = ContentHashesSupport
-          .calcContentHashIdWithFileType(content.getContent(), charset, content.getFileType());
+        if (fileType.isBinary()) {
+          previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashId(content.getContent(), fileType);
+        } else {
+          Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
+          previouslyCalculatedContentHashId = ContentHashesSupport
+            .calcContentHashIdWithFileType(content.getContent(), charset, fileType);
+        }
       } else {
         previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
       }
@@ -899,10 +887,14 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
   private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
 
+  public IndexExtension<Key, Value, Input> getExtension() {
+    return myExtension;
+  }
+
   public class SimpleUpdateData extends UpdateData<Key, Value> {
     private final int savedInputId;
     private final @NotNull Map<Key, Value> newData;
-    private final @NotNull NotNullComputable<Collection<Key>> oldKeysGetter;
+    protected final @NotNull NotNullComputable<Collection<Key>> oldKeysGetter;
 
     public SimpleUpdateData(ID<Key,Value> indexId, int id, @NotNull Map<Key, Value> data, @NotNull NotNullComputable<Collection<Key>> getter) {
       super(indexId);

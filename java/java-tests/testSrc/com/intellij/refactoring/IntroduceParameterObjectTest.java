@@ -22,7 +22,9 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
@@ -130,6 +132,18 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   public void testTypeParameters() throws Exception {
     doTest();
+  }
+
+  public void testTypeParametersWithSubstitution() throws Exception {
+    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    try {
+      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
+      doTest();
+    }
+    finally {
+      projectExtension.setLanguageLevel(oldLevel);
+    }
   }
 
   public void testSameTypeAndVarargs() throws Exception {

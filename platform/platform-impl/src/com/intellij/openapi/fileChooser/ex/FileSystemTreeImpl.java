@@ -102,12 +102,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
     myTree.addTreeExpansionListener(myExpansionListener);
 
-    myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor, new Runnable() {
-      public void run() {
-        myTree.expandPath(new TreePath(treeModel.getRoot()));
-        if (onInitialized != null) {
-          onInitialized.run();
-        }
+    myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor, () -> {
+      myTree.expandPath(new TreePath(treeModel.getRoot()));
+      if (onInitialized != null) {
+        onInitialized.run();
       }
     });
 
@@ -366,12 +364,9 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   @NotNull
   public VirtualFile[] getSelectedFiles() {
-    final List<VirtualFile> files = collectSelectedElements(new NullableFunction<FileElement, VirtualFile>() {
-      @Override
-      public VirtualFile fun(final FileElement element) {
-        final VirtualFile file = element.getFile();
-        return file != null && file.isValid() ? file : null;
-      }
+    final List<VirtualFile> files = collectSelectedElements((NullableFunction<FileElement, VirtualFile>)element -> {
+      final VirtualFile file = element.getFile();
+      return file != null && file.isValid() ? file : null;
     });
     return VfsUtilCore.toVirtualFileArray(files);
   }
@@ -473,15 +468,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
           AbstractTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
           final boolean async = treeStructure != null && treeStructure.isToBuildChildrenInBackground(virtualFile);
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-            @Override
-            public void run() {
-              if (virtualFile instanceof NewVirtualFile) {
-                RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
-              }
-              else {
-                virtualFile.refresh(async, false);
-              }
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+            if (virtualFile instanceof NewVirtualFile) {
+              RefreshQueue.getInstance().refresh(async, false, null, ModalityState.stateForComponent(myTree), virtualFile);
+            }
+            else {
+              virtualFile.refresh(async, false);
             }
           });
         }

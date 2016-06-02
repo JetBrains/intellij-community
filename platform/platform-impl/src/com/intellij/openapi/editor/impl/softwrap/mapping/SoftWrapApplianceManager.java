@@ -1255,7 +1255,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       rangeEndOffset = 0;
       tokenStartOffset = 0;
       tokenEndOffset = 0;
-      fontType = 0;
+      fontType = Font.PLAIN;
       skipToLineEnd = false;
       fontType2spaceWidth.reset();
       logicalLineData.reset();

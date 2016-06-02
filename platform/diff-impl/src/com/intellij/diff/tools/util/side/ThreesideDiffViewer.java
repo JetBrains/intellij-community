@@ -30,10 +30,9 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
@@ -97,7 +96,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
-    List<T> holders = new ArrayList<T>(3);
+    List<T> holders = new ArrayList<>(3);
     for (int i = 0; i < 3; i++) {
       DiffContent content = contents.get(i);
       holders.add(factory.create(content, myContext));
@@ -201,32 +200,27 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     @NotNull protected final ThreeSide mySide2;
 
     public ShowPartialDiffAction(@NotNull PartialDiffMode mode) {
-      String text;
-      Icon icon;
+      String id;
       switch (mode) {
         case LEFT_BASE:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
-          text = DiffBundle.message("merge.partial.diff.action.name.0.1");
-          icon = AllIcons.Diff.LeftDiff;
+          id = "Diff.ComparePartial.Base.Left";
           break;
         case BASE_RIGHT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
-          text = DiffBundle.message("merge.partial.diff.action.name.1.2");
-          icon = AllIcons.Diff.RightDiff;
+          id = "Diff.ComparePartial.Base.Right";
           break;
         case LEFT_RIGHT:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.RIGHT;
-          text = DiffBundle.message("merge.partial.diff.action.name");
-          icon = AllIcons.Diff.BranchDiff;
+          id = "Diff.ComparePartial.Left.Right";
           break;
         default:
           throw new IllegalArgumentException();
       }
-      getTemplatePresentation().setText(text);
-      getTemplatePresentation().setIcon(icon);
+      ActionUtil.copyFrom(this, id);
     }
 
     @Override

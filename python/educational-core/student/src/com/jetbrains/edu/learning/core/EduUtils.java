@@ -40,12 +40,7 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static Comparator<StudyItem> INDEX_COMPARATOR = new Comparator<StudyItem>() {
-    @Override
-    public int compare(StudyItem o1, StudyItem o2) {
-      return o1.getIndex() - o2.getIndex();
-    }
-  };
+  public static Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
@@ -95,7 +90,7 @@ public class EduUtils {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          int length = answerPlaceholder.getRealLength();
           if (!answerPlaceholder.isValid(document, length)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
@@ -104,12 +99,7 @@ public class EduUtils {
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -180,18 +170,17 @@ public class EduUtils {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "Create Student File", "Create Student File");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
+      FileDocumentManager.getInstance().saveDocument(document);
+    }), "Create Student File", "Create Student File");
+    createStudentDocument(project, taskFile, file, document);
+  }
+
+  public static void createStudentDocument(@NotNull Project project,
+                                           @NotNull TaskFile taskFile,
+                                           VirtualFile file,
+                                           final Document document) {
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
     taskFile.sortAnswerPlaceholders();
@@ -203,17 +192,7 @@ public class EduUtils {
       }
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "Create Student File", "Create Student File");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(document)), "Create Student File", "Create Student File");
     document.removeDocumentListener(listener);
   }
 
@@ -222,18 +201,10 @@ public class EduUtils {
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
     final int offset = answerPlaceholder.getRealStartOffset(document);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswerLength(), taskText);
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "Replace Answer Placeholders", "Replace Answer Placeholders");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswerLength(), taskText);
+      FileDocumentManager.getInstance().saveDocument(document);
+    }), "Replace Answer Placeholders", "Replace Answer Placeholders");
   }
 
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
@@ -251,15 +222,12 @@ public class EduUtils {
   private static void deleteWindowsFile(@NotNull final VirtualFile taskDir, @NotNull final String name) {
     final VirtualFile fileWindows = taskDir.findChild(name);
     if (fileWindows != null && fileWindows.exists()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            fileWindows.delete(taskDir);
-          }
-          catch (IOException e) {
-            LOG.warn("Tried to delete non existed _windows file");
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          fileWindows.delete(taskDir);
+        }
+        catch (IOException e) {
+          LOG.warn("Tried to delete non existed _windows file");
         }
       });
     }

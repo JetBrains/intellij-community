@@ -26,16 +26,13 @@ import java.util.Comparator;
 interface Weighted {
   int getWeight();
 
-  Comparator<Configurable> COMPARATOR = new Comparator<Configurable>() {
-    @Override
-    public int compare(Configurable configurable1, Configurable configurable2) {
-      int weight1 = configurable1 instanceof Weighted ? ((Weighted)configurable1).getWeight() : 0;
-      int weight2 = configurable2 instanceof Weighted ? ((Weighted)configurable2).getWeight() : 0;
-      return weight1 > weight2 ? -1 :
-             weight1 < weight2 ? 1 :
-             StringUtil.naturalCompare(
-               configurable1 == null ? null : configurable1.getDisplayName(),
-               configurable2 == null ? null : configurable2.getDisplayName());
-    }
+  Comparator<Configurable> COMPARATOR = (configurable1, configurable2) -> {
+    int weight1 = configurable1 instanceof Weighted ? ((Weighted)configurable1).getWeight() : 0;
+    int weight2 = configurable2 instanceof Weighted ? ((Weighted)configurable2).getWeight() : 0;
+    return weight1 > weight2 ? -1 :
+           weight1 < weight2 ? 1 :
+           StringUtil.naturalCompare(
+             configurable1 == null ? null : configurable1.getDisplayName(),
+             configurable2 == null ? null : configurable2.getDisplayName());
   };
 }

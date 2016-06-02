@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyValue;
@@ -450,14 +451,21 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           moduleDependencyData.setProductionOnTestDependency(true);
         }
         final DataNode<ModuleDependencyData> found = ExternalSystemApiUtil.find(
-          libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, new BooleanFunction<DataNode<ModuleDependencyData>>() {
-            @Override
-            public boolean fun(DataNode<ModuleDependencyData> node) {
-              if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
-                moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
-              }
-              return moduleDependencyData.equals(node.getData());
+          libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, node -> {
+            if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
+              moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
             }
+
+            final boolean result;
+            // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
+            if(moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
+              moduleDependencyData.setScope(node.getData().getScope());
+              result = moduleDependencyData.equals(node.getData());
+              moduleDependencyData.setScope(DependencyScope.PROVIDED);
+            } else {
+              result = moduleDependencyData.equals(node.getData());
+            }
+            return result;
           });
 
         if (targetModuleOutputPaths != null) {
@@ -575,12 +583,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static void mergeSourceSetContentRoots(@NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
                                                  @NotNull ProjectResolverContext resolverCtx) {
-    final Factory<Counter> counterFactory = new Factory<Counter>() {
-      @Override
-      public Counter create() {
-        return new Counter();
-      }
-    };
+    final Factory<Counter> counterFactory = () -> new Counter();
 
     final Map<String, Counter> weightMap = ContainerUtil.newHashMap();
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {

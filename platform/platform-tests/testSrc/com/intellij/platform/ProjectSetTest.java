@@ -95,12 +95,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directoryName = "newDir";
     context.directory = getSourceRoot();
     readDescriptor(new File(getTestDataPath() + "vcs.json"), context);
-    Collections.sort(pairs, new Comparator<Pair<String, String>>() {
-      @Override
-      public int compare(@NotNull Pair<String, String> o1, @NotNull Pair<String, String> o2) {
-        return o2.first.compareTo(o1.first);
-      }
-    });
+    Collections.sort(pairs, (o1, o2) -> o2.first.compareTo(o1.first));
     assertEquals(Pair.create("schema://foo.bar/path", "test"), pairs.get(1));
     assertEquals(Pair.create("schema://foo.bar1/path1", "test/custom"), pairs.get(0));
   }
@@ -118,12 +113,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
     readDescriptor(new File(getTestDataPath() + file), context);
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    Project project = ContainerUtil.find(projects, new Condition<Project>() {
-      @Override
-      public boolean value(Project project) {
-        return projectName.equals(project.getName());
-      }
-    });
+    Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
     ((ProjectManagerEx)ProjectManager.getInstance()).closeAndDispose(project);
   }

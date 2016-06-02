@@ -254,7 +254,16 @@ public class UIUtil {
       return color;
     }
   });
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
+    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+    @NotNull
+    @Override
+    public Color produce() {
+      Color color = UIManager.getColor("SidePanel.background");
+      return color == null ? myDefaultValue : color;
+    }
+  });
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -292,7 +301,7 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
 
   public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
@@ -354,9 +363,9 @@ public class UIUtil {
       return isRetina;
     }
 
-    /**
-     * Could be quite easily implemented with [NSScreen backingScaleFactor]
-     * and JNA
+    /*
+      Could be quite easily implemented with [NSScreen backingScaleFactor]
+      and JNA
      */
     //private static boolean isAppleRetina (Graphics2D g2d) {
     //  return false;
@@ -1071,6 +1080,10 @@ public class UIUtil {
 
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
+  }
+
+  public static Color getEditorPaneBackground() {
+    return UIManager.getColor("EditorPane.background");
   }
 
   public static Color getTreeBackground() {
@@ -2053,14 +2066,9 @@ public class UIUtil {
     return null;
   }
 
+  @Deprecated
   public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    for (Component component = c; component != null; component = component.getParent()) {
-      if (cls.isAssignableFrom(component.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)component;
-        return t;
-      }
-    }
-    return null;
+    return getParentOfType(cls, c);
   }
 
   @Language("HTML")
@@ -2300,43 +2308,26 @@ public class UIUtil {
   }
 
   public static void removeScrollBorder(final Component c) {
-    new AwtVisitor(c) {
-      @Override
-      public boolean visit(final Component component) {
-        if (component instanceof JScrollPane) {
-          if (!hasNonPrimitiveParents(c, component)) {
-            final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
-            if (keepBorderSides != null) {
-              if (scrollPane.getBorder() instanceof LineBorder) {
-                Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
-                scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
-              }
-              else {
-                scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
-              }
-            }
-            else {
-              scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
-            }
-          }
+    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
+      if (!uiParents(scrollPane, true)
+        .takeWhile(Conditions.notEqualTo(c))
+        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
+        .isEmpty()) continue;
+
+      Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
+      if (keepBorderSides != null) {
+        if (scrollPane.getBorder() instanceof LineBorder) {
+          Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
+          scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
         }
-        return false;
+        else {
+          scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
+        }
       }
-    };
-  }
-
-  public static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
-    Component eachParent = c.getParent();
-    while (true) {
-      if (eachParent == null || eachParent == stopParent) return false;
-      if (!isPrimitive(eachParent)) return true;
-      eachParent = eachParent.getParent();
+      else {
+        scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
+      }
     }
-  }
-
-  public static boolean isPrimitive(Component c) {
-    return c instanceof JPanel || c instanceof JLayeredPane;
   }
 
   public static Point getCenterPoint(Dimension container, Dimension child) {
@@ -2762,34 +2753,30 @@ public class UIUtil {
     return child == parent;
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is also checked.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see SwingUtilities#getAncestorOfClass
+   */
   @Nullable
-  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (cls.isAssignableFrom(eachParent.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)eachParent;
-        return t;
+  public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
       }
-
-      eachParent = eachParent.getParent();
+      component = component.getParent();
     }
-
     return null;
   }
 
   @NotNull
-  public static JBIterable<Component> getParents(@Nullable Component c) {
-    return JBIterable.generate(c, new Function.Mono<Component>() {
-      @Override
-      public Component fun(Component c) {
-        return c.getParent();
-      }
-    });
-  }
-
-  @NotNull
-  public static JBTreeTraverser<Component> uiTraverser() {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
+  public static JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
+    return strict ? JBIterable.generate(c, COMPONENT_PARENT).skip(1) : JBIterable.generate(c, COMPONENT_PARENT);
   }
 
   @NotNull
@@ -2832,6 +2819,14 @@ public class UIUtil {
       return result;
     }
   };
+
+  private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
+    @Override
+    public Component fun(Component c) {
+      return c.getParent();
+    }
+  };
+
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
     SwingUtilities.invokeLater(new Runnable() {
@@ -3271,7 +3266,7 @@ public class UIUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+        lcdContrastValue = isUnderDarcula() ? 140 : 230;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 
@@ -3502,7 +3497,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 
@@ -3714,5 +3709,19 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
+  }
+
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (Registry.is("ide.scroll.event.old.behavior")) return true;
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    int modifiers = ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & event.getModifiers();
+    return modifiers == 0; // no modifiers expected except SHIFT for horizontal scrolling
   }
 }

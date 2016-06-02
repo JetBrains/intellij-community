@@ -85,19 +85,16 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
-    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        UsageTarget[] usageTargets = getUsageTargets(editor, file);
-        if (usageTargets == null) {
-          handleNoUsageTargets(file, editor, selectionModel, project);
-          return;
-        }
+    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+      UsageTarget[] usageTargets = getUsageTargets(editor, file);
+      if (usageTargets == null) {
+        handleNoUsageTargets(file, editor, selectionModel, project);
+        return;
+      }
 
-        boolean clearHighlights = isClearHighlights(editor);
-        for (UsageTarget target : usageTargets) {
-          target.highlightUsages(file, editor, clearHighlights);
-        }
+      boolean clearHighlights = isClearHighlights(editor);
+      for (UsageTarget target : usageTargets) {
+        target.highlightUsages(file, editor, clearHighlights);
       }
     });
   }
@@ -125,12 +122,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
 
         if (results.length > 0) {
-          usageTargets = ContainerUtil.mapNotNull(results, new Function<ResolveResult, UsageTarget>() {
-            @Override
-            public UsageTarget fun(ResolveResult result) {
-              PsiElement element = result.getElement();
-              return element == null ? null : new PsiElement2UsageTargetAdapter(element);
-            }
+          usageTargets = ContainerUtil.mapNotNull(results, result -> {
+            PsiElement element = result.getElement();
+            return element == null ? null : new PsiElement2UsageTargetAdapter(element);
           }, UsageTarget.EMPTY_ARRAY);
         }
       }
@@ -366,18 +360,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                       TextAttributes attributes) {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
-    Arrays.sort(highlighters, new Comparator<RangeHighlighter>() {
-      @Override
-      public int compare(RangeHighlighter o1, RangeHighlighter o2) {
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-    });
-    Collections.sort(rangesToHighlight, new Comparator<TextRange>() {
-      @Override
-      public int compare(TextRange o1, TextRange o2) {
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-    });
+    Arrays.sort(highlighters, (o1, o2) -> o1.getStartOffset() - o2.getStartOffset());
+    Collections.sort(rangesToHighlight, (o1, o2) -> o1.getStartOffset() - o2.getStartOffset());
     int i = 0;
     int j = 0;
     while (i < highlighters.length && j < rangesToHighlight.size()) {
@@ -411,12 +395,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Use {@link #collectRangesToHighlight}
    */
+  @SuppressWarnings("unused")
+  @NotNull
+  @Deprecated
   public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
     return collectRangesToHighlight(ref, new ArrayList<TextRange>());
   }

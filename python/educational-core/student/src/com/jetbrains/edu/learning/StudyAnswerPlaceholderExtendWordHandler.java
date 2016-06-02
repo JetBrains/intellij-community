@@ -59,6 +59,6 @@ public class StudyAnswerPlaceholderExtendWordHandler implements ExtendWordSelect
     Document document = FileDocumentManager.getInstance().getDocument(file);
     assert document != null;
     int startOffset = placeholder.getRealStartOffset(document);
-    return Collections.singletonList(new TextRange(startOffset, startOffset + placeholder.getLength()));
+    return Collections.singletonList(new TextRange(startOffset, startOffset + placeholder.getRealLength()));
   }
 }

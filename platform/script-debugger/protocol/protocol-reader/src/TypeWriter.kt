@@ -215,13 +215,13 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
           fieldLoader.valueReader.writeReadCode(classScope, false, out)
 
           if (primitiveValueName != null) {
-            out.newLine().append("else").openBlock()
+            out.closeBlock().newLine().append("else").block {
+              assignField(out, "${primitiveValueName}Type")
+              out.append("reader.peek()").newLine()
 
-            assignField(out, "${primitiveValueName}Type")
-            out.append("reader.peek()").newLine()
-
-            assignField(out, primitiveValueName)
-            out + "reader.nextString(true)"
+              assignField(out, primitiveValueName)
+              out + "reader.nextString(true)"
+            }
           }
 
           if (stopIfAllFieldsWereRead && !isTracedStop) {

@@ -39,11 +39,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * @deprecated All Git commands are cancellable when called via {@link GitHandler}. <br/>
+ * All Git commands are cancellable when called via {@link GitHandler}. <br/>
  * To execute the command synchronously, call {@link GitHandler#runInCurrentThread(Runnable)}
  * or better {@link Git#runCommand(Computable)}.<br/>
  * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
  * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
+ *
+ * @deprecated To remove in IDEA 2017.
  */
 @Deprecated
 public class GitTask {
@@ -66,16 +68,9 @@ public class GitTask {
    * Executes this task synchronously, with a modal progress dialog.
    * @return Result of the task execution.
    */
+  @SuppressWarnings("unused")
   public GitTaskResult executeModal() {
     return execute(true);
-  }
-
-  /**
-   * Executes the task synchronously, with a modal progress dialog.
-   * @param resultHandler callback which will be called after task execution.
-   */
-  public void executeModal(GitTaskResultHandler resultHandler) {
-    execute(true, true, resultHandler);
   }
 
   /**
@@ -122,6 +117,11 @@ public class GitTask {
           completed.set(true);
         }
         @Override public void onCancel() {
+          commonOnCancel(LOCK, resultHandler);
+          completed.set(true);
+        }
+        @Override public void onError(@NotNull Exception error) {
+          super.onError(error);
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }

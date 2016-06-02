@@ -40,7 +40,6 @@ import java.util.*;
  */
 public class FormClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
@@ -58,7 +57,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

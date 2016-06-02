@@ -22,6 +22,7 @@ package com.intellij.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -46,9 +47,26 @@ public abstract class CodeStyleFacade {
    * @param offset the caret offset in the editor.
    * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
+   * @deprecated Use {@link #getLineIndent(Editor, Language, int)} instead.
    */
   @Nullable
+  @Deprecated
   public abstract String getLineIndent(@NotNull Document document, int offset);
+  
+  /**
+   * Calculates the indent that should be used for the line at specified offset in the specified
+   * editor.
+   *
+   * @param editor   The editor for which the indent must be returned.
+   * @param language Context language
+   * @param offset   The caret offset in the editor.
+   * @return the indent string (containing of tabs and/or white spaces), or null if it
+   *         was not possible to calculate the indent.
+   */
+  public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset) {
+    //noinspection deprecation
+    return getLineIndent(editor.getDocument(), offset);
+  }
 
   public abstract int getIndentSize(FileType fileType);
 

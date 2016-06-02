@@ -89,13 +89,10 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
       }
       handler.performAction(introduceOperation);
 
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
-          assert state != null;
-          state.gotoEnd(false);
-        }
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+        assert state != null;
+        state.gotoEnd(false);
       });
 
       myFixture.checkResultByFile(name + ".after.py", true);

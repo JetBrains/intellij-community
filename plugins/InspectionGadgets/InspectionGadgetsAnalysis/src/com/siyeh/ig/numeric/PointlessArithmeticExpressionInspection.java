@@ -108,7 +108,7 @@ public class PointlessArithmeticExpressionInspection
         break;
       }
       else if ((tokenType.equals(JavaTokenType.MINUS) && i == 1 || tokenType.equals(JavaTokenType.DIV)) &&
-               EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand)) {
+               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(previousOperand, operand)) {
         fromTarget = previousOperand;
         untilTarget = operand;
         replacement = PsiType.LONG.equals(polyadicExpression.getType())
@@ -117,7 +117,8 @@ public class PointlessArithmeticExpressionInspection
         break;
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK) && isZero(operand) ||
-        tokenType.equals(JavaTokenType.PERC) && (isOne(operand) || EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand))) {
+        tokenType.equals(JavaTokenType.PERC) && (isOne(operand) || EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(previousOperand, operand))) {
         fromTarget = operands[0];
         untilTarget = operands[length - 1];
         replacement = PsiType.LONG.equals(polyadicExpression.getType()) ? "0L" : "0";
@@ -279,7 +280,7 @@ public class PointlessArithmeticExpressionInspection
     }
 
     private boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2, int index) {
-      return index == 1 && EquivalenceChecker.expressionsAreEquivalent(expression1, expression2) &&
+      return index == 1 && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) &&
              !SideEffectChecker.mayHaveSideEffects(expression1);
     }
   }

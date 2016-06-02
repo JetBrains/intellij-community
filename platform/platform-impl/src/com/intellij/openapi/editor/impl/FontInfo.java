@@ -97,12 +97,7 @@ public class FontInfo {
     return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
   }
 
-  private static final Comparator<File> BY_NAME = new Comparator<File>() {
-    @Override
-    public int compare(File file1, File file2) {
-      return file1.getName().compareTo(file2.getName());
-    }
-  };
+  private static final Comparator<File> BY_NAME = (file1, file2) -> file1.getName().compareTo(file2.getName());
 
   @Nullable
   private static File findFileForFont(@NotNull String familyName, int style) {
@@ -115,14 +110,11 @@ public class FontInfo {
   @Nullable
   private static File doFindFileForFont(@NotNull String familyName, final int style) {
     final String normalizedFamilyName = familyName.toLowerCase(Locale.getDefault()).replace(" ", "");
-    FilenameFilter filter = new FilenameFilter() {
-      @Override
-      public boolean accept(File file, String name) {
-        String normalizedName = name.toLowerCase(Locale.getDefault());
-        return normalizedName.startsWith(normalizedFamilyName) &&
-               (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-               (style == -1 || style == getFontStyle(normalizedName));
-      }
+    FilenameFilter filter = (file, name) -> {
+      String normalizedName = name.toLowerCase(Locale.getDefault());
+      return normalizedName.startsWith(normalizedFamilyName) &&
+             (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
+             (style == -1 || style == getFontStyle(normalizedName));
     };
     List<File> files = new ArrayList<File>();
     
@@ -136,12 +128,7 @@ public class FontInfo {
     
     if (style == Font.PLAIN) {
       // prefer font containing 'regular' in its name
-      List<File> regulars = ContainerUtil.filter(files, new Condition<File>() {
-        @Override
-        public boolean value(File file) {
-          return file.getName().toLowerCase(Locale.getDefault()).contains("regular");
-        }
-      });
+      List<File> regulars = ContainerUtil.filter(files, file -> file.getName().toLowerCase(Locale.getDefault()).contains("regular"));
       if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
     }
     

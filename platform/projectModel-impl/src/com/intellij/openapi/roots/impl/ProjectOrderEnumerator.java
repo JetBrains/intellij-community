@@ -52,12 +52,9 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
     myRecursively = false;
     myWithoutDepModules = true;
     final THashSet<Module> processed = new THashSet<Module>();
-    processRootModules(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
-        return true;
-      }
+    processRootModules(module -> {
+      processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
+      return true;
     });
   }
 

@@ -417,9 +417,7 @@ public class StudyProjectGenerator {
   @Nullable
   private static CourseInfo addCourse(List<CourseInfo> courses, File courseDir) {
     if (courseDir.isDirectory()) {
-      File[] courseFiles = courseDir.listFiles((dir, name) -> {
-        return name.equals(EduNames.COURSE_META_FILE);
-      });
+      File[] courseFiles = courseDir.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
       if (courseFiles.length != 1) {
         LOG.info("User tried to add course with more than one or without course files");
         return null;
@@ -441,9 +439,7 @@ public class StudyProjectGenerator {
   @Nullable
   private static CourseInfo getCourseInfo(File courseFile) {
     if (courseFile.isDirectory()) {
-      File[] courseFiles = courseFile.listFiles((dir, name) -> {
-        return name.equals(EduNames.COURSE_META_FILE);
-      });
+      File[] courseFiles = courseFile.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
       if (courseFiles.length != 1) {
         LOG.info("More than one or without course files");
         return null;

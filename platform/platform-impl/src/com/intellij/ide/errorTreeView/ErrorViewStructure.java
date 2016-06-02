@@ -422,13 +422,10 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       removeGroup(groupingElement.getName());
       final VirtualFile virtualFile = groupingElement.getFile();
       if (virtualFile != null) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiFile psiFile = virtualFile.isValid()? PsiManager.getInstance(myProject).findFile(virtualFile) : null;
-            if (psiFile != null) {
-              DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile); // urge the daemon to re-highlight the file despite no modification has been made
-            }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final PsiFile psiFile = virtualFile.isValid()? PsiManager.getInstance(myProject).findFile(virtualFile) : null;
+          if (psiFile != null) {
+            DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile); // urge the daemon to re-highlight the file despite no modification has been made
           }
         });
       }

@@ -32,7 +32,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -202,28 +201,20 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
         new TextRange(doc.getLineStartOffset(myLineRange.getStartOffset()), doc.getLineEndOffset(myLineRange.getEndOffset()));
     }
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(0, document.getTextLength(), text);
-            manager.commitDocument(document);
-            try {
-              TextRange rangeToUse = myTextRange;
-              if (rangeToUse == null) {
-                rangeToUse = file.getTextRange();
-              }
-              ACTIONS.get(action).run(file, rangeToUse.getStartOffset(), rangeToUse.getEndOffset());
-            }
-            catch (IncorrectOperationException e) {
-              assertTrue(e.getLocalizedMessage(), false);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(0, document.getTextLength(), text);
+      manager.commitDocument(document);
+      try {
+        TextRange rangeToUse = myTextRange;
+        if (rangeToUse == null) {
+          rangeToUse = file.getTextRange();
+        }
+        ACTIONS.get(action).run(file, rangeToUse.getStartOffset(), rangeToUse.getEndOffset());
       }
-    }, action == Action.REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
+      catch (IncorrectOperationException e) {
+        assertTrue(e.getLocalizedMessage(), false);
+      }
+    }), action == Action.REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
 
     return document.getText();
   }

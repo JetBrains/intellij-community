@@ -31,6 +31,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,17 +129,15 @@ public class RefactoringHierarchyUtil {
 
     if (sortAlphabetically) {
       Collections.sort(
-          basesList, new Comparator<PsiClass>() {
-            public int compare(PsiClass c1, PsiClass c2) {
-              final String fqn1 = c1.getQualifiedName();
-              final String fqn2 = c2.getQualifiedName();
-              if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
-              if (fqn1 == null && fqn2 == null) {
-                return Comparing.compare(c1.getName(), c2.getName());
-              }
-              return fqn1 == null ? 1 : -1;
-            }
+        basesList, (c1, c2) -> {
+          final String fqn1 = c1.getQualifiedName();
+          final String fqn2 = c2.getQualifiedName();
+          if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
+          if (fqn1 == null && fqn2 == null) {
+            return Comparing.compare(c1.getName(), c2.getName());
           }
+          return fqn1 == null ? 1 : -1;
+        }
       );
     }
 
@@ -160,8 +159,10 @@ public class RefactoringHierarchyUtil {
 
     if (elementClass == null) return false;
     if (superClass != null) {
-      return !superClass.getManager().areElementsEquivalent(superClass, elementClass) &&
-             elementClass.isInheritor(superClass, true);
+      if (elementClass.isInheritor(superClass, true)) {
+        return !superClass.getManager().areElementsEquivalent(superClass, elementClass);
+      }
+      return PsiTreeUtil.isAncestor(elementClass, subClass, false) && !PsiTreeUtil.isAncestor(elementClass, superClass, false);
     }
     else {
       return subClass.getManager().areElementsEquivalent(subClass, elementClass);

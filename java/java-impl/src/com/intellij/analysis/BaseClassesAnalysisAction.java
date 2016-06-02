@@ -54,28 +54,25 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         final CompilerManager compilerManager = CompilerManager.getInstance(project);
         final boolean upToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project));
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) {
-              return;
-            }
-            if (!upToDate) {
-              final int i = Messages.showYesNoCancelDialog(getProject(), AnalysisScopeBundle.message("recompile.confirmation.message"),
-                                                           AnalysisScopeBundle.message("project.is.out.of.date"), Messages.getWarningIcon());
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (project.isDisposed()) {
+            return;
+          }
+          if (!upToDate) {
+            final int i = Messages.showYesNoCancelDialog(getProject(), AnalysisScopeBundle.message("recompile.confirmation.message"),
+                                                         AnalysisScopeBundle.message("project.is.out.of.date"), Messages.getWarningIcon());
 
-              if (i == Messages.CANCEL) return;
+            if (i == Messages.CANCEL) return;
 
-              if (i == Messages.YES) {
-                compileAndAnalyze(project, scope);
-              }
-              else {
-                doAnalyze(project, scope);
-              }
+            if (i == Messages.YES) {
+              compileAndAnalyze(project, scope);
             }
             else {
               doAnalyze(project, scope);
             }
+          }
+          else {
+            doAnalyze(project, scope);
           }
         });
       }
@@ -106,12 +103,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
       @Override
       public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
         if (aborted || errors != 0) return;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            doAnalyze(project, scope);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> doAnalyze(project, scope));
     }});
   }
 }

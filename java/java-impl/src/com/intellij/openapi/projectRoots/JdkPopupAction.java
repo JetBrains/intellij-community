@@ -84,23 +84,14 @@ public class JdkPopupAction extends AnAction {
 
     if (!isEnabledInCurrentOS() || component == null) return;
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
 
-      @Override
-      public void run() {
-        final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
-
-        if (jdkLocations.isEmpty()) {
-          return;
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showPopupMenu(e, jdkLocations, showInMiddle, component);
-          }
-        });
+      if (jdkLocations.isEmpty()) {
+        return;
       }
+
+      ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
     }, "Looking for JDK locations...", false, e.getProject(), component);
   }
 

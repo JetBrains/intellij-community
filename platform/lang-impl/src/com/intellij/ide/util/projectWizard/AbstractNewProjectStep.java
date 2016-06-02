@@ -34,10 +34,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.LocalArchivedTemplate;
+import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
@@ -47,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
 public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
@@ -63,6 +70,16 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
+    if (customization.showUserDefinedProjects()) {
+      ArchivedTemplatesFactory factory = new ArchivedTemplatesFactory();
+      ProjectTemplate[] templates = factory.createTemplates(CUSTOM_GROUP, null);
+      DirectoryProjectGenerator[] projectGenerators = ContainerUtil.map(templates,
+                                                                        (ProjectTemplate template) ->
+                                                                          new TemplateProjectDirectoryGenerator(
+                                                                            (LocalArchivedTemplate)template),
+                                                                        new DirectoryProjectGenerator[templates.length]);
+      addAll(customization.getActions(projectGenerators, callback));
+    }
     addAll(customization.getExtraActions(callback));
   }
 
@@ -130,6 +147,10 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
 
     public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
     }
+
+    public boolean showUserDefinedProjects(){
+      return false;
+    }
   }
 
   protected static abstract class AbstractCallback implements NullableConsumer<ProjectSettingsStepBase> {
@@ -140,12 +161,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       final Project project = ProjectManager.getInstance().getDefaultProject();
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
       doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                  new Function<VirtualFile, Object>() {
-                                                    @Override
-                                                    public Object fun(VirtualFile file) {
-                                                      return getProjectSettings(generator);
-                                                    }
-                                                  });
+                        file -> getProjectSettings(generator));
     }
 
     @Nullable
@@ -172,7 +188,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
     }
-    baseDir.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
       String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.getAbsolutePath());
@@ -194,16 +210,24 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
         return null;
       }
     }
+
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
-    final Object finalSettings = settings;
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
-      @Override
-      public void projectOpened(Project project, Module module) {
-        if (generator != null) {
-          generator.generateProject(project, baseDir, finalSettings, module);
+
+    ProjectOpenedCallback callback = null;
+    if(generator instanceof TemplateProjectDirectoryGenerator){
+      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
+    } else {
+      final Object finalSettings = settings;
+      callback = new ProjectOpenedCallback() {
+        @Override
+        public void projectOpened(Project project, Module module) {
+          if (generator != null) {
+            generator.generateProject(project, baseDir, finalSettings, module);
+          }
         }
-      }
-    }, false);
+      };
+    }
+    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, callback, false);
   }
 
 }

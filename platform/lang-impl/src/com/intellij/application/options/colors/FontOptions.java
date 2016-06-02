@@ -211,7 +211,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     Object source = event.getSource();
     if (source instanceof FontComboBox) {
       FontComboBox combo = (FontComboBox)source;
-      if (combo.isEnabled() && combo.getSelectedItem() != null) {
+      if (combo.isEnabled() && combo.isShowing() && combo.getSelectedItem() != null) {
         syncFontFamilies();
       }
     }

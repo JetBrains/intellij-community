@@ -110,11 +110,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     if (indicator != null) {
       if (indicator.isCanceled()) {
         if (!isCancelled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              cancel();
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> cancel());
         }
       }
       if (text.matches(PHASE_INFO_REGEXP)) {

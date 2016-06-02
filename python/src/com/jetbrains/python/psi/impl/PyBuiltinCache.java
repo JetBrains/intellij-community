@@ -143,13 +143,10 @@ public class PyBuiltinCache {
             final VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
               final Ref<PyFile> result = Ref.create();
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  PsiFile file = PsiManager.getInstance(project).findFile(builtins_vfile);
-                  if (file instanceof PyFile) {
-                    result.set((PyFile)file);
-                  }
+              ApplicationManager.getApplication().runReadAction(() -> {
+                PsiFile file = PsiManager.getInstance(project).findFile(builtins_vfile);
+                if (file instanceof PyFile) {
+                  result.set((PyFile)file);
                 }
               });
               return result.get();
@@ -380,6 +377,7 @@ public class PyBuiltinCache {
    */
   public boolean isBuiltin(@Nullable PsiElement target) {
     if (target == null) return false;
+    PyPsiUtils.assertValid(target);
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();
     if (!(the_file instanceof PyFile)) {

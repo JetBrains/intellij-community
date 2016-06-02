@@ -66,19 +66,20 @@ public class TextEditorHolder extends EditorHolder {
   // Build
   //
 
+  @NotNull
+  public static TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content) {
+    EditorEx editor = DiffUtil.createEditor(content.getDocument(), project, false, true);
+    DiffUtil.configureEditor(editor, content, project);
+    return new TextEditorHolder(editor);
+  }
+
   public static class TextEditorHolderFactory extends EditorHolderFactory<TextEditorHolder> {
     public static TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
     @Override
     @NotNull
     public TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
-      if (!(content instanceof DocumentContent)) throw new IllegalArgumentException(content.toString());
-      Project project = context.getProject();
-      DocumentContent documentContent = (DocumentContent)content;
-
-      EditorEx editor = DiffUtil.createEditor(documentContent.getDocument(), project, false, true);
-      DiffUtil.configureEditor(editor, documentContent, project);
-      return new TextEditorHolder(editor);
+      return TextEditorHolder.create(context.getProject(), (DocumentContent)content);
     }
 
     @Override

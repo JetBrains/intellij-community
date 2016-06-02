@@ -1327,6 +1327,7 @@ public class HighlightMethodUtil {
 
   static HighlightInfo checkOverrideEquivalentInheritedMethods(PsiClass aClass, PsiFile containingFile, @NotNull LanguageLevel languageLevel) {
     String description = null;
+    boolean appendImplementMethodFix = true;
     final Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     Ultimate:
@@ -1360,6 +1361,7 @@ public class HighlightMethodUtil {
                                                          HighlightUtil.formatClass(containingClass),
                                                          JavaHighlightUtil.formatMethod(superMethod),
                                                          HighlightUtil.formatClass(superMethod.getContainingClass()));
+            appendImplementMethodFix = false;
             break Ultimate;
           }
         }
@@ -1383,7 +1385,11 @@ public class HighlightMethodUtil {
     if (description != null) {
       // show error info at the class level
       TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+      final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+      if (appendImplementMethodFix) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+      }
+      return highlightInfo;
     }
     return null;
   }
@@ -1552,7 +1558,11 @@ public class HighlightMethodUtil {
           
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(infoElement).description(description).escapedToolTip(toolTip).navigationShift(+1).create();
           if (info != null) {
-            registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
+            JavaResolveResult[] methodCandidates = results;
+            if (constructorCall instanceof PsiNewExpression) {
+              methodCandidates = resolveHelper.getReferencedMethodCandidates((PsiCallExpression)constructorCall, true);
+            }
+            registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, methodCandidates, infoElement, info);
             registerMethodReturnFixAction(info, result, constructorCall);
             holder.add(info);
           }

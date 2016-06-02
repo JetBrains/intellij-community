@@ -104,12 +104,7 @@ public class XBreakpointUtil {
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
-    Collections.sort(panelProviders, new Comparator<BreakpointPanelProvider>() {
-      @Override
-      public int compare(BreakpointPanelProvider o1, BreakpointPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
+    Collections.sort(panelProviders, (o1, o2) -> o2.getPriority() - o1.getPriority());
     return panelProviders;
   }
 

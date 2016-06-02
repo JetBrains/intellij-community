@@ -176,26 +176,23 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     final Document document = new Document(new Element("maven-project-configuration"));
     XmlSerializer.serializeInto(projectConfig, document.getRootElement());
-    buildManager.runCommand(new Runnable() {
-      @Override
-      public void run() {
-        buildManager.clearState(myProject);
-        FileUtil.createIfDoesntExist(mavenConfigFile);
-        try {
-          JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
+    buildManager.runCommand(() -> {
+      buildManager.clearState(myProject);
+      FileUtil.createIfDoesntExist(mavenConfigFile);
+      try {
+        JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
 
-          DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
-          try {
-            crcOutput.writeInt(crc);
-          }
-          finally {
-            crcOutput.close();
-          }
+        DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
+        try {
+          crcOutput.writeInt(crc);
         }
-        catch (IOException e) {
-          LOG.debug("Unable to write config file", e);
-          throw new RuntimeException(e);
+        finally {
+          crcOutput.close();
         }
+      }
+      catch (IOException e) {
+        LOG.debug("Unable to write config file", e);
+        throw new RuntimeException(e);
       }
     });
   }

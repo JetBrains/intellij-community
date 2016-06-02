@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -254,6 +255,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     return checkBox.isSelected() != value;
   }
 
+  @MagicConstant(intValues = {CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE, CodeInsightSettings.REFORMAT_BLOCK})
   private int getReformatPastedBlockValue(){
     Object selectedItem = myReformatOnPasteCombo.getSelectedItem();
     if (NO_REFORMAT.equals(selectedItem)){

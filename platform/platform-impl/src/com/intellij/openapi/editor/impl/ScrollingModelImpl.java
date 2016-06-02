@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
@@ -141,8 +142,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     assertIsDispatchThread();
     myEditor.validateSize();
     if (myEditor.myUseNewRendering) {
-      VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-      scrollTo(caretPosition, scrollType);
+      AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
     }
     else {
       LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
@@ -166,8 +166,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
 
-    Point targetLocation = myEditor.logicalPositionToXY(pos);
-    scrollTo(targetLocation, scrollType);
+    AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.logicalPositionToXY(pos), scrollType));
   }
 
   private static void assertIsDispatchThread() {

@@ -155,9 +155,7 @@ public class FileWatcher {
 
     if (myFailureShown.compareAndSet(false, true)) {
       String title = ApplicationBundle.message("watcher.slow.sync");
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener)), ModalityState.NON_MODAL);
     }
   }
 

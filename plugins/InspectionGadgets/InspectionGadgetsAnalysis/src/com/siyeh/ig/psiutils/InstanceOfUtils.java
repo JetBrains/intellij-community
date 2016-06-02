@@ -244,7 +244,7 @@ public class InstanceOfUtils {
 
     private boolean isConflicting(PsiInstanceOfExpression expression) {
       final PsiExpression conditionOperand = expression.getOperand();
-      if (!EquivalenceChecker.expressionsAreEquivalent(
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
         referenceExpression, conditionOperand)) {
         return false;
       }
@@ -263,7 +263,7 @@ public class InstanceOfUtils {
 
     private boolean isAgreeing(PsiInstanceOfExpression expression) {
       final PsiExpression conditionOperand = expression.getOperand();
-      if (!EquivalenceChecker.expressionsAreEquivalent(
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
         referenceExpression, conditionOperand)) {
         return false;
       }

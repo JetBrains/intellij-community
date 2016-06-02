@@ -88,16 +88,14 @@ public class ConfigurationUtil {
         }
     );
     for (final PsiMethod method : suiteMethods) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final PsiClass containingClass = method.getContainingClass();
-          if (containingClass == null) return;
-          if (containingClass instanceof PsiAnonymousClass) return;
-          if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-          if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
-          if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
-            found.add(containingClass);
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) return;
+        if (containingClass instanceof PsiAnonymousClass) return;
+        if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+        if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
+        if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
+          found.add(containingClass);
         }
       });
     }
@@ -127,59 +125,54 @@ public class ConfigurationUtil {
     );
     if (testAnnotation != null) {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
-      ClassesWithAnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiClass>() {
-        public boolean process(final PsiClass annotated) {
-          AccessToken token = ReadAction.start();
-          try {
-            if (!processed.add(annotated)) { // don't process the same class twice regardless of it being in the scope
+      ClassesWithAnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(annotated -> {
+        AccessToken token = ReadAction.start();
+        try {
+          if (!processed.add(annotated)) { // don't process the same class twice regardless of it being in the scope
+            return true;
+          }
+          final VirtualFile file = PsiUtilCore.getVirtualFile(annotated);
+          if (file != null && scope.contains(file) && testClassFilter.isAccepted(annotated)) {
+            if (!found.add(annotated)) {
               return true;
             }
-            final VirtualFile file = PsiUtilCore.getVirtualFile(annotated);
-            if (file != null && scope.contains(file) && testClassFilter.isAccepted(annotated)) {
-              if (!found.add(annotated)) {
-                return true;
-              }
-              isJUnit4.set(Boolean.TRUE);
-            }
+            isJUnit4.set(Boolean.TRUE);
           }
-          finally {
-            token.finish();
-          }
-          if (table != null) {
-            SmartClassAnchor[] candidates = table.getAllSubtypes(annotated);
-            for (final SmartClassAnchor candidate : candidates) {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  int fileId = candidate.myFileId;
-                  VirtualFile file = PersistentFS.getInstance().findFileById(fileId);
-                  if (file != null && scope.contains(file)) {
-                    PsiClass aClass = ClassAnchorUtil.retrieve(manager.getProject(), candidate);
-                    if (testClassFilter.isAccepted(aClass)) {
-                      found.add(aClass);
-                      processed.add(aClass);
-                      isJUnit4.set(Boolean.TRUE);
-                    }
-                  }
-                }
-              });
-            }
-          }
-          else {
-            ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
-              @Override
-              public boolean processInReadAction(PsiClass aClass) {
+        }
+        finally {
+          token.finish();
+        }
+        if (table != null) {
+          SmartClassAnchor[] candidates = table.getAllSubtypes(annotated);
+          for (final SmartClassAnchor candidate : candidates) {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              int fileId = candidate.myFileId;
+              VirtualFile file = PersistentFS.getInstance().findFileById(fileId);
+              if (file != null && scope.contains(file)) {
+                PsiClass aClass = ClassAnchorUtil.retrieve(manager.getProject(), candidate);
                 if (testClassFilter.isAccepted(aClass)) {
                   found.add(aClass);
                   processed.add(aClass);
                   isJUnit4.set(Boolean.TRUE);
                 }
-                return true;
               }
             });
           }
-          return true;
         }
+        else {
+          ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+            @Override
+            public boolean processInReadAction(PsiClass aClass) {
+              if (testClassFilter.isAccepted(aClass)) {
+                found.add(aClass);
+                processed.add(aClass);
+                isJUnit4.set(Boolean.TRUE);
+              }
+              return true;
+            }
+          });
+        }
+        return true;
       });
     }
 

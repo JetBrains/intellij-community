@@ -126,17 +126,12 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     myPluginManagerMain.ignoreChanges();
     if (prev) return;
 
-    Disposable d = UIUtil.getParents(myPluginManagerMain.getMainPanel()).filter(Disposable.class).first();
+    Disposable d = UIUtil.uiParents(myPluginManagerMain.getMainPanel(), false).filter(Disposable.class).first();
     if (d == null) return;
     Disposer.register(d, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showShutdownDialogIfNeeded();
-          }
-        }, ApplicationManager.getApplication().getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> showShutdownDialogIfNeeded(), ApplicationManager.getApplication().getDisposed());
       }
     });
   }
@@ -192,12 +187,9 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   @Override
   @Nullable
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (myPluginManagerMain != null) {
-          myPluginManagerMain.filter(option);
-        }
+    return () -> {
+      if (myPluginManagerMain != null) {
+        myPluginManagerMain.filter(option);
       }
     };
   }

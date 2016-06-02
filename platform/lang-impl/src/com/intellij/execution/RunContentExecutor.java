@@ -140,12 +140,8 @@ public class RunContentExecutor implements Disposable {
   }
 
   public void activateToolWindow() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null));
   }
 
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {

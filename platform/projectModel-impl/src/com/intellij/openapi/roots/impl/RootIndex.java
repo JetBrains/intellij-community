@@ -43,13 +43,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.*;
 
 public class RootIndex {
-  public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
-    @Override
-    public int compare(OrderEntry o1, OrderEntry o2) {
-      String name1 = o1.getOwnerModule().getName();
-      String name2 = o2.getOwnerModule().getName();
-      return name1.compareTo(name2);
-    }
+  public static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
+    String name1 = o1.getOwnerModule().getName();
+    String name2 = o2.getOwnerModule().getName();
+    return name1.compareTo(name2);
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
@@ -265,7 +262,7 @@ public class RootIndex {
                   roots.putValue(sourceRoot, node);
                 }
               }
-              boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
+              boolean shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }
@@ -425,12 +422,9 @@ public class RootIndex {
     // Note that this method is used in upsource as well, hence, don't reduce this method's visibility.
     List<VirtualFile> result = myPackageDirectoryCache.getDirectoriesByPackageName(packageName);
     if (!includeLibrarySources) {
-      result = ContainerUtil.filter(result, new Condition<VirtualFile>() {
-        @Override
-        public boolean value(VirtualFile file) {
-          DirectoryInfo info = getInfoForFile(file);
-          return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
-        }
+      result = ContainerUtil.filter(result, file -> {
+        DirectoryInfo info = getInfoForFile(file);
+        return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
       });
     }
     return new CollectionQuery<VirtualFile>(result);

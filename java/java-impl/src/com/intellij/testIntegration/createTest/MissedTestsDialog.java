@@ -88,12 +88,7 @@ public class MissedTestsDialog extends DialogWrapper {
     final Set<String> existingNames = new HashSet<String>();
     final String prefix = getTestPrefix(existingNames);
 
-    existingNames.addAll(ContainerUtil.map(myTestClass.getMethods(), new Function<PsiMethod, String>() {
-      @Override
-      public String fun(PsiMethod method) {
-        return StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix));
-      }
-    }));
+    existingNames.addAll(ContainerUtil.map(myTestClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
 
 
     for (MemberInfo memberInfo : info) {

@@ -90,24 +90,20 @@ public abstract class CloudServerRuntimeInstance
 
   @Override
   public void computeDeployments(@NotNull final ComputeDeploymentsCallback callback) {
-    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
-
-      @Override
-      public void run() throws Exception {
-        try {
-          for (CloudApplicationRuntime application : getApplications()) {
-            Deployment deployment
-              = callback.addDeployment(application.getApplicationName(),
-                                       application,
-                                       application.getStatus(),
-                                       application.getStatusText());
-            application.setDeploymentModel(deployment);
-          }
-          callback.succeeded();
+    getTaskExecutor().submit(() -> {
+      try {
+        for (CloudApplicationRuntime application : getApplications()) {
+          Deployment deployment
+            = callback.addDeployment(application.getApplicationName(),
+                                     application,
+                                     application.getStatus(),
+                                     application.getStatusText());
+          application.setDeploymentModel(deployment);
         }
-        catch (ServerRuntimeException e) {
-          callback.errorOccurred(e.getMessage());
-        }
+        callback.succeeded();
+      }
+      catch (ServerRuntimeException e) {
+        callback.errorOccurred(e.getMessage());
       }
     }, callback);
   }
@@ -121,12 +117,7 @@ public abstract class CloudServerRuntimeInstance
         if (applications == null) {
           return Collections.emptyList();
         }
-        return ContainerUtil.map(applications, new Function<CloudRemoteApplication, CloudApplicationRuntime>() {
-          @Override
-          public CloudApplicationRuntime fun(CloudRemoteApplication application) {
-            return createApplicationRuntime(application);
-          }
-        });
+        return ContainerUtil.map(applications, application -> createApplicationRuntime(application));
       }
     });
   }

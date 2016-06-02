@@ -92,12 +92,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     }, project);
 
-    startupManager.registerStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        myStartupActivityPerformed = true;
-      }
-    });
+    startupManager.registerStartupActivity(() -> myStartupActivityPerformed = true);
 
     myHandler = new BatchUpdateListener() {
       @Override

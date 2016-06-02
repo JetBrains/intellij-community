@@ -25,12 +25,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.ant.config.AntBuildListener;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
 
 public class AntRunProfileState implements RunProfileState {
   private final ExecutionEnvironment myEnvironment;
@@ -42,20 +38,16 @@ public class AntRunProfileState implements RunProfileState {
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    RunProfile profile = myEnvironment.getRunProfile();
+    final RunProfile profile = myEnvironment.getRunProfile();
     if (profile instanceof AntRunConfiguration) {
-      AntRunConfiguration antRunConfiguration = (AntRunConfiguration)profile;
-      AntBuildTarget target = antRunConfiguration.getTarget();
-      if (target == null) return null;
-      ProcessHandler processHandler = ExecutionHandler
-        .executeRunConfiguration(antRunConfiguration, myEnvironment.getDataContext(), new ArrayList<BuildFileProperty>(),
-                                 new AntBuildListener() {
-                                   @Override
-                                   public void buildFinished(int state, int errorCount) {
-
-                                   }
-                                 });
-      if (processHandler == null) return null;
+      final AntRunConfiguration runConfig = (AntRunConfiguration)profile;
+      if (runConfig.getTarget() == null) {
+        return null;
+      }
+      final ProcessHandler processHandler = ExecutionHandler.executeRunConfiguration(runConfig, myEnvironment.getDataContext(), runConfig.getProperties(), AntBuildListener.NULL);
+      if (processHandler == null) {
+        return null;
+      }
       return new DefaultExecutionResult(null, processHandler);
     }
     return null;

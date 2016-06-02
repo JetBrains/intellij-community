@@ -45,6 +45,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -286,13 +288,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      @Override
-      public void run() {
-        LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-        Point p = getHintPosition(hint, editor, pos, constraint);
-        showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
-      }});
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
+      Point p = getHintPosition(hint, editor, pos, constraint);
+      showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, constraint));
+    });
   }
 
   /**
@@ -345,6 +345,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     Component component = hint.getComponent();
 
+    // Set focus to control so that screen readers will announce the tooltip contents.
+    // Users can press "ESC" to return to the editor.
+    if (ScreenReader.isActive()) {
+      hintInfo.setRequestFocus(true);
+    }
     doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
@@ -494,8 +499,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
     final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    if (dominantArea != null) {
+      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
+    }
+
     JRootPane rootPane = editor.getComponent().getRootPane();
-    if (dominantArea == null && rootPane != null) {
+    if (rootPane != null) {
       JLayeredPane lp = rootPane.getLayeredPane();
       for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
@@ -539,17 +548,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     }
-    else {
-      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
-    }
 
     return getHintPosition(hint, editor, pos, constraint);
   }
 
-  private static Point getHintPositionRelativeTo(final LightweightHint hint,
-                                                 final Editor editor,
-                                                 @PositionFlags  short constraint,
-                                                 final Rectangle lookupBounds,
+  private static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
+                                                 @NotNull final Editor editor,
+                                                 @PositionFlags short constraint,
+                                                 @NotNull final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
     JComponent externalComponent = getExternalComponent(editor);
@@ -649,7 +655,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   @NotNull
-  private static JComponent getExternalComponent(@NotNull Editor editor) {
+  public static JComponent getExternalComponent(@NotNull Editor editor) {
     JComponent externalComponent = editor.getComponent();
     JRootPane rootPane = externalComponent.getRootPane();
     if (rootPane == null) return externalComponent;
@@ -726,6 +732,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
+    // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
+    // when the tooltip gets the focus.
+    AccessibleContextUtil.setName(component, "Hint");
     showInformationHint(editor, component, true);
   }
 
@@ -940,6 +949,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       myQuestionAction = null;
       myQuestionHint = null;
+      if (myLastEditor != null && project == myLastEditor.getProject()) {
+        updateLastEditor(null);
+      }
     }
   }
 

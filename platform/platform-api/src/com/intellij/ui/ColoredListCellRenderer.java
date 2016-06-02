@@ -54,7 +54,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     }
     setFont(list.getFont());
     mySelected = selected;
-    myForeground = list.getForeground();
+    myForeground = isEnabled() ? list.getForeground() : UIManager.getColor("Label.disabledForeground");
     mySelectionForeground = list.getSelectionForeground();
     if (UIUtil.isWinLafOnVista()) {
       // the system draws a gradient background on the combobox selected item - don't overdraw it with our solid background
@@ -120,4 +120,23 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   }
 
   protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
+
+  /**
+   * Copied AS IS
+   *
+   * @see javax.swing.DefaultListCellRenderer#isOpaque()
+   */
+  @Override
+  public boolean isOpaque() {
+    Color back = getBackground();
+    Component p = getParent();
+    if (p != null) {
+      p = p.getParent();
+    }
+    // p should now be the JList.
+    boolean colorMatch = (back != null) && (p != null) &&
+                         back.equals(p.getBackground()) &&
+                         p.isOpaque();
+    return !colorMatch && super.isOpaque();
+  }
 }

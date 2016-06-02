@@ -68,6 +68,39 @@ interface B extends A {
 """
   }
 
+  public void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
+    myFixture.addClass """\
+interface A {
+  void f();
+}
+"""
+    myFixture.addClass """\
+class B {
+  protected void f() {}
+}
+"""
+
+    def file = myFixture.addClass("""\
+class C extends B implements A {
+   <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    def Presentation presentation = new Presentation()
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
+    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
+
+    myFixture.checkResult """\
+class C extends B implements A {
+    @Override
+    public void f() {
+        <caret>
+    }
+}
+"""
+  }
+
   public void testImplementSameNamedInterfaces() {
     myFixture.addClass """\
 class Main1 {

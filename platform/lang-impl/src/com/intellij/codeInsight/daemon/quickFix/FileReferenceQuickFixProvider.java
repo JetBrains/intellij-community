@@ -156,30 +156,27 @@ public class FileReferenceQuickFixProvider {
 
   private static class MyCreateFileFix extends CreateFileFix {
     private final boolean isDirectory;
-    private final FileReference myReference;
+    private final String myNewFileTemplateName;
 
     public MyCreateFileFix(boolean isdirectory, String newFileName, PsiDirectory directory, FileReference reference) {
       super(isdirectory, newFileName, directory);
       isDirectory = isdirectory;
-      myReference = reference;
+      myNewFileTemplateName = isDirectory ? null : reference.getNewFileTemplateName();
     }
 
     @Override
     protected String getFileText() {
-      if (!isDirectory) {
-        String templateName = myReference.getNewFileTemplateName();
-        if (templateName != null) {
-          Project project = myReference.getElement().getProject();
-          FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
-          FileTemplate template = fileTemplateManager.getTemplate(templateName);
-          if (template == null) template = fileTemplateManager.findInternalTemplate(templateName);
+      if (!isDirectory && myNewFileTemplateName != null) {
+        Project project = getStartElement().getProject();
+        FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        FileTemplate template = fileTemplateManager.getTemplate(myNewFileTemplateName);
+        if (template == null) template = fileTemplateManager.findInternalTemplate(myNewFileTemplateName);
 
-          if (template != null) {
-            try {
-              return template.getText(fileTemplateManager.getDefaultProperties());
-            } catch (IOException ex) {
-              throw new RuntimeException(ex);
-            }
+        if (template != null) {
+          try {
+            return template.getText(fileTemplateManager.getDefaultProperties());
+          } catch (IOException ex) {
+            throw new RuntimeException(ex);
           }
         }
       }

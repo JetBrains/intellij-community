@@ -34,7 +34,7 @@ import java.lang.ref.WeakReference;
  * @author Vladimir Kondratyev
  */
 public class FocusWatcher implements ContainerListener,FocusListener{
-  private Component myTopComponent;
+  private WeakReference<Component> myTopComponent;
   /**
    * Last component that had focus.
    */
@@ -52,7 +52,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * on some component hierarchy.
    */
   public Component getTopComponent() {
-    return myTopComponent;
+    return SoftReference.dereference(myTopComponent);
   }
 
   @Override
@@ -77,6 +77,8 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public final void deinstall(final Component component, @Nullable AWTEvent cause){
+    if (component == null) return;
+
     if(component instanceof Container){
       Container container=(Container)component;
       int componentCount=container.getComponentCount();
@@ -107,7 +109,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   @Override
   public final void focusLost(final FocusEvent e){
     Component component = e.getOppositeComponent();
-    if(component != null && !SwingUtilities.isDescendingFrom(component, myTopComponent)){
+    if(component != null && !SwingUtilities.isDescendingFrom(component, SoftReference.dereference(myTopComponent))){
       focusLostImpl(e);
     }
   }
@@ -124,7 +126,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public final void install(@NotNull Component component){
-    myTopComponent = component;
+    myTopComponent = new WeakReference<Component>(component);
     installImpl(component);
   }
   

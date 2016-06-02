@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-/**
- * Propose to cast one argument to corresponding type
- *  in the constructor invocation
- * E.g.
- *
- * User: cdr
- * Date: Nov 13, 2002
+/*
+  Propose to cast one argument to corresponding type
+   in the constructor invocation
+  E.g.
+
+  User: cdr
+  Date: Nov 13, 2002
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstructorParametersFixer {

@@ -253,7 +253,9 @@ public class JUnit4TestRunnerUtil {
             }
 
             //filter only selected method
-            if (methodName != null && descriptionMethodName != null && !descriptionMethodName.startsWith(methodName + "[")) {
+            if (methodName != null && descriptionMethodName != null &&
+                !descriptionMethodName.startsWith(methodName + "[") && //valid for any parameter for current method
+                !descriptionMethodName.equals(methodName)) { //if fork mode used, parameter is included in the name itself
               return false;
             }
             return true;

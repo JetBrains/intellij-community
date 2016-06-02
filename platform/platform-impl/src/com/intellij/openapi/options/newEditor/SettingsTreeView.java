@@ -365,29 +365,18 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
             fireSelected(null, callback);
           }
           else {
-            myBuilder.getReady(this).doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                if (configurable != myQueuedConfigurable) return;
+            myBuilder.getReady(this).doWhenDone(() -> {
+              if (configurable != myQueuedConfigurable) return;
 
-                MyNode editorNode = findNode(configurable);
-                FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
-                if (editorUiNode == null) return;
+              MyNode editorNode = findNode(configurable);
+              FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+              if (editorUiNode == null) return;
 
-                if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
-                  myBuilder.select(editorUiNode, new Runnable() {
-                    public void run() {
-                      fireSelected(configurable, callback);
-                    }
-                  });
-                }
-                else {
-                  myBuilder.scrollSelectionToVisible(new Runnable() {
-                    public void run() {
-                      fireSelected(configurable, callback);
-                    }
-                  }, false);
-                }
+              if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
+                myBuilder.select(editorUiNode, () -> fireSelected(configurable, callback));
+              }
+              else {
+                myBuilder.scrollSelectionToVisible(() -> fireSelected(configurable, callback), false);
               }
             });
           }
@@ -860,12 +849,10 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
 
       ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
-      return result.doWhenDone(new Runnable() {
-        public void run() {
-          myRefilteringNow = false;
-          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
-            restoreExpandedState(toRestore);
-          }
+      return result.doWhenDone(() -> {
+        myRefilteringNow = false;
+        if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+          restoreExpandedState(toRestore);
         }
       });
     }

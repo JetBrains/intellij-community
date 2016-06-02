@@ -43,12 +43,7 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
   public EditorNotificationPanel createConfigureNotificationPanel(@NotNull final Module module) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(GroovyBundle.message("groovy.library.is.not.configured.for.module", module.getName()));
-    panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), new Runnable() {
-      @Override
-      public void run() {
-        AddCustomLibraryDialog.createDialog(new GroovyLibraryDescription(), module, null).show();
-      }
-    });
+    panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), () -> AddCustomLibraryDialog.createDialog(new GroovyLibraryDescription(), module, null).show());
     return panel;
   }
 }

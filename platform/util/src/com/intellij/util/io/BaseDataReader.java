@@ -68,6 +68,36 @@ public abstract class BaseDataReader {
     }
   }
 
+  /**
+   * Please don't override this method as the BseOSProcessProcessHandler assumes that it can be two reading modes: blocking and non-blocking.
+   * Implement {@link #readAvailableBlocking} and {@link #readAvailableNonBlocking} instead.
+   * 
+   * 
+   * If the process handler assumes that reader handles the blocking mode, while it doesn't, it will result into premature stream close.
+   * 
+   * @return true in case any data was read
+   * @throws IOException if an exception during IO happened
+   */
+  protected boolean readAvailable() throws IOException {
+    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
+  }
+
+  /**
+   * 
+   * Non-blocking read returns the control back to the process handler when there is no data to read.
+   * 
+   */
+  protected boolean readAvailableNonBlocking() throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after stream is closed.
+   */
+  protected boolean readAvailableBlocking() throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   protected abstract Future<?> executeOnPooledThread(@NotNull Runnable runnable);
 
@@ -158,7 +188,6 @@ public abstract class BaseDataReader {
     }
   }
 
-  protected abstract boolean readAvailable() throws IOException;
   protected abstract void close() throws IOException;
 
   public void stop() {

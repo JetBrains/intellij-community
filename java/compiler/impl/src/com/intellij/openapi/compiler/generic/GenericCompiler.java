@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public abstract class GenericCompiler<Key, SourceState, OutputState> implements Compiler {
-  protected static final KeyDescriptor<String> STRING_KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
+  protected static final KeyDescriptor<String> STRING_KEY_DESCRIPTOR = EnumeratorStringDescriptor.INSTANCE;
   private final String myId;
   private final int myVersion;
   private final CompileOrderPlace myOrderPlace;

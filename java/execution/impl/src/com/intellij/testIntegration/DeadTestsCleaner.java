@@ -42,12 +42,9 @@ public class DeadTestsCleaner implements Runnable {
 
   private void processUrl(final String url) {
     final Ref<Location> locationRef = Ref.create();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        Location location = myTestLocator.getLocation(url);
-        locationRef.set(location);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      Location location = myTestLocator.getLocation(url);
+      locationRef.set(location);
     });
     if (locationRef.get() == null) {
       myTestStorage.removeState(url);

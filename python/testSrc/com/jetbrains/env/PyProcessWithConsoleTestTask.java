@@ -15,12 +15,12 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -53,6 +53,7 @@ import java.lang.reflect.InvocationTargetException;
  * @author Ilya.Kazakevich
  */
 public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleRunner> extends PyExecutionFixtureTestTask {
+  private static final Logger LOG = Logger.getInstance(PyProcessWithConsoleTestTask.class);
   @NotNull
   private final SdkCreationType myRequiredSdkType;
 
@@ -91,6 +92,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
         processFinishedSemaphore.up();
+        LOG.info(String.format("Thread finished %s", Thread.currentThread()));
       }
 
       @Override
@@ -108,23 +110,22 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     };
 
     // Invoke runner
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runner.runProcess(sdkHome, getProject(), processListener);
-        }
-        catch (final Throwable e) {
-          final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
-          failed.set(true);
-          processFinishedSemaphore.up();
-          throw exception;
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        runner.runProcess(sdkHome, getProject(), processListener);
+      }
+      catch (final Throwable e) {
+        final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
+        failed.set(true);
+        processFinishedSemaphore.up();
+        throw exception;
       }
     }, ModalityState.NON_MODAL);
 
 
-    processFinishedSemaphore.waitFor(60000);
+    LOG.info(String.format("Waiting for result on thread %s", Thread.currentThread()));
+    final boolean waitResult = processFinishedSemaphore.waitFor(60000);
+    assert waitResult : "Timeout waiting semaphore";
     XDebuggerTestUtil.waitForSwing();
     if (failed.get()) {
       Assert.fail("Failed to run test, see logs for exceptions");

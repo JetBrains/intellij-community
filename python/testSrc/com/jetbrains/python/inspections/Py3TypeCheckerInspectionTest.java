@@ -31,27 +31,21 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.copyDirectoryToProject("typing", "");
-        myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-        myFixture.enableInspections(PyTypeCheckerInspection.class);
-        myFixture.checkHighlighting(true, false, true);
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+      myFixture.copyDirectoryToProject("typing", "");
+      myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+      myFixture.enableInspections(PyTypeCheckerInspection.class);
+      myFixture.checkHighlighting(true, false, true);
     });
   }
 
   private void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-        myFixture.copyDirectoryToProject("typing", "");
-        myFixture.configureFromTempProjectFile("a.py");
-        myFixture.enableInspections(PyTypeCheckerInspection.class);
-        myFixture.checkHighlighting(true, false, true);
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+      myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+      myFixture.copyDirectoryToProject("typing", "");
+      myFixture.configureFromTempProjectFile("a.py");
+      myFixture.enableInspections(PyTypeCheckerInspection.class);
+      myFixture.checkHighlighting(true, false, true);
     });
   }
 
@@ -102,6 +96,16 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   // PY-18762
   public void testHomogeneousTuples() {
     myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
+    doTest();
+  }
+
+  // PY-9924
+  public void testTupleGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-9924
+  public void testListGetItemWithSlice() {
     doTest();
   }
 }

@@ -83,15 +83,18 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
     }
     if (quoteHandler == null) {
-      final Language baseLanguage = file.getViewProvider().getBaseLanguage();
-      for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
-        if (entry.getKey().isInstance(baseLanguage)) {
-          return entry.getValue();
-        }
-      }
-      return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
+      return getLanguageQuoteHandler(file.getViewProvider().getBaseLanguage());
     }
     return quoteHandler;
+  }
+
+  public static QuoteHandler getLanguageQuoteHandler(Language baseLanguage) {
+    for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
+      if (entry.getKey().isInstance(baseLanguage)) {
+        return entry.getValue();
+      }
+    }
+    return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
   private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
@@ -597,27 +600,24 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
       if (element.getNode() != null && isBrace) {
         final int finalLBraceOffset = lBraceOffset;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run(){
-            try{
-              int newOffset;
-              if (finalLBraceOffset != -1) {
-                RangeMarker marker = document.createRangeMarker(offset, offset + 1);
-                CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
-                newOffset = marker.getStartOffset();
-                marker.dispose();
-              } else {
-                newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try{
+            int newOffset;
+            if (finalLBraceOffset != -1) {
+              RangeMarker marker = document.createRangeMarker(offset, offset + 1);
+              CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
+              newOffset = marker.getStartOffset();
+              marker.dispose();
+            } else {
+              newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+            }
 
-              editor.getCaretModel().moveToOffset(newOffset + 1);
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              editor.getSelectionModel().removeSelection();
-            }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
+            editor.getCaretModel().moveToOffset(newOffset + 1);
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            editor.getSelectionModel().removeSelection();
+          }
+          catch(IncorrectOperationException e){
+            LOG.error(e);
           }
         });
       }

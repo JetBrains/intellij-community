@@ -74,12 +74,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        SettingsDialog.super.show();
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> SettingsDialog.super.show());
   }
 
 

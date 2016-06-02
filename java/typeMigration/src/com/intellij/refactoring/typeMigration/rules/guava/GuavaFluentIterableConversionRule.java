@@ -18,7 +18,6 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,7 +25,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
@@ -37,6 +35,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.hash.HashMap;
+import com.siyeh.ig.controlflow.DoubleNegationInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +95,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   static {
-    DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false));
@@ -158,6 +156,21 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       };
     } else if (methodName.equals("filter")) {
       descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method);
+    } else if (methodName.equals("isEmpty")) {
+      descriptorBase = new TypeConversionDescriptor("$q$.isEmpty()", null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+          final PsiElement parent = expression.getParent();
+          boolean isDoubleNegation = false;
+          if (parent instanceof PsiExpression && DoubleNegationInspection.isNegation((PsiExpression)parent)) {
+            isDoubleNegation = true;
+            expression = (PsiExpression)parent.replace(expression);
+          }
+          setReplaceByString((isDoubleNegation ? "" : "!") + "$q$.findAny().isPresent()");
+          return super.replace(expression, evaluator);
+        }
+      };
+      needSpecifyType = false;
     }
     else if (methodName.equals("transformAndConcat")) {
       descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
@@ -227,17 +240,14 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (descriptorBase == null) {
       return FluentIterableConversionUtil.createToCollectionDescriptor(methodName, context);
     }
-    if (descriptorBase != null) {
-      if (needSpecifyType) {
-        if (conversionType == null) {
-          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) (context instanceof PsiMethodCallExpression ? context : context.getParent());
-          conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall) ? CommonClassNames.JAVA_LANG_ITERABLE : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
-        }
-        descriptorBase.withConversionType(conversionType);
+    if (needSpecifyType) {
+      if (conversionType == null) {
+        PsiMethodCallExpression methodCall = (PsiMethodCallExpression) (context instanceof PsiMethodCallExpression ? context : context.getParent());
+        conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall) ? CommonClassNames.JAVA_LANG_ITERABLE : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
       }
-      return descriptorBase;
+      descriptorBase.withConversionType(conversionType);
     }
-    return null;
+    return descriptorBase;
   }
 
   @Nullable

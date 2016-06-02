@@ -34,9 +34,9 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,12 +84,15 @@ public class ImportFromExistingAction implements QuestionAction {
   public boolean execute() {
     // check if the tree is sane
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-    if (!myTarget.isValid()) return false;
+    PyPsiUtils.assertValid(myTarget);
     if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) return false; // we cannot be qualified
     for (ImportCandidateHolder item : mySources) {
-      if (!item.getImportable().isValid()) return false;
-      if (!item.getFile().isValid()) return false;
-      if (item.getImportElement() != null && !item.getImportElement().isValid()) return false;
+      PyPsiUtils.assertValid(item.getImportable());
+      PyPsiUtils.assertValid(item.getFile());
+      final PyImportElement element = item.getImportElement();
+      if (element != null) {
+        PyPsiUtils.assertValid(element);
+      }
     }
     if (mySources.isEmpty()) {
       return false;
@@ -108,14 +111,12 @@ public class ImportFromExistingAction implements QuestionAction {
     final JList list = new JBList(items);
     list.setCellRenderer(new CellRenderer(myName));
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final Object selected = list.getSelectedValue();
-        if (selected instanceof ImportCandidateHolder) {
-          final ImportCandidateHolder item = (ImportCandidateHolder)selected;
-          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-          doWriteAction(item);
-        }
+    final Runnable runnable = () -> {
+      final Object selected = list.getSelectedValue();
+      if (selected instanceof ImportCandidateHolder) {
+        final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+        doWriteAction(item);
       }
     };
 
@@ -125,12 +126,7 @@ public class ImportFromExistingAction implements QuestionAction {
         new PopupChooserBuilder(list)
           .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
           .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              return ((ImportCandidateHolder) o).getPresentableText(myName);
-            }
-          })
+          .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
           .createPopup()
           .showInBestPositionFor(dataContext);
       }

@@ -84,20 +84,12 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
 
   @NotNull
   private DelayedDocumentWatcher createWatcher() {
-    return new DelayedDocumentWatcher(myProject, myDelayMillis, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer modificationStamp) {
-        restartAllAutoTests(modificationStamp);
+    return new DelayedDocumentWatcher(myProject, myDelayMillis, modificationStamp -> restartAllAutoTests(modificationStamp), file -> {
+      if (ScratchFileService.getInstance().getRootType(file) != null) {
+        return false;
       }
-    }, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        if (ScratchFileService.getInstance().getRootType(file) != null) {
-          return false;
-        }
-        // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
-        return FileEditorManager.getInstance(myProject).isFileOpen(file);
-      }
+      // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
+      return FileEditorManager.getInstance(myProject).isFileOpen(file);
     });
   }
 
@@ -199,12 +191,9 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
       @Override
       public void processTerminated(ProcessEvent event) {
         clearRestarterListener(processHandler);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (isAutoTestEnabledForDescriptor(descriptor) && documentWatcher.isUpToDate(modificationStamp)) {
-              restart(descriptor);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isAutoTestEnabledForDescriptor(descriptor) && documentWatcher.isUpToDate(modificationStamp)) {
+            restart(descriptor);
           }
         }, ModalityState.any());
       }

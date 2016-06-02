@@ -43,7 +43,6 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FilenameIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
   @NotNull
   @Override
@@ -60,7 +59,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -166,14 +165,11 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                                                     @Nullable final IdFilter idFilter) {
     final Set<String> keys = new THashSet<String>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.processAllKeys(NAME, new Processor<String>() {
-      @Override
-      public boolean process(String value) {
-        if (name.equalsIgnoreCase(value)) {
-          keys.add(value);
-        }
-        return true;
+    index.processAllKeys(NAME, value -> {
+      if (name.equalsIgnoreCase(value)) {
+        keys.add(value);
       }
+      return true;
     }, scope, idFilter);
 
     // values accessed outside of provessAllKeys 

@@ -35,7 +35,8 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
   @Override
   public final void update(AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
-    e.getPresentation().setEnabled(search != null && search.hasMatches());
+    boolean invokedByShortcut = !ActionPlaces.isToolbarPlace(e.getPlace());
+    e.getPresentation().setEnabled(search != null && (invokedByShortcut || search.hasMatches()));
   }
 
   @Nullable

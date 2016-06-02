@@ -194,4 +194,9 @@ public class StructClass extends StructMember {
 
     return CodeConstants.BYTECODE_JAVA_LE_4;
   }
+
+  @Override
+  public String toString() {
+    return qualifiedName;
+  }
 }

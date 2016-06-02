@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
-  private volatile PsiType[] myTypeArgs = null;
+  private volatile PsiType[] myTypeArgs;
 
   private GrClosureType(LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,

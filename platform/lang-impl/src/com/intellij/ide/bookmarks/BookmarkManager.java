@@ -65,7 +65,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
-  private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks = new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
+  private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
+    new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
+  private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
 
   private final MessageBus myBus;
 
@@ -99,12 +101,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (file == null) return;
         for (final Bookmark bookmark : myBookmarks) {
           if (Comparing.equal(bookmark.getFile(), file)) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (myProject.isDisposed()) return;
-                bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
-              }
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (myProject.isDisposed()) return;
+              bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
             });
           }
         }
@@ -114,18 +113,13 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
-    mySortedState  = UISettings.getInstance().SORT_BOOKMARKS;
+    mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
         if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
           mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged();
-            }
-          });
+          EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
     }, project);
@@ -136,16 +130,16 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       .showInputDialog(myProject, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
                        IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), new InputValidator() {
-        @Override
-        public boolean checkInput(String inputString) {
-          return true;
-        }
+          @Override
+          public boolean checkInput(String inputString) {
+            return true;
+          }
 
-        @Override
-        public boolean canClose(String inputString) {
-          return true;
-        }
-      });
+          @Override
+          public boolean canClose(String inputString) {
+            return true;
+          }
+        });
     if (description != null) {
       setDescription(bookmark, description);
     }
@@ -179,13 +173,13 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   @NotNull
   public static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
-    if ( autoDescription == null ) {
+    if (autoDescription == null) {
       Document document = editor.getDocument();
       autoDescription = document.getCharsSequence()
         .subSequence(document.getLineStartOffset(lineIndex), document.getLineEndOffset(lineIndex)).toString().trim();
     }
-    if ( autoDescription.length () > MAX_AUTO_DESCRIPTION_SIZE) {
-      return autoDescription.substring(0, MAX_AUTO_DESCRIPTION_SIZE)+"...";
+    if (autoDescription.length() > MAX_AUTO_DESCRIPTION_SIZE) {
+      return autoDescription.substring(0, MAX_AUTO_DESCRIPTION_SIZE) + "...";
     }
     return autoDescription;
   }
@@ -356,12 +350,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     final int index = myBookmarks.indexOf(bookmark);
     if (index > 0) {
       Collections.swap(myBookmarks, index, index - 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
-        }
+      EventQueue.invokeLater(() -> {
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
       });
     }
     return myBookmarks;
@@ -378,12 +369,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     final int index = myBookmarks.indexOf(bookmark);
     if (index < myBookmarks.size() - 1) {
       Collections.swap(myBookmarks, index, index + 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
-        }
+      EventQueue.invokeLater(() -> {
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+        myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
       });
     }
 
@@ -427,12 +415,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     }
 
     Bookmark[] bookmarks = answer.toArray(new Bookmark[answer.size()]);
-    Arrays.sort(bookmarks, new Comparator<Bookmark>() {
-      @Override
-      public int compare(final Bookmark o1, final Bookmark o2) {
-        return o1.getLine() - o2.getLine();
-      }
-    });
+    Arrays.sort(bookmarks, (o1, o2) -> o1.getLine() - o2.getLine());
     return bookmarks;
   }
 
@@ -483,29 +466,18 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private class MyDocumentListener extends DocumentAdapter {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
-      if (e.isWholeTextReplaced()) return;
-      Map<Trinity<VirtualFile, Integer, String>, Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
-        Document document = bookmark.getDocument();
-        if (document == null || document != e.getDocument()) continue;
-        if (bookmark.getLine() ==-1) continue;
-
-        int start = document.getLineStartOffset(bookmark.getLine());
-        int end = document.getLineEndOffset(bookmark.getLine());
-        if (start >= e.getOffset() && end <= e.getOffset() + e.getOldLength() ) {
-          Trinity<VirtualFile, Integer, String> restoreBookmarkData
-            = new Trinity<VirtualFile, Integer, String>(bookmark.getFile(), bookmark.getLine(), document.getText(new TextRange(start, end)));
-          if (bookmarksToRemove == null) {
-            bookmarksToRemove = new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
-          }
-          bookmarksToRemove.put(restoreBookmarkData, bookmark);
+        Document doc = bookmark.getDocument();
+        if (doc == null || doc != e.getDocument()) continue;
+        if (bookmark.getLine() == -1) continue;
+        List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(doc);
+        if (list == null) {
+          myBeforeChangeData.put(doc, list = new ArrayList<Trinity<Bookmark, Integer, String>>());
         }
-      }
-      if (bookmarksToRemove != null) {
-        for (Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark> entry : bookmarksToRemove.entrySet()) {
-          removeBookmark(entry.getValue());
-          myDeletedDocumentBookmarks.put(entry.getKey(), entry.getValue());
-        }
+        list.add(new Trinity<>(bookmark,
+                               bookmark.getLine(),
+                               doc.getText(new TextRange(doc.getLineStartOffset(bookmark.getLine()),
+                                                         doc.getLineEndOffset(bookmark.getLine())))));
       }
     }
 
@@ -522,6 +494,20 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       return false;
     }
 
+    private void moveToDeleted(Bookmark bookmark) {
+      List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(bookmark.getDocument());
+
+      if (list != null) {
+        for (Trinity<Bookmark, Integer, String> trinity : list) {
+          if (trinity.first == bookmark) {
+            removeBookmark(bookmark);
+            myDeletedDocumentBookmarks.put(new Trinity<>(bookmark.getFile(), trinity.second, trinity.third), bookmark);
+            break;
+          }
+        }
+      }
+    }
+
     @Override
     public void documentChanged(DocumentEvent e) {
       List<Bookmark> bookmarksToRemove = null;
@@ -536,9 +522,15 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
       if (bookmarksToRemove != null) {
         for (Bookmark bookmark : bookmarksToRemove) {
-          removeBookmark(bookmark);
+          if (bookmark.getDocument() == e.getDocument()) {
+            moveToDeleted(bookmark);
+          } else {
+            removeBookmark(bookmark);
+          }
         }
       }
+
+      myBeforeChangeData.remove(e.getDocument());
 
       for (Iterator<Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark>> iterator = myDeletedDocumentBookmarks.entrySet().iterator();
            iterator.hasNext(); ) {
@@ -558,17 +550,33 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (document.getLineCount() <= line) {
           continue;
         }
-        int start = document.getLineStartOffset(line);
-        int end = document.getLineEndOffset(line);
-        String lineContent = document.getText(new TextRange(start, end));
-        if (entry.getKey().third.equals(lineContent)) {
-          Bookmark restored = addTextBookmark(bookmark.getFile(), bookmark.getLine(), bookmark.getDescription());
+
+        String lineContent = getLineContent(document, line);
+
+        String bookmarkedText = entry.getKey().third;
+        //'move statement up' action kills line bookmark: fix for single line movement up/down
+        if (!bookmarkedText.equals(lineContent)
+            && line > 1
+            && (bookmarkedText.equals(StringUtil.trimEnd(e.getNewFragment().toString(), "\n"))
+                ||
+                bookmarkedText.equals(StringUtil.trimEnd(e.getOldFragment().toString(), "\n")))) {
+          line -= 2;
+          lineContent = getLineContent(document, line);
+        }
+        if (bookmarkedText.equals(lineContent) && findEditorBookmark(document, line) == null) {
+          Bookmark restored = addTextBookmark(bookmark.getFile(), line, bookmark.getDescription());
           if (bookmark.getMnemonic() != 0) {
             setMnemonic(restored, bookmark.getMnemonic());
           }
           iterator.remove();
         }
       }
+    }
+
+    private String getLineContent(Document document, int line) {
+      int start = document.getLineStartOffset(line);
+      int end = document.getLineEndOffset(line);
+      return document.getText(new TextRange(start, end));
     }
   }
 }

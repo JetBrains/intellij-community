@@ -27,12 +27,7 @@ import java.util.List;
 
 public class WebProjectSettingsStepWrapper implements SettingsStep {
   private static final Function<Pair<String, JComponent>, LabeledComponent> PAIR_LABELED_COMPONENT_FUNCTION =
-    new Function<Pair<String, JComponent>, LabeledComponent>() {
-      @Override
-      public LabeledComponent fun(Pair<String, JComponent> pair) {
-        return LabeledComponent.create(pair.getSecond(), pair.getFirst());
-      }
-    };
+    pair -> LabeledComponent.create(pair.getSecond(), pair.getFirst());
 
   private final List<Pair<String, JComponent>> myFields = ContainerUtil.newArrayList();
   private final List<JComponent> myComponents = ContainerUtil.newArrayList();

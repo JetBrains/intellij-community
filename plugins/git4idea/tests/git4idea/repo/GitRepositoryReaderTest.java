@@ -140,7 +140,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @Test
   public void testBranches() throws Exception {
-    Collection<GitRemote> remotes = GitConfig.read(myPlatformFacade, new File(myGitDir, "config")).parseRemotes();
+    Collection<GitRemote> remotes = GitConfig.read(new File(myGitDir, "config")).parseRemotes();
     GitBranchState state = myRepositoryReader.readState(remotes);
 
     assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());

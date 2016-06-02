@@ -639,12 +639,7 @@ public class Messages {
                                                final int defaultOptionIndex, final int focusedOptionIndex, Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
                                      focusedOptionIndex, icon,
-                                     new PairFunction<Integer, JCheckBox, Integer>() {
-                                       @Override
-                                       public Integer fun(final Integer exitCode, final JCheckBox cb) {
-                                         return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
-                                       }
-                                     });
+                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
   public static int showCheckboxMessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, String checkboxText, final boolean checked,
@@ -917,7 +912,7 @@ public class Messages {
                                           @Nullable Icon icon,
                                           @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
 
     final InputDialog dialog = project != null ? new PasswordInputDialog(project, message, title, icon, validator)
@@ -961,7 +956,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
@@ -979,7 +974,7 @@ public class Messages {
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
@@ -1009,7 +1004,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
 
@@ -1032,7 +1027,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       InputDialog dialog = new InputDialog(message, title, icon, initialValue, validator);
@@ -1049,7 +1044,7 @@ public class Messages {
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     dialog.show();
@@ -1066,7 +1061,7 @@ public class Messages {
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<String, Boolean>(ourTestInputImplementation.show(message), checked);
+      return new Pair<String, Boolean>(ourTestInputImplementation.show(message, validator), checked);
     }
     else {
       InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
@@ -1083,7 +1078,7 @@ public class Messages {
                                                 String initialValue,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
@@ -1221,12 +1216,9 @@ public class Messages {
       builder.setTitle(rawText);
       builder.addOkAction();
       builder.addCancelAction();
-      builder.setOkOperation(new Runnable() {
-        @Override
-        public void run() {
-          textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
-          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-        }
+      builder.setOkOperation(() -> {
+        textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
+        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
       });
       builder.show();
     }
@@ -1438,18 +1430,15 @@ public class Messages {
     @Override
     public void show() {
       if (isMacSheetEmulation()) {
-        setInitialLocationCallback(new Computable<Point>() {
-          @Override
-          public Point compute() {
-            JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
-            if (rootPane == null) {
-              rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
-            }
-
-            Point p = rootPane.getLocationOnScreen();
-            p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
-            return p;
+        setInitialLocationCallback(() -> {
+          JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
+          if (rootPane == null) {
+            rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
           }
+
+          Point p = rootPane.getLocationOnScreen();
+          p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
+          return p;
         });
         animate();
         if (SystemInfo.isJavaVersionAtLeast("1.7")) {

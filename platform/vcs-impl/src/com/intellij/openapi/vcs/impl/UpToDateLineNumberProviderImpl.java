@@ -35,7 +35,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   @Override
   public boolean isRangeChanged(final int start, final int end) {
     LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null) {
+    if (tracker == null || !tracker.isOperational()) {
       return false;
     }
     return tracker.isRangeModified(start, end);
@@ -44,7 +44,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   @Override
   public boolean isLineChanged(int currentNumber) {
     LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null) {
+    if (tracker == null || !tracker.isOperational()) {
       return false;
     }
     return tracker.isLineModified(currentNumber);
@@ -53,7 +53,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   @Override
   public int getLineNumber(int currentNumber) {
     LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null) {
+    if (tracker == null || !tracker.isOperational()) {
       return currentNumber;
     }
     return tracker.transferLineToVcs(currentNumber, false);

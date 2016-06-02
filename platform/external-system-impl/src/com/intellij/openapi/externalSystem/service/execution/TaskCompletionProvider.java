@@ -112,14 +112,10 @@ public class TaskCompletionProvider extends CommandLineCompletionProvider {
   public static DataNode<ModuleData> findModuleDataNode(@NotNull final DataNode<ProjectData> projectDataNode,
                                                         @NotNull final String projectPath) {
     final DataNode<?> node =
-      ExternalSystemApiUtil.findFirstRecursively(projectDataNode, new BooleanFunction<DataNode<?>>() {
-        @Override
-        public boolean fun(DataNode<?> node) {
-          return node.getKey().equals(ProjectKeys.MODULE) &&
-                 node.getData() instanceof ModuleData &&
-                 ((ModuleData)node.getData()).getLinkedExternalProjectPath().equals(projectPath);
-        }
-      });
+      ExternalSystemApiUtil.findFirstRecursively(projectDataNode, node1 -> node1.getKey().equals(ProjectKeys.MODULE) &&
+                                                                           node1.getData() instanceof ModuleData &&
+                                                                           ((ModuleData)node1
+                                                                             .getData()).getLinkedExternalProjectPath().equals(projectPath));
 
     //noinspection unchecked
     return (DataNode<ModuleData>)node;

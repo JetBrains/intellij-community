@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -213,14 +212,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
-    final NullableFunction<Object, PsiElement> toPsiConverter = new NullableFunction<Object, PsiElement>() {
-      @Override
-      public PsiElement fun(Object o) {
-        if (o instanceof HierarchyNodeDescriptor) {
-          return ((HierarchyNodeDescriptor)o).getContainingFile();
-        }
-        return null;
+    final NullableFunction<Object, PsiElement> toPsiConverter = o -> {
+      if (o instanceof HierarchyNodeDescriptor) {
+        return ((HierarchyNodeDescriptor)o).getContainingFile();
       }
+      return null;
     };
 
     if (dndAware) {
@@ -322,12 +318,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private void setWaitCursor() {
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      }
-    }, 100);
+    myAlarm.addRequest(() -> setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)), 100);
   }
 
   public final void changeView(@NotNull final String typeName) {
@@ -355,7 +346,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
         tree.setModel(model);
 
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         final HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
         if (structure == null) {
           return;
@@ -365,20 +355,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         myBuilders.put(typeName, builder);
         Disposer.register(this, builder);
-        Disposer.register(builder, new Disposable() {
-          @Override
-          public void dispose() {
-            myBuilders.remove(typeName);
-          }
-        });
+        Disposer.register(builder, () -> myBuilders.remove(typeName));
 
         final HierarchyNodeDescriptor descriptor = structure.getBaseDescriptor();
-        builder.select(descriptor, new Runnable() {
-          @Override
-          public void run() {
-            builder.expand(descriptor, null);
-          }
-        });
+        builder.select(descriptor, () -> builder.expand(descriptor, null));
       }
       finally {
         restoreCursor();
@@ -515,13 +495,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     setHierarchyBase(element);
     validate();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        changeView(currentViewType);
-        final HierarchyTreeBuilder builder = getCurrentBuilder();
-        builder.restoreExpandedAndSelectedInfo(storedInfo.get());
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      changeView(currentViewType);
+      final HierarchyTreeBuilder builder = getCurrentBuilder();
+      builder.restoreExpandedAndSelectedInfo(storedInfo.get());
     });
   }
 
@@ -588,12 +565,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
                                                                                 selectedElement.getContainingFile(),
                                                                                 event.getDataContext());
       final HierarchyBrowser newBrowser = BrowseHierarchyActionBase.createAndAddToPanel(selectedElement.getProject(), provider, selectedElement);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ((HierarchyBrowserBaseEx)newBrowser).changeView(correctViewType(browser, currentViewType));
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> ((HierarchyBrowserBaseEx)newBrowser).changeView(correctViewType(browser, currentViewType)));
     }
 
     protected String correctViewType(HierarchyBrowserBaseEx browser, String viewType) {
@@ -659,7 +632,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     @Override
     public final void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = e.getProject();
       if (project == null) return;
       presentation.setEnabled(isEnabled());
       presentation.setText(getCurrentScopeType());
@@ -705,11 +678,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserManager.getInstance(myProject).getState().SCOPE = scopeType;
 
       // invokeLater is called to update state of button before long tree building operation
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
       });
     }
 

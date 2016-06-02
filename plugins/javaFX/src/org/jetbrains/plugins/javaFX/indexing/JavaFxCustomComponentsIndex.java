@@ -38,7 +38,6 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
 
   @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.custom.component");
 
-  private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
   private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
   private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer() {
     @Override
@@ -102,7 +101,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override

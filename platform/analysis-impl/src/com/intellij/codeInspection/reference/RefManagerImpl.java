@@ -33,6 +33,7 @@ import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -357,15 +358,11 @@ public class RefManagerImpl extends RefManager {
     synchronized (myRefTable) {
       answer = new ArrayList<RefElement>(myRefTable.values());
     }
-    ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
-      @Override
-      public int compare(RefElement o1, RefElement o2) {
-        VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
-        VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-
-        return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
-      }
-    });
+    ContainerUtil.quickSort(answer, (o1, o2) -> ReadAction.compute(() -> {
+      VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
+      VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
+      return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
+    }));
 
     return answer;
   }
@@ -472,38 +469,30 @@ public class RefManagerImpl extends RefManager {
 
     return getFromRefTableOrCache(
       elem,
-      new NullableFactory<RefElementImpl>() {
+      () -> ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
         @Override
-        public RefElementImpl create() {
-          return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-            @Override
-            @Nullable
-            public RefElementImpl compute() {
-              final RefManagerExtension extension = getExtension(elem.getLanguage());
-              if (extension != null) {
-                final RefElement refElement = extension.createRefElement(elem);
-                if (refElement != null) return (RefElementImpl)refElement;
-              }
-              if (elem instanceof PsiFile) {
-                return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-              }
-              if (elem instanceof PsiDirectory) {
-                return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-              }
-              return null;
-            }
-          });
-        }
-      },
-      new Consumer<RefElementImpl>() {
-        @Override
-        public void consume(RefElementImpl element) {
-          element.initialize();
-          for (RefManagerExtension each : myExtensions.values()) {
-            each.onEntityInitialized(element, elem);
+        @Nullable
+        public RefElementImpl compute() {
+          final RefManagerExtension extension = getExtension(elem.getLanguage());
+          if (extension != null) {
+            final RefElement refElement = extension.createRefElement(elem);
+            if (refElement != null) return (RefElementImpl)refElement;
           }
-          fireNodeInitialized(element);
+          if (elem instanceof PsiFile) {
+            return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+          }
+          if (elem instanceof PsiDirectory) {
+            return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+          }
+          return null;
         }
+      }),
+      element -> {
+        element.initialize();
+        for (RefManagerExtension each : myExtensions.values()) {
+          each.onEntityInitialized(element, elem);
+        }
+        fireNodeInitialized(element);
       });
   }
 
@@ -565,9 +554,10 @@ public class RefManagerImpl extends RefManager {
       if (result == null) return null;
 
       myRefTable.put(psiAnchor, result);
-    }
-    if (whenCached != null) {
-      whenCached.consume(result);
+
+      if (whenCached != null) {
+        whenCached.consume(result);
+      }
     }
 
     return result;

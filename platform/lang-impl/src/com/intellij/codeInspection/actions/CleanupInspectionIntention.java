@@ -76,12 +76,9 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
     final List<ProblemDescriptor> descriptions =
-      ProgressManager.getInstance().runProcess(new Computable<List<ProblemDescriptor>>() {
-        @Override
-        public List<ProblemDescriptor> compute() {
-          InspectionManager inspectionManager = InspectionManager.getInstance(project);
-          return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
-        }
+      ProgressManager.getInstance().runProcess(() -> {
+        InspectionManager inspectionManager = InspectionManager.getInstance(project);
+        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
       }, new EmptyProgressIndicator());
 
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
@@ -100,14 +97,11 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       new SequentialModalProgressTask(project, templatePresentationText, true);
     final boolean isBatch = BatchQuickFix.class.isAssignableFrom(myQuickfixClass);
     final AbstractPerformFixesTask fixesTask = createTask(project, descriptions.toArray(new ProblemDescriptor[descriptions.size()]), progressTask, isBatch);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(fixesTask);
-        ProgressManager.getInstance().run(progressTask);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(fixesTask);
+      ProgressManager.getInstance().run(progressTask);
     }, templatePresentationText, null);
 
     if (!fixesTask.isApplicableFixFound()) {

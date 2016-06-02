@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,28 +31,37 @@ import java.util.Map;
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<QualifiedName, List<PsiElement>> myCache = new ConcurrentHashMap<QualifiedName, List<PsiElement>>();
-  private final Map<VirtualFile, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<VirtualFile, List<QualifiedName>>();
+  private final Map<QualifiedName, List<PsiElement>> myCache = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, List<QualifiedName>> myQNameCache = ContainerUtil.newConcurrentMap();
 
   public void clearCache() {
     myCache.clear();
     myQNameCache.clear();
   }
 
+  @Nullable
   public List<PsiElement> get(QualifiedName qualifiedName) {
-    return myCache.get(qualifiedName);
+    final List<PsiElement> result = myCache.get(qualifiedName);
+    if (result == null) {
+      return null;
+    }
+    final boolean staleElementRemoved = result.removeIf(e -> !e.isValid());
+    if (staleElementRemoved) {
+      Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
+    }
+    return (!result.isEmpty() ? result : null);
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
-    myCache.put(qualifiedName, results);
+    myCache.put(qualifiedName, new ArrayList<>(results));
   }
 
   public List<QualifiedName> getNames(VirtualFile vFile) {
     return myQNameCache.get(vFile);
   }
-  
+
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
-    myQNameCache.put(vFile, qNames);
+    myQNameCache.put(vFile, new ArrayList<>(qNames));
   }
 
   protected class MyVirtualFileAdapter extends VirtualFileAdapter {

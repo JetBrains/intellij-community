@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -88,12 +89,12 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     }
 
     final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(number, promptType);
-    c.insets = new Insets(2,2,2,5);
+    c.insets = JBUI.insets(2, 2, 2, 5);
     parent.add(promptComponent, c);
 
     c.gridx = 1;
     c.weightx = 1;
-    c.insets = new Insets(2,2,2,2);
+    c.insets = JBUI.insets(2);
     c.anchor = GridBagConstraints.CENTER;
     parent.add(component, c);
   }

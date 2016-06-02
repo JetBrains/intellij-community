@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,13 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class GroovyImportHelper {
+
+  public enum ImportKind {
+    SIMPLE,
+    ON_DEMAND,
+    ALIAS;
+  }
+
   public static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
     if (!(element instanceof PsiClass)) return false;
 
@@ -77,13 +84,13 @@ public class GroovyImportHelper {
                                        @NotNull PsiElement place,
                                        @NotNull PsiScopeProcessor importProcessor,
                                        @NotNull GrImportStatement[] importStatements,
-                                       boolean shouldProcessOnDemand) {
+                                       @NotNull ImportKind kind,
+                                       @Nullable Boolean processStatic) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
-      if (shouldProcessOnDemand != imp.isOnDemand()) continue;
-      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) {
-        return false;
-      }
+      if (getImportKind(imp) != kind) continue;
+      if (processStatic != null && processStatic != imp.isStatic()) continue;
+      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) return false;
     }
     return true;
   }
@@ -118,5 +125,13 @@ public class GroovyImportHelper {
       if (!ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
+  }
+
+  @Nullable
+  private static ImportKind getImportKind(GrImportStatement statement) {
+    if (statement.isOnDemand() && !statement.isAliasedImport()) return ImportKind.ON_DEMAND;
+    if (!statement.isOnDemand() && statement.isAliasedImport()) return ImportKind.ALIAS;
+    if (!statement.isAliasedImport() && !statement.isOnDemand()) return ImportKind.SIMPLE;
+    return null;
   }
 }

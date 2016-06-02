@@ -89,12 +89,7 @@ public class StatisticsWeigher extends CompletionWeigher {
 
       //noinspection unchecked
       final THashSet<LookupElement> initialSet = new THashSet<LookupElement>(initialList, TObjectHashingStrategy.IDENTITY);
-      final Condition<LookupElement> notInInitialList = new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return !initialSet.contains(element);
-        }
-      };
+      final Condition<LookupElement> notInInitialList = element -> !initialSet.contains(element);
 
       return ContainerUtil.concat(initialList, new Iterable<LookupElement>() {
         @Override
@@ -159,12 +154,7 @@ public class StatisticsWeigher extends CompletionWeigher {
     @Override
     public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
       checkPrefixChanged(context);
-      return ContainerUtil.map(items, new Function<LookupElement, Pair<LookupElement, Object>>() {
-        @Override
-        public Pair<LookupElement, Object> fun(LookupElement lookupElement) {
-          return new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
-        }
-      });
+      return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT))));
     }
 
     @Override

@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.application;
 
+/**
+ * @deprecated To remove in 2017.
+ */
+@Deprecated
 public class RuntimeInterruptedException extends RuntimeException {
   public RuntimeInterruptedException(InterruptedException cause) {
     super(cause);

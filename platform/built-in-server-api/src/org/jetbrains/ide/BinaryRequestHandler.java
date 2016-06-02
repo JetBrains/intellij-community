@@ -25,10 +25,10 @@ import java.util.UUID;
 public abstract class BinaryRequestHandler {
   public static final ExtensionPointName<BinaryRequestHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.binaryRequestHandler");
 
-  @NotNull
   /**
    * uuidgen on Mac OS X could be used to generate UUID
    */
+  @NotNull
   public abstract UUID getId();
 
   @NotNull

@@ -78,24 +78,22 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     final TreeSet<TextRange> ranges = new TreeSet<TextRange>(InjectorUtils.RANGE_COMPARATOR);
     final PsiFile containingFile = xmlElement.getContainingFile();
     final Ref<Boolean> unparsableRef = Ref.create();
-    getInjectedLanguage(xmlElement, unparsableRef, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
-      public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-        for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-          if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
-        }
-        for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-          final PsiLanguageInjectionHost host = trinity.first;
-          if (host.getContainingFile() != containingFile) continue;
-          final TextRange textRange = trinity.third;
-          ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
-        }
-        InjectorUtils.registerInjection(language, list, containingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, true, registrar);
-        if (Boolean.TRUE.equals(unparsableRef.get())) {
-          InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-        }
-        return true;
+    getInjectedLanguage(xmlElement, unparsableRef, (language, list) -> {
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
       }
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        final PsiLanguageInjectionHost host1 = trinity.first;
+        if (host1.getContainingFile() != containingFile) continue;
+        final TextRange textRange = trinity.third;
+        ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
+      }
+      InjectorUtils.registerInjection(language, list, containingFile, registrar);
+      InjectorUtils.registerSupport(mySupport, true, registrar);
+      if (Boolean.TRUE.equals(unparsableRef.get())) {
+        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+      }
+      return true;
     });
   }
 

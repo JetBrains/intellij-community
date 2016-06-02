@@ -60,18 +60,15 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-[^/\\\\]+\\.jar");
   
   private static boolean containsGroovyClasses(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        AccessToken accessToken = ReadAction.start();
-        try {
-          return Result.create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
-                               PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
-        finally {
-          accessToken.finish();
-        }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      AccessToken accessToken = ReadAction.start();
+      try {
+        return CachedValueProvider.Result
+          .create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
+                  PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+      finally {
+        accessToken.finish();
       }
     });
   }

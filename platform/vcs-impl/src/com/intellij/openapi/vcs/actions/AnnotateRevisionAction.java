@@ -96,6 +96,12 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     return revisions.get(currentLine);
   }
 
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    if (currentLine < 0) return super.getAnnotatedLine(e);
+    return currentLine;
+  }
+
   @Nullable
   @Override
   protected Editor getEditor(@NotNull AnActionEvent e) {

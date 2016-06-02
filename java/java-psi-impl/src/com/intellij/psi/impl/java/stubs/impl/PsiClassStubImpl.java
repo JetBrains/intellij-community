@@ -45,8 +45,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int IN_QUALIFIED_NEW = 0x40;
   private static final int DEPRECATED_ANNOTATION = 0x80;
 
-  private LanguageLevel myLanguageLevel = null;
-  private StringRef mySourceFileName = null;
+  private LanguageLevel myLanguageLevel;
+  private StringRef mySourceFileName;
 
   public PsiClassStubImpl(final JavaClassElementType type,
                           final StubElement parent,

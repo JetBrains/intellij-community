@@ -39,7 +39,7 @@ class IdentityVirtualFilePointer implements VirtualFilePointer {
 
   @Override
   public VirtualFile getFile() {
-    return myFile;
+    return isValid() ? myFile : null;
   }
 
   @Override

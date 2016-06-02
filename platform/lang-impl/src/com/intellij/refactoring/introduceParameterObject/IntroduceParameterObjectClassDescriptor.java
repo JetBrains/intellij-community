@@ -15,19 +15,59 @@
  */
 package com.intellij.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Describes parameter class to create or existing class, chosen to wrap parameters
+ */
 public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamedElement, P extends ParameterInfo> {
+  /**
+   * Class name to create/existing class short name
+   */
   private final String myClassName;
+  /**
+   * Package name where class should be created/package name of the existing class. Won't be used if 'create inner class' option is chosen
+   */
   private final String myPackageName;
+
+  /**
+   * Flag to search for existing class with fqn: <code>myPackageName.myClassName</code>
+   */
   private final boolean myUseExistingClass;
+
+  /**
+   * Flag that inner class with name <code>myClassName</code> should be created in outer class: <code>method.getContainingClass()</code>
+   */
   private final boolean myCreateInnerClass;
+
+  /**
+   * Visibility for newly created class
+   */
   private final String myNewVisibility;
+
+  /**
+   * Flag to generate accessors for existing class when fields won't be accessible from new usages
+   */
   private final boolean myGenerateAccessors;
+
+  /**
+   * Bundle of method parameters which should correspond to the newly created/existing class fields
+   */
   private final P[] myParamsToMerge;
+
+  /**
+   * Store existing class found by fqn / created class in refactoring#performRefactoring
+   */
   private PsiElement myExistingClass;
+  /**
+   * Detected compatible constructor of the existing class
+   */
+  private M myExistingClassCompatibleConstructor;
 
   public IntroduceParameterObjectClassDescriptor(String className,
                                                  String packageName,
@@ -81,19 +121,32 @@ public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamed
     return myGenerateAccessors;
   }
 
-  public P getParameterInfo(int parameterIdx) {
+  public P getParameterInfo(int oldIndex) {
     for (P info : myParamsToMerge) {
-      if (info.getOldIndex() == parameterIdx) {
+      if (info.getOldIndex() == oldIndex) {
         return info;
       }
     }
     return null;
   }
 
-  public abstract String getSetterName(P paramInfo, PsiElement context);
-  public abstract String getGetterName(P paramInfo, PsiElement context);
+  /**
+   * Corresponding field accessors how they should appear inside changed method body
+   */
+  public abstract String getSetterName(P paramInfo, @NotNull PsiElement context);
+  public abstract String getGetterName(P paramInfo, @NotNull PsiElement context);
 
-  public abstract void initExistingClass(M method);
+  /**
+   * Called if use existing class is chosen only. Should find constructor to use
+   */
+  @Nullable
+  public abstract M findCompatibleConstructorInExistingClass(M method);
+  public M getExistingClassCompatibleConstructor() {
+    return myExistingClassCompatibleConstructor;
+  }
+  public void setExistingClassCompatibleConstructor(M existingClassCompatibleConstructor) {
+    myExistingClassCompatibleConstructor = existingClassCompatibleConstructor;
+  }
 
-  public abstract PsiElement createClass(M method, IntroduceParameterObjectDelegate.Accessor[] accessors);
+  public abstract PsiElement createClass(M method, ReadWriteAccessDetector.Access[] accessors);
 }

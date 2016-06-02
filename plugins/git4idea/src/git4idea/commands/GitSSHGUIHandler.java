@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
@@ -244,7 +245,7 @@ public class GitSSHGUIHandler {
         contents = new JPanel(new GridBagLayout());
         inputs = new JTextComponent[myNumPrompts];
         GridBagConstraints c;
-        Insets insets = new Insets(1, 1, 1, 1);
+        Insets insets = JBUI.insets(1);
         if (myInstruction.length() != 0) {
           JLabel instructionLabel = new JLabel(myInstruction);
           c = new GridBagConstraints();

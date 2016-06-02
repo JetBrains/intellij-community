@@ -933,12 +933,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return getContainingMethod(position.getElementAt());
   }
 
-  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = new Comparator<Method>() {
-    @Override
-    public int compare(Method m1, Method m2) {
-      return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
-    }
-  };
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR =
+    (m1, m2) -> LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
 
   public static void disableCollection(ObjectReference reference) {
     try {

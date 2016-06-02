@@ -383,12 +383,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     });
     PsiElement target = ((PsiElement2UsageTargetAdapter)targets[0]).getElement();
     List<PsiReference> result = new ArrayList<PsiReference>(ReferencesSearch.search(target).findAll());
-    return ContainerUtil.map(result, new Function<PsiReference, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiReference psiReference) {
-        return psiReference.getElement();
-      }
-    });
+    return ContainerUtil.map(result, psiReference -> psiReference.getElement());
   }
 
   protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) throws IOException {

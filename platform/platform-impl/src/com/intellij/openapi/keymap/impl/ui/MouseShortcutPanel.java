@@ -16,7 +16,10 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
@@ -32,22 +35,33 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
   static final JBColor BORDER = new JBColor(0xDEDEDE, 0x383B3D);
 
   private final int myClickCount;
+  private MouseShortcut myMouseShortcut = null;
+
   private final MouseAdapter myMouseListener = new MouseAdapter() {
     @Override
     public void mouseWheelMoved(MouseWheelEvent event) {
-      mousePressed(event);
+      setShortcutIfNeeded(toMouseShortcut(event));
     }
 
     @Override
     public void mousePressed(MouseEvent event) {
-      event.consume();
+      myMouseShortcut = toMouseShortcut(event);
+    }
 
+    private MouseShortcut toMouseShortcut(MouseEvent event) {
       int button = MouseShortcut.getButton(event);
       int clickCount = event instanceof MouseWheelEvent ? 1 : event.getClickCount();
       if (0 <= button && clickCount <= myClickCount) {
         int modifiers = event.getModifiersEx();
-        setShortcut(new MouseShortcut(button, modifiers, clickCount));
+        return new MouseShortcut(button, modifiers, clickCount);
       }
+      return null;
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent event) {
+      event.consume();
+      setShortcutIfNeeded(myMouseShortcut);
     }
   };
 
@@ -56,14 +70,21 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
+    if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetbrainsJvm && Registry.is("ide.mac.forceTouch")) {
+      new MacGestureSupportForMouseShortcutPanel(this, () -> myMouseShortcut = null);
+    }
     setBackground(BACKGROUND);
     setOpaque(true);
   }
 
-  void setShortcut(MouseShortcut shortcut) {
+  public void setShortcut(MouseShortcut shortcut) {
     MouseShortcut old = getShortcut();
     if (old != null || shortcut != null) {
       super.setShortcut(shortcut);
     }
+  }
+
+  private void setShortcutIfNeeded(MouseShortcut shortcut) {
+    if (shortcut != null) setShortcut(shortcut);
   }
 }

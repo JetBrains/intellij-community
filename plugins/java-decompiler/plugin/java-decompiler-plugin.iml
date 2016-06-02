@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="java-psi-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="debugger-openapi" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>

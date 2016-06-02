@@ -73,17 +73,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private final Project myProject;
 
-  private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<Module, ModuleEditor>(new Comparator<Module>() {
-    @Override
-    public int compare(Module o1, Module o2) {
-      String n1 = o1.getName();
-      String n2 = o2.getName();
-      int result = n1.compareToIgnoreCase(n2);
-      if (result != 0) {
-        return result;
-      }
-      return n1.compareTo(n2);
+  private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<Module, ModuleEditor>((o1, o2) -> {
+    String n1 = o1.getName();
+    String n2 = o2.getName();
+    int result = n1.compareToIgnoreCase(n2);
+    if (result != 0) {
+      return result;
     }
+    return n1.compareTo(n2);
   });
 
   private boolean myModified = false;
@@ -109,19 +106,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void disposeUIResources() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-          Disposer.dispose(moduleEditor);
-        }
-        myModuleEditors.clear();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+        Disposer.dispose(moduleEditor);
+      }
+      myModuleEditors.clear();
 
-        myModuleModel.dispose();
+      myModuleModel.dispose();
 
-        if (myFacetsConfigurator != null) {
-          myFacetsConfigurator.disposeEditors();
-        }
+      if (myFacetsConfigurator != null) {
+        myFacetsConfigurator.disposeEditors();
       }
     });
   }
@@ -189,18 +183,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public void resetModuleEditors() {
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!myModuleEditors.isEmpty()) {
-          LOG.error("module editors was not disposed");
-          myModuleEditors.clear();
-        }
-        final Module[] modules = myModuleModel.getModules();
-        if (modules.length > 0) {
-          for (Module module : modules) {
-            getOrCreateModuleEditor(module);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!myModuleEditors.isEmpty()) {
+        LOG.error("module editors was not disposed");
+        myModuleEditors.clear();
+      }
+      final Module[] modules = myModuleModel.getModules();
+      if (modules.length > 0) {
+        for (Module module : modules) {
+          getOrCreateModuleEditor(module);
         }
       }
     });
@@ -296,47 +287,44 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-            final ModifiableRootModel model = moduleEditor.apply();
-            if (model != null) {
-              if (!model.isSdkInherited()) {
-                // make sure the sdk is set to original SDK stored in the JDK Table
-                final Sdk modelSdk = model.getSdk();
-                if (modelSdk != null) {
-                  final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                  if (original != null) {
-                    model.setSdk(original);
-                  }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+          final ModifiableRootModel model = moduleEditor.apply();
+          if (model != null) {
+            if (!model.isSdkInherited()) {
+              // make sure the sdk is set to original SDK stored in the JDK Table
+              final Sdk modelSdk = model.getSdk();
+              if (modelSdk != null) {
+                final Sdk original = modifiedToOriginalMap.get(modelSdk);
+                if (original != null) {
+                  model.setSdk(original);
                 }
               }
-              models.add(model);
             }
+            models.add(model);
           }
-          myFacetsConfigurator.applyEditors();
         }
-        catch (ConfigurationException e) {
-          exceptionRef.set(e);
-          return;
-        }
+        myFacetsConfigurator.applyEditors();
+      }
+      catch (ConfigurationException e) {
+        exceptionRef.set(e);
+        return;
+      }
 
-        try {
-          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
-          myModuleModelCommitted = true;
-          myFacetsConfigurator.commitFacets();
+      try {
+        final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+        ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+        myModuleModelCommitted = true;
+        myFacetsConfigurator.commitFacets();
 
-        }
-        finally {
-          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+      }
+      finally {
+        ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
-          myFacetsConfigurator = createFacetsConfigurator();
-          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-          myModuleModelCommitted = false;
-        }
+        myFacetsConfigurator = createFacetsConfigurator();
+        myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+        myModuleModelCommitted = false;
       }
     });
 
@@ -386,30 +374,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<Module>();
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          final List<Module> committedModules;
-          if (builder instanceof ProjectImportBuilder<?>) {
-            final ModifiableArtifactModel artifactModel =
-              ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-            committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
-          }
-          else {
-            committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
-          }
-          if (committedModules != null) {
-            modules.addAll(committedModules);
-          }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (Module module : modules) {
-                getOrCreateModuleEditor(module);
-              }
-            }
-          });
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
+        final List<Module> committedModules;
+        if (builder instanceof ProjectImportBuilder<?>) {
+          final ModifiableArtifactModel artifactModel =
+            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+          committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
         }
+        else {
+          committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
+        }
+        if (committedModules != null) {
+          modules.addAll(committedModules);
+        }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (Module module : modules) {
+            getOrCreateModuleEditor(module);
+          }
+        });
       });
       return modules;
     }
@@ -436,11 +418,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          getOrCreateModuleEditor(module);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        getOrCreateModuleEditor(module);
       });
       processModuleCountChanged();
     }
@@ -544,43 +523,27 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
     final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.select(artifact, true);
-      }
-    });
+    return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(artifact, true));
   }
 
   public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
                                                 @Nullable final String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
-      @Override
-      public void run() {
-        final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(facet, true).doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            if (tabNameToSelect != null) {
-              FacetEditorImpl facetEditor = modulesConfig.getFacetConfigurator().getOrCreateEditor(facet);
-              facetEditor.setSelectedTabName(tabNameToSelect);
-            }
-          }
-        });
-      }
+    return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> {
+      final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
+      config.select(facet, true).doWhenDone(() -> {
+        if (tabNameToSelect != null) {
+          FacetEditorImpl facetEditor = modulesConfig.getFacetConfigurator().getOrCreateEditor(facet);
+          facetEditor.setSelectedTabName(tabNameToSelect);
+        }
+      });
     });
   }
 
   public static boolean showDialog(Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
-      @Override
-      public void run() {
-        config.select(moduleToSelect, editorNameToSelect, true);
-      }
-    });
+    return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }
 
   public void moduleRenamed(Module module, final String oldName, final String name) {

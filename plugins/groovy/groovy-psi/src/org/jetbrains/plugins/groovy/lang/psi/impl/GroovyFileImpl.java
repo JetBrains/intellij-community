@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -68,18 +69,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
-  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = new CachedValueProvider<ConcurrentMap<String, GrBindingVariable>>() {
-    @Nullable
-    @Override
-    public Result<ConcurrentMap<String, GrBindingVariable>> compute() {
-      final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
-      return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-    }
+  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = () -> {
+    final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
+    return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
   };
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
-  private volatile GrParameter mySyntheticArgsParameter = null;
+  private volatile GrParameter mySyntheticArgsParameter;
   private volatile PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
@@ -139,6 +136,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     boolean processClasses = ResolveUtil.shouldProcessClasses(classHint);
 
+    GrImportStatement[] importStatements = getImportStatements();
+    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, false)) return false;
+
     GroovyScriptClass scriptClass = getScriptClass();
     if (scriptClass != null && StringUtil.isJavaIdentifier(scriptClass.getName())) {
 
@@ -161,11 +161,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (!processChildrenScopes(processor, state, lastParent, place)) return false;
     }
 
-    GrImportStatement[] importStatements = getImportStatements();
-    if (!processImports(processor, state, lastParent, place, importStatements, false)) return false;
+    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, true)) return false;
+    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.SIMPLE, null)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
-    if (!processImports(processor, state, lastParent, place, importStatements, true)) return false;
-    if  (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ON_DEMAND, null)) return false;
+    if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
 
     if (ResolveUtil.shouldProcessPackages(classHint)) {
 
@@ -209,8 +209,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                    @Nullable PsiElement lastParent,
                                    @NotNull PsiElement place,
                                    @NotNull GrImportStatement[] importStatements,
-                                   boolean onDemand) {
-    return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, onDemand);
+                                   @NotNull ImportKind kind,
+                                   @Nullable Boolean processStatic) {
+    return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, kind, processStatic);
   }
 
   @NotNull
@@ -416,13 +417,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public PsiType getInferredScriptReturnType() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiType>() {
-      @Override
-      public Result<PsiType> compute() {
-        return Result.create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),
-                             PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
+      .create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),
+              PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

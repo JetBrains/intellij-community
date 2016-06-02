@@ -91,7 +91,7 @@ public class PsiUtilEx {
       final String shortName = ((PsiClassType)type).getClassName();
       if (!Comparing.equal(shortName, CommonClassNames.JAVA_LANG_STRING_SHORT)) return false;
     }
-    return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
+    return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false));
   }
 
   public static boolean isStringOrStringArray(@NotNull PsiType type) {

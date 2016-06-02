@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,21 +34,34 @@ import java.util.List;
 import java.util.Map;
 
 public class VarTypeProcessor {
-
   public static final int VAR_NON_FINAL = 1;
   public static final int VAR_EXPLICIT_FINAL = 2;
   public static final int VAR_FINAL = 3;
 
+  private final StructMethod method;
+  private final MethodDescriptor methodDescriptor;
   private final Map<VarVersionPair, VarType> mapExprentMinTypes = new HashMap<VarVersionPair, VarType>();
   private final Map<VarVersionPair, VarType> mapExprentMaxTypes = new HashMap<VarVersionPair, VarType>();
   private final Map<VarVersionPair, Integer> mapFinalVars = new HashMap<VarVersionPair, Integer>();
 
+  public VarTypeProcessor(StructMethod mt, MethodDescriptor md) {
+    method = mt;
+    methodDescriptor = md;
+  }
+
+  public void calculateVarTypes(RootStatement root, DirectGraph graph) {
+    setInitVars(root);
+
+    resetExprentTypes(graph);
+
+    //noinspection StatementWithEmptyBody
+    while (!processVarTypes(graph)) ;
+  }
+
   private void setInitVars(RootStatement root) {
-    StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
+    boolean thisVar = !method.hasModifier(CodeConstants.ACC_STATIC);
 
-    boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
-
-    MethodDescriptor md = (MethodDescriptor)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR);
+    MethodDescriptor md = methodDescriptor;
 
     if (thisVar) {
       StructClass cl = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
@@ -88,15 +101,6 @@ public class VarTypeProcessor {
 
       stack.addAll(stat.getStats());
     }
-  }
-
-  public void calculateVarTypes(RootStatement root, DirectGraph graph) {
-    setInitVars(root);
-
-    resetExprentTypes(graph);
-
-    //noinspection StatementWithEmptyBody
-    while (!processVarTypes(graph)) ;
   }
 
   private static void resetExprentTypes(DirectGraph graph) {

@@ -24,6 +24,7 @@ import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -32,6 +33,9 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class LocalHistoryTestCase extends Assert {
+  {
+    FSRecords.connect();
+  }
   private static long myCurrentId = 0;
 
   public static long nextId() {

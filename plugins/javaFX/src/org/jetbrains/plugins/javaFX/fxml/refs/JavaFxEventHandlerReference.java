@@ -18,13 +18,16 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
@@ -115,7 +118,17 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
           canonicalText = eventType.getCanonicalText();
         }
       }
-      return "public void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
+      final String modifiers = getModifiers(element.getProject());
+      return modifiers + " void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
+    }
+
+    @NotNull
+    private static String getModifiers(@NotNull Project project) {
+      String visibility = CodeStyleSettingsManager.getSettings(project).VISIBILITY;
+      if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
+      final boolean needAnnotation = !PsiModifier.PUBLIC.equals(visibility);
+      final String modifier = !PsiModifier.PACKAGE_LOCAL.equals(visibility) ? visibility : "";
+      return needAnnotation ? "@" + JavaFxCommonNames.JAVAFX_FXML_ANNOTATION + " " + modifier : modifier;
     }
 
     @NotNull

@@ -50,51 +50,45 @@ public class GenerateComponentExternalizationAction extends AnAction {
     final CodeStyleManager formatter = CodeStyleManager.getInstance(target.getManager().getProject());
     final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(target.getProject());
     final String qualifiedName = target.getQualifiedName();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              final PsiReferenceList implList = target.getImplementsList();
-              assert implList != null;
-              final PsiJavaCodeReferenceElement referenceElement =
-                factory.createReferenceFromText(PERSISTENCE_STATE_COMPONENT + "<" + qualifiedName + ">", target);
-              implList.add(styler.shortenClassReferences(referenceElement.copy()));
-              PsiMethod read = factory.createMethodFromText(
-                "public void loadState(" + qualifiedName + " state) {\n" +
-                "    com.intellij.util.xmlb.XmlSerializerUtil.copyBean(state, this);\n" +
-                "}",
-                target
-              );
+    Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final PsiReferenceList implList = target.getImplementsList();
+        assert implList != null;
+        final PsiJavaCodeReferenceElement referenceElement =
+          factory.createReferenceFromText(PERSISTENCE_STATE_COMPONENT + "<" + qualifiedName + ">", target);
+        implList.add(styler.shortenClassReferences(referenceElement.copy()));
+        PsiMethod read = factory.createMethodFromText(
+          "public void loadState(" + qualifiedName + " state) {\n" +
+          "    com.intellij.util.xmlb.XmlSerializerUtil.copyBean(state, this);\n" +
+          "}",
+          target
+        );
 
-              read = (PsiMethod)formatter.reformat(target.add(read));
-              styler.shortenClassReferences(read);
+        read = (PsiMethod)formatter.reformat(target.add(read));
+        styler.shortenClassReferences(read);
 
-              PsiMethod write = factory.createMethodFromText(
-                "public " + qualifiedName + " getState() {\n" +
-                "    return this;\n" +
-                "}\n",
-                target
-              );
-              write = (PsiMethod)formatter.reformat(target.add(write));
-              styler.shortenClassReferences(write);
+        PsiMethod write = factory.createMethodFromText(
+          "public " + qualifiedName + " getState() {\n" +
+          "    return this;\n" +
+          "}\n",
+          target
+        );
+        write = (PsiMethod)formatter.reformat(target.add(write));
+        styler.shortenClassReferences(write);
 
-              PsiAnnotation annotation = target.getModifierList().addAnnotation(STATE);
+        PsiAnnotation annotation = target.getModifierList().addAnnotation(STATE);
 
-              annotation = (PsiAnnotation)formatter.reformat(annotation.replace(
-                factory.createAnnotationFromText("@" + STATE +
-                                                 "(name = \"" + qualifiedName + "\", " +
-                                                 "storages = {@" + STORAGE + "(file = \"" + StoragePathMacros.WORKSPACE_FILE + "\"\n )})",
-                                                 target)));
-              styler.shortenClassReferences(annotation);
-            }
-            catch (IncorrectOperationException e1) {
-              LOG.error(e1);
-            }
-          }
-        });
+        annotation = (PsiAnnotation)formatter.reformat(annotation.replace(
+          factory.createAnnotationFromText("@" + STATE +
+                                           "(name = \"" + qualifiedName + "\", " +
+                                           "storages = {@" + STORAGE + "(file = \"" + StoragePathMacros.WORKSPACE_FILE + "\"\n )})",
+                                           target)));
+        styler.shortenClassReferences(annotation);
       }
-    };
+      catch (IncorrectOperationException e1) {
+        LOG.error(e1);
+      }
+    });
 
     CommandProcessor.getInstance().executeCommand(target.getProject(), runnable,
                                                   DevKitBundle.message("command.implement.externalizable"), null);

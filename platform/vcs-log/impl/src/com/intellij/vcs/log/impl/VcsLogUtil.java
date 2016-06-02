@@ -15,7 +15,9 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,35 +38,18 @@ public class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    return groupByRoot(refs, new Function<VcsRef, VirtualFile>() {
-      @NotNull
-      @Override
-      public VirtualFile fun(@NotNull VcsRef ref) {
-        return ref.getRoot();
-      }
-    });
+    return groupByRoot(refs, ref -> ref.getRoot());
   }
 
   @NotNull
   public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, new Function<T, VirtualFile>() {
-      @NotNull
-      @Override
-      public VirtualFile fun(@NotNull T commit) {
-        return commit.getRoot();
-      }
-    });
+    return groupByRoot(commits, commit -> commit.getRoot());
   }
 
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
     Map<VirtualFile, Set<T>> map =
-      new TreeMap<VirtualFile, Set<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
-        @Override
-        public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-          return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-        }
-      });
+      new TreeMap<VirtualFile, Set<T>>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
@@ -100,12 +85,7 @@ public class VcsLogUtil {
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
 
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile root1, VirtualFile root2) {
-        return root1.getPath().compareTo(root2.getPath());
-      }
-    });
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, (root1, root2) -> root1.getPath().compareTo(root2.getPath()));
 
     for (FilePath filePath : files) {
       VirtualFile virtualFile = filePath.getVirtualFile();
@@ -176,12 +156,9 @@ public class VcsLogUtil {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
     Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
-      @Override
-      public boolean value(FilePath filePath) {
-        VirtualFile virtualFile = filePath.getVirtualFile();
-        return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
-      }
+    return new HashSet<FilePath>(ContainerUtil.filter(files, filePath -> {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
     }));
   }
 
@@ -210,12 +187,7 @@ public class VcsLogUtil {
 
   @NotNull
   public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
-    return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return visibleRoots.contains(ref.getRoot());
-      }
-    });
+    return ContainerUtil.filter(log.getAllReferences(), ref -> visibleRoots.contains(ref.getRoot()));
   }
 
   @NotNull
@@ -244,5 +216,16 @@ public class VcsLogUtil {
     }
 
     return branchName;
+  }
+
+  public static void triggerUsage(@NotNull AnActionEvent e) {
+    String text = e.getPresentation().getText();
+    if (text != null) {
+      triggerUsage(text);
+    }
+  }
+
+  public static void triggerUsage(@NotNull String text) {
+    UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 }

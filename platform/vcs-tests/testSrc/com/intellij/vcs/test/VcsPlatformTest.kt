@@ -39,6 +39,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   private lateinit var myTestStartedIndicator: String
 
+  protected lateinit var changeListManager: ChangeListManager
+
   @Throws(Exception::class)
   override fun setUp() {
     myTestRoot = File(FileUtil.getTempDirectory(), "testRoot")
@@ -53,6 +55,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
     myProjectRoot = myProject.baseDir
     myProjectPath = myProjectRoot.path
+
+    changeListManager = ChangeListManager.getInstance(myProject)
   }
 
   @Throws(Exception::class)

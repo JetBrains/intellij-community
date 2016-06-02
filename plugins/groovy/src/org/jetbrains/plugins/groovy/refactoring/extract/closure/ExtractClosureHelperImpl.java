@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import gnu.trove.TIntArrayList;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -41,6 +43,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myFinal;
   private final TIntArrayList myToRemove;
   private final boolean myGenerateDelegate;
+  @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   private final int myReplaceFieldsWithGetters;
   private final boolean myForceReturn;
   private final boolean myReplaceAllOccurrences;
@@ -53,6 +56,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
                                   boolean declareFinal,
                                   TIntArrayList toRemove,
                                   boolean generateDelegate,
+                                  @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
                                   int replaceFieldsWithGetters,
                                   boolean forceReturn,
                                   boolean replaceAllOccurrences,

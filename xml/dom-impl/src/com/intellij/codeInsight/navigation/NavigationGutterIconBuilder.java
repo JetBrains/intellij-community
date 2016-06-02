@@ -57,13 +57,8 @@ import java.util.*;
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR = new NotNullFunction<PsiElement, Collection<? extends PsiElement>>() {
-    @Override
-    @NotNull
-    public Collection<? extends PsiElement> fun(final PsiElement element) {
-      return ContainerUtil.createMaybeSingletonList(element);
-    }
-  };
+  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
+    element -> ContainerUtil.createMaybeSingletonList(element);
 
   private final Icon myIcon;
   private final NotNullFunction<T,Collection<? extends PsiElement>> myConverter;
@@ -78,30 +73,16 @@ public class NavigationGutterIconBuilder<T> {
   private Computable<PsiElementListCellRenderer> myCellRenderer;
   private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
   private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
-  public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR = new NotNullFunction<DomElement, Collection<? extends PsiElement>>() {
-    @Override
-    @NotNull
-    public Collection<? extends PsiElement> fun(final DomElement o) {
-      return ContainerUtil.createMaybeSingletonList(o.getXmlElement());
+  public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
+    o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
+  public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
+    if (dom.getXmlElement() != null) {
+      return Collections.singletonList(new DomGotoRelatedItem(dom));
     }
+    return Collections.emptyList();
   };
-  public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = new NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>>() {
-    @NotNull
-    @Override
-    public Collection<? extends GotoRelatedItem> fun(DomElement dom) {
-      if (dom.getXmlElement() != null) {
-        return Collections.singletonList(new DomGotoRelatedItem(dom));
-      }
-      return Collections.emptyList();
-    }
-  };
-  public static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER = new NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>>() {
-    @NotNull
-    @Override
-    public Collection<? extends GotoRelatedItem> fun(PsiElement dom) {
-      return Collections.singletonList(new GotoRelatedItem(dom, "XML"));
-    }
-  };
+  public static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
+    dom -> Collections.singletonList(new GotoRelatedItem(dom, "XML"));
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
     this(icon, converter, null);
@@ -284,12 +265,7 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     Computable<PsiElementListCellRenderer> renderer =
-      myCellRenderer == null ? new Computable<PsiElementListCellRenderer>() {
-        @Override
-        public PsiElementListCellRenderer compute() {
-          return new DefaultPsiElementCellRenderer();
-        }
-      } : myCellRenderer;
+      myCellRenderer == null ? (Computable<PsiElementListCellRenderer>)() -> new DefaultPsiElementCellRenderer() : myCellRenderer;
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 

@@ -58,28 +58,26 @@ public class TaskChangelistSupport implements EditChangelistSupport {
                          myTaskManager.getState().trackContextForNewChangelist :
                          myTaskManager.getAssociatedTask(initial) != null);
     bottomPanel.add(checkBox);
-    return new Consumer<LocalChangeList>() {
-      public void consume(LocalChangeList changeList) {
-        if (initial == null) {
-          myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
-          if (checkBox.isSelected()) {
+    return changeList -> {
+      if (initial == null) {
+        myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
+        if (checkBox.isSelected()) {
+          myTaskManager.trackContext(changeList);
+        }
+        else {
+          myTaskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
+        }
+      }
+      else {
+        final LocalTask associatedTask = myTaskManager.getAssociatedTask(changeList);
+        if (checkBox.isSelected()) {
+          if (associatedTask == null) {
             myTaskManager.trackContext(changeList);
-          }
-          else {
-            myTaskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
           }
         }
         else {
-          final LocalTask associatedTask = myTaskManager.getAssociatedTask(changeList);
-          if (checkBox.isSelected()) {
-            if (associatedTask == null) {
-              myTaskManager.trackContext(changeList);
-            }
-          }
-          else {
-            if (associatedTask != null) {
-              myTaskManager.removeTask(associatedTask);
-            }
+          if (associatedTask != null) {
+            myTaskManager.removeTask(associatedTask);
           }
         }
       }

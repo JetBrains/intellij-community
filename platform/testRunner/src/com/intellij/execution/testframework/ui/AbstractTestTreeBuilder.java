@@ -79,19 +79,16 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
       setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(properties));
     }
     else {
-      setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-              @Override
-              public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-                if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
-                    o1 instanceof BaseTestProxyNodeDescriptor &&
-                    o2 instanceof BaseTestProxyNodeDescriptor) {
-                  final Long d1 = ((BaseTestProxyNodeDescriptor)o1).getElement().getDuration();
-                  final Long d2 = ((BaseTestProxyNodeDescriptor)o2).getElement().getDuration();
-                  return Comparing.compare(d2, d1);
-                }
-                return 0;
-              }
-            });
+      setNodeDescriptorComparator((o1, o2) -> {
+        if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
+            o1 instanceof BaseTestProxyNodeDescriptor &&
+            o2 instanceof BaseTestProxyNodeDescriptor) {
+          final Long d1 = ((BaseTestProxyNodeDescriptor)o1).getElement().getDuration();
+          final Long d2 = ((BaseTestProxyNodeDescriptor)o2).getElement().getDuration();
+          return Comparing.compare(d2, d1);
+        }
+        return 0;
+      });
     }
     queueUpdate();
   }

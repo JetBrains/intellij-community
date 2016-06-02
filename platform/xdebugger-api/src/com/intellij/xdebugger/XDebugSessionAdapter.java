@@ -15,9 +15,9 @@
  */
 package com.intellij.xdebugger;
 
-@Deprecated
 /**
  * Is not required since Java 1.8
  */
+@Deprecated
 public abstract class XDebugSessionAdapter implements XDebugSessionListener {
 }

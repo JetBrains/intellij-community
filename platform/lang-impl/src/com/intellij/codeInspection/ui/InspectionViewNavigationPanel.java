@@ -41,7 +41,7 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     myTree = tree;
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(18, 12, 0, 0));
-    final String titleLabelText = getTitleText(myNode instanceof InspectionRootNode, true);
+    final String titleLabelText = getTitleText(true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
     myLinks = new JPanel();
     myLinks.setLayout(new BoxLayout(myLinks, BoxLayout.Y_AXIS));
@@ -61,8 +61,8 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
   }
 
   @NotNull
-  public static String getTitleText(boolean addGroupWord, boolean addColon) {
-    return "Select inspection" + (addGroupWord ? " group " : " ") + "to see problems" + (addColon ? ":" : ".");
+  public static String getTitleText(boolean addColon) {
+    return "Select inspection to see problems" + (addColon ? ":" : ".");
   }
 
   private void resetChildrenNavigation() {

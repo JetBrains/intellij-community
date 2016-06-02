@@ -63,11 +63,6 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     return file;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   protected interface TestParser {
     void parse(PsiBuilder builder);
   }

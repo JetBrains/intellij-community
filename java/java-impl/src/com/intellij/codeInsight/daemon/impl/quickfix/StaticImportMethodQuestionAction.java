@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -22,7 +23,7 @@ import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -91,27 +92,18 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
 
   private void doImport(final T toImport) {
     final Project project = toImport.getProject();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              PsiElement element = myRef.getElement();
-              if (element != null) {
-                AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-
+    final PsiElement element = myRef.getElement();
+    if (element == null) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
+    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () -> {
+      try {
+        AddSingleMemberStaticImportAction
+          .bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
       }
-    }, QuickFixBundle.message("add.import"), this);
-
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private void chooseAndImport(final Editor editor, final Project project) {
@@ -139,10 +131,11 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
           }
 
           if (finalChoice) {
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-            LOG.assertTrue(selectedValue.isValid());
-            doImport(selectedValue);
-            return FINAL_CHOICE;
+            return doFinalStep(() -> {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              LOG.assertTrue(selectedValue.isValid());
+              doImport(selectedValue);
+            });
           }
 
           return AddImportAction.getExcludesStep(PsiUtil.getMemberQualifiedName(selectedValue), project);
@@ -156,7 +149,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         @NotNull
         @Override
         public String getTextFor(T value) {
-          return ObjectUtils.assertNotNull(value.getName());
+          return getElementPresentableName(value);
         }
 
         @Override
@@ -171,9 +164,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       protected ListCellRenderer getListElementRenderer() {
         return new PsiElementListCellRenderer<T>() {
           public String getElementText(T element) {
-            final PsiClass aClass = element.getContainingClass();
-            LOG.assertTrue(aClass != null);
-            return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
+            return getElementPresentableName(element);
           }
 
           public String getContainerText(final T element, final String name) {
@@ -222,6 +213,12 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       }
     };
     popup.showInBestPositionFor(editor);
+  }
+
+  private String getElementPresentableName(T element) {
+    final PsiClass aClass = element.getContainingClass();
+    LOG.assertTrue(aClass != null);
+    return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
   }
 }
 

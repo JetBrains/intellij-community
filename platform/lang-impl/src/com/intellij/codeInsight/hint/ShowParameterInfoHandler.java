@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
-  private boolean myRequestFocus;
+  private final boolean myRequestFocus;
 
   public ShowParameterInfoHandler() {
     this(false);
@@ -87,7 +87,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       project,
       file,
       offset,
-      lbraceOffset
+      lbraceOffset,
+      requestFocus
     );
 
     context.setHighlightedElement(highlightedElement);
@@ -107,7 +108,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
             if (items != null && items.length > 0) {
-              showLookupEditorHint(items, editor, project, handler);
+              showLookupEditorHint(items, editor, project, handler, requestFocus);
             }
             return;
           }
@@ -130,22 +131,23 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void showLookupEditorHint(Object[] descriptors, final Editor editor, final Project project, ParameterInfoHandler handler) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler);
+  private static void showLookupEditorHint(Object[] descriptors,
+                                           final Editor editor,
+                                           final Project project,
+                                           ParameterInfoHandler handler,
+                                           boolean requestFocus) {
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
     component.update();
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                   0, false, pos.getSecond());
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!editor.getComponent().isShowing()) return;
+      hintManager.showEditorHint(hint, editor, pos.getFirst(),
+                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
+                                 0, false, pos.getSecond());
     });
   }
 

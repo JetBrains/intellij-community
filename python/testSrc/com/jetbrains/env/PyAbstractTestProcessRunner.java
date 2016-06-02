@@ -65,12 +65,9 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   @Override
   protected void prepareConsoleAfterProcessEnd() {
     super.prepareConsoleAfterProcessEnd();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        // Print output of tests to console (because console may be scrolled)
-        myProxyManager.getProxy().getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      // Print output of tests to console (because console may be scrolled)
+      myProxyManager.getProxy().getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
     }, ModalityState.NON_MODAL);
   }
 

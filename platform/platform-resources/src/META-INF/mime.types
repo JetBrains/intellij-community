@@ -101,7 +101,7 @@
   application/xslt+xml                  xsl
   application/zip                       zip
   text/css                              css
-  text/html                             html htm shtml
+  text/html                             html htm shtml stm shtm
   text/mathml                           mml;
   text/plain                            txt
   text/vcard                            vcard vcf

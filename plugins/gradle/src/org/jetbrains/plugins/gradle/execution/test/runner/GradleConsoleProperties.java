@@ -44,7 +44,7 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   }
 
   @Override
-  protected int getSelectionMode() {
+  public int getSelectionMode() {
     return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 }

@@ -63,65 +63,41 @@ public class DependenciesUsagesPanel extends UsagesPanel {
     cancelCurrentFindRequest();
 
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            final ProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
-              @Override
-              public void consume(final JComponent component) {
-                setToComponent(component);
-              }
-            });
-            myCurrentProgress = progress;
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    UsageInfo[] usages = new UsageInfo[0];
-                    Set<PsiFile> elementsToSearch = null;
+    myAlarm.addRequest(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final ProgressIndicator progress = new PanelProgressIndicator(component -> setToComponent(component));
+      myCurrentProgress = progress;
+      ProgressManager.getInstance().runProcess(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          UsageInfo[] usages = new UsageInfo[0];
+          Set<PsiFile> elementsToSearch = null;
 
-                    try {
-                      if (myBuilders.get(0).isBackward()){
-                        elementsToSearch = searchIn;
-                        usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
-                      }
-                      else {
-                        elementsToSearch = searchFor;
-                        usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
-                      }
-                      assert !new HashSet<PsiFile>(elementsToSearch).contains(null);
-                    }
-                    catch (ProcessCanceledException e) {
-                    }
-                    catch (Exception e) {
-                      LOG.error(e);
-                    }
+          try {
+            if (myBuilders.get(0).isBackward()){
+              elementsToSearch = searchIn;
+              usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
+            }
+            else {
+              elementsToSearch = searchFor;
+              usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
+            }
+            assert !new HashSet<PsiFile>(elementsToSearch).contains(null);
+          }
+          catch (ProcessCanceledException e) {
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
 
-                    if (!progress.isCanceled()) {
-                      final UsageInfo[] finalUsages = usages;
-                      final PsiElement[] _elementsToSearch =
-                        elementsToSearch != null ? PsiUtilCore.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
-                      ApplicationManager.getApplication().invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                          showUsages(_elementsToSearch, finalUsages);
-                        }
-                      }, ModalityState.stateForComponent(DependenciesUsagesPanel.this));
-                    }
-                  }
-                });
-                myCurrentProgress = null;
-              }
-            }, progress);
+          if (!progress.isCanceled()) {
+            final UsageInfo[] finalUsages = usages;
+            final PsiElement[] _elementsToSearch =
+              elementsToSearch != null ? PsiUtilCore.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
+            ApplicationManager.getApplication().invokeLater(() -> showUsages(_elementsToSearch, finalUsages), ModalityState.stateForComponent(DependenciesUsagesPanel.this));
           }
         });
-      }
-    }, 300);
+        myCurrentProgress = null;
+      }, progress);
+    }), 300);
   }
 
   public void addBuilder(DependenciesBuilder builder) {

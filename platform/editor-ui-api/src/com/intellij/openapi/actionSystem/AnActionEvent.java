@@ -162,7 +162,7 @@ public class AnActionEvent implements PlaceProvider<String> {
 
   @Nullable
   public <T> T getData(@NotNull DataKey<T> key) {
-    return key.getData(getDataContext());
+    return getDataContext().getData(key);
   }
 
   /**

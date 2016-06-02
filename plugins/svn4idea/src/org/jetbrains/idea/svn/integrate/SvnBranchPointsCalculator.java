@@ -160,7 +160,7 @@ public class SvnBranchPointsCalculator {
     PersistentHolder(final File file) {
       myLock = new Object();
       myPersistentMap = new SmallMapSerializer<String, TreeMap<String, BranchCopyData>>(
-        file, new EnumeratorStringDescriptor(), new BranchDataExternalizer());
+        file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
       // list for values by default
       myForSearchMap = new MultiMap<String, String>();
       for (String s : myPersistentMap.keySet()) {

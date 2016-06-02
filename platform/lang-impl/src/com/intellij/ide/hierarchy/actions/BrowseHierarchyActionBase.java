@@ -90,12 +90,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     contentManager.setSelectedContent(content);
     hierarchyBrowser.setContent(content);
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        provider.browserActivated(hierarchyBrowser);
-      }
-    };
+    final Runnable runnable = () -> provider.browserActivated(hierarchyBrowser);
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);
     return hierarchyBrowser;
   }

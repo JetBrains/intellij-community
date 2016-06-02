@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.data;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -41,21 +40,22 @@ public class RefsModel implements VcsLogRefs {
     myRefsToHashes = prepareRefsMap(allRefs);
 
     myBranchesToIndices = prepareRefsToIndicesMap(myBranches, hashMap);
-    myRefsToHeadIndices = prepareRefsToIndicesMap(Iterables.filter(Iterables.concat(refsByRoot.values()), new Predicate<VcsRef>() {
-      @Override
-      public boolean apply(VcsRef vcsRef) {
-        return heads.contains(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
-      }
-    }), hashMap);
+    myRefsToHeadIndices = prepareRefsToIndicesMap(Iterables.filter(Iterables.concat(refsByRoot.values()),
+                                                                   vcsRef -> heads.contains(
+                                                                     hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()))),
+                                                  hashMap);
 
     myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
   }
 
+  @NotNull
   private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
     TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
     for (Integer head : heads) {
       CommitId commitId = hashMap.getCommitId(head);
-      map.put(head, commitId.getRoot());
+      if (commitId != null) {
+        map.put(head, commitId.getRoot());
+      }
     }
     return map;
   }

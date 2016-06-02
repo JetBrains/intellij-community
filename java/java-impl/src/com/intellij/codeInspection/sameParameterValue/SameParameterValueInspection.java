@@ -101,28 +101,30 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
       inlineSameParameterValue(method, parameterToInline, defToInline);
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
-            int idx = 0;
-            for (PsiReference reference : refsToInline) {
-              if (reference instanceof PsiJavaCodeReferenceElement) {
-                exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, (PsiJavaCodeReferenceElement)reference);
-              }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
+          int idx = 0;
+          for (PsiReference reference : refsToInline) {
+            if (reference instanceof PsiJavaCodeReferenceElement) {
+              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, (PsiJavaCodeReferenceElement)reference);
             }
+          }
 
-            for (final PsiExpression expr : exprs) {
-              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
-            }
+          for (final PsiExpression expr : exprs) {
+            if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       });
 

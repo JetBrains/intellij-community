@@ -195,31 +195,16 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, Position.RIGHT, "__AUTODETECT__");
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, "__AUTODETECT__"));
   }
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final String anchor) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, Position.RIGHT, anchor);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, anchor));
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, pos, "__IGNORED__");
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, pos, "__IGNORED__"));
   }
 
   @Override
@@ -440,12 +425,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       updateChildren(new ChildAction() {
         @Override
         public void update(final IdeStatusBarImpl child) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              StatusBarWidget widgetCopy = mfw.copy();
-              child.addWidget(widgetCopy, pos, anchor);
-            }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            StatusBarWidget widgetCopy = mfw.copy();
+            child.addWidget(widgetCopy, pos, anchor);
           });
         }
       });
@@ -482,14 +464,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void setInfo(@Nullable final String s, @Nullable final String requestor) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myInfoAndProgressPanel != null) {
-          Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
-          myInfo = pair.first;
-          myRequestor = pair.second;
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myInfoAndProgressPanel != null) {
+        Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
+        myInfo = pair.first;
+        myRequestor = pair.second;
       }
     });
   }
@@ -693,25 +672,22 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void updateWidget(@NotNull final String id) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final WidgetBean bean = myWidgetMap.get(id);
-        if (bean != null) {
-          if (bean.component instanceof StatusBarWrapper) {
-            ((StatusBarWrapper)bean.component).beforeUpdate();
-          }
-
-          bean.component.repaint();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final WidgetBean bean = myWidgetMap.get(id);
+      if (bean != null) {
+        if (bean.component instanceof StatusBarWrapper) {
+          ((StatusBarWrapper)bean.component).beforeUpdate();
         }
 
-        updateChildren(new ChildAction() {
-          @Override
-          public void update(IdeStatusBarImpl child) {
-            child.updateWidget(id);
-          }
-        });
+        bean.component.repaint();
       }
+
+      updateChildren(new ChildAction() {
+        @Override
+        public void update(IdeStatusBarImpl child) {
+          child.updateWidget(id);
+        }
+      });
     });
   }
 

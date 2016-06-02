@@ -430,24 +430,16 @@ public class DarculaLaf extends BasicLookAndFeel {
       Disposer.register(application, myDisposable);
     }
     myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
-          myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-          myMnemonicAlarm.cancelAllRequests();
-          final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
-          if (focusOwner != null) {
-            myMnemonicAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                repaintMnemonics(focusOwner, myAltPressed);
-              }
-            }, 10);
-          }
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        myMnemonicAlarm.cancelAllRequests();
+        final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+        if (focusOwner != null) {
+          myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
         }
-        return false;
       }
+      return false;
     }, myDisposable);
   }
 

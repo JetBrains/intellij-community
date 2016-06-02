@@ -187,6 +187,7 @@ public class CheckBoxList<T> extends JBList {
 
   public void addItem(T item, String text, boolean selected) {
     JCheckBox checkBox = new JCheckBox(text, selected);
+    checkBox.setOpaque(true); // to paint selection background
     myItemMap.put(item, checkBox);
     //noinspection unchecked
     ((DefaultListModel)getModel()).addElement(checkBox);

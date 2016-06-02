@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -50,7 +49,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
@@ -220,10 +218,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
     if (annotationResult == null) return;
-    if (!file.isValid()) {
-      LOG.info("Trying to apply diagnostics to invalid PsiFile, skipped");
-      return;
-    }
+    PyPsiUtils.assertValid(file);
     final String text = file.getText();
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -296,12 +291,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
         annotation.registerFix(new IgnoreErrorFix(problem.myCode));
         annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                                           new Computable<String>() {
-                                                                             @Override
-                                                                             public String compute() {
-                                                                               return "Edit inspection profile setting";
-                                                                             }
-                                                                           }));
+                                                                           () -> "Edit inspection profile setting"));
       }
     }
   }
@@ -315,7 +305,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     return StringUtil.offsetToLineNumber(text, start) != StringUtil.offsetToLineNumber(text, end);
   }
 
-  private static boolean ignoreDueToSettings(Project project, Problem problem, PsiElement element) {
+  private static boolean ignoreDueToSettings(Project project, Problem problem, @Nullable PsiElement element) {
     final EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (!editorSettings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
       // ignore trailing spaces errors if they're going to disappear after save
@@ -323,46 +313,51 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         return true;
       }
     }
-    
+
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(PythonLanguage.getInstance());
     final PyCodeStyleSettings pySettings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
-    // E303 too many blank lines (num)
-    if (problem.myCode.equals("E303") && element instanceof PsiWhiteSpace) {
-      final Matcher matcher = E303_LINE_COUNT_PATTERN.matcher(problem.myDescription);
-      if (matcher.matches()) {
-        final int reportedBlanks = Integer.parseInt(matcher.group(1));
-        final PsiElement nonWhitespaceAfter = PyPsiUtils.getNextNonWhitespaceSibling(element);
-        final PsiElement nonWhitespaceBefore = PyPsiUtils.getPrevNonWhitespaceSibling(element);
-        final boolean classNearby = nonWhitespaceBefore instanceof PyClass || nonWhitespaceAfter instanceof PyClass;
-        final boolean functionNearby = nonWhitespaceBefore instanceof PyFunction || nonWhitespaceAfter instanceof PyFunction;
-        if (functionNearby || classNearby) {
-          if (PyUtil.isTopLevel(element)) {
-            if (reportedBlanks <= pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS) {
-              return true;
+    
+    if (element instanceof PsiWhiteSpace) {
+      // E303 too many blank lines (num)
+      if (problem.myCode.equals("E303")) {
+        final Matcher matcher = E303_LINE_COUNT_PATTERN.matcher(problem.myDescription);
+        if (matcher.matches()) {
+          final int reportedBlanks = Integer.parseInt(matcher.group(1));
+          final PsiElement nonWhitespaceAfter = PyPsiUtils.getNextNonWhitespaceSibling(element);
+          final PsiElement nonWhitespaceBefore = PyPsiUtils.getPrevNonWhitespaceSibling(element);
+          final boolean classNearby = nonWhitespaceBefore instanceof PyClass || nonWhitespaceAfter instanceof PyClass;
+          final boolean functionNearby = nonWhitespaceBefore instanceof PyFunction || nonWhitespaceAfter instanceof PyFunction;
+          if (functionNearby || classNearby) {
+            if (PyUtil.isTopLevel(element)) {
+              if (reportedBlanks <= pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS) {
+                return true;
+              }
             }
-          }
-          else {
-            // Blanks around classes have priority over blanks around functions as defined in Python spacing builder
-            if (classNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_CLASS ||
-                functionNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_METHOD) {
-              return true;
+            else {
+              // Blanks around classes have priority over blanks around functions as defined in Python spacing builder
+              if (classNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_CLASS ||
+                  functionNearby && reportedBlanks <= commonSettings.BLANK_LINES_AROUND_METHOD) {
+                return true;
+              }
             }
           }
         }
       }
+      
+      if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
+        return true;
+      }
+        
+      // E251 unexpected spaces around keyword / parameter equals
+      // Note that E222 (multiple spaces after operator) is not suppressed, though. 
+      if (problem.myCode.equals("E251") &&
+          (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
+           element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
+        return true;
+      }
     }
-    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
-      return true;
-    }
-    // E251 unexpected spaces around keyword / parameter equals
-    // Note that E222 (multiple spaces after operator) is not suppressed, though. 
-    if (problem.myCode.equals("E251") &&
-        (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
-         element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
-      return true;
-    }
-      return false;
+    return false;
   }
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");
@@ -407,13 +402,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-          if (!tool.ignoredErrors.contains(myCode)) {
-            tool.ignoredErrors.add(myCode);
-          }
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(model -> {
+        PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+        if (!tool.ignoredErrors.contains(myCode)) {
+          tool.ignoredErrors.add(myCode);
         }
       });
     }

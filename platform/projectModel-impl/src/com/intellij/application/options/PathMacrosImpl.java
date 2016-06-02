@@ -20,8 +20,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
@@ -40,8 +43,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
 
-  private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
-  private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
+  private final Map<String, String> myLegacyMacros = new THashMap<>();
+  private final Map<String, String> myMacros = new LinkedHashMap<>();
   private int myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -63,7 +66,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   @NonNls
   public static final String USER_HOME_MACRO_NAME = PathMacroUtil.USER_HOME_NAME;
 
-  private static final Set<String> SYSTEM_MACROS = new HashSet<String>();
+  private static final Set<String> SYSTEM_MACROS = new THashSet<>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
 
   static {
@@ -130,7 +133,8 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     "SelectionEndLine",
     "SelectionStartColumn",
     "SelectionEndColumn",
-    "PyInterpreterDirectory"
+    "PyInterpreterDirectory",
+    "ExecutableByFileExt"
   );
 
   public PathMacrosImpl() {
@@ -145,7 +149,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public Set<String> getUserMacroNames() {
     myLock.readLock().lock();
     try {
-      return new THashSet<String>(myMacros.keySet()); // keyset should not escape the lock
+      return new THashSet<>(myMacros.keySet()); // keyset should not escape the lock
     }
     finally {
       myLock.readLock().unlock();
@@ -196,7 +200,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public Set<String> getAllMacroNames() {
     final Set<String> userMacroNames = getUserMacroNames();
     final Set<String> systemMacroNames = getSystemMacroNames();
-    final Set<String> allNames = new HashSet<String>(userMacroNames.size() + systemMacroNames.size());
+    final Set<String> allNames = new THashSet<>(userMacroNames.size() + systemMacroNames.size());
     allNames.addAll(systemMacroNames);
     allNames.addAll(userMacroNames);
     return allNames;
@@ -229,7 +233,8 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public Collection<String> getLegacyMacroNames() {
     try {
       myLock.readLock().lock();
-      return new THashSet<String>(myLegacyMacros.keySet()); // keyset should not escape the lock
+      // keyset should not escape the lock
+      return new THashSet<>(myLegacyMacros.keySet());
     }
     finally {
       myLock.readLock().unlock();
@@ -238,7 +243,10 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
   @Override
   public void setMacro(@NotNull String name, @NotNull String value) {
-    if (value.trim().isEmpty()) return;
+    if (StringUtil.isEmptyOrSpaces(value)) {
+      return;
+    }
+
     try {
       myLock.writeLock().lock();
       myMacros.put(name, value);
@@ -309,9 +317,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     try {
       myLock.writeLock().lock();
 
-      final List children = element.getChildren(MACRO_ELEMENT);
-      for (Object aChildren : children) {
-        Element macro = (Element)aChildren;
+      for (Element macro : element.getChildren(MACRO_ELEMENT)) {
         final String name = macro.getAttributeValue(NAME_ATTR);
         String value = macro.getAttributeValue(VALUE_ATTR);
         if (name == null || value == null) {
@@ -329,11 +335,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
         myMacros.put(name, value);
       }
 
-      final List ignoredChildren = element.getChildren(IGNORED_MACRO_ELEMENT);
-      for (final Object child : ignoredChildren) {
-        final Element macroElement = (Element)child;
-        final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
-        if (ignoredName != null && !ignoredName.isEmpty() && !myIgnoredMacros.contains(ignoredName)) {
+      for (Element macroElement : element.getChildren(IGNORED_MACRO_ELEMENT)) {
+        String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
+        if (!StringUtil.isEmpty(ignoredName) && !myIgnoredMacros.contains(ignoredName)) {
           myIgnoredMacros.add(ignoredName);
         }
       }
@@ -345,16 +349,20 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
-    for (final String name : getUserMacroNames()) {
-      final String value = getValue(name);
-      if (value != null && !value.trim().isEmpty()) result.addMacroReplacement(value, name);
+    for (String name : getUserMacroNames()) {
+      String value = getValue(name);
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        result.addMacroReplacement(value, name);
+      }
     }
   }
 
   public void addMacroExpands(ExpandMacroToPathMap result) {
-    for (final String name : getUserMacroNames()) {
-      final String value = getValue(name);
-      if (value != null && !value.trim().isEmpty()) result.addMacroExpand(name, value);
+    for (String name : getUserMacroNames()) {
+      String value = getValue(name);
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        result.addMacroExpand(name, value);
+      }
     }
 
     myLock.readLock().lock();

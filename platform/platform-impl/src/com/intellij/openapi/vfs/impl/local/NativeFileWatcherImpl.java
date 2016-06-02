@@ -44,6 +44,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -65,8 +66,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private File myExecutable;
 
   private volatile MyProcessHandler myProcessHandler;
-  private volatile int myStartAttemptCount = 0;
-  private volatile boolean myIsShuttingDown = false;
+  private volatile int myStartAttemptCount;
+  private volatile boolean myIsShuttingDown;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
@@ -287,7 +288,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
-    private WatcherOp myLastOp = null;
+    private WatcherOp myLastOp;
     private final List<String> myLines = ContainerUtil.newArrayList();
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -347,7 +348,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          LOG.error("Illegal watcher command: " + line);
+          String message = "Illegal watcher command: '" + line + "'";
+          if (line.length() <= 20) message += " " + Arrays.toString(line.chars().toArray());
+          LOG.error(message);
           return;
         }
 

@@ -40,7 +40,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,7 +47,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -59,14 +57,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
@@ -246,15 +239,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
-      new Condition<HighlightInfo>() {
-        @Override
-        public boolean value(HighlightInfo info) {
-          return info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
-                 info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
-                 info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
-                  info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0;
-        }
-      });
+      info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
+             info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
+             info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
+              info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0);
   }
 
   @NotNull
@@ -262,23 +250,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    //to load text
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        TreeUtil.clearCaches((TreeElement)myFile.getNode());
-      }
-    });
-
-
-    //to initialize caches
-    if (!DumbService.isDumb(getProject())) {
-      CacheManager.SERVICE.getInstance(myProject).getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
-    }
-    final JavaPsiFacadeEx facade = getJavaFacade();
-    if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable); // check repository work
-    }
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable);
 
     try {
       Collection<HighlightInfo> infos = doHighlighting();
@@ -289,9 +261,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       return infos;
     }
     finally {
-      if (facade != null) {
-        facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
-      }
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
     }
   }
 

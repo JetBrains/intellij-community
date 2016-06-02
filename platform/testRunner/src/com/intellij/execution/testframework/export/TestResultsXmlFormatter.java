@@ -95,13 +95,10 @@ public class TestResultsXmlFormatter {
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
-        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
-        return o1.compareTo(o2);
-      }
+    TreeMap<String, Integer> counts = new TreeMap<String, Integer>((o1, o2) -> {
+      if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+      if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+      return o1.compareTo(o2);
     });
     for (AbstractTestProxy node : myTestRoot.getAllTests()) {
       if (!node.isLeaf()) continue;

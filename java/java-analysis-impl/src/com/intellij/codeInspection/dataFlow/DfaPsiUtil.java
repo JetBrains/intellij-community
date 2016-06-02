@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -66,32 +67,10 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (owner == null || resultType instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
-    }
-
-    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
-      return Nullness.NOT_NULL;
-    }
-    if (owner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)owner;
-      if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isEnum()) {
-          return Nullness.NOT_NULL;
-        }
-      }
-    }
-
     if (resultType != null) {
-      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
-        if (!annotation.isValid()) {
-          PsiUtilCore.ensureValid(owner);
-          PsiUtil.ensureValidType(resultType, owner + " of " + owner.getClass());
-          PsiUtilCore.ensureValid(annotation); //should fail
-        }
         String qualifiedName = annotation.getQualifiedName();
+        NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
         if (nnn.getNullables().contains(qualifiedName)) {
           return Nullness.NULLABLE;
         }
@@ -101,6 +80,17 @@ public class DfaPsiUtil {
       }
     }
 
+    if (owner == null || resultType instanceof PsiPrimitiveType) {
+      return Nullness.UNKNOWN;
+    }
+
+    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
+      return Nullness.NOT_NULL;
+    }
+    if (owner instanceof PsiMethod && isEnumValueOf((PsiMethod)owner)) {
+      return Nullness.NOT_NULL;
+    }
+
     if (NullableNotNullManager.isNullable(owner)) {
       return Nullness.NULLABLE;
     }
@@ -108,7 +98,29 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
+    if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();
+      int index = lambda.getParameterList().getParameterIndex((PsiParameter)owner);
+      PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType());
+      if (sam != null && index < sam.getParameterList().getParametersCount()) {
+        return getElementNullability(null, sam.getParameterList().getParameters()[index]);
+      }
+    }
+
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isEnumValueOf(PsiMethod method) {
+    if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isEnum()) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isInitializedNotNull(PsiField field) {
@@ -146,7 +158,7 @@ public class DfaPsiUtil {
               return false;
             }
 
-            PsiCallExpression call = ((MethodCallInstruction)instruction).getCallExpression();
+            PsiCall call = ((MethodCallInstruction)instruction).getCallExpression();
             if (call == null) return false;
 
             if (call instanceof PsiMethodCallExpression &&
@@ -277,36 +289,33 @@ public class DfaPsiUtil {
     final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
     List<PsiExpression> list = ContainerUtil.mapNotNull(
       ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
-      new NullableFunction<PsiReference, PsiExpression>() {
-        @Override
-        public PsiExpression fun(final PsiReference psiReference) {
-          if (modificationRef.get()) return null;
-          final PsiElement parent = psiReference.getElement().getParent();
-          if (parent instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-            final IElementType operation = assignmentExpression.getOperationTokenType();
-            if (assignmentExpression.getLExpression() == psiReference) {
-              if (JavaTokenType.EQ.equals(operation)) {
-                final PsiExpression rValue = assignmentExpression.getRExpression();
-                if (!literalsOnly || allOperandsAreLiterals(rValue)) {
-                  // if there's a codeBlock omit the values assigned later
-                  if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
-                      && placeOffset < parent.getTextRange().getStartOffset()) {
-                    return null;
-                  }
-                  return rValue;
+      (NullableFunction<PsiReference, PsiExpression>)psiReference -> {
+        if (modificationRef.get()) return null;
+        final PsiElement parent = psiReference.getElement().getParent();
+        if (parent instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+          final IElementType operation = assignmentExpression.getOperationTokenType();
+          if (assignmentExpression.getLExpression() == psiReference) {
+            if (JavaTokenType.EQ.equals(operation)) {
+              final PsiExpression rValue = assignmentExpression.getRExpression();
+              if (!literalsOnly || allOperandsAreLiterals(rValue)) {
+                // if there's a codeBlock omit the values assigned later
+                if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
+                    && placeOffset < parent.getTextRange().getStartOffset()) {
+                  return null;
                 }
-                else {
-                  modificationRef.set(Boolean.TRUE);
-                }
+                return rValue;
               }
-              else if (JavaTokenType.PLUSEQ.equals(operation)) {
+              else {
                 modificationRef.set(Boolean.TRUE);
               }
             }
+            else if (JavaTokenType.PLUSEQ.equals(operation)) {
+              modificationRef.set(Boolean.TRUE);
+            }
           }
-          return null;
         }
+        return null;
       });
     if (modificationRef.get()) return Collections.emptyList();
     PsiExpression initializer = psiVariable.getInitializer();

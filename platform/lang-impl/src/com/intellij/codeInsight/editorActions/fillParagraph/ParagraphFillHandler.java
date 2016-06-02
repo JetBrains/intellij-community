@@ -49,17 +49,14 @@ public class ParagraphFillHandler {
 
     final String replacementText = stringBuilder.toString();
 
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
-                               replacementText);
-        final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
-                                        CodeStyleSettingsManager.getSettings(element.getProject()), element.getLanguage());
-        codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
-                                                 textRange.getStartOffset(),
-                                                 textRange.getStartOffset() + replacementText.length() + 1);
-      }
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
+      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
+                             replacementText);
+      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
+                                      CodeStyleSettingsManager.getSettings(element.getProject()), element.getLanguage());
+      codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
+                                               textRange.getStartOffset(),
+                                               textRange.getStartOffset() + replacementText.length() + 1);
     }, null, document);
 
   }

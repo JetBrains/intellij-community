@@ -139,12 +139,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   @Override
   @NotNull
   public Condition getDisposed() {
-    return new Condition() {
-      @Override
-      public boolean value(final Object o) {
-        return isDisposed();
-      }
-    };
+    return o -> isDisposed();
   }
 
   @NotNull

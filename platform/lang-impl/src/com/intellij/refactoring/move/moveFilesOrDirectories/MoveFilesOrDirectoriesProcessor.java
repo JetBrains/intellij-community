@@ -204,12 +204,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       final String message = e.getMessage();
       final int index = message != null ? message.indexOf("java.io.IOException") : -1;
       if (index >= 0 && message != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            String cause = message.substring(index + "java.io.IOException".length());
-            Messages.showMessageDialog(myProject, cause, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String cause = message.substring(index + "java.io.IOException".length());
+          Messages.showMessageDialog(myProject, cause, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         });
       }
       else {

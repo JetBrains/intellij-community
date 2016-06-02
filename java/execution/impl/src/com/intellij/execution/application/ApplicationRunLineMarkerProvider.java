@@ -41,17 +41,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
         final AnAction[] actions = ExecutorAction.getActions(0);
-        return new Info(AllIcons.RunConfigurations.TestState.Run, new Function<PsiElement, String>() {
-          @Override
-          public String fun(final PsiElement element) {
-            return StringUtil.join(ContainerUtil.mapNotNull(actions, new Function<AnAction, String>() {
-              @Override
-              public String fun(AnAction action) {
-                return getText(action, element);
-              }
-            }), "\n");
-          }
-        }, actions);
+        return new Info(AllIcons.RunConfigurations.TestState.Run, element1 -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, element1)), "\n"), actions);
       }
     }
     return null;

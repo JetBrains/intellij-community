@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -38,7 +38,7 @@ import java.util.LinkedList;
 
 abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project == null) return;
 
     OccurenceNavigator navigator = getNavigator(e.getDataContext());
@@ -152,11 +152,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
     ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
 
-    String id = mgr.getLastActiveToolWindowId(new Condition<JComponent>() {
-      public boolean value(final JComponent component) {
-        return findNavigator(component) != null;
-      }
-    });
+    String id = mgr.getLastActiveToolWindowId(component -> findNavigator(component) != null);
     if (id == null) {
       return null;
     }

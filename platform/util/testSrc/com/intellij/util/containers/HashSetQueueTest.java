@@ -25,7 +25,7 @@ import java.util.Iterator;
 
 public class HashSetQueueTest extends TestCase {
   private final Assertion CHECK = new Assertion();
-  private final HashSetQueue<String> myQueue = new HashSetQueue<String>();
+  private final HashSetQueue<String> myQueue = new HashSetQueue<>();
 
   public void testEmpty() {
     assertEquals(0, myQueue.size());
@@ -45,7 +45,7 @@ public class HashSetQueueTest extends TestCase {
     assertEquals(1, myQueue.size());
     myQueue.add("3");
     assertEquals(2, myQueue.size());
-    CHECK.compareAll(new Object[]{"2", "3"}, new ArrayList<String>(myQueue));
+    CHECK.compareAll(new Object[]{"2", "3"}, new ArrayList<>(myQueue));
     assertEquals("2", myQueue.poll());
     assertEquals("3", myQueue.poll());
     testEmpty();
@@ -127,5 +127,29 @@ public class HashSetQueueTest extends TestCase {
     assertTrue(iterator.hasNext());
     assertEquals("2", iterator.next());
     assertFalse(iterator.hasNext());
+  }
+
+  public void testResettableIterator() {
+    assertTrue(myQueue.add("1"));
+    HashSetQueue.ResettableIterator<String> iterator = myQueue.iterator();
+    Object position = iterator.markPosition();
+    assertTrue(iterator.hasNext());
+    assertEquals("1", iterator.next());
+    assertFalse(iterator.hasNext());
+    Object pos2 = iterator.markPosition();
+
+    boolean reset = iterator.resetPosition(position);
+    assertTrue(reset);
+
+    assertTrue(iterator.hasNext());
+    assertEquals("1", iterator.next());
+    assertFalse(iterator.hasNext());
+
+    reset = iterator.resetPosition(position);
+    assertTrue(reset);
+    assertTrue(iterator.hasNext());
+
+    boolean reset2 = iterator.resetPosition(pos2);
+    assertFalse(reset2);
   }
 }

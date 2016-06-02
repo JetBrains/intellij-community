@@ -110,12 +110,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void checkConfiguration(@NotNull final ClientLibraryDescription description, final @Nullable Project project,
                                  final @Nullable JComponent component) throws RuntimeConfigurationError {
     if (!isDownloaded(description)) {
-      throw new RuntimeConfigurationError("Client libraries were not downloaded", new Runnable() {
-        @Override
-        public void run() {
-          download(description, project, component);
-        }
-      });
+      throw new RuntimeConfigurationError("Client libraries were not downloaded", () -> download(description, project, component));
     }
   }
 
@@ -134,15 +129,12 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void download(@NotNull final ClientLibraryDescription libraryDescription, @Nullable Project project, @Nullable JComponent component) {
     final Ref<IOException> exc = Ref.create(null);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      new Runnable() {
-        @Override
-        public void run() {
-          try {
-            download(libraryDescription);
-          }
-          catch (IOException e) {
-            exc.set(e);
-          }
+      () -> {
+        try {
+          download(libraryDescription);
+        }
+        catch (IOException e) {
+          exc.set(e);
         }
       }, "Downloading Client Libraries", false, project, component);
     if (exc.isNull()) {

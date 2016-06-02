@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,15 +63,14 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer {
       if (myColored && value != null) {
         try {
           double rangedValue = NumpyArrayTable.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          this.setBackground(
-            new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
-                        new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130)));
+          //noinspection UseJBColor
+          this.setBackground(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130));
         }
         catch (NumberFormatException ignored) {
         }
       }
       else {
-        this.setBackground(new JBColor(UIUtil.getBgFillColor(table), UIUtil.getBgFillColor(table)));
+        this.setBackground(UIUtil.getBgFillColor(table));
       }
     }
 

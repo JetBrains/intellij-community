@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -26,6 +27,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -40,6 +43,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.evaluate.CodeFragmentInputComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,13 +123,23 @@ public abstract class XDebuggerEditorBase {
                                                                false);
   }
 
-  protected JPanel addChooseFactoryLabel(JComponent component, boolean top) {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(component, BorderLayout.CENTER);
+  protected JPanel decorate(JComponent component, boolean multiline, boolean showEditor) {
+    JPanel panel = JBUI.Panels.simplePanel();
 
-    JPanel factoryPanel = new JPanel(new BorderLayout());
-    factoryPanel.add(myChooseFactory, top ? BorderLayout.NORTH : BorderLayout.CENTER);
+    JPanel factoryPanel = JBUI.Panels.simplePanel();
+    factoryPanel.add(myChooseFactory, multiline ? BorderLayout.NORTH : BorderLayout.CENTER);
     panel.add(factoryPanel, BorderLayout.WEST);
+
+    if (!multiline && showEditor) {
+      ComponentWithBrowseButton<JComponent> componentWithButton =
+        new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
+      componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+      componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
+      panel.add(componentWithButton, BorderLayout.CENTER);
+    } else {
+      panel.add(component, BorderLayout.CENTER);
+    }
+
     return panel;
   }
 
@@ -164,8 +178,8 @@ public abstract class XDebuggerEditorBase {
       if (language == null) {
         language = LanguageUtil.getFileTypeLanguage(getEditorsProvider().getFileType());
       }
+      text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), text.getMode());
     }
-    text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), getMode());
 
     Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
     boolean many = languages.size() > 1;
@@ -266,5 +280,47 @@ public abstract class XDebuggerEditorBase {
       myHistoryIndex--;
       setExpression(expressions.get(myHistoryIndex));
     }
+  }
+
+  private void showCodeFragmentEditor(Component parent, XDebuggerEditorBase baseEditor) {
+    DialogWrapper dialog = new DialogWrapper(parent, true) {
+      CodeFragmentInputComponent inputComponent =
+        new CodeFragmentInputComponent(baseEditor.getProject(), baseEditor.getEditorsProvider(), mySourcePosition,
+                                       XExpressionImpl.changeMode(baseEditor.getExpression(), EvaluationMode.CODE_FRAGMENT),
+                                       null, null);
+
+      {
+        setTitle("Edit");
+        init();
+      }
+
+      @Nullable
+      @Override
+      protected String getDimensionServiceKey() {
+        return "#xdebugger.code.fragment.editor";
+      }
+
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        JPanel component = inputComponent.getMainComponent();
+        component.setPreferredSize(JBUI.size(300, 200));
+        return component;
+      }
+
+      @Override
+      protected void doOKAction() {
+        super.doOKAction();
+        baseEditor.setExpression(inputComponent.getInputEditor().getExpression());
+        IdeFocusManager.findInstance().requestFocus(baseEditor.getEditorComponent(), false);
+      }
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return inputComponent.getInputEditor().getPreferredFocusedComponent();
+      }
+    };
+    dialog.show();
   }
 }

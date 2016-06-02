@@ -38,12 +38,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
 
   @NotNull
   public static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<SuppressQuickFix, SuppressIntentionAction>() {
-      @Override
-      public SuppressIntentionAction fun(SuppressQuickFix fix) {
-        return convertBatchToSuppressIntentionAction(fix);
-      }
-    });
+    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> convertBatchToSuppressIntentionAction(fix));
   }
 
   @Override

@@ -49,20 +49,12 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
       if (lookup != null) {
         List<LookupElement> items = lookup.getItems();
         if (!addReferenceVariants()) {
-          items = ContainerUtil.findAll(items, new Condition<LookupElement>() {
-            @Override
-            public boolean value(LookupElement lookupElement) {
-              final Object o = lookupElement.getObject();
-              return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
-            }
+          items = ContainerUtil.findAll(items, lookupElement -> {
+            final Object o = lookupElement.getObject();
+            return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
           });
         }
-        Collections.sort(items, new Comparator<LookupElement>() {
-          @Override
-          public int compare(LookupElement o1, LookupElement o2) {
-            return o1.getLookupString().compareTo(o2.getLookupString());
-          }
-        });
+        Collections.sort(items, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
         result = "";
         for (LookupElement item : items) {
           result = result + "\n" + item.getLookupString();

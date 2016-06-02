@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+
+import static java.awt.GridBagConstraints.*;
 
 class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myHotswapInBackground;
@@ -88,9 +91,9 @@ class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
     myRbNever = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.never"));
     myRbAsk = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.ask"));
 
-    panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbHangWarningEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    panel.add(myHotswapInBackground, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbHangWarningEnabled, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, JBUI.insetsTop(4), 0, 0));
+    panel.add(myHotswapInBackground, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, JBUI.insetsTop(4), 0, 0));
     
     int cbLeftOffset = 0;
     final Border border = myCbCompileBeforeHotswap.getBorder();
@@ -112,7 +115,7 @@ class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
     final JPanel reloadPanel = new JPanel(new BorderLayout());
     reloadPanel.add(box, BorderLayout.CENTER);
     reloadPanel.add(new JLabel(DebuggerBundle.message("label.debugger.hotswap.configurable.reload.classes")), BorderLayout.WEST);
-    panel.add(reloadPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
+    panel.add(reloadPanel, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, NORTHWEST, NONE, JBUI.insets(4, cbLeftOffset, 0, 0), 0, 0));
 
     return panel;
   }

@@ -72,7 +72,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
   public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
   // asked only for non-DVCS
-  public boolean INCLUDE_TEXT_INTO_PATCH = false;
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
@@ -83,7 +82,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean USE_COMMIT_MESSAGE_MARGIN = false;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
-  public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = false;
+  public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "path")

@@ -28,12 +28,17 @@ import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
+  private static final ConcurrentMap<JpsOrderRootType, JpsElementCollectionRole<JpsLibraryRoot>> ourRootRoles = ContainerUtil.newConcurrentMap();
   private final JpsLibraryType<P> myLibraryType;
 
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
@@ -103,7 +108,10 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   }
 
   private static JpsElementCollectionRole<JpsLibraryRoot> getRole(JpsOrderRootType type) {
-    return JpsElementCollectionRole.create(new JpsLibraryRootRole(type));
+    JpsElementCollectionRole<JpsLibraryRoot> role = ourRootRoles.get(type);
+    if (role != null) return role;
+    ourRootRoles.putIfAbsent(type, JpsElementCollectionRole.create(new JpsLibraryRootRole(type)));
+    return ourRootRoles.get(type);
   }
 
   @Override

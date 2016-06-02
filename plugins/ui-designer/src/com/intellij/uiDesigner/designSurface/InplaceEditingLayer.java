@@ -213,11 +213,9 @@ public final class InplaceEditingLayer extends JComponent{
     else {
       grabFocus();
       final JComponent finalComponentToFocus = componentToFocus;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          finalComponentToFocus.requestFocusInWindow();
-          myFocusWatcher.install(myInplaceEditorComponent);
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        finalComponentToFocus.requestFocusInWindow();
+        myFocusWatcher.install(myInplaceEditorComponent);
       });
     }
 
@@ -251,16 +249,14 @@ public final class InplaceEditingLayer extends JComponent{
       if (!myEditor.isUndoRedoInProgress()) {
         CommandProcessor.getInstance().executeCommand(
           myInplaceComponent.getProject(),
-          new Runnable() {
-            public void run() {
-              try {
-                final Object value = myInplaceEditor.getValue();
-                myInplaceProperty.setValue(myInplaceComponent, value);
-              }
-              catch (Exception ignored) {
-              }
-              myEditor.refreshAndSave(true);
+          () -> {
+            try {
+              final Object value = myInplaceEditor.getValue();
+              myInplaceProperty.setValue(myInplaceComponent, value);
             }
+            catch (Exception ignored) {
+            }
+            myEditor.refreshAndSave(true);
           }, UIDesignerBundle.message("command.set.property.value"), null);
       }
       // 2. Remove editor from the layer
@@ -353,11 +349,7 @@ public final class InplaceEditingLayer extends JComponent{
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          finishInplaceEditing();
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.NON_MODAL);
     }
   }
 

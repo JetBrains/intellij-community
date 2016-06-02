@@ -41,12 +41,12 @@ public class ReferenceParser {
   public static final int INCOMPLETE_ANNO = 0x40;
 
   public static class TypeInfo {
-    public boolean isPrimitive = false;
-    public boolean isParameterized = false;
-    public boolean isArray = false;
-    public boolean isVarArg = false;
-    public boolean hasErrors = false;
-    public PsiBuilder.Marker marker = null;
+    public boolean isPrimitive;
+    public boolean isParameterized;
+    public boolean isArray;
+    public boolean isVarArg;
+    public boolean hasErrors;
+    public PsiBuilder.Marker marker;
   }
 
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
@@ -118,7 +118,13 @@ public class ReferenceParser {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
-      emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      if (anno == null) {
+        emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+        typeInfo.hasErrors = true;
+      }
       type.done(JavaElementType.TYPE);
       typeInfo.marker = type;
       return typeInfo;

@@ -117,7 +117,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
       if (v == version) {
         return sdk;
       }
-      else if (candidate == null && v != null && version.getMaxLanguageLevel().isAtLeast(version.getMaxLanguageLevel())) {
+      if (candidate == null && v != null && version.getMaxLanguageLevel().isAtLeast(version.getMaxLanguageLevel())) {
         candidate = sdk;
       }
     }

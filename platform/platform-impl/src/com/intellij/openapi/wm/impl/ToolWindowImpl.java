@@ -38,6 +38,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -47,9 +48,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -73,6 +77,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myHideOnEmptyContent = false;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
+
+  private static Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
+    new KeyStroke[] {
+      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)
+    }
+  ));
+
+  private static Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
+    new KeyStroke[] {
+      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)
+    }
+  ));
 
   @NotNull
   private ActionCallback myActivation = ActionCallback.DONE;
@@ -105,6 +121,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myComponent = myContentManager.getComponent();
 
+    installToolwindowFocusPolicy();
+
     UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
@@ -112,6 +130,50 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     });
     Disposer.register(myContentManager, notifyConnector);
+  }
+
+  /**
+   * Installs a focus traversal policy for the tool window.
+   * If the policy cannot handle a keystroke, it delegates the handling to
+   * the nearest ancestors focus traversal policy. For instance,
+   * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
+   * to a ThreeComponentSplitter instance.
+   */
+  private void installToolwindowFocusPolicy() {
+
+    myComponent.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, FORWARD_TRAVERSAL_KEYSTROKES);
+    myComponent.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, BACKWARD_TRAVERSAL_KEYSTROKES);
+
+    FocusTraversalPolicy layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicy();
+
+    myComponent.setFocusCycleRoot(true);
+    myComponent.setFocusTraversalPolicyProvider(true);
+    myComponent.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      @Override
+      public Component getComponentAfter(Container container, Component component) {
+        return layoutFocusTraversalPolicy.getComponentAfter(container, component);
+      }
+
+      @Override
+      public Component getComponentBefore(Container container, Component component) {
+        return layoutFocusTraversalPolicy.getComponentBefore(container, component);
+      }
+
+      @Override
+      public Component getFirstComponent(Container container) {
+        return layoutFocusTraversalPolicy.getFirstComponent(container);
+      }
+
+      @Override
+      public Component getLastComponent(Container container) {
+        return layoutFocusTraversalPolicy.getLastComponent(container);
+      }
+
+      @Override
+      public Component getDefaultComponent(Container container) {
+        return layoutFocusTraversalPolicy.getDefaultComponent(container);
+      }
+    });
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
@@ -142,20 +204,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
 
-    getActivation().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myToolWindowManager.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (runnable != null) {
-              runnable.run();
-            }
-            UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
-          }
-        });
+    getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(() -> {
+      if (runnable != null) {
+        runnable.run();
       }
-    });
+      UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
+    }));
   }
 
   @Override
@@ -169,24 +223,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public ActionCallback getReady(@NotNull final Object requestor) {
     final ActionCallback result = new ActionCallback();
-    myShowing.getReady(this).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
-        cmd.add(new FinalizableCommand(null) {
-          @Override
-          public void run() {
-            IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
-              @Override
-              public void run() {
-                if (myContentManager.isDisposed()) return;
-                myContentManager.getReady(requestor).notify(result);
-              }
-            });
-          }
-        });
-        myToolWindowManager.execute(cmd);
-      }
+    myShowing.getReady(this).doWhenDone(() -> {
+      ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
+      cmd.add(new FinalizableCommand(null) {
+        @Override
+        public void run() {
+          IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
+            if (myContentManager.isDisposed()) return;
+            myContentManager.getReady(requestor).notify(result);
+          });
+        }
+      });
+      myToolWindowManager.execute(cmd);
     });
     return result;
   }
@@ -196,12 +244,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.showToolWindow(myId);
     if (runnable != null) {
-      getActivation().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          myToolWindowManager.invokeLater(runnable);
-        }
-      });
+      getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(runnable));
     }
   }
 

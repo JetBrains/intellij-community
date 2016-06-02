@@ -81,6 +81,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     setCellRenderer(new NodeRenderer());
 
     setSelectionModel(mySelectionModel);
+    setOpaque(false);
   }
 
   @Override
@@ -92,6 +93,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.setUI(actualUI);
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public boolean isEmpty() {
@@ -277,12 +283,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         myBusyIcon.suspend();
         myBusyIcon.setToolTipText(null);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myBusyIcon != null) {
+            repaint();
           }
         });
       }
@@ -679,10 +682,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         e.consume();
       }
     }
-    /**
-     * Returns true if <code>mouseX</code> falls
-     * in the area of row that is used to expand/collapse the node and
-     * the node at <code>row</code> does not represent a leaf.
+    /*
+      Returns true if <code>mouseX</code> falls
+      in the area of row that is used to expand/collapse the node and
+      the node at <code>row</code> does not represent a leaf.
      */
   }
 

@@ -98,13 +98,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       @Override
       public void setSelectedItem(Object item) {
         if (SHOW_ALL.equals(item)) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              PythonSdkDetailsDialog moreDialog = myModule == null
-                                                  ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
-                                                  : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
-              moreDialog.show();
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            PythonSdkDetailsDialog moreDialog = myModule == null
+                                                ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
+                                                : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
+            moreDialog.show();
           });
           return;
         }
@@ -187,12 +185,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private Runnable getSettingsModifiedCallback() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        mySdkSettingsWereModified = true;
-      }
-    };
+    return () -> mySdkSettingsWereModified = true;
   }
 
   private void initContent() {
@@ -322,12 +315,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(myProject).setProjectSdk(item);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(item));
     if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);
     }

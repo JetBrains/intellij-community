@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
-  private boolean delegationRequired = false;
+  private boolean delegationRequired;
   private final ExtractEnumProcessor myExtractEnumProcessor;
   private final PsiClass myClass;
   private boolean extractInnerClass;
@@ -163,11 +163,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
       conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myClass.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myClass.delete());
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =
@@ -903,11 +899,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);
 
     protected boolean isProhibitedReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
-        public boolean value(final PsiField field) {
-          return NecessaryAccessorsVisitor.this.isProhibitedReference(field);
-        }
-      });
+      return BackpointerUtil.isBackpointerReference(expression, field -> NecessaryAccessorsVisitor.this.isProhibitedReference(field));
     }
 
     protected abstract boolean isProhibitedReference(PsiField field);

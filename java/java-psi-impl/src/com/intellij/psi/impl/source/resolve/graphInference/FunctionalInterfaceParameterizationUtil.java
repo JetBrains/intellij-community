@@ -177,15 +177,17 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiSubstitutor substitutor = result.getSubstitutor();
       final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
-      for (int i = 0; i < typeParameters.length; i++) {
+      next: for (int i = 0; i < typeParameters.length; i++) {
         PsiType paramType = substitutor.substitute(typeParameters[i]);
         if (paramType instanceof PsiWildcardType) {
+          final PsiType bound = ((PsiWildcardType)paramType).getBound();
           for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
             if (PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
-              return null;
+              newParameters[i] = bound;
+              continue next;
             }
           }
-          final PsiType bound = ((PsiWildcardType)paramType).getBound();
+
           if (((PsiWildcardType)paramType).isSuper()) {
             newParameters[i] = bound;
           }

@@ -39,6 +39,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +92,59 @@ public class GeneratedParserUtilBase {
       return true;
     }
   };
+
+  public interface Hook<T> {
+
+    @Contract("_,null,_->null")
+    PsiBuilder.Marker run(PsiBuilder builder, PsiBuilder.Marker marker, T param);
+
+  }
+
+  public static final Hook<WhitespacesAndCommentsBinder> LEFT_BINDER =
+    new Hook<WhitespacesAndCommentsBinder>() {
+      @Override
+      public PsiBuilder.Marker run(PsiBuilder builder,
+                                   PsiBuilder.Marker marker,
+                                   WhitespacesAndCommentsBinder param) {
+        if (marker != null) marker.setCustomEdgeTokenBinders(param, null);
+        return marker;
+      }
+    };
+
+  public static final Hook<WhitespacesAndCommentsBinder> RIGHT_BINDER =
+    new Hook<WhitespacesAndCommentsBinder>() {
+      @Override
+      public PsiBuilder.Marker run(PsiBuilder builder,
+                                   PsiBuilder.Marker marker,
+                                   WhitespacesAndCommentsBinder param) {
+        if (marker != null) marker.setCustomEdgeTokenBinders(null, param);
+        return marker;
+      }
+    };
+
+  public static final Hook<WhitespacesAndCommentsBinder[]> WS_BINDERS =
+    new Hook<WhitespacesAndCommentsBinder[]>() {
+      @Override
+      public PsiBuilder.Marker run(PsiBuilder builder,
+                                   PsiBuilder.Marker marker,
+                                   WhitespacesAndCommentsBinder[] param) {
+        if (marker != null) marker.setCustomEdgeTokenBinders(param[0], param[1]);
+        return marker;
+      }
+    };
+
+  public static final Hook<String> LOG_HOOK = new Hook<String>() {
+    @Override
+    public PsiBuilder.Marker run(PsiBuilder builder, PsiBuilder.Marker marker, String param) {
+      PsiBuilderImpl.ProductionMarker m = (PsiBuilderImpl.ProductionMarker)marker;
+      int start = m == null ? builder.getCurrentOffset() : m.getStartOffset();
+      int end = m == null ? start : m.getEndOffset();
+      String prefix = "[" + start + ", " + end + "]" + (m == null ? "" : " " + m.getTokenType());
+      builder.mark().error(prefix + ": " + param);
+      return marker;
+    }
+  };
+
 
   public static boolean eof(PsiBuilder builder, int level) {
     return builder.eof();
@@ -386,6 +440,7 @@ public class GeneratedParserUtilBase {
 
   // simple enter/exit methods pair that doesn't require frame object
   public static PsiBuilder.Marker enter_section_(PsiBuilder builder) {
+    ErrorState.get(builder).level++;
     return builder.mark();
   }
 
@@ -393,7 +448,10 @@ public class GeneratedParserUtilBase {
                                    PsiBuilder.Marker marker,
                                    @Nullable IElementType elementType,
                                    boolean result) {
-    close_marker_impl_(ErrorState.get(builder).currentFrame, marker, elementType, result);
+    ErrorState state = ErrorState.get(builder);
+    close_marker_impl_(state.currentFrame, marker, elementType, result);
+    run_hooks_impl_(builder, state, result ? elementType : null);
+    state.level--;
   }
 
   // complex enter/exit methods pair with frame object
@@ -413,6 +471,7 @@ public class GeneratedParserUtilBase {
 
   private static void enter_section_impl_(PsiBuilder builder, int level, int modifiers, IElementType elementType, String frameName) {
     ErrorState state = ErrorState.get(builder);
+    state.level++;
     Frame frame = state.FRAMES.alloc().init(builder, state, level, modifiers, elementType, frameName);
     Frame prevFrame = state.currentFrame;
     if (prevFrame != null && prevFrame.errorReportedAt > frame.position) {
@@ -433,12 +492,7 @@ public class GeneratedParserUtilBase {
       state.predicateCount++;
     }
     else if ((modifiers & _NOT_) != 0) {
-      if (state.predicateCount == 0) {
-        state.predicateSign = false;
-      }
-      else {
-        state.predicateSign = !state.predicateSign;
-      }
+      state.predicateSign = state.predicateCount != 0 && !state.predicateSign;
       state.predicateCount++;
     }
   }
@@ -473,6 +527,7 @@ public class GeneratedParserUtilBase {
 
     if (((frame.modifiers & _AND_) | (frame.modifiers & _NOT_)) != 0) {
       close_marker_impl_(frame, marker, null, false);
+      replace_variants_with_name_(state, frame, builder, result, pinned);
       state.predicateCount--;
       if ((frame.modifiers & _NOT_) != 0) state.predicateSign = !state.predicateSign;
     }
@@ -480,7 +535,33 @@ public class GeneratedParserUtilBase {
       close_frame_impl_(state, frame, builder, marker, elementType, result, pinned);
       exit_section_impl_(state, frame, builder, elementType, result, pinned, eatMore);
     }
+    run_hooks_impl_(builder, state, pinned || result ? elementType : null);
     state.FRAMES.recycle(frame);
+    state.level--;
+  }
+
+  public static <T> void register_hook_(PsiBuilder builder, Hook<T> hook, T param) {
+    ErrorState state = ErrorState.get(builder);
+    state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
+  }
+
+  public static <T> void register_hook_(PsiBuilder builder, Hook<T[]> hook, T... param) {
+    ErrorState state = ErrorState.get(builder);
+    state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
+  }
+
+  private static void run_hooks_impl_(PsiBuilder builder, ErrorState state, @Nullable IElementType elementType) {
+    if (state.hooks == null) return;
+    PsiBuilder.Marker marker = elementType == null ? null : (PsiBuilder.Marker)builder.getLatestDoneMarker();
+    if (elementType != null && marker == null) {
+      builder.error("No expected done marker at offset " + builder.getCurrentOffset());
+    }
+    while (state.hooks != null && state.hooks.level >= state.level) {
+      if (state.hooks.level == state.level) {
+        marker = ((Hook<Object>)state.hooks.hook).run(builder, marker, state.hooks.param);
+      }
+      state.hooks = state.hooks.next;
+    }
   }
 
   private static void exit_section_impl_(ErrorState state,
@@ -492,11 +573,7 @@ public class GeneratedParserUtilBase {
                                          @Nullable Parser eatMore) {
     int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
-    if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
-        frame.name != null && state.variants.size() - frame.variantCount > 1) {
-      state.clearVariants(true, frame.variantCount);
-      addVariantInner(state, initialPos, frame.name);
-    }
+    replace_variants_with_name_(state, frame, builder, result, pinned);
     int lastErrorPos = getLastVariantPos(state, initialPos);
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
@@ -649,6 +726,20 @@ public class GeneratedParserUtilBase {
         }
       }
       marker.rollbackTo();
+    }
+  }
+
+  private static void replace_variants_with_name_(ErrorState state,
+                                                  Frame frame,
+                                                  PsiBuilder builder,
+                                                  boolean result,
+                                                  boolean pinned) {
+    int initialPos = builder.rawTokenIndex();
+    boolean willFail = !result && !pinned;
+    if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
+        frame.name != null && state.variants.size() - frame.variantCount > 1) {
+      state.clearVariants(true, frame.variantCount);
+      addVariantInner(state, initialPos, frame.name);
     }
   }
 
@@ -818,8 +909,10 @@ public class GeneratedParserUtilBase {
     public PairProcessor<IElementType, IElementType> altExtendsChecker;
 
     int predicateCount;
+    int level;
     boolean predicateSign = true;
     boolean suppressErrors;
+    Hooks<?> hooks;
     public Frame currentFrame;
     public CompletionState completionState;
 
@@ -1031,6 +1124,24 @@ public class GeneratedParserUtilBase {
     }
   }
 
+  private static class Hooks<T> {
+    final Hook<T> hook;
+    final T param;
+    final int level;
+    final Hooks<?> next;
+
+    Hooks(Hook<T> hook, T param, int level, Hooks next) {
+      this.hook = hook;
+      this.param = param;
+      this.level = level;
+      this.next = next;
+    }
+
+    static <E> Hooks<E> concat(Hook<E> hook, E param, int level, Hooks<?> hooks) {
+      return new Hooks<E>(hook, param, level, hooks);
+    }
+  }
+
 
   private static final int MAX_CHILDREN_IN_TREE = 10;
   public static boolean parseAsTree(ErrorState state, final PsiBuilder builder, int level, final IElementType chunkType,
@@ -1039,29 +1150,26 @@ public class GeneratedParserUtilBase {
     final LinkedList<Pair<PsiBuilder.Marker, Integer>> siblingList = new LinkedList<Pair<PsiBuilder.Marker, Integer>>();
     PsiBuilder.Marker marker = null;
 
-    final Runnable checkSiblingsRunnable = new Runnable() {
-      @Override
-      public void run() {
-        main:
-        while (!siblingList.isEmpty()) {
-          final Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parenList.peek();
-          final int rating = siblingList.getFirst().second;
-          int count = 0;
-          for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
-            if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
-            if (++count >= MAX_CHILDREN_IN_TREE) {
-              PsiBuilder.Marker parentMarker = pair.first.precede();
-              parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
-              while (count-- > 0) {
-                siblingList.removeFirst();
-              }
-              parentMarker.done(chunkType);
-              siblingList.addFirst(Pair.create(parentMarker, rating + 1));
-              continue main;
+    final Runnable checkSiblingsRunnable = () -> {
+      main:
+      while (!siblingList.isEmpty()) {
+        final Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parenList.peek();
+        final int rating = siblingList.getFirst().second;
+        int count = 0;
+        for (Pair<PsiBuilder.Marker, Integer> pair : siblingList) {
+          if (pair.second != rating || parenPair != null && pair.first == parenPair.second) break main;
+          if (++count >= MAX_CHILDREN_IN_TREE) {
+            PsiBuilder.Marker parentMarker = pair.first.precede();
+            parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
+            while (count-- > 0) {
+              siblingList.removeFirst();
             }
+            parentMarker.done(chunkType);
+            siblingList.addFirst(Pair.create(parentMarker, rating + 1));
+            continue main;
           }
-          break;
         }
+        break;
       }
     };
     boolean checkParens = state.braces != null && checkBraces;

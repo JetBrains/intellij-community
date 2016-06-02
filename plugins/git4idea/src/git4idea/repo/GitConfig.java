@@ -16,6 +16,8 @@
 package git4idea.repo;
 
   import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -24,7 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import org.ini4j.Ini;
@@ -119,7 +120,7 @@ public class GitConfig {
    * If some section is invalid, it is skipped, and a warning is reported.
    */
   @NotNull
-  static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
+  static GitConfig read(@NotNull File configFile) {
     GitConfig emptyConfig = new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(),
                                           Collections.<BranchConfig>emptyList());
     if (!configFile.exists()) {
@@ -138,7 +139,7 @@ public class GitConfig {
       return emptyConfig;
     }
 
-    IdeaPluginDescriptor plugin = platformFacade.getPluginByClassName(GitConfig.class.getName());
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManagerCore.getPluginByClassName(GitConfig.class.getName()));
     ClassLoader classLoader = plugin == null ?
                               GitConfig.class.getClassLoader() :   // null e.g. if IDEA is started from IDEA
                               plugin.getPluginClassLoader();

@@ -106,5 +106,22 @@ class UpdateInfoParsingTest {
     assertEquals(2, info["IU"]!!.channels[0].builds.count { it.target != null })
   }
 
+  @Test fun fullBuildNumbers() {
+    val info = load("""
+      <products>
+        <product name="IntelliJ IDEA">
+          <code>IU</code>
+          <channel id="IDEA_EAP" status="eap">
+            <build number="162.100" fullNumber="162.100.1" version="2016.2">
+               <patch from="162.99" fullFrom="162.99.2" size="1"/>
+            </build>
+          </channel>
+        </product>
+      </products>""".trimIndent())
+    val buildInfo = info["IU"]!!.channels[0].builds[0]
+    assertEquals("162.100.1", buildInfo.number.asString())
+    assertEquals("162.99.2", buildInfo.patches[0].fromBuild.asString())
+  }
+
   private fun load(text: String) = UpdatesInfo(loadElement(text))
 }

@@ -142,13 +142,10 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
 
       BaseButtonBehavior.this.execute(e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!myComponent.isShowing()) {
-            setHovered(false);
-            myMouseDeadzone.clear();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myComponent.isShowing()) {
+          setHovered(false);
+          myMouseDeadzone.clear();
         }
       });
 

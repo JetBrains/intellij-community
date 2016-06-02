@@ -82,12 +82,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         }
         else {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show();
-            }
-          });
+          SwingUtilities.invokeLater(
+            () -> new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show());
         }
       }
     });
@@ -98,28 +94,25 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                   final DebugProcessImpl debugProcess,
                                                   @Nullable final DialogWrapper dialog) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
-                                                 UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
-                                                 frame,
-                                                 new XDebuggerEvaluator.XEvaluationCallback() {
-                                                   @Override
-                                                   public void evaluated(@NotNull XValue result) {
-                                                     forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
-                                                   }
+    SwingUtilities.invokeLater(() -> {
+      if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
+                                               UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
+                                               frame,
+                                               new XDebuggerEvaluator.XEvaluationCallback() {
+                                                 @Override
+                                                 public void evaluated(@NotNull XValue result) {
+                                                   forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
+                                                 }
 
-                                                   @Override
-                                                   public void errorOccurred(@NotNull String errorMessage) {
-                                                     showError(debugProcess.getProject(),
-                                                               DebuggerBundle.message("error.executing.finally", errorMessage));
-                                                   }
-                                                 })) {
-          return;
-        }
-        forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
+                                                 @Override
+                                                 public void errorOccurred(@NotNull String errorMessage) {
+                                                   showError(debugProcess.getProject(),
+                                                             DebuggerBundle.message("error.executing.finally", errorMessage));
+                                                 }
+                                               })) {
+        return;
       }
+      forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
     });
   }
 
@@ -138,14 +131,11 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           return;
         }
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (dialog != null) {
-              dialog.close(DialogWrapper.OK_EXIT_CODE);
-            }
-            debugProcess.getSession().stepInto(true, null);
+        SwingUtilities.invokeLater(() -> {
+          if (dialog != null) {
+            dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
+          debugProcess.getSession().stepInto(true, null);
         });
       }
     });
@@ -182,15 +172,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   }
 
   private static void showError(final Project project, final String message) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(project,
-                                   message,
-                                   UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
-                                   Messages.getErrorIcon());
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(project,
+                                                                                   message,
+                                                                                   UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
+                                                                                   Messages.getErrorIcon()), ModalityState.any());
   }
 
   public void update(@NotNull AnActionEvent e) {
@@ -226,7 +211,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
       myProcess = process;
       myFrame = frame;
       myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "forceReturnValue", myFrame.getSourcePosition(),
-                                               XExpressionImpl.EMPTY_EXPRESSION, false, true);
+                                               XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
 
       setTitle("Return Value");
       init();

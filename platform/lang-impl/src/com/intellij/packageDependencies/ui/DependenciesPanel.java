@@ -198,24 +198,18 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myRightTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
-            final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
-            if (searchIn.isEmpty() || searchFor.isEmpty()) {
-              myUsagesPanel.setToInitialPosition();
-              processDependencies(searchIn, searchFor, new Processor<List<PsiFile>>() { //todo do not show too many usages
-                @Override
-                public boolean process(final List<PsiFile> path) {
-                  searchFor.add(path.get(1));
-                  return true;
-                }
-              });
-            }
-            else {
-              myUsagesPanel.findUsages(searchIn, searchFor);
-            }
+        SwingUtilities.invokeLater(() -> {
+          final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
+          final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
+          if (searchIn.isEmpty() || searchFor.isEmpty()) {
+            myUsagesPanel.setToInitialPosition();
+            processDependencies(searchIn, searchFor, path -> {
+              searchFor.add(path.get(1));
+              return true;
+            });
+          }
+          else {
+            myUsagesPanel.findUsages(searchIn, searchFor);
           }
         });
       }
@@ -253,12 +247,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       for (PsiFile from : searchIn) {
         for (PsiFile to : initialSearchFor) {
           final List<List<PsiFile>> paths = builder.findPaths(from, to);
-          Collections.sort(paths, new Comparator<List<PsiFile>>() {
-            @Override
-            public int compare(final List<PsiFile> p1, final List<PsiFile> p2) {
-              return p1.size() - p2.size();
-            }
-          });
+          Collections.sort(paths, (p1, p2) -> p1.size() - p2.size());
           for (List<PsiFile> path : paths) {
             if (!path.isEmpty()){
               path.add(0, from);
@@ -703,16 +692,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
       final List<PsiFile> files = new ArrayList<PsiFile>(myDependencies.keySet());
-      Collections.sort(files, new Comparator<PsiFile>() {
-        @Override
-        public int compare(PsiFile f1, PsiFile f2) {
-          final VirtualFile virtualFile1 = f1.getVirtualFile();
-          final VirtualFile virtualFile2 = f2.getVirtualFile();
-          if (virtualFile1 != null && virtualFile2 != null) {
-            return virtualFile1.getPath().compareToIgnoreCase(virtualFile2.getPath());
-          }
-          return 0;
+      Collections.sort(files, (f1, f2) -> {
+        final VirtualFile virtualFile1 = f1.getVirtualFile();
+        final VirtualFile virtualFile2 = f2.getVirtualFile();
+        if (virtualFile1 != null && virtualFile2 != null) {
+          return virtualFile1.getPath().compareToIgnoreCase(virtualFile2.getPath());
         }
+        return 0;
       });
       for (PsiFile file : files) {
         final Element fileElement = new Element("file");
@@ -764,21 +750,18 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void actionPerformed(AnActionEvent e) {
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final List<AnalysisScope> scopes = new ArrayList<AnalysisScope>();
-          for (DependenciesBuilder builder : myBuilders) {
-            final AnalysisScope scope = builder.getScope();
-            scope.invalidate();
-            scopes.add(scope);
-          }
-          if (!myForward) {
-            new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
-          }
-          else {
-            new AnalyzeDependenciesHandler(myProject, scopes, myTransitiveBorder, myExcluded).analyze();
-          }
+      SwingUtilities.invokeLater(() -> {
+        final List<AnalysisScope> scopes = new ArrayList<AnalysisScope>();
+        for (DependenciesBuilder builder : myBuilders) {
+          final AnalysisScope scope = builder.getScope();
+          scope.invalidate();
+          scopes.add(scope);
+        }
+        if (!myForward) {
+          new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
+        }
+        else {
+          new AnalyzeDependenciesHandler(myProject, scopes, myTransitiveBorder, myExcluded).analyze();
         }
       });
     }
@@ -815,18 +798,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void actionPerformed(final AnActionEvent e) {
       @NonNls final String delim = "&nbsp;-&gt;&nbsp;";
       final StringBuffer buf = new StringBuffer();
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
-        @Override
-        public boolean process(final List<PsiFile> path) {
-          if (buf.length() > 0) buf.append("<br>");
-          buf.append(StringUtil.join(path, new Function<PsiFile, String>() {
-            @Override
-            public String fun(final PsiFile psiFile) {
-              return psiFile.getName();
-            }
-          }, delim));
-          return true;
-        }
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+        if (buf.length() > 0) buf.append("<br>");
+        buf.append(StringUtil.join(path, psiFile -> psiFile.getName(), delim));
+        return true;
       });
       final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, XmlStringUtil.wrapInHtml(buf));
       pane.setForeground(JBColor.foreground());
@@ -843,12 +818,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public void update(final AnActionEvent e) {
       final boolean[] direct = new boolean[]{true};
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
-        @Override
-        public boolean process(final List<PsiFile> path) {
-          direct [0] = false;
-          return false;
-        }
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+        direct [0] = false;
+        return false;
       });
       e.getPresentation().setEnabled(!direct[0]);
     }
@@ -898,20 +870,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       } else {
         builder = new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder);
       }
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"), new Runnable() {
-        @Override
-        public void run() {
-          builder.analyze();
-        }
-      }, new Runnable() {
-        @Override
-        public void run() {
-          myBuilders.add(builder);
-          myDependencies.putAll(builder.getDependencies());
-          putAllDependencies(builder);
-          exclude(myExcluded);
-          rebuild();
-        }
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
+                                                                         () -> builder.analyze(), () -> {
+        myBuilders.add(builder);
+        myDependencies.putAll(builder.getDependencies());
+        putAllDependencies(builder);
+        exclude(myExcluded);
+        rebuild();
       }, null, new PerformAnalysisInBackgroundOption(myProject));
     }
 

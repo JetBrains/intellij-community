@@ -76,18 +76,15 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
   public Pair<List<Pair<Integer, Integer>>, List<String>> getHighlightedStringsInConsole() {
     final List<String> resultStrings = new ArrayList<String>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myConsole.flushDeferredText();
-        final Editor editor = myConsole.getEditor();
-        for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          if (highlighter instanceof RangeHighlighterEx) {
-            final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
-            final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
-            resultRanges.add(Pair.create(start, end));
-            resultStrings.add(editor.getDocument().getText().substring(start, end));
-          }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myConsole.flushDeferredText();
+      final Editor editor = myConsole.getEditor();
+      for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+        if (highlighter instanceof RangeHighlighterEx) {
+          final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
+          final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
+          resultRanges.add(Pair.create(start, end));
+          resultStrings.add(editor.getDocument().getText().substring(start, end));
         }
       }
     }, ModalityState.NON_MODAL);

@@ -61,7 +61,7 @@ public class SelectFromListDialog extends DialogWrapper {
     myList.setSelectedIndex(0);
 
     myList.setCellRenderer(new ColoredListCellRenderer(){
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         append(myToStringAspect.getToStirng(value),
                new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }

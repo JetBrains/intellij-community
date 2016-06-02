@@ -3,6 +3,7 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,5 +40,10 @@ public class PyCCLanguageManager implements CCLanguageManager {
 
   private static FileTemplate getInternalTemplateByName(@NotNull final Project project, String name) {
     return FileTemplateManager.getInstance(project).getInternalTemplate(name);
+  }
+
+  @Override
+  public boolean isTestFile(VirtualFile file) {
+    return EduNames.TESTS_FILE.equals(file.getName());
   }
 }

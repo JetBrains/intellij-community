@@ -34,32 +34,28 @@ public class ProcessCloseUtil {
     outerSemaphore.down();
 
     final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          final Semaphore semaphore = new Semaphore();
-          semaphore.down();
+    application.executeOnPooledThread(() -> {
+      try {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
 
-          final Runnable closeRunnable = new Runnable() {
-            public void run() {
-              try {
-                closeProcessImpl(process);
-              }
-              finally {
-                semaphore.up();
-              }
-            }
-          };
-
-          final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
-          semaphore.waitFor(ourAsynchronousWaitTimeout);
-          if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
-            innerFuture.cancel(true); // will call interrupt()
+        final Runnable closeRunnable = () -> {
+          try {
+            closeProcessImpl(process);
           }
+          finally {
+            semaphore.up();
+          }
+        };
+
+        final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
+        semaphore.waitFor(ourAsynchronousWaitTimeout);
+        if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
+          innerFuture.cancel(true); // will call interrupt()
         }
-        finally {
-          outerSemaphore.up();
-        }
+      }
+      finally {
+        outerSemaphore.up();
       }
     });
 

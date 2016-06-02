@@ -25,9 +25,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
@@ -96,12 +99,12 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
         for (PsiElement grandChild : grandChildren) {
           ProgressManager.checkCanceled();
 
-          if (grandChild instanceof XmlComment) {
+          if (grandChild instanceof XmlComment || isEntity(grandChild)) {
             addToFold(foldings, grandChild, document);
           }
         }
       }
-      else if(child instanceof XmlAttribute && isAttributeShouldBeFolded((XmlAttribute)child)) {
+      else if (isEntity(child) || child instanceof XmlAttribute && isAttributeShouldBeFolded((XmlAttribute)child)) {
         addToFold(foldings, child, document);
       }
       else {
@@ -180,6 +183,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
       final XmlAttributeValue valueElement = ((XmlAttribute)element).getValueElement();
       return valueElement != null ? valueElement.getValueTextRange() : null;
     }
+    else if (isEntity(element)) {
+      return element.getTextRange();
+    }
     else {
       return null;
     }
@@ -205,8 +211,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
 
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
-      if (startLine < endLine || elementToFold instanceof XmlAttribute) {
-        if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset()) {
+      final boolean entity = isEntity(elementToFold);
+      if (startLine < endLine || elementToFold instanceof XmlAttribute || entity) {
+        if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset() || entity) {
           foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
           return true;
         }
@@ -224,6 +231,23 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
         psi instanceof XmlAttribute ||
         psi instanceof XmlConditionalSection
       ) return "...";
+    if (isEntity(psi)) {
+      final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, psi.getText(), psi.getContainingFile());
+      final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
+      if (value != null) {
+        return getEntityValue(value);
+      }
+    }
+    return null;
+  }
+
+  private static String getEntityValue(XmlAttributeValue value) {
+    final String result = value.getValue();
+    final int i = result.indexOf('#');
+    if (i > 0) {
+      final int charNum = StringUtil.parseInt(StringUtil.trimEnd(result.substring(i + 1), ";"), -1);
+      return charNum >= 0 ? String.valueOf((char)charNum) : null;
+    }
     return null;
   }
 
@@ -232,7 +256,13 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && foldingSettings.isCollapseHtmlStyleAttribute());
+           || (psi instanceof XmlAttribute && foldingSettings.isCollapseHtmlStyleAttribute())
+           || isEntity(psi) && foldingSettings.isCollapseEntities();
+  }
+
+  protected boolean isEntity(PsiElement psi) {
+    return psi instanceof XmlEntityRef ||
+           (psi instanceof XmlTokenImpl && ((XmlTokenImpl)psi).getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF);
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {

@@ -42,12 +42,7 @@ public class PsiEnter {
   }
 
   void enter(final PsiClassOwner psiClassOwner) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        enterTopLevels(psiClassOwner);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> enterTopLevels(psiClassOwner));
   }
 
   private void enterTopLevels(PsiClassOwner owner) {

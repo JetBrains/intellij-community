@@ -42,44 +42,48 @@ def unpackJdks() {
     return
   }
 
-  unpackJdk(osDir, jdkDir, "1.6")
-  unpackJdk(osDir, jdkDir, "1.8")
+  unpackJdk(osDir, jdkDir, "jre6", "1.6")
+  unpackJdk(osDir, jdkDir, "jbsdk8", "1.8")
 }
 
-private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
-  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("jdk$majorVersion") }
+private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, String targetDirectoryName) {
+  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith(archiveFileNamePrefix) }
   if (SystemInfo.isWindows) {
-    def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x32"
-    jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.zip") }
+    def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x86"
+    jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.tar.gz") }
   }
   if (jdkFiles.empty) {
-    projectBuilder.error("Cannot unpack JDK: jdk$majorVersion* not found in $osDir")
+    projectBuilder.error("Cannot unpack JDK: $archiveFileNamePrefix not found in $osDir")
   }
   if (jdkFiles.size() > 1) {
     projectBuilder.error("Cannot unpack JDK: several matching files are found ($jdkFiles)")
   }
 
   File jdkFile = jdkFiles.first()
-  def destDir = new File(jdkDir, majorVersion)
+  def destDir = new File(jdkDir, targetDirectoryName)
   FileUtil.delete(destDir)
-  if (jdkFile.name.endsWith(".zip")) {
-    ant.unzip(src: jdkFile, dest: destDir)
-  }
-  else if (jdkFile.name.endsWith(".tar")) {
-    projectBuilder.info("Extracting $jdkFile to $destDir")
-    ant.mkdir(dir: destDir)
-    //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
-    ant.exec(executable: "tar", dir: jdkFile.getParent()) {
-      arg(value: "-xf")
-      arg(value: jdkFile.name)
-      arg(value: "--directory")
-      arg(value: destDir)
+  projectBuilder.info("Extracting $jdkFile to $destDir")
+  ant.mkdir(dir: destDir)
+
+  if (jdkFile.name.endsWith(".tar.gz")) {
+    if (SystemInfo.isWindows) {
+      ant.untar(src: jdkFile, dest: destDir, compression: 'gzip')
     }
-    if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
-      new File(destDir, "jre/jdk/Contents").listFiles().each { file ->
-        ant.exec(executable: "mv", dir: destDir) {
-          arg(value: file.absolutePath)
-          arg(value: destDir)
+    else {
+      //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
+      ant.exec(executable: "tar", dir: jdkFile.getParent()) {
+        arg(value: "-xf")
+        arg(value: jdkFile.name)
+        arg(value: "--directory")
+        arg(value: destDir)
+      }
+      def jdkContents = new File(destDir, "jdk/Contents")
+      if (SystemInfo.isMac && jdkContents.exists()) {
+        jdkContents.listFiles().each { file ->
+          ant.exec(executable: "mv", dir: destDir) {
+            arg(value: file.absolutePath)
+            arg(value: destDir)
+          }
         }
       }
     }
@@ -88,4 +92,3 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
     projectBuilder.error("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
   }
 }
-

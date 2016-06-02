@@ -59,15 +59,11 @@ public class RemoteDesktopDetector {
           if (myRemoteDesktopConnected) {
             // We postpone notification to avoid recursive initialization of RemoteDesktopDetector 
             // (in case it's initialized by request from com.intellij.notification.EventLog)
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                          ApplicationBundle.message("remote.desktop.detected.title"),
-                                                          ApplicationBundle
-                                                            .message("remote.desktop.detected.message"),
-                                                          NotificationType.INFORMATION));
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                                                                        ApplicationBundle.message("remote.desktop.detected.title"),
+                                                                                                        ApplicationBundle
+                                                        .message("remote.desktop.detected.message"),
+                                                                                                        NotificationType.INFORMATION)));
           }
         }
       }

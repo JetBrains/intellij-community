@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class ExportThreadsAction
- * @author Jeka
- */
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -28,7 +24,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.actions.ExportToTextFileAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -40,7 +35,7 @@ import java.util.List;
 
 public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -53,20 +48,16 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
         process.getManagerThread().invoke(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads));
-              }
-            }, ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().invokeLater(() -> ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
           }
         });
       }
     }
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+  public void update(AnActionEvent e){
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;

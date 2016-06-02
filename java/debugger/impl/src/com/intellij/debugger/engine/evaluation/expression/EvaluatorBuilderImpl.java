@@ -805,7 +805,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
         else {
-          myResult = new LocalVariableEvaluator(name, false);
+          myResult = new ReferenceEvaluator(name);
         }
       }
     }

@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -88,7 +87,6 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
       final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
       try {
         final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroupsToApply, baseForPatch);
-        commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
         PatchWriter.writePatches(myProject, save.getFile().getPath(), textPatches, commitContext, CharsetToolkit.UTF8_CHARSET);
       }
       catch (final IOException e) {

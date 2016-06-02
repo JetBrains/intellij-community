@@ -284,9 +284,7 @@ public class AttachToLocalProcessAction extends AnAction {
       mySelectedDebugger = selectedDebugger;
 
       if (debuggers.size() > 1) {
-        mySubItems = ContainerUtil.map(debuggers, debugger -> {
-          return new AttachItem(myGroup, false, myProcessInfo, Collections.singletonList(debugger));
-        });
+        mySubItems = ContainerUtil.map(debuggers, debugger -> new AttachItem(myGroup, false, myProcessInfo, Collections.singletonList(debugger)));
       }
       else {
         mySubItems = Collections.emptyList();

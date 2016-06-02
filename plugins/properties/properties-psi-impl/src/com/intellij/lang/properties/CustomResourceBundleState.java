@@ -56,22 +56,12 @@ public class CustomResourceBundleState {
   }
 
   public List<VirtualFile> getFiles(@NotNull final VirtualFileManager manager) {
-    return ContainerUtil.mapNotNull(getFileUrls(), new Function<String, VirtualFile>() {
-        @Override
-        public VirtualFile fun(String url) {
-          return manager.findFileByUrl(url);
-        }
-      });
+    return ContainerUtil.mapNotNull(getFileUrls(), url -> manager.findFileByUrl(url));
   }
 
   @Nullable
   public CustomResourceBundleState removeNonExistentFiles(final VirtualFileManager virtualFileManager) {
-    final List<String> existentFiles = ContainerUtil.filter(myFileUrls, new Condition<String>() {
-      @Override
-      public boolean value(String url) {
-        return virtualFileManager.findFileByUrl(url) != null;
-      }
-    });
+    final List<String> existentFiles = ContainerUtil.filter(myFileUrls, url -> virtualFileManager.findFileByUrl(url) != null);
     if (existentFiles.isEmpty()) {
       return null;
     }

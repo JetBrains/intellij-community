@@ -395,7 +395,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
 
       @Override
-      protected final void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       }
     };
   }
@@ -517,40 +517,29 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         final T oldValue = getSelectedValue();
         final int oldIndex = myList.getSelectedIndex();
 
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            DumbService.getInstance(getProject()).runReadActionInSmartMode(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  final List<T> listItems = getListItems();
+        ApplicationManager.getApplication().executeOnPooledThread(() -> DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
+          try {
+            final List<T> listItems = getListItems();
 
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      mergeListItems(myListModel, myList, listItems);
+            SwingUtilities.invokeLater(() -> {
+              mergeListItems(myListModel, myList, listItems);
 
-                      if (myList.isEmpty()) {
-                        createRightComponent(true);
-                      }
-                      else if (myList.getSelectedIndex() < 0) {
-                        myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
-                      }
-                      else {
-                        Object newValue = myList.getSelectedValue();
-                        updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
-                      }
-                    }
-                  });
-                }
-                finally {
-                  myList.setPaintBusy(false);
-                }
+              if (myList.isEmpty()) {
+                createRightComponent(true);
+              }
+              else if (myList.getSelectedIndex() < 0) {
+                myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
+              }
+              else {
+                Object newValue = myList.getSelectedValue();
+                updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
               }
             });
           }
-        });
+          finally {
+            myList.setPaintBusy(false);
+          }
+        }));
       }
     });
   }

@@ -67,22 +67,19 @@ public class InlineArtifactAction extends DumbAwareAction {
     }
     if (!treeComponent.checkCanModifyChildren(parent, parentNode, Collections.singletonList(node))) return;
 
-    treeComponent.editLayout(new Runnable() {
-      @Override
-      public void run() {
-        parent.removeChild(element);
-        final ArtifactEditorContext context = myEditor.getContext();
-        final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(context);
-        if (artifact != null) {
-          final CompositePackagingElement<?> rootElement = artifact.getRootElement();
-          if (rootElement instanceof ArtifactRootElement<?>) {
-            for (PackagingElement<?> child : rootElement.getChildren()) {
-              parent.addOrFindChild(ArtifactUtil.copyWithChildren(child, context.getProject()));
-            }
+    treeComponent.editLayout(() -> {
+      parent.removeChild(element);
+      final ArtifactEditorContext context = myEditor.getContext();
+      final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(context);
+      if (artifact != null) {
+        final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+        if (rootElement instanceof ArtifactRootElement<?>) {
+          for (PackagingElement<?> child : rootElement.getChildren()) {
+            parent.addOrFindChild(ArtifactUtil.copyWithChildren(child, context.getProject()));
           }
-          else {
-            parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement, context.getProject()));
-          }
+        }
+        else {
+          parent.addOrFindChild(ArtifactUtil.copyWithChildren(rootElement, context.getProject()));
         }
       }
     });

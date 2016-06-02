@@ -145,11 +145,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           daemon.restart();
         }
         else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              daemon.restart();
-            }
-          });
+          SwingUtilities.invokeLater(() -> daemon.restart());
         }
       }
     });
@@ -232,23 +228,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         try {
           indicator.setText(title);
           incModificationCount();
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              try {
-                result[0] = addBuildFileImpl(file);
-                updateRegisteredActions();
-              }
-              catch (AntNoFileException e) {
-                ex[0] = e;
-              }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            try {
+              result[0] = addBuildFileImpl(file);
+              updateRegisteredActions();
+            }
+            catch (AntNoFileException e) {
+              ex[0] = e;
             }
           });
           if (result[0] != null) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                myEventDispatcher.getMulticaster().buildFileAdded(result[0]);
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().buildFileAdded(result[0]));
           }
         }
         finally {
@@ -401,27 +391,15 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     myIsInitialized = Boolean.FALSE;
     myAntWorkspaceConfiguration.loadFromProjectSettings(parentNode);
     getProperties().readExternal(parentNode);
-    runWhenInitialized(new Runnable() {
-      public void run() {
-        loadBuildFileProjectProperties(parentNode);
-      }
-    });
+    runWhenInitialized(() -> loadBuildFileProjectProperties(parentNode));
   }
 
   private void runWhenInitialized(final Runnable runnable) {
     if (getProject().isInitialized()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          runnable.run();
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> runnable.run());
     }
     else {
-      myStartupManager.runWhenProjectIsInitialized(new Runnable() {
-        public void run() {
-          runnable.run();
-        }
-      });
+      myStartupManager.runWhenProjectIsInitialized(() -> runnable.run());
     }
   }
 
@@ -439,11 +417,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           }
           final List<VirtualFile> files = new ArrayList<VirtualFile>(myAntFileToContextFileMap.keySet());
           // sort in order to minimize changes
-          Collections.sort(files, new Comparator<VirtualFile>() {
-            public int compare(final VirtualFile o1, final VirtualFile o2) {
-              return o1.getUrl().compareTo(o2.getUrl());
-            }
-          });
+          Collections.sort(files, (o1, o2) -> o1.getUrl().compareTo(o2.getUrl()));
           for (VirtualFile file : files) {
             final Element element = new Element(CONTEXT_MAPPING);
             final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
@@ -641,26 +615,24 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     targetDone.down();
     final Ref<Boolean> result = Ref.create(Boolean.FALSE);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        try {
-          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-          if (project == null || project.isDisposed()) {
-            targetDone.up();
-          }
-          else {
-            target.run(dataContext, additionalProperties, new AntBuildListener() {
-              public void buildFinished(int state, int errorCount) {
-                result.set((state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0));
-                targetDone.up();
-              }
-            });
-          }
-        }
-        catch (Throwable e) {
+    SwingUtilities.invokeLater(() -> {
+      try {
+        final Project project = dataContext.getData(CommonDataKeys.PROJECT);
+        if (project == null || project.isDisposed()) {
           targetDone.up();
-          LOG.error(e);
         }
+        else {
+          target.run(dataContext, additionalProperties, new AntBuildListener() {
+            public void buildFinished(int state, int errorCount) {
+              result.set((state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0));
+              targetDone.up();
+            }
+          });
+        }
+      }
+      catch (Throwable e) {
+        targetDone.up();
+        LOG.error(e);
       }
     });
     targetDone.waitFor();
@@ -717,102 +689,96 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         indicator.pushState();
         try {
           indicator.setText(title);
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              try {
-                myInitThread = Thread.currentThread();
-                // first, remove existing files
-                for (AntBuildFile file : getBuildFiles()) {
-                  removeBuildFileImpl(file);
-                }
-                // then fill the configuration with the files configured in xml
-                List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
-                for (Pair<Element, String> pair : files) {
-                  final Element element = pair.getFirst();
-                  final VirtualFile file = vfManager.findFileByUrl(pair.getSecond());
-                  if (file == null) {
-                    continue;
-                  }
-                  try {
-                    final AntBuildFileBase buildFile = addBuildFileImpl(file);
-                    buildFile.readProperties(element);
-                    buildFiles.add(Pair.create(element, buildFile));
-                  }
-                  catch (AntNoFileException ignored) {
-                  }
-                  catch (InvalidDataException e) {
-                    LOG.error(e);
-                  }
-                }
-                // updating properties separately to avoid  unnecesary building of PSI after clearing caches
-                for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
-                  final AntBuildFileBase buildFile = pair.getSecond();
-                  buildFile.updateProperties();
-                  final VirtualFile vFile = buildFile.getVirtualFile();
-                  final String buildFileUrl = vFile != null? vFile.getUrl() : null; 
-
-                  for (final Object o1 : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
-                    final Element e = (Element)o1;
-                    final String eventId = e.getAttributeValue(EVENT_ELEMENT);
-                    ExecutionEvent event = null;
-                    final String targetName = e.getAttributeValue(TARGET_ELEMENT);
-                    if (ExecuteBeforeCompilationEvent.TYPE_ID.equals(eventId)) {
-                      event = ExecuteBeforeCompilationEvent.getInstance();
-                    }
-                    else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
-                      event = ExecuteAfterCompilationEvent.getInstance();
-                    }
-                    else if ("beforeRun".equals(eventId)) {
-                      /*
-                      for compatibility with previous format
-
-                      <buildFile url="file://$PROJECT_DIR$/module/src/support-scripts.xml">
-                        <executeOn event="beforeRun" target="prebuild-steps" runConfigurationType="Application" runConfigurationName="Main" />
-                      </buildFile>
-                      */
-                      final String configType = e.getAttributeValue("runConfigurationType");
-                      final String configName = e.getAttributeValue("runConfigurationName");
-                      convertToBeforeRunTask(myProject, buildFileUrl, targetName, configType, configName);
-                    }
-                    else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
-                      try {
-                        event = new ExecuteCompositeTargetEvent(targetName);
-                      }
-                      catch (WrongNameFormatException e1) {
-                        LOG.info(e1);
-                        event = null;
-                      }
-                    }
-                    if (event != null) {
-                      try {
-                        event.readExternal(e, getProject());
-                        setTargetForEvent(buildFile, targetName, event);
-                      }
-                      catch (InvalidDataException readFailed) {
-                        LOG.info(readFailed.getMessage());
-                      }
-                    }
-                  }
-                }
-                AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+          ApplicationManager.getApplication().runReadAction(() -> {
+            try {
+              myInitThread = Thread.currentThread();
+              // first, remove existing files
+              for (AntBuildFile file : getBuildFiles()) {
+                removeBuildFileImpl(file);
               }
-              catch (InvalidDataException e) {
-                LOG.error(e);
+              // then fill the configuration with the files configured in xml
+              List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
+              for (Pair<Element, String> pair : files) {
+                final Element element = pair.getFirst();
+                final VirtualFile file = vfManager.findFileByUrl(pair.getSecond());
+                if (file == null) {
+                  continue;
+                }
+                try {
+                  final AntBuildFileBase buildFile = addBuildFileImpl(file);
+                  buildFile.readProperties(element);
+                  buildFiles.add(Pair.create(element, buildFile));
+                }
+                catch (AntNoFileException ignored) {
+                }
+                catch (InvalidDataException e) {
+                  LOG.error(e);
+                }
+              }
+              // updating properties separately to avoid  unnecesary building of PSI after clearing caches
+              for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
+                final AntBuildFileBase buildFile = pair.getSecond();
+                buildFile.updateProperties();
+                final VirtualFile vFile = buildFile.getVirtualFile();
+                final String buildFileUrl = vFile != null? vFile.getUrl() : null;
+
+                for (final Object o1 : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
+                  final Element e = (Element)o1;
+                  final String eventId = e.getAttributeValue(EVENT_ELEMENT);
+                  ExecutionEvent event = null;
+                  final String targetName = e.getAttributeValue(TARGET_ELEMENT);
+                  if (ExecuteBeforeCompilationEvent.TYPE_ID.equals(eventId)) {
+                    event = ExecuteBeforeCompilationEvent.getInstance();
+                  }
+                  else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
+                    event = ExecuteAfterCompilationEvent.getInstance();
+                  }
+                  else if ("beforeRun".equals(eventId)) {
+                    /*
+                    for compatibility with previous format
+
+                    <buildFile url="file://$PROJECT_DIR$/module/src/support-scripts.xml">
+                      <executeOn event="beforeRun" target="prebuild-steps" runConfigurationType="Application" runConfigurationName="Main" />
+                    </buildFile>
+                    */
+                    final String configType = e.getAttributeValue("runConfigurationType");
+                    final String configName = e.getAttributeValue("runConfigurationName");
+                    convertToBeforeRunTask(myProject, buildFileUrl, targetName, configType, configName);
+                  }
+                  else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
+                    try {
+                      event = new ExecuteCompositeTargetEvent(targetName);
+                    }
+                    catch (WrongNameFormatException e1) {
+                      LOG.info(e1);
+                      event = null;
+                    }
+                  }
+                  if (event != null) {
+                    try {
+                      event.readExternal(e, getProject());
+                      setTargetForEvent(buildFile, targetName, event);
+                    }
+                    catch (InvalidDataException readFailed) {
+                      LOG.info(readFailed.getMessage());
+                    }
+                  }
+                }
+              }
+              AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+            }
+            catch (InvalidDataException e) {
+              LOG.error(e);
+            }
+            finally {
+              try {
+                incModificationCount();
+                updateRegisteredActions();
               }
               finally {
-                try {
-                  incModificationCount();
-                  updateRegisteredActions();
-                }
-                finally {
-                  myInitThread = null;
-                  myIsInitialized = Boolean.TRUE;
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      myEventDispatcher.getMulticaster().configurationLoaded();
-                    }
-                  }, ModalityState.any());
-                }
+                myInitThread = null;
+                myIsInitialized = Boolean.TRUE;
+                ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().configurationLoaded(), ModalityState.any());
               }
             }
           });
@@ -865,11 +831,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!app.isDispatchThread() || task.isHeadless()) {
       // for headless tasks we need to ensure async execution. 
       // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
-      app.invokeLater(new Runnable() {
-        public void run() {
-          task.queue();
-        }
-      }, ModalityState.any());
+      app.invokeLater(() -> task.queue(), ModalityState.any());
     }
     else {
       task.queue();

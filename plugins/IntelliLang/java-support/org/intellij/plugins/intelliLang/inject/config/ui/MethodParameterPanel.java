@@ -76,18 +76,16 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     super(injection, project);
     $$$setupUI$$$();
 
-    myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, new Function<String, Document>() {
-      public Document fun(String s) {
-        final Document document = PsiUtilEx.createDocument(s, project);
-        document.addDocumentListener(new DocumentAdapter() {
-          @Override
-          public void documentChanged(final DocumentEvent e) {
-            updateParamTree();
-            updateTree();
-          }
-        });
-        return document;
-      }
+    myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, s -> {
+      final Document document = PsiUtilEx.createDocument(s, project);
+      document.addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void documentChanged(final DocumentEvent e) {
+          updateParamTree();
+          updateTree();
+        }
+      });
+      return document;
     }, "");
     myClassPanel.add(myClassField, BorderLayout.CENTER);
     myParamsTable.getTree().setShowsRootHandles(true);
@@ -181,27 +179,22 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void rebuildTreeModel() {
     myData.clear();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiType classType = getClassType();
-        final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
-          findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
-        if (classes.length == 0) return;
-        final THashSet<String> visitedSignatures = new THashSet<String>();
-        for (PsiClass psiClass : classes) {
-          for (PsiMethod method : psiClass.getMethods()) {
-            final PsiModifierList modifiers = method.getModifierList();
-            if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
-            if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
-                ContainerUtil.find(method.getParameterList().getParameters(), new Condition<PsiParameter>() {
-                  public boolean value(PsiParameter p) {
-                    return MethodParameterInjection.isInjectable(p.getType(), p.getProject());
-                  }
-                }) != null) {
-              final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
-              if (!visitedSignatures.add(info.getMethodSignature())) continue;
-              myData.put(method, info);
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiType classType = getClassType();
+      final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
+        findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
+      if (classes.length == 0) return;
+      final THashSet<String> visitedSignatures = new THashSet<String>();
+      for (PsiClass psiClass : classes) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          final PsiModifierList modifiers = method.getModifierList();
+          if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) continue;
+          if (MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ||
+              ContainerUtil.find(method.getParameterList().getParameters(),
+                                 p -> MethodParameterInjection.isInjectable(p.getType(), p.getProject())) != null) {
+            final MethodParameterInjection.MethodInfo info = MethodParameterInjection.createMethodInfo(method);
+            if (!visitedSignatures.add(info.getMethodSignature())) continue;
+            myData.put(method, info);
           }
         }
       }
@@ -211,12 +204,10 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
     final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(myData.keySet());
-    Collections.sort(methods, new Comparator<PsiMethod>() {
-      public int compare(final PsiMethod o1, final PsiMethod o2) {
-        final int names = o1.getName().compareTo(o2.getName());
-        if (names != 0) return names;
-        return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
-      }
+    Collections.sort(methods, (o1, o2) -> {
+      final int names = o1.getName().compareTo(o2.getName());
+      if (names != 0) return names;
+      return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
     });
     for (PsiMethod method : methods) {
       final PsiParameter[] params = method.getParameterList().getParameters();
@@ -249,11 +240,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       }
     }).booleanValue();
     if (applyMethods) {
-      other.setMethodInfos(ContainerUtil.findAll(myData.values(), new Condition<MethodParameterInjection.MethodInfo>() {
-        public boolean value(final MethodParameterInjection.MethodInfo methodInfo) {
-          return methodInfo.isEnabled();
-        }
-      }));
+      other.setMethodInfos(ContainerUtil.findAll(myData.values(), methodInfo -> methodInfo.isEnabled()));
     }
   }
 

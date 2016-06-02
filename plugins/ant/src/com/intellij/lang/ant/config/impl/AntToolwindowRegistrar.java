@@ -20,17 +20,18 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,12 +59,11 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     }
     
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
         final AntConfiguration config = AntConfiguration.getInstance(myProject);
         ((AntConfigurationBase)config).ensureInitialized();
-        return config.executeTargetBeforeCompile(dataContext);
+        return config.executeTargetBeforeCompile(createDataContext(context));
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
@@ -77,9 +77,24 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
           }
           return true;
         }
-        return config.executeTargetAfterCompile(dataContext);
+        return config.executeTargetAfterCompile(createDataContext(context));
       }
     });
+  }
+
+  @NotNull
+  private static DataContext createDataContext(CompileContext context) {
+    final HashMap<String, Object> dataMap = new HashMap<>();
+    final Project project = context.getProject();
+    if (project != null) {
+      dataMap.put(CommonDataKeys.PROJECT.getName(), project);
+    }
+    final CompileScope scope = context.getCompileScope();
+    final Module[] modules = scope.getAffectedModules();
+    if (modules.length == 1) {
+      dataMap.put(LangDataKeys.MODULE.getName(), modules[0]);
+    }
+    return SimpleDataContext.getSimpleContext(dataMap, null);
   }
 
   public void projectClosed() {

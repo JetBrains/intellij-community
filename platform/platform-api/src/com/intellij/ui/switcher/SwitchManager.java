@@ -70,19 +70,11 @@ public class SwitchManager {
       if (areAllModifiersPressed(e.getModifiers(), myQa.getModiferCodes())) {
         myWaitingForAutoInitSession = true;
         myAutoInitSessionEvent = e;
-        Runnable initRunnable = new Runnable() {
-          @Override
-          public void run() {
-            IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-              @Override
-              public void run() {
-                if (myWaitingForAutoInitSession) {
-                  tryToInitSessionFromFocus(null, false);
-                }
-              }
-            });
+        Runnable initRunnable = () -> IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+          if (myWaitingForAutoInitSession) {
+            tryToInitSessionFromFocus(null, false);
           }
-        };
+        });
         if (myFadingAway.isEmpty()) {
           myInitSessionAlarm.addRequest(initRunnable, Registry.intValue("actionSystem.keyGestureHoldTime"));
         }
@@ -176,12 +168,8 @@ public class SwitchManager {
         @Override
         public void consume(final SwitchTarget switchTarget) {
           mySession = null;
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-            @Override
-            public void run() {
-              tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(result.createSetDoneRunnable());
-            }
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+            () -> tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(result.createSetDoneRunnable()));
         }
       });
     }

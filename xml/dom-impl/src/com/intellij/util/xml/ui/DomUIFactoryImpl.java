@@ -58,20 +58,10 @@ public class DomUIFactoryImpl extends DomUIFactory {
   private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<Function<DomElement, TableCellEditor>>();
 
   public DomUIFactoryImpl() {
-    final Function<DomElement, TableCellEditor> booleanCreator = new Function<DomElement, TableCellEditor>() {
-      @Override
-      public TableCellEditor fun(final DomElement domElement) {
-        return new BooleanTableCellEditor();
-      }
-    };
+    final Function<DomElement, TableCellEditor> booleanCreator = domElement -> new BooleanTableCellEditor();
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
-    registerCustomCellEditor(String.class, new Function<DomElement, TableCellEditor>() {
-      @Override
-      public TableCellEditor fun(final DomElement domElement) {
-        return new DefaultCellEditor(removeBorder(new JTextField()));
-      }
-    });
+    registerCustomCellEditor(String.class, domElement -> new DefaultCellEditor(removeBorder(new JTextField())));
     Consumer<DomUIFactory>[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
     for (Consumer<DomUIFactory> extension : extensions) {
       extension.consume(this);

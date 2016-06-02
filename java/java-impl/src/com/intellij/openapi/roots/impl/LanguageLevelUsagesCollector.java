@@ -55,11 +55,6 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
     }
     languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().toString());
 
-    return ContainerUtil.map2Set(languageLevels, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String languageLevel) {
-        return new UsageDescriptor(languageLevel, 1);
-      }
-    });
+    return ContainerUtil.map2Set(languageLevels, languageLevel -> new UsageDescriptor(languageLevel, 1));
   }
 }

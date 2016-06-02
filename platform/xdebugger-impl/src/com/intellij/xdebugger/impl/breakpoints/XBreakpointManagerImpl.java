@@ -16,9 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -401,8 +399,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myDefaultBreakpoints.clear();
     myBreakpointsDefaults.clear();
 
-    AccessToken token = ReadAction.start();
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
         loadBreakpoint(breakpointState, true);
       }
@@ -430,10 +427,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       }
 
       myDependentBreakpointManager.loadState();
-    }
-    finally {
-      token.finish();
-    }
+    });
     myLineBreakpointManager.updateBreakpointsUI();
     myTime = state.getTime();
     myDefaultGroup = state.getDefaultGroup();

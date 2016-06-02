@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,7 +26,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JavaParameterInfo extends ParameterInfo {
   @Nullable
-  PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
+  PsiType createType(@Nullable PsiElement context, final PsiManager manager) throws IncorrectOperationException;
+
+  @Nullable
+  default PsiType createType(@NotNull PsiElement context) {
+    return createType(context, context.getManager());
+  }
 
   String getTypeText();
 
@@ -34,8 +40,7 @@ public interface JavaParameterInfo extends ParameterInfo {
   PsiExpression getValue(PsiCallExpression callExpression);
 
   @Nullable
-  @Override
-  default PsiElement getActualValue(PsiElement callExpression) {
+  default PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
     return callExpression instanceof PsiCallExpression ? getValue((PsiCallExpression)callExpression) : null;
   }
 

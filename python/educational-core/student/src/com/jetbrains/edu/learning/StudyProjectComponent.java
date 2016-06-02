@@ -52,8 +52,6 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-  // Shows could we use JavaFX Task Description panel or should use Swing
-  private boolean useJavaFx = true;
   private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
@@ -63,11 +61,8 @@ public class StudyProjectComponent implements ProjectComponent {
   public void projectOpened() {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
-    try {
+    if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
-    }
-    catch (NoClassDefFoundError e) {
-      useJavaFx = false;
     }
 
     if (course != null && !course.isUpToDate()) {
@@ -115,10 +110,12 @@ public class StudyProjectComponent implements ProjectComponent {
       List<AnAction> actionsOnToolbar = window.getActions(true);
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
-          if (action instanceof StudyToolbarAction) {
-            String id = ((StudyToolbarAction)action).getActionId();
-            String[] shortcuts = ((StudyToolbarAction)action).getShortcuts();
-            addShortcut(id, shortcuts);
+          if (action instanceof StudyActionWithShortcut) {
+            String id = ((StudyActionWithShortcut)action).getActionId();
+            String[] shortcuts = ((StudyActionWithShortcut)action).getShortcuts();
+            if (shortcuts != null) {
+              addShortcut(id, shortcuts);
+            }
           }
         }
       }
@@ -230,7 +227,7 @@ public class StudyProjectComponent implements ProjectComponent {
             keymap.addShortcut(actionShortcut.first, new KeyboardShortcut(KeyStroke.getKeyStroke(actionShortcut.second), null));
           }
         }
-       }
+      }
     }
     myListener = null;
   }
@@ -283,10 +280,6 @@ public class StudyProjectComponent implements ProjectComponent {
     return module.getComponent(StudyProjectComponent.class);
   }
 
-  public boolean useJavaFx() {
-    return useJavaFx;
-  }
-
   private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -294,30 +287,30 @@ public class StudyProjectComponent implements ProjectComponent {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
+        return;
+      }
       if (taskDir != null && taskDir.getName().contains(EduNames.TASK)) {
         int taskIndex = EduUtils.getIndex(taskDir.getName(), EduNames.TASK);
         final VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON)) {
           int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
-          if (course != null) {
-            List<Lesson> lessons = course.getLessons();
-            if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
-              final Lesson lesson = lessons.get(lessonIndex);
-              final List<Task> tasks = lesson.getTaskList();
-              if (StudyUtils.indexIsValid(taskIndex, tasks)) {
-                final Task task = tasks.get(taskIndex);
-                final TaskFile taskFile = new TaskFile();
-                taskFile.initTaskFile(task, false);
-                taskFile.setUserCreated(true);
-                final String name = createdFile.getName();
-                taskFile.name = name;
-                task.getTaskFiles().put(name, taskFile);
-              }
+          List<Lesson> lessons = course.getLessons();
+          if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
+            final Lesson lesson = lessons.get(lessonIndex);
+            final List<Task> tasks = lesson.getTaskList();
+            if (StudyUtils.indexIsValid(taskIndex, tasks)) {
+              final Task task = tasks.get(taskIndex);
+              final TaskFile taskFile = new TaskFile();
+              taskFile.initTaskFile(task, false);
+              taskFile.setUserCreated(true);
+              final String name = createdFile.getName();
+              taskFile.name = name;
+              task.getTaskFiles().put(name, taskFile);
             }
           }
         }
       }
     }
   }
-
 }

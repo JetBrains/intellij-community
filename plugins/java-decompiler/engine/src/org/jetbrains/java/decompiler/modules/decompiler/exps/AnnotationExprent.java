@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.List;
 
 public class AnnotationExprent extends Exprent {
-
   public static final int ANNOTATION_NORMAL = 1;
   public static final int ANNOTATION_MARKER = 2;
   public static final int ANNOTATION_SINGLE_ELEMENT = 3;
@@ -45,29 +44,38 @@ public class AnnotationExprent extends Exprent {
     TextBuffer buffer = new TextBuffer();
 
     buffer.appendIndent(indent);
-    buffer.append("@");
+    buffer.append('@');
     buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(className)));
 
-    if (!parNames.isEmpty()) {
-      buffer.append("(");
-      if (parNames.size() == 1 && "value".equals(parNames.get(0))) {
-        buffer.append(parValues.get(0).toJava(indent + 1, tracer));
-      }
-      else {
-        for (int i = 0; i < parNames.size(); i++) {
+    int type = getAnnotationType();
+
+    if (type != ANNOTATION_MARKER) {
+      buffer.append('(');
+
+      boolean oneLiner = type == ANNOTATION_SINGLE_ELEMENT || indent < 0;
+
+      for (int i = 0; i < parNames.size(); i++) {
+        if (!oneLiner) {
           buffer.appendLineSeparator().appendIndent(indent + 1);
+        }
+
+        if (type != ANNOTATION_SINGLE_ELEMENT) {
           buffer.append(parNames.get(i));
           buffer.append(" = ");
-          buffer.append(parValues.get(i).toJava(indent + 2, tracer));
-
-          if (i < parNames.size() - 1) {
-            buffer.append(",");
-          }
         }
+
+        buffer.append(parValues.get(i).toJava(0, tracer));
+
+        if (i < parNames.size() - 1) {
+          buffer.append(',');
+        }
+      }
+
+      if (!oneLiner) {
         buffer.appendLineSeparator().appendIndent(indent);
       }
 
-      buffer.append(")");
+      buffer.append(')');
     }
 
     return buffer;

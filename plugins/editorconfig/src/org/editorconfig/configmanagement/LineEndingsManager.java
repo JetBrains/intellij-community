@@ -44,18 +44,15 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
   }
 
   private void updateStatusBar() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-        StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
-        StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
+      StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
+      StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
 
-        if (widget instanceof LineSeparatorPanel) {
-          FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(myProject),
-                                                                    null, null, null, null);
-          ((LineSeparatorPanel)widget).selectionChanged(event);
-        }
+      if (widget instanceof LineSeparatorPanel) {
+        FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(myProject),
+                                                                  null, null, null, null);
+        ((LineSeparatorPanel)widget).selectionChanged(event);
       }
     });
   }

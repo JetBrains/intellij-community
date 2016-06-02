@@ -29,16 +29,13 @@ public class PatternValuesIndex {
 
   public static Set<String> buildStringIndex(Collection<ElementPattern<?>> patterns) {
     final THashSet<String> result = new THashSet<String>();
-    processStringValues(patterns, new PairProcessor<ElementPattern<?>, Collection<Object>>() {
-      @Override
-      public boolean process(ElementPattern<?> elementPattern, Collection<Object> value) {
-        for (Object o : value) {
-          if (o instanceof String) {
-            result.add((String)o);
-          }
+    processStringValues(patterns, (elementPattern, value) -> {
+      for (Object o : value) {
+        if (o instanceof String) {
+          result.add((String)o);
         }
-        return true;
       }
+      return true;
     });
     return result;
   }

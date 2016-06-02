@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +21,13 @@ import com.intellij.remoteServer.agent.annotation.AsyncCall;
 import com.intellij.remoteServer.agent.annotation.ChildCall;
 import com.intellij.remoteServer.agent.annotation.FinalCall;
 import com.intellij.remoteServer.agent.annotation.ImmediateCall;
-import com.intellij.remoteServer.agent.impl.util.FinalTask;
-import com.intellij.remoteServer.agent.impl.util.SequentialTaskExecutor;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * @author michael.golubev
@@ -20,16 +36,12 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
   private static final Logger LOG = Logger.getInstance("#" + ThreadInvocationHandler.class.getName());
 
-  private final SequentialTaskExecutor myTaskExecutor;
+  private final ExecutorService myTaskExecutor;
   private final ClassLoader myCallerClassLoader;
   private final Object myTarget;
   private final ChildWrapperCreator myPreWrapperFactory;
 
-  public ThreadInvocationHandler(SequentialTaskExecutor taskExecutor, ClassLoader callerClassLoader, Object target) {
-    this(taskExecutor, callerClassLoader, target, null);
-  }
-
-  public ThreadInvocationHandler(SequentialTaskExecutor taskExecutor, ClassLoader callerClassLoader, Object target,
+  public ThreadInvocationHandler(ExecutorService taskExecutor, ClassLoader callerClassLoader, Object target,
                                  @Nullable ChildWrapperCreator preWrapperCreator) {
     myTaskExecutor = taskExecutor;
     myCallerClassLoader = callerClassLoader;
@@ -39,21 +51,17 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-    final Callable<Object> taskCallable = new Callable<Object>() {
-
-      @Override
-      public Object call() {
-        try {
-          return method.invoke(myTarget, args);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-          return null;
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-          return null;
-        }
+    final Callable<Object> taskCallable = () -> {
+      try {
+        return method.invoke(myTarget, args);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+        return null;
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+        return null;
       }
     };
 
@@ -62,7 +70,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
       boolean childCall = method.getAnnotation(ChildCall.class) != null;
       if (childCall) {
-        Object child = immediateCall ? taskCallable.call() : myTaskExecutor.queueAndWaitTask(taskCallable);
+        Object child = immediateCall ? taskCallable.call() : executeAndWait(taskCallable);
         if (child == null) {
           return null;
         }
@@ -91,36 +99,39 @@ public class ThreadInvocationHandler implements InvocationHandler {
       boolean asyncCall = method.getAnnotation(AsyncCall.class) != null;
 
       if (asyncCall) {
-        myTaskExecutor.queueTask(new Runnable() {
-
-          @Override
-          public void run() {
-            try {
-              taskCallable.call();
-            }
-            catch (Exception e) {
-              LOG.error(e); // should never happen
-            }
+        myTaskExecutor.submit(() -> {
+          try {
+            taskCallable.call();
+          }
+          catch (Exception e) {
+            LOG.error(e); // should never happen
           }
         });
         return null;
       }
       else {
-        return myTaskExecutor.queueAndWaitTask(taskCallable);
+        return executeAndWait(taskCallable);
       }
     }
     finally {
       boolean finalCall = method.getAnnotation(FinalCall.class) != null;
       if (finalCall) {
-        myTaskExecutor.queueTask(new FinalTask() {
-
-          @Override
-          public void run() {
-
-          }
-        });
+        myTaskExecutor.shutdownNow();
       }
     }
+  }
+
+  private Object executeAndWait(Callable<Object> taskCallable) throws Throwable {
+    Object child;
+    Future<Object> future = myTaskExecutor.submit(taskCallable);
+    try {
+      child = future.get();
+    }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      throw cause == null ? e : cause;
+    }
+    return child;
   }
 
   private Object createChildProxy(Object child) {
@@ -150,7 +161,10 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
     return Proxy.newProxyInstance(myCallerClassLoader,
                                   new Class[]{callerChildInterface},
-                                  new ThreadInvocationHandler(myTaskExecutor, myCallerClassLoader, preWrappedChild,
-                                                              myPreWrapperFactory));
+                                  new ThreadInvocationHandler(
+                                    myTaskExecutor,
+                                    myCallerClassLoader, preWrappedChild,
+                                    myPreWrapperFactory
+                                  ));
   }
 }

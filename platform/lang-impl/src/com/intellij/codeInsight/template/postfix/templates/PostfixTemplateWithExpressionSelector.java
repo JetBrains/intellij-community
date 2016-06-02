@@ -81,16 +81,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
       editor, expressions,
       new Pass<PsiElement>() {
         public void pass(@NotNull final PsiElement e) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CommandProcessor.getInstance().executeCommand(e.getProject(), new Runnable() {
-                public void run() {
-                  expandForChooseExpression(e, editor);
-                }
-              }, "Expand postfix template", PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(e.getProject(), () -> expandForChooseExpression(e, editor), "Expand postfix template", PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
         }
       },
       mySelector.getRenderer(),

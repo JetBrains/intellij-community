@@ -90,21 +90,17 @@ public final class ChainsSearcher {
 
     final LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>> q =
       new LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>(ContainerUtil.map(allInitialVertexes,
-                        new Function<WeightAware<MethodIncompleteSignature>, WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>() {
-                          @Override
-                          public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
-                            final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
-                            final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
-                            return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                              Pair.create(
-                                underlying,
-                                new MethodsChain(context.resolveNotDeprecated(underlying),
-                                                 methodIncompleteSignatureWeightAware.getWeight(),
-                                                 underlying.getOwner())),
-                              methodIncompleteSignatureWeightAware.getWeight()
-                            );
-                          }
-                        }
+                                                                                                   methodIncompleteSignatureWeightAware -> {
+                                                                                                     final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
+                                                                                                     return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
+                                                                                                       Pair.create(
+                                                                                                         underlying,
+                                                                                                         new MethodsChain(context.resolveNotDeprecated(underlying),
+                                                                                                                          methodIncompleteSignatureWeightAware.getWeight(),
+                                                                                                                          underlying.getOwner())),
+                                                                                                       methodIncompleteSignatureWeightAware.getWeight()
+                                                                                                     );
+                                                                                                   }
       ));
 
     int maxWeight = 0;
@@ -265,45 +261,42 @@ public final class ChainsSearcher {
     }
 
     private static List<MethodsChain> reduceChainsSize(final List<MethodsChain> chains, final PsiManager psiManager) {
-      return ContainerUtil.map(chains, new Function<MethodsChain, MethodsChain>() {
-        @Override
-        public MethodsChain fun(final MethodsChain chain) {
-          final Iterator<PsiMethod[]> chainIterator = chain.iterator();
-          if (!chainIterator.hasNext()) {
-            LOG.error("empty chain");
+      return ContainerUtil.map(chains, chain -> {
+        final Iterator<PsiMethod[]> chainIterator = chain.iterator();
+        if (!chainIterator.hasNext()) {
+          LOG.error("empty chain");
+          return chain;
+        }
+        final PsiMethod[] first = chainIterator.next();
+        while (chainIterator.hasNext()) {
+          final PsiMethod psiMethod = chainIterator.next()[0];
+          if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            continue;
+          }
+          final PsiClass current = psiMethod.getContainingClass();
+          if (current == null) {
+            LOG.error("containing class must be not null");
             return chain;
           }
-          final PsiMethod[] first = chainIterator.next();
-          while (chainIterator.hasNext()) {
-            final PsiMethod psiMethod = chainIterator.next()[0];
-            if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-              continue;
-            }
-            final PsiClass current = psiMethod.getContainingClass();
-            if (current == null) {
-              LOG.error("containing class must be not null");
-              return chain;
-            }
-            final PsiMethod[] currentMethods = current.findMethodsByName(first[0].getName(), true);
-            if (currentMethods.length != 0) {
-              for (final PsiMethod f : first) {
-                final PsiMethod[] fSupers = f.findDeepestSuperMethods();
-                final PsiMethod fSuper = fSupers.length == 0 ? first[0] : fSupers[0];
-                for (final PsiMethod currentMethod : currentMethods) {
-                  if (psiManager.areElementsEquivalent(currentMethod, fSuper)) {
-                    return createChainFromFirstElement(chain, currentMethod.getContainingClass());
-                  }
-                  for (final PsiMethod method : currentMethod.findDeepestSuperMethods()) {
-                    if (psiManager.areElementsEquivalent(method, fSuper)) {
-                      return createChainFromFirstElement(chain, method.getContainingClass());
-                    }
+          final PsiMethod[] currentMethods = current.findMethodsByName(first[0].getName(), true);
+          if (currentMethods.length != 0) {
+            for (final PsiMethod f : first) {
+              final PsiMethod[] fSupers = f.findDeepestSuperMethods();
+              final PsiMethod fSuper = fSupers.length == 0 ? first[0] : fSupers[0];
+              for (final PsiMethod currentMethod : currentMethods) {
+                if (psiManager.areElementsEquivalent(currentMethod, fSuper)) {
+                  return createChainFromFirstElement(chain, currentMethod.getContainingClass());
+                }
+                for (final PsiMethod method : currentMethod.findDeepestSuperMethods()) {
+                  if (psiManager.areElementsEquivalent(method, fSuper)) {
+                    return createChainFromFirstElement(chain, method.getContainingClass());
                   }
                 }
               }
             }
           }
-          return chain;
         }
+        return chain;
       });
     }
 

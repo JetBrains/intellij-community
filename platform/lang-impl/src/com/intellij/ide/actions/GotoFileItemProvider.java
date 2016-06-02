@@ -67,6 +67,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       }
     }
 
+    if (pattern.startsWith("./") || pattern.startsWith(".\\")) {
+      pattern = pattern.substring(1);
+    }
+
     return super.filterElements(base, pattern, everywhere, indicator, consumer);
   }
 }

@@ -78,21 +78,15 @@ public class GithubDownloadUtil {
       project,
       progressTitle,
       "Downloading zip archive" + DownloadUtil.CONTENT_LENGTH_TEMPLATE + " ...",
-      new Callable<File>() {
-        @Override
-        public File call() throws Exception {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          downloadAtomically(progress, url, outputFile, userName, repositoryName);
-          return outputFile;
+      () -> {
+        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        downloadAtomically(progress, url, outputFile, userName, repositoryName);
+        return outputFile;
+      }, () -> {
+        if (!retryOnError) {
+          return false;
         }
-      }, new Producer<Boolean>() {
-        @Override
-        public Boolean produce() {
-          if (!retryOnError) {
-            return false;
-          }
-          return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
-        }
+        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
       }
     );
     File out = outcome.get();

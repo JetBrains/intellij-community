@@ -55,11 +55,6 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     };
   }
 
-  @Override
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
-  }
-
   public ShowChangeMarkerAction() {
     myChangeMarkerContext = new ChangeMarkerContext() {
       @Override
@@ -116,6 +111,11 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
 
 
     LineStatusTrackerDrawing.moveToRange(range, editor, lineStatusTracker);
+  }
+
+  @Override
+  protected boolean forceSyncUpdate(final AnActionEvent e) {
+    return true;
   }
 
   protected interface ChangeMarkerContext {

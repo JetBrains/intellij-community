@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Map;
 
 public class SerializedStubTree {
   private final byte[] myBytes;
@@ -37,7 +36,6 @@ public class SerializedStubTree {
   private final long myByteContentLength;
   private final int myCharContentLength;
   private Stub myStubElement;
-  private Map<StubIndexKey, Map<Object, StubIdList>> myStubIndicesValueMap;
 
   public SerializedStubTree(final byte[] bytes, int length, @Nullable Stub stubElement, long byteContentLength, int charContentLength) {
     myBytes = bytes;
@@ -88,14 +86,6 @@ public class SerializedStubTree {
       if (willIndexStub) return stubElement;
     }
     return SerializationManagerEx.getInstanceEx().deserialize(new UnsyncByteArrayInputStream(myBytes));
-  }
-
-  public Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap() {
-    return myStubIndicesValueMap;
-  }
-
-  public void setStubIndicesValueMap(Map<StubIndexKey, Map<Object, StubIdList>> nestedIndicesMap) {
-    myStubIndicesValueMap = nestedIndicesMap;
   }
 
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {

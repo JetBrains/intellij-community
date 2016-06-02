@@ -44,7 +44,7 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     configuration.setGeneratedName();
     checkSuggestedName("testSmth()", configuration);
 
-    data.METHOD_NAME = "12345678901234567890";
+    data.METHOD_NAME = "123456789012345678900";
     configuration.setGeneratedName();
     checkSuggestedName("123456789012345678...()", configuration);
   }

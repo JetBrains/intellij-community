@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
@@ -36,24 +35,30 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   }
 
   public void testDecoratorsPy3K() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-19130
+  public void testClassDecoratedThroughDecorator() {
+    doTest();
+  }
+
+  // PY-19130
+  public void testClassDecoratedThroughCall() {
+    doTest();
   }
   
   public void testTupleVsLiteralList() {
     doTest();
   }
-  
-  public void testInheritedInit() {  // PY-312
+
+  // PY-312
+  public void testInheritedInit() {
     doTest();
   }
-  
-  public void testBadDecorator() {  // PY-428
+
+  // PY-428
+  public void testBadDecorator() {
     doTest();
   }
   
@@ -74,13 +79,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   }
   
   public void testPy1268() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
   
   public void testInstanceMethodAsLambda() {
@@ -91,15 +90,23 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testTuples() {  // PY-2294
+  // PY-19412
+  public void testReassignedViaClassMethod() {
     doTest();
   }
 
-  public void testNestedClass() {  // PY-2460
+  // PY-2294
+  public void testTuples() {
     doTest();
   }
 
-  public void testReassignedMethod() {  // PY-2622
+  // PY-2460
+  public void testNestedClass() {
+    doTest();
+  }
+
+  // PY-2622
+  public void testReassignedMethod() {
     doTest();
   }
 
@@ -107,15 +114,18 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testFunctionStoredInInstance() {  // PY-3623
+  // PY-3623
+  public void testFunctionStoredInInstance() {
     doTest();
   }
-  
-  public void testUnresolvedSuperclass() {  // PY-4419
+
+  // PY-4419
+  public void testUnresolvedSuperclass() {
     doTest();
   }
-  
-  public void testMultipleInheritedConstructors() {  // PY-4897
+
+  // PY-4897
+  public void testMultipleInheritedConstructors() {
     doTest();
   }
 
@@ -139,13 +149,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   }
 
   public void testPy3k() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
   private void doTest() {
@@ -179,11 +183,13 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testParameterWithDefaultAfterKeywordContainer() {  // PY-9934
+  // PY-9934
+  public void testParameterWithDefaultAfterKeywordContainer() {
     doTest();
   }
 
-  public void testParameterWithDefaultAfterKeywordContainer2() {  // PY-10351
+  // PY-10351
+  public void testParameterWithDefaultAfterKeywordContainer2() {
     doTest();
   }
 

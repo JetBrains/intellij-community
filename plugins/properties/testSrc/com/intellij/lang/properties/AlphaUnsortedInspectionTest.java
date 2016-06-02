@@ -99,8 +99,4 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
     return PluginPathManager.getPluginHomePath("properties") + "/testData/alphaUnsorted/";
   }
 
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
 }

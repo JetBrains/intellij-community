@@ -360,18 +360,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       @Nullable
       @Override
       public String getPresentableText() {
-        if (!isValid()) {
-          return null;
-        }
+        PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
         final PyExpression[] superClassExpressions = getSuperClassExpressions();
         if (superClassExpressions.length > 0) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
-            public String fun(PyExpression expr) {
-              String name = expr.getText();
-              return notNullize(name, PyNames.UNNAMED_ELEMENT);
-            }
+          result.append(join(Arrays.asList(superClassExpressions), expr -> {
+            String name = expr.getText();
+            return notNullize(name, PyNames.UNNAMED_ELEMENT);
           }, ", "));
           result.append(")");
         }
@@ -737,12 +733,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private Map<String, Property> initializePropertyCache() {
     final Map<String, Property> result = new HashMap<String, Property>();
-    processProperties(null, new Processor<Property>() {
-      @Override
-      public boolean process(Property property) {
-        result.put(property.getName(), property);
-        return false;
-      }
+    processProperties(null, property -> {
+      result.put(property.getName(), property);
+      return false;
     }, false);
     return result;
   }
@@ -755,9 +748,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable
   private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
-    if (!isValid()) {
-      return null;
-    }
+    PyPsiUtils.assertValid(this);
     LanguageLevel level = LanguageLevel.getDefault();
     // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
     final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
@@ -1244,6 +1235,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+    PyPsiUtils.assertValid(this);
     if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
       final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
       final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
@@ -1278,7 +1270,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             if (resolvedType instanceof PyClassLikeType) {
               classLikeType = (PyClassLikeType)resolvedType;
             }
-          }
+         }
         }
       }
       result.add(classLikeType);
@@ -1314,6 +1306,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   @Override
   public PyType getMetaClassType(@NotNull TypeEvalContext context) {
+    PyPsiUtils.assertValid(this);
     if (context.maySwitchToAST(this)) {
       final PyExpression expression = getMetaClassExpression();
       if (expression != null) {
@@ -1374,6 +1367,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) throws MROException {
+    PyPsiUtils.assertValid(this);
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
       final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;

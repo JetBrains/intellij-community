@@ -143,7 +143,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
 
-  private List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
+  protected List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
     final ArrayList<Block> result = new ArrayList<Block>(3);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {

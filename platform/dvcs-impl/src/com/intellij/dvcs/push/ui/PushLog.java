@@ -222,7 +222,7 @@ public class PushLog extends JPanel implements DataProvider {
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser =
-      new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
+      new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
                          null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);

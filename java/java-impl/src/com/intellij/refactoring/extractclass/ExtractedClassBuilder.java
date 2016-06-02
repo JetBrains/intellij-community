@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ import java.util.Set;
 class ExtractedClassBuilder {
   private static final Logger LOGGER = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractedClassBuilder");
 
-  private String className = null;
-  private String packageName = null;
+  private String className;
+  private String packageName;
   private final List<PsiField> fields = new ArrayList<PsiField>(5);
   private final List<PsiMethod> methods = new ArrayList<PsiMethod>(5);
   private final List<PsiClassInitializer> initializers = new ArrayList<PsiClassInitializer>(5);
@@ -48,9 +48,9 @@ class ExtractedClassBuilder {
   private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
   private final List<PsiClass> interfaces = new ArrayList<PsiClass>();
 
-  private boolean requiresBackPointer = false;
-  private String originalClassName = null;
-  private String backPointerName = null;
+  private boolean requiresBackPointer;
+  private String originalClassName;
+  private String backPointerName;
   private Project myProject;
   private JavaCodeStyleManager myJavaCodeStyleManager;
   private Set<PsiField> myFieldsNeedingSetters;
@@ -257,16 +257,14 @@ class ExtractedClassBuilder {
 
   private void outputFieldsAndInitializers(final StringBuffer out, boolean normalizeDeclaration) {
     if (hasEnumConstants()) {
-      out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
-        public String fun(PsiField field) {
-          final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
-          final PsiExpression initializer = field.getInitializer();
-          if (initializer != null) {
-            initializer.accept(new Mutator(fieldStr));
-          }
-          fieldStr.append(")");
-          return fieldStr.toString();
+      out.append(StringUtil.join(enumConstantFields, field -> {
+        final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
+        final PsiExpression initializer = field.getInitializer();
+        if (initializer != null) {
+          initializer.accept(new Mutator(fieldStr));
         }
+        fieldStr.append(")");
+        return fieldStr.toString();
       }, ", "));
       out.append(";");
     }
@@ -542,11 +540,7 @@ class ExtractedClassBuilder {
     }
 
     private boolean isBackpointerReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
-        public boolean value(final PsiField psiField) {
-          return !fieldIsExtracted(psiField);
-        }
-      });
+      return BackpointerUtil.isBackpointerReference(expression, psiField -> !fieldIsExtracted(psiField));
     }
 
 

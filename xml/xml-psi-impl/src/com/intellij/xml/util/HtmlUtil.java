@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,7 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -615,6 +612,7 @@ public class HtmlUtil {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;
+      if ("Dart".equals(language.getID())) return true;
       language = language.getBaseLanguage();
     }
 
@@ -692,5 +690,25 @@ public class HtmlUtil {
     public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
       return true;
     }
+  }
+
+  @Nullable
+  public static Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
+    // comma is useduse as separator because class name cannot contain comma but it can be part of JSF classes attributes
+    return classAttributeValue != null ? StringUtil.tokenize(classAttributeValue, " \t,") : Collections.emptyList();
+  }
+
+  @Contract("!null -> !null")
+  public static String getTagPresentation(final @Nullable XmlTag tag) {
+    if (tag == null) return null;
+    StringBuilder builder = new StringBuilder(tag.getLocalName());
+    String id = StringUtil.nullize(tag.getAttributeValue(ID_ATTRIBUTE_NAME), true);
+    if (id != null) {
+      builder.append('#').append(id);
+    }
+    for (String className : splitClassNames(tag.getAttributeValue(CLASS_ATTRIBUTE_NAME))) {
+      builder.append('.').append(className);
+    }
+    return builder.toString();
   }
 }

@@ -22,12 +22,15 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.PlatformIcons;
@@ -48,7 +51,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionMenuItem extends JCheckBoxMenuItem {
+public class ActionMenuItem extends JBCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
@@ -106,7 +109,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
-    super.fireActionPerformed(event);
+    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
 
   @Override
@@ -278,42 +281,31 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
       fm.typeAheadUntil(typeAhead);
-      fm.runOnOwnContext(myContext, new Runnable() {
-        @Override
-        public void run() {
-          final AnActionEvent event = new AnActionEvent(
-            new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-            myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
-          );
-          final AnAction action = myAction.getAction();
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-            actionManager.fireBeforeActionPerformed(action, myContext, event);
-            Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
-            if (component != null && !isInTree(component)) {
-              typeAhead.setDone();
-              return;
-            }
-
-            SimpleTimer.getInstance().setUp(new Runnable() {
-              @Override
-              public void run() {
-                //noinspection SSBasedInspection
-                SwingUtilities.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    fm.doWhenFocusSettlesDown(typeAhead.createSetDoneRunnable());
-                  }
-                });
-              }
-            }, Registry.intValue("actionSystem.typeAheadTimeAfterPopupAction"));
-
-            ActionUtil.performActionDumbAware(action, event);
-            actionManager.queueActionPerformedEvent(action, myContext, event);
-          }
-          else {
+      fm.runOnOwnContext(myContext, () -> {
+        final AnActionEvent event = new AnActionEvent(
+          new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
+        );
+        final AnAction action1 = myAction.getAction();
+        if (ActionUtil.lastUpdateAndCheckDumb(action1, event, false)) {
+          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+          actionManager.fireBeforeActionPerformed(action1, myContext, event);
+          Component component1 = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
+          if (component1 != null && !isInTree(component1)) {
             typeAhead.setDone();
+            return;
           }
+
+          SimpleTimer.getInstance().setUp(() -> {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(() -> fm.doWhenFocusSettlesDown(typeAhead.createSetDoneRunnable()));
+          }, Registry.intValue("actionSystem.typeAheadTimeAfterPopupAction"));
+
+          ActionUtil.performActionDumbAware(action1, event);
+          actionManager.queueActionPerformedEvent(action1, myContext, event);
+        }
+        else {
+          typeAhead.setDone();
         }
       });
     }
@@ -374,12 +366,9 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
         if (queueForDispose) {
           // later since we cannot remove property listeners inside event processing
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (getParent() == null) {
-                uninstallSynchronizer();
-              }
+          SwingUtilities.invokeLater(() -> {
+            if (getParent() == null) {
+              uninstallSynchronizer();
             }
           });
         }

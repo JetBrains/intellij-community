@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;

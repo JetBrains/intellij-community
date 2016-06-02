@@ -3,18 +3,20 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.jetbrains.env.EnvTestTagsRequired;
-import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
 import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * User : catherine
@@ -22,11 +24,13 @@ import java.util.List;
 @EnvTestTagsRequired(tags = "pytest")
 public class PythonPyTestingTest extends PyEnvTestCase {
 
+  @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
   }
 
+  @Test
   public void testPytestRunner() {
 
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
@@ -53,6 +57,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testPytestRunner2() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
       @NotNull
@@ -97,6 +102,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   /**
    * Ensures file references are highlighted for pytest traceback
    */
+  @Test
   public void testPyTestFileReferences() {
     final String fileName = "reference_tests.py";
 

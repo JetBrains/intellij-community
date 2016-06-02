@@ -51,7 +51,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
                                CommonProblemDescriptor descriptor,
                                @NotNull LocalInspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
-                               OfflineProblemDescriptor offlineDescriptor) {
+                               @NotNull OfflineProblemDescriptor offlineDescriptor) {
     super(refEntity, descriptor, toolWrapper, presentation);
     if (descriptor == null) {
       setUserObject(offlineDescriptor);
@@ -104,12 +104,8 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     if (element instanceof RefElement) {
       final PsiElement psiElement = ((RefElement)element).getElement();
       if (psiElement != null) {
-        ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(new Computable<ProblemDescriptor>() {
-          @Override
-          public ProblemDescriptor compute() {
-            return runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, toolWrapper);
-          }
-        }, new DaemonProgressIndicator());
+        ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
+          () -> runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, toolWrapper), new DaemonProgressIndicator());
         if (descriptor != null) return descriptor;
       }
       return null;

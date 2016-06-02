@@ -140,6 +140,22 @@ public class TrimUtil {
     return new Range(start1, end1, start2, end2);
   }
 
+  @NotNull
+  public static MergeRange expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                   int start1, int start2, int start3, int end1, int end2, int end3) {
+    int count1 = expandForwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3);
+    start1 += count1;
+    start2 += count1;
+    start3 += count1;
+
+    int count2 = expandBackwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3);
+    end1 -= count2;
+    end2 -= count2;
+    end3 -= count2;
+
+    return new MergeRange(start1, end1, start2, end2, start3, end3);
+  }
+
   public static int expandForward(@NotNull CharSequence text1, @NotNull CharSequence text2,
                                   int start1, int start2, int end1, int end2) {
     int oldStart1 = start1;
@@ -343,6 +359,11 @@ public class TrimUtil {
   }
 
   @NotNull
+  public static Range expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
+    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  }
+
+  @NotNull
   public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
     return trim(text1, text2, range.start1, range.start2, range.end1, range.end2);
   }
@@ -351,6 +372,12 @@ public class TrimUtil {
   public static MergeRange trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
                                 @NotNull MergeRange range) {
     return trim(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3);
+  }
+
+  @NotNull
+  public static MergeRange expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                   @NotNull MergeRange range) {
+    return expandW(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3);
   }
 
   @NotNull

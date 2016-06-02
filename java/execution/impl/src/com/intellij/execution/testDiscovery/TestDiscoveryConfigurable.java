@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
+import static java.awt.GridBagConstraints.*;
 
 
 public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
@@ -74,9 +77,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
       }
     });
     final JPanel panelWithSettings = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0,
-                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                         new Insets(0, 0, 0, 0), 0, 0);
+    final GridBagConstraints gc = new GridBagConstraints(0, RELATIVE, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0);
     panelWithSettings.add(myPositionRb, gc);
     myClass.setText("Class:");
     final ClassBrowser classBrowser = new ClassBrowser(project, "Choose Class") {
@@ -111,12 +112,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     myMethod.setComponent(textFieldWithBrowseButton);
     final MethodBrowser methodBrowser = new MethodBrowser(project) {
       protected Condition<PsiMethod> getFilter(final PsiClass testClass) {
-        return new Condition<PsiMethod>() {
-          @Override
-          public boolean value(PsiMethod method) {
-            return method.getContainingClass() == testClass;
-          }
-        };
+        return method -> method.getContainingClass() == testClass;
       }
 
       @Override

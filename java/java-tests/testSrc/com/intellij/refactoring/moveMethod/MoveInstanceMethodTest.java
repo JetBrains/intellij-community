@@ -93,6 +93,24 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     }
   }
 
+  public void testThisMethodReferenceWithTargetField() throws Exception {
+    doTest(false, 0);
+  }
+
+  public void testForeignMethodReferenceWithTargetField() throws Exception {
+    doTest(false, 0);
+  }
+
+  public void testParameterMethodReference() throws Exception {
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doTest(true, 0);
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
+  }
+
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     doTest(isTargetParameter, targetIndex, null);
   }

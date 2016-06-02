@@ -131,7 +131,7 @@ public class IpnbJfxUtils {
 
   @NotNull
   private static String replaceLinks(@NotNull String source) {
-    final Pattern inlineLink = Pattern.compile("(\\[(.*?)\\]\\([ \\t]*<?(.*?)>?[ \\t]*(([\'\"])(.*?)\\5)?\\))", 32);
+    final Pattern inlineLink = Pattern.compile("(\\[(.*?)\\]\\([ \\t]*<?(.*?)>?[ \\t]*(([\'\"])(.*?)\\5)?\\))", Pattern.DOTALL);
     final Matcher matcher = inlineLink.matcher(source);
     final StringBuffer sb = new StringBuffer();
     while (matcher.find()) {

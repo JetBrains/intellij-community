@@ -72,11 +72,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public Comparator<TestResultMessage> getComparator() {
-      return new Comparator<TestResultMessage>() {
-        public int compare(final TestResultMessage o1, final TestResultMessage o2) {
-          return o1.getResult() - o2.getResult();
-        }
-      };
+      return (o1, o2) -> o1.getResult() - o2.getResult();
     }
   }
 
@@ -96,11 +92,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public Comparator<TestResultMessage> getComparator() {
-      return new Comparator<TestResultMessage>() {
-        public int compare(final TestResultMessage o1, final TestResultMessage o2) {
-          return o1.getMethod().compareToIgnoreCase(o2.getMethod());
-        }
-      };
+      return (o1, o2) -> o1.getMethod().compareToIgnoreCase(o2.getMethod());
     }
   }
 
@@ -119,11 +111,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public Comparator<TestResultMessage> getComparator() {
-      return new Comparator<TestResultMessage>() {
-        public int compare(final TestResultMessage o1, final TestResultMessage o2) {
-          return o1.getTestClass().compareToIgnoreCase(o2.getTestClass());
-        }
-      };
+      return (o1, o2) -> o1.getTestClass().compareToIgnoreCase(o2.getTestClass());
     }
   }
 
@@ -141,11 +129,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public Comparator<TestResultMessage> getComparator() {
-      return new Comparator<TestResultMessage>() {
-        public int compare(final TestResultMessage o1, final TestResultMessage o2) {
-          return (int)(getDuration(o1) - getDuration(o2));
-        }
-      };
+      return (o1, o2) -> (int)(getDuration(o1) - getDuration(o2));
     }
   }
 }

@@ -148,16 +148,13 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
         VirtualFile suggestedDir = suggestedPath == null
                                    ? null
                                    : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
-        final NullableConsumer<Sdk> consumer = new NullableConsumer<Sdk>() {
-          @Override
-          public void consume(@Nullable Sdk sdk) {
-            if (sdk == null) return;
-            if (!allSdks.contains(sdk)) {
-              allSdks.add(sdk);
-              sdkService.addSdk(sdk);
-            }
-            updateSdkList(allSdks, sdk);
+        final NullableConsumer<Sdk> consumer = sdk -> {
+          if (sdk == null) return;
+          if (!allSdks.contains(sdk)) {
+            allSdks.add(sdk);
+            sdkService.addSdk(sdk);
           }
+          updateSdkList(allSdks, sdk);
         };
         FileChooser.chooseFiles(descriptor, myProject, suggestedDir, new FileChooser.FileChooserConsumer() {
           @Override

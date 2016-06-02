@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     for (Element infoElement : element.getChildren(INFO_TAG)) {
       SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
       String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
+      @SuppressWarnings("UseJBColor")
       Color color = colorStr == null ? null : new Color(Integer.parseInt(colorStr, 16));
       registerSeverity(highlightInfo, color);
     }
@@ -217,12 +218,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     for (Object o : orderMap.keys()) {
       list.add((HighlightSeverity)o);
     }
-    Collections.sort(list, new Comparator<HighlightSeverity>() {
-      @Override
-      public int compare(HighlightSeverity o1, HighlightSeverity o2) {
-        return SeverityRegistrar.compare(o1, o2, orderMap);
-      }
-    });
+    Collections.sort(list, (o1, o2) -> compare(o1, o2, orderMap));
     return list;
   }
 

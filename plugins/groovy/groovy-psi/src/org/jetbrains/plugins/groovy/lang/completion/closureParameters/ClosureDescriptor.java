@@ -93,12 +93,7 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiType[] typeArray = PsiType.createArray(parameters.length);
-    ContainerUtil.map(parameters, new Function<PsiParameter, PsiType>() {
-      @Override
-      public PsiType fun(PsiParameter parameter) {
-        return parameter.getType();
-      }
-    }, typeArray);
+    ContainerUtil.map(parameters, parameter -> parameter.getType(), typeArray);
     return GrClosureSignatureUtil.isSignatureApplicable(closureSignature, typeArray, place);
   }
 

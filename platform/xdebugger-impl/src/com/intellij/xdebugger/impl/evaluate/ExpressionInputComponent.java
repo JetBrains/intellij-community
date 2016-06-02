@@ -60,7 +60,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myMainPanel = new JPanel(new BorderLayout());
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateExpression", sourcePosition,
-                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true);
+                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
     myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
     historyButton.setIcon(AllIcons.General.MessageHistory);
@@ -110,7 +110,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         protected ListCellRenderer getListElementRenderer() {
           return new ColoredListCellRenderer<XExpression>() {
             @Override
-            protected void customizeCellRenderer(JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
+            protected void customizeCellRenderer(@NotNull JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
               append(value.getExpression());
             }
           };

@@ -64,7 +64,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
       }
     });
     myValueList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (index == 0) {
           append(value.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }

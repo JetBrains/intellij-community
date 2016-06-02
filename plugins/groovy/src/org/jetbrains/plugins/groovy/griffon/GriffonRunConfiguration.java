@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.groovy.mvc.MvcRunConfiguration;
@@ -35,13 +34,4 @@ public class GriffonRunConfiguration extends MvcRunConfiguration {
   protected String getNoSdkMessage() {
     return "Griffon SDK is not configured";
   }
-
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    GriffonRunConfiguration res = new GriffonRunConfiguration(myFactory, getConfigurationModule().getProject(), getName(), cmdLine);
-    res.envs.putAll(envs);
-    res.passParentEnv = passParentEnv;
-    return res;
-  }
-
 }

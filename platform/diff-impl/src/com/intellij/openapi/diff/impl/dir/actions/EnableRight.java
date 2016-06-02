@@ -16,7 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -25,7 +25,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 public class EnableRight extends DirDiffAction {
   protected EnableRight(DirDiffTableModel model) {
     super(model);
-    EmptyAction.setupAction(this, "DirDiffMenu.EnableRight", null);
+    ActionUtil.copyFrom(this, "DirDiffMenu.EnableRight");
   }
 
   @Override

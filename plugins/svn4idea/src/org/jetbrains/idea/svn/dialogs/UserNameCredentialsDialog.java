@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class UserNameCredentialsDialog extends DialogWrapper implements Document
     GridBagConstraints gb = new GridBagConstraints();
 
     // top label.
-    gb.insets = new Insets(2, 2, 2, 2);
+    gb.insets = JBUI.insets(2);
     gb.weightx = 1;
     gb.weighty = 0;
     gb.gridwidth = 2;

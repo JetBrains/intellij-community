@@ -60,12 +60,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
         final String typeNode = itemType.getPresentableText();
         JavaFxPsiUtil.insertImportWhenNeeded((XmlFile)attr.getContainingFile(), typeNode, itemType.getCanonicalText());
         final String[] vals = value != null ? value.split(",") : ArrayUtil.EMPTY_STRING_ARRAY;
-        value = StringUtil.join(vals, new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return "<" + typeNode + " " + FxmlConstants.FX_VALUE + "=\"" + s.trim() + "\"/>";
-          }
-        }, "\n");
+        value = StringUtil.join(vals, s -> "<" + typeNode + " " + FxmlConstants.FX_VALUE + "=\"" + s.trim() + "\"/>", "\n");
       }
     }
     final XmlTag childTag = XmlElementFactory.getInstance(project).createTagFromText("<" + name + ">" + value + "</" + name + ">");

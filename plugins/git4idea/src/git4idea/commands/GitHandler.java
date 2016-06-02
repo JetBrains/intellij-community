@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,8 +89,8 @@ public abstract class GitHandler {
   private final File myWorkingDirectory;
 
   private boolean myEnvironmentCleanedUp = true; // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-  private int mySshHandler = -1;
-  private int myHttpHandler = -1;
+  private UUID mySshHandler;
+  private UUID myHttpHandler;
   private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
@@ -435,6 +435,7 @@ public abstract class GitHandler {
         }
       }
       setUpLocale();
+      unsetGitTrace();
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
       // start process
@@ -457,13 +458,17 @@ public abstract class GitHandler {
     myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
   }
 
+  private void unsetGitTrace() {
+    myEnv.put("GIT_TRACE", "0");
+  }
+
   private void setupHttpAuthenticator() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, ObjectUtils.assertNotNull(myUrls));
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myEnvironmentCleanedUp = false;
-    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHttpHandler));
+    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("handler=%s, port=%s", myHttpHandler, port));
@@ -475,7 +480,7 @@ public abstract class GitHandler {
     myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject), myProject);
     myEnvironmentCleanedUp = false;
-    myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(mySshHandler));
+    myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("handler=%s, port=%s", mySshHandler, port));
@@ -602,10 +607,10 @@ public abstract class GitHandler {
     if (myEnvironmentCleanedUp) {
       return;
     }
-    if (mySshHandler >= 0) {
+    if (mySshHandler != null) {
       ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
     }
-    if (myHttpHandler >= 0) {
+    if (myHttpHandler != null) {
       ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
     }
     myEnvironmentCleanedUp = true;

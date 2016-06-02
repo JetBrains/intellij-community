@@ -66,12 +66,25 @@ public class ExtractIncludeAction extends BasePlatformRefactoringAction {
 
   @Nullable
   @Override
+  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    RefactoringActionHandler handler = super.getHandler(language, element);
+    if (handler != null) return handler;
+    return element == null ? null : getHandler(element);
+  }
+
+  @Nullable
+  @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return null;
   }
 
   @Nullable
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+    return getHandler(element);
+  }
+
+  @Nullable
+  private static RefactoringActionHandler getHandler(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());

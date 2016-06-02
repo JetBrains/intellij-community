@@ -76,13 +76,10 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
 
   @Override
   public void navigate(final Project project) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        OpenFileDescriptor descriptor = getDescriptor();
-        if (descriptor != null) {
-          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      OpenFileDescriptor descriptor = getDescriptor();
+      if (descriptor != null) {
+        FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
       }
     });
   }

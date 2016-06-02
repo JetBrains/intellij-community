@@ -138,12 +138,7 @@ public class CoverageSuitesBundle {
   }
 
   public String getPresentableName() {
-    return StringUtil.join(mySuites, new Function<CoverageSuite, String>() {
-      @Override
-      public String fun(CoverageSuite coverageSuite) {
-        return coverageSuite.getPresentableName();
-      }
-    }, ", ");
+    return StringUtil.join(mySuites, coverageSuite -> coverageSuite.getPresentableName(), ", ");
   }
 
   public boolean isModuleChecked(final Module module) {
@@ -172,13 +167,8 @@ public class CoverageSuitesBundle {
 
   public GlobalSearchScope getSearchScope(final Project project) {
     if (myCachedValue == null) {
-      myCachedValue = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<GlobalSearchScope>() {
-        @Nullable
-        @Override
-        public Result<GlobalSearchScope> compute() {
-          return new Result<GlobalSearchScope>(getSearchScopeInner(project), ProjectRootModificationTracker.getInstance(project));
-        }
-      }, false);
+      myCachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        () -> new CachedValueProvider.Result<GlobalSearchScope>(getSearchScopeInner(project), ProjectRootModificationTracker.getInstance(project)), false);
     }
     return myCachedValue.getValue();
     

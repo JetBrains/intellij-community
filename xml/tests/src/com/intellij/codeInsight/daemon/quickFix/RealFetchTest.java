@@ -40,18 +40,14 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNotSame(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().removeResource(url);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
   public void testOverwriteFetchDtd() throws Exception {
 
     final String url = "http://helpserver.labs.intellij.net/help/images.dtd";
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().addResource(url, virtualFile.getPath());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().addResource(url, virtualFile.getPath()));
 
     myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://helpserver.labs.intellij.net/help/ima<caret>ges.dtd</error>\"><images> </images>");
     myFixture.testHighlighting();
@@ -60,13 +56,6 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     List<HighlightInfo> infos = myFixture.doHighlighting();
     assertEmpty(infos);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManager.getInstance().removeResource(url);
-    });
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 }

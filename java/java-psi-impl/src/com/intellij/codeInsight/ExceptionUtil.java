@@ -472,10 +472,10 @@ public class ExceptionUtil {
           @Override
           public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
             PsiElement element = info.getElement();
-            if (element instanceof PsiMethod &&
+            if (info instanceof MethodCandidateInfo &&
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
                 !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-              return Pair.create((PsiMethod)element, info.getSubstitutor());
+              return Pair.create((PsiMethod)element, ((MethodCandidateInfo)info).getSubstitutor(false));
             }
             return null;
           }

@@ -65,7 +65,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     TestFormattingModel model = new TestFormattingModel(text);
     Document document = model.getDocument();
     TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), file);
-    FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, block);
+    FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, block, null);
     return builder.build();
   }
 }

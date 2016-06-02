@@ -21,7 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
-class LeafBlockWrapper extends AbstractBlockWrapper {
+public class LeafBlockWrapper extends AbstractBlockWrapper {
   private static final int CONTAIN_LINE_FEEDS = 4;
   private static final int READ_ONLY = 8;
   private static final int LEAF = 16;
@@ -126,7 +126,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   @Override
-  protected IndentData getNumberOfSymbolsBeforeBlock() {
+  public IndentData getNumberOfSymbolsBeforeBlock() {
     int spaces = getWhiteSpace().getSpaces();
     int indentSpaces = getWhiteSpace().getIndentSpaces();
 

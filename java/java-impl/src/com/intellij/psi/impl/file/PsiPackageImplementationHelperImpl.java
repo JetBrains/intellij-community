@@ -138,14 +138,11 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     final Project project = psiPackage.getProject();
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
     window.activate(null);
-    window.getActivation().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        final ProjectView projectView = ProjectView.getInstance(project);
-        PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
-        if (directories.length == 0) return;
-        projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
-      }
+    window.getActivation().doWhenDone(() -> {
+      final ProjectView projectView = ProjectView.getInstance(project);
+      PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
+      if (directories.length == 0) return;
+      projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
     });
   }
 

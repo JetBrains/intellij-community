@@ -173,12 +173,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setModalContext(false)
         .setAdText(adText)
         .setMayBeParent(true);
-      builder.setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return Boolean.TRUE;
-        }
-      });
+      builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setLocation(preferredBounds.getLocation());
       myDropdownPopup.setSize(preferredBounds.getSize());
@@ -208,6 +203,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public void close(final boolean isOk) {
     if (checkDisposed()){
       return;
+    }
+
+    if (myActionListener != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      myActionListener.onClose();
     }
 
     if (isOk) {
@@ -261,10 +260,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     cleanupUI(isOk);
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (myActionListener != null) {
-      myActionListener.onClose();
-    }
   }
 
   private void cleanupUI(boolean ok) {

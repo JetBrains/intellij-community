@@ -8,7 +8,7 @@
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="package" />
-    <option name="VM_PARAMETERS" value="-ea -Didea.home.path=../ -Didea.system.path=../test-system -Didea.config.path=../test-config -Xbootclasspath/p:../out/classes/production/boot -XX:+HeapDumpOnOutOfMemoryError -Xmx350m -XX:MaxPermSize=200m -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader" />
+    <option name="VM_PARAMETERS" value="-ea -Didea.home.path=../ -Didea.system.path=../test-system -Didea.config.path=../test-config -Xbootclasspath/p:../out/classes/production/boot -XX:+HeapDumpOnOutOfMemoryError -Xmx350m -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader" />
     <option name="PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <option name="ENV_VARIABLES" />

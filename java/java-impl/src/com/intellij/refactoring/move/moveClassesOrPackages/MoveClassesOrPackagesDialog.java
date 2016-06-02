@@ -116,11 +116,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
       myInnerClassChooser.setText(((PsiClass)initialTargetElement).getQualifiedName());
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myInnerClassChooser.requestFocus();
-        }
-      }, ModalityState.stateForComponent(myMainPanel));
+      ApplicationManager.getApplication().invokeLater(() -> myInnerClassChooser.requestFocus(), ModalityState.stateForComponent(myMainPanel));
     }
     else if (initialTargetElement instanceof PsiPackage) {
       myClassPackageChooser.setText(((PsiPackage)initialTargetElement).getQualifiedName());

@@ -249,12 +249,9 @@ final class OptionsUIForm {
       fileDescriptor.setShowFileSystemRoots(true);
       fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
       fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
-      FileChooser.chooseFiles(fileDescriptor, null, previous, new Consumer<List<VirtualFile>>() {
-        @Override
-        public void consume(final List<VirtualFile> files) {
-          String path = files.get(0).getPath();
-          externalEditorPath.setText(path);
-        }
+      FileChooser.chooseFiles(fileDescriptor, null, previous, files -> {
+        String path = files.get(0).getPath();
+        externalEditorPath.setText(path);
       });
     }
   }

@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,26 +45,24 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull final PsiSubstitutor substitutor,
                                                  @NotNull String[] options) {
-    LightElement context = new FromStringLightElement(method);
-    return ContainerUtil.map(options, new Function<String, PsiType[]>() {
-      @Override
-      public PsiType[] fun(String value) {
-          String[] params = value.split(",");
-          return ContainerUtil.map(params, new Function<String, PsiType>() {
-            @Override
-            public PsiType fun(String param) {
-              try {
-                PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
-                return substitutor.substitute(original);
-              }
-              catch (IncorrectOperationException e) {
-                //do nothing. Just don't throw an exception
-              }
-              return PsiType.NULL;
-            }
-          }, new PsiType[params.length]);
-      }
+    PsiElement context = createContext(method);
+    return ContainerUtil.map(options, value -> {
+        String[] params = value.split(",");
+        return ContainerUtil.map(params, param -> {
+          try {
+            PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
+            return substitutor.substitute(original);
+          }
+          catch (IncorrectOperationException e) {
+            //do nothing. Just don't throw an exception
+          }
+          return PsiType.NULL;
+        }, new PsiType[params.length]);
     });
+  }
+
+  public static PsiElement createContext(@NotNull PsiMethod method) {
+    return new FromStringLightElement(method);
   }
 }
 

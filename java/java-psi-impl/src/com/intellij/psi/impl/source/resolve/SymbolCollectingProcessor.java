@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SymbolCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
   private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<String, ResultWithContext>();
-  private PsiElement myCurrentFileContext = null;
-  private PsiAnchor myCurrentContextAnchor = null;
+  private PsiElement myCurrentFileContext;
+  private PsiAnchor myCurrentContextAnchor;
 
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {

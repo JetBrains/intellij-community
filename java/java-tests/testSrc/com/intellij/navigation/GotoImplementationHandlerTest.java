@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.navigation;
 
-
-import com.intellij.codeInsight.navigation.GotoImplementationHandler;
+import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
+
+import java.util.Arrays;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
-
-  public void testMultipleImplsFromAbstractCall() throws Throwable {
+  public void testMultipleImplsFromAbstractCall() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
                                                           "    abstract void foo();\n" +
                                                           "\n" +
@@ -43,15 +43,14 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "    class Hello2 extends Hello {\n" +
                                                           "        void foo() {}\n" +
                                                           "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+                                                          "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
   }
 
-  public void testToStringOnUnqualified() throws Throwable {
+  public void testToStringOnUnqualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +
                                                                 "        <caret>toString();\n" +
@@ -68,19 +67,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                                 "    public String toString() {\n" +
                                                                 "        return \"Impl2\";\n" +
                                                                 "    }\n" +
-                                                                "}\n");
+                                                                "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-     PlatformTestUtil.startPerformanceTest(getTestName(false), 50, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
-        assertEquals(3, impls.length);
-      }
-    }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
+     PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
+       PsiElement[] impls = getTargets(file);
+       assertEquals(3, impls.length);
+     }).cpuBound().usesAllCPUCores().assertTiming();
   }
 
-  public void testToStringOnQualified() throws Throwable {
+  public void testToStringOnQualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +
                                                                 "        Fix ff = new FixImpl1();\n" +
@@ -98,20 +94,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                                 "    public String toString() {\n" +
                                                                 "        return \"Impl2\";\n" +
                                                                 "    }\n" +
-                                                                "}\n");
+                                                                "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 50, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
-        assertEquals(3, impls.length);
-      }
-    }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
-    
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
+      PsiElement[] impls = getTargets(file);
+      assertEquals(3, impls.length);
+    }).cpuBound().usesAllCPUCores().assertTiming();
   }
 
-  public void testShowSelfNonAbstract() throws Throwable {
+  public void testShowSelfNonAbstract() {
     //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
     PsiFile file = myFixture.addFileToProject("Foo.java", "public class Hello {\n" +
                                                           "    void foo(){}\n" +
@@ -127,15 +119,14 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "    class Hello2 extends Hello {\n" +
                                                           "        void foo() {}\n" +
                                                           "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+                                                          "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(3, impls.length);
   }
 
-  public void testMultipleImplsFromStaticCall() throws Throwable {
+  public void testMultipleImplsFromStaticCall() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
                                                           "    static void bar (){}\n" +
                                                           "    class Hello1 extends Hello {\n" +
@@ -149,11 +140,11 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
   }
 
-  public void testFilterOutImpossibleVariants() throws Throwable {
+  public void testFilterOutImpossibleVariants() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "interface A {\n" +
                                                           "    void save();\n" +
                                                           "}\n" +
@@ -175,16 +166,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(1, impls.length);
-    final PsiElement meth = impls[0];
-    assertTrue(meth instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    final PsiElement method = impls[0];
+    assertTrue(method instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
     assertNotNull(aClass);
-    assertEquals(aClass.getName(), "X");
+    assertEquals("X", aClass.getName());
   }
 
-  public void testImplicitInheritance() throws Throwable {
+  public void testImplicitInheritance() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "interface PackContainer {\n" +
                                                           "    void foo();\n" +
                                                           "}\n" +
@@ -203,16 +194,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(1, impls.length);
-    final PsiElement meth = impls[0];
-    assertTrue(meth instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    final PsiElement method = impls[0];
+    assertTrue(method instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
     assertNotNull(aClass);
-    assertEquals(aClass.getName(), "PsiPackageBase");
+    assertEquals("PsiPackageBase", aClass.getName());
   }
-  
-  public void testMethodReferences() throws Throwable {
+
+  public void testMethodReferences() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {void f();}\n" +
                                                           "class A implements I { public void f(){}}\n" +
                                                           "class B implements I { public void f(){}}\n" +
@@ -221,12 +212,24 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
-    final PsiElement meth = impls[0];
-    assertTrue(meth instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    // target are non-deterministic now
+    Arrays.sort(impls, (o1, o2) -> {
+      String name1 = ((PsiMethod)o1).getContainingClass().getName();
+      String name2 = ((PsiMethod)o2).getContainingClass().getName();
+      return StringUtil.compare(name1, name2, false);
+    });
+    final PsiElement method = impls[0];
+    assertTrue(method instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
     assertNotNull(aClass);
-    assertEquals(aClass.getName(), "A");
+    assertEquals("A", aClass.getName());
+  }
+
+  private PsiElement[] getTargets(PsiFile file) {
+    GotoTargetHandler.GotoData gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), file);
+    assertNotNull(gotoData);
+    return gotoData.targets;
   }
 }

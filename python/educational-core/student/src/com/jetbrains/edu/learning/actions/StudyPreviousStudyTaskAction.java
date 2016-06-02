@@ -20,11 +20,6 @@ public class StudyPreviousStudyTaskAction extends StudyTaskNavigationAction {
   public static final String SHORTCUT = "ctrl pressed COMMA";
 
   @Override
-  protected String getNavigationFinishedMessage() {
-    return "It's already the first task";
-  }
-
-  @Override
   protected Task getTargetTask(@NotNull final Task sourceTask) {
     return StudyNavigator.previousTask(sourceTask);
   }

@@ -84,6 +84,20 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNull(intentionAction);
   }
 
+  public void testSkipSameNamedNonStaticReferences() throws Exception {
+
+    myFixture.addClass("package foo;" +
+                       "public class Clazz {" +
+                       "   public void print(String s) {}" +
+                       "   public static void print() {}" +
+                       "   public static void print(int i) {}" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Clazz.print'");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
 
   @Override
   protected String getTestDataPath() {

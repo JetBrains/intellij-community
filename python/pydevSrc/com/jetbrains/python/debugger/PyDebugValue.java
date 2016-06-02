@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.base.Strings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
@@ -16,10 +19,14 @@ public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   public static final int MAX_VALUE = 256;
 
+  public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_";
+
   private String myTempName = null;
   private final String myType;
+  private final String myTypeQualifier;
   private final String myValue;
   private final boolean myContainer;
+  private final boolean myIsReturnedVal;
   private final PyDebugValue myParent;
   private String myId = null;
 
@@ -29,17 +36,19 @@ public class PyDebugValue extends XNamedValue {
 
   private final boolean myErrorOnEval;
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
-                      boolean errorOnEval, final PyFrameAccessor frameAccessor) {
-    this(name, type, value, container, errorOnEval, null, frameAccessor);
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
+                      boolean isReturnedVal, boolean errorOnEval, final PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, isReturnedVal, errorOnEval, null, frameAccessor);
   }
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
-                      boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
+                      boolean isReturnedVal, boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
+    myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
+    myIsReturnedVal = isReturnedVal;
     myErrorOnEval = errorOnEval;
     myParent = parent;
     myFrameAccessor = frameAccessor;
@@ -65,12 +74,16 @@ public class PyDebugValue extends XNamedValue {
     return myContainer;
   }
 
+  public boolean isReturnedVal() {
+    return myIsReturnedVal;
+  }
+
   public boolean isErrorOnEval() {
     return myErrorOnEval;
   }
   
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
-    return new PyDebugValue(myName, myType, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
+    return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -174,23 +187,20 @@ public class PyDebugValue extends XNamedValue {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        if (myFrameAccessor == null) return;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (myFrameAccessor == null) return;
 
-        try {
-          final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
-          if (!node.isObsolete()) {
-            node.addChildren(values, true);
-          }
+      try {
+        final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
+        if (!node.isObsolete()) {
+          node.addChildren(values, true);
         }
-        catch (PyDebuggerException e) {
-          if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display children:" + e.getMessage());
-          }
-          LOG.warn(e);
+      }
+      catch (PyDebuggerException e) {
+        if (!node.isObsolete()) {
+          node.setErrorMessage("Unable to display children:" + e.getMessage());
         }
+        LOG.warn(e);
       }
     });
   }
@@ -213,7 +223,8 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
+                            myFrameAccessor);
   }
 
   @Nullable
@@ -258,7 +269,13 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName));
+    if (myParent == null) {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
+    }
+    else
+    {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
+    }
   }
 
   @Override
@@ -266,8 +283,34 @@ public class PyDebugValue extends XNamedValue {
     return true;
   }
 
+  private static final  Pattern IS_TYPE_DECLARATION = Pattern.compile("<(?:class|type)\\s*'(?<TYPE>.*?)'>");
   @Override
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(myType));
+
+    String lookupType = getDeclaringType();
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(lookupType));
+  }
+
+  protected final String getDeclaringType() {
+    String lookupType = getQualifiedType();
+    if (!Strings.isNullOrEmpty(myValue))
+    {
+      Matcher matcher = IS_TYPE_DECLARATION.matcher(myValue);
+      if (matcher.matches())
+      {
+        lookupType = matcher.group("TYPE");
+      }
+    }
+    return lookupType;
+  }
+
+  public String getQualifiedType() {
+    if (Strings.isNullOrEmpty(myType))
+      return null;
+    return (myTypeQualifier == null) ? myType : (myTypeQualifier + "." + myType);
+  }
+
+  public String getTypeQualifier() {
+    return myTypeQualifier;
   }
 }

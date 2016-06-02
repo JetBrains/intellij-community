@@ -132,16 +132,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
-      StartupManager.getInstance(this).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          if (isDisposed()) return;
+      StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        if (isDisposed()) return;
 
-          JFrame frame = WindowManager.getInstance().getFrame(ProjectImpl.this);
-          String title = FrameTitleBuilder.getInstance().getProjectTitle(ProjectImpl.this);
-          if (frame != null && title != null) {
-            frame.setTitle(title);
-          }
+        JFrame frame = WindowManager.getInstance().getFrame(this);
+        String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
+        if (frame != null && title != null) {
+          frame.setTitle(title);
         }
       });
     }
@@ -288,9 +285,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
-    if (!isDefault() &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
-        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       distributeProgress();
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
@@ -317,7 +312,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
     int editors = splitters.getEditorsCount();
 
-    double modulesPart = (ourClassesAreLoaded || editors == 0) ? toDistribute : toDistribute * 0.5;
+    double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
     if (modulesCount != 0) {
 
       double step = modulesPart / modulesCount;
@@ -354,10 +349,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assert application.isWriteAccessAllowed();  // dispose must be under write action
+    application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
+    if (ProjectManagerEx.getInstanceEx().isProjectOpened(this)) {
+      throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
+    }
 
     // we use super here, because temporarilyDisposed will be true if project closed
     LOG.assertTrue(!super.isDisposed());

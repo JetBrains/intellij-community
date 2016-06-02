@@ -48,11 +48,7 @@ final class RegExpEnumReference extends StringLiteralReference {
     if (values == null || values.size() == 0) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    return ContainerUtil.map2Array(values, new Function<String, Object>() {
-      public Object fun(String s) {
-        return LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON);
-      }
-    });
+    return ContainerUtil.map2Array(values, s -> LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON));
   }
 
   public boolean isSoft() {

@@ -52,12 +52,7 @@ public abstract class MembersGetter {
 
   protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
     myPlace = place;
-    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, new PairConsumer<PsiMember, PsiClass>() {
-      @Override
-      public void consume(PsiMember member, PsiClass psiClass) {
-        myImportedStatically.add(member);
-      }
-    });
+    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, (member, psiClass) -> myImportedStatically.add(member));
 
     PsiClass current = PsiTreeUtil.getContextOfType(place, PsiClass.class);
     while (current != null) {
@@ -100,24 +95,21 @@ public abstract class MembersGetter {
     final GlobalSearchScope scope = myPlace.getResolveScope();
 
     final PsiClassType baseType = JavaPsiFacade.getElementFactory(project).createType(where);
-    Consumer<PsiType> consumer = new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType psiType) {
-        PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-        if (psiClass == null) {
-          return;
-        }
-        psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
-        if (mayProcessMembers(psiClass)) {
-          final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
-          psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
-          doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
+    Consumer<PsiType> consumer = psiType -> {
+      PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+      if (psiClass == null) {
+        return;
+      }
+      psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
+      if (mayProcessMembers(psiClass)) {
+        final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
+        psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
+        doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
 
-          String name = psiClass.getName();
-          if (name != null && searchFactoryMethods) {
-            Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
-            doProcessMembers(acceptMethods, results, false, factoryMethods);
-          }
+        String name = psiClass.getName();
+        if (name != null && searchFactoryMethods) {
+          Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
+          doProcessMembers(acceptMethods, results, false, factoryMethods);
         }
       }
     };

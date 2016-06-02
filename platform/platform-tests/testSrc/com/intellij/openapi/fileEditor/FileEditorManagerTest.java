@@ -128,12 +128,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       Editor editor = ((TextEditor)editors[0]).getEditor();
       final FoldingModel foldingModel = editor.getFoldingModel();
       assertEquals(2, foldingModel.getAllFoldRegions().length);
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-            region.setExpanded(false);
-          }
+      foldingModel.runBatchFoldingOperation(() -> {
+        for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+          region.setExpanded(false);
         }
       });
       int textLength = editor.getDocument().getTextLength();
@@ -212,12 +209,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   private void assertOpenFiles(String... fileNames) {
     EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    List<String> names = ContainerUtil.map(files, new Function<EditorWithProviderComposite, String>() {
-      @Override
-      public String fun(EditorWithProviderComposite composite) {
-        return composite.getFile().getName();
-      }
-    });
+    List<String> names = ContainerUtil.map(files, composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 

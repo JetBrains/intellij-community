@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
+import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,12 +146,7 @@ public class LibraryScopeCache {
       }
     }
 
-    Comparator<Module> comparator = new Comparator<Module>() {
-      @Override
-      public int compare(@NotNull Module o1, @NotNull Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    };
+    Comparator<Module> comparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
     Collections.sort(modulesLibraryUsedIn, comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
     Module[] uniques = uniquesList.toArray(new Module[uniquesList.size()]);
@@ -199,17 +195,26 @@ public class LibraryScopeCache {
 
   @NotNull
   private GlobalSearchScope calcLibraryUseScope(@NotNull List<OrderEntry> entries) {
+    Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
+    Set<Module> modulesWithSdk = new THashSet<>(entries.size());
+    for (OrderEntry entry : entries) {
+      (entry instanceof JdkOrderEntry ? modulesWithSdk : modulesWithLibrary).add(entry.getOwnerModule());
+    }
+    modulesWithSdk.removeAll(modulesWithLibrary);
+
+    // optimisation: if the library attached to all modules (often the case with JDK) then replace the 'union of all modules' scope with just 'project'
+    if (modulesWithSdk.size() + modulesWithLibrary.size() == ModuleManager.getInstance(myProject).getModules().length) {
+      return GlobalSearchScope.allScope(myProject);
+    }
+
     List<GlobalSearchScope> united = ContainerUtil.newArrayList();
     united.add(getLibrariesOnlyScope());
-    Set<Module> modulesInvolved = new THashSet<>(entries.size());
-    for (OrderEntry entry : entries) {
-      Module ownerModule = entry.getOwnerModule();
-      united.add(GlobalSearchScope.moduleWithDependentsScope(ownerModule));
-      modulesInvolved.add(ownerModule);
+    if (!modulesWithSdk.isEmpty()) {
+      united.add(new ModulesScope(modulesWithSdk, myProject));
     }
-    // optimisation: if the library attached to all modules (often the case with JDK) then replace the 'union of all modules' scope with just 'project'
-    if (modulesInvolved.size() == ModuleManager.getInstance(myProject).getModules().length) {
-      return GlobalSearchScope.allScope(myProject);
+
+    for (Module module : modulesWithLibrary) {
+      united.add(GlobalSearchScope.moduleWithDependentsScope(module));
     }
 
     return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[united.size()]));

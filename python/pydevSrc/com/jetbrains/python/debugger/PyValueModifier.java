@@ -17,15 +17,13 @@ public class PyValueModifier extends XValueModifier {
 
   @Override
   public void setValue(@NotNull final String expression, @NotNull final XModificationCallback callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          myDebugProcess.changeVariable(myVariable, expression);
-          callback.valueModified();
-        }
-        catch (PyDebuggerException e) {
-          callback.errorOccurred(e.getTracebackError());
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        myDebugProcess.changeVariable(myVariable, expression);
+        callback.valueModified();
+      }
+      catch (PyDebuggerException e) {
+        callback.errorOccurred(e.getTracebackError());
       }
     });
   }

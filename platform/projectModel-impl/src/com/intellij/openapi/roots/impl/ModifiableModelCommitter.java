@@ -45,15 +45,12 @@ public class ModifiableModelCommitter {
     final List<ModifiableRootModel> modelsToDispose = ContainerUtil.newArrayList(rootModels);
     modelsToDispose.removeAll(modelsToCommit);
 
-    ModuleManagerImpl.commitModelWithRunnable(moduleModel, new Runnable() {
-      @Override
-      public void run() {
-        for (RootModelImpl model : modelsToCommit) {
-          ModuleRootManagerImpl.doCommit(model);
-        }
-        for (ModifiableRootModel model : modelsToDispose) {
-          model.dispose();
-        }
+    ModuleManagerImpl.commitModelWithRunnable(moduleModel, () -> {
+      for (RootModelImpl model : modelsToCommit) {
+        ModuleRootManagerImpl.doCommit(model);
+      }
+      for (ModifiableRootModel model : modelsToDispose) {
+        model.dispose();
       }
     });
   }

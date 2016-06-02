@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -220,20 +217,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   private void doSelectModuleOrGroup(final Object toSelect, final boolean requestFocus) {
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ProjectView projectView = ProjectView.getInstance(myProject);
-        if (requestFocus) {
-          projectView.changeView(getId(), getSubId());
-        }
-        ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, new Condition<AbstractTreeNode>(){
-          @Override
-          public boolean value(final AbstractTreeNode node) {
-            return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
-          }
-        });
+    final Runnable runnable = () -> {
+      ProjectView projectView = ProjectView.getInstance(myProject);
+      if (requestFocus) {
+        projectView.changeView(getId(), getSubId());
       }
+      ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
     };
     if (requestFocus) {
       windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);

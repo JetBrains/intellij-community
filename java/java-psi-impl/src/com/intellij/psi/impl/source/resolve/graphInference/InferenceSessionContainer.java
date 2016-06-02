@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -63,7 +64,8 @@ public class InferenceSessionContainer {
                               @NotNull PsiParameter[] parameters,
                               @NotNull PsiExpression[] arguments,
                               @NotNull PsiSubstitutor partialSubstitutor,
-                              @NotNull final PsiElement parent) {
+                              @NotNull final PsiElement parent,
+                              @NotNull final ParameterTypeInferencePolicy policy) {
     if (parent instanceof PsiCall) {
       final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -82,14 +84,14 @@ public class InferenceSessionContainer {
 
           InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
-            session = startTopLevelInference(topLevelCall);
+            session = startTopLevelInference(topLevelCall, policy);
           }
           else {
             session = CachedValuesManager.getCachedValue(topLevelCall, new CachedValueProvider<InferenceSession>() {
               @Nullable
               @Override
               public Result<InferenceSession> compute() {
-                return new Result<InferenceSession>(startTopLevelInference(topLevelCall), PsiModificationTracker.MODIFICATION_COUNT);
+                return new Result<InferenceSession>(startTopLevelInference(topLevelCall, policy), PsiModificationTracker.MODIFICATION_COUNT);
               }
             });
 
@@ -102,7 +104,7 @@ public class InferenceSessionContainer {
               if (childSession != null) {
                 for (PsiTypeParameter parameter : typeParameters) {
                   if (!childSession.getInferenceSubstitution().getSubstitutionMap().containsKey(parameter)) {
-                    session = startTopLevelInference(topLevelCall);
+                    session = startTopLevelInference(topLevelCall, policy);
                     break;
                   }
                 }
@@ -124,13 +126,13 @@ public class InferenceSessionContainer {
             }
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
-            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent).prepareSubstitution();
+            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy).prepareSubstitution();
           }
         }
       }
     }
 
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent);
+    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
     inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
     return inferenceSession.infer(parameters, arguments, parent);
   }
@@ -178,7 +180,7 @@ public class InferenceSessionContainer {
   }
 
   @Nullable
-  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall) {
+  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall, final ParameterTypeInferencePolicy policy) {
     final JavaResolveResult result = topLevelCall.resolveMethodGenerics();
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
@@ -190,7 +192,7 @@ public class InferenceSessionContainer {
         @Override
         public InferenceSession compute() {
           final InferenceSession topLevelSession =
-            new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall);
+            new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
           topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
           topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
           return topLevelSession;

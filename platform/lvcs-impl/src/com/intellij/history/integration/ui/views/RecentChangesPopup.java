@@ -53,11 +53,9 @@ public class RecentChangesPopup {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());
 
-    Runnable selectAction = new Runnable() {
-      public void run() {
-        RecentChange c = (RecentChange)list.getSelectedValue();
-        showRecentChangeDialog(c);
-      }
+    Runnable selectAction = () -> {
+      RecentChange c = (RecentChange)list.getSelectedValue();
+      showRecentChangeDialog(c);
     };
 
     showList(list, selectAction);

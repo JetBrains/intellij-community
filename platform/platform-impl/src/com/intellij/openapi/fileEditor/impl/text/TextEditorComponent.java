@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -50,6 +49,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,8 +166,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
 
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
-    ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
     ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
@@ -291,12 +289,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     private boolean myUpdateScheduled;
 
     public MyDocumentListener() {
-      myUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-          myUpdateScheduled = false;
-          updateModifiedProperty();
-        }
+      myUpdateRunnable = () -> {
+        myUpdateScheduled = false;
+        updateModifiedProperty();
       };
     }
 
@@ -359,5 +354,16 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   @NotNull
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Override
+  public Color getBackground() {
+    //noinspection ConstantConditions
+    return myEditor == null ? super.getBackground() : myEditor.getContentComponent().getBackground();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 }

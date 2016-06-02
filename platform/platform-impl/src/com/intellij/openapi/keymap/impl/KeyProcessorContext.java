@@ -98,6 +98,5 @@ public class KeyProcessorContext {
     myActions.clear();
     myFocusOwner = null;
     myDataContext = null;
-    myFoundComponent = null;
   }
 }

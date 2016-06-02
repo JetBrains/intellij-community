@@ -99,21 +99,18 @@ public abstract class MavenTestCase extends UsefulTestCase {
           throw new RuntimeException(e);
         }
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            setUpInWriteAction();
+          }
+          catch (Throwable e) {
             try {
-              setUpInWriteAction();
+              tearDown();
             }
-            catch (Throwable e) {
-              try {
-                tearDown();
-              }
-              catch (Exception e1) {
-                e1.printStackTrace();
-              }
-              throw new RuntimeException(e);
+            catch (Exception e1) {
+              e1.printStackTrace();
             }
+            throw new RuntimeException(e);
           }
         });
       }

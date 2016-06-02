@@ -107,24 +107,21 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     }, myProject);
 
-    startupManager.registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        DocumentAdapter documentListener = new DocumentAdapter() {
-          @Override
-          public void documentChanged(DocumentEvent event) {
-            if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-            VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-            if (file != null) {
-              refreshFileStatusFromDocument(file, event.getDocument());
-            }
+    startupManager.registerPreStartupActivity(() -> {
+      DocumentAdapter documentListener = new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent event) {
+          if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
+          VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+          if (file != null) {
+            refreshFileStatusFromDocument(file, event.getDocument());
           }
-        };
-
-        final EditorFactory factory = EditorFactory.getInstance();
-        if (factory != null) {
-          factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
         }
+      };
+
+      final EditorFactory factory = EditorFactory.getInstance();
+      if (factory != null) {
+        factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
       }
     });
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {

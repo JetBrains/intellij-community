@@ -114,14 +114,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected void refreshElements(@NotNull final PsiElement[] elements) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiClass[] classesToMove = new PsiClass[elements.length];
-        for (int i = 0; i < classesToMove.length; i++) {
-          classesToMove[i] = (PsiClass)elements[i];
-        }
-        setClassesToMove(classesToMove);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass[] classesToMove = new PsiClass[elements.length];
+      for (int i = 0; i < classesToMove.length; i++) {
+        classesToMove[i] = (PsiClass)elements[i];
       }
+      setClassesToMove(classesToMove);
     });
   }
 
@@ -235,11 +233,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
-                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, new Function<PsiClass, String>() {
-                                       public String fun(PsiClass psiClass) {
-                                         return psiClass.getName();
-                                       }
-                                     }, ", "),
+                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
                                      myTargetClass.getQualifiedName());
   }
 
@@ -308,17 +302,15 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private void detectInaccessibleMemberUsages(final ConflictsCollector collector) {
     PsiElement[] members = collectPackageLocalMembers(collector.getClassToMove());
     for(PsiElement member: members) {
-      ReferencesSearch.search(member).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference psiReference) {
-          PsiElement element = psiReference.getElement();
-          for (PsiClass psiClass : myClassesToMove) {
-            if (PsiTreeUtil.isAncestor(psiClass, element, false)) return true;
-          }
-          if (isInaccessibleFromTarget(element, PsiModifier.PACKAGE_LOCAL)) {
-            collector.addConflict(psiReference.resolve(), element);
-          }
-          return true;
+      ReferencesSearch.search(member).forEach(psiReference -> {
+        PsiElement element = psiReference.getElement();
+        for (PsiClass psiClass : myClassesToMove) {
+          if (PsiTreeUtil.isAncestor(psiClass, element, false)) return true;
         }
+        if (isInaccessibleFromTarget(element, PsiModifier.PACKAGE_LOCAL)) {
+          collector.addConflict(psiReference.resolve(), element);
+        }
+        return true;
       });
     }
   }

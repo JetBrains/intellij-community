@@ -108,17 +108,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
 
 
   protected void moveViaProcessor(@NotNull Project project, @NotNull final BaseRefactoringProcessor processor) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            processor.run();
-          }
-        });
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> processor.run()), null, null);
   }
 
   /**

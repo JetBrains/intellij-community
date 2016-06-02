@@ -116,9 +116,10 @@ public class AddImportAction implements QuestionAction {
           }
 
           if (finalChoice) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            addImport(myReference, selectedValue);
-            return FINAL_CHOICE;
+            return doFinalStep(() -> {
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              addImport(myReference, selectedValue);
+            });
           }
 
           return getExcludesStep(selectedValue.getQualifiedName(), myProject);
@@ -185,20 +186,14 @@ public class AddImportAction implements QuestionAction {
   }
   
   public static void excludeFromImport(final Project project, final String prefix) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed()) return;
 
-        final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable(project);
-        ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-          @Override
-          public void run() {
-            final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);
-            options.addExcludePackage(prefix);
-          }
-        });
-      }
+      final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable(project);
+      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+        final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);
+        options.addExcludePackage(prefix);
+      });
     });
   }
 
@@ -215,22 +210,7 @@ public class AddImportAction implements QuestionAction {
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
     StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
-              @Override
-              public void run() {
-                _addImport(ref, targetClass);
-              }
-            });
-          }
-        });
-      }
-    }, QuickFixBundle.message("add.import"), null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass))), QuickFixBundle.message("add.import"), null);
   }
 
   private void _addImport(PsiReference ref, PsiClass targetClass) {

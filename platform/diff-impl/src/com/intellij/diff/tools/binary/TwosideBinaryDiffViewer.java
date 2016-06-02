@@ -33,15 +33,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +85,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyAcceptSideAction(Side.LEFT));
     group.add(new MyAcceptSideAction(Side.RIGHT));
@@ -122,25 +121,22 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
 
-      final JComponent notification = ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
-        @Override
-        public JComponent compute() {
-          if (!file1.isValid() || !file2.isValid()) {
-            return DiffNotifications.createError();
-          }
+      final JComponent notification = ReadAction.compute(() -> {
+        if (!file1.isValid() || !file2.isValid()) {
+          return DiffNotifications.createError();
+        }
 
-          try {
-            // we can't use getInputStream() here because we can't restore BOM marker
-            // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
-            // It can be made for files from VFS that implements FileSystemInterface though.
-            byte[] bytes1 = file1.contentsToByteArray();
-            byte[] bytes2 = file2.contentsToByteArray();
-            return Arrays.equals(bytes1, bytes2) ? DiffNotifications.createEqualContents() : null;
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-            return null;
-          }
+        try {
+          // we can't use getInputStream() here because we can't restore BOM marker
+          // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
+          // It can be made for files from VFS that implements FileSystemInterface though.
+          byte[] bytes1 = file1.contentsToByteArray();
+          byte[] bytes2 = file2.contentsToByteArray();
+          return Arrays.equals(bytes1, bytes2) ? DiffNotifications.createEqualContents() : null;
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+          return null;
         }
       });
 
@@ -157,12 +153,9 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 
@@ -224,12 +217,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       assert baseFile != null && targetFile != null;
 
       try {
-        ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
-          @Override
-          public Void compute() throws IOException {
-            targetFile.setBinaryContent(baseFile.contentsToByteArray());
-            return null;
-          }
+        WriteAction.run(() -> {
+          targetFile.setBinaryContent(baseFile.contentsToByteArray());
         });
       }
       catch (IOException err) {

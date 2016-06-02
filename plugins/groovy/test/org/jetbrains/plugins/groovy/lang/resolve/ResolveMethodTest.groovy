@@ -2270,4 +2270,15 @@ public class A {
       assert element.containingClass.qualifiedName == expectedClass
     }
   }
+
+  void 'test low priority for varargs method'() {
+    def method = resolveByText('''\
+def foo(Object... values) {}
+def foo(Object[] values, Closure c) {}
+
+fo<caret>o(new Object[0], {})
+''', GrMethod)
+    assert !method.isVarArgs()
+    assert method.parameters.size() == 2
+  }
 }

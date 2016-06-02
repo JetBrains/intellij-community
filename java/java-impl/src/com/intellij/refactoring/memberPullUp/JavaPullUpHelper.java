@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove = null;
+  private Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 
@@ -222,12 +222,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
     Language language = myTargetSuperClass.getLanguage();
-    final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
+    final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySuperSignature(myTargetSuperClass, method.getSignature(substitutor), false);
     if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
         method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);
     }
-    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
@@ -235,7 +235,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;
-      } else {
+      }
+      else {
+        if (info.isToAbstract() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          PsiUtil.setModifierProperty(methodCopy, PsiModifier.DEFAULT, false);
+        }
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
 
@@ -394,11 +398,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
                   return fieldsToInitializers.get(source).movedFieldsUsed;
                 }
               },
-              new Condition<PsiField>() {
-                public boolean value(PsiField object) {
-                  return !initializedFields.contains(object);
-                }
-              }
+              object -> !initializedFields.contains(object)
       );
 
       for (PsiField psiField : unmovable) {
@@ -417,14 +417,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     ArrayList<PsiField> initializedFields = new ArrayList<PsiField>(fieldsToInitializers.keySet());
 
-    Collections.sort(initializedFields, new Comparator<PsiField>() {
-      public int compare(PsiField field1, PsiField field2) {
-        Initializer i1 = fieldsToInitializers.get(field1);
-        Initializer i2 = fieldsToInitializers.get(field2);
-        if(i1.movedFieldsUsed.contains(field2)) return 1;
-        if(i2.movedFieldsUsed.contains(field1)) return -1;
-        return 0;
-      }
+    Collections.sort(initializedFields, (field1, field2) -> {
+      Initializer i1 = fieldsToInitializers.get(field1);
+      Initializer i2 = fieldsToInitializers.get(field2);
+      if(i1.movedFieldsUsed.contains(field2)) return 1;
+      if(i2.movedFieldsUsed.contains(field1)) return -1;
+      return 0;
     });
 
     for (final PsiField initializedField : initializedFields) {

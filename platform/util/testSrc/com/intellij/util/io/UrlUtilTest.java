@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,19 @@ public class UrlUtilTest {
 
     assertPair(URLUtil.splitJarUrl("jar:file:/path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
     assertPair(URLUtil.splitJarUrl("jar:file:///path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
+
+    if (SystemInfo.isWindows) {
+      assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "C:/path/to/jar.jar", "resource.xml");
+      assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "//HOST/share/path/to/jar.jar", "resource.xml");
+    }
+    else {
+      assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "/C:/path/to/jar.jar", "resource.xml");
+      assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "/HOST/share/path/to/jar.jar", "resource.xml");
+    }
+
+    assertPair(URLUtil.splitJarUrl("file:/path/to/jar%20with%20spaces.jar!/resource.xml"), "/path/to/jar with spaces.jar", "resource.xml");
+
+    assertPair(URLUtil.splitJarUrl("file:/path/to/jar with spaces.jar!/resource.xml"), "/path/to/jar with spaces.jar", "resource.xml");
   }
 
   private static void assertPair(@Nullable Pair<String, String> pair, String expected1, String expected2) {
@@ -83,7 +97,7 @@ public class UrlUtilTest {
     // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA==")).isEqualTo(test);
   }
-  
+
   private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
     final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
     boolean found = matcher.find();

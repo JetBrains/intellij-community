@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -169,22 +170,31 @@ public class ChangesUtil {
     return result;
   }
 
-  public static VirtualFile[] getFilesFromChanges(final Collection<Change> changes) {
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        FilePath filePath = afterRevision.getFile();
-        VirtualFile file = filePath.getVirtualFile();
-        if (file == null || !file.isValid()) {
-          file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
-        }
-        if (file != null && file.isValid()) {
-          files.add(file);
-        }
-      }
+  @NotNull
+  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
+    return VfsUtilCore.toVirtualFileArray(getAfterRevisionsFiles(changes));
+  }
+
+  @NotNull
+  public static List<VirtualFile> getAfterRevisionsFiles(@NotNull Collection<Change> changes) {
+    return changes.stream()
+      .map(Change::getAfterRevision)
+      .filter(Objects::nonNull)
+      .map(ContentRevision::getFile)
+      .map(ChangesUtil::refreshAndFind)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private static VirtualFile refreshAndFind(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+
+    if (file == null || !file.isValid()) {
+      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
     }
-    return VfsUtilCore.toVirtualFileArray(files);
+
+    return file != null && file.isValid() ? file : null;
   }
 
   public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {

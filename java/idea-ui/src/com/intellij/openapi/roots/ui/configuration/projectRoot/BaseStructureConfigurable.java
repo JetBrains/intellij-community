@@ -110,22 +110,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       config = nodeByName.getConfigurable();
     }
 
-    final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myAutoScrollEnabled = true;
-      }
-    });
+    final ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
 
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
-    selectNodeInTree(nodeToSelect, requestFocus).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        setSelectedNode(nodeToSelect);
-        Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
-      }
+    selectNodeInTree(nodeToSelect, requestFocus).doWhenDone(() -> {
+      setSelectedNode(nodeToSelect);
+      Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
     });
 
     return result;
@@ -347,6 +339,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
+      //noinspection Convert2Lambda
       super(new Condition<Object[]>() {
         @Override
         public boolean value(final Object[] objects) {
@@ -377,12 +370,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     private List<MyNode> removeFromModel(final TreePath[] paths) {
-      List<MyNode> nodes = ContainerUtil.mapNotNull(paths, new Function<TreePath, MyNode>() {
-        @Override
-        public MyNode fun(TreePath path) {
-          Object node = path.getLastPathComponent();
-          return node instanceof MyNode ? (MyNode)node : null;
-        }
+      List<MyNode> nodes = ContainerUtil.mapNotNull(paths, path -> {
+        Object node = path.getLastPathComponent();
+        return node instanceof MyNode ? (MyNode)node : null;
       });
       MultiMap<RemoveConfigurableHandler, MyNode> grouped = groupNodes(nodes);
 

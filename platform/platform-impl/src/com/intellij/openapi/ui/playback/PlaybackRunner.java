@@ -98,19 +98,13 @@ public class PlaybackRunner {
 
     try {
       myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          stop();
+      myActionCallback.doWhenProcessed(() -> {
+        stop();
 
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              activityMonitor.setActive(false);
-              restoreRegistryValues();
-            }
-          });
-        }
+        SwingUtilities.invokeLater(() -> {
+          activityMonitor.setActive(false);
+          restoreRegistryValues();
+        });
       });
 
       myRobot = new Robot();
@@ -124,11 +118,7 @@ public class PlaybackRunner {
             executeFrom(0, getScriptDir());
           }
           else {
-            IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-              public void run() {
-                executeFrom(0, getScriptDir());
-              }
-            });
+            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
           }
         }
       }.start();
@@ -194,21 +184,17 @@ public class PlaybackRunner {
           }
         };
       final ActionCallback cmdCallback = cmd.execute(context);
-      cmdCallback.doWhenDone(new Runnable() {
-        public void run() {
-          if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1, context.getBaseDir());
-          }
-          else {
-            myCallback.message(null, "Stopped", StatusCallback.Type.message);
-            myActionCallback.setDone();
-          }
+      cmdCallback.doWhenDone(() -> {
+        if (cmd.canGoFurther()) {
+          executeFrom(cmdIndex + 1, context.getBaseDir());
         }
-      }).doWhenRejected(new Runnable() {
-        public void run() {
+        else {
           myCallback.message(null, "Stopped", StatusCallback.Type.message);
-          myActionCallback.setRejected();
+          myActionCallback.setDone();
         }
+      }).doWhenRejected(() -> {
+        myCallback.message(null, "Stopped", StatusCallback.Type.message);
+        myActionCallback.setRejected();
       });
     }
     else {
@@ -347,11 +333,7 @@ public class PlaybackRunner {
           messageEdt(context, text, type);
         }
         else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              messageEdt(context, text, type);
-            }
-          });
+          SwingUtilities.invokeLater(() -> messageEdt(context, text, type));
         }
       }
 

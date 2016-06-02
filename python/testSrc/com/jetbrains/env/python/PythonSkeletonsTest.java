@@ -27,9 +27,13 @@ import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Set;
+
+import static com.intellij.testFramework.UsefulTestCase.edt;
+import static org.junit.Assert.*;
 
 /**
  * Heavyweight integration tests of skeletons of Python binary modules.
@@ -42,6 +46,7 @@ import java.util.Set;
 public class PythonSkeletonsTest extends PyEnvTestCase {
   public static final ImmutableSet<String> TAGS = ImmutableSet.of("skeletons");
 
+  @Test
   public void testBuiltins() {
     runTest(new SkeletonsTask() {
       @Override
@@ -87,6 +92,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
   // PY-4349
+  @Test
   public void testFakeNamedTuple() {
     runTest(new SkeletonsTask() {
       @Override
@@ -109,6 +115,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testKnownPropertiesTypes() {
     runTest(new SkeletonsTask() {
       @Override
@@ -128,6 +135,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
   // PY-9797
+  @Test
   public void testReadWriteDeletePropertyDefault() {
     runTest(new SkeletonsTask() {
       @Override
@@ -160,6 +168,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
   // PY-17282
+  @Test
   public void testBinaryStandardModule() {
     runTest(new SkeletonsTask() {
       @Override

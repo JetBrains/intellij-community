@@ -137,7 +137,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    PsiExpression initializer = myField.getInitializer();
+    PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
 
     initializer = normalize ((PsiExpression)initializer.copy());
@@ -190,13 +190,23 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (myField.isWritable()) {
       myField.normalizeDeclaration();
     }
+
+    if (isAccessedForWriting(expr)) {
+      PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
+      if (assignmentExpression != null) {
+        assignmentExpression.delete();
+      }
+      return;
+    }
+
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
         PsiReferenceExpression referenceExpression = null;
         if (initializer1 instanceof PsiReferenceExpression) {
           referenceExpression = (PsiReferenceExpression)initializer1;
-        } else if (initializer1 instanceof PsiMethodCallExpression) {
+        }
+        else if (initializer1 instanceof PsiMethodCallExpression) {
           referenceExpression = ((PsiMethodCallExpression)initializer1).getMethodExpression();
         }
         if (referenceExpression != null &&
@@ -242,7 +252,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
-    PsiExpression initializer = myField.getInitializer();
+    PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
@@ -250,7 +260,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myField.getProject()).getResolveHelper();
     for (UsageInfo info : usagesIn) {
       PsiElement element = info.getElement();
-      if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
+      if (element instanceof PsiExpression && (!myField.hasModifierProperty(PsiModifier.FINAL) || myInlineThisOnly) && isAccessedForWriting((PsiExpression)element)) {
         String message = RefactoringBundle.message("0.is.used.for.writing.in.1", RefactoringUIUtil.getDescription(myField, true),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
         conflicts.putValue(element, message);

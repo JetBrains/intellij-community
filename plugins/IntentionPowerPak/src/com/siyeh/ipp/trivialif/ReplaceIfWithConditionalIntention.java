@@ -118,7 +118,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         }
         final PsiExpression thenArgument = thenArguments[i];
         final PsiExpression elseArgument = elseArguments[i];
-        if (EquivalenceChecker.expressionsAreEquivalent(thenArgument, elseArgument)) {
+        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
           replacementText.append(thenArgument.getText());
         }
         else {

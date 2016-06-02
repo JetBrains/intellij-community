@@ -24,7 +24,7 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +38,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   @Nullable private final Runnable myAfterRunnable;
 
   public OpenInEditorAction(@Nullable Runnable afterRunnable) {
-    EmptyAction.setupAction(this, "EditSource", null);
+    ActionUtil.copyFrom(this, "EditSource");
     myAfterRunnable = afterRunnable;
   }
 

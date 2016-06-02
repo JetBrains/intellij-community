@@ -60,12 +60,7 @@ public class DiffTreeTest extends TestCase {
 
     @Override
     public String toString() {
-      return getChildren().length == 0 ? String.valueOf(myId) : StringUtil.join(myChildren, new Function<Node, String>() {
-        @Override
-        public String fun(Node node) {
-          return node.toString();
-        }
-      }, "");
+      return getChildren().length == 0 ? String.valueOf(myId) : StringUtil.join(myChildren, node -> node.toString(), "");
     }
 
     public TextRange getTextRange() {

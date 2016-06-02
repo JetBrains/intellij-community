@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -119,8 +121,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public Icon getIcon(int flags) {
-    if (isValid()) {
-      final Property property = getProperty();
+    PyPsiUtils.assertValid(this);
+    final Property property = getProperty();
       if (property != null) {
         if (property.getGetter().valueOrNull() == this) {
           return PythonIcons.Python.PropertyGetter;
@@ -136,7 +138,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (getContainingClass() != null) {
         return PlatformIcons.METHOD_ICON;
       }
-    }
     return PythonIcons.Python.Function;
   }
 
@@ -624,7 +625,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    */
   @Nullable
   public Modifier getModifier() {
-    String deconame = getClassOrStaticMethodDecorator();
+    final String deconame = getClassOrStaticMethodDecorator();
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       return CLASSMETHOD;
     }
@@ -632,7 +633,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return STATICMETHOD;
     }
     // implicit staticmethod __new__
-    PyClass cls = getContainingClass();
+    final PyClass cls = getContainingClass();
     if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
     }
@@ -640,31 +641,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (getStub() != null) {
       return getWrappersFromStub();
     }
-    String func_name = getName();
-    if (func_name != null) {
-      PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
-      if (assignment != null) {
-        for (Pair<PyExpression, PyExpression> pair : assignment.getTargetsToValuesMapping()) {
-          PyExpression value = pair.getSecond();
-          if (value instanceof PyCallExpression) {
-            PyExpression target = pair.getFirst();
-            if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
-              Pair<String, PyFunction> interpreted = interpretAsModifierWrappingCall((PyCallExpression)value, this);
-              if (interpreted != null) {
-                PyFunction original = interpreted.getSecond();
-                if (original == this) {
-                  String wrapper_name = interpreted.getFirst();
-                  if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
-                    return CLASSMETHOD;
-                  }
-                  else if (PyNames.STATICMETHOD.equals(wrapper_name)) {
-                    return STATICMETHOD;
-                  }
-                }
-              }
-            }
-          }
+    final String funcName = getName();
+    if (funcName != null) {
+      PyAssignmentStatement currentAssignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
+      while (currentAssignment != null) {
+        final String modifier = currentAssignment
+          .getTargetsToValuesMapping()
+          .stream()
+          .filter(pair -> pair.getFirst() instanceof PyTargetExpression && funcName.equals(pair.getFirst().getName()))
+          .filter(pair -> pair.getSecond() instanceof PyCallExpression)
+          .map(pair -> interpretAsModifierWrappingCall((PyCallExpression)pair.getSecond(), this))
+          .filter(interpreted -> interpreted != null && interpreted.getSecond() == this)
+          .map(interpreted -> interpreted.getFirst())
+          .filter(wrapperName -> PyNames.CLASSMETHOD.equals(wrapperName) || PyNames.STATICMETHOD.equals(wrapperName))
+          .findAny()
+          .orElse(null);
+
+        if (PyNames.CLASSMETHOD.equals(modifier)) {
+          return CLASSMETHOD;
         }
+        else if (PyNames.STATICMETHOD.equals(modifier)) {
+          return STATICMETHOD;
+        }
+
+        currentAssignment = PsiTreeUtil.getNextSiblingOfType(currentAssignment, PyAssignmentStatement.class);
       }
     }
     return null;
@@ -752,13 +752,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
      * Need to save stubs and use them somehow.
      *
      */
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, new CachedValueProvider<List<PyAssignmentStatement>>() {
-      @Nullable
-      @Override
-      public Result<List<PyAssignmentStatement>> compute() {
-        final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, () -> {
+      final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 

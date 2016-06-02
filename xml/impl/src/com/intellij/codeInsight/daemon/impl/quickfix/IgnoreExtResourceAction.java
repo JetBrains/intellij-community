@@ -33,11 +33,6 @@ public class IgnoreExtResourceAction extends BaseExtResourceAction {
 
   @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri));
   }
 }

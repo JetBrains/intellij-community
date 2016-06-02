@@ -91,6 +91,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     assertIntentionNotAvailable();
   }
 
+  public void testRemoveRedundantCast() throws Exception {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.lambda.with.anonymous.intention.name");

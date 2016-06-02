@@ -35,14 +35,13 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public interface JavaElementType {
   @SuppressWarnings("deprecation")
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
-    private final ConstructorAccessor myConstructor;
+    private final Constructor<? extends ASTNode> myConstructor;
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
       this(debugName, nodeClass, false);
@@ -50,14 +49,13 @@ public interface JavaElementType {
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass, final boolean leftBound) {
       super(debugName, leftBound);
-      Constructor<? extends ASTNode> constructor = ReflectionUtil.getDefaultConstructor(nodeClass);
-      myConstructor = ReflectionUtil.getConstructorAccessor(constructor);
+      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstanceViaConstructorAccessor(myConstructor);
+      return ReflectionUtil.createInstance(myConstructor);
     }
   }
 
@@ -84,8 +82,8 @@ public interface JavaElementType {
   IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
+  IElementType LITERAL_EXPRESSION = JavaStubElementTypes.LITERAL_EXPRESSION;
 
-  IElementType LITERAL_EXPRESSION = new JavaCompositeElementType("LITERAL_EXPRESSION", PsiLiteralExpressionImpl.class);
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);
   IElementType DIAMOND_TYPE = new JavaCompositeElementType("DIAMOND_TYPE", PsiDiamondTypeElementImpl.class);

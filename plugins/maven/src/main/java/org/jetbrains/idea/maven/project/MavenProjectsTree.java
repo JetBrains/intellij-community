@@ -249,19 +249,11 @@ public class MavenProjectsTree {
   }
 
   public void setIgnoredFilesPaths(final List<String> paths) {
-    doChangeIgnoreStatus(new Runnable() {
-      public void run() {
-        myIgnoredFilesPaths = new ArrayList<String>(paths);
-      }
-    });
+    doChangeIgnoreStatus(() -> myIgnoredFilesPaths = new ArrayList<String>(paths));
   }
 
   public void removeIgnoredFilesPaths(final Collection<String> paths) {
-    doChangeIgnoreStatus(new Runnable() {
-      public void run() {
-        myIgnoredFilesPaths.removeAll(paths);
-      }
-    });
+    doChangeIgnoreStatus(() -> myIgnoredFilesPaths.removeAll(paths));
   }
 
   public boolean getIgnoredState(MavenProject project) {
@@ -280,14 +272,12 @@ public class MavenProjectsTree {
 
   private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
     final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
-    doChangeIgnoreStatus(new Runnable() {
-      public void run() {
-        if (ignored) {
-          myIgnoredFilesPaths.addAll(paths);
-        }
-        else {
-          myIgnoredFilesPaths.removeAll(paths);
-        }
+    doChangeIgnoreStatus(() -> {
+      if (ignored) {
+        myIgnoredFilesPaths.addAll(paths);
+      }
+      else {
+        myIgnoredFilesPaths.removeAll(paths);
       }
     }, fromImport);
   }
@@ -299,11 +289,9 @@ public class MavenProjectsTree {
   }
 
   public void setIgnoredFilesPatterns(final List<String> patterns) {
-    doChangeIgnoreStatus(new Runnable() {
-      public void run() {
-        myIgnoredFilesPatternsCache = null;
-        myIgnoredFilesPatterns = new ArrayList<String>(patterns);
-      }
+    doChangeIgnoreStatus(() -> {
+      myIgnoredFilesPatternsCache = null;
+      myIgnoredFilesPatterns = new ArrayList<String>(patterns);
     });
   }
 
@@ -1258,41 +1246,40 @@ public class MavenProjectsTree {
 
     try {
       process.checkCanceled();
-      final List<String> names = ContainerUtil.mapNotNull(mavenProjects, new Function<MavenProject, String>() {
-        @Override
-        public String fun(MavenProject project) {
-          return project.getDisplayName();
-        }
-      });
+      final List<String> names = ContainerUtil.mapNotNull(mavenProjects, project12 -> project12.getDisplayName());
       final String text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200);
       process.setText(ProjectBundle.message("maven.resolving.pom", text));
       process.setText2("");
 
       final MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(new LinkedHashSet<String>(), new LinkedHashSet<String>());
-      Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, new Function<MavenProject, VirtualFile>() {
-        @Override
-        public VirtualFile fun(MavenProject project) {
-          explicitProfiles.getEnabledProfiles().addAll(project.getActivatedProfilesIds().getEnabledProfiles());
-          explicitProfiles.getDisabledProfiles().addAll(project.getActivatedProfilesIds().getDisabledProfiles());
-          return project.getFile();
-        }
+      Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, project1 -> {
+        explicitProfiles.getEnabledProfiles().addAll(project1.getActivatedProfilesIds().getEnabledProfiles());
+        explicitProfiles.getDisabledProfiles().addAll(project1.getActivatedProfilesIds().getDisabledProfiles());
+        return project1.getFile();
       });
       Collection<MavenProjectReaderResult> results = new MavenProjectReader().resolveProject(
         generalSettings, embedder, files, explicitProfiles, myProjectLocator);
 
       for (MavenProjectReaderResult result : results) {
+        MavenProject mavenProjectCandidate = null;
         for (MavenProject mavenProject : mavenProjects) {
-          if (mavenProject.getMavenId().equals(result.mavenModel.getMavenId())) {
-            MavenProjectChanges changes = mavenProject.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
-            if (result.nativeMavenProject != null) {
-              for (MavenImporter eachImporter : mavenProject.getSuitableImporters()) {
-                eachImporter.resolve(project, mavenProject, result.nativeMavenProject, embedder, context);
-              }
-            }
-
-            fireProjectResolved(Pair.create(mavenProject, changes), result.nativeMavenProject);
+          MavenId mavenId = result.mavenModel.getMavenId();
+          if (mavenProject.getMavenId().equals(mavenId)) {
+            mavenProjectCandidate = mavenProject;
+            break;
+          } else if (mavenProject.getMavenId().equals(mavenId.getGroupId(), mavenId.getArtifactId())) {
+            mavenProjectCandidate = mavenProject;
           }
         }
+
+        if(mavenProjectCandidate == null) continue;
+        MavenProjectChanges changes = mavenProjectCandidate.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
+        if (result.nativeMavenProject != null) {
+          for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
+            eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
+          }
+        }
+        fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
       }
     }
     finally {

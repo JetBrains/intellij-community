@@ -74,6 +74,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
+    setRemoteConnectionCreator(config.getRemoteConnectionCreator());
   }
 
   @NotNull
@@ -157,12 +158,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     console.attachToProcess(processHandler);
 
     RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console, console.getProperties());
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return console.getResultsView();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> console.getResultsView());
 
     final DefaultExecutionResult result = new DefaultExecutionResult(console, processHandler);
     result.setRestartActions(rerunFailedTestsAction);
@@ -249,12 +245,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
     if (forkPerModule()) {
-      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>(new Comparator<Module>() {
-        @Override
-        public int compare(Module o1, Module o2) {
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
-      });
+      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final PsiClass psiClass : classes.keySet()) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);

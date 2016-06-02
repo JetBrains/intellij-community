@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-view/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/xpath-lang/gen" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -25,4 +26,3 @@
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
   </component>
 </module>
-

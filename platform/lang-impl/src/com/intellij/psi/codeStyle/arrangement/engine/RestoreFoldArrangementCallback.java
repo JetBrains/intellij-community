@@ -50,14 +50,11 @@ public class RestoreFoldArrangementCallback implements ArrangementCallback {
 
       final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
       foldingManager.updateFoldRegions(myEditor);
-      myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          for (FoldRegionInfo info : foldRegionsInfo) {
-            final FoldRegion foldRegion = foldingManager.findFoldRegion(myEditor, info.myStart, info.myEnd);
-            if (foldRegion != null) {
-              foldRegion.setExpanded(info.myIsExpanded);
-            }
+      myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (FoldRegionInfo info : foldRegionsInfo) {
+          final FoldRegion foldRegion = foldingManager.findFoldRegion(myEditor, info.myStart, info.myEnd);
+          if (foldRegion != null) {
+            foldRegion.setExpanded(info.myIsExpanded);
           }
         }
       });

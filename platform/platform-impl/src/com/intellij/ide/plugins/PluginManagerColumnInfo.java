@@ -124,39 +124,37 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     if (isSortByStatus()) {
       final RowSorter.SortKey defaultSortKey = myModel.getDefaultSortKey();
       final int up = defaultSortKey != null && defaultSortKey.getSortOrder() == SortOrder.ASCENDING ? -1 : 1;
-      return new Comparator<IdeaPluginDescriptor>() {
-        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-          if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-            final int status1 = ((PluginNode)o1).getStatus();
-            final int status2 = ((PluginNode)o2).getStatus();
-            if (isDownloaded((PluginNode)o1)){
-              if (!isDownloaded((PluginNode)o2)) return up;
-              return comparator.compare(o1, o2);
-            }
-            if (isDownloaded((PluginNode)o2)) return -up;
+      return (o1, o2) -> {
+        if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
+          final int status1 = ((PluginNode)o1).getStatus();
+          final int status2 = ((PluginNode)o2).getStatus();
+          if (isDownloaded((PluginNode)o1)){
+            if (!isDownloaded((PluginNode)o2)) return up;
+            return comparator.compare(o1, o2);
+          }
+          if (isDownloaded((PluginNode)o2)) return -up;
 
-            if (status1 == PluginNode.STATUS_DELETED) {
-              if (status2 != PluginNode.STATUS_DELETED) return up;
-              return comparator.compare(o1, o2);
-            }
-            if (status2 == PluginNode.STATUS_DELETED) return -up;
+          if (status1 == PluginNode.STATUS_DELETED) {
+            if (status2 != PluginNode.STATUS_DELETED) return up;
+            return comparator.compare(o1, o2);
+          }
+          if (status2 == PluginNode.STATUS_DELETED) return -up;
 
-            if (status1 == PluginNode.STATUS_INSTALLED) {
-              if (status2 !=PluginNode.STATUS_INSTALLED) return up;
-              final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
-              final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
-              if (hasNewerVersion1 != hasNewerVersion2) {
-                if (hasNewerVersion1) return up;
-                return -up;
-              }
-              return comparator.compare(o1, o2);
-            }
-            if (status2 == PluginNode.STATUS_INSTALLED) {
+          if (status1 == PluginNode.STATUS_INSTALLED) {
+            if (status2 !=PluginNode.STATUS_INSTALLED) return up;
+            final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
+            final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
+            if (hasNewerVersion1 != hasNewerVersion2) {
+              if (hasNewerVersion1) return up;
               return -up;
             }
+            return comparator.compare(o1, o2);
           }
-          return comparator.compare(o1, o2);
+          if (status2 == PluginNode.STATUS_INSTALLED) {
+            return -up;
+          }
         }
+        return comparator.compare(o1, o2);
       };
     }
 
@@ -164,43 +162,41 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   protected Comparator<IdeaPluginDescriptor> getColumnComparator() {
-    return new Comparator<IdeaPluginDescriptor>() {
-      public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-        if (myModel.isSortByRating()) {
-          final String rating1 = ((PluginNode)o1).getRating();
-          final String rating2 = ((PluginNode)o2).getRating();
-          final int compare = Comparing.compare(rating2, rating1);
-          if (compare != 0) {
-            return compare;
-          }
+    return (o1, o2) -> {
+      if (myModel.isSortByRating()) {
+        final String rating1 = ((PluginNode)o1).getRating();
+        final String rating2 = ((PluginNode)o2).getRating();
+        final int compare = Comparing.compare(rating2, rating1);
+        if (compare != 0) {
+          return compare;
         }
-
-        if (isSortByDate()) {
-          long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
-          long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
-          date1 /= 60 * 1000;
-          date2 /= 60 * 1000;
-          if (date2 != date1) {
-            return date2 - date1 > 0L ? 1 : -1;
-          }
-        }
-
-        if (isSortByDownloads()) {
-          String count1 = o1.getDownloads();
-          String count2 = o2.getDownloads();
-          if (count1 != null && count2 != null) {
-            final Long result = Long.valueOf(count2);
-            if (result != 0) {
-              return result.compareTo(Long.valueOf(count1));
-            }
-          }
-          else {
-            return count1 != null ? -1 : 1;
-          }
-        }
-
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
       }
+
+      if (isSortByDate()) {
+        long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
+        long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
+        date1 /= 60 * 1000;
+        date2 /= 60 * 1000;
+        if (date2 != date1) {
+          return date2 - date1 > 0L ? 1 : -1;
+        }
+      }
+
+      if (isSortByDownloads()) {
+        String count1 = o1.getDownloads();
+        String count2 = o2.getDownloads();
+        if (count1 != null && count2 != null) {
+          final Long result = Long.valueOf(count2);
+          if (result != 0) {
+            return result.compareTo(Long.valueOf(count1));
+          }
+        }
+        else {
+          return count1 != null ? -1 : 1;
+        }
+      }
+
+      return StringUtil.compare(o1.getName(), o2.getName(), true);
     };
   }
 

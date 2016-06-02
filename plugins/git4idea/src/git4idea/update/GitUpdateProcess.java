@@ -35,7 +35,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
@@ -68,7 +67,6 @@ public class GitUpdateProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Collection<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
@@ -78,13 +76,11 @@ public class GitUpdateProcess {
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
 
   public GitUpdateProcess(@NotNull Project project,
-                          @NotNull GitPlatformFacade platformFacade,
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           boolean checkRebaseOverMergeProblem) {
     myProject = project;
-    myPlatformFacade = platformFacade;
     myRepositories = repositories;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myGit = ServiceManager.getService(Git.class);
@@ -193,7 +189,7 @@ public class GitUpdateProcess {
     final Ref<GitUpdateResult> compoundResult = Ref.create();
     final Map<VirtualFile, GitUpdater> finalUpdaters = updaters;
 
-    new GitPreservingProcess(myProject, myPlatformFacade, myGit, myRootsToSave, "Update", "Remote",
+    new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
                              GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, new Runnable() {
       @Override
       public void run() {
@@ -387,7 +383,7 @@ public class GitUpdateProcess {
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(GitPlatformFacade.class), rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, myGit, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

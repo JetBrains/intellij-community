@@ -55,7 +55,7 @@ import java.util.List;
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
-  private volatile String myCachedQName = null;
+  private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
   private volatile int myKindWhenDummy = CLASS_NAME_KIND;
 

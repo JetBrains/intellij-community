@@ -35,12 +35,8 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
     List<Configurable> list;
     if (category == DebuggerSettingsCategory.GENERAL) {
       list = new SmartList<>(
-        SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class, new Getter<XDebuggerGeneralSettings>() {
-          @Override
-          public XDebuggerGeneralSettings get() {
-            return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings();
-          }
-        }));
+        SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class,
+                                  () -> XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()));
     }
     else {
       list = null;

@@ -26,7 +26,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.VerticalBox;
-import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -299,15 +299,11 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
   }
 
   private void processEnabled() {
-    new AwtVisitor(this) {
-      @Override
-      public boolean visit(Component component) {
-        if (component != myEnabled) {
-          component.setEnabled(myQaEnabled);
-        }
-        return false;
+    for (Component component : UIUtil.uiTraverser(this)) {
+      if (component != myEnabled) {
+        component.setEnabled(myQaEnabled);
       }
-    };
+    }
   }
 
   private class ModifierBox extends JCheckBox {

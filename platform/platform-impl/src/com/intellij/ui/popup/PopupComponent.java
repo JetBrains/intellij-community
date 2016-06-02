@@ -111,7 +111,7 @@ public interface PopupComponent {
 
     public DialogPopupWrapper(Component owner, Component content, int x, int y, JBPopup jbPopup) {
       if (!owner.isShowing()) {
-        throw new IllegalArgumentException("Popup owner must be showing");
+        throw new IllegalArgumentException("Popup owner must be showing, owner " + owner.getClass());
       }
 
       final Window wnd = UIUtil.getWindow(owner);
@@ -164,11 +164,7 @@ public interface PopupComponent {
       myDialog.setVisible(true);
       AwtPopupWrapper.fixFlickering(myDialog, true);
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myDialog.setFocusableWindowState(true);
-        }
-      });
+      SwingUtilities.invokeLater(() -> myDialog.setFocusableWindowState(true));
     }
   }
 

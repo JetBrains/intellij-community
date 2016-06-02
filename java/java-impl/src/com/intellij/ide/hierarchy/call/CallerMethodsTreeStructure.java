@@ -83,14 +83,11 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     for (final PsiMethod methodToFind : methodsToFind) {
       final JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 
-      MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(final PsiReference reference) {
-          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
-            if (!processor.process(reference, data)) break;
-          }
-          return true;
+      MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
+        for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+          if (!processor.process(reference, data)) break;
         }
+        return true;
       });
     }
 

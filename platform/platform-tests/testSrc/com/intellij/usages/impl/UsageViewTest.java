@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
@@ -63,7 +64,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
-    document.insertString(0, "/* sdfsdfsd */");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "/* sdfsdfsd */"));
     documentManager.commitAllDocuments();
     int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
@@ -77,7 +78,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
-    document.insertString(0, "/* sdfsdfsd */");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "/* sdfsdfsd */"));
     documentManager.commitAllDocuments();
     int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);

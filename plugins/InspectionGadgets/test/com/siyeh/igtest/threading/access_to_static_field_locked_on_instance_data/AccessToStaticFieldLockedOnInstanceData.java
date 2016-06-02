@@ -1,8 +1,8 @@
 package com.siyeh.igtest.threading.access_to_static_field_locked_on_instance_data;
 
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+
+
 
 public class AccessToStaticFieldLockedOnInstanceData {
     private static int foo;
@@ -16,8 +16,8 @@ public class AccessToStaticFieldLockedOnInstanceData {
 
     public synchronized void test2()
     {
-        foo = 3;
-        System.out.println(foo);
+        <warning descr="Access to static field 'foo' locked on instance data">foo</warning> = 3;
+        System.out.println(<warning descr="Access to static field 'foo' locked on instance data">foo</warning>);
     }
 
     public void foo()
@@ -25,8 +25,8 @@ public class AccessToStaticFieldLockedOnInstanceData {
         foo = 3;
         synchronized(this)
         {
-            foo = 3;
-            System.out.println(foo);
+            <warning descr="Access to static field 'foo' locked on instance data">foo</warning> = 3;
+            System.out.println(<warning descr="Access to static field 'foo' locked on instance data">foo</warning>);
             LIST.get(0);
         }
     }
@@ -35,20 +35,19 @@ class StaticFieldNotLockedOnInstanceData
 {
     private static final Object printer_ = new Object();
 
-    private final Executor executor_ = Executors.newCachedThreadPool();
     private final Object lock_ = new Object();
 
     void print()
     {
         synchronized (lock_)
         {
-            executor_.execute(new Runnable()
+            new Thread(new Runnable()
             {
                 @Override public void run()
                 {
                     printer_.hashCode();
                 }
-            });
+            }).start();
         }
     }
 }

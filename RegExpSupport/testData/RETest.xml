@@ -233,6 +233,10 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>[a&amp;&amp;]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>a[a[b][c]]</pattern>
       <expected>OK</expected>
     </test>
@@ -396,6 +400,10 @@
       <pattern>a\p{123}</pattern>
       <expected>ERR</expected>
     </test>
+    <test>
+      <pattern>[\p{nothing}]</pattern>
+      <expected>ERR</expected>
+    </test>
     <test verify="false">
       <pattern><![CDATA[a\p{<error descr="Character family name expected">*</error>}b]]></pattern>
       <expected>OK</expected>
@@ -417,6 +425,22 @@
     <test>
       <pattern>[\ud800\udc00-\udbff\udfff]</pattern>
       <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\R</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\X</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern><![CDATA[<weak_warning descr="Redundant character escape">\-</weak_warning>[<weak_warning descr="Redundant character escape">\*</weak_warning>\-\[\]\\<weak_warning descr="Redundant character escape">\+]</weak_warning>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>[\b]</pattern>
+      <expected>ERR</expected>
     </test>
   </charclasses>
 
@@ -623,7 +647,7 @@
       <pattern>[\x4a-\x3f]</pattern>
       <expected>ERR</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern><![CDATA[[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]]]></pattern>
       <expected>OK</expected>
     </test>
@@ -631,7 +655,7 @@
       <pattern>[\ud800\udc00-\udbff\udfff]</pattern>
       <expected>OK</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern><![CDATA[[<error descr="Illegal character range (to < from)">z-a</error>]]]></pattern>
       <expected>OK</expected>
     </test>
@@ -865,6 +889,10 @@
     </test>
     <test>
       <pattern>\E</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>a|*</pattern>
       <expected>ERR</expected>
     </test>
   </incomplete>

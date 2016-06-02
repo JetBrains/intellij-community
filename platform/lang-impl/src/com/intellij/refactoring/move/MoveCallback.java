@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-/**
- * created at Nov 27, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move;
-
-import org.jetbrains.annotations.Nullable;
 
 public interface MoveCallback {
   void refactoringCompleted();

@@ -30,7 +30,6 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,12 +73,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
-      String list = StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
-        @Override
-        public String fun(IdeaPluginDescriptor downloader) {
-          return downloader.getName();
-        }
-      }, "<br/>");
+      String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
   }
@@ -228,7 +222,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
-          message = message.substring(0, idx) + 
+          message = message.substring(0, idx) +
                     "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }

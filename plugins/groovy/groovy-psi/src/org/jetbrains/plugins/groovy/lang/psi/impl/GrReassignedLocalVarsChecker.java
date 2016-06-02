@@ -69,13 +69,8 @@ public class GrReassignedLocalVarsChecker {
     }
 
     assert resolved instanceof GrVariable;
-    return CachedValuesManager.getCachedValue(resolved, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        return Result.create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(resolved, () -> CachedValueProvider.Result
+      .create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static boolean isReassignedVarImpl(@NotNull final GrVariable resolved) {
@@ -122,70 +117,58 @@ public class GrReassignedLocalVarsChecker {
 
     assert resolved instanceof GrVariable;
 
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), new Function<GrVariable, PsiType>() {
-      @Override
-      public PsiType fun(GrVariable variable) {
-        return getLeastUpperBoundByVar(variable);
-      }
-    });
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), variable -> getLeastUpperBoundByVar(variable));
   }
 
   @Nullable
   private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable var) {
-    return RecursionManager.doPreventingRecursion(var, false, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
-        final GrExpression initializer = var.getInitializerGroovy();
+    return RecursionManager.doPreventingRecursion(var, false, (NullableComputable<PsiType>)() -> {
+      final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
+      final GrExpression initializer = var.getInitializerGroovy();
 
-        if (initializer == null && all.isEmpty()) {
-          return var.getDeclaredType();
-        }
-
-        PsiType result = initializer != null ? initializer.getType() : null;
-
-        final PsiManager manager = var.getManager();
-        for (PsiReference reference : all) {
-          final PsiElement ref = reference.getElement();
-          if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
-            result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
-          }
-        }
-
-        return result;
+      if (initializer == null && all.isEmpty()) {
+        return var.getDeclaredType();
       }
+
+      PsiType result = initializer != null ? initializer.getType() : null;
+
+      final PsiManager manager = var.getManager();
+      for (PsiReference reference : all) {
+        final PsiElement ref = reference.getElement();
+        if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
+          result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
+        }
+      }
+
+      return result;
     });
   }
 
   @NotNull
   private static Set<String> getUsedVarsInsideBlock(@NotNull final GrCodeBlock block) {
-      return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<String>>() {
-        @Nullable
-        @Override
-        public Result<Set<String>> compute() {
-          final Set<String> result = ContainerUtil.newHashSet();
+      return CachedValuesManager.getCachedValue(block, () -> {
+        final Set<String> result = ContainerUtil.newHashSet();
 
-          block.acceptChildren(new GroovyRecursiveElementVisitor() {
+        block.acceptChildren(new GroovyRecursiveElementVisitor() {
 
-            @Override
-            public void visitOpenBlock(GrOpenBlock openBlock) {
-              result.addAll(getUsedVarsInsideBlock(openBlock));
+          @Override
+          public void visitOpenBlock(GrOpenBlock openBlock) {
+            result.addAll(getUsedVarsInsideBlock(openBlock));
+          }
+
+          @Override
+          public void visitClosure(GrClosableBlock closure) {
+            result.addAll(getUsedVarsInsideBlock(closure));
+          }
+
+          @Override
+          public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+            if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
+              result.add(referenceExpression.getReferenceName());
             }
-
-            @Override
-            public void visitClosure(GrClosableBlock closure) {
-              result.addAll(getUsedVarsInsideBlock(closure));
-            }
-
-            @Override
-            public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-              if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
-                result.add(referenceExpression.getReferenceName());
-              }
-            }
-          });
-          return Result.create(result, block);
-        }
+          }
+        });
+        return CachedValueProvider.Result.create(result, block);
       });
   }
 

@@ -35,4 +35,5 @@ public class TooBroadScopeInspectionFixTest extends IGQuickFixesTestCase {
   public void testForStatement2() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
   public void testForStatement3() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
   public void testComments() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "s")); }
+  public void testComments2() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "alpha")); }
 }

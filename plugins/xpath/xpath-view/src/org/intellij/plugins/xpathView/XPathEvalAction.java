@@ -136,7 +136,7 @@ public class XPathEvalAction extends XPathAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = event.getProject();
         if (project == null) {
             // no active project
             LOG.debug("No project");
@@ -269,12 +269,7 @@ public class XPathEvalAction extends XPathAction {
 
         //noinspection unchecked
         final List<?> _result = new ArrayList(result);
-        final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
-            @Override
-            public UsageSearcher create() {
-                return new MyUsageSearcher(_result, xPath, contextNode);
-            }
-        };
+        final Factory<UsageSearcher> searcherFactory = () -> new MyUsageSearcher(_result, xPath, contextNode);
         final MyUsageTarget usageTarget = new MyUsageTarget(xPath.toString(), contextNode);
 
         showUsageView(project, usageTarget, searcherFactory, new EditExpressionAction() {
@@ -308,12 +303,7 @@ public class XPathEvalAction extends XPathAction {
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
-            @Override
-            public ProgressIndicator create() {
-                return new FindProgressIndicator(project, "XML Document(s)");
-            }
-        });
+        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, "XML Document(s)"));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
         final UsageTarget[] usageTargets = { usageTarget };
@@ -398,13 +388,10 @@ public class XPathEvalAction extends XPathAction {
             editor.getCaretModel().moveToOffset(lowestOffset);
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
-                final String s = StringUtil.pluralize("match", list.size());
-                statusBar.setInfo(list.size() + " XPath " + s + " found (press Escape to remove the highlighting)");
-            }
+        SwingUtilities.invokeLater(() -> {
+            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
+            final String s = StringUtil.pluralize("match", list.size());
+            statusBar.setInfo(list.size() + " XPath " + s + " found (press Escape to remove the highlighting)");
         });
     }
 
@@ -498,50 +485,46 @@ public class XPathEvalAction extends XPathAction {
 
         @Override
         public void generate(@NotNull final Processor<Usage> processor) {
-            Runnable runnable = new Runnable() {
-                @Override
-                @SuppressWarnings({"unchecked"})
-                public void run() {
-                    final List<?> list;
-                    if (myResult.isEmpty()) {
-                        try {
-                            list = (List<?>)myXPath.selectNodes(myContextNode);
-                        } catch (JaxenException e) {
-                            LOG.debug(e);
-                            Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(), "XPath error", Messages.getErrorIcon());
-                            return;
-                        }
-                    } else {
-                        list = myResult;
+            Runnable runnable = () -> {
+                final List<?> list;
+                if (myResult.isEmpty()) {
+                    try {
+                        list = (List<?>)myXPath.selectNodes(myContextNode);
+                    } catch (JaxenException e) {
+                        LOG.debug(e);
+                        Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(), "XPath error", Messages.getErrorIcon());
+                        return;
                     }
-
-                    final int size = list.size();
-                    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                    indicator.setText("Collecting matches...");
-
-                    Collections.sort(list, new Comparator() {
-                        @Override
-                        public int compare(Object o1, Object o2) {
-                            indicator.checkCanceled();
-                            if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
-                                return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
-                            } else {
-                                return String.valueOf(o1).compareTo(String.valueOf(o2));
-                            }
-                        }
-                    });
-                    for (int i = 0; i < size; i++) {
-                        indicator.checkCanceled();
-                        Object o = list.get(i);
-                        if (o instanceof PsiElement) {
-                            final PsiElement element = (PsiElement)o;
-                            processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
-                            indicator.setText2(element.getContainingFile().getName());
-                        }
-                        indicator.setFraction(i / (double)size);
-                    }
-                    list.clear();
+                } else {
+                    list = myResult;
                 }
+
+                final int size = list.size();
+                final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+                indicator.setText("Collecting matches...");
+
+                Collections.sort(list, new Comparator() {
+                    @Override
+                    public int compare(Object o1, Object o2) {
+                        indicator.checkCanceled();
+                        if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
+                            return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
+                        } else {
+                            return String.valueOf(o1).compareTo(String.valueOf(o2));
+                        }
+                    }
+                });
+                for (int i = 0; i < size; i++) {
+                    indicator.checkCanceled();
+                    Object o = list.get(i);
+                    if (o instanceof PsiElement) {
+                        final PsiElement element = (PsiElement)o;
+                        processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+                        indicator.setText2(element.getContainingFile().getName());
+                    }
+                    indicator.setFraction(i / (double)size);
+                }
+                list.clear();
             };
             ApplicationManager.getApplication().runReadAction(runnable);
         }
@@ -550,14 +533,7 @@ public class XPathEvalAction extends XPathAction {
     public abstract static class EditExpressionAction implements Runnable {
         @Override
         public void run() {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    execute();
-                }
-
-            };
-            SwingUtilities.invokeLater(runnable);
+          execute();
         }
 
         protected abstract void execute();

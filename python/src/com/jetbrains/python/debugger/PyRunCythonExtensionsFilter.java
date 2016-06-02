@@ -140,12 +140,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
               final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
                                      ? "Permission denied"
                                      : "Non-zero exit code (" + exitCode + "): \n" + result.getStderr();
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  showErrorDialog(message);
-                }
-              });
+              UIUtil.invokeLaterIfNeeded(() -> showErrorDialog(message));
             }
           }
         });

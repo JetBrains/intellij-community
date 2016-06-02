@@ -172,10 +172,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myDoNotSave = isUnitTestMode || isHeadless;
 
-    if (myTestModeFlag) {
-      registerShutdownHook();
-    }
-
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
 
@@ -212,34 +208,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       //noinspection ResultOfObjectAllocationIgnored
       new IdeaApplication(args);
     }
-    gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-    writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
+    gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+    writePauses = gatherStatistics ? new PausesStat("Write action") : null;
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
-  }
-
-  private void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      if (isDisposed() || myDisposeInProgress) {
-        return;
-      }
-      ShutDownTracker.invokeAndWait(isUnitTestMode(), true, () -> {
-        if (ApplicationManager.getApplication() != this) return;
-        try {
-          myDisposeInProgress = true;
-          saveAll();
-        }
-        finally {
-          if (!disposeSelf(true)) {
-            myDisposeInProgress = false;
-          }
-        }
-      });
-    });
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
@@ -328,7 +304,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
-        assert !isReadAccessAllowed(): describe(Thread.currentThread());
         try {
           action.run();
         }
@@ -339,9 +314,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
-          assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
       }
     });
@@ -364,7 +337,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
@@ -454,10 +426,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+  protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> ApplicationImpl.super.createComponents(indicator);
-
+    Runnable task = () -> super.createComponents(indicator);
 
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -514,10 +485,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
 
-    if (gatherWriteActionStatistics) {
+    if (gatherStatistics) {
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
     }
   }
 
@@ -562,7 +534,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                            // The thread will deadlock trying to get read action otherwise.
         || isHeadlessEnvironment() && !isUnitTestMode()
       ) {
-      LOG.debug("Starting process with progress from within write action makes no sense");
+      if (writeAccessAllowed) {
+        LOG.debug("Starting process with progress from within write action makes no sense");
+      }
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -609,9 +583,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
 
   @Override
-  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable final Project project, @NotNull final String progressTitle,
+  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable final Project project,
+                                                                 @NotNull final String progressTitle,
                                                                  final boolean canBeCanceled,
-                                                                 final String cancelText, final JComponent parentComponent,
+                                                                 final String cancelText,
+                                                                 final JComponent parentComponent,
                                                                  @NotNull final Runnable process) {
     assertIsDispatchThread();
     boolean writeAccessAllowed = isWriteAccessAllowed();
@@ -1073,7 +1049,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isUnitTestMode()) return true;
+    if (isHeadlessEnvironment()) return true;
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
 
@@ -1099,18 +1075,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final boolean gatherWriteActionStatistics;
+  private final boolean gatherStatistics;
   private final PausesStat writePauses;
 
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!isDisposed() && !isDisposeInProgress() && !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
-    }
     boolean writeActionPending = myWriteActionPending;
-    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
+    if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       writePauses.started();
     }
     myWriteActionPending = true;
@@ -1146,12 +1118,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       fireWriteActionFinished(clazz);
       // fire listeners before popping stack because if somebody starts write action in a listener,
       // there is a danger of unlocking the write lock before other listeners have been run (since write lock became non-reentrant).
-      myWriteActionsStack.pop();
-      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
-        writePauses.finished("write action ("+clazz+")");
-      }
     }
     finally {
+      myWriteActionsStack.pop();
+      if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
+        writePauses.finished("write action ("+clazz+")");
+      }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
       }

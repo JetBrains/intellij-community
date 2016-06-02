@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,7 +36,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiAwareTextEditorProvider extends TextEditorProvider implements AsyncFileEditorProvider {
+public class PsiAwareTextEditorProvider extends TextEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
@@ -45,41 +44,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
   @Override
   @NotNull
   public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
-    return createEditorAsync(project, file).build();
-  }
-
-  @NotNull
-  @Override
-  public Builder createEditorAsync(@NotNull final Project project, @NotNull final VirtualFile file) {
-    if (!accept(project, file)) {
-      LOG.error("Cannot open text editor for " + file);
-    }
-    CodeFoldingState state = null;
-    if (!project.isDefault()) { // There's no CodeFoldingManager for default project (which is used in diff command-line application)
-      try {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          state = CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error("Error building initial foldings", e);
-      }
-    }
-    final CodeFoldingState finalState = state;
-    return new Builder() {
-      @Override
-      public FileEditor build() {
-        final PsiAwareTextEditorImpl editor = new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this);
-        if (finalState != null) {
-          finalState.setToEditor(editor.getEditor());
-        }
-        return editor;
-      }
-    };
+    return new PsiAwareTextEditorImpl(project, file, this);
   }
 
   @Override
@@ -93,12 +58,9 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     if (child != null) {
       if (document == null) {
         final Element detachedStateCopy = child.clone();
-        state.setDelayedFoldState(new Producer<CodeFoldingState>() {
-          @Override
-          public CodeFoldingState produce() {
-            Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-            return document == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document);
-          }
+        state.setDelayedFoldState(() -> {
+          Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
+          return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);
         });
       }
       else {
@@ -137,7 +99,6 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     if (FileEditorStateLevel.FULL == level) {
       // Folding
       if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
       else {
@@ -153,8 +114,11 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     super.setStateImpl(project, editor, state);
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
-    if (project != null && foldState != null) {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    if (project != null && foldState != null && AsyncEditorLoader.isEditorLoaded(editor)) {
+      if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        LOG.error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time");
+      }
       editor.getFoldingModel().runBatchFoldingOperation(
         () -> CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
       );

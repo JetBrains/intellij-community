@@ -17,11 +17,11 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ModuleRendererFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -30,17 +30,18 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
@@ -119,14 +120,18 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
       ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
                                                              ComboBoxClassElement.class,
-                                                             new Function<PsiClass, ComboBoxClassElement>() {
-                                                               @Override
-                                                               public ComboBoxClassElement fun(PsiClass psiClass) {
-                                                                 return new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement());
-                                                               }
-                                                             });
+                                                             psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, myProject, file);
+      String locationDeclName = null;
+      XStackFrame frame = session.getCurrentStackFrame();
+      if (frame instanceof JavaStackFrame) {
+        Location location = ((JavaStackFrame)frame).getDescriptor().getLocation();
+        if (location != null) {
+          locationDeclName = location.declaringType().name();
+        }
+      }
+
+      return new AlternativeSourceNotificationPanel(elems, baseClass, myProject, file, locationDeclName);
     }
     return null;
   }
@@ -161,9 +166,10 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
     public AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
                                               final PsiClass aClass,
                                               final Project project,
-                                              final VirtualFile file) {
+                                              final VirtualFile file,
+                                              String locationDeclName) {
       setText(DebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
-      final ComboBox switcher = new ComboBox(alternatives);
+      final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -175,17 +181,12 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
             session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
               protected void action() throws Exception {
-                StackFrameProxyImpl proxy = context.getFrameProxy();
-                Location location = proxy != null ? proxy.location() : null;
-                if (location != null) {
-                  DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
+                if (!StringUtil.isEmpty(locationDeclName)) {
+                  DebuggerUtilsEx.setAlternativeSourceUrl(locationDeclName, vFile.getUrl(), project);
                 }
-                DebuggerUIUtil.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    FileEditorManager.getInstance(project).closeFile(file);
-                    session.refresh(true);
-                  }
+                DebuggerUIUtil.invokeLater(() -> {
+                  FileEditorManager.getInstance(project).closeFile(file);
+                  session.refresh(true);
                 });
               }
             });
@@ -197,16 +198,13 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
         }
       });
       myLinksPanel.add(switcher);
-      createActionLabel(DebuggerBundle.message("action.disable.text"), new Runnable() {
-        @Override
-        public void run() {
-          DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
-          FILE_PROCESSED_KEY.set(file, null);
-          FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-          FileEditor editor = fileEditorManager.getSelectedEditor(file);
-          if (editor != null) {
-            fileEditorManager.removeTopComponent(editor, AlternativeSourceNotificationPanel.this);
-          }
+      createActionLabel(DebuggerBundle.message("action.disable.text"), () -> {
+        DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
+        FILE_PROCESSED_KEY.set(file, null);
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+        FileEditor editor = fileEditorManager.getSelectedEditor(file);
+        if (editor != null) {
+          fileEditorManager.removeTopComponent(editor, this);
         }
       });
     }

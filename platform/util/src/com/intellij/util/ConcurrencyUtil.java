@@ -137,10 +137,10 @@ public class ConcurrencyUtil {
     };
   }
 
-  @TestOnly
   /**
    * Awaits for all tasks in the {@code executor} to finish for the specified {@code timeout}
    */
+  @TestOnly
   public static void awaitQuiescence(@NotNull ThreadPoolExecutor executor, long timeout, @NotNull TimeUnit unit) {
     executor.setKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
     executor.setCorePoolSize(0); // interrupt idle workers

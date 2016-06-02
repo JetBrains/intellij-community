@@ -88,7 +88,7 @@ public class DiffManagerImpl extends DiffManagerEx {
   @NotNull
   @Override
   public List<DiffTool> getDiffTools() {
-    List<DiffTool> result = new ArrayList<DiffTool>();
+    List<DiffTool> result = new ArrayList<>();
     Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
     result.add(SimpleDiffTool.INSTANCE);
     result.add(UnifiedDiffTool.INSTANCE);
@@ -100,7 +100,7 @@ public class DiffManagerImpl extends DiffManagerEx {
   @NotNull
   @Override
   public List<MergeTool> getMergeTools() {
-    List<MergeTool> result = new ArrayList<MergeTool>();
+    List<MergeTool> result = new ArrayList<>();
     Collections.addAll(result, MergeTool.EP_NAME.getExtensions());
     result.add(TextMergeTool.INSTANCE);
     result.add(BinaryMergeTool.INSTANCE);

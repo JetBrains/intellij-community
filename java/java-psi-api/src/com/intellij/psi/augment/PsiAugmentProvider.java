@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Some code is not what it seems to be!
@@ -75,9 +76,9 @@ public abstract class PsiAugmentProvider {
    *
    * @since 2016.2
    */
-  @Nullable
-  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
-    return null;
+  @NotNull
+  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+    return modifiers;
   }
 
   //</editor-fold>
@@ -120,21 +121,17 @@ public abstract class PsiAugmentProvider {
     return result.get();
   }
 
-  @Nullable
-  public static Boolean checkModifierProperty(@NotNull final PsiModifierList modifierList, @NotNull final String name) {
-    final Ref<Boolean> result = Ref.create();
+  @NotNull
+  public static Set<String> transformModifierProperties(@NotNull final PsiModifierList modifierList,
+                                                        @NotNull Project project,
+                                                        @NotNull final Set<String> modifiers) {
+    final Ref<Set<String>> result = Ref.create(modifiers);
 
-    forEach(modifierList.getProject(), new Processor<PsiAugmentProvider>() {
+    forEach(project, new Processor<PsiAugmentProvider>() {
       @Override
       public boolean process(PsiAugmentProvider provider) {
-        Boolean property = provider.hasModifierProperty(modifierList, name);
-        if (property != null) {
-          result.set(property);
-          return false;
-        }
-        else {
-          return true;
-        }
+        result.set(provider.transformModifiers(modifierList, Collections.unmodifiableSet(result.get())));
+        return true;
       }
     });
 
@@ -142,8 +139,9 @@ public abstract class PsiAugmentProvider {
   }
 
   private static void forEach(Project project, Processor<PsiAugmentProvider> processor) {
+    boolean dumb = DumbService.isDumb(project);
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (!DumbService.isDumb(project) || DumbService.isDumbAware(provider)) {
+      if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);
           if (!goOn) break;

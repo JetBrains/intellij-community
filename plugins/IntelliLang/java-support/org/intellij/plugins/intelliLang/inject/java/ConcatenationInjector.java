@@ -183,19 +183,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         private void visitVariableUsages(PsiVariable variable) {
           if (variable == null) return;
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
-            ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference psiReference) {
-                final PsiElement element = psiReference.getElement();
-                if (element instanceof PsiExpression) {
-                  final PsiExpression refExpression = (PsiExpression)element;
-                  places.add(refExpression);
-                  if (!myUnparsable) {
-                    myUnparsable = checkUnparsableReference(refExpression);
-                  }
+            ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
+              final PsiElement element = psiReference.getElement();
+              if (element instanceof PsiExpression) {
+                final PsiExpression refExpression = (PsiExpression)element;
+                places.add(refExpression);
+                if (!myUnparsable) {
+                  myUnparsable = checkUnparsableReference(refExpression);
                 }
-                return true;
               }
+              return true;
             });
           }
         }

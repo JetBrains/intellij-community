@@ -35,23 +35,13 @@ public abstract class TaskDialogPanelProvider {
   private final static ExtensionPointName<TaskDialogPanelProvider> EP_NAME = ExtensionPointName.create("com.intellij.tasks.dialogPanelProvider");
 
   public static List<TaskDialogPanel> getOpenTaskPanels(@NotNull Project project, @NotNull Task task) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME), new NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>() {
-      @Nullable
-      @Override
-      public TaskDialogPanel fun(TaskDialogPanelProvider provider) {
-        return provider.getOpenTaskPanel(project, task);
-      }
-    });
+    return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME),
+                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getOpenTaskPanel(project, task));
   }
     
   public static List<TaskDialogPanel> getCloseTaskPanels(@NotNull Project project, @NotNull LocalTask task) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME), new NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>() {
-      @Nullable
-      @Override
-      public TaskDialogPanel fun(TaskDialogPanelProvider provider) {
-        return provider.getCloseTaskPanel(project, task);
-      }
-    });
+    return ContainerUtil.mapNotNull(Extensions.getExtensions(EP_NAME),
+                                    (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getCloseTaskPanel(project, task));
   }
     
   @Nullable

@@ -38,20 +38,22 @@ public class IndentInfo {
   public IndentInfo(final int lineFeeds,
                     final int indentSpaces,
                     final int spaces,
-                    final int hiddenSpaces)
-  {
+                    final int hiddenSpaces) {
     this(lineFeeds, indentSpaces, spaces, hiddenSpaces, false);
   }
 
   public IndentInfo(final int lineFeeds,
                     final int indentSpaces,
                     final int spaces,
-                    final boolean forceSkipTabulationsUsage)
-  {
+                    final boolean forceSkipTabulationsUsage) {
     this(lineFeeds, indentSpaces, spaces, 0, forceSkipTabulationsUsage);
   }
 
-  public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces, final int hiddenSpaces, final boolean forceSkipTabulationsUsage) {
+  public IndentInfo(final int lineFeeds,
+                    final int indentSpaces,
+                    final int spaces,
+                    final int hiddenSpaces,
+                    final boolean forceSkipTabulationsUsage) {
     mySpaces = spaces;
     myIndentSpaces = indentSpaces;
     myLineFeeds = lineFeeds;
@@ -72,7 +74,8 @@ public class IndentInfo {
    *
    * @param options              indentation formatting options
    */
-  public String generateNewWhiteSpace(CommonCodeStyleSettings.IndentOptions options) {
+  @NotNull
+  public String generateNewWhiteSpace(@NotNull CommonCodeStyleSettings.IndentOptions options) {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < myLineFeeds; i ++) {
       if (options.KEEP_INDENTS_ON_EMPTY_LINES && i > 0) {
@@ -87,44 +90,33 @@ public class IndentInfo {
   }
 
   private static void generateLineWhitespace(@NotNull StringBuffer buffer,
-                                      @NotNull CommonCodeStyleSettings.IndentOptions options,
-                                      int indentSpaces,
-                                      int alignmentSpaces,
-                                      boolean tabsAllowed) {
-     if (options.USE_TAB_CHARACTER && tabsAllowed) {
+                                             @NotNull CommonCodeStyleSettings.IndentOptions options,
+                                             int indentSpaces,
+                                             int alignmentSpaces,
+                                             boolean tabsAllowed) {
+    if (options.USE_TAB_CHARACTER && tabsAllowed) {
       if (options.SMART_TABS) {
         int tabCount = indentSpaces / options.TAB_SIZE;
         int leftSpaces = indentSpaces - tabCount * options.TAB_SIZE;
-        if (tabCount > 0) {
-          StringUtil.repeatSymbol(buffer, '\t', tabCount);
-        }
-        if (leftSpaces + alignmentSpaces > 0) {
-          StringUtil.repeatSymbol(buffer, ' ', leftSpaces + alignmentSpaces);
-        }
+        StringUtil.repeatSymbol(buffer, '\t', tabCount);
+        StringUtil.repeatSymbol(buffer, ' ', leftSpaces + alignmentSpaces);
       }
       else {
         int size = indentSpaces + alignmentSpaces;
-        while (size > 0) {
-          if (size >= options.TAB_SIZE) {
-            buffer.append('\t');
-            size -= options.TAB_SIZE;
-          }
-          else {
-            buffer.append(' ');
-            size--;
-          }
-        }
-      }
-    }
-    else {
-      int spaces = indentSpaces + alignmentSpaces;
-      if (spaces > 0) {
+        int tabs = size / options.TAB_SIZE;
+        int spaces = size % options.TAB_SIZE;
+        StringUtil.repeatSymbol(buffer, '\t', tabs);
         StringUtil.repeatSymbol(buffer, ' ', spaces);
       }
     }
+    else {
+       int spaces = indentSpaces + alignmentSpaces;
+       StringUtil.repeatSymbol(buffer, ' ', spaces);
+    }
   }
 
-  public IndentInfo setIndentEmptyLines(boolean indentEmptyLines) {
+  @NotNull
+  IndentInfo setIndentEmptyLines(boolean indentEmptyLines) {
     myIndentEmptyLines = indentEmptyLines;
     return this;
   }

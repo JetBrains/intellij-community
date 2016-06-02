@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public class Bottom extends PsiType {
   public static final Bottom BOTTOM = new Bottom();
 
   private Bottom() {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
   }
 
   @NotNull
@@ -56,12 +56,9 @@ public class Bottom extends PsiType {
     return text.equals("_");
   }
 
+  @Override
   public boolean equals(Object o) {
-    if (o instanceof Bottom) {
-      return true;
-    }
-
-    return false;
+    return o instanceof Bottom;
   }
 
   @Override

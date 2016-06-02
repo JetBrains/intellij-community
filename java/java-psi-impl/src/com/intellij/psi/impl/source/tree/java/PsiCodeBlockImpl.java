@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,9 +86,9 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RBRACE);
   }
 
-  private volatile Set<String> myVariablesSet = null;
-  private volatile Set<String> myClassesSet = null;
-  private volatile boolean myConflict = false;
+  private volatile Set<String> myVariablesSet;
+  private volatile Set<String> myClassesSet;
+  private volatile boolean myConflict;
 
   // return Pair(classes, locals) or null if there was conflict
   @Nullable

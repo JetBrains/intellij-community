@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ public interface EditorSettings {
 
   boolean isLineMarkerAreaShown();
   void setLineMarkerAreaShown(boolean lineMarkerAreaShown);
+
+  boolean areGutterIconsShown();
+  void setGutterIconsShown(boolean gutterIconsShown);
 
   boolean isFoldingOutlineShown();
   void setFoldingOutlineShown(boolean val);

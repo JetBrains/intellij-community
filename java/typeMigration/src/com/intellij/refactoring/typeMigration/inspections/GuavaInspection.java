@@ -280,7 +280,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<ProblemDescriptor> {
+  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -333,13 +333,13 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project,
-                         @NotNull ProblemDescriptor[] descriptors,
+                         @NotNull CommonProblemDescriptor[] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
       final List<PsiElement> elementsToFix = new ArrayList<PsiElement>();
       final List<PsiType> migrationTypes = new ArrayList<PsiType>();
 
-      for (ProblemDescriptor descriptor : descriptors) {
+      for (CommonProblemDescriptor descriptor : descriptors) {
         final MigrateGuavaTypeFix fix = getFix(descriptor);
         elementsToFix.add(fix.getStartElement());
         migrationTypes.add(fix.myTargetType);
@@ -348,7 +348,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!elementsToFix.isEmpty()) performTypeMigration(elementsToFix, migrationTypes);
     }
 
-    private MigrateGuavaTypeFix getFix(ProblemDescriptor descriptor) {
+    private MigrateGuavaTypeFix getFix(CommonProblemDescriptor descriptor) {
       final QuickFix[] fixes = descriptor.getFixes();
       LOG.assertTrue(fixes != null);
       for (QuickFix fix : fixes) {
@@ -400,12 +400,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         PsiType type = typeIterator.next();
         mappings.put(element, type);
       }
-      return new Function<PsiElement, PsiType>() {
-        @Override
-        public PsiType fun(PsiElement element) {
-          return mappings.get(element);
-        }
-      };
+      return element -> mappings.get(element);
     }
   }
 }

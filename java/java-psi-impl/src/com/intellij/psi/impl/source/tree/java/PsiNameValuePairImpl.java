@@ -68,14 +68,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public String getLiteralValue() {
-    PsiNameValuePairStub stub = getStub();
-    if (stub == null) {
-      PsiAnnotationMemberValue value = getValue();
-      return value instanceof PsiLiteralExpression ? StringUtil.unquoteString(value.getText()) : null;
-    }
-    else {
-      return stub.getValue();
-    }
+    PsiAnnotationMemberValue value = getValue();
+    return value instanceof PsiLiteralExpression ? StringUtil.unquoteString(value.getText()) : null;
   }
 
   @Override
@@ -86,6 +80,9 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public PsiAnnotationMemberValue getValue() {
+    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
+    if (child != null) return child;
+
     ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
     return node == null ? null : (PsiAnnotationMemberValue)node.getPsi();
   }

@@ -65,13 +65,7 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
     @NotNull
     @Override
     protected final CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull final ActionManager actionManager) {
-      return new CachedValueProvider<AnAction[]>() {
-        @Nullable
-        @Override
-        public Result<AnAction[]> compute() {
-          return Result.create(computeChildren(actionManager), ModificationTracker.NEVER_CHANGED);
-        }
-      };
+      return () -> CachedValueProvider.Result.create(computeChildren(actionManager), ModificationTracker.NEVER_CHANGED);
     }
 
     @NotNull

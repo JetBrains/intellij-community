@@ -178,13 +178,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
-    myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, new Runnable() {
-      @Override
-      public void run() {
-        Component component = myCurrentStep.getDefaultFocusedComponent();
-        if (component != null) {
-          component.requestFocus();
-        }
+    myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
+      Component component = myCurrentStep.getDefaultFocusedComponent();
+      if (component != null) {
+        component.requestFocus();
       }
     });
 

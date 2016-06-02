@@ -1,4 +1,5 @@
 from pycharm_generator_utils.constants import *
+import keyword
 
 try:
     import inspect
@@ -400,6 +401,8 @@ def make_names_unique(seq, name_map=None):
         if type(one) is list:
             ret.append(make_names_unique(one, name_map))
         else:
+            if keyword.iskeyword(one):
+                one += "_"
             one_key = lstrip(one, "*") # starred parameters are unique sans stars
             if one_key in name_map:
                 old_one = one_key

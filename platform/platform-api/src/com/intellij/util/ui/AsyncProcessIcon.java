@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
-  private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
     setUseMask(false);
   }
@@ -70,24 +71,22 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
     return icons;
   }
-  
+
   public void updateLocation(final JComponent container) {
-    final Rectangle rec = container.getVisibleRect();
-
-    final Dimension iconSize = getPreferredSize();
-
-    final Rectangle newBounds = new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
+    final Rectangle newBounds = calculateBounds(container);
     if (!newBounds.equals(getBounds())) {
       setBounds(newBounds);
       // painting problems with scrollpane
       // repaint shouldn't be called from paint method
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          container.repaint();
-        }
-      });
+      SwingUtilities.invokeLater(() -> container.repaint());
     }
+  }
+
+  @NotNull
+  protected Rectangle calculateBounds(@NotNull JComponent container) {
+    Rectangle rec = container.getVisibleRect();
+    Dimension iconSize = getPreferredSize();
+    return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
   }
 
   private static class ProcessIcon extends LayeredIcon {

@@ -910,17 +910,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);
     final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-    final Thread thread = new Thread(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          progressStarted.countDown();
-          result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
-        }
-        catch (ProcessCanceledException ex) {
-          result.set(new FindResultImpl());
-        }
-      }, progressIndicatorBase);
-    }, "runAsyncTest");
+    final Thread thread = new Thread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        progressStarted.countDown();
+        result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
+      }
+      catch (ProcessCanceledException ex) {
+        result.set(new FindResultImpl());
+      }
+    }, progressIndicatorBase), "runAsyncTest");
     thread.start();
 
     progressStarted.await();

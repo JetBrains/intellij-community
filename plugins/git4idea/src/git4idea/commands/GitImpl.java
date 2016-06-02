@@ -29,12 +29,9 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.GitCommit;
-import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.GitHistoryUtils;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
 import git4idea.rebase.GitRebaseResumeMode;
@@ -222,18 +219,6 @@ public class GitImpl implements Git {
     handler.addParameters("pop");
     addListeners(handler, listeners);
     return run(handler);
-  }
-
-  @NotNull
-  @Override
-  public List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range) {
-    try {
-      return GitHistoryUtils.history(repository.getProject(), repository.getRoot(), range);
-    }
-    catch (VcsException e) {
-      // this is critical, because we need to show the list of unmerged commits, and it shouldn't happen => inform user and developer
-      throw new GitExecutionException("Couldn't get [git log " + range + "] on repository [" + repository.getRoot() + "]", e);
-    }
   }
 
   @Override

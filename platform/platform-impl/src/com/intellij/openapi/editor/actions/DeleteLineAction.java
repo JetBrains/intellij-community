@@ -49,35 +49,32 @@ public class DeleteLineAction extends TextComponentEditorAction {
 
       final List<Caret> carets = caret == null ? editor.getCaretModel().getAllCarets() : Collections.singletonList(caret);
 
-      editor.getCaretModel().runBatchCaretOperation(new Runnable() {
-        @Override
-        public void run() {
-          int[] caretColumns = new int[carets.size()];
-          int caretIndex = carets.size() - 1;
-          TextRange range = getRangeToDelete(editor, carets.get(caretIndex));
+      editor.getCaretModel().runBatchCaretOperation(() -> {
+        int[] caretColumns = new int[carets.size()];
+        int caretIndex = carets.size() - 1;
+        TextRange range = getRangeToDelete(editor, carets.get(caretIndex));
 
-          while (caretIndex >= 0) {
-            int currentCaretIndex = caretIndex;
-            TextRange currentRange = range;
-            // find carets with overlapping line ranges
-            while (--caretIndex >= 0) {
-              range = getRangeToDelete(editor, carets.get(caretIndex));
-              if (range.getEndOffset() < currentRange.getStartOffset()) {
-                break;
-              }
-              currentRange = new TextRange(range.getStartOffset(), currentRange.getEndOffset());
+        while (caretIndex >= 0) {
+          int currentCaretIndex = caretIndex;
+          TextRange currentRange = range;
+          // find carets with overlapping line ranges
+          while (--caretIndex >= 0) {
+            range = getRangeToDelete(editor, carets.get(caretIndex));
+            if (range.getEndOffset() < currentRange.getStartOffset()) {
+              break;
             }
+            currentRange = new TextRange(range.getStartOffset(), currentRange.getEndOffset());
+          }
 
-            for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
-              caretColumns[i] = carets.get(i).getVisualPosition().column;
-            }
-            int targetLine = editor.offsetToVisualPosition(currentRange.getStartOffset()).line;
+          for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
+            caretColumns[i] = carets.get(i).getVisualPosition().column;
+          }
+          int targetLine = editor.offsetToVisualPosition(currentRange.getStartOffset()).line;
 
-            document.deleteString(currentRange.getStartOffset(), currentRange.getEndOffset());
+          document.deleteString(currentRange.getStartOffset(), currentRange.getEndOffset());
 
-            for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
-              carets.get(i).moveToVisualPosition(new VisualPosition(targetLine, caretColumns[i]));
-            }
+          for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
+            carets.get(i).moveToVisualPosition(new VisualPosition(targetLine, caretColumns[i]));
           }
         }
       });

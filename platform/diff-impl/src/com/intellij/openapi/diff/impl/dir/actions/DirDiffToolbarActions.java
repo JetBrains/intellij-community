@@ -34,7 +34,7 @@ public class DirDiffToolbarActions extends ActionGroup {
 
   public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
     super("Directory Diff Actions", false);
-    final List<AnAction> actions = new ArrayList<AnAction>(Arrays.asList(
+    final List<AnAction> actions = new ArrayList<>(Arrays.asList(
       new RefreshDirDiffAction(model),
       Separator.getInstance(),
       new EnableLeft(model),

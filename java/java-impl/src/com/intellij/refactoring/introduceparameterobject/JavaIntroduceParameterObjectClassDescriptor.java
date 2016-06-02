@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,25 +32,21 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
   private static final Logger LOG = Logger.getInstance("#" + JavaIntroduceParameterObjectClassDescriptor.class.getName());
-  private final Set<PsiTypeParameter> myTypeParameters = new HashSet<>();
+  private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
-
-  private PsiMethod myExistingClassCompatibleConstructor;
 
   public JavaIntroduceParameterObjectClassDescriptor(String className,
                                                      String packageName,
@@ -77,7 +74,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       }
     };
     for (ParameterInfoImpl parameterInfo : paramsToMerge) {
-      parameterInfo.getTypeWrapper().getType(method, method.getManager()).accept(typeParametersVisitor);
+      parameterInfo.getTypeWrapper().getType(method).accept(typeParametersVisitor);
     }
   }
 
@@ -106,35 +103,15 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   public String createFakeClassTypeText() {
     String text = StringUtil.getQualifiedName(getPackageName(), getClassName());
     if (!myTypeParameters.isEmpty()) {
-      text += "<" + StringUtil.join(myTypeParameters, new Function<PsiTypeParameter, String>() {
-        @Override
-        public String fun(PsiTypeParameter parameter) {
-          return parameter.getName();
-        }
-      }, ", ") + ">";
+      text += "<" + StringUtil.join(myTypeParameters, PsiNamedElement::getName, ", ") + ">";
     }
     return text;
   }
 
-  public PsiMethod getExistingClassCompatibleConstructor() {
-    return myExistingClassCompatibleConstructor;
-  }
-
-  public void setExistingClassCompatibleConstructor(PsiMethod existingClassCompatibleConstructor) {
-    myExistingClassCompatibleConstructor = existingClassCompatibleConstructor;
-  }
 
   @Override
   public PsiClass getExistingClass() {
     return (PsiClass)super.getExistingClass();
-  }
-
-  @Override
-  public void setExistingClass(PsiElement existingClass) {
-    super.setExistingClass(existingClass);
-    if (isUseExistingClass()) {
-      setExistingClassCompatibleConstructor(existingClassIsCompatible((PsiClass)existingClass));
-    }
   }
 
   public String getGetter(ParameterInfoImpl param) {
@@ -148,14 +125,14 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public String getSetterName(ParameterInfoImpl parameterInfo, PsiElement context) {
+  public String getSetterName(ParameterInfoImpl parameterInfo, @NotNull PsiElement context) {
     final ParameterBean bean = getBean(parameterInfo);
     @NonNls String setter = bean != null ? bean.getSetter() : null;
     if (setter == null) {
       setter = bean != null && bean.getField() != null
                ? GenerateMembersUtil.suggestSetterName(bean.getField())
                : GenerateMembersUtil
-                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context, context.getManager()),
+                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
                                     context.getProject());
     }
 
@@ -163,24 +140,25 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public String getGetterName(ParameterInfoImpl paramInfo, PsiElement context) {
+  public String getGetterName(ParameterInfoImpl paramInfo, @NotNull PsiElement context) {
     final ParameterBean bean = getBean(paramInfo);
     @NonNls String getter = bean != null ? bean.getGetter() : null;
     if (getter == null) {
       getter = bean != null && bean.getField() != null ? GenerateMembersUtil.suggestGetterName(bean.getField())
                                                        : GenerateMembersUtil
-                 .suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context, context.getManager()),
+                 .suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context),
                                     context.getProject());
     }
     return getter;
   }
 
   @Override
-  public void initExistingClass(PsiMethod method) {
+  public PsiMethod findCompatibleConstructorInExistingClass(PsiMethod method) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
     final String qualifiedName = StringUtil.getQualifiedName(getPackageName(), getClassName());
     final PsiClass existingClass = psiFacade.findClass(qualifiedName, method.getResolveScope());
     setExistingClass(existingClass);
+    return findCompatibleConstructor(existingClass);
   }
 
   @Nullable
@@ -189,46 +167,50 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return bean != null ? bean.getField() : null;
   }
 
-  private ParameterBean getBean(ParameterInfoImpl param) {
+  public ParameterBean getBean(ParameterInfoImpl param) {
     return myExistingClassProperties.get(param);
   }
 
   @Nullable
-  private PsiMethod existingClassIsCompatible(@NotNull PsiClass aClass) {
+  private PsiMethod findCompatibleConstructor(@NotNull PsiClass aClass) {
     ParameterInfoImpl[] paramsToMerge = getParamsToMerge();
     if (paramsToMerge.length == 1) {
       final ParameterInfoImpl parameterInfo = paramsToMerge[0];
-      final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass, aClass.getManager());
+      final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass);
       if (TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName())) {
         ParameterBean bean = new ParameterBean();
         bean.setField(aClass.findFieldByName("value", false));
         bean.setGetter(paramType.getCanonicalText() + "Value");
         myExistingClassProperties.put(parameterInfo, bean);
         for (PsiMethod constructor : aClass.getConstructors()) {
-          if (constructorIsCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
+          if (isConstructorCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
         }
       }
     }
     final PsiMethod[] constructors = aClass.getConstructors();
     PsiMethod compatibleConstructor = null;
     for (PsiMethod constructor : constructors) {
-      if (constructorIsCompatible(constructor, paramsToMerge, aClass)) {
+      if (isConstructorCompatible(constructor, paramsToMerge, aClass)) {
         compatibleConstructor = constructor;
         break;
       }
     }
-    if (compatibleConstructor == null) {
+
+    PsiField[] fields = aClass.getFields();
+    if (compatibleConstructor == null && !areTypesCompatible(getParamsToMerge(), fields, aClass)) {
       return null;
     }
-    final PsiParameterList parameterList = compatibleConstructor.getParameterList();
-    final PsiParameter[] constructorParams = parameterList.getParameters();
-    for (int i = 0; i < constructorParams.length; i++) {
-      final PsiParameter param = constructorParams[i];
+
+    final PsiVariable[] constructorParams = compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters()
+                                                                          : fields;
+    for (int i = 0; i < getParamsToMerge().length; i++) {
       final ParameterInfoImpl methodParam = getParameterInfo(i);
       final ParameterBean bean = new ParameterBean();
       myExistingClassProperties.put(methodParam, bean);
 
-      final PsiField field = findFieldAssigned(param, compatibleConstructor);
+      final PsiVariable var = constructorParams[i];
+
+      final PsiField field = var instanceof PsiParameter ? findFieldAssigned((PsiParameter)var, compatibleConstructor) : (PsiField)var;
       if (field == null) {
         return null;
       }
@@ -248,15 +230,18 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return compatibleConstructor;
   }
 
-  private boolean constructorIsCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
+  private boolean isConstructorCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] constructorParams = parameterList.getParameters();
-    if (constructorParams.length != paramsToMerge.length) {
+    return areTypesCompatible(paramsToMerge, constructorParams, context);
+  }
+
+  private boolean areTypesCompatible(ParameterInfoImpl[] expected, PsiVariable[] actual, PsiElement context) {
+    if (actual.length != expected.length) {
       return false;
     }
-    for (int i = 0; i < constructorParams.length; i++) {
-      if (!TypeConversionUtil.isAssignable(constructorParams[i].getType(),
-                                           getParameterInfo(i).getTypeWrapper().getType(context, context.getManager()))) {
+    for (int i = 0; i < actual.length; i++) {
+      if (!TypeConversionUtil.isAssignable(actual[i].getType(), getParameterInfo(i).getTypeWrapper().getType(context))) {
         return false;
       }
     }
@@ -270,7 +255,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public PsiClass createClass(PsiMethod method, IntroduceParameterObjectDelegate.Accessor[] accessors) {
+  public PsiClass createClass(PsiMethod method, ReadWriteAccessDetector.Access[] accessors) {
     if (isUseExistingClass()) {
       return getExistingClass();
     }
@@ -285,10 +270,10 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final ParameterInfoImpl[] parameterInfos = getParamsToMerge();
     for (int i = 0; i < parameterInfos.length; i++) {
       PsiParameter parameter = parameters[parameterInfos[i].getOldIndex()];
-      final boolean setterRequired = accessors[i] == IntroduceParameterObjectDelegate.Accessor.Setter;
+      final boolean setterRequired = accessors[i] == ReadWriteAccessDetector.Access.Write;
       final String newName = parameterInfos[i].getName();
       beanClassBuilder
-        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method, method.getManager()), setterRequired);
+        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
     }
 
     final String classString = beanClassBuilder.buildBeanClass();
@@ -329,7 +314,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       }
     }
     catch (IncorrectOperationException e) {
-      LOG.info(e);
+      LOG.error(e);
     }
     return null;
   }
@@ -339,7 +324,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
     private final PsiParameter param;
 
-    private PsiField fieldAssigned = null;
+    private PsiField fieldAssigned;
 
     ParamAssignmentFinder(PsiParameter param) {
       this.param = param;

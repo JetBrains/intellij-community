@@ -140,15 +140,12 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
         final PsiElement element = descriptor.getPsiElement();
         if (element != null) {
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-          profile.modifyProfile(new Consumer<ModifiableModel>() {
-            @Override
-            public void consume(ModifiableModel model) {
-              final String toolName = PyShadowingBuiltinsInspection.class.getSimpleName();
-              final PyShadowingBuiltinsInspection inspection = (PyShadowingBuiltinsInspection)model.getUnwrappedTool(toolName, element);
-              if (inspection != null) {
-                if (!inspection.ignoredNames.contains(myName)) {
-                  inspection.ignoredNames.add(myName);
-                }
+          profile.modifyProfile(model -> {
+            final String toolName = PyShadowingBuiltinsInspection.class.getSimpleName();
+            final PyShadowingBuiltinsInspection inspection = (PyShadowingBuiltinsInspection)model.getUnwrappedTool(toolName, element);
+            if (inspection != null) {
+              if (!inspection.ignoredNames.contains(myName)) {
+                inspection.ignoredNames.add(myName);
               }
             }
           });

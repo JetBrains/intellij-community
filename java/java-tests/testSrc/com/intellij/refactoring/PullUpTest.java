@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.TreeSet;
 
 /**
  * @author ven
@@ -178,6 +179,22 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, "Class <b><code>Test.Printer</code></b> already contains a method <b><code>foo()</code></b>", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testOuterClassRefsNoConflictIfAsAbstract() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
+  }
+
+  public void testOuterClassRefs() throws Exception {
+    doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
+  }
+
+  public void testDefaultMethodAsAbstract() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
+  public void testDefaultMethodAsDefault() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
+  }
+
   public void testPublicMethodFromPrivateClassConflict() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("HM", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
@@ -244,7 +261,8 @@ public class PullUpTest extends LightRefactoringTestCase {
     }
 
     if (conflictMessage != null && !IGNORE_CONFLICTS.equals(conflictMessage)) {
-      assertEquals(conflictMessage, conflictsMap.values().iterator().next());
+      TreeSet<String> conflicts = new TreeSet<>(conflictsMap.values());
+      assertEquals(conflictMessage, conflicts.iterator().next());
       return;
     }
 

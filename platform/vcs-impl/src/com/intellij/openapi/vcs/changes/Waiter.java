@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -25,16 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class Waiter extends Task.Modal {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.Waiter");
-  private final ModalityState myState;
   private final Runnable myRunnable;
   private boolean myStarted;
   private boolean myDone;
   private final Object myLock = new Object();
 
-  public Waiter(final Project project, final Runnable runnable, final ModalityState state, final String title, final boolean cancellable) {
+  public Waiter(final Project project, final Runnable runnable, final String title, final boolean cancellable) {
     super(project, title, cancellable);
     myRunnable = runnable;
-    myState = state;
     myDone = false;
     myStarted = false;
     setCancelText("Skip");
@@ -63,12 +60,7 @@ public class Waiter extends Task.Modal {
   }
 
   @Override
-  public void onCancel() {
-    onSuccess();
-  }
-
-  @Override
-  public void onSuccess() {
+  public void onFinished() {
     // allow do not wait for done
     /*synchronized (myLock) {
       if (! myDone) {

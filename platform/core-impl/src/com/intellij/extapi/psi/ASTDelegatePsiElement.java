@@ -29,7 +29,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -66,7 +65,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   public PsiManagerEx getManager() {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
-      return (PsiManagerEx)PsiManager.getInstance(project);
+      return PsiManagerEx.getInstanceEx(project);
     }
     PsiElement parent = this;
 
@@ -357,7 +356,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
-    CodeEditUtil.removeChild(getNode(), child);
+    ((CompositeElement)getNode()).deleteChildInternal(child);
   }
 
   @Override

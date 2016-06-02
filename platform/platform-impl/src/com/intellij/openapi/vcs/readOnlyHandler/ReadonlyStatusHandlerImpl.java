@@ -80,12 +80,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     files = VfsUtilCore.toVirtualFileArray(realFiles);
 
     for (final WritingAccessProvider accessProvider : myAccessProviders) {
-      Collection<VirtualFile> denied = ContainerUtil.filter(files, new Condition<VirtualFile>() {
-        @Override
-        public boolean value(final VirtualFile virtualFile) {
-          return !accessProvider.isPotentiallyWritable(virtualFile);
-        }
-      });
+      Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
 
       if (denied.isEmpty()) {
         denied = accessProvider.requestWriting(files);

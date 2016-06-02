@@ -132,13 +132,11 @@ public class MavenModuleBuilderHelper {
     }
 
     // execute when current dialog is closed (e.g. Project Structure)
-    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
-      public void run() {
-        if (!pom.isValid()) return;
+    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+      if (!pom.isValid()) return;
 
-        EditorHelper.openInEditor(getPsiFile(project, pom));
-        if (myArchetype != null) generateFromArchetype(project, pom);
-      }
+      EditorHelper.openInEditor(getPsiFile(project, pom));
+      if (myArchetype != null) generateFromArchetype(project, pom);
     });
   }
 
@@ -214,11 +212,7 @@ public class MavenModuleBuilderHelper {
 
     props.putAll(myPropertiesToCreateByArtifact);
 
-    runner.run(params, settings, new Runnable() {
-      public void run() {
-        copyGeneratedFiles(workingDir, pom, project);
-      }
-    });
+    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project));
   }
 
   private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {

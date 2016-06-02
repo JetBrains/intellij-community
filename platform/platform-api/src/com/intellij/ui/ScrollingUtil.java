@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -288,8 +289,10 @@ public class ScrollingUtil {
     installMoveDownAction(list, focusParent);
     installMovePageUpAction(list, focusParent);
     installMovePageDownAction(list, focusParent);
-    installMoveHomeAction(list, focusParent);
-    installMoveEndAction(list, focusParent);
+    if (!(focusParent instanceof JTextComponent)) {
+      installMoveHomeAction(list, focusParent);
+      installMoveEndAction(list, focusParent);
+    }
   }
 
   public static void installMoveEndAction(final JList list, @Nullable JComponent focusParent) {

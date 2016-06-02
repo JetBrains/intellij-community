@@ -79,7 +79,7 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
     }
   }
 
-  @Order(0)
+  @Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER - 1)
   private static class SourceSetsNode extends ExternalSystemNode {
     public SourceSetsNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked

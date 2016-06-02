@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
@@ -279,17 +279,34 @@ class RefCountHolder {
     if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
       PsiElement refElement = ref.getElement();
-      if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
-        return true;
-      }
-      if (PsiUtil.isAccessedForReading((PsiExpression)refElement)) {
-        if (refElement.getParent() instanceof PsiExpression &&
-            refElement.getParent().getParent() instanceof PsiExpressionStatement &&
-            PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
-          continue; // "var++;"
+      PsiElement resolved = ref.resolve();
+      if (resolved != null) {
+        ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
+        if (access == ReadWriteAccessDetector.Access.Read || access == ReadWriteAccessDetector.Access.ReadWrite) {
+          if (isJustIncremented(access, refElement)) continue;
+          return true;
         }
-        return true;
       }
+    }
+    return false;
+  }
+
+  private static ReadWriteAccessDetector.Access getAccess(@NotNull PsiReference ref, @NotNull PsiElement resolved) {
+    PsiElement start = resolved.getLanguage() == ref.getElement().getLanguage() ? resolved : ref.getElement();
+    ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(start);
+    if (detector != null) {
+      return detector.getReferenceAccess(resolved, ref);
+    }
+    return null;
+  }
+
+  // "var++;"
+  private static boolean isJustIncremented(@NotNull ReadWriteAccessDetector.Access access, @NotNull PsiElement refElement) {
+    if (access == ReadWriteAccessDetector.Access.ReadWrite  &&
+        refElement instanceof PsiExpression &&
+        refElement.getParent() instanceof PsiExpression &&
+        refElement.getParent().getParent() instanceof PsiExpressionStatement) {
+      return true;
     }
     return false;
   }
@@ -301,12 +318,12 @@ class RefCountHolder {
     }
     if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
-      final PsiElement refElement = ref.getElement();
-      if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
-        return true;
-      }
-      if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
-        return true;
+      PsiElement resolved = ref.resolve();
+      if (resolved != null) {
+        ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
+        if (access == ReadWriteAccessDetector.Access.Write || access == ReadWriteAccessDetector.Access.ReadWrite) {
+          return true;
+        }
       }
     }
     return false;

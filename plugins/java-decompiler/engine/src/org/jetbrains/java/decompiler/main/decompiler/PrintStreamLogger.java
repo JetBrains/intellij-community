@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.io.PrintStream;
 
@@ -33,7 +33,7 @@ public class PrintStreamLogger extends IFernflowerLogger {
   @Override
   public void writeMessage(String message, Severity severity) {
     if (accepts(severity)) {
-      stream.println(severity.prefix + InterpreterUtil.getIndentString(indent) + message);
+      stream.println(severity.prefix + TextUtil.getIndentString(indent) + message);
     }
   }
 

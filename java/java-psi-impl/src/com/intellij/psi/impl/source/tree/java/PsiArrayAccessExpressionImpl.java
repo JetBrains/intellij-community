@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implements PsiArrayAccessExpression, Constants {
@@ -46,7 +46,7 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
   public PsiType getType() {
     PsiType arrayType = getArrayExpression().getType();
     if (!(arrayType instanceof PsiArrayType)) return null;
-    return GenericsUtil.getVariableTypeByExpressionType(((PsiArrayType)arrayType).getComponentType(), false);
+    return ((PsiArrayType)arrayType).getComponentType();
   }
 
   @Override

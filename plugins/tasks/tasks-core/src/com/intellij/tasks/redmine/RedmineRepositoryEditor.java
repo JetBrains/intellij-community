@@ -45,12 +45,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
     toggleCredentialsVisibility();
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        initialize();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> initialize());
   }
 
   @Override

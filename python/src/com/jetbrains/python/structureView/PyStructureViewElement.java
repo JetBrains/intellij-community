@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +124,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     for (PyElement e : getElementChildren(myElement)) {
       children.add(createChild(e, getElementVisibility(e), false, elementIsField(e)));
     }
-    if (myElement instanceof PyClass && myElement.isValid()) {
+    PyPsiUtils.assertValid(myElement);
+    if (myElement instanceof PyClass) {
       for (PyClass c : ((PyClass)myElement).getAncestorClasses(null)) {
         for (PyElement e: getElementChildren(c)) {
           final StructureViewTreeElement inherited = createChild(e, getElementVisibility(e), true, elementIsField(e));
@@ -151,9 +153,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
     final Collection<PyElement> children = new ArrayList<PyElement>();
-    if (!element.isValid()) {
-      return children;
-    }
+    PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override
       public void visitElement(PsiElement e) {
@@ -171,18 +171,16 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       final Set<String> names = new HashSet<String>();
       for (PyElement attr : attrs) {
         final String name = attr.getName();
-        if (attr.isValid() && !names.contains(name)) {
+        PyPsiUtils.assertValid(attr);
+        if (!names.contains(name)) {
           filtered.add(attr);
         }
         names.add(name);
       }
-      final Comparator<PyElement> comparator = new Comparator<PyElement>() {
-        @Override
-        public int compare(PyElement e1, PyElement e2) {
-          final String n1 = e1.getName();
-          final String n2 = e2.getName();
-          return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
-        }
+      final Comparator<PyElement> comparator = (e1, e2) -> {
+        final String n1 = e1.getName();
+        final String n2 = e2.getName();
+        return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
       };
       Collections.sort(filtered, comparator);
       children.addAll(filtered);

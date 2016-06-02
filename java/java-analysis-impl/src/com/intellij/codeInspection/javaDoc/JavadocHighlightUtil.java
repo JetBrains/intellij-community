@@ -192,13 +192,24 @@ public class JavadocHighlightUtil {
         if (dataElements.length == 0 || dataElements.length == 1 && empty(dataElements[0])) {
           holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
-        else if (!SEE_TAG_REFS.contains(dataElements[0].getNode().getElementType())) {
+        else if (!isValidSeeRef(dataElements[0])) {
           holder.problem(dataElements[0], InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
       }
 
       checkInlineTags(dataElements, holder);
     }
+  }
+
+  private static boolean isValidSeeRef(PsiElement e) {
+    if (SEE_TAG_REFS.contains(e.getNode().getElementType())) return true;
+
+    String text = e.getText();
+    if (StringUtil.isQuotedString(text) && text.charAt(0) == '"') return true;
+
+    if (text.toLowerCase(Locale.US).startsWith("<a href=")) return true;
+
+    return false;
   }
 
   static void checkInlineTags(@NotNull PsiElement[] elements, @NotNull ProblemHolder holder) {

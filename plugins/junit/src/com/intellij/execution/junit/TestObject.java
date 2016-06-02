@@ -79,7 +79,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
-
   public static TestObject fromString(final String id,
                                       final JUnitConfiguration configuration,
                                       @NotNull ExecutionEnvironment environment) {
@@ -242,14 +241,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
         deleteTempFiles();
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            unboundOutputRoot.flush();
-            packetsReceiver.checkTerminated();
-            final JUnitRunningModel model = packetsReceiver.getModel();
-            notifyByBalloon(model, myStarted, consoleProperties);
-          }
+        final Runnable runnable = () -> {
+          unboundOutputRoot.flush();
+          packetsReceiver.checkTerminated();
+          final JUnitRunningModel model = packetsReceiver.getModel();
+          notifyByBalloon(model, myStarted, consoleProperties);
         };
         handler.getOut().addRequest(runnable, queue);
       }
@@ -277,12 +273,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     });
 
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView, consoleProperties);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return packetsReceiver.getModel();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> packetsReceiver.getModel());
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);
@@ -349,12 +340,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         createTempFiles(javaParameters);
       }
 
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>(new Comparator<Module>() {
-        @Override
-        public int compare(Module o1, Module o2) {
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
-      }) : null;
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
 
       final List<String> testNames = new ArrayList<String>();
 

@@ -54,7 +54,7 @@ public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorH
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
     return group;

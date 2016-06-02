@@ -82,11 +82,6 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
-
-  @Override
   protected String getBasePath() {
     return "/xml/tests/testData/catalog/";
   }

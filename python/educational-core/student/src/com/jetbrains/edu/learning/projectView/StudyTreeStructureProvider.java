@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -24,7 +25,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                              @NotNull Collection<AbstractTreeNode> children,
                                              ViewSettings settings) {
-    if (!isCourseBasedProject(parent)) {
+    if (!needModify(parent)) {
       return children;
     }
     Collection<AbstractTreeNode> nodes = new ArrayList<>();
@@ -78,21 +79,23 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     if (!StudyTaskManager.getInstance(project).isInvisibleFile(virtualFile.getPath())) {
       String fileName = virtualFile.getName();
       if (!fileName.contains(EduNames.WINDOW_POSTFIX) && !fileName.contains(EduNames.WINDOWS_POSTFIX)
-          && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName) && !fileName.contains(".answer")) {
+          && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
         nodes.add(node);
       }
     }
   }
 
-  protected boolean isCourseBasedProject(@NotNull final AbstractTreeNode parent) {
+  protected boolean needModify(@NotNull final AbstractTreeNode parent) {
     final Project project = parent.getProject();
-    if (project != null) {
-      final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
-      if (studyTaskManager.getCourse() == null) {
-        return false;
-      }
+    if (project == null) {
+      return false;
     }
-    return true;
+    final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+    Course course = studyTaskManager.getCourse();
+    if (course == null) {
+      return false;
+    }
+    return EduNames.STUDY.equals(course.getCourseMode());
   }
 
   @Nullable

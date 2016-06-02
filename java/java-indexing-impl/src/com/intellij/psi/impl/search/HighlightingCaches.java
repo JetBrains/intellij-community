@@ -17,7 +17,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.AnyPsiChangeListener;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 class HighlightingCaches {
   public static HighlightingCaches getInstance(Project project) {
@@ -53,8 +51,8 @@ class HighlightingCaches {
     });
   }
 
-  // baseClass -> (list of direct subclasses, isInheritor flag array)
-  final Map<PsiClass, Pair<List<PsiClass>, AtomicIntegerArray>> DIRECT_SUB_CLASSES = createWeakCache();
+  // baseClass -> list of direct subclasses
+  final ConcurrentMap<PsiClass, PsiClass[]> DIRECT_SUB_CLASSES = createWeakCache();
   // baseClass -> all sub classes transitively, including anonymous
   final ConcurrentMap<PsiClass, Iterable<PsiClass>> ALL_SUB_CLASSES = createWeakCache();
   // baseMethod -> all overriding methods

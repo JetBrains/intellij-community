@@ -11,7 +11,7 @@ def test():
             """
     xs = [1, 2, 3]
     x = xs[0]
-    f(<warning descr="Expected type 'str', got 'int' instead">x</warning>)
+    f(<warning descr="Expected type 'str', got 'Union[int, List[int]]' instead">x</warning>)
     c = C()
     c_0 = c[<warning descr="Expected type 'str', got 'int' instead">0</warning>]
     f(<warning descr="Expected type 'str', got 'int' instead">c_0</warning>)

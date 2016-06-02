@@ -71,12 +71,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(ServerType.EP_NAME.getExtensions(),
-                                             new Function<ServerType, String>() {
-                      @Override
-                      public String fun(ServerType type) {
-                        return type.getPresentableName();
-                      }
-                    }, ", ");
+                                             type -> type.getPresentableName(), ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
@@ -128,12 +123,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
-      }
-    };
+    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
   }
 
   @Override
@@ -262,16 +252,13 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
-            if (configurable.getDisplayName().equals(s)) {
-              return false;
-            }
+      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), s -> {
+        for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
+          if (configurable.getDisplayName().equals(s)) {
+            return false;
           }
-          return true;
         }
+        return true;
       });
       MyNode node = addServerNode(myServersManager.createServer(myServerType, name), true);
       selectNodeInTree(node);

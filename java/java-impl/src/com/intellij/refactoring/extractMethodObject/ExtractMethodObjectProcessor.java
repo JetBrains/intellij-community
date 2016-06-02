@@ -81,7 +81,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiField[] myOutputFields;
 
   private PsiMethod myInnerMethod;
-  private boolean myMadeStatic = false;
+  private boolean myMadeStatic;
   private final Set<MethodToMoveUsageInfo> myUsages = new LinkedHashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
   private boolean myChangeReturnType;
@@ -182,11 +182,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (myMultipleExitPoints) {
           addOutputVariableFieldsWithGetters();
         }
-        myCopyMethodToInner = new Runnable() {
-          public void run() {
-            copyMethodWithoutParameters();
-            copyMethodTypeParameters();
-          }
+        myCopyMethodToInner = () -> {
+          copyMethodWithoutParameters();
+          copyMethodTypeParameters();
         };
       } else {
         for (UsageInfo usage : usages) {
@@ -232,13 +230,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       };
       if (dlg.showAndGet()) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
-              if (memberInfo.isChecked()) {
-                myInnerClass.add(memberInfo.getMember().copy());
-                memberInfo.getMember().delete();
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
+            if (memberInfo.isChecked()) {
+              myInnerClass.add(memberInfo.getMember().copy());
+              memberInfo.getMember().delete();
             }
           }
         });
@@ -420,13 +416,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public  PsiExpression processMethodDeclaration( PsiExpressionList expressionList) throws IncorrectOperationException {
     if (isCreateInnerClass()) {
       final String typeArguments = getMethod().hasTypeParameters() ? "<" + StringUtil.join(Arrays.asList(getMethod().getTypeParameters()),
-                                                                                           new Function<PsiTypeParameter, String>() {
-                                                                                             public String fun(final PsiTypeParameter typeParameter) {
-                                                                                               final String typeParameterName =
-                                                                                                 typeParameter.getName();
-                                                                                               LOG.assertTrue(typeParameterName != null);
-                                                                                               return typeParameterName;
-                                                                                             }
+                                                                                           typeParameter -> {
+                                                                                             final String typeParameterName =
+                                                                                               typeParameter.getName();
+                                                                                             LOG.assertTrue(typeParameterName != null);
+                                                                                             return typeParameterName;
                                                                                            }, ", ") + ">" : "";
       final PsiMethodCallExpression methodCallExpression =
           (PsiMethodCallExpression)myElementFactory.createExpressionFromText("invoke" + expressionList.getText(), null);

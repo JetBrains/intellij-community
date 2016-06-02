@@ -87,12 +87,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
     final List<PsiMethod> constructors = choose(filterIfFieldAlreadyAssigned(myField, myClass.getConstructors()), project);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        addFieldInitialization(constructors, myField, project, editor);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, myField, project, editor));
   }
 
   private static void addFieldInitialization(@NotNull List<PsiMethod> constructors,
@@ -185,12 +180,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   private static void createDefaultConstructor(PsiClass psiClass, @NotNull final Project project, final Editor editor, final PsiFile file) {
     final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(psiClass);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        defaultConstructorFix.invoke(project, editor, file);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
   private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {

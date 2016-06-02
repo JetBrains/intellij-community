@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
@@ -183,22 +183,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = fromContext.getConfigurationType();
-        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
         final RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
         if (settings != null) {
           fromContext.setConfigurationSettings(settings);
         } else {
-          final ArrayList<String> currentNames = new ArrayList<String>();
-          for (RunnerAndConfigurationSettings configurationSettings : configurations) {
-            currentNames.add(configurationSettings.getName());
-          }
-          RunConfiguration configuration = fromContext.getConfiguration();
-          String name = configuration.getName();
-          if (name == null) {
-            LOG.error(configuration);
-            name = "Unnamed";
-          }
-          configuration.setName(RunManager.suggestUniqueName(name, currentNames));
+          runManager.setUniqueNameIfNeed(fromContext.getConfiguration());
         }
       }
     }

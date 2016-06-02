@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import javax.swing.*;
 
 public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
-  private final PsiClassListCellRenderer myClassListCellRenderer = new PsiClassListCellRenderer();
+  private final PsiClassListCellRenderer myClassListCellRenderer = PsiClassListCellRenderer.INSTANCE;
   private final MethodCellRenderer myMethodCellRenderer;
   
   public MethodOrFunctionalExpressionCellRenderer(boolean showMethodNames) {
@@ -48,6 +48,6 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
   }
 
   public int getIconFlags() {
-    return myClassListCellRenderer.getIconFlags();
+    return PsiClassListCellRenderer.INSTANCE.getIconFlags();
   }
 }

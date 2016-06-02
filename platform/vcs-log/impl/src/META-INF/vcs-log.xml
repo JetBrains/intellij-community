@@ -8,7 +8,7 @@
     <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
 
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
+    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings"
@@ -23,10 +23,13 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MergeCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.CurrentBranchHighlighter$Factory"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
   </extensions>
 
   <actions>

@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.*;
@@ -223,11 +222,10 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
-    final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
-      GitPreservingProcess process = new GitPreservingProcess(project, facade, git, rootsToSave, "Rebasing", "upstream/master",
+      GitPreservingProcess process = new GitPreservingProcess(project, git, rootsToSave, "Rebasing", "upstream/master",
                                                               GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
                                                               () -> {
                                                                 doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);

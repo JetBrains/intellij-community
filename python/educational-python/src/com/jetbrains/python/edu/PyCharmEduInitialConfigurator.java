@@ -163,17 +163,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class");
-            }
-          });
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
     }
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
@@ -185,15 +175,12 @@ public class PyCharmEduInitialConfigurator {
         @Override
         public void welcomeScreenDisplayed() {
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-                GeneralSettings.getInstance().setShowTipsOnStartup(false);
-                propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+              GeneralSettings.getInstance().setShowTipsOnStartup(false);
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
 
-                patchKeymap();
-              }
+              patchKeymap();
             }
           });
         }

@@ -32,6 +32,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -317,7 +318,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       HgVcs myVcs = HgVcs.getInstance(myProject);
       myAmend.setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
       myAmend.setText(myAmend.getText() + " (QRefresh)");
-      final Insets insets = new Insets(2, 2, 2, 2);
+      final Insets insets = JBUI.insets(2);
       // add commit subrepos checkbox
       GridBagConstraints c = new GridBagConstraints();
       c.anchor = GridBagConstraints.CENTER;

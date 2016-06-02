@@ -41,19 +41,15 @@ public class GroovyGenerateGetterSetterAction extends GrBaseGenerateAction {
   }
 
   static {
-    GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
-      @Override
-      @NotNull
-      public Collection<EncapsulatableClassMember> fun(PsiClass s) {
-        if (!(s instanceof GrTypeDefinition)) return Collections.emptyList();
-        final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
-        for (PsiField field : s.getFields()) {
-          if (!(field instanceof PsiEnumConstant) && field instanceof GrField) {
-            result.add(new GrFieldMember((GrField)field));
-          }
+    GenerateAccessorProviderRegistrar.registerProvider(s -> {
+      if (!(s instanceof GrTypeDefinition)) return Collections.emptyList();
+      final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+      for (PsiField field : s.getFields()) {
+        if (!(field instanceof PsiEnumConstant) && field instanceof GrField) {
+          result.add(new GrFieldMember((GrField)field));
         }
-        return result;
       }
+      return result;
     });
   }
 

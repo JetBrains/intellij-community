@@ -153,17 +153,7 @@ public abstract class Change {
   }
 
   public static void apply(final Change change, final FragmentSide fromSide) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(change.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            doApply(change, fromSide);
-          }
-        }, null, DiffBundle.message("save.merge.result.command.name"));
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(change.getProject(), () -> doApply(change, fromSide), null, DiffBundle.message("save.merge.result.command.name")));
   }
 
   public static void doApply(final Change change, final FragmentSide fromSide) {

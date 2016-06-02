@@ -373,7 +373,7 @@ public class CodeInsightUtil {
                                                                                arg,
                                                                                true,
                                                                                PsiUtil.getLanguageLevel(context));
-          if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
+          if (PsiType.NULL.equals(substitution) || substitution != null && substitution.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || substitution instanceof PsiWildcardType) continue;
           if (substitution == null) {
             result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
             return true;

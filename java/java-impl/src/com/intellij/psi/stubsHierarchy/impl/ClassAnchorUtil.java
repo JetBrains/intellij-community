@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,27 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
-
-import java.util.List;
+import com.intellij.psi.stubs.IStubElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassAnchorUtil {
 
   public static PsiClass retrieve(Project project, SmartClassAnchor anchor) {
     if (anchor instanceof SmartClassAnchor.DirectSmartClassAnchor) {
       return ((SmartClassAnchor.DirectSmartClassAnchor)anchor).myPsiClass;
-    } else if (anchor instanceof SmartClassAnchor.StubSmartClassAnchor) {
-      SmartClassAnchor.StubSmartClassAnchor stubAnchor = ((SmartClassAnchor.StubSmartClassAnchor)anchor);
+    }
+    if (anchor instanceof SmartClassAnchor.StubSmartClassAnchor) {
+      SmartClassAnchor.StubSmartClassAnchor stubAnchor = (SmartClassAnchor.StubSmartClassAnchor)anchor;
       VirtualFile file = PersistentFS.getInstance().findFileById(stubAnchor.myFileId);
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return (PsiClass) restoreFromStubIndex((PsiFileWithStubSupport)psiFile, stubAnchor.myStubId);
+      return (PsiClass) restoreFromStubIndex((PsiFileWithStubSupport)psiFile, stubAnchor.myStubId, stubAnchor.myStubElementType);
     }
     return null;
   }
@@ -53,35 +49,7 @@ public class ClassAnchorUtil {
     });
   }
 
-  public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {
-    StubTree tree = fileImpl.getStubTree();
-
-    boolean foreign = tree == null;
-    if (foreign) {
-      if (fileImpl instanceof PsiFileImpl) {
-        tree = ((PsiFileImpl)fileImpl).calcStubTree();
-      }
-      else {
-        return null;
-      }
-    }
-
-    List<StubElement<?>> list = tree.getPlainList();
-    if (index >= list.size()) {
-      return null;
-    }
-    StubElement stub = list.get(index);
-
-    if (foreign) {
-      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
-      if (cachedPsi != null) return cachedPsi;
-
-      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-      if (ast != null) {
-        return ast.getPsi();
-      }
-      return null;
-    }
-    return stub.getPsi();
+  private static PsiElement restoreFromStubIndex(@NotNull PsiFileWithStubSupport fileImpl, int index, IStubElementType stubElementType) {
+    return PsiAnchor.restoreFromStubIndex(fileImpl, index, stubElementType, false);
   }
 }

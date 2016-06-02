@@ -36,15 +36,12 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final Object myRoot = new Object();
   private boolean myFilteredTargets = false;
-  private static final Comparator<AntBuildTarget> ourTargetComparator = new Comparator<AntBuildTarget>() {
-    @Override
-    public int compare(final AntBuildTarget target1, final AntBuildTarget target2) {
-      final String name1 = target1.getDisplayName();
-      if (name1 == null) return Integer.MIN_VALUE;
-      final String name2 = target2.getDisplayName();
-      if (name2 == null) return Integer.MAX_VALUE;
-      return name1.compareToIgnoreCase(name2);
-    }
+  private static final Comparator<AntBuildTarget> ourTargetComparator = (target1, target2) -> {
+    final String name1 = target1.getDisplayName();
+    if (name1 == null) return Integer.MIN_VALUE;
+    final String name2 = target2.getDisplayName();
+    if (name2 == null) return Integer.MAX_VALUE;
+    return name1.compareToIgnoreCase(name2);
   };
 
   public AntExplorerTreeStructure(final Project project) {

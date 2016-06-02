@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-/**
- * (c) 2016 Silent Forest AB
- * created: 18 March 2016
+/*
+  (c) 2016 Silent Forest AB
+  created: 18 March 2016
  */
 package com.intellij.codeInspection;
 

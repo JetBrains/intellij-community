@@ -26,6 +26,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -86,9 +87,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "GotoClass",
     "GotoSymbol",
     
-    "ShowSettings"
+    "ShowSettings",
+    "RecentFiles",
+    "Switcher"
   };
-
 
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
 
@@ -255,7 +257,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     installKeyDispatcher();
 
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
+      TransactionGuard.submitTransaction(this, () -> FileDocumentManager.getInstance().saveAllDocuments());
     }
   }
 

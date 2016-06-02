@@ -304,7 +304,7 @@ public class JBAutoscroller implements ActionListener {
       int row = getLeadSelectionIndexIfSelectionIsNotEmpty(getRowSelectionModel());
       int col = getLeadSelectionIndexIfSelectionIsNotEmpty(getColumnSelectionModel());
 
-      if (row >= 0 && row < myTable.getRowCount() && col >= 0 && col < myTable.getColumnCount()) {
+      if (row >= 0 && row < myTable.getRowCount() || col >= 0 && col < myTable.getColumnCount()) {
         myTable.scrollRectToVisible(myTable.getCellRect(row, col, false));
       }
     }

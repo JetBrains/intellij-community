@@ -78,6 +78,9 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
+    if (LambdaUtil.notInferredType(type)) {
+      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), targetClass.getResolveScope());
+    }
 
     String varName = myReferenceExpression.getReferenceName();
     PsiExpression initializer = null;
@@ -141,11 +144,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(localVariable);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(localVariable);
           });
         }
       }

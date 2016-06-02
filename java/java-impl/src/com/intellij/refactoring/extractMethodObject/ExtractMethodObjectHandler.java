@@ -100,56 +100,34 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     } else {
       marker = null;
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-          public void run() {
-            try {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  extractProcessor.doRefactoring();
-                }
-              });
-              processor.run();
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  processor.runChangeSignature();
-                }
-              });
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+    CommandProcessor.getInstance().executeCommand(project,
+                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
+                                                    try {
+                                                      ApplicationManager.getApplication().runWriteAction(() -> extractProcessor.doRefactoring());
+                                                      processor.run();
+                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.runChangeSignature());
+                                                    }
+                                                    catch (IncorrectOperationException e) {
+                                                      LOG.error(e);
+                                                    }
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-            if (processor.isCreateInnerClass()) {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  processor.moveUsedMethodsToInner();
-                }
-              });
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              if (editor != null) {
-                DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
-              }
-            }
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                if (processor.isCreateInnerClass()) {
-                  processor.changeInstanceAccess(project);
-                }
-                final PsiElement method = processor.getMethod();
-                LOG.assertTrue(method != null);
-                method.delete();
-              }
-            });
-          }
-        });
-      }
-    }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
+                                                    PsiDocumentManager.getInstance(project).commitAllDocuments();
+                                                    if (processor.isCreateInnerClass()) {
+                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.moveUsedMethodsToInner());
+                                                      PsiDocumentManager.getInstance(project).commitAllDocuments();
+                                                      if (editor != null) {
+                                                        DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+                                                      }
+                                                    }
+                                                    ApplicationManager.getApplication().runWriteAction(() -> {
+                                                      if (processor.isCreateInnerClass()) {
+                                                        processor.changeInstanceAccess(project);
+                                                      }
+                                                      final PsiElement method = processor.getMethod();
+                                                      LOG.assertTrue(method != null);
+                                                      method.delete();
+                                                    });
+                                                  }), ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(marker.getStartOffset());
       marker.dispose();

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="truth">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/truth-0.28.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

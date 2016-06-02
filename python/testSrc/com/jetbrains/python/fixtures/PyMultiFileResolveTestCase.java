@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
@@ -43,7 +43,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
 
   protected PsiElement doResolve(PsiFile psiFile) {
     final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
-    final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
+    final PsiManagerEx psiManager = (PsiManagerEx)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
       public boolean accept(VirtualFile file) {
@@ -94,12 +94,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     final PsiFile psiFile = prepareFile();
     final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
     if (ref instanceof PsiPolyVariantReference) {
-      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), new Function<ResolveResult, PsiElement>() {
-        @Override
-        public PsiElement fun(ResolveResult result) {
-          return result.getElement();
-        }
-      });
+      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), result -> result.getElement());
     }
     return Collections.singletonList(ref.resolve());
   }

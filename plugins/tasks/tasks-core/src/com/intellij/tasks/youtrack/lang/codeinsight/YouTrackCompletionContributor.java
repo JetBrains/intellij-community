@@ -48,25 +48,16 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     }
 
     final Application application = ApplicationManager.getApplication();
-    Future<List<CompletionItem>> future = application.executeOnPooledThread(new Callable<List<CompletionItem>>() {
-      @Override
-      public List<CompletionItem> call() throws Exception {
-        return intellisense.fetchCompletion(parameters.getOriginalFile().getText(), parameters.getOffset());
-      }
-    });
+    Future<List<CompletionItem>> future = application.executeOnPooledThread(
+      () -> intellisense.fetchCompletion(parameters.getOriginalFile().getText(), parameters.getOffset()));
     try {
       final List<CompletionItem> suggestions = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
       // actually backed by original CompletionResultSet
       result = result.withPrefixMatcher(extractPrefix(parameters)).caseInsensitive();
-      result.addAllElements(ContainerUtil.map(suggestions, new Function<CompletionItem, LookupElement>() {
-        @Override
-        public LookupElement fun(CompletionItem item) {
-          return LookupElementBuilder.create(item, item.getOption())
-            .withTypeText(item.getDescription(), true)
-            .withInsertHandler(INSERT_HANDLER)
-            .withBoldness(item.getStyleClass().equals("keyword"));
-        }
-      }));
+      result.addAllElements(ContainerUtil.map(suggestions, (Function<CompletionItem, LookupElement>)item -> LookupElementBuilder.create(item, item.getOption())
+        .withTypeText(item.getDescription(), true)
+        .withInsertHandler(INSERT_HANDLER)
+        .withBoldness(item.getStyleClass().equals("keyword"))));
     }
     catch (Exception ignored) {
       //noinspection InstanceofCatchParameter

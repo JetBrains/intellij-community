@@ -40,13 +40,9 @@ import java.util.Map;
  */
 public class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
 
-  private static final Condition<PsiPackage> PACKAGE_CONDITION = new Condition<PsiPackage>() {
-    @Override
-    public boolean value(PsiPackage aPackage) {
-      return PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
-             Character.isLowerCase(aPackage.getName().charAt(0));
-    }
-  };
+  private static final Condition<PsiPackage> PACKAGE_CONDITION =
+    aPackage -> PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
+              Character.isLowerCase(aPackage.getName().charAt(0));
 
   @Override
   public String getParameterId() {

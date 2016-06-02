@@ -115,24 +115,9 @@ public class EditorSearchSession implements SearchSession,
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
       .withDataProvider(this)
-      .withCloseAction(new Runnable() {
-        @Override
-        public void run() {
-          close();
-        }
-      })
-      .withReplaceAction(new Runnable() {
-        @Override
-        public void run() {
-          replaceCurrent();
-        }
-      })
-      .withSecondarySearchActionsIsModifiedGetter(new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return myFindModel.getSearchContext() != FindModel.SearchContext.ANY;
-        }
-      })
+      .withCloseAction(() -> close())
+      .withReplaceAction(() -> replaceCurrent())
+      .withSecondarySearchActionsIsModifiedGetter(() -> myFindModel.getSearchContext() != FindModel.SearchContext.ANY)
       .build();
 
     myComponent.addListener(this);

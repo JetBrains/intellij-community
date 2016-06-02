@@ -135,9 +135,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     while (!insideReadAction.get()) {
 
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      assertTrue(indicator.isCanceled());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> assertTrue(indicator.isCanceled()));
     assertTrue(indicator.isCanceled());
   }
 

@@ -193,13 +193,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
 
       myInsideChange++;
       try{
-        queueUpdate().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            // After updating the tree we have to synchronize the selection in the tree
-            // with selected element in the hierarchy
-            syncSelection();
-          }
+        queueUpdate().doWhenDone(() -> {
+          // After updating the tree we have to synchronize the selection in the tree
+          // with selected element in the hierarchy
+          syncSelection();
         });
       }finally{
         myInsideChange--;

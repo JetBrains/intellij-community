@@ -15,9 +15,11 @@
  */
 package com.intellij.util
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
 import org.jdom.Document
+import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
@@ -58,3 +60,5 @@ private fun loadDocument(reader: Reader): Document {
     reader.close()
   }
 }
+
+fun Element.getTreeHash() = JDOMUtil.getTreeHash(this)

@@ -27,12 +27,9 @@ import javax.swing.*;
  */
 public class ExecutionModes {
   private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
-  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = new PairConsumer<ExecutionMode, String>() {
-    @Override
-    public void consume(ExecutionMode mode, String presentableCmdLine) {
-      final String msg = "Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine;
-      LOG.error(msg);
-    }
+  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = (mode, presentableCmdLine) -> {
+    final String msg = "Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine;
+    LOG.error(msg);
   };
 
   /**

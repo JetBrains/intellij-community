@@ -11,10 +11,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +126,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   protected static void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
     data.clearText();
-    data.addText(additionalName, new SimpleTextAttributes(Font.PLAIN, color));
+    data.addText(additionalName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
     data.setIcon(icon);
   }
 

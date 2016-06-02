@@ -141,11 +141,11 @@ public final class IconLoader {
     }
   }
 
-  @Nullable
   /**
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String)}
    */
+  @Nullable
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;

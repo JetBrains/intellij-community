@@ -73,6 +73,7 @@ public final class NameResolverTools {
    * @return true if element's fqn is one of names, provided by provider
    */
   public static boolean isName(@NotNull final PyElement element, @NotNull final FQNamesProvider... namesProviders) {
+    assert element.isValid();
     final Pair<String, String> qualifiedAndClassName = QUALIFIED_AND_CLASS_NAME.getValue(element);
     final String qualifiedName = qualifiedAndClassName.first;
     final String className = qualifiedAndClassName.second;

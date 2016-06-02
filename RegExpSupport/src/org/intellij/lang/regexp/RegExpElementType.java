@@ -20,6 +20,6 @@ import com.intellij.lang.Language;
 
 public class RegExpElementType extends IElementType {
     RegExpElementType(String s) {
-        super(s, Language.findInstance(RegExpLanguage.class));
+        super(s, RegExpLanguage.INSTANCE);
     }
 }

@@ -164,12 +164,7 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), new Function<File, Character>() {
-      @Override
-      public Character fun(File root) {
-        return root.getPath().toUpperCase(Locale.US).charAt(0);
-      }
-    });
+    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
 
     char drive = 0;
     for (char c = 'E'; c <= 'Z'; c++) {
@@ -217,25 +212,22 @@ public class IoTestUtil {
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
     command.redirectErrorStream(true);
     final Process process = command.start();
-    Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
+    Thread thread = new Thread(() -> {
+      try {
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         try {
-          final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-          try {
-            //noinspection StatementWithEmptyBody
-            String line;
-            while ((line = reader.readLine()) != null) {
-              System.out.println(line);
-            }
-          }
-          finally {
-            reader.close();
+          //noinspection StatementWithEmptyBody
+          String line;
+          while ((line = reader.readLine()) != null) {
+            System.out.println(line);
           }
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+        finally {
+          reader.close();
         }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }, "io test");
     thread.start();
@@ -289,22 +281,19 @@ public class IoTestUtil {
   public static File createTestJar(@NotNull File jarFile, @NotNull final File root) throws IOException {
     final ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
     try {
-      FileUtil.visitFiles(root, new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          if (file.isFile()) {
-            String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
-            try {
-              stream.putNextEntry(new ZipEntry(path));
-              stream.write(FileUtil.loadFileBytes(file));
-              stream.closeEntry();
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+      FileUtil.visitFiles(root, file -> {
+        if (file.isFile()) {
+          String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
+          try {
+            stream.putNextEntry(new ZipEntry(path));
+            stream.write(FileUtil.loadFileBytes(file));
+            stream.closeEntry();
           }
-          return true;
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
         }
+        return true;
       });
     }
     finally {

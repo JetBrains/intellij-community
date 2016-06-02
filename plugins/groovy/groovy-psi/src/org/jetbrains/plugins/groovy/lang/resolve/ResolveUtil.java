@@ -29,7 +29,6 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +86,7 @@ public class ResolveUtil {
   private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
+  public static final Key<PsiElement> DOCUMENTATION_DELEGATE = Key.create("groovy.documentation.delegate");
 
   private ResolveUtil() {
   }
@@ -133,16 +133,13 @@ public class ResolveUtil {
                                      @NotNull final ResolveState state) {
     final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
 
-    return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
-      @Override
-      public boolean process(PsiElement scope, PsiElement lastParent) {
-        ProgressManager.checkCanceled();
-        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
-          return false;
-        }
-        issueLevelChangeEvents(processor, scope);
-        return true;
+    return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {
+      ProgressManager.checkCanceled();
+      if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
+        return false;
       }
+      issueLevelChangeEvents(processor, scope);
+      return true;
     });
   }
 
@@ -361,12 +358,9 @@ public class ResolveUtil {
 
   public static Set<String> getAllSuperTypes(@NotNull PsiType base, final Project project) {
     final Map<String, Set<String>> cache =
-      CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Set<String>>>() {
-        @Override
-        public Result<Map<String, Set<String>>> compute() {
-          final Map<String, Set<String>> result = ContainerUtil.newConcurrentMap();
-          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
+      CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+        final Map<String, Set<String>> result = ContainerUtil.newConcurrentMap();
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);
@@ -899,11 +893,24 @@ public class ResolveUtil {
   }
 
   public static boolean isScriptField(GrVariable var) {
-    PsiClass context = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass(var.getParent());
-    final GrModifierList modifierList = var.getModifierList();
-    return context instanceof GroovyScriptClass &&
-           modifierList != null &&
-           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null;
+    return findScriptField(var) != null;
+  }
+
+  @Nullable
+  public static GrScriptField findScriptField(@NotNull GrVariable var) {
+    return CachedValuesManager.getCachedValue(var, () -> {
+      PsiFile file = var.getContainingFile();
+      if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+        PsiClass scriptClass = ((GroovyFile)file).getScriptClass();
+        assert scriptClass != null;
+        for (PsiField field : scriptClass.getFields()) {
+          if (field instanceof GrScriptField) {
+            if (((GrScriptField)field).getOriginalVariable() == var) return CachedValueProvider.Result.create(((GrScriptField)field), var);
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(null, var);
+    });
   }
 
   @Nullable
@@ -935,14 +942,16 @@ public class ResolveUtil {
     if (isScriptField(variable)) {
       final String name = variable.getName();
 
-      int count = 0;
       final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
       assert script != null;
-      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
-        if (name.equals(field.getName())) count++;
-      }
+      List<GrField> duplicates = ContainerUtil.filter(script.getFields(), (GrField f) -> {
+        if (!(f instanceof GrScriptField)) return false;
+        if (!name.equals(f.getName())) return false;
+        if (((GrScriptField)f).getOriginalVariable() == variable) return false;
+        return true;
+      });
 
-      return count > 1 ? GrScriptField.getScriptField(variable) : null;
+      return duplicates.size() > 0 ? duplicates.get(0) : null;
     }
     else {
       PsiNamedElement duplicate = resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class);

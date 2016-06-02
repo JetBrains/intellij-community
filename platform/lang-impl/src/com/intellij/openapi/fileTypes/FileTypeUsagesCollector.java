@@ -63,34 +63,25 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
         throw new CollectUsagesException("Project is disposed");
       }
       final String ideaDirPath = getIdeaDirPath(project);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          FileBasedIndex.getInstance().processValues(
-            FileTypeIndex.NAME,
-            fileType,
-            null,
-            new FileBasedIndex.ValueProcessor<Void>() {
-              @Override
-              public boolean process(VirtualFile file, Void value) {
-                //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-                if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
-                  usedFileTypes.add(fileType);
-                  return false;
-                }
-                return true;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        FileBasedIndex.getInstance().processValues(
+          FileTypeIndex.NAME,
+          fileType,
+          null,
+          new FileBasedIndex.ValueProcessor<Void>() {
+            @Override
+            public boolean process(VirtualFile file, Void value) {
+              //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+              if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
+                usedFileTypes.add(fileType);
+                return false;
               }
-            }, GlobalSearchScope.projectScope(project));
-        }
+              return true;
+            }
+          }, GlobalSearchScope.projectScope(project));
       });
     }
-    return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
-      @NotNull
-      @Override
-      public UsageDescriptor fun(FileType fileType) {
-        return new UsageDescriptor(fileType.getName(), 1);
-      }
-    });
+    return ContainerUtil.map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> new UsageDescriptor(fileType.getName(), 1));
   }
 
   @Nullable

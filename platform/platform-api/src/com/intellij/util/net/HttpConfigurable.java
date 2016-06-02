@@ -40,6 +40,8 @@ import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.proxy.SharedProxyConfig;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -129,6 +131,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initComponent() {
+
+    final HttpConfigurable currentState = getState();
+    if (currentState != null) {
+      final Element serialized = XmlSerializer.serializeIfNotDefault(currentState, new SkipDefaultsSerializationFilter());
+      if (serialized == null) {
+        // all settings are defaults
+        // trying user's proxy configuration entered while obtaining the license
+        final SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
+        if (cfg != null) {
+          SharedProxyConfig.clear();
+          if (cfg.host != null) {
+            USE_HTTP_PROXY = true;
+            PROXY_HOST = cfg.host;
+            PROXY_PORT = cfg.port;
+            if (cfg.login != null) {
+              setPlainProxyPassword(new String(cfg.password));
+              PROXY_LOGIN = cfg.login;
+              PROXY_AUTHENTICATION = true;
+              KEEP_PROXY_PASSWORD = true;
+            }
+          }
+        }
+      }
+    }
+
+
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
@@ -210,7 +238,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String decode(String value) {
-    return new String(Base64.decode(value));
+    return new String(Base64.decode(value), CharsetToolkit.UTF8_CHARSET);
   }
 
   @Transient
@@ -219,7 +247,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String encode(String password) {
-    return new String(Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET)));
+    return Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
@@ -228,31 +256,28 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     final Ref<PasswordAuthentication> value = Ref.create();
-    runAboveAll(new Runnable() {
-      @Override
-      public void run() {
-        if (isGenericPasswordCanceled(host, port)) {
-          return;
-        }
+    runAboveAll(() -> {
+      if (isGenericPasswordCanceled(host, port)) {
+        return;
+      }
 
-        PasswordAuthentication password = getGenericPassword(host, port);
-        if (password != null) {
-          value.set(password);
-          return;
-        }
+      PasswordAuthentication password = getGenericPassword(host, port);
+      if (password != null) {
+        value.set(password);
+        return;
+      }
 
-        AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
-                                                               "Please enter credentials for: " + prompt, "", "", remember);
-        dialog.show();
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          AuthenticationPanel panel = dialog.getPanel();
-          PasswordAuthentication passwordAuthentication = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
-          putGenericPassword(host, port, passwordAuthentication, remember && panel.isRememberPassword());
-          value.set(passwordAuthentication);
-        }
-        else {
-          setGenericPasswordCanceled(host, port);
-        }
+      AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
+                                                             "Please enter credentials for: " + prompt, "", "", remember);
+      dialog.show();
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        AuthenticationPanel panel = dialog.getPanel();
+        PasswordAuthentication passwordAuthentication = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
+        putGenericPassword(host, port, passwordAuthentication, remember && panel.isRememberPassword());
+        value.set(passwordAuthentication);
+      }
+      else {
+        setGenericPasswordCanceled(host, port);
       }
     });
     return value.get();
@@ -275,32 +300,29 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       return myTestGenericAuthRunnable.get();
     }
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
-    runAboveAll(new Runnable() {
-      @Override
-      public void run() {
-        if (AUTHENTICATION_CANCELLED) {
-          return;
-        }
+    runAboveAll(() -> {
+      if (AUTHENTICATION_CANCELLED) {
+        return;
+      }
 
-        // password might have changed, and the check below is for that
-        String password = getPlainProxyPassword();
-        if (PROXY_AUTHENTICATION && ! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
-          value[0] = new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
-          return;
-        }
-        AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
-                                                                  "Please enter credentials for: " + prompt, PROXY_LOGIN, "", KEEP_PROXY_PASSWORD);
-        dialog.show();
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          PROXY_AUTHENTICATION = true;
-          AuthenticationPanel panel = dialog.getPanel();
-          KEEP_PROXY_PASSWORD = panel.isRememberPassword();
-          PROXY_LOGIN = StringUtil.nullize(panel.getLogin());
-          setPlainProxyPassword(String.valueOf(panel.getPassword()));
-          value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
-        } else {
-          AUTHENTICATION_CANCELLED = true;
-        }
+      // password might have changed, and the check below is for that
+      String password1 = getPlainProxyPassword();
+      if (PROXY_AUTHENTICATION && ! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password1)) {
+        value[0] = new PasswordAuthentication(PROXY_LOGIN, password1.toCharArray());
+        return;
+      }
+      AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+                                                                "Please enter credentials for: " + prompt, PROXY_LOGIN, "", KEEP_PROXY_PASSWORD);
+      dialog.show();
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        PROXY_AUTHENTICATION = true;
+        AuthenticationPanel panel = dialog.getPanel();
+        KEEP_PROXY_PASSWORD = panel.isRememberPassword();
+        PROXY_LOGIN = StringUtil.nullize(panel.getLogin());
+        setPlainProxyPassword(String.valueOf(panel.getPassword()));
+        value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
+      } else {
+        AUTHENTICATION_CANCELLED = true;
       }
     });
     return value[0];
@@ -328,17 +350,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void writeExternal(Element element) throws WriteExternalException {
     XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-          if (frame != null) {
-            USE_PROXY_PAC = false;
-            Messages.showMessageDialog(frame.getComponent(), "Proxy: both 'use proxy' and 'autodetect proxy' settings were set." +
-                                                             "\nOnly one of these options should be selected.\nPlease re-configure.",
-                                       "Proxy Setup", Messages.getWarningIcon());
-            editConfigurable(frame.getComponent());
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+        if (frame != null) {
+          USE_PROXY_PAC = false;
+          Messages.showMessageDialog(frame.getComponent(), "Proxy: both 'use proxy' and 'autodetect proxy' settings were set." +
+                                                           "\nOnly one of these options should be selected.\nPlease re-configure.",
+                                     "Proxy Setup", Messages.getWarningIcon());
+          editConfigurable(frame.getComponent());
         }
       }, ModalityState.NON_MODAL);
     }

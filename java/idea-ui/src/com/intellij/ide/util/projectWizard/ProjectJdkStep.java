@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,9 +69,9 @@ public class ProjectJdkStep extends ModuleWizardStep {
         return new Dimension(-1, 200);
       }
     };
-    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
+    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     myJDKsComponent.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-    panel.add(myJDKsComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));
+    panel.add(myJDKsComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 

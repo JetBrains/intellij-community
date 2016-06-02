@@ -192,10 +192,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @NotNull
   public String getNameWithoutExtension() {
-    String name = getName();
-    int index = name.lastIndexOf('.');
-    if (index < 0) return name;
-    return name.substring(0, index);
+    return StringUtil.trimExtension(getName());
   }
 
 

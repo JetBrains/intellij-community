@@ -198,14 +198,11 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof Executor) {
-              //noinspection ConstantConditions
-              performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof Executor) {
+            //noinspection ConstantConditions
+            performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
           }
         }).createPopup().showUnderneathOf(event.getComponent());
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -236,6 +238,49 @@ public class DiffDrawUtil {
   //
 
   // TODO: desync of range and 'border' line markers on typing
+
+  @NotNull
+  public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
+                                                                      @NotNull LineRange deleted,
+                                                                      @NotNull LineRange inserted,
+                                                                      @Nullable List<DiffFragment> innerFragments) {
+    boolean ignored = innerFragments != null;
+
+    List<RangeHighlighter> list = new ArrayList<>();
+    if (!inserted.isEmpty() && !deleted.isEmpty()) {
+      list.addAll(createLineMarker(editor, deleted.start, TextDiffType.DELETED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createLineMarker(editor, inserted.end - 1, TextDiffType.INSERTED, SeparatorPlacement.BOTTOM));
+    }
+    else if (!inserted.isEmpty()) {
+      list.addAll(createLineMarker(editor, inserted.start, TextDiffType.INSERTED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createLineMarker(editor, inserted.end - 1, TextDiffType.INSERTED, SeparatorPlacement.BOTTOM));
+    }
+    else if (!deleted.isEmpty()) {
+      list.addAll(createLineMarker(editor, deleted.start, TextDiffType.DELETED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createLineMarker(editor, deleted.end - 1, TextDiffType.DELETED, SeparatorPlacement.BOTTOM));
+    }
+
+    if (innerFragments != null) {
+      int deletedStartOffset = editor.getDocument().getLineStartOffset(deleted.start);
+      int insertedStartOffset = editor.getDocument().getLineStartOffset(inserted.start);
+
+      for (DiffFragment fragment : innerFragments) {
+        int deletedWordStart = deletedStartOffset + fragment.getStartOffset1();
+        int deletedWordEnd = deletedStartOffset + fragment.getEndOffset1();
+        list.addAll(createInlineHighlighter(editor, deletedWordStart, deletedWordEnd, TextDiffType.DELETED));
+
+        int insertedWordStart = insertedStartOffset + fragment.getStartOffset2();
+        int insertedWordEnd = insertedStartOffset + fragment.getEndOffset2();
+        list.addAll(createInlineHighlighter(editor, insertedWordStart, insertedWordEnd, TextDiffType.INSERTED));
+      }
+    }
+
+    return list;
+  }
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,

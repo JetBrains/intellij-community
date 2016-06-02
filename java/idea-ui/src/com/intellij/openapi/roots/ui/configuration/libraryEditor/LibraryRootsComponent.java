@@ -179,24 +179,21 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         if (selectedElements.length == 0) {
           return;
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (Object selectedElement : selectedElements) {
-              if (selectedElement instanceof ItemElement) {
-                final ItemElement itemElement = (ItemElement)selectedElement;
-                getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (Object selectedElement : selectedElements) {
+            if (selectedElement instanceof ItemElement) {
+              final ItemElement itemElement = (ItemElement)selectedElement;
+              getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+            }
+            else if (selectedElement instanceof OrderRootTypeElement) {
+              final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+              final String[] urls = getLibraryEditor().getUrls(rootType);
+              for (String url : urls) {
+                getLibraryEditor().removeRoot(url, rootType);
               }
-              else if (selectedElement instanceof OrderRootTypeElement) {
-                final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
-                final String[] urls = getLibraryEditor().getUrls(rootType);
-                for (String url : urls) {
-                  getLibraryEditor().removeRoot(url, rootType);
-                }
-              }
-              else if (selectedElement instanceof ExcludedRootElement) {
-                getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
-              }
+            }
+            else if (selectedElement instanceof ExcludedRootElement) {
+              getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
             }
           }
         });
@@ -455,12 +452,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          getLibraryEditor().addRoots(rootsToAttach);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
       onRootsChanged();
       myTreeBuilder.queueUpdate();
@@ -546,12 +538,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
       final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myPanel, myProject, toSelect);
       if (files.length > 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (VirtualFile file : files) {
-              getLibraryEditor().addExcludedRoot(file.getUrl());
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (VirtualFile file : files) {
+            getLibraryEditor().addExcludedRoot(file.getUrl());
           }
         });
         myLastChosen = files[0];

@@ -35,24 +35,16 @@ public class MainImpl {
       @Override
       public void start(final boolean newConfigFolder) {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PluginManager.installExceptionHandler();
+        SwingUtilities.invokeLater(() -> {
+          PluginManager.installExceptionHandler();
 
-            if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
-              StartupUtil.runStartupWizard();
-            }
-
-            final IdeaApplication app = new IdeaApplication(args);
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                app.run();
-              }
-            });
+          if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
+            StartupUtil.runStartupWizard();
           }
+
+          final IdeaApplication app = new IdeaApplication(args);
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> app.run());
         });
       }
     });

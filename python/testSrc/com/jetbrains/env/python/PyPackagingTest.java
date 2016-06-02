@@ -9,6 +9,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -18,6 +19,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static org.junit.Assert.*;
 
 /**
  * @author vlan
@@ -39,6 +44,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     super.runPythonTest(testTask);
   }
 
+  @Test
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
@@ -60,6 +66,8 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  @Staging
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
@@ -92,6 +100,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {
 
@@ -107,7 +116,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages(false);
           // TODO: Install Markdown from a local file
-          manager.install(list(PyRequirement.fromString("Markdown<2.2"),
+          manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
                                new PyRequirement("httplib2")), Collections.<String>emptyList());
           final List<PyPackage> packages2 = manager.getPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);

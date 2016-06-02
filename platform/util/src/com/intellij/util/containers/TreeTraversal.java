@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ import java.util.NoSuchElementException;
  *
  * <p>For example, the tree
  *
- * <pre>          {@code
+ * <pre>{@code
  *          h
  *        / | \
  *       /  e  \
@@ -125,6 +126,24 @@ public abstract class TreeTraversal {
 
     protected TracingIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
+    }
+
+    protected JBIterable<T> _transform(JBIterable<?> original) {
+      JBIterable<?> result = original;
+      for (Function<Object, Object> f : getTransformations()) {
+        result = result.transform(f);
+      }
+      //noinspection unchecked
+      return (JBIterable<T>)result;
+    }
+
+    protected T _transform(Object original) {
+      Object result = original;
+      for (Function<Object, ?> f : getTransformations()) {
+        result = f.fun(result);
+      }
+      //noinspection unchecked
+      return (T)result;
     }
   }
 
@@ -266,13 +285,13 @@ public abstract class TreeTraversal {
       if (last == null) throw new NoSuchElementException();
 
       H p = last.parent;
-      return p == null ? null : p.node;
+      return p == null ? null : p.node == null ? null : _transform(p.node);
     }
 
     @NotNull
     public JBIterable<T> backtrace() {
       if (last == null) throw new NoSuchElementException();
-      return JBIterable.generate(last, P.<T>toPrev()).transform(P.<T>toNode()).filter(Condition.NOT_NULL);
+      return _transform(JBIterable.generate(last, P.<T>toPrev()).transform(P.<T>toNode()).filter(Condition.NOT_NULL));
     }
   }
 
@@ -469,30 +488,14 @@ public abstract class TreeTraversal {
     @Override
     public T parent() {
       if (top == null) throw new NoSuchElementException();
-      return paths.get(top.node);
+      return _transform(paths.get(top.node));
     }
 
     @NotNull
     @Override
     public JBIterable<T> backtrace() {
       if (top == null) throw new NoSuchElementException();
-      final T first = top.node;
-      return new JBIterable<T>() {
-        @Override
-        public Iterator<T> iterator() {
-          return new JBIterator<T>() {
-            T cur = first;
-
-            @Override
-            public T nextImpl() {
-              if (cur == null) return stop();
-              T result = cur;
-              cur = paths.get(cur);
-              return result;
-            }
-          };
-        }
-      };
+      return _transform(JBIterable.generate(top.node, Functions.fromMap(paths)));
     }
   }
 

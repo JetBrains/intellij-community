@@ -7,18 +7,16 @@ import com.intellij.psi.tree.IElementType;
 %%
 
 %{
-   public FileTemplateTextLexer() {
+   public _FileTemplateTextLexer() {
      this((java.io.Reader)null);
    }
 %}
 
 %unicode
-%class FileTemplateTextLexer
+%class _FileTemplateTextLexer
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 ALPHA=[A-Za-z_]
 DIGIT=[0-9]

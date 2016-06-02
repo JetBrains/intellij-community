@@ -490,14 +490,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public PyExpression findAssignedValue() {
-    if (isValid()) {
-      PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
-      if (assignment != null) {
-        List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-        for (Pair<PyExpression, PyExpression> pair : mapping) {
-          PyExpression assigned_to = pair.getFirst();
-          if (assigned_to == this) return pair.getSecond();
-        }
+    PyPsiUtils.assertValid(this);
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+    if (assignment != null) {
+      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+      for (Pair<PyExpression, PyExpression> pair : mapping) {
+        PyExpression assigned_to = pair.getFirst();
+        if (assigned_to == this) return pair.getSecond();
       }
     }
     return null;

@@ -266,12 +266,7 @@ public class PluginHeaderPanel {
         switch (myActionId) {
           case UPDATE:
           case INSTALL:
-            Runnable setPlugin = new Runnable() {
-              @Override
-              public void run() {
-                setPlugin(myPlugin);
-              }
-            };
+            Runnable setPlugin = () -> setPlugin(myPlugin);
             new InstallPluginAction(myManager.getAvailable(), myManager.getInstalled()).install(setPlugin, setPlugin, true);
             break;
           case UNINSTALL:
@@ -287,17 +282,14 @@ public class PluginHeaderPanel {
               dialog.close(DialogWrapper.OK_EXIT_CODE);
             }
             //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                final DialogWrapper settings =
-                  DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
-                if (settings instanceof SettingsDialog) {
-                  ((SettingsDialog)settings).doOKAction();
-                  ApplicationManager.getApplication().restart();
-                } else {
-                  ApplicationManager.getApplication().restart();
-                }
+            SwingUtilities.invokeLater(() -> {
+              final DialogWrapper settings =
+                DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
+              if (settings instanceof SettingsDialog) {
+                ((SettingsDialog)settings).doOKAction();
+                ApplicationManager.getApplication().restart();
+              } else {
+                ApplicationManager.getApplication().restart();
               }
             });
             break;

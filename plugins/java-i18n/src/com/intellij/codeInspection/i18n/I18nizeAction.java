@@ -135,25 +135,17 @@ public class I18nizeAction extends AnAction {
       if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
-                                         StringUtil.unescapeStringCharacters(dialog.getValue()),
-                                         dialog.getI18nizedText(), dialog.getParameters(),
-                                         dialog.getPropertyCreationHandler());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      try {
+        handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
+                                   StringUtil.unescapeStringCharacters(dialog.getValue()),
+                                   dialog.getI18nizedText(), dialog.getParameters(),
+                                   dialog.getPropertyCreationHandler());
       }
-    });
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
   }
 
   @Override

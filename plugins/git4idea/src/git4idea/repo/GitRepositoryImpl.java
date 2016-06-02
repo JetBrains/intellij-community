@@ -18,13 +18,11 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
@@ -38,7 +36,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
-  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
@@ -50,12 +47,10 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   private GitRepositoryImpl(@NotNull VirtualFile rootDir,
                             @NotNull VirtualFile gitDir,
-                            @NotNull GitPlatformFacade facade,
                             @NotNull Project project,
                             @NotNull Disposable parentDisposable,
                             final boolean light) {
     super(project, rootDir, parentDisposable);
-    myPlatformFacade = facade;
     myVcs = assertNotNull(GitVcs.getInstance(project));
     myGitDir = gitDir;
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
@@ -82,8 +77,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                           @NotNull VirtualFile gitDir,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
-    GitPlatformFacade platformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, platformFacade, project, project, !listenToRepoChanges);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, project, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
       repository.setupUpdater();
@@ -203,7 +197,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   private GitRepoInfo readRepoInfo() {
     File configFile = myRepositoryFiles.getConfigFile();
-    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
+    GitConfig config = GitConfig.read(configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());

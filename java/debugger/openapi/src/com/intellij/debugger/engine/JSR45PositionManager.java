@@ -132,6 +132,12 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return result;
   }
 
+  @NotNull
+  @Override
+  public Set<LanguageFileType> getAcceptedFileTypes() {
+    return myFileTypes;
+  }
+
   private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
     final FileType fileType = classPosition.getFile().getFileType();
     if(!myFileTypes.contains(fileType)) {

@@ -16,12 +16,24 @@ class FooWithComments {
     return <warning descr="Condition 'AnEnum.valueOf(name) != null' is always 'true'">AnEnum.valueOf(name) != null</warning>;
   }
 
+  boolean checkCustomValueOf(int i) {
+    return AnEnum.valueOf(i) != null;
+  }
+
   private native void anotherMethod(String name);
 
   @Nullable
   private native AnEnum nullableGetter();
 
   enum AnEnum {
-    ENUM_VALUE, FOO2
+    ENUM_VALUE, FOO2;
+
+    @Nullable
+    public static AnEnum valueOf(int i) {
+      if (i < 0 || i > 1)
+        return null;
+
+      return values()[i];
+    }
   }
 }

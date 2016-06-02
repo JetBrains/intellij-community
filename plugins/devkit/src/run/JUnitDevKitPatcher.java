@@ -19,6 +19,7 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -37,12 +38,14 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author anna
  * @since Mar 4, 2005
  */
 public class JUnitDevKitPatcher extends JUnitPatcher {
+  private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
 
   @Override
@@ -81,6 +84,18 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
       if (!vm.hasProperty("idea.home.path")) {
         File homeDir = new File(sandboxHome, "test");
         FileUtil.createDirectory(homeDir);
+        String buildNumber = IdeaJdk.getBuildNumber(jdk.getHomePath());
+        if (buildNumber != null) {
+          try {
+            FileUtil.writeToFile(new File(homeDir, "build.txt"), buildNumber);
+          }
+          catch (IOException e) {
+            LOG.warn("failed to create build.txt in " + homeDir + ": " + e.getMessage(), e);
+          }
+        }
+        else {
+          LOG.warn("Cannot determine build number for " + jdk.getHomePath());
+        }
         vm.defineProperty("idea.home.path", homeDir.getAbsolutePath());
       }
       if (!vm.hasProperty("idea.plugins.path")) {

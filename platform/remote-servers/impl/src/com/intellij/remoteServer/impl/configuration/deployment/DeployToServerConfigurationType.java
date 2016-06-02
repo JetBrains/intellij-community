@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
@@ -80,13 +82,20 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
       }
 
       if (deployConfiguration.getDeploymentSource() == null) {
-        List<DeploymentSource> sources = deployConfiguration.getDeploymentConfigurator().getAvailableDeploymentSources();
-        DeploymentSource source = ContainerUtil.getFirstItem(sources);
-        if (source != null) {
-          deployConfiguration.setDeploymentSource(source);
-          DeploymentSourceType type = source.getType();
-          type.setBuildBeforeRunTask(configuration, source);
-        }
+        setupDeploymentSource(configuration, deployConfiguration);
+      }
+    }
+
+    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(@NotNull RunConfiguration configuration, DeployToServerRunConfiguration<S, D> deployConfiguration) {
+      DeploymentConfigurator<D, S> deploymentConfigurator = deployConfiguration.getDeploymentConfigurator();
+      List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
+      DeploymentSource source = ContainerUtil.getFirstItem(sources);
+      if (source != null) {
+        deployConfiguration.setDeploymentSource(source);
+        deployConfiguration.setDeploymentConfiguration(deploymentConfigurator.createDefaultConfiguration(source));
+        DeploymentSourceType type = source.getType();
+        //noinspection unchecked
+        type.setBuildBeforeRunTask(configuration, source);
       }
     }
 

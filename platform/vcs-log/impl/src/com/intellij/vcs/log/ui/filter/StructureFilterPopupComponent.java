@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,13 +86,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                                          final boolean shorten,
                                          boolean full) {
     return getText(files, category, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
-                   new NotNullFunction<VirtualFile, String>() {
-                     @NotNull
-                     @Override
-                     public String fun(VirtualFile file) {
-                       return shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
-                     }
-                   }, full);
+                   file -> shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH),
+                   full);
   }
 
   private static String getTextFromFilePaths(@NotNull Collection<FilePath> files,
@@ -101,13 +95,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                                              final boolean shorten,
                                              boolean full) {
     return getText(files, category, shorten ? FILE_PATH_BY_NAME_COMPARATOR : FILE_PATH_BY_PATH_COMPARATOR,
-                   new NotNullFunction<FilePath, String>() {
-                     @NotNull
-                     @Override
-                     public String fun(FilePath file) {
-                       return shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH);
-                     }
-                   }, full);
+                   file -> shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH),
+                   full);
   }
 
   private static <F> String getText(@NotNull Collection<F> files,
@@ -158,24 +147,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
 
   private static String getTooltipTextForRoots(Collection<VirtualFile> files, final boolean shorten) {
     return getTooltipTextForFiles(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
-                                  new NotNullFunction<VirtualFile, String>() {
-                                    @NotNull
-                                    @Override
-                                    public String fun(VirtualFile file) {
-                                      return shorten ? file.getName() : file.getPresentableUrl();
-                                    }
-                                  });
+                                  file -> shorten ? file.getName() : file.getPresentableUrl());
   }
 
   private static String getTooltipTextForFilePaths(Collection<FilePath> files, final boolean shorten) {
     return getTooltipTextForFiles(files, shorten ? FILE_PATH_BY_NAME_COMPARATOR : FILE_PATH_BY_PATH_COMPARATOR,
-                                  new NotNullFunction<FilePath, String>() {
-                                    @NotNull
-                                    @Override
-                                    public String fun(FilePath file) {
-                                      return shorten ? file.getName() : file.getPresentableUrl();
-                                    }
-                                  });
+                                  file -> shorten ? file.getName() : file.getPresentableUrl());
   }
 
   private static <F> String getTooltipTextForFiles(@NotNull Collection<F> files,
@@ -394,12 +371,9 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         files = Collections.emptySet();
       }
       else {
-        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
-          @Override
-          public VirtualFile fun(FilePath filePath) {
-            // for now, ignoring non-existing paths
-            return filePath.getVirtualFile();
-          }
+        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), filePath -> {
+          // for now, ignoring non-existing paths
+          return filePath.getVirtualFile();
         });
       }
 

@@ -168,21 +168,13 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
-            final PsiPackage targetPackage =
-              targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-            conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
-                                                                        dialog.getContainmentVerifier()));
-          }
-        });
-      }
-    }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
+      final PsiPackage targetPackage =
+        targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
+      conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
+                                                                  dialog.getContainmentVerifier()));
+    }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
     }
     if (!conflicts.isEmpty()) {

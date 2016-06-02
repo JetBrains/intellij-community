@@ -27,13 +27,10 @@ public class Utils {
                                          final JTextComponent textField,
                                          String ad) {
 
-    final Runnable callback = new Runnable() {
-      @Override
-      public void run() {
-        String selectedValue = (String)list.getSelectedValue();
-        if (selectedValue != null) {
-          textField.setText(selectedValue);
-        }
+    final Runnable callback = () -> {
+      String selectedValue = (String)list.getSelectedValue();
+      if (selectedValue != null) {
+        textField.setText(selectedValue);
       }
     };
 

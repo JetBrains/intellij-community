@@ -302,6 +302,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testSubstituteTypeParamsInInheritor() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   public void testDelegateWithVarargs() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, true);
   }

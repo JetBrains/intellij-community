@@ -43,12 +43,9 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
                                                                                 pyClass.getClassAttributes(),
                                                                                 Arrays.asList(pyClass.getMethods()));
 
-    return ContainerUtil.mapNotNull(members, new Function<PsiNamedElement, String>() {
-      @Override
-      public String fun(PsiNamedElement expression) {
-        final String attrName = expression.getName();
-        return attrName != null ? attrName : null;
-      }
+    return ContainerUtil.mapNotNull(members, expression -> {
+      final String attrName = expression.getName();
+      return attrName != null ? attrName : null;
     });
   }
 }

@@ -18,11 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +42,6 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author anna
@@ -157,12 +152,7 @@ public class PluginDownloader {
       if (ApplicationManager.getApplication() != null) {
         final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
         final String title = IdeBundle.message("title.failed.to.download");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(text, title);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(text, title));
       }
       return false;
     }
@@ -342,13 +332,11 @@ public class PluginDownloader {
                                    app != null ? ApplicationInfo.getInstance().getApiVersion() :
                                    appInfo.getBuild().asString();
 
-      String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
-
       URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
       uriBuilder.addParameter("action", "download");
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
-      uriBuilder.addParameter("uuid", uuid);
+      uriBuilder.addParameter("uuid", PermanentInstallationID.get());
       return uriBuilder.build().toString();
     }
   }

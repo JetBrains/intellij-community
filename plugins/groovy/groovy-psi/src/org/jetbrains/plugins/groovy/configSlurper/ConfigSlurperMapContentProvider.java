@@ -87,12 +87,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
     final Set<String> res = new HashSet<String>();
 
-    info.first.collectVariants(info.second, new PairConsumer<String, Boolean>() {
-      @Override
-      public void consume(String variant, Boolean isFinal) {
-        res.add(variant);
-      }
-    });
+    info.first.collectVariants(info.second, (variant, isFinal) -> res.add(variant));
 
     return res;
   }
@@ -104,15 +99,12 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
     final Ref<Boolean> res = new Ref<Boolean>();
 
-    info.first.collectVariants(info.second, new PairConsumer<String, Boolean>() {
-      @Override
-      public void consume(String variant, Boolean isFinal) {
-        if (variant.equals(key)) {
-          res.set(isFinal);
-        }
-        else if (variant.startsWith(key) && variant.length() > key.length() && variant.charAt(key.length()) == '.') {
-          res.set(false);
-        }
+    info.first.collectVariants(info.second, (variant, isFinal) -> {
+      if (variant.equals(key)) {
+        res.set(isFinal);
+      }
+      else if (variant.startsWith(key) && variant.length() > key.length() && variant.charAt(key.length()) == '.') {
+        res.set(false);
       }
     });
 

@@ -39,25 +39,17 @@ import java.awt.geom.Rectangle2D;
 public class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      UISettings settings = UISettings.getInstance();
-      return settings == null || null == settings.COLOR_BLINDNESS
-             ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
-             : new JBColor(new Color(0x6ca69c), new Color(0x639990));
-    }
+  public static final Color GREEN = new JBColor(() -> {
+    UISettings settings = UISettings.getInstance();
+    return settings == null || null == settings.COLOR_BLINDNESS
+           ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
+           : new JBColor(new Color(0x6ca69c), new Color(0x639990));
   });
-  public static final Color RED = new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      UISettings settings = UISettings.getInstance();
-      return settings == null || null == settings.COLOR_BLINDNESS
-             ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
-             : new JBColor(new Color(0xcc7447), new Color(0xcc7447));
-    }
+  public static final Color RED = new JBColor(() -> {
+    UISettings settings = UISettings.getInstance();
+    return settings == null || null == settings.COLOR_BLINDNESS
+           ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
+           : new JBColor(new Color(0xcc7447), new Color(0xcc7447));
   });
   public static final Color RED_TEXT = new JBColor(new Color(0xb81708), new Color(0xdb5c5c));
   public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);

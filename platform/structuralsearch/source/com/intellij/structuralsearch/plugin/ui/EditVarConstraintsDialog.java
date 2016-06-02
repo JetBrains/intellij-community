@@ -245,7 +245,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
           final Variable var = variables.get(parameterList.getSelectedIndex());
           if (validateParameters()) {
             if (current!=null) copyValuesFromUI(current);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() { copyValuesToUI(var); }});
+            ApplicationManager.getApplication().runWriteAction(() -> copyValuesToUI(var));
             current = var;
           } else {
             rollingBackSelection = true;

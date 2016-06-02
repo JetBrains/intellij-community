@@ -61,21 +61,11 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
           Lists.newArrayList(new PyLocalAttachDebugger(processInfo.getExecutableCannonicalPath().get()));
       }
       else {
-        result = ContainerUtil.map(PythonSdkType.getAllLocalCPythons(), new Function<Sdk, XLocalAttachDebugger>() {
-          @Override
-          public XLocalAttachDebugger fun(Sdk sdk) {
-            return new PyLocalAttachDebugger(sdk);
-          }
-        });
+        result = ContainerUtil.map(PythonSdkType.getAllLocalCPythons(), sdk -> new PyLocalAttachDebugger(sdk));
       }
 
       // most recent python version goes first
-      Collections.sort(result, new Comparator<XLocalAttachDebugger>() {
-        @Override
-        public int compare(XLocalAttachDebugger a, XLocalAttachDebugger b) {
-          return -a.getDebuggerDisplayName().compareToIgnoreCase(b.getDebuggerDisplayName());
-        }
-      });
+      Collections.sort(result, (a, b) -> -a.getDebuggerDisplayName().compareToIgnoreCase(b.getDebuggerDisplayName()));
 
       contextHolder.putUserData(DEBUGGERS_KEY, Collections.unmodifiableList(result));
       return result;

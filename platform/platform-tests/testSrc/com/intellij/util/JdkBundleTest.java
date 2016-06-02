@@ -37,9 +37,7 @@ public class JdkBundleTest {
   private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
 
   private static File[] findJdkInDirectory (File locationToSearch, String version) {
-    return locationToSearch.listFiles(pathname -> {
-      return pathname.getName().contains(version);
-    });
+    return locationToSearch.listFiles(pathname -> pathname.getName().contains(version));
   }
 
   @Test
@@ -139,7 +137,8 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 
   @Test
@@ -164,6 +163,7 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 }

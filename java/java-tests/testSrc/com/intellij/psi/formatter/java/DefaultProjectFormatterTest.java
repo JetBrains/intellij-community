@@ -53,9 +53,7 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
     throws IncorrectOperationException {
     final String fileName = "before." + getFileExtension();
     final PsiFile file = createFileFromText(text, fileName, PsiFileFactory.getInstance(LightPlatformTestCase.getProject()));
-    CommandProcessor.getInstance().executeCommand(LightPlatformTestCase.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      performFormatting(file);
-    }), "", "");
+    CommandProcessor.getInstance().executeCommand(LightPlatformTestCase.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
     String fileText = file.getText();
     TestCase.assertEquals(textAfter, fileText);
   }

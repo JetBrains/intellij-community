@@ -73,12 +73,7 @@ public class JarRootsRefreshTest extends PlatformTestCase {
     assertTrue(jarRoot.isValid());
     PsiDirectory directory = getPsiManager().findDirectory(vLibDir);
     DataContext psiDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory);
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        new MoveHandler().invoke(myProject, new PsiElement[] {file}, psiDataContext);
-      }
-    }.execute();
+    new MoveHandler().invoke(myProject, new PsiElement[] {file}, psiDataContext);
     assertFalse(jarRoot.isValid());
 
     jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
@@ -92,11 +87,6 @@ public class JarRootsRefreshTest extends PlatformTestCase {
     DataContext psiDataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), file);
     RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(psiDataContext);
     assertNotNull(renameHandler);
-    new WriteCommandAction.Simple(file.getProject()) {
-      @Override
-      public void run() {
-        PsiElementRenameHandler.rename(file, file.getProject(), file, null, newName);
-      }
-    }.execute();
+    PsiElementRenameHandler.rename(file, file.getProject(), file, null, newName);
   }
 }

@@ -146,7 +146,7 @@ public class TypeEvaluator {
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] actualParms = call.getArgumentList().getExpressions();
-        return PsiImplUtil.normalizeWildcardTypeByPosition(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
+        return PsiUtil.captureToplevelWildcards(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
     else if (expr instanceof PsiPolyadicExpression) {
@@ -360,11 +360,7 @@ public class TypeEvaluator {
       if (types != null) {
         b.append(info.getElement()).append(" : ");
 
-        b.append(StringUtil.join(types, new Function<PsiType, String>() {
-          public String fun(final PsiType psiType) {
-            return psiType.getCanonicalText();
-          }
-        }, " "));
+        b.append(StringUtil.join(types, psiType -> psiType.getCanonicalText(), " "));
 
         b.append("\n");
       }

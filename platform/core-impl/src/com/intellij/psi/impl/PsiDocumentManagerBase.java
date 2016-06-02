@@ -214,10 +214,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void commitAllDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
-    }
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     if (myUncommittedDocuments.isEmpty()) return;
 
@@ -291,12 +288,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void commitDocument(@NotNull final Document doc) {
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
+    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
+
+    VirtualFile vFile = getVirtualFile(document);
+    if (vFile != null && !isFreeThreaded(vFile)) {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
 
-    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (!isCommitted(document)) {
       doCommit(document);
     }
@@ -462,52 +460,40 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (SwingUtilities.isEventDispatchThread()) {
       commitAllDocuments();
       runnable.run();
+      return;
     }
-    else {
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-        LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
-      }
 
-      final Semaphore s1 = new Semaphore();
-      final Semaphore s2 = new Semaphore();
-      final boolean[] committed = {false};
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
+    }
 
-      application.runReadAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (myUncommittedDocuments.isEmpty()) {
-              runnable.run();
-              committed[0] = true;
-            }
-            else {
-              s1.down();
-              s2.down();
-              TransactionGuard.submitTransaction(myProject, new Runnable() {
-                @Override
-                public void run() {
-                  commitAllDocuments();
-                  s1.up();
-                  s2.waitFor();
-                }
-              });
-            }
+    while (true) {
+      boolean executed = application.runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (myUncommittedDocuments.isEmpty()) {
+            runnable.run();
+            return true;
           }
+          return false;
         }
-      );
+      });
+      if (executed) break;
 
-      if (!committed[0]) {
-        s1.waitFor();
-        application.runReadAction(
-          new Runnable() {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          performWhenAllCommitted(new Runnable() {
             @Override
             public void run() {
-              s2.up();
-              runnable.run();
+              semaphore.up();
             }
-          }
-        );
-      }
+          });
+        }
+      }, ModalityState.any());
+      semaphore.waitFor();
     }
   }
 
@@ -547,30 +533,34 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
-    final ModalityState modalityState = ModalityState.current();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    final ModalityState modalityState = ModalityState.defaultModalityState();
+    final Runnable whenAllCommitted = new Runnable() {
       @Override
       public void run() {
-        performWhenAllCommitted(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            // later because we may end up in write action here if there was a synchronous commit
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (hasUncommitedDocuments()) {
-                  // no luck, will try later
-                  performLaterWhenAllCommitted(runnable);
-                }
-                else {
-                  runnable.run();
-                }
-              }
-            }, modalityState, myProject.getDisposed());
+            if (hasUncommitedDocuments()) {
+              // no luck, will try later
+              performLaterWhenAllCommitted(runnable);
+            }
+            else {
+              runnable.run();
+            }
           }
-        });
+        }, modalityState, myProject.getDisposed());
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
+      whenAllCommitted.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          performWhenAllCommitted(whenAllCommitted);
+        }
+      });
+    }
   }
 
   private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
@@ -600,7 +590,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
       List<Map.Entry<Object, Runnable>> entries = new ArrayList<Map.Entry<Object, Runnable>>(new LinkedHashMap<Object, Runnable>(actionsWhenAllDocumentsAreCommitted).entrySet());
-      weAreInsideAfterCommitHandler();
+      beforeCommitHandler();
 
       try {
         for (Map.Entry<Object, Runnable> entry : entries) {
@@ -619,13 +609,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private void weAreInsideAfterCommitHandler() {
+  private void beforeCommitHandler() {
     actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
   }
   private void checkWeAreOutsideAfterCommitHandler() {
-    if (actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance()) {
+    if (isInsideCommitHandler()) {
       throw new IncorrectOperationException("You must not call performWhenAllCommitted()/cancelAndRunWhenCommitted() from within after-commit handler");
     }
+  }
+
+  private boolean isInsideCommitHandler() {
+    return actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance();
   }
 
   @Override

@@ -83,13 +83,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private JBColor jbColor(final Color regular, final Color dark) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return isDark() ? dark : regular;
-      }
-    });
+    return new JBColor(() -> isDark() ? dark : regular);
   }
 
   private int getAnimationColorShift() {
@@ -404,12 +398,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
       Application application = ApplicationManager.getApplication();
       if (!myMouseOverScrollbar && !sb.getValueIsAdjusting() && (application == null || !application.isUnitTestMode())) {
-        myMacScrollbarFadeTimer.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myMacScrollbarFadeAnimator.resume();
-          }
-        }, 700, null);
+        myMacScrollbarFadeTimer.addRequest(() -> myMacScrollbarFadeAnimator.resume(), 700, null);
       }
     }
   }
@@ -801,20 +790,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     Graphics2D g2d = (Graphics2D)g;
     if (Registry.is("mac.scroll.new.ui")) {
       float value = (float)(1 - myMacScrollbarFadeLevel);
-      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      if (!myMacScrollbarHidden || alwaysPaintThumb()) {
+        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+        painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      }
       return;
     }
     RenderingHints oldHints = g2d.getRenderingHints();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    JBColor baseColor = new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return !isDark() ? Gray._0 : Gray._128;
-      }
-    });
+    JBColor baseColor = new JBColor(() -> !isDark() ? Gray._0 : Gray._128);
     
     int arc = Math.min(thumbBounds.width, thumbBounds.height);
 

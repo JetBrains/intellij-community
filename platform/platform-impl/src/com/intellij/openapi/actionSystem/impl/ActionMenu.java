@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ReflectionUtil;
@@ -47,7 +48,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public final class ActionMenu extends JMenu {
+public final class ActionMenu extends JBMenu {
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -364,26 +365,20 @@ public final class ActionMenu extends JMenu {
     private SingleAlarm myCheckAlarm;
 
     private UsabilityHelper(Component component) {
-      myCallbackAlarm = new SingleAlarm(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myCallbackAlarm);
-          myCallbackAlarm = null;
-          if (myEventToRedispatch != null) {
-            IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
-          }
+      myCallbackAlarm = new SingleAlarm(() -> {
+        Disposer.dispose(myCallbackAlarm);
+        myCallbackAlarm = null;
+        if (myEventToRedispatch != null) {
+          IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
       }, 50, this);
-      myCheckAlarm = new SingleAlarm(new Runnable() {
-        @Override
-        public void run() {
-          if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
-            if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
-              myCallbackAlarm.request();
-            }
+      myCheckAlarm = new SingleAlarm(() -> {
+        if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
+          if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
+            myCallbackAlarm.request();
           }
-          myCheckAlarm.request();
         }
+        myCheckAlarm.request();
       }, 100, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
@@ -399,7 +394,7 @@ public final class ActionMenu extends JMenu {
       if (event instanceof ComponentEvent) {
         ComponentEvent componentEvent = (ComponentEvent)event;
         Component component = componentEvent.getComponent();
-        JPopupMenu popup = UIUtil.findParentByClass(component, JPopupMenu.class);
+        JPopupMenu popup = UIUtil.getParentOfType(JPopupMenu.class, component);
         if (popup != null && popup.getInvoker() == myComponent) {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;

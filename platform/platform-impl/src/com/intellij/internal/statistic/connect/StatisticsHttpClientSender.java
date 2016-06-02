@@ -15,9 +15,8 @@
  */
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.http.Header;
@@ -36,7 +35,7 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
 
       Response response = Request.Post(url).bodyForm(Form.form().
         add("content", content).
-        add("uuid", UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())).
+        add("uuid", PermanentInstallationID.get()).
         add("patch", String.valueOf(false)).
         add("ide", ApplicationNamesInfo.getInstance().getProductName()).build()).execute();
 

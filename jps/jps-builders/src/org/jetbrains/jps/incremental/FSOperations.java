@@ -39,7 +39,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -165,6 +164,17 @@ public class FSOperations {
       }
     }
 
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
+      // mark as non-incremental only the module that triggered non-incremental change
+      for (ModuleBuildTarget target : targets) {
+        if (!isMarkedDirty(context, target)) {
+          // if the target was marked dirty already, all its files were compiled, so
+          // it makes no sense to mark it non-incremental
+          context.markNonIncremental(target);
+        }
+      }
+    }
+
     removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
@@ -172,12 +182,6 @@ public class FSOperations {
       markDirtyFiles(context, target, round, timestamps, true, null, filter);
     }
 
-    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
-      // mark as non-incremental only the module that triggered non-incremental change
-      for (ModuleBuildTarget target : targets) {
-        context.markNonIncremental(target);
-      }
-    }
   }
 
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
@@ -287,22 +291,36 @@ public class FSOperations {
     }
   }
 
+  public static boolean isMarkedDirty(CompileContext context, ModuleChunk chunk) {
+    synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
+      Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      return marked != null && marked.containsAll(chunk.getTargets());
+    }
+  }
+
+  public static boolean isMarkedDirty(CompileContext context, BuildTarget<?> target) {
+    synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
+      Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      return marked != null && marked.contains(target);
+    }
+  }
+
   private static void addCompletelyMarkedDirtyTarget(CompileContext context, BuildTarget<?> target) {
     synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
-      Set<BuildTarget<?>> targetsCompletelyMarkedDirty = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
-      if (targetsCompletelyMarkedDirty == null) {
-        targetsCompletelyMarkedDirty = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
-        TARGETS_COMPLETELY_MARKED_DIRTY.set(context, targetsCompletelyMarkedDirty);
+      Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      if (marked == null) {
+        marked = new HashSet<BuildTarget<?>>();
+        TARGETS_COMPLETELY_MARKED_DIRTY.set(context, marked);
       }
-      targetsCompletelyMarkedDirty.add(target);
+      marked.add(target);
     }
   }
 
   private static void removeTargetsAlreadyMarkedDirty(CompileContext context, Set<ModuleBuildTarget> targetsSetToFilter) {
     synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
-      Set<BuildTarget<?>> targetsCompletelyMarkedDirty = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
-      if (targetsCompletelyMarkedDirty != null) {
-        targetsSetToFilter.removeAll(targetsCompletelyMarkedDirty);
+      Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
+      if (marked != null) {
+        targetsSetToFilter.removeAll(marked);
       }
     }
   }

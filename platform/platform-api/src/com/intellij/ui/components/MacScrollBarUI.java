@@ -100,11 +100,12 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
     if (c.isOpaque()) {
+      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
       paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }
     else if (myThumbAnimator.myValue > 0) {
+      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.MAC_OVERLAY_THUMB_DARK_PAINTER : JBScrollPane.MAC_OVERLAY_THUMB_PAINTER;
       paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, false);
     }
   }
@@ -112,16 +113,11 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void onThumbMove() {
     if (myScrollBar != null && myScrollBar.isShowing() && !myScrollBar.isOpaque()) {
-      if (myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
+      if (!myTrackHovered && myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myThumbAnimator.start(false);
-          }
-        }, 700);
+        myAlarm.addRequest(() -> myThumbAnimator.start(false), 700);
       }
     }
   }
@@ -151,7 +147,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       if (event != null && MouseEvent.MOUSE_MOVED == event.getID()) {
         Object source = event.getSource();
         if (source instanceof Component) {
-          JScrollPane pane = UIUtil.findParentByClass((Component)source, JScrollPane.class);
+          JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, (Component)source);
           if (pane != null) {
             pauseThumbAnimation(pane.getHorizontalScrollBar());
             pauseThumbAnimation(pane.getVerticalScrollBar());
@@ -258,20 +254,14 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         return 1 == behavior.intValue() ? JumpToSpot : NextPage;
       }
     };
-    private static final Producer<ID> INIT = new Producer<ID>() {
-      @Nullable
-      @Override
-      public ID produce() {
-        return invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarBehaviorObserver", createSelector("handleBehaviorChanged:"), CURRENT),
-                      createSelector("handleBehaviorChanged:"),
-                      nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-                      ID.NIL,
-                      2 // NSNotificationSuspensionBehaviorCoalesce
-        );
-      }
-    };
+    private static final Producer<ID> INIT = () -> invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
+                                                      "addObserver:selector:name:object:",
+                                                      createDelegate("JBScrollBarBehaviorObserver", createSelector("handleBehaviorChanged:"), CURRENT),
+                                                      createSelector("handleBehaviorChanged:"),
+                                                      nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+                                                      ID.NIL,
+                                                      2 // NSNotificationSuspensionBehaviorCoalesce
+    );
   }
 
   private enum Style {
@@ -299,19 +289,13 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         return 1 == style.intValue() ? Overlay : Legacy;
       }
     };
-    private static final Producer<ID> INIT = new Producer<ID>() {
-      @Nullable
-      @Override
-      public ID produce() {
-        return invoke(invoke("NSNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarStyleObserver", createSelector("handleScrollerStyleChanged:"), CURRENT),
-                      createSelector("handleScrollerStyleChanged:"),
-                      nsString("NSPreferredScrollerStyleDidChangeNotification"),
-                      ID.NIL
-        );
-      }
-    };
+    private static final Producer<ID> INIT = () -> invoke(invoke("NSNotificationCenter", "defaultCenter"),
+                                                      "addObserver:selector:name:object:",
+                                                      createDelegate("JBScrollBarStyleObserver", createSelector("handleScrollerStyleChanged:"), CURRENT),
+                                                      createSelector("handleScrollerStyleChanged:"),
+                                                      nsString("NSPreferredScrollerStyleDidChangeNotification"),
+                                                      ID.NIL
+    );
   }
 
   private static abstract class Native<T> implements Callback, Runnable, Producer<T> {

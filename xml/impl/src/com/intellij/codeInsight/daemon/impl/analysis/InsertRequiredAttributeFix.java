@@ -144,38 +144,25 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
 
     final PsiElement anchor1 = anchor;
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            @Override
-            public void run() {
-              int textOffset = anchor1.getTextOffset();
-              if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
-              editor.getCaretModel().moveToOffset(textOffset);
-              if (anchorIsEmptyTag && indirectSyntax) {
-                editor.getDocument().deleteString(textOffset,textOffset + 2);
-              }
-              TemplateManager.getInstance(project).startTemplate(editor, template);
-            }
-          }
-        );
+    final Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        int textOffset = anchor1.getTextOffset();
+        if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
+        editor.getCaretModel().moveToOffset(textOffset);
+        if (anchorIsEmptyTag && indirectSyntax) {
+          editor.getDocument().deleteString(textOffset,textOffset + 2);
+        }
+        TemplateManager.getInstance(project).startTemplate(editor, template);
       }
-    };
+    );
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Runnable commandRunnable = new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(
-            project,
-            runnable,
-            getText(),
-            getFamilyName()
-          );
-        }
-      };
+      Runnable commandRunnable = () -> CommandProcessor.getInstance().executeCommand(
+        project,
+        runnable,
+        getText(),
+        getFamilyName()
+      );
 
       ApplicationManager.getApplication().invokeLater(commandRunnable);
     }

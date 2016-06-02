@@ -75,12 +75,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
           final PsiExpression[] arguments = ((PsiExpressionList)lambdaParent).getExpressions();
           final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
           arguments[idx] = javaPsiFacade.getElementFactory().createExpressionFromText(
-            "(" + StringUtil.join(expression.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-              @Override
-              public String fun(PsiParameter parameter) {
-                return parameter.getName();
-              }
-            }, ", ") + ") -> {}", expression);
+            "(" + StringUtil.join(expression.getParameterList().getParameters(), parameter -> parameter.getName(), ", ") + ") -> {}", expression);
           final PsiParameter[] methodParams = method.getParameterList().getParameters();
           final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
             .inferTypeArguments(typeParameters, methodParams, arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
@@ -126,12 +121,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
         text = parameters[0].getName();
       }
       else {
-        text = "(" + StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter parameter) {
-            return parameter.getName();
-          }
-        }, ", ") + ")";
+        text = "(" + StringUtil.join(parameters, parameter -> parameter.getName(), ", ") + ")";
       }
       final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
         .createExpressionFromText(text + "->{}", lambdaExpression);

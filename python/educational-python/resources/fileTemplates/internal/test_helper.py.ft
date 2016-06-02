@@ -90,7 +90,7 @@ def test_is_initial_text(error_text="You should modify the file"):
     text = get_initial_text(path)
     file_text = get_file_text(path)
 
-    if file_text.strip() == text:
+    if file_text.strip() == text.strip():
         failed(error_text)
     else:
         passed()

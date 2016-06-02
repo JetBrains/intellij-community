@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.Disposer;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public class LoggedErrorProcessor {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+    message += DefaultLogger.attachmentsToString(t);
     logger.info(message, t);
 
     if (myMirrorToStderr) {

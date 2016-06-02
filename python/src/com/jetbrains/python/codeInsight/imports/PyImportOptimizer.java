@@ -55,13 +55,10 @@ public class PyImportOptimizer implements ImportOptimizer {
         node.accept(visitor);
       }
     });
-    return new Runnable() {
-      @Override
-      public void run() {
-        visitor.optimizeImports();
-        if (file instanceof PyFile) {
-          new ImportSorter((PyFile)file).run();
-        }
+    return () -> {
+      visitor.optimizeImports();
+      if (file instanceof PyFile) {
+        new ImportSorter((PyFile)file).run();
       }
     };
   }
@@ -109,12 +106,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     private boolean groupsNotSorted() {
       final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
-      return SORT_IMPORTS && ContainerUtil.exists(myGroups.values(), new Condition<List<PyImportStatementBase>>() {
-        @Override
-        public boolean value(List<PyImportStatementBase> imports) {
-          return !importOrdering.isOrdered(imports);
-        }
-      });
+      return SORT_IMPORTS && ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
     private boolean needBlankLinesBetweenGroups() {

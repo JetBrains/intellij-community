@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema.schemaFile;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -57,14 +58,14 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
     container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
 
     try {
-      myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
       Assert.assertNotNull(position);
       PsiElement resolve = position.resolve();
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
@@ -78,14 +79,14 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
     container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
 
     try {
-      myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
       Assert.assertNotNull(position);
       PsiElement resolve = position.resolve();
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
       container.unregisterComponent(key);
       container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);

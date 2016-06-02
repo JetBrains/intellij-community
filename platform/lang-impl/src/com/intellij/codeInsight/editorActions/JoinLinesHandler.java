@@ -97,13 +97,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
 
     final int startReformatOffset = CharArrayUtil.shiftBackward(doc.getCharsSequence(), doc.getLineEndOffset(startLine), " \t");
-    CodeEditUtil.setNodeReformatStrategy(new NotNullFunction<ASTNode, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(@NotNull ASTNode node) {
-        return node.getTextRange().getStartOffset() >= startReformatOffset;
-      }
-    });
+    CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
     try {
       doJob(editor, doc, caret, project, docManager, psiFile, startLine, endLine);
     }

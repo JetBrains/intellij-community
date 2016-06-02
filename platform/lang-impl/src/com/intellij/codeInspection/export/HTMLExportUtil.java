@@ -34,17 +34,14 @@ public class HTMLExportUtil {
       HTMLExporter.writeFileImpl(folder, fileName, buf);
     }
     catch (IOException e) {
-      Runnable showError = new Runnable() {
-        @Override
-        public void run() {
-          final String fullPath = folder + File.separator + fileName;
-          Messages.showMessageDialog(
-            project,
-            InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
-            InspectionsBundle.message("inspection.export.results.error.title"),
-            Messages.getErrorIcon()
-          );
-        }
+      Runnable showError = () -> {
+        final String fullPath = folder + File.separator + fileName;
+        Messages.showMessageDialog(
+          project,
+          InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
+          InspectionsBundle.message("inspection.export.results.error.title"),
+          Messages.getErrorIcon()
+        );
       };
       ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
       throw new ProcessCanceledException();
@@ -56,17 +53,12 @@ public class HTMLExportUtil {
       runnable.run();
     }
     catch (IOException e) {
-      Runnable showError = new Runnable() {
-        @Override
-        public void run() {
-          Messages.showMessageDialog(
-            project,
-            InspectionsBundle.message("inspection.export.error.writing.to", "export file"),
-            InspectionsBundle.message("inspection.export.results.error.title"),
-            Messages.getErrorIcon()
-          );
-        }
-      };
+      Runnable showError = () -> Messages.showMessageDialog(
+        project,
+        InspectionsBundle.message("inspection.export.error.writing.to", "export file"),
+        InspectionsBundle.message("inspection.export.results.error.title"),
+        Messages.getErrorIcon()
+      );
       ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
       throw new ProcessCanceledException();
     }

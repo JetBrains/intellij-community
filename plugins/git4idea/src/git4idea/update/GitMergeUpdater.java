@@ -275,7 +275,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, git, ServiceManager.getService(git4idea.GitPlatformFacade.class), Collections.singleton(root), makeParams());
+      super(project, git, Collections.singleton(root), makeParams());
       myMerger = merger;
       myRoot = root;
     }

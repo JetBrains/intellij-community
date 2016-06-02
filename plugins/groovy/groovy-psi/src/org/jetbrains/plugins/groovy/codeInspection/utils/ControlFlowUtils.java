@@ -120,12 +120,7 @@ public class ControlFlowUtils {
 
     final GrCaseSection[] caseClauses = switchStatement.getCaseSections();
 
-    if (ContainerUtil.find(caseClauses, new Condition<GrCaseSection>() {
-      @Override
-      public boolean value(GrCaseSection section) {
-        return section.isDefault();
-      }
-    }) == null) {
+    if (ContainerUtil.find(caseClauses, section -> section.isDefault()) == null) {
       return true;
     }
 
@@ -517,23 +512,20 @@ public class ControlFlowUtils {
     }
     if (applicable.isEmpty()) return null;
 
-    Collections.sort(applicable, new Comparator<Instruction>() {
-      @Override
-      public int compare(Instruction o1, Instruction o2) {
-        PsiElement e1 = o1.getElement();
-        PsiElement e2 = o2.getElement();
-        LOG.assertTrue(e1 != null);
-        LOG.assertTrue(e2 != null);
-        final TextRange t1 = e1.getTextRange();
-        final TextRange t2 = e2.getTextRange();
-        final int s1 = t1.getStartOffset();
-        final int s2 = t2.getStartOffset();
+    Collections.sort(applicable, (o1, o2) -> {
+      PsiElement e1 = o1.getElement();
+      PsiElement e2 = o2.getElement();
+      LOG.assertTrue(e1 != null);
+      LOG.assertTrue(e2 != null);
+      final TextRange t1 = e1.getTextRange();
+      final TextRange t2 = e2.getTextRange();
+      final int s1 = t1.getStartOffset();
+      final int s2 = t2.getStartOffset();
 
-        if (s1 == s2) {
-          return t1.getEndOffset() - t2.getEndOffset();
-        }
-        return s2 - s1;
+      if (s1 == s2) {
+        return t1.getEndOffset() - t2.getEndOffset();
       }
+      return s2 - s1;
     });
 
     return applicable.get(0);
@@ -624,19 +616,16 @@ public class ControlFlowUtils {
   }
 
   public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
-    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
-      @Override
-      public Result<Set<GrExpression>> compute() {
-        final Set<GrExpression> result = new HashSet<GrExpression>();
-        visitAllExitPoints(block, new ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            ContainerUtil.addIfNotNull(result, returnValue);
-            return true;
-          }
-        });
-        return Result.create(result, block);
-      }
+    return CachedValuesManager.getCachedValue(block, () -> {
+      final Set<GrExpression> result = new HashSet<GrExpression>();
+      visitAllExitPoints(block, new ExitPointVisitor() {
+        @Override
+        public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+          ContainerUtil.addIfNotNull(result, returnValue);
+          return true;
+        }
+      });
+      return CachedValueProvider.Result.create(result, block);
     });
   }
 
@@ -779,21 +768,11 @@ public class ControlFlowUtils {
 
   @Nullable
   public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   public static List<Instruction> findAllInstructions(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.findAll(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.findAll(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   @NotNull

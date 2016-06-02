@@ -94,7 +94,7 @@ public class PluginManagerCore {
       if (ourBuildNumber == null) {
         ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
         if (ourBuildNumber == null) {
-          ourBuildNumber = BuildNumber.fallback();
+          ourBuildNumber = BuildNumber.currentVersion();
         }
       }
       return ourBuildNumber;
@@ -212,8 +212,10 @@ public class PluginManagerCore {
   }
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
+    String[] sortedIds = ArrayUtil.toStringArray(ids);
+    Arrays.sort(sortedIds);
     try {
-      for (String id : ids) {
+      for (String id : sortedIds) {
         writer.write(id);
         writer.write(LineSeparator.getSystemLineSeparator().getSeparatorString());
       }
@@ -1134,7 +1136,7 @@ public class PluginManagerCore {
       }
     }
 
-    if (!StringUtil.isEmpty(untilBuild) && !buildNumber.isSnapshot()) {
+    if (!StringUtil.isEmpty(untilBuild)) {
       BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, descriptorName);
       if (untilBuildNumber.compareTo(buildNumber) < 0) {
         if (descriptorDebugString != null) {

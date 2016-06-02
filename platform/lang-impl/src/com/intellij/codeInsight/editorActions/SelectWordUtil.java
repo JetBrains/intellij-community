@@ -77,6 +77,10 @@ public class SelectWordUtil {
     addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
   }
 
+  public static void addWordOrLexemeSelection(boolean camel, @NotNull Editor editor, int cursorOffset, @NotNull List<TextRange> ranges) {
+    addWordOrLexemeSelection(camel, editor, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
+  }
+
   public static void addWordSelection(boolean camel,
                                       CharSequence editorText,
                                       int cursorOffset,
@@ -88,6 +92,23 @@ public class SelectWordUtil {
     }
 
     TextRange range = getWordSelectionRange(editorText, cursorOffset, isWordPartCondition);
+    if (range != null && !range.equals(camelRange)) {
+      ranges.add(range);
+    }
+  }
+
+  public static void addWordOrLexemeSelection(boolean camel,
+                                              @NotNull Editor editor,
+                                              int cursorOffset,
+                                              @NotNull List<TextRange> ranges,
+                                              CharCondition isWordPartCondition) {
+    TextRange camelRange = camel ? getCamelSelectionRange(editor.getDocument().getImmutableCharSequence(),
+                                                          cursorOffset, isWordPartCondition) : null;
+    if (camelRange != null) {
+      ranges.add(camelRange);
+    }
+
+    TextRange range = getWordOrLexemeSelectionRange(editor, cursorOffset, isWordPartCondition);
     if (range != null && !range.equals(camelRange)) {
       ranges.add(range);
     }
@@ -125,7 +146,20 @@ public class SelectWordUtil {
   }
 
   @Nullable
-  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset, @NotNull CharCondition isWordPartCondition) {
+  public static TextRange getWordOrLexemeSelectionRange(@NotNull Editor editor, int cursorOffset,
+                                                         @NotNull CharCondition isWordPartCondition) {
+    return getWordOrLexemeSelectionRange(editor, editor.getDocument().getImmutableCharSequence(), cursorOffset, isWordPartCondition);
+  }
+
+  @Nullable
+  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset,
+                                                @NotNull CharCondition isWordPartCondition) {
+    return getWordOrLexemeSelectionRange(null, editorText, cursorOffset, isWordPartCondition);
+  }
+
+  @Nullable
+  private static TextRange getWordOrLexemeSelectionRange(@Nullable Editor editor, @NotNull CharSequence editorText, int cursorOffset,
+                                                         @NotNull CharCondition isWordPartCondition) {
     int length = editorText.length();
     if (length == 0) return null;
     if (cursorOffset == length ||
@@ -138,11 +172,13 @@ public class SelectWordUtil {
       int start = cursorOffset;
       int end = cursorOffset;
 
-      while (start > 0 && isWordPartCondition.value(editorText.charAt(start - 1))) {
+      while (start > 0 && isWordPartCondition.value(editorText.charAt(start - 1)) &&
+             (editor == null || !EditorActionUtil.isLexemeBoundary(editor, start))) {
         start--;
       }
 
-      while (end < length && isWordPartCondition.value(editorText.charAt(end))) {
+      while (end < length && isWordPartCondition.value(editorText.charAt(end)) &&
+             (end == start || editor == null || !EditorActionUtil.isLexemeBoundary(editor, end))) {
         end++;
       }
 
@@ -193,14 +229,11 @@ public class SelectWordUtil {
                                     final CharSequence text,
                                     final int cursorOffset,
                                     final Editor editor) {
-    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        PsiElement e = element;
-        while (e != null && !(e instanceof PsiFile)) {
-          if (processElement(e, consumer, text, cursorOffset, editor)) return;
-          e = e.getParent();
-        }
+    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(() -> {
+      PsiElement e = element;
+      while (e != null && !(e instanceof PsiFile)) {
+        if (processElement(e, consumer, text, cursorOffset, editor)) return;
+        e = e.getParent();
       }
     });
   }

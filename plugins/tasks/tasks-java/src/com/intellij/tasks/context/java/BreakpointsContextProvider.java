@@ -66,11 +66,7 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
     final BreakpointManager breakpointManager = ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager();
     List<Breakpoint> breakpoints = breakpointManager.getBreakpoints();
     for (final Breakpoint breakpoint : breakpoints) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          breakpointManager.removeBreakpoint(breakpoint);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(breakpoint));
     }
   }
 }

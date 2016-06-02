@@ -284,12 +284,12 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
-    <extensionPoint name="smartPointerElementInfoFactory" interface="com.intellij.psi.impl.smartPointers.SmartPointerElementInfoFactory"/>
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"/>
+    <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider"/>
 
     <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.DeclarationRangeHandler"/>
@@ -483,8 +483,6 @@
     <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
-
-    <extensionPoint name="forcedElementWeigher" interface="com.intellij.psi.util.proximity.ForcedElementWeigher"/>
 
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>

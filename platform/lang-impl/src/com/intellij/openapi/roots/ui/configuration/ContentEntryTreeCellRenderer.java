@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
 import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
@@ -64,7 +63,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
             if (contentEntry != null) {
               final String prefix = getPresentablePrefix(contentEntry, file);
               if (!prefix.isEmpty()) {
-                append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+                append(" (" + prefix + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
               }
               setIcon(updateIcon(contentEntry, file, getIcon()));
             }

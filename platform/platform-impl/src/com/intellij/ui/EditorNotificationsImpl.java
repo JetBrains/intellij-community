@@ -18,10 +18,8 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -111,8 +109,10 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @Nullable
   private ReadTask createTask(@NotNull final ProgressIndicator indicator, @NotNull final VirtualFile file) {
-    final FileEditor[] editors = FileEditorManager.getInstance(myProject).getAllEditors(file);
-    if (editors.length == 0) return null;
+    List<FileEditor> editors = ContainerUtil.filter(
+      FileEditorManager.getInstance(myProject).getAllEditors(file),
+      editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor) editor).getEditor()));
+    if (editors.isEmpty()) return null;
 
     return new ReadTask() {
       private boolean isOutdated() {

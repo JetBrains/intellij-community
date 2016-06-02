@@ -54,19 +54,11 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (int i = 0; i < 239; i++) {
-              element.addChildElement().copyFrom(child);
-            }
-          }
-        });
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      for (int i = 0; i < 239; i++) {
+        element.addChildElement().copyFrom(child);
       }
-    }).cpuBound().attempts(1).useLegacyScaling().assertTiming();
+    })).cpuBound().attempts(1).useLegacyScaling().assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
@@ -126,12 +118,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("", 100, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        assertNull(getDomManager().getFileElement(file));
-      }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("", 100, () -> assertNull(getDomManager().getFileElement(file))).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

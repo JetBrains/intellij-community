@@ -47,49 +47,42 @@ import java.util.List;
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
-  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = new Comparator<RangeHighlighterEx>() {
-    @Override
-    public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
-      final int result = LayerComparator.INSTANCE.compare(o1, o2);
-      if (result != 0) {
-        return result;
-      }
-
-      // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
-      // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
-      // while the other one has only foreground color). See IDEA-85697 for concrete example.
-      final TextAttributes a1 = o1.getTextAttributes();
-      final TextAttributes a2 = o2.getTextAttributes();
-      if (a1 == null ^ a2 == null) {
-        return a1 == null ? 1 : -1;
-      }
-
-      if (a1 == null) {
-        return result;
-      }
-
-      final Color fore1 = a1.getForegroundColor();
-      final Color fore2 = a2.getForegroundColor();
-      if (fore1 == null ^ fore2 == null) {
-        return fore1 == null ? 1 : -1;
-      }
-
-      final Color back1 = a1.getBackgroundColor();
-      final Color back2 = a2.getBackgroundColor();
-      if (back1 == null ^ back2 == null) {
-        return back1 == null ? 1 : -1;
-      }
-
+  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
+    final int result = LayerComparator.INSTANCE.compare(o1, o2);
+    if (result != 0) {
       return result;
     }
+
+    // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
+    // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
+    // while the other one has only foreground color). See IDEA-85697 for concrete example.
+    final TextAttributes a1 = o1.getTextAttributes();
+    final TextAttributes a2 = o2.getTextAttributes();
+    if (a1 == null ^ a2 == null) {
+      return a1 == null ? 1 : -1;
+    }
+
+    if (a1 == null) {
+      return result;
+    }
+
+    final Color fore1 = a1.getForegroundColor();
+    final Color fore2 = a2.getForegroundColor();
+    if (fore1 == null ^ fore2 == null) {
+      return fore1 == null ? 1 : -1;
+    }
+
+    final Color back1 = a1.getBackgroundColor();
+    final Color back2 = a2.getBackgroundColor();
+    if (back1 == null ^ back2 == null) {
+      return back1 == null ? 1 : -1;
+    }
+
+    return result;
   };
 
-  private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED = new Comparator<RangeHighlighterEx>() {
-    @Override
-    public int compare(RangeHighlighterEx r1, RangeHighlighterEx r2) {
-      return r2.getAffectedAreaEndOffset() - r1.getAffectedAreaEndOffset();
-    }
-  };
+  private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED =
+    (r1, r2) -> r2.getAffectedAreaEndOffset() - r1.getAffectedAreaEndOffset();
 
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
@@ -616,7 +609,7 @@ public class IterationState {
   
   @NotNull
   public TextAttributes getBeforeLineStartBackgroundAttributes() {
-    return new TextAttributes(null, getBreakBackgroundColor(false), null, null, 0);
+    return new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
   }
 
   private Color getBreakBackgroundColor(boolean lineEnd) {

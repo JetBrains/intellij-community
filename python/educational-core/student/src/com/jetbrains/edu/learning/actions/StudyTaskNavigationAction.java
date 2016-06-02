@@ -4,20 +4,16 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +23,7 @@ import javax.swing.tree.TreePath;
 import java.util.Map;
 
 
-abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
+abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut {
   public StudyTaskNavigationAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -40,11 +36,6 @@ abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
     }
     Task nextTask = getTargetTask(studyState.getTask());
     if (nextTask == null) {
-      BalloonBuilder balloonBuilder =
-        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(getNavigationFinishedMessage(), MessageType.INFO, null);
-      Balloon balloon = balloonBuilder.createBalloon();
-      assert studyEditor != null;
-      balloon.show(StudyUtils.computeLocation(studyEditor.getEditor()), Balloon.Position.above);
       return;
     }
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
@@ -122,12 +113,22 @@ abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
     navigateTask(project);
   }
 
-  protected abstract String getNavigationFinishedMessage();
-
   protected abstract Task getTargetTask(@NotNull final Task sourceTask);
 
   @Override
   public void update(AnActionEvent e) {
     StudyUtils.updateAction(e);
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
+    StudyState studyState = new StudyState(studyEditor);
+    if (!studyState.isValid()) {
+      return;
+    }
+    if (getTargetTask(studyState.getTask()) == null) {
+      e.getPresentation().setEnabled(false);
+    }
   }
 }

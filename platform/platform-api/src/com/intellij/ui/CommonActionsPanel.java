@@ -148,7 +148,6 @@ public class CommonActionsPanel extends JPanel {
                                         new DefaultActionGroup(toolbarActions.toArray(new AnAction[toolbarActions.size()])),
                                         position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
                                         myDecorateButtons);
-    myToolbar.getComponent().setOpaque(false);
     myToolbar.getComponent().setBorder(null);
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
@@ -170,8 +169,10 @@ public class CommonActionsPanel extends JPanel {
   protected void paintComponent(Graphics g2) {
     final Graphics2D g = (Graphics2D)g2;
     if (myDecorateButtons) {
+      myToolbar.getComponent().setOpaque(false);
       MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
-    } else {
+    }
+    else {
       super.paintComponent(g);
     }
   }

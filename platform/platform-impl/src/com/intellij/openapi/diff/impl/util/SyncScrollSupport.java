@@ -151,6 +151,7 @@ public class SyncScrollSupport implements Disposable {
     Editor slave = sidesContainer.getEditor(masterSide.otherSide());
 
     if (master == null || slave == null) return;
+    if (master.isDisposed() || slave.isDisposed()) return;
 
     int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
     int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();

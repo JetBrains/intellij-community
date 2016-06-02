@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -50,8 +51,8 @@ import java.util.Set;
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
 
   private final boolean myInJavaDoc;
-  private boolean myStatic = false;
-  private PsiElement myDeclarationHolder = null;
+  private boolean myStatic;
+  private PsiElement myDeclarationHolder;
   private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<>();
   private final Set<CompletionElement> mySecondRateResults = ContainerUtil.newIdentityTroveSet();
   private final Set<String> myShadowedNames = ContainerUtil.newHashSet();
@@ -60,10 +61,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
-  private boolean myMembersFlag = false;
-  private boolean myQualified = false;
-  private PsiType myQualifierType = null;
-  private PsiClass myQualifierClass = null;
+  private boolean myMembersFlag;
+  private boolean myQualified;
+  private PsiType myQualifierType;
+  private PsiClass myQualifierClass;
   private final Condition<String> myMatcher;
   private final Options myOptions;
   private final boolean myAllowStaticWithInstanceQualifier;
@@ -111,8 +112,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
 
     myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
-                                         SuppressManager.getInstance()
-                                           .isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE);
+                                         SuppressManager.getInstance().isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE) ||
+                                         Registry.is("ide.java.completion.suggest.static.after.instance");
 
   }
 

@@ -73,25 +73,17 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
   private static boolean findClassInheritors(final PsiClass element) {
     final Collection<PsiElement> inheritors = new ArrayList<PsiElement>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
-            if (inheritor != null) {
-              inheritors.add(inheritor);
-            } else {
-              final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
-              if (functionalExpression != null) {
-                inheritors.add(functionalExpression);
-              }
-            }
-          }
-        });
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
+      if (inheritor != null) {
+        inheritors.add(inheritor);
+      } else {
+        final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
+        if (functionalExpression != null) {
+          inheritors.add(functionalExpression);
+        }
       }
-    }, "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
+    }), "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
     return inheritors.isEmpty();
   }
 
@@ -122,17 +114,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
 
     final Ref<String> errorMessage = new Ref<String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            errorMessage.set(getCannotInlineMessage(psiClass));
-          }
-        });
-      }
-    }, "Check if inline is possible...", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage(psiClass))), "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;

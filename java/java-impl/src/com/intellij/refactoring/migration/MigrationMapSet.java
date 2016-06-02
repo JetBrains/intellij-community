@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.Iterator;
 public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
 
-  private ArrayList<MigrationMap> myMaps = null;
+  private ArrayList<MigrationMap> myMaps;
   @NonNls private static final String MIGRATION_MAP = "migrationMap";
   @NonNls private static final String ENTRY = "entry";
   @NonNls private static final String NAME = "name";

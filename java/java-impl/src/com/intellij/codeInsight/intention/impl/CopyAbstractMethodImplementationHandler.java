@@ -65,17 +65,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            searchExistingImplementations();
-          }
-        });
-      }
-    }, CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
       Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
                                CodeInsightBundle.message("copy.abstract.method.title"));
@@ -85,25 +75,19 @@ public class CopyAbstractMethodImplementationHandler {
       copyImplementation(mySourceMethods.get(0));
     }
     else {
-      Collections.sort(mySourceMethods, new Comparator<PsiMethod>() {
-        @Override
-        public int compare(final PsiMethod o1, final PsiMethod o2) {
-          PsiClass c1 = o1.getContainingClass();
-          PsiClass c2 = o2.getContainingClass();
-          return Comparing.compare(c1.getName(), c2.getName());
-        }
+      Collections.sort(mySourceMethods, (o1, o2) -> {
+        PsiClass c1 = o1.getContainingClass();
+        PsiClass c2 = o2.getContainingClass();
+        return Comparing.compare(c1.getName(), c2.getName());
       });
       final PsiMethod[] methodArray = mySourceMethods.toArray(new PsiMethod[mySourceMethods.size()]);
       final JList list = new JBList(methodArray);
       list.setCellRenderer(new MethodCellRenderer(true));
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          int index = list.getSelectedIndex();
-          if (index < 0) return;
-          PsiMethod element = (PsiMethod)list.getSelectedValue();
-          copyImplementation(element);
-        }
+      final Runnable runnable = () -> {
+        int index = list.getSelectedIndex();
+        if (index < 0) return;
+        PsiMethod element = (PsiMethod)list.getSelectedValue();
+        copyImplementation(element);
       };
       new PopupChooserBuilder(list)
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))

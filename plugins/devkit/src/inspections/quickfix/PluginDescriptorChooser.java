@@ -75,12 +75,9 @@ public class PluginDescriptorChooser {
                                                project,
                                                module.getModuleWithDependenciesScope());
 
-    elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public boolean value(DomFileElement<IdeaPlugin> element) {
-        VirtualFile virtualFile = element.getFile().getVirtualFile();
-        return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
-      }
+    elements = ContainerUtil.filter(elements, element -> {
+      VirtualFile virtualFile = element.getFile().getVirtualFile();
+      return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
     });
 
     elements = findAppropriateIntelliJModule(module.getName(), elements);
@@ -156,27 +153,21 @@ public class PluginDescriptorChooser {
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   List<DomFileElement<IdeaPlugin>> elements) {
-    Collections.sort(elements, new Comparator<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public int compare(DomFileElement<IdeaPlugin> o1, DomFileElement<IdeaPlugin> o2) {
-        // current module = first group
-        final Module module1 = o1.getModule();
-        final Module module2 = o2.getModule();
-        final int byAlpha = ModulesAlphaComparator.INSTANCE.compare(module1, module2);
-        if (byAlpha == 0) return 0;
+    Collections.sort(elements, (o1, o2) -> {
+      // current module = first group
+      final Module module1 = o1.getModule();
+      final Module module2 = o2.getModule();
+      final int byAlpha = ModulesAlphaComparator.INSTANCE.compare(module1, module2);
+      if (byAlpha == 0) return 0;
 
-        if (currentModule.equals(module1)) return -1;
-        if (currentModule.equals(module2)) return 1;
+      if (currentModule.equals(module1)) return -1;
+      if (currentModule.equals(module2)) return 1;
 
-        return byAlpha;
-      }
+      return byAlpha;
     });
-    Collections.sort(elements, new Comparator<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public int compare(DomFileElement<IdeaPlugin> o1, DomFileElement<IdeaPlugin> o2) {
-        if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
-        return o1.getFile().getName().compareTo(o2.getFile().getName());
-      }
+    Collections.sort(elements, (o1, o2) -> {
+      if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
+      return o1.getFile().getName().compareTo(o2.getFile().getName());
     });
 
     return ContainerUtil.map(elements, new Function<DomFileElement<IdeaPlugin>, PluginDescriptorCandidate>() {

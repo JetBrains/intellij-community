@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -34,14 +35,14 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -59,7 +60,6 @@ import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
+public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
@@ -89,7 +89,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
   @NotNull private final VcsLogUiImpl myUi;
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
@@ -105,11 +105,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   };
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull final VcsLogDataManager logDataManager, @NotNull VisiblePack initialDataPack) {
-    super(new GraphTableModel(initialDataPack, logDataManager, ui));
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+    super(new GraphTableModel(initialDataPack, logData, ui));
+    getEmptyText().setText("Changes log");
+
     myUi = ui;
-    myLogDataManager = logDataManager;
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logDataManager, myGraphCellPainter, this);
+    myLogData = logData;
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+
+    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -230,7 +234,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   private int calculateMaxRootWidth() {
     int width = 0;
-    for (VirtualFile file : myLogDataManager.getRoots()) {
+    for (VirtualFile file : myLogData.getRoots()) {
       Font tableFont = UIManager.getFont("Table.font");
       width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
     }
@@ -281,12 +285,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
       if (!details.isEmpty()) {
         CopyPasteManager.getInstance()
-          .setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
-            @Override
-            public String fun(VcsFullCommitDetails details) {
-              return details.getSubject();
-            }
-          }, "\n")));
+          .setContents(new StringSelection(StringUtil.join(details, VcsShortCommitDetails::getSubject, "\n")));
       }
     }
   }
@@ -336,49 +335,47 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
+  private VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+    return VcsCommitStyleFactory
+      .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+  }
+
+  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
+    VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, text, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
     if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
       LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
-      return VcsCommitStyleFactory
-        .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+      return baseStyle;
     }
 
     RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
 
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
-      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
-                   dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(), baseStyle.getBackground(),
+                   VcsLogHighlighter.TextStyle.NORMAL);
 
-    final VcsShortCommitDetails details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
+    final VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
     if (details == null || details instanceof LoadingDetails) return defaultStyle;
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
-      ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
-        @Override
-        public VcsLogHighlighter.VcsCommitStyle fun(VcsLogHighlighter highlighter) {
-          return highlighter.getStyle(details, selected);
-        }
-      });
+      ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {
-    viewport.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        AbstractTableModel model = getModel();
-        Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
-        model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
-      }
+    viewport.addChangeListener(e -> {
+      AbstractTableModel model = getModel();
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+      model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
     });
   }
 
   private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
+      VcsLogUtil.triggerUsage("RootColumnClick");
       myUi.setShowRootNames(!myUi.isShowRootNames());
       return true;
     }
@@ -392,7 +389,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @Nullable
   private TableColumn getRootColumnOrNull(@NotNull MouseEvent e) {
-    if (!myLogDataManager.isMultiRoot()) return null;
+    if (!myLogData.isMultiRoot()) return null;
     int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
     if (column == GraphTableModel.ROOT_COLUMN) {
       return getColumnModel().getColumn(column);
@@ -437,6 +434,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   }
 
+  @Override
+  public void setCursor(Cursor cursor) {
+    super.setCursor(cursor);
+    Component layeredPane = UIUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
+    if (layeredPane != null) {
+      layeredPane.setCursor(cursor);
+    }
+  }
+
   @NotNull
   private String getArrowTooltipText(int commit, @Nullable Integer row) {
     VcsShortCommitDetails details;
@@ -444,12 +450,12 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       details = getModel().getShortDetails(row); // preload rows around the commit
     }
     else {
-      details = myLogDataManager.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
+      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
     }
 
     String balloonText = "";
     if (details instanceof LoadingDetails) {
-      CommitId commitId = myLogDataManager.getCommitId(commit);
+      CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
         if (myUi.isMultipleRoots()) {
@@ -462,7 +468,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    DetailsPanel.formatDateTime(details.getAuthorTime());
+                    CommitPanel.formatDateTime(details.getAuthorTime());
     }
     return balloonText;
   }
@@ -531,12 +537,9 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
         myTable.getSelectionModel().setValueIsAdjusting(true);
-        toSelectAndScroll.first.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int row) {
-            myTable.addRowSelectionInterval(row, row);
-            return true;
-          }
+        toSelectAndScroll.first.forEach(row -> {
+          myTable.addRowSelectionInterval(row, row);
+          return true;
         });
         myTable.getSelectionModel().setValueIsAdjusting(false);
       }
@@ -622,10 +625,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
 
+      boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
+      if (isClickOnGraphElement) {
+        triggerElementClick(printElement);
+      }
+
       Selection previousSelection = getSelection();
       GraphAnswer<Integer> answer =
         getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
-      handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null, previousSelection, e);
+      handleAnswer(answer, isClickOnGraphElement, previousSelection, e);
     }
 
     private boolean isAboveLink(MouseEvent e) {
@@ -649,6 +657,17 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   }
 
+  private static void triggerElementClick(@NotNull PrintElement printElement) {
+    if (printElement instanceof NodePrintElement) {
+      VcsLogUtil.triggerUsage("GraphNodeClick");
+    }
+    else if (printElement instanceof EdgePrintElement) {
+      if (((EdgePrintElement)printElement).hasArrow()) {
+        VcsLogUtil.triggerUsage("GraphArrowClick");
+      }
+    }
+  }
+
   @NotNull
   public VisibleGraph<Integer> getVisibleGraph() {
     return getModel().getVisiblePack().getVisibleGraph();
@@ -661,7 +680,40 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   private int getXOffset() {
     TableColumn rootColumn = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    return myLogDataManager.isMultiRoot() ? rootColumn.getWidth() : 0;
+    return myLogData.isMultiRoot() ? rootColumn.getWidth() : 0;
+  }
+
+  @Override
+  public TableCellEditor getCellEditor() {
+    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
+    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
+    return myDummyEditor;
+  }
+
+  @Override
+  public int getRowHeight() {
+    return myGraphCommitCellRenderer.getPreferredHeight();
+  }
+
+  @Override
+  protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
+    int lastRow = getRowCount() - 1;
+    if (lastRow >= 0) {
+      g.setColor(getStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.fillRect(x, y, width, height);
+      if (myUi.isMultipleRoots()) {
+        g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
+
+        int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
+        if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
+
+        g.fillRect(x, y, rootWidth, height);
+      }
+    }
+    else {
+      g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+      g.fillRect(x, y, width, height);
+    }
   }
 
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
@@ -740,18 +792,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     public void setBackground(Color bg) {
       myBorderColor = bg;
     }
-  }
-
-  @Override
-  public TableCellEditor getCellEditor() {
-    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
-    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
-    return myDummyEditor;
-  }
-
-  @Override
-  public int getRowHeight() {
-    return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {
@@ -909,11 +949,13 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mousePressed(convertMouseEvent(e));
     }
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseReleased(convertMouseEvent(e));
     }
 
@@ -927,12 +969,18 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseDragged(convertMouseEvent(e));
     }
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      if (isOnBorder(e)) return;
       mouseInputListener.mouseMoved(convertMouseEvent(e));
+    }
+
+    public boolean isOnBorder(@NotNull MouseEvent e) {
+      return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUI.scale(3);
     }
   }
 
@@ -940,6 +988,21 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @Override
     public void valueChanged(ListSelectionEvent e) {
       mySelection = null;
+    }
+  }
+
+  private class MyProgressListener implements VcsLogProgress.ProgressListener {
+    @NotNull private String myText = "";
+
+    @Override
+    public void progressStarted() {
+      myText = getEmptyText().getText();
+      getEmptyText().setText("Loading History...");
+    }
+
+    @Override
+    public void progressStopped() {
+      getEmptyText().setText(myText);
     }
   }
 }

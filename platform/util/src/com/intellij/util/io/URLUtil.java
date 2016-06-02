@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Base64Converter;
@@ -24,11 +23,9 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,7 +94,7 @@ public class URLUtil {
       throw new MalformedURLException(url.getFile());
     }
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(FileUtil.unquote(paths.first));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(paths.first);
     ZipEntry zipEntry = zipFile.getEntry(paths.second);
     if (zipEntry == null) {
       zipFile.close();
@@ -118,6 +115,8 @@ public class URLUtil {
    * Returns a pair of path to a .jar file and entry name inside a .jar, or null if the URL does not contain a separator.
    * <p/>
    * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
+   * <p/>
+   * Please note that the first part is platform-dependent - see UrlUtilTest.testJarUrlSplitter() for examples.
    */
   @Nullable
   public static Pair<String, String> splitJarUrl(@NotNull String url) {
@@ -132,16 +131,31 @@ public class URLUtil {
     }
 
     if (jarPath.startsWith(FILE_PROTOCOL)) {
-      jarPath = jarPath.substring(FILE_PROTOCOL.length());
-      if (jarPath.startsWith(SCHEME_SEPARATOR)) {
-        jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
+      try {
+        jarPath = urlToFile(new URL(jarPath)).getPath().replace('\\', '/');
       }
-      else if (StringUtil.startsWithChar(jarPath, ':')) {
-        jarPath = jarPath.substring(1);
+      catch (Exception e) {
+        jarPath = jarPath.substring(FILE_PROTOCOL.length());
+        if (jarPath.startsWith(SCHEME_SEPARATOR)) {
+          jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
+        }
+        else if (StringUtil.startsWithChar(jarPath, ':')) {
+          jarPath = jarPath.substring(1);
+        }
       }
     }
 
     return Pair.create(jarPath, resourcePath);
+  }
+
+  @NotNull
+  public static File urlToFile(@NotNull URL url) {
+    try {
+      return new File(url.toURI().getSchemeSpecificPart());
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException("URL='" + url.toString() + "'", e);
+    }
   }
 
   @NotNull
@@ -250,6 +264,4 @@ public class URLUtil {
     }
     return host;
   }
-
-
 }

@@ -18,7 +18,11 @@ val JSON_READER_PARAMETER_DEF = "$READER_NAME: $JSON_READER_CLASS_NAME"
 internal fun writeJavaTypeName(arg: Type, out: TextOutput) {
   if (arg is Class<*>) {
     val name = arg.canonicalName
-    out.append(if (name == "java.util.List") "List" else name)
+    out.append(
+        if (name == "java.util.List") "List"
+        else if (name == "java.lang.String") "String?"
+        else name
+    )
   }
   else if (arg is ParameterizedType) {
     writeJavaTypeName(arg.rawType, out)

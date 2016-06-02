@@ -46,12 +46,7 @@ public class BorderEffect {
              effectType == attributes2.getEffectType();
     }
   };
-  private static final Condition<TextAttributes> BOX_FILTER = new Condition<TextAttributes>() {
-                              @Override
-                              public boolean value(TextAttributes attributes) {
-                                return isBorder(attributes);
-                              }
-                            };
+  private static final Condition<TextAttributes> BOX_FILTER = attributes -> isBorder(attributes);
 
   public BorderEffect(EditorImpl editor, Graphics graphics, int clipStartOffset, int clipEndOffset) {
     myEditor = editor;
@@ -80,15 +75,12 @@ public class BorderEffect {
   }
 
   public void paintHighlighters(MarkupModelEx markupModel) {
-    markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx rangeHighlighter) {
-        TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(textAttributes)) {
-          paintBorder(rangeHighlighter, textAttributes);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, rangeHighlighter -> {
+      TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
+      if (isBorder(textAttributes)) {
+        paintBorder(rangeHighlighter, textAttributes);
       }
+      return true;
     });
   }
 

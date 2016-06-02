@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ import java.util.List;
 public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + StreamApiMigrationInspection.class.getName());
 
-  public boolean REPLACE_TRIVIAL_FOREACH = false;
+  public boolean REPLACE_TRIVIAL_FOREACH;
 
   @Nullable
   @Override
@@ -278,12 +278,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static boolean isThrowsCompatible(PsiMethod method) {
-    return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), new Condition<PsiClassType>() {
-      @Override
-      public boolean value(PsiClassType type) {
-        return !ExceptionUtil.isUncheckedException(type);
-      }
-    }) != null;
+    return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), type -> !ExceptionUtil.isUncheckedException(type)) != null;
   }
 
   private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {

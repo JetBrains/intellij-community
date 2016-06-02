@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -440,15 +440,15 @@ public abstract class AbstractExternalFilter {
    * Settings used for parsing of external documentation
    */
   protected static class ParseSettings {
-    @NotNull
     /**
      * Pattern defining the start of target fragment
      */
-    private final Pattern startPattern;
     @NotNull
+    private final Pattern startPattern;
     /**
      * Pattern defining the end of target fragment
      */
+    @NotNull
     private final Pattern endPattern;
     /**
      * If <code>false</code>, and line matching start pattern is not found, whole document will be processed

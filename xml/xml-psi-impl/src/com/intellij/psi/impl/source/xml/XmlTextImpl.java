@@ -50,9 +50,9 @@ import java.util.Arrays;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
-  private volatile String myDisplayText = null;
-  private volatile int[] myGapDisplayStarts = null;
-  private volatile int[] myGapPhysicalStarts = null;
+  private volatile String myDisplayText;
+  private volatile int[] myGapDisplayStarts;
+  private volatile int[] myGapPhysicalStarts;
 
   public XmlTextImpl() {
     super(XmlElementType.XML_TEXT);

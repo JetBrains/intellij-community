@@ -58,12 +58,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
                                            public void pass(GrControlFlowOwner grExpression) {
                                              passInner(grExpression);
                                            }
-                                         }, new Function<GrControlFlowOwner, String>() {
-        @Override
-        public String fun(GrControlFlowOwner flowOwner) {
-          return flowOwner.getText();
-        }
-      }
+                                         }, flowOwner -> flowOwner.getText()
       );
     }
   }

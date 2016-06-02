@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,8 @@ public class SharedImplUtil {
     return node.getTreeParent().getPsi().getManager();
   }
 
-  public static ASTNode[] getChildrenOfType(ASTNode node, IElementType elementType) {
+  @NotNull
+  public static ASTNode[] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
     int count = countChildrenOfType(node, elementType);
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;

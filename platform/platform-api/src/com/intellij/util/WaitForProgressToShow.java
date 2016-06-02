@@ -57,12 +57,7 @@ public class WaitForProgressToShow {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
       if (pi != null) {
         execute(pi);
-        application.invokeLater(command, pi.getModalityState(), new Condition() {
-          @Override
-          public boolean value(Object o) {
-            return (! project.isOpen()) || project.isDisposed();
-          }
-        });
+        application.invokeLater(command, pi.getModalityState(), o -> (! project.isOpen()) || project.isDisposed());
       } else {
         final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
         application.invokeLater(command, notNullModalityState, project.getDisposed());

@@ -113,11 +113,8 @@ public class ErrorDiffTool implements FrameDiffTool {
         if (fileName != null && FileTypeManager.getInstance().getFileTypeByFileName(fileName) != UnknownFileType.INSTANCE) {
           // FileType was assigned elsewhere (ex: by other UnknownFileTypeDiffRequest). We should reload request.
           if (myContext instanceof DiffContextEx) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                ((DiffContextEx)myContext).reloadDiffRequest();
-              }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ((DiffContextEx)myContext).reloadDiffRequest();
             }, ModalityState.current());
           }
         }

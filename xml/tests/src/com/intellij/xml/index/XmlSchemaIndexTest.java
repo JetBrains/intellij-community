@@ -73,12 +73,7 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
     assertEquals(new ArrayList<VirtualFile>(files1).toString(), 2, files1.size());
 
-    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getName();
-      }
-    }));
+    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, virtualFile -> virtualFile.getName()));
     Collections.sort(names);
     assertEquals(Arrays.asList("web-app_2_5.xsd", "web-app_3_0.xsd"), names);
   }

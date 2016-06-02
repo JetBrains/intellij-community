@@ -16,6 +16,7 @@
 package org.jetbrains.io
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -23,16 +24,13 @@ import io.netty.handler.codec.http.QueryStringDecoder
 
 internal abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
   override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {
-    if (Logger.getInstance(BuiltInServer::class.java).isDebugEnabled) {
-      Logger.getInstance(BuiltInServer::class.java).debug("IN HTTP: " + message.uri())
-    }
+    Logger.getInstance(BuiltInServer::class.java).debug { "\n\nIN HTTP: $message\n\n" }
 
     if (!process(context, message, QueryStringDecoder(message.uri()))) {
       HttpResponseStatus.NOT_FOUND.send(context.channel(), message)
     }
   }
 
-  @Throws(Exception::class)
   protected abstract fun process(context: ChannelHandlerContext,
                                  request: FullHttpRequest,
                                  urlDecoder: QueryStringDecoder): Boolean

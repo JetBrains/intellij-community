@@ -112,11 +112,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (event instanceof KeyEvent && event.isShiftDown()) {
       final Content[] contents = window.getContentManager().getContents();
       if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
-        run = new Runnable() {
-          public void run() {
-            window.getContentManager().setSelectedContent(contents[0], true, true);
-          }
-        };
+        run = () -> window.getContentManager().setSelectedContent(contents[0], true, true);
       }
     }
 

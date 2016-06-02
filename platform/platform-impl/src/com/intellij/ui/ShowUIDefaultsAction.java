@@ -56,12 +56,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       i++;
     }
 
-    Arrays.sort(data, new Comparator<Object[]>() {
-      @Override
-      public int compare(Object[] o1, Object[] o2) {
-        return StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString());
-      }
-    });
+    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString()));
 
     final Project project = getEventProject(e);
     new DialogWrapper(project) {
@@ -147,13 +142,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
         });
         final JBScrollPane pane = new JBScrollPane(table);
-        new TableSpeedSearch(table, new PairFunction<Object, Cell, String>() {
-          @Nullable
-          @Override
-          public String fun(Object o, Cell cell) {
-            return cell.column == 1 ? null : String.valueOf(o);
-          }
-        });
+        new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(pane, BorderLayout.CENTER);

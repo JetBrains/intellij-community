@@ -144,21 +144,18 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
                              final List<UsageInfo> result) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        @Override
-        public boolean process(PsiMethod overrider) {
-          PsiElement original = overrider;
-          if (overrider instanceof PsiMirrorElement) {
-            original = ((PsiMirrorElement)overrider).getPrototype();
-          }
-
-          if (original instanceof SyntheticElement) return true;
-
-          if (original instanceof GrField) {
-            result.add(new FieldNameCollisionInfo((GrField)original, method));
-          }
-          return true;
+      OverridingMethodsSearch.search(method).forEach(overrider -> {
+        PsiElement original = overrider;
+        if (overrider instanceof PsiMirrorElement) {
+          original = ((PsiMirrorElement)overrider).getPrototype();
         }
+
+        if (original instanceof SyntheticElement) return true;
+
+        if (original instanceof GrField) {
+          result.add(new FieldNameCollisionInfo((GrField)original, method));
+        }
+        return true;
       });
     }
 

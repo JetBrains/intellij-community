@@ -118,12 +118,9 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
       showDialog(toSearchFor, ref, project);
     }
     else if (scopes.size() > 1) {
-      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, new PairFunction<GrParametersOwner, PsiElement, Object>() {
-        @Override
-        public Object fun(GrParametersOwner owner, PsiElement element) {
-          showDialog((PsiMethod)owner, ref, project);
-          return null;
-        }
+      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, (owner, element) -> {
+        showDialog((PsiMethod)owner, ref, project);
+        return null;
       });
       myEnclosingMethodsPopup.showInBestPositionFor(editor);
     }

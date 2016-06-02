@@ -49,15 +49,12 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
     if (parent instanceof ModuleSourceItemGroup) {
       final Module module = ((ModuleSourceItemGroup)parent).getModule();
       final Set<F> facets = new HashSet<F>(editorContext.getFacetsProvider().getFacetsByType(module, myFacetTypeId));
-      ArtifactUtil.processPackagingElements(artifact, myElementType, new Processor<E>() {
-        @Override
-        public boolean process(E e) {
-          F facet = getFacet(e);
-          if (facet != null) {
-            facets.remove(facet);
-          }
-          return true;
+      ArtifactUtil.processPackagingElements(artifact, myElementType, e -> {
+        F facet = getFacet(e);
+        if (facet != null) {
+          facets.remove(facet);
         }
+        return true;
       }, editorContext, true);
 
       if (!facets.isEmpty()) {

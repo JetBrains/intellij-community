@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -28,29 +27,23 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 public class GoToHashOrRefAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
     final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     Collection<VcsRef> visibleBranches = VcsLogUtil.getVisibleBranches(log, visibleRoots);
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, new Function<String, Future>() {
-      @Override
-      public Future fun(String text) {
-        return log.jumpToReference(text);
-      }
-    }, new Function<VcsRef, Future>() {
-      @Override
-      public Future fun(VcsRef vcsRef) {
-        return logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot());
-      }
-    }, logUi.getColorManager(), new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, text -> log.jumpToReference(text),
+                                                      vcsRef -> logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot()),
+                                                      logUi.getColorManager(),
+                                                      new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }
 

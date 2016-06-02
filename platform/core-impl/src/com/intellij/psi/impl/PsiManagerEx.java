@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,28 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author peter
  */
 public abstract class PsiManagerEx extends PsiManager {
+  public static PsiManagerEx getInstanceEx(Project project) {
+    return (PsiManagerEx)getInstance(project);
+  }
   public abstract boolean isBatchFilesProcessingMode();
 
+  @TestOnly
+  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
+
+  @TestOnly
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   /**

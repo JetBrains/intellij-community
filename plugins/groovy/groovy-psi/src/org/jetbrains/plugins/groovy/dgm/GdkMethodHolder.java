@@ -119,19 +119,16 @@ public class GdkMethodHolder {
   public static GdkMethodHolder getHolderForClass(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
     final Project project = categoryClass.getProject();
     Key<CachedValue<GdkMethodHolder>> key = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
-    return CachedValuesManager.getManager(project).getCachedValue(categoryClass, key, new CachedValueProvider<GdkMethodHolder>() {
-      @Override
-      public Result<GdkMethodHolder> compute() {
-        GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
+    return CachedValuesManager.getManager(project).getCachedValue(categoryClass, key, () -> {
+      GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
 
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-        final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
-        if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
-          return Result.create(result, rootManager);
-        }
-
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+      final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+      final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
+      if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
+        return CachedValueProvider.Result.create(result, rootManager);
       }
+
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
     }, false);
   }
 }

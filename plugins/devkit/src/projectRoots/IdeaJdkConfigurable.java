@@ -204,11 +204,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     Sandbox sandbox = new Sandbox(mySandboxHome.getText(), (Sdk)myInternalJres.getSelectedItem(), myIdeaJdk);
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        modificator.commitChanges();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
     ((ProjectJdkImpl) myIdeaJdk).resetVersionString();
     myModified = false;
   }

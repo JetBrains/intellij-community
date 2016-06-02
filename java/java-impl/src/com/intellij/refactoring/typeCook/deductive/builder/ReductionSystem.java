@@ -356,11 +356,7 @@ public class ReductionSystem {
     }
 
     Arrays.sort(data,
-                new Comparator<String>() {
-                  public int compare(String x, String y) {
-                    return x.compareTo(y);
-                  }
-                });
+                (x, y) -> x.compareTo(y));
 
 
     final StringBuffer repr = new StringBuffer();
@@ -473,11 +469,7 @@ public class ReductionSystem {
     }
 
     Arrays.sort(data,
-                new Comparator<String>() {
-                  public int compare(String x, String y) {
-                    return x.compareTo(y);
-                  }
-                });
+                (x, y) -> x.compareTo(y));
 
 
     final StringBuffer repr = new StringBuffer();

@@ -136,12 +136,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        installEditorFactoryListener();
-      }
-    }, getProject().getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
   }
 
   @Override
@@ -339,12 +334,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
     if (erase) {
-      DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-        }
-      });
+      DocumentUtil.writeInRunUndoTransparentAction(
+        () -> editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset()));
     }
     // always scroll to end on user input
     scrollToEnd();
@@ -521,12 +512,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   public void setInputText(@NotNull final String query) {
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query));
-      }
-    });
+    DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
 
   boolean isHistoryViewerForceAdditionalColumnsUsage() {

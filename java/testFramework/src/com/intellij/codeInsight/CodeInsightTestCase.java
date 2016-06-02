@@ -232,12 +232,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
           FileUtil.copyDir(projectRoot, toDirIO);
           VirtualFile fromDir = getVirtualFile(projectRoot);
           editorInfos =
-            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, new Function<VirtualFile, String>() {
-              @Override
-              public String fun(final VirtualFile s) {
-                return s.getPath().substring(projectRoot.getPath().length());
-              }
-            }));
+            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, s -> s.getPath().substring(projectRoot.getPath().length())));
 
           toDir.refresh(false, true);
         }

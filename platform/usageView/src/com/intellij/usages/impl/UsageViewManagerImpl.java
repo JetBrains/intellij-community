@@ -193,12 +193,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   private static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (Usage foundUsage : foundUsages) {
-          usageView.appendUsage(foundUsage);
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (Usage foundUsage : foundUsages) {
+        usageView.appendUsage(foundUsage);
       }
     });
   }
@@ -210,31 +207,25 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                               @NotNull final UsageViewPresentation presentation,
                                               final int usageCount,
                                               @Nullable final UsageViewImpl usageView) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
-        String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount, StringUtil.pluralize(presentation.getUsagesWord()));
-        UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
-        if (ret == UsageLimitUtil.Result.ABORT) {
-          if (usageView != null) {
-            usageView.cancelCurrentSearch();
-          }
-          indicator.cancel();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
+      String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount, StringUtil.pluralize(presentation.getUsagesWord()));
+      UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
+      if (ret == UsageLimitUtil.Result.ABORT) {
+        if (usageView != null) {
+          usageView.cancelCurrentSearch();
         }
-        tooManyUsagesStatus.userResponded();
+        indicator.cancel();
       }
+      tooManyUsagesStatus.userResponded();
     });
   }
 
   public static long getFileLength(@NotNull final VirtualFile virtualFile) {
     final long[] length = {-1L};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!virtualFile.isValid()) return;
-        length[0] = virtualFile.getLength();
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!virtualFile.isValid()) return;
+      length[0] = virtualFile.getLength();
     });
     return length[0];
   }

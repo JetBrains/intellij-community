@@ -22,14 +22,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class LocallyDeletedChange {
-  private final String myPresentableUrl;
-  private final FilePath myPath;
+  @NotNull private final String myPresentableUrl;
+  @NotNull private final FilePath myPath;
 
-  public LocallyDeletedChange(@NotNull final FilePath path) {
+  public LocallyDeletedChange(@NotNull FilePath path) {
     myPath = path;
     myPresentableUrl = myPath.getPresentableUrl();
   }
 
+  @NotNull
   public FilePath getPath() {
     return myPath;
   }
@@ -46,9 +47,7 @@ public class LocallyDeletedChange {
 
     LocallyDeletedChange that = (LocallyDeletedChange)o;
 
-    if (!myPresentableUrl.equals(that.myPresentableUrl)) return false;
-
-    return true;
+    return myPresentableUrl.equals(that.myPresentableUrl);
   }
 
   @Override
@@ -56,6 +55,7 @@ public class LocallyDeletedChange {
     return myPresentableUrl.hashCode();
   }
 
+  @NotNull
   public String getPresentableUrl() {
     return myPresentableUrl;
   }

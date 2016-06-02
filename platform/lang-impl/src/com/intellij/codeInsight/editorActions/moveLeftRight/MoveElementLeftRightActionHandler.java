@@ -41,12 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
-  private static final Comparator<PsiElement> BY_OFFSET = new Comparator<PsiElement>() {
-    @Override
-    public int compare(PsiElement o1, PsiElement o2) {
-      return o1.getTextOffset() - o2.getTextOffset();
-    }
-  };
+  private static final Comparator<PsiElement> BY_OFFSET = (o1, o2) -> o1.getTextOffset() - o2.getTextOffset();
 
   private static final Set<String> OUR_ACTIONS = new HashSet<String>(Arrays.asList(
     IdeActions.MOVE_ELEMENT_LEFT,

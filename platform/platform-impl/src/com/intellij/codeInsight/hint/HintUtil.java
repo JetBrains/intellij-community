@@ -73,15 +73,12 @@ public class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          label.myPane.setText(s);
-          
-          // Force preferred size recalculation.
-          label.setPreferredSize(null);
-          label.myPane.setPreferredSize(null);
-        }
+      updatedTextConsumer.set(s -> {
+        label.myPane.setText(s);
+
+        // Force preferred size recalculation.
+        label.setPreferredSize(null);
+        label.myPane.setPreferredSize(null);
       });
     }
 
@@ -209,6 +206,20 @@ public class HintUtil {
     private HintLabel(@NotNull SimpleColoredComponent component) {
       this();
       setText(component);
+    }
+
+    @Override
+    public boolean requestFocusInWindow() {
+      // Forward the focus to the tooltip contents so that screen readers announce
+      // the tooltip contents right away.
+      if (myPane != null) {
+        return myPane.requestFocusInWindow();
+      } else if (myColored != null) {
+        return myColored.requestFocusInWindow();
+      } else if (myIcon != null) {
+        return myIcon.requestFocusInWindow();
+      }
+      return super.requestFocusInWindow();
     }
 
     public void setText(@NotNull SimpleColoredComponent colored) {

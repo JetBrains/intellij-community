@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,13 +125,8 @@ public class ConfigImportHelper {
 
     final String prefix = getPrefixFromSelector(selector);
     final String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
-    for (File file : parent.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(@NotNull File file, @NotNull String name) {
-        return StringUtil.startsWithIgnoreCase(name, prefix) ||
-               customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
-      }
-    })) {
+    for (File file : parent.listFiles((file1, name) -> StringUtil.startsWithIgnoreCase(name, prefix) ||
+           customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix))) {
       File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
       if (!options.exists()) {
         continue;
@@ -196,15 +191,14 @@ public class ConfigImportHelper {
     // Copy old plugins. If some of them are incompatible PluginManager will deal with it
     FileUtil.copyDir(src, dest);
 
+    // delete old user token - we must not reuse it
+    FileUtil.delete(new File(dest, "user.token"));
+    FileUtil.delete(new File(dest, "user.web.token"));
+
     File oldPluginsDir = new File(src, PLUGINS_PATH);
     if (!oldPluginsDir.isDirectory() && SystemInfo.isMac) {
       oldPluginsDir = getSettingsPath(oldInstallationHome, settings, PathManager.PROPERTY_PLUGINS_PATH,
-                                      new Function<String, String>() {
-                                        @Override
-                                        public String fun(String pathSelector) {
-                                          return PathManager.getDefaultPluginPathFor(pathSelector);
-                                        }
-                                      });
+                                      pathSelector -> PathManager.getDefaultPluginPathFor(pathSelector));
       if (oldPluginsDir == null) {
         //e.g. installation home referred to config home. Try with default selector, same as config name
         oldPluginsDir = new File(PathManager.getDefaultPluginPathFor(src.getName()));
@@ -255,12 +249,8 @@ public class ConfigImportHelper {
       return new File(oldInstallHome, "config");
     }
 
-    return getSettingsPath(oldInstallHome, settings, PathManager.PROPERTY_CONFIG_PATH, new Function<String, String>() {
-      @Override
-      public String fun(String pathsSelector) {
-        return PathManager.getDefaultConfigPathFor(pathsSelector);
-      }
-    });
+    return getSettingsPath(oldInstallHome, settings, PathManager.PROPERTY_CONFIG_PATH,
+                           pathsSelector -> PathManager.getDefaultConfigPathFor(pathsSelector));
   }
 
   private static File getSettingsPath(File installHome, ConfigImportSettings settings, String propertyName, Function<String, String> fromPathSelector) {
@@ -340,14 +330,14 @@ public class ConfigImportHelper {
         }
         if (bundle.containsKey(propertyName)) {
           return bundle.getString(propertyName);
-        } 
+        }
         return null;
       }
       catch (IOException e) {
         return null;
       }
     }
-    
+
     final String fileContent = getContent(file);
 
     // try to find custom config path

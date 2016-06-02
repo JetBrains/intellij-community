@@ -18,7 +18,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
     return isAvailableForCollection(literal);
   }
 
-  protected boolean isAvailableForCollection(PySequenceExpression literal) {
+  protected boolean isAvailableForCollection(@NotNull PySequenceExpression literal) {
     return true;
   }
 
@@ -90,30 +91,61 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
     final PySequenceExpression literal = findCollectionLiteralUnderCaret(editor, file);
     assert literal != null;
 
-    final PsiElement replacedElement;
-    if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
-      replacedElement = literal.getParent();
-    }
-    else {
-      replacedElement = literal;
-    }
+    final PsiElement replacedElement = wrapCollection(literal);
+    final PsiElement copy = prepareOriginalElementCopy(replacedElement.copy());
 
-    final String innerText = stripLiteralBraces(replacedElement);
+    final TextRange contentRange = getRangeOfContentWithoutBraces(copy);
+    final String contentToWrap = contentRange.substring(copy.getText());
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final PyExpression newLiteral = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file),
-                                                                              myLeftBrace + innerText + myRightBrace);
+                                                                              myLeftBrace + contentToWrap + myRightBrace);
     replacedElement.replace(newLiteral);
   }
 
   @NotNull
-  private static String stripLiteralBraces(@NotNull PsiElement literal) {
+  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+    final PySequenceExpression sequence = unwrapCollection(copy);
+    if (sequence instanceof PyTupleExpression) {
+      final PyExpression[] elements = sequence.getElements();
+      if (elements.length == 1) {
+        final PsiElement next = PyPsiUtils.getNextNonCommentSibling(elements[0], true);
+        // Strictly speaking single element tuple must contain trailing comma, but lets check explicitly nonetheless
+        if (next != null && next.getNode().getElementType() == PyTokenTypes.COMMA) {
+          next.delete();
+        }
+      }
+    }
+    return copy;
+  }
+
+  @NotNull
+  protected static PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
+    final PyParenthesizedExpression parenthesizedExpression = as(literal, PyParenthesizedExpression.class);
+    if (parenthesizedExpression != null) {
+      final PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
+      assert containedExpression != null;
+      return (PyTupleExpression)containedExpression;
+    }
+    return (PySequenceExpression)literal;
+  }
+
+  @NotNull
+  protected static PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
+    if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
+      return literal.getParent();
+    }
+    return literal;
+  }
+
+  @NotNull
+  private static TextRange getRangeOfContentWithoutBraces(@NotNull PsiElement literal) {
     if (literal instanceof PyTupleExpression) {
-      return literal.getText();
+      return TextRange.create(0, literal.getTextLength());
     }
 
-    final PsiElement firstChild = literal.getFirstChild();
-
     final String replacedText = literal.getText();
+    
+    final PsiElement firstChild = literal.getFirstChild();
     final int contentStartOffset;
     if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType())) {
       contentStartOffset = firstChild.getTextLength();
@@ -131,7 +163,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
       contentEndOffset = replacedText.length();
     }
 
-    return literal.getText().substring(contentStartOffset, contentEndOffset);
+    return TextRange.create(contentStartOffset, contentEndOffset);
   }
 
   @Nullable
@@ -142,12 +174,9 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
     if (seqExpr != null) {
       return seqExpr;
     }
-    final PyParenthesizedExpression paren = (PyParenthesizedExpression)PsiTreeUtil.findFirstParent(curElem, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        final PyParenthesizedExpression parenthesizedExpr = as(element, PyParenthesizedExpression.class);
-        return parenthesizedExpr != null && parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression;
-      }
+    final PyParenthesizedExpression paren = (PyParenthesizedExpression)PsiTreeUtil.findFirstParent(curElem, element -> {
+      final PyParenthesizedExpression parenthesizedExpr = as(element, PyParenthesizedExpression.class);
+      return parenthesizedExpr != null && parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression;
     });
     return paren != null ? ((PyTupleExpression)paren.getContainedExpression()) : null;
   }

@@ -13,15 +13,19 @@ import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author traff
  */
 public class IPythonConsoleTest extends PyEnvTestCase {
+  @Test
   public void testQuestion() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
@@ -33,20 +37,18 @@ public class IPythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testParsing() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiFile psi =
-              PsiDocumentManager.getInstance(getProject())
-                .getPsiFile(getConsoleView().getConsoleEditor().getDocument());
-            Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          PsiFile psi =
+            PsiDocumentManager.getInstance(getProject())
+              .getPsiFile(getConsoleView().getConsoleEditor().getDocument());
+          Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
         });
       }
     });
@@ -66,22 +68,19 @@ public class IPythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testParsingNoIPython() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiFile psi =
-              PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getConsoleEditor().getDocument());
-            //TreeUtil.ensureParsed(psi.getNode());
-            assertTrue(PsiTreeUtil.hasErrorElements(psi));
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          PsiFile psi =
+            PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getConsoleEditor().getDocument());
+          //TreeUtil.ensureParsed(psi.getNode());
+          assertTrue(PsiTreeUtil.hasErrorElements(psi));
         });
-
       }
 
       @NotNull

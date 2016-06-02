@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,17 +151,13 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
       });
       if (module != null) {
         final HashSet<Module> dependencies = new HashSet<Module>();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            ModuleUtilCore.collectModulesDependsOn(module, dependencies);
-          }
-        });
+        ApplicationManager.getApplication().runReadAction(() -> ModuleUtilCore.collectModulesDependsOn(module, dependencies));
         memberWithModulesMap.put(member, dependencies);
       }
     }
 
     scope.accept(new PsiRecursiveElementVisitor() {
-      private int myFileCount = 0;
+      private int myFileCount;
       @Override public void visitFile(final PsiFile file) {
         if (progressIndicator != null){
           if (progressIndicator.isCanceled()) return;
@@ -204,13 +200,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     });
     if (duplicates.isEmpty()) {
       if (!silent) {
-        final Runnable nothingFoundRunnable = new Runnable() {
-          @Override
-          public void run() {
-            final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
-                                                             ApplicationNamesInfo.getInstance().getProductName());
-            Messages.showInfoMessage(project, message, REFACTORING_NAME);
-          }
+        final Runnable nothingFoundRunnable = () -> {
+          final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
+                                                           ApplicationNamesInfo.getInstance().getProductName());
+          Messages.showInfoMessage(project, message, REFACTORING_NAME);
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           nothingFoundRunnable.run();
@@ -227,37 +220,27 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
-    final Runnable replaceRunnable = new Runnable() {
-      @Override
-      public void run() {
-        LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
-        try {
-          for (final PsiMember member : methods) {
-            final List<Match> matches = duplicates.get(member);
-            if (matches == null) continue;
-            final int duplicatesNo = matches.size();
-            WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              @Override
-              public void run() {
-                PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-                  @Override
-                  public void run() {
-                    final MatchProvider matchProvider =
-                      member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
-                                                  : new ConstantMatchProvider(member, project, matches);
-                    DuplicatesImpl.invoke(project, matchProvider);
-                  }
-                });
-              }
-            }, REFACTORING_NAME, REFACTORING_NAME);
-  
-            WindowManager.getInstance().getStatusBar(project).setInfo("");
-          }
+    final Runnable replaceRunnable = () -> {
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
+      try {
+        for (final PsiMember member : methods) {
+          final List<Match> matches = duplicates.get(member);
+          if (matches == null) continue;
+          final int duplicatesNo = matches.size();
+          WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
+          CommandProcessor.getInstance().executeCommand(project,
+                                                        () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
+                                                          final MatchProvider matchProvider =
+                                                            member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
+                                                                                        : new ConstantMatchProvider(member, project, matches);
+                                                          DuplicatesImpl.invoke(project, matchProvider);
+                                                        }), REFACTORING_NAME, REFACTORING_NAME);
+
+          WindowManager.getInstance().getStatusBar(project).setInfo("");
         }
-        finally {
-          a.finish();
-        }
+      }
+      finally {
+        a.finish();
       }
     };
     ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);

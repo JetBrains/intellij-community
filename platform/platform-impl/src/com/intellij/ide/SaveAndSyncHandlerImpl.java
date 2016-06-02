@@ -56,7 +56,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
   private final SingleAlarm myRefreshDelayAlarm = new SingleAlarm(this::doScheduledRefresh, 300, this);
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
-  private volatile long myRefreshSessionId = 0;
+  private volatile long myRefreshSessionId;
 
   public SaveAndSyncHandlerImpl(@NotNull GeneralSettings generalSettings,
                                 @NotNull ProgressManager progressManager,

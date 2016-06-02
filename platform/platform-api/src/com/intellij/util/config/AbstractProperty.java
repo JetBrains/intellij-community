@@ -21,11 +21,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Comparator;
 
 public abstract class AbstractProperty<T> {
-  public static final Comparator<AbstractProperty> NAME_COMPARATOR = new Comparator<AbstractProperty>() {
-    public int compare(AbstractProperty property, AbstractProperty property1) {
-      return property.getName().compareTo(property1.getName());
-    }
-  };
+  public static final Comparator<AbstractProperty> NAME_COMPARATOR =
+    (property, property1) -> property.getName().compareTo(property1.getName());
 
   @NonNls
   public abstract String getName();

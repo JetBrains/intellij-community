@@ -15,27 +15,30 @@
  */
 package com.intellij.codeInsight.editorActions.enter;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
-    int caretOffset = caretOffsetRef.get().intValue();
-    PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (file instanceof PropertiesFile) {
-      handleEnterInPropertiesFile(editor, editor.getDocument(), psiAtOffset, caretOffset);
+      int caretOffset = caretOffsetRef.get().intValue();
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+      PsiElement psiAtOffset = file.findElementAt(caretOffset);
+      handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
       return Result.Stop;
     }
     return Result.Continue;

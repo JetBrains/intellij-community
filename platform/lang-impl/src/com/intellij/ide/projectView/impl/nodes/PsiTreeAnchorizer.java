@@ -75,11 +75,11 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   public void freeAnchor(final Object element) {
     if (element instanceof SmartPointerWrapper) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          SmartPsiElementPointer pointer = ((SmartPointerWrapper)element).myPointer;
-          SmartPointerManager.getInstance(pointer.getProject()).removePointer(pointer);
+      ApplicationManager.getApplication().runReadAction(() -> {
+        SmartPsiElementPointer pointer = ((SmartPointerWrapper)element).myPointer;
+        Project project = pointer.getProject();
+        if (!project.isDisposed()) {
+          SmartPointerManager.getInstance(project).removePointer(pointer);
         }
       });
     }

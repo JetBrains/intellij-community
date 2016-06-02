@@ -95,12 +95,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         }
         else {
           final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-          PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, new Function<PsiMethod, PsiMethodMember>() {
-            @Override
-            public PsiMethodMember fun(final PsiMethod s) {
-              return new PsiMethodMember(s, substitutor);
-            }
-          });
+          PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, s -> new PsiMethodMember(s, substitutor));
           MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
           chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
@@ -299,12 +294,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         generator.generateSuperCallIfNeeded(buffer, baseConstructor.getParameterList().getParameters());
       }
       final PsiParameter[] parameters = fieldParams.toArray(new PsiParameter[fieldParams.size()]);
-      final List<String> existingNames = ContainerUtil.map(dummyConstructor.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-        @Override
-        public String fun(PsiParameter parameter) {
-          return parameter.getName();
-        }
-      });
+      final List<String> existingNames = ContainerUtil.map(dummyConstructor.getParameterList().getParameters(), parameter -> parameter.getName());
       if (generator instanceof ConstructorBodyGeneratorEx) {
         ((ConstructorBodyGeneratorEx)generator).generateFieldInitialization(buffer, fields, parameters, existingNames);
       }

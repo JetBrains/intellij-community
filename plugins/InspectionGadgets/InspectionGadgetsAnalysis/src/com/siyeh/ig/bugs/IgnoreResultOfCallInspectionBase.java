@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
@@ -148,15 +149,37 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      final PsiAnnotation anno2 =
-        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton("javax.annotation.CheckReturnValue"));
-      if (anno2 != null) {
-        registerMethodCallError(call, aClass);
-      }
-      if (!myMethodMatcher.matches(method)) {
+      if (!myMethodMatcher.matches(method) &&
+          findAnnotationInTree(method, Collections.singleton("javax.annotation.CheckReturnValue")) == null) {
         return;
       }
       registerMethodCallError(call, aClass);
+    }
+
+    private PsiAnnotation findAnnotationInTree(PsiElement element, Set<String> fqAnnotationNames) {
+      while (element != null) {
+        if (element instanceof PsiModifierListOwner) {
+          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+          final PsiAnnotation annotation =
+            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+          if (annotation != null) {
+            return annotation;
+          }
+        }
+
+        if (element instanceof PsiClassOwner) {
+          final PsiClassOwner classOwner = (PsiClassOwner)element;
+          final String packageName = classOwner.getPackageName();
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+          if (aPackage == null) {
+            return null;
+          }
+          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+        }
+
+        element = element.getContext();
+      }
+      return null;
     }
   }
 }

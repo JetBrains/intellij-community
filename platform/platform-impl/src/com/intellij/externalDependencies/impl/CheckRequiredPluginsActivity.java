@@ -126,12 +126,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
                                     for (PluginId pluginId : notInstalled) {
                                       pluginIds.add(pluginId.getIdString());
                                     }
-                                    PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
-                                      @Override
-                                      public void run() {
-                                        notification.expire();
-                                      }
-                                    });
+                                    PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> notification.expire());
                                   }
                                 }
                               }

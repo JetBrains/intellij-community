@@ -192,19 +192,16 @@ public class GradleTestsExecutionConsoleManager
       final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
 
-      return ContainerUtil.find(taskTask.getTasksToExecute(), new Condition<ExternalTaskPojo>() {
-        @Override
-        public boolean value(final ExternalTaskPojo pojo) {
-          final ExternalProjectInfo externalProjectInfo =
-            ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
-          if (externalProjectInfo == null) return false;
+      return ContainerUtil.find(taskTask.getTasksToExecute(), pojo -> {
+        final ExternalProjectInfo externalProjectInfo =
+          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
+        if (externalProjectInfo == null) return false;
 
-          final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-            externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
-          return taskDataNode != null &&
-                 (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
-                   || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
-        }
+        final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
+          externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
+        return taskDataNode != null &&
+               (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
+                 || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
       }) != null;
     }
     return false;
@@ -214,12 +211,7 @@ public class GradleTestsExecutionConsoleManager
   public AnAction[] getRestartActions(@NotNull final GradleTestsExecutionConsole consoleView) {
     JavaRerunFailedTestsAction rerunFailedTestsAction =
       new GradleRerunFailedTestsAction(consoleView);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return consoleView.getResultsViewer();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
     return new AnAction[]{rerunFailedTestsAction};
   }
 }

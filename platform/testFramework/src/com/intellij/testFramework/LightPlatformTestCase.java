@@ -68,7 +68,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,7 +133,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  private static boolean ourHaveShutdownHook;
 
   private ThreadTracker myThreadTracker;
 
@@ -172,9 +170,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @TestOnly
   public static void disposeApplication() {
     if (ourApplication != null) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Disposer.dispose(ourApplication);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
 
       ourApplication = null;
     }
@@ -241,10 +237,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
     ourPathToKeep = projectFile.getPath();
-    if (!ourHaveShutdownHook) {
-      ourHaveShutdownHook = true;
-      registerShutdownHook();
-    }
     ourPsiManager = null;
 
     ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
@@ -732,13 +724,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ourProject = null;
       ourPathToKeep = null;
     }
-  }
-
-  private static void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(
-      () -> ShutDownTracker.invokeAndWait(true, true,
-                                          () -> ApplicationManager.getApplication().runWriteAction(
-                                            LightPlatformTestCase::closeAndDeleteProject)));
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {

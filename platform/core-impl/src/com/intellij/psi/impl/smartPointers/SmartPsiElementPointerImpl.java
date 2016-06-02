@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
@@ -99,7 +98,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   void cacheElement(@Nullable E element) {
     myElement = element == null ? null : 
-                ((PsiManagerEx)PsiManager.getInstance(getProject())).isBatchFilesProcessingMode() ? new WeakReference<E>(element) : 
+                PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<E>(element) :
                 new SoftReference<E>(element);
   }
 
@@ -182,9 +181,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
-      final SmartPointerElementInfo result = factory.createElementInfo(element, containingFile);
-      if (result != null) return result;
+    SmartPointerElementInfo info = AnchorElementInfoFactory.createElementInfo(element, containingFile);
+    if (info != null) {
+      return info;
     }
 
     if (element instanceof PsiFile) {

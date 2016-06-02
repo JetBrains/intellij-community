@@ -46,34 +46,27 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     final boolean[] needStrictSignatureSearch = new boolean[1];
     final boolean strictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = resolveInReadAction(p.getProject(), new Computable<PsiClass>() {
-      public PsiClass compute() {
-        PsiClass aClass = method.getContainingClass();
-        if (aClass == null) return null;
-        isConstructor[0] = method.isConstructor();
-        psiManager[0] = aClass.getManager();
-        methodName[0] = method.getName();
-        isValueAnnotation[0] = PsiUtil.isAnnotationMethod(method) &&
-                               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methodName[0]) &&
-                               method.getParameterList().getParametersCount() == 0;
-        needStrictSignatureSearch[0] = strictSignatureSearch && (aClass instanceof PsiAnonymousClass
-                                                                 || aClass.hasModifierProperty(PsiModifier.FINAL)
-                                                                 || method.hasModifierProperty(PsiModifier.STATIC)
-                                                                 || method.hasModifierProperty(PsiModifier.FINAL)
-                                                                 || method.hasModifierProperty(PsiModifier.PRIVATE));
-        return aClass;
-      }
+    final PsiClass aClass = resolveInReadAction(p.getProject(), () -> {
+      PsiClass aClass1 = method.getContainingClass();
+      if (aClass1 == null) return null;
+      isConstructor[0] = method.isConstructor();
+      psiManager[0] = aClass1.getManager();
+      methodName[0] = method.getName();
+      isValueAnnotation[0] = PsiUtil.isAnnotationMethod(method) &&
+                             PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methodName[0]) &&
+                             method.getParameterList().getParametersCount() == 0;
+      needStrictSignatureSearch[0] = strictSignatureSearch && (aClass1 instanceof PsiAnonymousClass
+                                                               || aClass1.hasModifierProperty(PsiModifier.FINAL)
+                                                               || method.hasModifierProperty(PsiModifier.STATIC)
+                                                               || method.hasModifierProperty(PsiModifier.FINAL)
+                                                               || method.hasModifierProperty(PsiModifier.PRIVATE));
+      return aClass1;
     });
     if (aClass == null) return;
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = resolveInReadAction(p.getProject(), new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return p.getEffectiveSearchScope();
-      }
-    });
+    final SearchScope searchScope = resolveInReadAction(p.getProject(), () -> p.getEffectiveSearchScope());
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }

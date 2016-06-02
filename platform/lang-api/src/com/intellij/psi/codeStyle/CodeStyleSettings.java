@@ -173,9 +173,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
 
-  public boolean USE_SAME_INDENTS = false;
+  public boolean USE_SAME_INDENTS;
 
-  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
+  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES;
 
   public boolean AUTODETECT_INDENTS = true;
 
@@ -228,8 +228,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
-  public boolean GENERATE_FINAL_LOCALS = false;
-  public boolean GENERATE_FINAL_PARAMETERS = false;
+  public boolean GENERATE_FINAL_LOCALS;
+  public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
   public String VISIBILITY = "public";
@@ -238,7 +238,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
-  public boolean USE_EXTERNAL_ANNOTATIONS = false;
+  public boolean USE_EXTERNAL_ANNOTATIONS;
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
@@ -247,12 +247,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 //----------------- IMPORTS --------------------
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
-  public boolean USE_FQ_CLASS_NAMES = false;
+  public boolean USE_FQ_CLASS_NAMES;
   
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
-  public boolean INSERT_INNER_CLASS_IMPORTS = false;
+  public boolean INSERT_INNER_CLASS_IMPORTS;
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
@@ -280,7 +280,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *
    * @see #WRAP_ON_TYPING
    */
-  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
+  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
 
   // ---------------------------------- Javadoc formatting options -------------------------
@@ -296,14 +296,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    */
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
 
-  public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS = false;
-  public boolean JD_ADD_BLANK_AFTER_RETURN = false;
+  public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS;
+  public boolean JD_ADD_BLANK_AFTER_RETURN;
   public boolean JD_ADD_BLANK_AFTER_DESCRIPTION = true;
   public boolean JD_P_AT_EMPTY_LINES = true;
 
   public boolean JD_KEEP_INVALID_TAGS = true;
   public boolean JD_KEEP_EMPTY_LINES = true;
-  public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+  public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
 
   public boolean JD_USE_THROWS_NOT_EXCEPTION = true;
   public boolean JD_KEEP_EMPTY_PARAMETER = true;
@@ -313,8 +313,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
   
-  public boolean JD_PRESERVE_LINE_FEEDS = false;
-  public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE = false;
+  public boolean JD_PRESERVE_LINE_FEEDS;
+  public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
   // ---------------------------------------------------------------------------------------
 
@@ -324,7 +324,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_KEEP_WHITESPACES = false;
+  public boolean XML_KEEP_WHITESPACES;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
@@ -353,32 +353,32 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_ALIGN_TEXT = false;
+  public boolean XML_ALIGN_TEXT;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = false;
+  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_AFTER_TAG_NAME = false;
+  public boolean XML_SPACE_AFTER_TAG_NAME;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_INSIDE_EMPTY_TAG = false;
+  public boolean XML_SPACE_INSIDE_EMPTY_TAG;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA = false;
+  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public int XML_WHITE_SPACE_AROUND_CDATA = 0;
+  public int XML_WHITE_SPACE_AROUND_CDATA;
 
   // ---------------------------------------------------------------------------------------
 
   // ---------------------------------- HTML formatting options -------------------------
-  public boolean HTML_KEEP_WHITESPACES = false;
+  public boolean HTML_KEEP_WHITESPACES;
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
 
@@ -387,41 +387,42 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int HTML_KEEP_BLANK_LINES = 2;
 
   public boolean HTML_ALIGN_ATTRIBUTES = true;
-  public boolean HTML_ALIGN_TEXT = false;
+  public boolean HTML_ALIGN_TEXT;
 
-  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
-  public boolean HTML_SPACE_AFTER_TAG_NAME = false;
-  public boolean HTML_SPACE_INSIDE_EMPTY_TAG = false;
+  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+  public boolean HTML_SPACE_AFTER_TAG_NAME;
+  public boolean HTML_SPACE_INSIDE_EMPTY_TAG;
 
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
-  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 0;
+  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
 
   @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
-
+  public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
+  public boolean HTML_ENFORCE_QUOTES = false;
   // ---------------------------------------------------------------------------------------
 
 
   // true if <%page import="x.y.z, x.y.t"%>
   // false if <%page import="x.y.z"%>
   //          <%page import="x.y.t"%>
-  public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = false;
+  public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------
 
   // region Formatter control
 
-  public boolean FORMATTER_TAGS_ENABLED = false;
+  public boolean FORMATTER_TAGS_ENABLED;
   public String FORMATTER_ON_TAG = "@formatter:on";
   public String FORMATTER_OFF_TAG = "@formatter:off";
 
-  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP = false;
-  private volatile Pattern myFormatterOffPattern = null;
-  private volatile Pattern myFormatterOnPattern = null;
+  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP;
+  private volatile Pattern myFormatterOffPattern;
+  private volatile Pattern myFormatterOnPattern;
 
   @Nullable
   public Pattern getFormatterOffPattern() {
@@ -658,10 +659,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      boolean committedDocumentNeeded = false;
       for (FileIndentOptionsProvider provider : Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME)) {
         if (!isFullReformat || provider.useOnFullReformat()) {
-          committedDocumentNeeded |= provider instanceof ProviderForCommittedDocument;
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
             if (providerProcessor != null) {
@@ -674,28 +673,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      IndentOptions options = getIndentOptions(file.getFileType());
-      if (committedDocumentNeeded) {
-        markOptionsInaccurateIfDocumentUncommitted(options, file);
-      }
-      return options;
+      return getIndentOptions(file.getFileType());
     }
     else
       return OTHER_INDENT_OPTIONS;
   }
-
-  private static void markOptionsInaccurateIfDocumentUncommitted(@NotNull IndentOptions options, @NotNull PsiFile file) {
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = manager.getDocument(file);
-    if (document != null && !manager.isCommitted(document)) {
-      options.setRecalculateForCommittedDocument(true);
-    }
-  }
-
-  public static boolean isRecalculateForCommittedDocument(@NotNull IndentOptions options) {
-    return options.isRecalculateForCommittedDocument();
-  }
-
+  
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
     return
       formatRange != null &&
@@ -1019,4 +1002,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
+  public enum QuoteStyle {
+    Single("'"),
+    Double("\""),
+    None("");
+
+    public final String quote;
+
+    QuoteStyle(String quote) {
+      this.quote = quote;
+    }
+  }
 }

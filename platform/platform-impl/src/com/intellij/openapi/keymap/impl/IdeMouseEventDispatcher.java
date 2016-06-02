@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,12 +57,24 @@ import static java.awt.event.MouseEvent.*;
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
-  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<Container, BlockState>();
-  private int myLastHorScrolledComponentHash = 0;
+  private final ArrayList<AnAction> myActions = new ArrayList<>(1);
+  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<>();
+  private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
+  @JdkConstants.InputEventMask
   private int myModifiers;
+  @JdkConstants.InputEventMask
   private int myModifiersEx;
+
+  private static boolean myForceTouchIsAllowed = true;
+
+  public static void forbidForceTouch () {
+    myForceTouchIsAllowed = false;
+  }
+
+  public static boolean isForceTouchAllowed () {
+    return myForceTouchIsAllowed;
+  }
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -170,7 +183,9 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
+    @JdkConstants.InputEventMask
     int modifiers = e.getModifiers();
+    @JdkConstants.InputEventMask
     int modifiersEx = e.getModifiersEx();
     if (e.getID() == MOUSE_PRESSED) {
       myPressedModifiersStored = true;
@@ -178,6 +193,7 @@ public final class IdeMouseEventDispatcher {
       myModifiersEx = modifiersEx;
     }
     else if (e.getID() == MOUSE_RELEASED) {
+      myForceTouchIsAllowed = true;
       if (myPressedModifiersStored) {
         myPressedModifiersStored = false;
         modifiers = myModifiers;
@@ -255,8 +271,6 @@ public final class IdeMouseEventDispatcher {
           e.consume();
         }
       }
-      if (actions.length > 0 && e.isConsumed())
-        return true;
     }
     return e.getButton() > 3;
   }
@@ -311,6 +325,7 @@ public final class IdeMouseEventDispatcher {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
+             && UIUtil.isScrollEvent(mwe)
              && findHorizontalScrollBar(c) != null;
     }
     return false;

@@ -304,6 +304,30 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testInaccessibleSuperCallWhenQualifiedInline() throws Exception {
+    doTestConflict("Inlined method calls super.bar() which won't be accessed in class <b><code>B</code></b>");
+  }
+
+  public void testSuperCallWhenUnqualifiedInline() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testDeleteOverrideAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNegativeArguments() throws Exception {
+    doTest();
+  }
+
+  public void testInaccessibleFieldInSuperClass() throws Exception {
+    doTestConflict("Field <b><code>A.i</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>B.bar()</code></b>");
+  }
+
+  public void testPrivateFieldInSuperClassInSameFile() throws Exception {
+    doTest();
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);

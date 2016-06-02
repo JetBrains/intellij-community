@@ -47,7 +47,6 @@ import java.util.*;
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<>();
   private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
-  private CharSequence myText;
 
   public LayeredLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     super(highlighter, scheme);
@@ -117,11 +116,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   @Override
   public void setText(@NotNull final CharSequence text) {
-    // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    updateLayers();
-
-    myText = text;
-    super.setText(text);
+    if (updateLayers()) {
+      resetText(text);
+    } else {
+      super.setText(text);
+    }
   }
 
   @Override
@@ -155,15 +154,16 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   protected boolean updateLayers() { return false; }
 
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
   @Override
   public void documentChanged(DocumentEvent e) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean b = updateLayers();
+    boolean changed = updateLayers();
 
+    //noinspection SynchronizeOnThis
     synchronized (this) {
-      myText = e.getDocument().getCharsSequence();
-      if (b) {
-        setText(myText);
+      if (changed) {
+        super.setText(e.getDocument().getImmutableCharSequence());
       }
       else {
         super.documentChanged(e);
@@ -175,11 +175,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean b = updateLayers();
+    final boolean changed = updateLayers();
 
+    //noinspection SynchronizeOnThis
     synchronized (this) {
-      if (b) {
-        setText(myText);
+      if (changed) {
+        Document document = getDocument();
+        if (document != null) {
+          resetText(document.getImmutableCharSequence());
+        }
       }
       return new LayeredHighlighterIteratorImpl(startOffset);
     }

@@ -113,18 +113,15 @@ public class DownloadUtil {
     while (true) {
       final Ref<V> dataRef = Ref.create(null);
       final Ref<Exception> innerExceptionRef = Ref.create(null);
-      boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          indicator.setText(actionShortDescription);
-          try {
-            V data = supplier.call();
-            dataRef.set(data);
-          }
-          catch (Exception ex) {
-            innerExceptionRef.set(ex);
-          }
+      boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.setText(actionShortDescription);
+        try {
+          V data = supplier.call();
+          dataRef.set(data);
+        }
+        catch (Exception ex) {
+          innerExceptionRef.set(ex);
         }
       }, progressTitle, true, project);
       if (!completed) {

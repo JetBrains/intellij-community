@@ -7,9 +7,11 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.designer.DesignerToolWindowManager</implementation-class>
+      <headless-implementation-class></headless-implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.designer.palette.PaletteToolWindowManager</implementation-class>
+      <headless-implementation-class></headless-implementation-class>
     </component>
   </project-components>
 

@@ -76,16 +76,13 @@ public class ConcurrentBitSetTest extends TestCase {
 
     Thread[] threads = new Thread[N];
     for (int i=0; i<N;i++) {
-      Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          for (int i = 0; i < 10000; i++) {
-            for (int j = 0; j < L; j++) {
-              bitSet.flip(j);
-            }
+      Thread thread = new Thread(() -> {
+        for (int i1 = 0; i1 < 10000; i1++) {
+          for (int j = 0; j < L; j++) {
+            bitSet.flip(j);
           }
         }
-      },"conc bit set");
+      }, "conc bit set");
       threads[i] = thread;
       thread.start();
     }
@@ -102,16 +99,13 @@ public class ConcurrentBitSetTest extends TestCase {
 
     Thread[] threads = new Thread[N];
     for (int i=0; i<N;i++) {
-      Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < L; j++) {
-              bitSet.flip(j);
-            }
+      Thread thread = new Thread(() -> {
+        for (int i1 = 0; i1 < 100; i1++) {
+          for (int j = 0; j < L; j++) {
+            bitSet.flip(j);
           }
         }
-      },"conc bit stress");
+      }, "conc bit stress");
       threads[i] = thread;
       thread.start();
     }

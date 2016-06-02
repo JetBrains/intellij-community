@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class SliceLeafAnalyzer {
-  public static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
+class SliceLeafAnalyzer {
+  static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
     @Override
     public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
@@ -82,7 +82,7 @@ public class SliceLeafAnalyzer {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
-    List<SliceNode> childrenFiltered = new ArrayList<SliceNode>();
+    List<SliceNode> childrenFiltered = new ArrayList<>();
     if (oldRoot.myCachedChildren != null) {
       for (SliceNode child : oldRoot.myCachedChildren) {
         SliceNode childFiltered = filterTree(child, filter,postProcessor);
@@ -93,7 +93,7 @@ public class SliceLeafAnalyzer {
     }
     boolean success = postProcessor == null || postProcessor.process(filtered, childrenFiltered);
     if (!success) return null;
-    filtered.myCachedChildren = new ArrayList<SliceNode>(childrenFiltered);
+    filtered.myCachedChildren = new ArrayList<>(childrenFiltered);
     return filtered;
   }
 
@@ -110,30 +110,26 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public static SliceRootNode createTreeGroupedByValues(Collection<PsiElement> leaves, SliceRootNode oldRoot, final Map<SliceNode, Collection<PsiElement>> map) {
+  static SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+                                                 @NotNull SliceRootNode oldRoot,
+                                                 @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<SliceNode>(leaves.size());
+    root.myCachedChildren = new ArrayList<>(leaves.size());
 
     for (final PsiElement leafExpression : leaves) {
-      SliceNode newNode = filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
-        @Override
-        public SliceNode fun(SliceNode oldNode) {
-          if (oldNode.getDuplicate() != null) return null;
-          if (!node(oldNode, map).contains(leafExpression)) return null;
+      SliceNode newNode = filterTree(oldRootStart, oldNode -> {
+        if (oldNode.getDuplicate() != null) return null;
+        if (!node(oldNode, map).contains(leafExpression)) return null;
 
-          return oldNode.copy();
-        }
-      }, new PairProcessor<SliceNode, List<SliceNode>>() {
-        @Override
-        public boolean process(SliceNode node, List<SliceNode> children) {
-          if (!children.isEmpty()) return true;
-          PsiElement element = node.getValue().getElement();
-          if (element == null) return false;
-          return element.getManager().areElementsEquivalent(element, leafExpression); // leaf can be there only if it's filtering expression
-        }
+        return oldNode.copy();
+      }, (node, children) -> {
+        if (!children.isEmpty()) return true;
+        PsiElement element = node.getValue().getElement();
+        if (element == null) return false;
+        return element.getManager().areElementsEquivalent(element, leafExpression); // leaf can be there only if it's filtering expression
       });
 
       SliceLeafValueRootNode lvNode = new SliceLeafValueRootNode(root.getProject(), leafExpression, root, Collections.singletonList(newNode),
@@ -143,7 +139,7 @@ public class SliceLeafAnalyzer {
     return root;
   }
 
-  public static void startAnalyzeValues(@NotNull final AbstractTreeStructure treeStructure, @NotNull final Runnable finish) {
+  static void startAnalyzeValues(@NotNull final AbstractTreeStructure treeStructure, @NotNull final Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
 
@@ -236,9 +232,9 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
-                                                           @NotNull AbstractTreeStructure treeStructure,
-                                                           @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
+  static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
+                                                    @NotNull AbstractTreeStructure treeStructure,
+                                                    @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -250,17 +246,14 @@ public class SliceLeafAnalyzer {
           node(element, map).addAll(node(duplicate, map));
         }
         else {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              final SliceUsage sliceUsage = element.getValue();
+          ApplicationManager.getApplication().runReadAction(() -> {
+            final SliceUsage sliceUsage = element.getValue();
 
-              Collection<? extends AbstractTreeNode> children = element.getChildren();
-              if (children.isEmpty() && sliceUsage instanceof JavaSliceUsage) {
-                PsiElement value = ((JavaSliceUsage)sliceUsage).indexNesting == 0 ? sliceUsage.getElement() : null;
-                if (value != null) {
-                  node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
-                }
+            Collection<? extends AbstractTreeNode> children = element.getChildren();
+            if (children.isEmpty() && sliceUsage instanceof JavaSliceUsage) {
+              PsiElement value = ((JavaSliceUsage)sliceUsage).indexNesting == 0 ? sliceUsage.getElement() : null;
+              if (value != null) {
+                node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
               }
             }
           });

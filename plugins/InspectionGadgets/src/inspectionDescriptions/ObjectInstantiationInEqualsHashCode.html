@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports construction of (temporary) new objects inside an <b>equals()</b>, <b>hashCode()</b>, <b>compareTo</b> or
+<b>Comparator.compare()</b> method.
+This can cause significant performance problems when for example objects of classes with such constructs are added to a <b>Set</b> or <b>Map</b>,
+where these methods will be called often.
+This inspection will not warn when the objects are created in a <b>throw</b> or <b>assert</b> statement.
+<!-- tooltip end -->
+<p>
+<small>New in 2016.2</small>
+</body>
+</html>

@@ -84,6 +84,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateContext myContext;
   private JBPopup myContextPopup;
   private Dimension myLastSize;
+  private JPanel myTemplateOptionsPanel;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
@@ -165,7 +166,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gb.next().weighty(0));
 
-    panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
+    myTemplateOptionsPanel = new JPanel(new BorderLayout());
+    myTemplateOptionsPanel.add(createTemplateOptionsPanel());
+    panel.add(myTemplateOptionsPanel, gb.nextLine().next().next().coverColumn(2).weighty(1));
 
     panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
@@ -240,7 +243,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<String>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -274,17 +277,12 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(myCbReformat, gbConstraints);
 
     for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
-      if (!processor.isVisible(myTemplate)) continue;
+      if (!processor.isVisible(myTemplate, myContext)) continue;
       gbConstraints.gridy++;
       final JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);
       cb.setSelected(myOptions.get(processor).booleanValue());
-      cb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          myOptions.put(processor, cb.isSelected());
-        }
-      });
+      cb.addActionListener(e -> myOptions.put(processor, cb.isSelected()));
     }
 
     gbConstraints.weighty = 1;
@@ -314,40 +312,40 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(ctxLabel, BorderLayout.CENTER);
     panel.add(change, BorderLayout.EAST);
 
-    final Runnable updateLabel = new Runnable() {
-      @Override
-      public void run() {
-        myExpandByCombo.setEnabled(isExpandableFromEditor());
-        updateHighlighter();
+    final Runnable updateLabel = () -> {
+      myExpandByCombo.setEnabled(isExpandableFromEditor());
+      updateHighlighter();
 
-        StringBuilder sb = new StringBuilder();
-        String oldPrefix = "";
-        for (TemplateContextType type : getApplicableContexts()) {
-          final TemplateContextType base = type.getBaseContextType();
-          String ownName = UIUtil.removeMnemonic(type.getPresentableName());
-          String prefix = "";
-          if (base != null && !(base instanceof EverywhereContextType)) {
-            prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
-            ownName = StringUtil.decapitalize(ownName);
-          }
-          if (type instanceof EverywhereContextType) {
-            ownName = "Other";
-          }
-          if (sb.length() > 0) {
-            sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
-          }
-          if (!oldPrefix.equals(prefix)) {
-            sb.append(prefix);
-            oldPrefix = prefix;
-          }
-          sb.append(ownName);
+      StringBuilder sb = new StringBuilder();
+      String oldPrefix = "";
+      for (TemplateContextType type : getApplicableContexts()) {
+        final TemplateContextType base = type.getBaseContextType();
+        String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+        String prefix = "";
+        if (base != null && !(base instanceof EverywhereContextType)) {
+          prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+          ownName = StringUtil.decapitalize(ownName);
         }
-        final boolean noContexts = sb.length() == 0;
-        String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
-        ctxLabel.setText(StringUtil.first(contexts, 100, true));
-        ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
-        change.setText(noContexts ? "Define" : "Change");
+        if (type instanceof EverywhereContextType) {
+          ownName = "Other";
+        }
+        if (sb.length() > 0) {
+          sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
+        }
+        if (!oldPrefix.equals(prefix)) {
+          sb.append(prefix);
+          oldPrefix = prefix;
+        }
+        sb.append(ownName);
       }
+      final boolean noContexts = sb.length() == 0;
+      String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
+      ctxLabel.setText(StringUtil.first(contexts, 100, true));
+      ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
+      change.setText(noContexts ? "Define" : "Change");
+
+      myTemplateOptionsPanel.removeAll();
+      myTemplateOptionsPanel.add(createTemplateOptionsPanel());
     };
 
     new ClickListener() {
@@ -501,18 +499,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
     }
 
     CommandProcessor.getInstance().executeCommand(
-      null, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final Document document = myTemplateEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), myTemplate.getString());
-          }
-        });
-      }
-    },
+      null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final Document document = myTemplateEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), myTemplate.getString());
+      }),
       "",
       null
     );
@@ -544,12 +534,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private ArrayList<Variable> updateVariablesByTemplateText() {
     List<Variable> oldVariables = getCurrentVariables();
     
-    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, new Function<Variable, String>() {
-      @Override
-      public String fun(Variable variable) {
-        return variable.getName();
-      }
-    });
+    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, variable -> variable.getName());
     
     Map<String,Variable> newVariableNames = parseVariables();
 
@@ -595,22 +580,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     //todo[peter,kirillk] without these invokeLaters this requestFocus conflicts with com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.MyDialog.MyWindowListener.windowOpened()
     IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
     final ModalityState modalityState = ModalityState.stateForComponent(myKeyField);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
-              }
-            }, modalityState);
-          }
-        }, modalityState);
-      }
-    }, modalityState);
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
   private Map<String, Variable> parseVariables() {

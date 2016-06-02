@@ -31,11 +31,8 @@ import java.io.File;
 import java.util.List;
 
 public class SinglePathEntry implements AntClasspathEntry {
-  private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = new Function<VirtualFile, AntClasspathEntry>() {
-    public AntClasspathEntry fun(VirtualFile singlePathEntry) {
-      return fromVirtualFile(singlePathEntry);
-    }
-  };
+  private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE =
+    singlePathEntry -> fromVirtualFile(singlePathEntry);
 
   @NonNls static final String PATH = "path";
 

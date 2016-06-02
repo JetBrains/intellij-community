@@ -74,12 +74,7 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
 
   @NotNull
   private static List<PsiClass> collectImplementedTraits(@NotNull GrTypeDefinition typeDefinition) {
-    return ContainerUtil.findAll(typeDefinition.getSupers(), new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass aClass) {
-        return GrTraitUtil.isTrait(aClass);
-      }
-    });
+    return ContainerUtil.findAll(typeDefinition.getSupers(), aClass -> GrTraitUtil.isTrait(aClass));
   }
 
   @NotNull
@@ -116,12 +111,7 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
 
       @NotNull
       private String buildTraitString(@NotNull ClashingMethod entry) {
-        return StringUtil.join(entry.getSuperTraits(), new Function<GrTypeDefinition, String>() {
-          @Override
-          public String fun(GrTypeDefinition tr) {
-            return tr.getName();
-          }
-        }, ", ");
+        return StringUtil.join(entry.getSuperTraits(), tr -> tr.getName(), ", ");
       }
     };
   }

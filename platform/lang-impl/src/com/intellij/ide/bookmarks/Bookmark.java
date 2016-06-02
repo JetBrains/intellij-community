@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,12 +65,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
   private final VirtualFile myFile;
-  @NotNull private final OpenFileDescriptor myTarget;
+  @NotNull private OpenFileDescriptor myTarget;
   private final Project myProject;
 
   private String myDescription;
   private char myMnemonic = 0;
-  public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 11);
+  public static final Font MNEMONIC_FONT = new Font("Monospaced", Font.PLAIN, 11);
 
   public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
@@ -90,7 +90,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (i != 0) return i;
     i = myFile.getName().compareTo(o.getFile().getName());
     if (i != 0) return i;
-    return myTarget.compareTo(o.myTarget);
+    return getTarget().compareTo(o.getTarget());
   }
 
   public void updateHighlighter() {
@@ -150,22 +150,30 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
     final Document markupDocument = markup.getDocument();
     if (markupDocument.getLineCount() <= line) return;
-    final int startOffset = markupDocument.getLineStartOffset(line);
-    final int endOffset = markupDocument.getLineEndOffset(line);
+    RangeHighlighterEx highlighter = findMyHighlighter();
+    if (highlighter != null) {
+      highlighter.dispose();
+    }
+  }
+
+  private RangeHighlighterEx findMyHighlighter() {
+    final Document document = getDocument();
+    if (document == null) return null;
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
+    final Document markupDocument = markup.getDocument();
+    final int startOffset = 0;
+    final int endOffset = markupDocument.getTextLength();
 
     final Ref<RangeHighlighterEx> found = new Ref<RangeHighlighterEx>();
-    markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        GutterMark renderer = highlighter.getGutterIconRenderer();
-        if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
-          found.set(highlighter);
-          return false;
-        }
-        return true;
+    markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      GutterMark renderer = highlighter.getGutterIconRenderer();
+      if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
+        found.set(highlighter);
+        return false;
       }
+      return true;
     });
-    if (!found.isNull()) found.get().dispose();
+    return found.get();
   }
 
   public Icon getIcon() {
@@ -202,35 +210,53 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (!getFile().isValid()) {
       return false;
     }
-
-    // There is a possible case that target document line that is referenced by the current bookmark is removed. We assume
-    // that corresponding range marker becomes invalid then.
-    RangeMarker rangeMarker = myTarget.getRangeMarker();
-    return rangeMarker == null || rangeMarker.isValid();
+    if (getLine() ==-1) {
+      return true;
+    }
+    RangeHighlighterEx highlighter = findMyHighlighter();
+    return highlighter != null && highlighter.isValid();
   }
 
   @Override
   public boolean canNavigate() {
-    return myTarget.canNavigate();
+    return getTarget().canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return myTarget.canNavigateToSource();
+    return getTarget().canNavigateToSource();
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    myTarget.navigate(requestFocus);
+    getTarget().navigate(requestFocus);
   }
 
   public int getLine() {
+    int targetLine = myTarget.getLine();
+    if (targetLine == -1) return targetLine;
+    //What user sees in gutter
+    RangeHighlighterEx highlighter = findMyHighlighter();
+    if (highlighter != null && highlighter.isValid()) {
+      Document document = getDocument();
+      if (document != null) {
+        return document.getLineNumber(highlighter.getStartOffset());
+      }
+    }
     RangeMarker marker = myTarget.getRangeMarker();
     if (marker != null && marker.isValid()) {
       Document document = marker.getDocument();
       return document.getLineNumber(marker.getStartOffset());
     }
-    return myTarget.getLine();
+    return targetLine;
+  }
+
+  private OpenFileDescriptor getTarget() {
+    int line = getLine();
+    if (line != myTarget.getLine()) {
+      myTarget = new OpenFileDescriptor(myProject, myFile, line, -1, true);
+    }
+    return myTarget;
   }
 
   @Override
@@ -307,13 +333,9 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.setColor(new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          //noinspection UseJBColor
-          return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
-        }
+      g.setColor(new JBColor(() -> {
+        //noinspection UseJBColor
+        return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
       }));
       g.fillRect(x, y, getIconWidth(), getIconHeight());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.enumswitch;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -29,11 +30,13 @@ import java.util.Map;
 
 public class CreateEnumSwitchBranchesIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new EnumSwitchPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
@@ -54,7 +57,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
       return;
     }
     final PsiField[] fields = enumClass.getFields();
-    final List<PsiEnumConstant> missingEnumElements = new ArrayList<PsiEnumConstant>(fields.length);
+    final List<PsiEnumConstant> missingEnumElements = new ArrayList<>(fields.length);
     for (final PsiField field : fields) {
       if (!(field instanceof PsiEnumConstant)) {
         continue;
@@ -114,6 +117,13 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
   }
 
   private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
+    if (anchor instanceof PsiSwitchLabelStatement) {
+      PsiElement sibling = PsiTreeUtil.skipSiblingsBackward(anchor, PsiWhiteSpace.class);
+      while (sibling instanceof PsiSwitchLabelStatement) {
+        anchor = sibling;
+        sibling = PsiTreeUtil.skipSiblingsBackward(anchor, PsiWhiteSpace.class);
+      }
+    }
     final PsiElement parent = anchor.getParent();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
     final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + ":", anchor);

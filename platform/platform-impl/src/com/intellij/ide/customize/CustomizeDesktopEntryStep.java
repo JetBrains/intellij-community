@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
@@ -26,8 +25,6 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -35,11 +32,11 @@ import java.awt.*;
  */
 public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   public static boolean isAvailable() {
-    return CreateDesktopEntryAction.isAvailable();
+    return System.getProperty("idea.skip.desktop.entry.step") == null && CreateDesktopEntryAction.isAvailable();
   }
 
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
-  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users");
+  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users (requires superuser privileges)");
 
   public CustomizeDesktopEntryStep(String iconPath) {
     setLayout(new BorderLayout());
@@ -67,15 +64,11 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
     add(panel, BorderLayout.CENTER);
 
-    myCreateEntryCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
-        myGlobalEntryCheckBox.setSelected(myCreateEntryCheckBox.isSelected() && !PathManager.getHomePath().startsWith("/home"));
-      }
-    });
+    myCreateEntryCheckBox.addChangeListener(e -> myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected()));
+    myCreateEntryCheckBox.setSelected(!"true".equals(System.getProperty("idea.debug.mode")));
 
-    myCreateEntryCheckBox.setSelected(true);
+    myGlobalEntryCheckBox.setSelected(false);
+    myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
   }
 
   @Override

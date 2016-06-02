@@ -46,17 +46,15 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
 
   public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass,
                                   @Nullable final GlobalSearchScope resolveScope) {
-    super(null, project, new Function<String,Document>() {
-      public Document fun(final String s) {
-        PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-        final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
-        fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-        if (resolveScope != null) {
-          fragment.forceResolveScope(resolveScope);
-        }
-        fragment.putUserData(CLASS_NAME_REFERENCE_FRAGMENT, true);
-        return PsiDocumentManager.getInstance(project).getDocument(fragment);
+    super(null, project, s -> {
+      PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+      final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+      fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+      if (resolveScope != null) {
+        fragment.forceResolveScope(resolveScope);
       }
+      fragment.putUserData(CLASS_NAME_REFERENCE_FRAGMENT, true);
+      return PsiDocumentManager.getInstance(project).getDocument(fragment);
     }, selectedClass != null ? selectedClass.getQualifiedName() : "");
 
     myProject = project;

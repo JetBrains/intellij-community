@@ -25,7 +25,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.SetupRule
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.resolve.ast.bindable.BindableTransformContributor
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.transformations.impl.BindableTransformationSupport
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -85,7 +86,8 @@ class GrBindableSupportTest {
       def method = call.resolveMethod() as LightMethodBuilder
       assert method
       assert method.containingClass == clazz
-      assert method.originInfo == BindableTransformContributor.ORIGIN_INFO
+      assert method.originInfo == BindableTransformationSupport.ORIGIN_INFO
+      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE)
     }
   }
 
@@ -105,7 +107,7 @@ class GrBindableSupportTest {
       def method = call.resolveMethod() as LightMethodBuilder
       assert method
       assert method.containingClass == clazz
-      assert method.originInfo == BindableTransformContributor.ORIGIN_INFO
+      assert method.originInfo == BindableTransformationSupport.ORIGIN_INFO
     }
   }
 }

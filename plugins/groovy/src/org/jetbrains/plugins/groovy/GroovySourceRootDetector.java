@@ -46,12 +46,7 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
   @Override
   @NotNull
   protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
-    return new NullableFunction<CharSequence, String>() {
-      @Override
-      public String fun(CharSequence charSequence) {
-        return getPackageName(charSequence);
-      }
-    };
+    return charSequence -> getPackageName(charSequence);
   }
 
   @Nullable

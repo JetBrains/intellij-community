@@ -7,6 +7,6 @@ class A{
  public void foo(boolean bol){}
 
  {
-  foo(<caret>equals);
+  foo(x<caret>equals);
  }
 }

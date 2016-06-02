@@ -25,45 +25,39 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class IgnoreUnversionedAction extends AnAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+
+    if (!ChangeListManager.getInstance(project).isFreezedWithNotification(null)) {
+      List<VirtualFile> files = e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+      ChangesBrowserBase<?> browser = e.getData(ChangesBrowserBase.DATA_KEY);
+      Runnable callback = browser == null ? null : () -> {
+        browser.rebuildList();
+        //noinspection unchecked
+        browser.getViewer().excludeChanges((List)files);
+      };
+
+      IgnoreUnversionedDialog.ignoreSelectedFiles(project, files, callback);
+    }
+  }
+
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-    final List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    if (files == null) return;
-    removeNullFiles(files);
-    if (files.isEmpty()) return;
-
-    IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
-  }
-
-  private static void removeNullFiles(List<VirtualFile> files) {
-    for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
-      final VirtualFile next = iterator.next();
-      if (next == null) {
-        iterator.remove();
-      }
-    }
-  }
-
-  public void update(AnActionEvent e) {
     List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    if (files != null) {
-      removeNullFiles(files);
-    }
-    boolean enabled = files != null && !files.isEmpty();
-    e.getPresentation().setEnabled(enabled);
+
+    e.getPresentation().setEnabled(project != null && !ContainerUtil.isEmpty(files));
   }
 }
