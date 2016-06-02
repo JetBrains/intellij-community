@@ -17,6 +17,7 @@ package com.jetbrains.python.facet;
 
 import com.intellij.facet.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ public abstract class LibraryContributingFacet<T extends FacetConfiguration> ext
         }
       }
     });
+    Disposer.register(this, connection);
   }
 
   public abstract void updateLibrary();
