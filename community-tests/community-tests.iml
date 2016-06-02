@@ -49,5 +49,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="idea-ui" scope="TEST" />
   </component>
 </module>

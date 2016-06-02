@@ -15,6 +15,7 @@
  */
 package com.intellij.tests.gui;
 
+import com.intellij.tests.gui.fixtures.FrameworksTreeFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
 import com.intellij.tests.gui.framework.IdeGuiTest;
@@ -29,6 +30,8 @@ import java.io.IOException;
  */
 public class NewProjectTest extends GuiTestCase {
 
+
+  //Should run with main_idea_tests module classpath
   @Test @IdeGuiTest
   public void testNewProject() throws IOException, InterruptedException {
     String myName = "TestProject";
@@ -39,6 +42,10 @@ public class NewProjectTest extends GuiTestCase {
     findWelcomeFrame().createNewProject();
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();
     newProjectWizard.selectProjectType("Java");
+
+    final FrameworksTreeFixture frameworksTreeFixture = FrameworksTreeFixture.find(myRobot);
+    frameworksTreeFixture.selectFramework("Struts");
+
     //newProjectWizard.
 
     Thread.sleep(10000);
