@@ -296,22 +296,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private static String getRevisionInfo(@NotNull TreeNodeOnVcsRevision revision) {
+  private static String getRevisionInfo(@NotNull VcsFileRevision revision) {
     StringBuilder sb = new StringBuilder();
     // revision
     sb.append(RevisionColumnInfo.toString(revision, true)).append(" ");
 
     // author
-    VcsFileRevision vcsFileRevision = revision.getRevision();
-    sb.append(vcsFileRevision.getAuthor()).append(" ");
+    sb.append(revision.getAuthor()).append(" ");
 
     // date
     sb.append(formatDateTime(revision.getRevisionDate().getTime()));
 
     // committed by
-    if (vcsFileRevision instanceof VcsFileRevisionEx) {
-      if (!Comparing.equal(vcsFileRevision.getAuthor(), ((VcsFileRevisionEx)vcsFileRevision).getCommitterName())) {
-        sb.append(" (committed by ").append(((VcsFileRevisionEx)vcsFileRevision).getCommitterName()).append(")");
+    if (revision instanceof VcsFileRevisionEx) {
+      if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
+        sb.append(" (committed by ").append(((VcsFileRevisionEx)revision).getCommitterName()).append(")");
       }
     }
 
@@ -879,8 +878,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    CopyPasteManager.getInstance()
-      .setContents(new StringSelection(StringUtil.join(getSelectedRevisions(), MessageColumnInfo::getSubject, "\n")));
+    CopyPasteManager.getInstance().setContents(new StringSelection(
+      StringUtil.join(getSelectedRevisions(), revision -> getRevisionInfo(revision) + " " + MessageColumnInfo.getSubject(revision), "\n")));
   }
 
   @Override

@@ -402,12 +402,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
-  @Nullable
-  public Type getType() {
-    Value value = getValue();
-    return value != null ? value.type() : null;
-  }
-
   public NodeRenderer getRenderer (DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     Type type = getType();

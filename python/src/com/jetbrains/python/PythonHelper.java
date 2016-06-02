@@ -76,7 +76,7 @@ public enum PythonHelper implements HelperPackage {
   EXTRA_SYSPATH("extra_syspath.py"),
   SYSPATH("syspath.py"),
 
-  PEP8("pep8.py"),
+  PYCODESTYLE("pycodestyle.py"),
 
   REST_RUNNER("rest_runners/rst2smth.py"),
 

@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.javaFX.refactoring;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.rename.RenameXmlAttributeProcessor;
+import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -44,14 +43,23 @@ public class JavaFxRenameAttributeProcessor extends RenameXmlAttributeProcessor 
 
   @Override
   public void prepareRenaming(PsiElement element, String newName, Map<PsiElement, String> allRenames, SearchScope scope) {
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue refId = (XmlAttributeValue)element;
-      final PsiReference refIdReference = refId.getReference();
-      if (refIdReference != null) {
-        final PsiElement resolveRefId = refIdReference.resolve();
-        if (resolveRefId instanceof PsiField) {
-          allRenames.put(resolveRefId, newName);
+    visitReferencedElements(element.getReferences(), psiElement -> {
+      if (psiElement instanceof PsiNamedElement && psiElement != element) {
+        allRenames.put(psiElement, newName);
+      }
+    });
+  }
+
+  static void visitReferencedElements(PsiReference[] references, NullableConsumer<PsiElement> consumer) {
+    for (PsiReference reference : references) {
+      if (reference instanceof PsiPolyVariantReference) {
+        final ResolveResult[] resolveResults = ((PsiPolyVariantReference)reference).multiResolve(false);
+        for (ResolveResult resolveResult : resolveResults) {
+          consumer.consume(resolveResult.getElement());
         }
+      }
+      else {
+        consumer.consume(reference.resolve());
       }
     }
   }
