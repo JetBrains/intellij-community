@@ -48,6 +48,9 @@ class LinuxDistributionBuilder {
     if (new File(buildContext.paths.linuxJre).exists()) {
       buildTarGz(true)
     }
+    else {
+      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE directory doesn't exist: $buildContext.paths.linuxJre")
+    }
   }
 
   private void unixScripts() {

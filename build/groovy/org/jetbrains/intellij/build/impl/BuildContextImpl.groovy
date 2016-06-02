@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
@@ -42,13 +43,14 @@ class BuildContextImpl extends BuildContext {
 
   BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                   BuildOptions options = new BuildOptions()) {
+                   BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null) {
     this.projectBuilder = projectBuilder
     this.ant = ant
     this.project = project
     this.global = global
     this.productProperties = productProperties
     this.options = options
+    this.macHostProperties = macHostProperties
     underTeamCity = System.getProperty("teamcity.buildType.id") != null
     messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
 

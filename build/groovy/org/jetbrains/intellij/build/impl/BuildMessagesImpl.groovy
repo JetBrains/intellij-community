@@ -71,7 +71,7 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  void block(String blockName, Closure body) {
+  public <V> V block(String blockName, Closure<V> body) {
     try {
       //todo[nik] move this logic into DefaultBuildInfoPrinter?
       if (underTeamCity) {
@@ -81,7 +81,7 @@ class BuildMessagesImpl implements BuildMessages {
         info(blockName)
         indent++
       }
-      body()
+      return body()
     }
     finally {
       if (underTeamCity) {

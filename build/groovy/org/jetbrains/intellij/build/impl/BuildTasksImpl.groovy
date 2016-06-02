@@ -183,9 +183,9 @@ idea.fatal.error.notification=disabled
       linuxBuilder.layoutUnix(propertiesFile)
     }
 
-    MacDistributionBuilderImpl macBuilder = null
+    MacDistributionBuilder macBuilder = null
     buildContext.executeStep("Build Mac OS X distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
-      macBuilder = new MacDistributionBuilderImpl(buildContext)
+      macBuilder = new MacDistributionBuilder(buildContext)
       macBuilder.layoutMac(propertiesFile)
     }
 

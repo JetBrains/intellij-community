@@ -35,7 +35,14 @@ class BuildOptions {
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final MAC_DISTRIBUTION_STEP = "mac_dist"
+  static final MAC_DMG_STEP = "mac_dmg"
   static final LINUX_DISTRIBUTION_STEP = "linux_dist"
   static final WINDOWS_DISTRIBUTION_STEP = "windows_dist"
   static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+
+  /**
+   * Pass 'true' to this system property to produce an additional dmg archive for Mac OS X without bundled JRE
+   */
+  public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
+  boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
 }

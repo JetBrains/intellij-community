@@ -88,6 +88,11 @@ class MacProductProperties {
   boolean includeYourkitAgentInEAP = true
   List<String> extraMacBins = []
   String bundleIdentifier
+
+  /**
+   * Path to an image which will be injected into .dmg file
+   */
+  String dmgImagePath
 }
 
 class LinuxProductProperties {

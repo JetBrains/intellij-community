@@ -33,6 +33,7 @@ abstract class BuildContext {
   ApplicationInfoProperties applicationInfo
   JpsGantProjectBuilder projectBuilder
   ProductProperties productProperties
+  MacHostProperties macHostProperties
   BuildOptions options
 
   /**
@@ -73,8 +74,9 @@ abstract class BuildContext {
 
   public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions()) {
-    return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties, options)
+                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null) {
+    return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
+                                options, macHostProperties)
   }
 }
 
@@ -118,6 +120,11 @@ abstract class BuildPaths {
    * Path to a directory containing distribution of JRE for Linux which will be bundled with the product
    */
   String linuxJre
+
+  /**
+   * Path to a .tar.gz archive containing distribution of JRE for Mac OS X which will be bundled with the product
+   */
+  String macJreTarGz
 }
 
 interface BuildMessages {
@@ -130,5 +137,5 @@ interface BuildMessages {
   void error(String message)
 
   void progress(String message)
-  void block(String blockName, Closure body)
+  public <V> V block(String blockName, Closure<V> body)
 }

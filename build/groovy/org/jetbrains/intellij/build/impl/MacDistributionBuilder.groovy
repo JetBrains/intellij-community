@@ -16,16 +16,17 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 
 import java.time.LocalDate
 /**
  * @author nik
  */
-class MacDistributionBuilderImpl {
+class MacDistributionBuilder {
   private final BuildContext buildContext
   final String macDistPath
 
-  MacDistributionBuilderImpl(BuildContext buildContext) {
+  MacDistributionBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
     macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
   }
@@ -48,7 +49,16 @@ class MacDistributionBuilderImpl {
     Map<String, String> customIdeaProperties = ["idea.jre.check": "$buildContext.productProperties.toolsJarRequired"];
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     buildContext.productProperties.customMacLayout(macDistPath)
-    buildMacZip()
+    def macZipPath = buildMacZip()
+    if (buildContext.macHostProperties == null) {
+      buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
+      buildContext.notifyArtifactBuilt(macZipPath)
+    }
+    else {
+      buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
+        MacDmgBuilder.signAndBuildDmg(buildContext, buildContext.macHostProperties, macZipPath)
+      }
+    }
   }
 
   private void layoutMacApp(File ideaPropertiesFile, Map<String, String> customIdeaProperties, String docTypes) {
@@ -183,8 +193,8 @@ class MacDistributionBuilderImpl {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
-  void buildMacZip() {
-    buildContext.messages.block("Build zip archive for Mac OS") {
+  private String buildMacZip() {
+    return buildContext.messages.block("Build zip archive for Mac OS") {
       def extraBins = buildContext.productProperties.mac.extraMacBins
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = buildContext.productProperties.macAppRoot(buildContext.applicationInfo, buildContext.buildNumber)
@@ -228,7 +238,7 @@ class MacDistributionBuilderImpl {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
-      buildContext.notifyArtifactBuilt(targetPath)
+      return targetPath
     }
   }
 

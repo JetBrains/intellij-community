@@ -41,6 +41,7 @@ def getProperties(String home) {
       mac.urlSchemes = ["idea"]
       mac.includeYourkitAgentInEAP = false
       mac.bundleIdentifier = "com.jetbrains.intellij.ce"
+      mac.dmgImagePath = "$home/build/conf/mac/communitydmg.png"
     }
 
     def String appInfoFile() {
