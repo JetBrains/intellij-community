@@ -48,14 +48,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     setHasPty(commandLine instanceof PtyCommandLine);
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
-    if (myHasPty && SystemInfo.isWindows) { // explicitly destroy pty on process termination, see IDEA-156065
-      addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          getProcess().destroy();
-        }
-      });
-    }
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
