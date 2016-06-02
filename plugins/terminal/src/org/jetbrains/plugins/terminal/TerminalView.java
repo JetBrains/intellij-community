@@ -2,6 +2,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -18,7 +19,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -146,20 +146,14 @@ public class TerminalView {
 
   private void initDistractionFreeSwitcher(@NotNull final ToolWindow toolWindow, final ActionToolbar toolbar) {
     setInitialState(toolWindow, toolbar);
-    myProject.getMessageBus().connect()
-      .subscribe(ToggleDistractionFreeModeAction.TOPIC, new ToggleDistractionFreeModeAction.ToggleListener() {
-        @Override
-        public void onDistractionFreeModeEnter() {
-          if (shouldMakeToolWindowDistractionFree(toolWindow.getAnchor())) {
-            setToolWindowDistractionFree(true, toolbar, toolWindow);
-          }
-        }
-
-        @Override
-        public void onDistractionFreeModeLeave() {
-          setToolWindowDistractionFree(false, toolbar, (ToolWindowImpl)toolWindow);
-        }
-      });
+    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, (source) -> {
+      if (shouldMakeToolWindowDistractionFree(toolWindow.getAnchor())) {
+        setToolWindowDistractionFree(true, toolbar, toolWindow);
+      }
+      else {
+        setToolWindowDistractionFree(false, toolbar, toolWindow);
+      }
+    });
   }
 
   private static void setToolWindowDistractionFree(boolean distractionFree,

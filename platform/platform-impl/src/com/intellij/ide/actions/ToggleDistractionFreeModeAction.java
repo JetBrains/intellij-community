@@ -28,7 +28,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +35,6 @@ import javax.swing.*;
 import static java.lang.String.valueOf;
 
 public class ToggleDistractionFreeModeAction extends DumbAwareAction {
-  public static Topic<ToggleListener> TOPIC = Topic.create("dfm listener", ToggleListener.class);
   private static final String key = "editor.distraction.free.mode";
 
   @Override
@@ -68,12 +66,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     if (enter) {
       applyAndSave(p, ui, eo, ds, before, after, false);
       TogglePresentationModeAction.storeToolWindows(project);
-      project.getMessageBus().syncPublisher(TOPIC).onDistractionFreeModeEnter();
     }
     else {
       applyAndSave(p, ui, eo, ds, after, before, true);    
       TogglePresentationModeAction.restoreToolWindows(project, true, false);
-      project.getMessageBus().syncPublisher(TOPIC).onDistractionFreeModeLeave();
     }
 
     UISettings.getInstance().fireUISettingsChanged();
@@ -116,11 +112,4 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     RegistryValue value = Registry.get(key);
     value.setValue(!value.asBoolean());
   }
-
-  public interface ToggleListener {
-    void onDistractionFreeModeEnter();
-
-    void onDistractionFreeModeLeave();
-  }
-  
 }
