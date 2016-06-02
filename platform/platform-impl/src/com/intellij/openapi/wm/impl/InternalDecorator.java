@@ -35,7 +35,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -498,6 +497,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public int getHeaderHeight() {
     return myHeader.getPreferredSize().height;
+  }
+
+  public void setHeaderVisible(boolean value) {
+    myHeader.setVisible(value);
   }
 
   @Override

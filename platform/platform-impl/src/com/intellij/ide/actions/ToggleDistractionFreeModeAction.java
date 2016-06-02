@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import static java.lang.String.valueOf;
 
 public class ToggleDistractionFreeModeAction extends DumbAwareAction {
+  public static Topic<ToggleListener> TOPIC = Topic.create("dfm listener", ToggleListener.class);
   private static final String key = "editor.distraction.free.mode";
 
   @Override
@@ -51,9 +53,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RegistryValue value = Registry.get(key);
-    boolean enter = !value.asBoolean();
-    value.setValue(enter);
+    alternateCurrentDistractionFreeModeSetting();
+    boolean enter = isDistractionFreeModeEnabled();
 
     if (project == null) return;
 
@@ -67,10 +68,12 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     if (enter) {
       applyAndSave(p, ui, eo, ds, before, after, false);
       TogglePresentationModeAction.storeToolWindows(project);
+      project.getMessageBus().syncPublisher(TOPIC).onDistractionFreeModeEnter();
     }
     else {
       applyAndSave(p, ui, eo, ds, after, before, true);    
       TogglePresentationModeAction.restoreToolWindows(project, true, false);
+      project.getMessageBus().syncPublisher(TOPIC).onDistractionFreeModeLeave();
     }
 
     UISettings.getInstance().fireUISettingsChanged();
@@ -104,4 +107,20 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
     // @formatter:on
   }
+
+  public static boolean isDistractionFreeModeEnabled() {
+    return Registry.get(key).asBoolean();
+  }
+
+  private static void alternateCurrentDistractionFreeModeSetting() {
+    RegistryValue value = Registry.get(key);
+    value.setValue(!value.asBoolean());
+  }
+
+  public interface ToggleListener {
+    void onDistractionFreeModeEnter();
+
+    void onDistractionFreeModeLeave();
+  }
+  
 }
