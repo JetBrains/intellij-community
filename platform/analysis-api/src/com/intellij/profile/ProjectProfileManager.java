@@ -25,15 +25,15 @@ import static com.intellij.profile.DefaultProjectProfileManager.PROFILE;
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class ProjectProfileManager implements ProfileManager {
-  public abstract String getProfileName();
+public interface ProjectProfileManager extends ProfileManager {
+  String getProfileName();
 
-  public abstract String getProjectProfile();
+  String getProjectProfile();
 
-  public abstract void setProjectProfile(@Nullable String projectProfile);
+  void setProjectProfile(@Nullable String projectProfile);
 
   @NotNull
-  public static Element serializeProfile(@NotNull Profile profile) {
+  static Element serializeProfile(@NotNull Profile profile) {
     Element result = new Element(PROFILE);
     profile.writeExternal(result);
     return result;
