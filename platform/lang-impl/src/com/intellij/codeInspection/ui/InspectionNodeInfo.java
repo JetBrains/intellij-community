@@ -54,7 +54,7 @@ public class InspectionNodeInfo extends JPanel {
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile =
-      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
+      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
     boolean enabled = currentProfile.isToolEnabled(key);
 

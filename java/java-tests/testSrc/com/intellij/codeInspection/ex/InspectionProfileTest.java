@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.profile.ProjectProfileManager.serializeProfile;
+import static com.intellij.profile.ProfileEx.serializeProfile;
 import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
 
 /**

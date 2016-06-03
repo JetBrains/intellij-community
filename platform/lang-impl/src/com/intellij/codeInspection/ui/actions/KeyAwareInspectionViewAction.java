@@ -24,7 +24,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -83,7 +82,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       final boolean enabled = super.isEnabled(view, e);
       if (!enabled) return false;
       final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getProjectProfileImpl();
+      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getInspectionProfile();
       return profile.isToolEnabled(key);
     }
 
@@ -106,7 +105,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
               files.add(element);
             }
           }
-          ModifiableModel model = ((InspectionProfileImpl)profileManager.getProjectProfileImpl()).getModifiableModel();
+          ModifiableModel model = profileManager.getInspectionProfile().getModifiableModel();
           for (PsiElement element : files) {
             model.disableTool(key.toString(), element);
           }

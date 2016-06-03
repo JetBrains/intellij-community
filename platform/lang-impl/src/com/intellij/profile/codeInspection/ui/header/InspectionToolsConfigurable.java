@@ -90,7 +90,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private AuxiliaryRightPanel myAuxiliaryRightPanel;
   private Alarm mySelectionAlarm;
 
-  public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager,
+  public InspectionToolsConfigurable(@NotNull InspectionProjectProfileManager projectProfileManager,
                                      InspectionProfileManager profileManager) {
     myProjectProfileManager = projectProfileManager;
     myApplicationProfileManager = profileManager;

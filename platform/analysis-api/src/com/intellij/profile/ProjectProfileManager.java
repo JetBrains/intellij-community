@@ -15,11 +15,7 @@
  */
 package com.intellij.profile;
 
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.profile.DefaultProjectProfileManager.PROFILE;
 
 /**
  * User: anna
@@ -31,11 +27,4 @@ public interface ProjectProfileManager extends ProfileManager {
   String getProjectProfile();
 
   void setProjectProfile(@Nullable String projectProfile);
-
-  @NotNull
-  static Element serializeProfile(@NotNull Profile profile) {
-    Element result = new Element(PROFILE);
-    profile.writeExternal(result);
-    return result;
-  }
 }
