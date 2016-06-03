@@ -22,9 +22,13 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +52,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 
 public class CreatePatchConfigurationPanel {
-  private static final int WIDTH = 70;
+  private static final int TEXT_FIELD_WIDTH = 70;
 
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myFileNameField;
@@ -81,18 +85,9 @@ public class CreatePatchConfigurationPanel {
       }
     });
 
-    myFileNameField.setTextFieldPreferredWidth(WIDTH);
-    myBasePathField.setTextFieldPreferredWidth(WIDTH);
-    myBasePathField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        VirtualFile chosenFile = FileChooser
-          .chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myBasePathField, project, project.getBaseDir());
-        if (chosenFile != null) {
-          selectBasePath(chosenFile.getPath());
-        }
-      }
-    });
+    myFileNameField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
     selectBasePath(ObjectUtils.assertNotNull(myProject.getBasePath()));
     initEncodingCombo();
