@@ -558,19 +558,20 @@ public class ExpectedTypesProvider {
 
     @Override public void visitExpressionList(@NotNull PsiExpressionList list) {
       PsiResolveHelper helper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
-      if (list.getParent() instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
         CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
         Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, list, myExpr, myForCompletion));
       }
-      else if (list.getParent() instanceof PsiEnumConstant) {
-        getExpectedArgumentsTypesForEnumConstant((PsiEnumConstant)list.getParent(), list);
+      else if (parent instanceof PsiEnumConstant) {
+        getExpectedArgumentsTypesForEnumConstant((PsiEnumConstant)parent, list);
       }
-      else if (list.getParent() instanceof PsiNewExpression) {
-        getExpectedArgumentsTypesForNewExpression((PsiNewExpression)list.getParent(), list);
+      else if (parent instanceof PsiNewExpression) {
+        getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent, list);
       }
-      else if (list.getParent() instanceof PsiAnonymousClass) {
-        getExpectedArgumentsTypesForNewExpression((PsiNewExpression)list.getParent().getParent(), list);
+      else if (parent instanceof PsiAnonymousClass) {
+        getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent.getParent(), list);
       }
     }
 

@@ -260,7 +260,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void switchFromStubToAst(List<Pair<StubBasedPsiElementBase, AstPath>> bindings) {
     if (!bindings.isEmpty()) {
-      assert !myUseStrongRefs;
+      LOG.assertTrue(!myUseStrongRefs, this + " of " + getClass() + "; " + bindings);
     }
 
     for (Pair<StubBasedPsiElementBase, AstPath> pair : bindings) {

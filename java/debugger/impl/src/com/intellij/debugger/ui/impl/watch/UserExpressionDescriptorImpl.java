@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,8 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   @Nullable
   @Override
   public String getDeclaredType() {
-    Value value = getValue();
-    return value != null ? value.type().name() : null;
+    Type type = getType();
+    return type != null ? type.name() : null;
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {

@@ -160,6 +160,15 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private void abracadabraDaberBoreh() {
+    // we need to track if there are KeyBoardEvents in IdeEventQueue
+    // so we want to intercept all events posted to IdeEventQueue and increment counters
+    // However, we regular control flow goes like this:
+    //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
+    // Instead, we do following:
+    //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
+    //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
+    // since that the control flow goes like this:
+    //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
     try {
       Class<?> aClass = Class.forName("sun.awt.PostEventQueue");
       Constructor<?> constructor = aClass.getDeclaredConstructor(EventQueue.class);
@@ -536,7 +545,7 @@ public class IdeEventQueue extends EventQueue {
       Application app = ApplicationManager.getApplication();
 
       boolean weAreNotActive = app == null || !app.isActive();
-      weAreNotActive |=(e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null);
+      weAreNotActive |= e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null;
       if (weAreNotActive) {
         myWinMetaPressed = false;
         return e;
@@ -1149,7 +1158,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
-    return event instanceof KeyEvent && (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED || event.getID() == KeyEvent.KEY_TYPED);
+    return event instanceof KeyEvent;
   }
 
   @Override

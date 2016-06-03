@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -99,7 +100,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
           return;
         }
         createFromTemplate(taskDirectory.get(), manager.getTestsTemplate(project), view, false);
-        createFromTemplate(taskDirectory.get(), FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TASK_HTML), view, false);
+        createFromTemplate(taskDirectory.get(), FileTemplateManager.getInstance(project).getInternalTemplate(CCSettings.getInstance().useHtmlAsDefaultTaskFormat() ? EduNames.TASK_HTML : EduNames.TASK_MD), view, false);
         String defaultExtension = manager.getDefaultTaskFileExtension();
         if (defaultExtension != null) {
           FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);

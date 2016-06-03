@@ -68,6 +68,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   private boolean isValueCached;
   private int myCachedValue;
+  private int myOldValue;
 
   DefaultScrollBarUI() {
     this(13, 14, 10);
@@ -306,6 +307,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   private void updateThumbBounds() {
+    int value = 0;
     int min = myScrollBar.getMinimum();
     int max = myScrollBar.getMaximum();
     int range = max - min;
@@ -319,13 +321,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
-        int value = getValue();
+        value = getValue();
         int maxY = myTrackBounds.y + myTrackBounds.height - height;
         int y = (value < max - extent) ? (myTrackBounds.height - height) * (value - min) / (range - extent) : maxY;
-        y = adjust(y, myTrackBounds.y, maxY);
-        boolean moved = myThumbBounds.y != y || myThumbBounds.height != height;
-        myThumbBounds.setBounds(myTrackBounds.x, y, myTrackBounds.width, height);
-        if (moved) onThumbMove();
+        myThumbBounds.setBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
+        if (myOldValue != value) onThumbMove();
       }
     }
     else {
@@ -335,16 +335,15 @@ class DefaultScrollBarUI extends ScrollBarUI {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
-        int value = getValue();
+        value = getValue();
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
         int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
-        x = adjust(x, myTrackBounds.x, maxX);
-        boolean moved = myThumbBounds.x != x || myThumbBounds.width != width;
-        myThumbBounds.setBounds(x, myTrackBounds.y, width, myTrackBounds.height);
-        if (moved) onThumbMove();
+        myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
+        if (myOldValue != value) onThumbMove();
       }
     }
+    myOldValue = value;
   }
 
   private int getValue() {

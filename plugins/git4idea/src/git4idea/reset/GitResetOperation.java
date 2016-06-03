@@ -17,6 +17,8 @@ package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
@@ -183,12 +184,8 @@ public class GitResetOperation {
   }
 
   private static void saveAllDocuments() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(),
+                                                      ModalityState.defaultModalityState());
   }
 
 }

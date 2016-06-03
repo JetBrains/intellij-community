@@ -42,7 +42,8 @@ public class CCTreeStructureProvider extends StudyTreeStructureProvider {
           if (virtualFile == null) {
             continue;
           }
-          if (StudyUtils.getTaskFile(project, virtualFile) == null && !EduNames.TASK_HTML.equals(virtualFile.getName())) {
+          if (StudyUtils.getTaskFile(project, virtualFile) == null && !EduNames.TASK_HTML.equals(virtualFile.getName()) 
+              && !EduNames.TASK_MD.equals(virtualFile.getName())) {
             modifiedChildren.add(new CCStudentInvisibleFileNode(project, ((PsiFileNode)node).getValue(), settings));
           }
         }

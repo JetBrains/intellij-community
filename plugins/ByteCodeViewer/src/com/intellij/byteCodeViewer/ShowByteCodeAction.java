@@ -167,15 +167,24 @@ public class ShowByteCodeAction extends AnAction {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
       if (injectedEditor != null) {
-        PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, project);
-        psiElement = psiFile != null ? psiFile.findElementAt(injectedEditor.getCaretModel().getOffset()) : null;
+        psiElement = findElementInFile(PsiUtilBase.getPsiFileInEditor(injectedEditor, project), injectedEditor);
       }
 
       if (file != null && psiElement == null) {
-        psiElement = file.findElementAt(editor.getCaretModel().getOffset());
+        psiElement = findElementInFile(file, editor);
       }
     }
 
     return psiElement;
+  }
+
+  private static PsiElement findElementInFile(@Nullable PsiFile psiFile, Editor editor) {
+    if (psiFile == null) {
+      return null;
+    }
+    if (psiFile instanceof PsiCompiledFile) {
+      psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+    }
+    return psiFile.findElementAt(editor.getCaretModel().getOffset());
   }
 }

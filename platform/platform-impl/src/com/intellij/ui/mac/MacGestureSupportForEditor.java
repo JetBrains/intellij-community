@@ -58,15 +58,15 @@ public class MacGestureSupportForEditor {
                                                             0);
               action.beforeActionPerformedUpdate(actionEvent);
 
-              //if (presentation.isEnabled()) {
-              actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-              final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+              if (presentation.isEnabled()) {
+                actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
+                final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
-              //  if (context != null && !context.isShowing()) continue;
+                if (context != null && !context.isShowing()) continue;
 
-              action.actionPerformed(actionEvent);
+                action.actionPerformed(actionEvent);
 
-              // }
+              }
             }
           }
           e.consume();

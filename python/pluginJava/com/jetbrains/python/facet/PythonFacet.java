@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PythonFacet extends Facet<PythonFacetConfiguration> implements LibraryContributingFacet {
+public class PythonFacet extends LibraryContributingFacet<PythonFacetConfiguration> {
   public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<PythonFacet>("python");
 
   public PythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final PythonFacetConfiguration configuration,

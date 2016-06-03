@@ -74,7 +74,7 @@ public class InferenceVariable extends LightTypeParameter {
     if (variable != null) {
       for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
         if (boundType instanceof PsiClassType) {
-          final TypeAnnotationProvider annotationProvider = modifier.getTypeAnnotationProvider(inferenceVariableType, (PsiClassType)boundType);
+          final TypeAnnotationProvider annotationProvider = modifier.modifyAnnotations(inferenceVariableType, (PsiClassType)boundType);
           if (annotationProvider != null) {
             boundType = boundType.annotate(annotationProvider);
           }

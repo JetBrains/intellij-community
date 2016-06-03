@@ -11,11 +11,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 public abstract class JavaFxPropertyReference<T extends PsiElement> extends PsiReferenceBase<T> {
   protected final PsiClass myPsiClass;
 
-  public JavaFxPropertyReference(@NotNull T element, PsiClass aClass, boolean soft) {
-    super(element, soft);
-    myPsiClass = aClass;
-  }
-
   public JavaFxPropertyReference(@NotNull T element, PsiClass aClass) {
     super(element);
     myPsiClass = aClass;

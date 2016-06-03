@@ -65,7 +65,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     else {
       mySettingButton = myBalloon.new ActionButton(
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
-        "Configure Notification",
+        "Turn notification off or change its behavior",
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
           final NotificationsConfigurable configurable = new NotificationsConfigurable();
           ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
@@ -97,7 +97,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
-      "Close Notification (Alt-Click close all notifications)",
+      "Alt-click to close all notifications",
       event -> {
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection

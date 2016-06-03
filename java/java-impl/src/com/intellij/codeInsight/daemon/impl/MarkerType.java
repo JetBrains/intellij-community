@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -150,10 +149,10 @@ public class MarkerType {
   }
   @Nullable
   private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
-    Pair<PsiMethod, PsiClass> pair = FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method);
+    FindSuperElementsHelper.SiblingInfo pair = FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method);
     if (pair == null) return null;
-    PsiMethod superMethod = pair.getFirst();
-    PsiClass subClass = pair.getSecond();
+    PsiMethod superMethod = pair.superMethod;
+    PsiClass subClass = pair.subClass;
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 

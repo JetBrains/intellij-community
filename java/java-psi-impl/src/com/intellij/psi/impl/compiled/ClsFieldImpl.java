@@ -41,12 +41,12 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
-  private final NotNullLazyValue<PsiTypeElement> myType;
+  private final NotNullLazyValue<PsiTypeElement> myTypeElement;
   private final NullableLazyValue<PsiExpression> myInitializer;
 
   public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
-    myType = new AtomicNotNullLazyValue<PsiTypeElement>() {
+    myTypeElement = new AtomicNotNullLazyValue<PsiTypeElement>() {
       @NotNull
       @Override
       protected PsiTypeElement compute() {
@@ -86,7 +86,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public PsiTypeElement getTypeElement() {
-    return myType.getValue();
+    return myTypeElement.getValue();
   }
 
   @Override

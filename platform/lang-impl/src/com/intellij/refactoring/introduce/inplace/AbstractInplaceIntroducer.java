@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    * @return the declaration
    */
   @Nullable
-  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String[] names);
+  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, @NotNull String[] names);
 
   /**
    * Returns the suggested names for the introduced element.
@@ -184,6 +184,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    * @param variable   introduced element declaration, if already created.
    * @return the suggested names
    */
+  @NotNull
   protected abstract String[] suggestNames(boolean replaceAll, @Nullable V variable);
 
   protected abstract void performIntroduce();
@@ -192,13 +193,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public abstract boolean isReplaceAllOccurrences();
   public abstract void setReplaceAllOccurrences(boolean allOccurrences);
   @Override
+  @Nullable
   protected abstract JComponent getComponent();
 
   protected abstract void saveSettings(@NotNull V variable);
   @Override
+  @Nullable
   protected abstract V getVariable();
 
-  public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
+  public abstract E restoreExpression(@NotNull PsiFile containingFile, @NotNull V variable, @NotNull RangeMarker marker, @Nullable String exprText);
 
   /**
    * Begins the in-place refactoring operation.
@@ -595,7 +598,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String getRefactoringId() {
     return null;
   }
-  
+
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return super.startsOnTheSameElement(handler, element) || getLocalVariable() == element;
