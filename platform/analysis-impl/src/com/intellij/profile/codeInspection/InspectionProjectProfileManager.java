@@ -21,23 +21,23 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.ProjectProfileManager;
+import com.intellij.profile.ProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
-public interface InspectionProjectProfileManager extends ProjectProfileManager, SeverityProvider, PersistentStateComponent<Element> {
+public interface InspectionProjectProfileManager extends ProfileManager, SeverityProvider, PersistentStateComponent<Element> {
   static InspectionProjectProfileManager getInstance(Project project){
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
   void addProfilesListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 
-  @Override
   default String getProfileName() {
     return getInspectionProfile().getName();
   }
@@ -65,4 +65,6 @@ public interface InspectionProjectProfileManager extends ProjectProfileManager, 
   default Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
   }
+
+  void setProjectProfile(@Nullable String projectProfile);
 }

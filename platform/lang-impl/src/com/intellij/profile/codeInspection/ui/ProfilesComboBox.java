@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
-import com.intellij.profile.ProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +83,7 @@ public class ProfilesComboBox extends JComboBox {
         }
         else if (ItemEvent.SELECTED == e.getStateChange()) {
           final Object item = e.getItem();
-          if (profileManager instanceof ProjectProfileManager && item instanceof Profile && !((Profile)item).isProjectLevel()) {
+          if (profileManager instanceof InspectionProjectProfileManager && item instanceof Profile && !((Profile)item).isProjectLevel()) {
             if (Messages.showOkCancelDialog(InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.message"),
                                             InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.title"),
                                             Messages.getErrorIcon()) == Messages.OK) {
@@ -137,14 +137,14 @@ public class ProfilesComboBox extends JComboBox {
     Object oldSelection = getSelectedItem();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)getModel();
     model.removeAllElements();
-    if (noneItemAppearance && profileManager instanceof ProjectProfileManager) {
+    if (noneItemAppearance && profileManager instanceof InspectionProjectProfileManager) {
       model.addElement(USE_GLOBAL_PROFILE);
     }
     for (Profile profile : availableProfiles) {
       model.addElement(profile);
     }
     if (selectedProfile != null && ((!selectedProfile.isProjectLevel() && profileManager instanceof ApplicationProfileManager) ||
-                                    (selectedProfile.isProjectLevel() && profileManager instanceof ProjectProfileManager))) {
+                                    (selectedProfile.isProjectLevel() && profileManager instanceof InspectionProjectProfileManager))) {
       setSelectedItem(selectedProfile);
     }
     else {

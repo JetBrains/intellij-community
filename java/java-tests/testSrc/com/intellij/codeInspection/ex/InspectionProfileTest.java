@@ -28,6 +28,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
@@ -91,7 +92,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl localProfile = createProfile();
     profileManager.updateProfile(localProfile);
 
-    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(getProject());
+    InspectionProjectProfileManagerImpl projectProfileManager = InspectionProjectProfileManagerImpl.getInstanceImpl(getProject());
     try {
       //normally on open project profile wrappers are init for both managers
       profileManager.updateProfile(localProfile);

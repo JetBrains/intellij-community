@@ -87,6 +87,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -215,7 +216,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProfileImpl.initAndDo((Computable)() -> {
       InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
-      InspectionProjectProfileManager.getInstance(project).setProjectProfile(profile.getName());
+      InspectionProjectProfileManagerImpl.getInstanceImpl(project).setProjectProfile(profile.getName());
       return null;
     });
   }
@@ -995,7 +996,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Assert.assertNotNull("Cannot find handler for: " + targetElement, handler);
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
-    if (scope != null) options.searchScope = scope; 
+    if (scope != null) options.searchScope = scope;
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);
     }
@@ -1470,7 +1471,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureByFileInner(@NotNull VirtualFile copy) {
     return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy));
   }
-  
+
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 

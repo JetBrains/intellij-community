@@ -60,7 +60,7 @@ private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles", stateSplitter = ProfileStateSplitter::class)))
 class InspectionProjectProfileManagerImpl(private val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
-                                          private val holder: DependencyValidationManager,
+                                          private val scopeManager: DependencyValidationManager,
                                           private val localScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
@@ -78,7 +78,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   private val profiles = THashMap<String, InspectionProfile>()
   private val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
-  private var projectProfile: String? = null
+  private var state = State()
 
   @OptionTag("USE_PROJECT_PROFILE")
   private var useProjectProfile = true
@@ -105,6 +105,11 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
         }
       }
     })
+  }
+
+  private class State {
+    @OptionTag("PROJECT_PROFILE")
+    var projectProfile: String? = null
   }
 
   override fun getProject() = project
@@ -167,10 +172,10 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
         }
       }
       profileManager.apply {
-        holder.addScopeListener(scopeListener!!)
+        scopeManager.addScopeListener(scopeListener!!)
         localScopesHolder.addScopeListener(scopeListener!!)
         Disposer.register(project, Disposable {
-          holder.removeScopeListener(scopeListener!!)
+          scopeManager.removeScopeListener(scopeListener!!)
           localScopesHolder.removeScopeListener(scopeListener!!)
         })
       }
@@ -266,11 +271,11 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   }
 
   private val isCustomProfileUsed: Boolean
-    get() = projectProfile != null && !Comparing.strEqual(projectProfile, PROJECT_DEFAULT_PROFILE_NAME)
+    get() = state.projectProfile != null && !Comparing.strEqual(state.projectProfile, PROJECT_DEFAULT_PROFILE_NAME)
 
   override fun getProfile(name: String) = getProfile(name, true)
 
-  override fun getScopesManager() = holder
+  override fun getScopesManager() = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<Profile> {
     inspectionProfile
@@ -279,16 +284,16 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
 
   @Synchronized override fun getAvailableProfileNames() = profiles.keys.toTypedArray()
 
-  @OptionTag("PROJECT_PROFILE")
-  @Synchronized override fun getProjectProfile() = projectProfile
+   val projectProfile: String?
+    get() = state.projectProfile
 
   @Synchronized override fun setProjectProfile(newProfile: String?) {
-    if (Comparing.strEqual(newProfile, projectProfile)) {
+    if (Comparing.strEqual(newProfile, state.projectProfile)) {
       return
     }
 
-    val oldProfile = projectProfile
-    projectProfile = newProfile
+    val oldProfile = state.projectProfile
+    state.projectProfile = newProfile
     useProjectProfile = newProfile != null
     if (oldProfile != null) {
       for (adapter in profileListeners) {
@@ -301,18 +306,18 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     if (!useProjectProfile) {
       return applicationProfileManager.rootProfile as InspectionProfile
     }
-    if (projectProfile == null || profiles.isEmpty) {
-      projectProfile = PROJECT_DEFAULT_PROFILE_NAME
+    if (state.projectProfile == null || profiles.isEmpty) {
+      state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
       val projectProfile = applicationProfileManager.createProfile()
       projectProfile.copyFrom(applicationProfileManager.rootProfile)
       projectProfile.isProjectLevel = true
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
       profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile as InspectionProfile?)
     }
-    else if (!profiles.containsKey(projectProfile)) {
-      projectProfile = profiles.keys.iterator().next()
+    else if (!profiles.containsKey(state.projectProfile)) {
+      state.projectProfile = profiles.keys.iterator().next()
     }
-    val profile = profiles.get(projectProfile)!!
+    val profile = profiles.get(state.projectProfile)!!
     if (profile.isProjectLevel) {
       profile.profileManager = this
     }
@@ -342,7 +347,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   }
 
   fun convert(element: Element) {
-    if (projectProfile != null) {
+    if (state.projectProfile != null) {
       (inspectionProfile as ProfileEx).convert(element, project)
     }
   }
