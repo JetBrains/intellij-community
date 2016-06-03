@@ -25,13 +25,13 @@ class BuildOptions {
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
    */
-  public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.useCompiledClasses"
+  public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
   boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false)
 
   /**
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skipBuildSteps' system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = System.getProperty("intellij.build.skipBuildSteps", "").split(",") as Set<String>
+  Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final MAC_DISTRIBUTION_STEP = "mac_dist"
