@@ -53,7 +53,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       }
     }
     Rectangle r = rectangleForCurrentValue();
-    g.setColor(getComboBackGround());
+    g.setColor(getComboBackground());
     g.fillRect(JBUI.scale(1), JBUI.scale(1), w-2*JBUI.scale(1), h-2*JBUI.scale(1));
     if (!isTableCellEditor(c)) {
       paintBorder(c, g, 0, 0, w, h);
@@ -63,7 +63,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     paintCurrentValue(g, r, hasFocus);
   }
 
-  protected Color getComboBackGround() {
+  protected Color getComboBackground() {
     if (!comboBox.isEnabled() && !comboBox.isEditable()) {
       return UIManager.getColor("ComboBox.disabledBackground");
     }
@@ -88,7 +88,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void paint(Graphics g) {
-        g.setColor(getComboBackGround());
+        g.setColor(getComboBackground());
         g.fillRect(0, 0, getWidth(), getHeight());
         IconUtil.paintInCenterOf(this, g, MacIntelliJIconCache.getIcon("winCheckSign"));
       }
