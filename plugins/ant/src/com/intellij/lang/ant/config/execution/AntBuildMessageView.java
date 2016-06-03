@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -577,16 +577,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
     }
 
-    public void projectOpened(Project project) {
-    }
-
     public void projectClosed(Project project) {
       if (myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
-    }
-
-    public void projectClosing(Project project) {
     }
 
     public boolean canCloseProject(Project project) {
@@ -612,10 +606,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
 
       final int result = Messages.showYesNoCancelDialog(
-        AntBundle.message("ant.process.is.active.terminate.confirmation.text"), 
+        AntBundle.message("ant.process.is.active.terminate.confirmation.text"),
         AntBundle.message("close.ant.build.messages.dialog.title"), Messages.getQuestionIcon()
       );
-      
+
       if (result == 0) { // yes
         messageView.stopProcess();
         myCloseAllowed = true;

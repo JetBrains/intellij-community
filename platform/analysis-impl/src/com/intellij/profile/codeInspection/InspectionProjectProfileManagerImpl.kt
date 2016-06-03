@@ -21,10 +21,15 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.MainConfigurationStateSplitter
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
@@ -56,7 +61,7 @@ private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 class InspectionProjectProfileManagerImpl(private val myProject: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val myHolder: DependencyValidationManager,
-                                          private val myLocalScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager, ProjectComponent {
+                                          private val myLocalScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): InspectionProjectProfileManagerImpl {
@@ -77,6 +82,30 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
 
   @OptionTag("USE_PROJECT_PROFILE")
   private var useProjectProfile = true
+
+  init {
+    project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
+      override fun projectClosed(project: Project?) {
+        val cleanupInspectionProfilesRunnable = {
+          for (wrapper in nameToProfile.values) {
+            wrapper.cleanup(myProject)
+          }
+          for (wrapper in appNameToProfile.values) {
+            wrapper.cleanup(myProject)
+          }
+          fireProfilesShutdown()
+        }
+
+        val app = ApplicationManager.getApplication()
+        if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+          cleanupInspectionProfilesRunnable.invoke()
+        }
+        else {
+          app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
+        }
+      }
+    })
+  }
 
   override fun getProject() = myProject
 
@@ -113,15 +142,15 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
     nameToProfile.remove(name)?.cleanup(myProject)
   }
 
-  override fun projectOpened() {
-    // upsource
-    val startupManager = StartupManager.getInstance(myProject) ?: return
-    startupManager.registerPostStartupActivity {
-      val inspectionProfile = inspectionProfile
+  @Suppress("unused")
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity {
+    override fun runActivity(project: Project) {
+      val profileManager = getInstanceImpl(project)
+      val inspectionProfile = profileManager.inspectionProfile
       val app = ApplicationManager.getApplication()
       val initInspectionProfilesRunnable = {
-        initProfileWrapper(inspectionProfile)
-        fireProfilesInitialized()
+        profileManager.initProfileWrapper(inspectionProfile)
+        profileManager.fireProfilesInitialized()
       }
       if (app.isUnitTestMode || app.isHeadlessEnvironment) {
         initInspectionProfilesRunnable.invoke()
@@ -132,17 +161,19 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
       else {
         app.executeOnPooledThread(initInspectionProfilesRunnable)
       }
-      scopeListener = NamedScopesHolder.ScopeListener {
-        for (profile in profiles.values) {
+      profileManager.scopeListener = NamedScopesHolder.ScopeListener {
+        for (profile in profileManager.profiles.values) {
           profile.scopesChanged()
         }
       }
-      myHolder.addScopeListener(scopeListener!!)
-      myLocalScopesHolder.addScopeListener(scopeListener!!)
-      Disposer.register(myProject, Disposable {
-        myHolder.removeScopeListener(scopeListener!!)
-        myLocalScopesHolder.removeScopeListener(scopeListener!!)
-      })
+      profileManager.apply {
+        myHolder.addScopeListener(scopeListener!!)
+        myLocalScopesHolder.addScopeListener(scopeListener!!)
+        Disposer.register(myProject, Disposable {
+          myHolder.removeScopeListener(scopeListener!!)
+          myLocalScopesHolder.removeScopeListener(scopeListener!!)
+        })
+      }
     }
   }
 
@@ -156,25 +187,6 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
     }
     else {
       appNameToProfile.put(profile.name, wrapper)
-    }
-  }
-
-  override fun projectClosed() {
-    val app = ApplicationManager.getApplication()
-    val cleanupInspectionProfilesRunnable = {
-      for (wrapper in nameToProfile.values) {
-        wrapper.cleanup(myProject)
-      }
-      for (wrapper in appNameToProfile.values) {
-        wrapper.cleanup(myProject)
-      }
-      fireProfilesShutdown()
-    }
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      cleanupInspectionProfilesRunnable.invoke()
-    }
-    else {
-      app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
     }
   }
 
@@ -333,14 +345,6 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
     if (projectProfile != null) {
       (inspectionProfile as ProfileEx).convert(element, project)
     }
-  }
-
-  override fun getComponentName() = "InspectionProjectProfileManager"
-
-  override fun initComponent() {
-  }
-
-  override fun disposeComponent() {
   }
 }
 

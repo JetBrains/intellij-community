@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -575,10 +575,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectOpened(final Project project) {
-    }
-
-    @Override
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
@@ -598,10 +594,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         myContent = null;
       }
       return canClose;
-    }
-
-    @Override
-    public void projectClosing(final Project project) {
     }
 
     private boolean closeQuery(boolean modal) {

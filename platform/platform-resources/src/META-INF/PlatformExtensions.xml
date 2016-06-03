@@ -436,5 +436,7 @@
 
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
+
+    <postStartupActivity implementation="com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl$ProjectInspectionProfileStartUpActivity"/>
   </extensions>
 </idea-plugin>
