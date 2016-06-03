@@ -98,7 +98,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
-  private volatile boolean mySingleInspectionRun;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -156,7 +155,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void addView(@NotNull InspectionResultsView view) {
     addView(view, view.getCurrentProfileName() == null
                   ? InspectionsBundle.message("inspection.results.title")
-                  : InspectionsBundle.message(mySingleInspectionRun ?
+                  : InspectionsBundle.message(!getCurrentProfile().isEditable() ?
                                               "inspection.results.for.inspection.toolwindow.title" :
                                               "inspection.results.for.profile.toolwindow.title",
                                               view.getCurrentProfileName(), getCurrentScope().getShortenName()), false);
@@ -975,14 +974,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isViewClosed() {
     return myViewClosed;
-  }
-
-  public void setSingleInspectionRun(boolean singleInspectionRun) {
-    mySingleInspectionRun = singleInspectionRun;
-  }
-
-  public boolean isSingleInspectionRun() {
-    return mySingleInspectionRun;
   }
 
   private InspectionRVContentProvider createContentProvider() {
