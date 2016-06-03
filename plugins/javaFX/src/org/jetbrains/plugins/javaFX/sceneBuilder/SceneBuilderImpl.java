@@ -46,7 +46,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
@@ -105,14 +104,14 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
-    FXMLLoader.setDefaultClassLoader(SceneBuilderImpl.class.getClassLoader());
 
     final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
       .runReadActionInSmartMode(this::collectCustomComponents);
+    myClassLoader = createProjectContentClassLoader(myProject);
+    FXMLLoader.setDefaultClassLoader(myClassLoader);
 
     myEditorController = new EditorController();
     if (!customComponents.isEmpty()) {
-      myClassLoader = createCustomComponentClassLoader(myProject);
       myEditorController.setLibrary(new CustomLibrary(myClassLoader, customComponents));
     }
     HierarchyTreeViewController componentTree = new HierarchyTreeViewController(myEditorController);
@@ -260,7 +259,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @NotNull
-  private static URLClassLoader createCustomComponentClassLoader(Project project) {
+  private static URLClassLoader createProjectContentClassLoader(Project project) {
     final List<String> pathList = ApplicationManager.getApplication().runReadAction((Computable<List<String>>)() ->
       OrderEnumerator.orderEntries(project).productionOnly().withoutSdk().recursively().getPathsList().getPathList());
 
@@ -319,6 +318,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
     try {
       if (myClassLoader != null) {
+        FXMLLoader.setDefaultClassLoader(SceneBuilderImpl.class.getClassLoader());
         myClassLoader.close();
         myClassLoader = null;
       }

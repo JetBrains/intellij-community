@@ -99,6 +99,7 @@ public class ExtractMethodHelper {
     try {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
           return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
         }, RefactoringBundle.message("searching.for.duplicates"), true, project);
     }

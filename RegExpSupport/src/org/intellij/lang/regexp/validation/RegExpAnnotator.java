@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -55,6 +56,27 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     finally {
       myHolder = null;
+    }
+  }
+
+  @Override
+  public void visitRegExpOptions(RegExpOptions options) {
+    checkValidFlag(options.getOptionsOn(), options);
+    checkValidFlag(options.getOptionsOff(), options);
+  }
+
+  private void checkValidFlag(@Nullable ASTNode optionsNode, @NotNull RegExpOptions context) {
+    if (optionsNode == null) {
+      return;
+    }
+    final String text = optionsNode.getText();
+    final int start = (optionsNode.getElementType() == RegExpTT.OPTIONS_OFF) ? 1 : 0; // skip '-' if necessary
+    for (int i = start, length = text.length(); i < length; i++) {
+      final int c = text.codePointAt(i);
+      if (!Character.isBmpCodePoint(c) || !myLanguageHosts.supportsInlineOptionFlag((char)c, context)) {
+        final int offset = optionsNode.getStartOffset() + i;
+        myHolder.createErrorAnnotation(new TextRange(offset, offset + 1), "Unknown inline option flag");
+      }
     }
   }
 

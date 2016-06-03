@@ -189,7 +189,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   private static void doTest(String clsPath, String txtPath) {
-    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).findFileByPath(clsPath);
+    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
     String expected;

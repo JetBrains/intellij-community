@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpProperty;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +47,12 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
     return null;
   }
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof RegExpGroup) {
-      return "Capturing Group: " + ((RegExpElement)element).getUnescapedText();
+      final RegExpGroup group = (RegExpGroup)element;
+      return StringUtil.escapeXml(group.getUnescapedText());
     } else {
       return null;
     }

@@ -472,18 +472,4 @@ public class TestsPresentationUtil {
         break;
     }
   }
-
-  public static void printWithAnsiColoring(@NotNull final Printer printer, @NotNull String text, @NotNull final Key processOutputType) {
-    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
-      @Override
-      public void coloredTextAvailable(String text, Key attributes) {
-        ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(attributes);
-        if (contentType == null || contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
-          contentType = ConsoleViewContentType.getConsoleViewType(processOutputType);
-        }
-        printer.print(text, contentType);
-      }
-    });
-  }
 }

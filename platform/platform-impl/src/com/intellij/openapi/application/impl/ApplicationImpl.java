@@ -24,7 +24,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.*;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
@@ -33,7 +32,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
@@ -489,6 +487,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+      //noinspection TestOnlyProblems
       LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
     }
   }
@@ -496,12 +495,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @TestOnly
   public String writeActionStatistics() {
     return writePauses.statistics();
-  }
-
-  @NotNull
-  @Override
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.getAppComponents();
   }
 
   @Override
