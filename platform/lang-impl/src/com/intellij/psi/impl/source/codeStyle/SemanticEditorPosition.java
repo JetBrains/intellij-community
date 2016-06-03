@@ -88,6 +88,20 @@ public abstract class SemanticEditorPosition {
     }
     return this;
   }
+
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                                            @NotNull SyntaxElement rightParenthesis) {
+    while (!myIterator.atEnd()) {
+      if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
+        beforeParentheses(leftParenthesis, rightParenthesis);
+      }
+      else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
+        break; 
+      }
+      myIterator.retreat();
+    }
+    return this;
+  }
   
   public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
     myIterator.retreat();

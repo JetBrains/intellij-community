@@ -54,7 +54,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     ForKeyword,
     BlockComment,
     DocBlockStart,
-    DocBlockEnd
+    DocBlockEnd,
+    Comma
   }
   
   
@@ -79,7 +80,22 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
     if (getPosition(editor, offset).matchesRule(
       position -> position.isAt(Whitespace) &&
                   position.isAtMultiline())) {
-      if (getPosition(editor, offset).matchesRule(
+      //noinspection StatementWithEmptyBody
+      if (getPosition(editor, offset).before().isAt(Comma)) {
+        // TODO: Add support
+      }
+      else if (getPosition(editor, offset + 1).isAt(BlockClosingBrace)) {
+        return myFactory.createIndentCalculator(
+          NONE,
+          position -> {
+            position.findLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
+            if (!position.isAtEnd()) {
+              return getBlockStartOffset(position);
+            }
+            return -1;
+          });
+      }
+      else if (getPosition(editor, offset).matchesRule(
         position -> position
           .before()
           .beforeOptional(Semicolon)

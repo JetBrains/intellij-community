@@ -52,6 +52,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.C_STYLE_COMMENT, BlockComment);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_START, DocBlockStart);
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_END, DocBlockEnd);
+    SYNTAX_MAP.put(JavaTokenType.COMMA, Comma);
   }
   
   @Nullable
