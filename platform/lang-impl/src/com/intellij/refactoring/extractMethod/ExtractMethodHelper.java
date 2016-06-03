@@ -86,15 +86,12 @@ public class ExtractMethodHelper {
    * @param searchScopes    scopes where to look them in
    * @param generatedMethod new method that should be excluded from the search
    * @return list of discovered duplicate code fragments or empty list if user interrupted the search 
-   * @see #replaceDuplicatesWithPrompt(List, PsiElement, Editor, Consumer) 
+   * @see #replaceDuplicates(PsiElement, Editor, Consumer, List)  
    */
   @NotNull
   public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
                                                     @NotNull List<PsiElement> searchScopes,
                                                     @NotNull PsiElement generatedMethod) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return finder.findDuplicates(searchScopes, generatedMethod);
-    }
     final Project project = generatedMethod.getProject();
     try {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -112,27 +109,17 @@ public class ExtractMethodHelper {
   /**
    * Notifies user about found duplicates and then highlights each of them in the editor and asks user how to proceed.
    *
-   * @param duplicates  discovered duplicates of extracted code fragment
-   * @param replacement generated expression or statement that contains invocation of the new method
+   * @param callElement generated expression or statement that contains invocation of the new method
    * @param editor      instance of editor where refactoring is performed
    * @param replacer    strategy of substituting each duplicate occurence with the replacement fragment
+   * @param duplicates  discovered duplicates of extracted code fragment
    * @see #collectDuplicates(SimpleDuplicatesFinder, List, PsiElement)
    */
-  public static void replaceDuplicatesWithPrompt(@NotNull List<SimpleMatch> duplicates,
-                                                 @NotNull PsiElement replacement,
-                                                 @NotNull Editor editor,
-                                                 @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      replaceDuplicates(replacement, editor, replacer, duplicates);
-    }
-    ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(replacement, editor, replacer, duplicates));
-  }
-
-  private static void replaceDuplicates(PsiElement callElement,
-                                        Editor editor,
-                                        Consumer<Pair<SimpleMatch, PsiElement>> replacer,
-                                        List<SimpleMatch> duplicates) {
-    if (duplicates.size() > 0) {
+  public static void replaceDuplicates(@NotNull PsiElement callElement,
+                                       @NotNull Editor editor,
+                                       @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer,
+                                       @NotNull List<SimpleMatch> duplicates) {
+    if (!duplicates.isEmpty()) {
       final String message = RefactoringBundle
         .message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
                  ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
