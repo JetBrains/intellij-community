@@ -13,444 +13,339 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile.codeInspection;
+package com.intellij.profile.codeInspection
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.profile.ApplicationProfileManager;
-import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.ProfileEx;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInspection.InspectionProfile
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionProfileWrapper
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.packageDependencies.DependencyValidationManager
+import com.intellij.profile.Profile
+import com.intellij.profile.ProfileChangeAdapter
+import com.intellij.profile.ProfileEx
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.OptionTag
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import org.jdom.Element
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+const val PROFILE = "profile"
+const val SCOPES = "scopes"
 
-/**
- * User: anna
- * Date: 30-Nov-2005
- */
-@State(
-  name = "InspectionProjectProfileManager",
-  storages = @Storage(value = "inspectionProfiles", stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
-)
-public class InspectionProjectProfileManagerImpl implements PersistentStateComponent<Element>, InspectionProjectProfileManager,
-                                                            ProjectComponent {
-  private static final Logger LOG = Logger.getInstance(InspectionProjectProfileManagerImpl.class);
-  private static final String VERSION = "1.0";
+private val LOG = Logger.getInstance(InspectionProjectProfileManagerImpl::class.java)
+private const val VERSION = "1.0"
+private const val SCOPE = "scope"
+private const val NAME = "name"
+private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
-  private final Map<String, InspectionProfileWrapper> myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
-  private final Map<String, InspectionProfileWrapper> myAppName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
+@State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles", stateSplitter = ProfileStateSplitter::class)))
+class InspectionProjectProfileManagerImpl(private val myProject: Project,
+                                          private val applicationProfileManager: InspectionProfileManager,
+                                          private val myHolder: DependencyValidationManager,
+                                          private val myLocalScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager, ProjectComponent {
+  companion object {
+    @JvmStatic
+    fun getInstanceImpl(project: Project): InspectionProjectProfileManagerImpl {
+      return InspectionProjectProfileManager.getInstance(project) as InspectionProjectProfileManagerImpl
+    }
+  }
 
-  private final SeverityRegistrar mySeverityRegistrar;
-  private final NamedScopeManager myLocalScopesHolder;
-  private NamedScopesHolder.ScopeListener myScopeListener;
+  private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
+  private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
 
-  private final Map<String, Profile> myProfiles = new THashMap<>();
-  protected final DependencyValidationManager myHolder;
-  private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
+  private val severityRegistrar = SeverityRegistrar(myProject.messageBus)
+  private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
-  private final ApplicationProfileManager myApplicationProfileManager;
+  private val profiles = THashMap<String, InspectionProfile>()
+  private val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
-  @NonNls public static final String SCOPES = "scopes";
-  @NonNls protected static final String SCOPE = "scope";
-  @NonNls public static final String PROFILE = "profile";
-  @NonNls protected static final String NAME = "name";
-
-  @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
-
-  @NotNull
-  protected final Project myProject;
-
-  private String myProjectProfile;
+  private var projectProfile: String? = null
 
   @OptionTag("USE_PROJECT_PROFILE")
-  private boolean useProjectProfile = true;
+  private var useProjectProfile = true
 
+  override fun getProject() = myProject
 
-  @NotNull
-  public Project getProject() {
-    return myProject;
+  override fun isProfileLoaded(): Boolean {
+    val profile = inspectionProfile
+    val name = profile.name
+    return if (profile.profileManager === this) nameToProfile.containsKey(name) else appNameToProfile.containsKey(name)
   }
 
-  public InspectionProjectProfileManagerImpl(@NotNull Project project,
-                                             @NotNull InspectionProfileManager inspectionProfileManager,
-                                             @NotNull DependencyValidationManager holder,
-                                             @NotNull NamedScopeManager localScopesHolder) {
-    myProject = project;
-    myApplicationProfileManager = inspectionProfileManager;
-    myHolder = holder;
-
-    myLocalScopesHolder = localScopesHolder;
-    mySeverityRegistrar = new SeverityRegistrar(project.getMessageBus());
-  }
-
-  public static InspectionProjectProfileManagerImpl getInstanceImpl(Project project) {
-    return (InspectionProjectProfileManagerImpl)project.getComponent(InspectionProjectProfileManager.class);
-  }
-
-  @Override
-  public boolean isProfileLoaded() {
-    final InspectionProfile profile = getInspectionProfile();
-    final String name = profile.getName();
-    return profile.getProfileManager() == this ? myName2Profile.containsKey(name) : myAppName2Profile.containsKey(name);
-  }
-
-  @NotNull
-  public InspectionProfileWrapper getProfileWrapper() {
-    InspectionProfile profile = getInspectionProfile();
-    String profileName = profile.getName();
-    Map<String, InspectionProfileWrapper> nameToProfile = profile.getProfileManager() == this ? myName2Profile : myAppName2Profile;
-    InspectionProfileWrapper wrapper = nameToProfile.get(profileName);
-    if (wrapper == null) {
-      initProfileWrapper(profile);
-      return nameToProfile.get(profileName);
-    }
-    return wrapper;
-  }
-
-  @Override
-  public synchronized void updateProfile(@NotNull Profile profile) {
-    myProfiles.put(profile.getName(), profile);
-    for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
-      profileChangeAdapter.profileChanged(profile);
-    }
-
-    initProfileWrapper(profile);
-  }
-
-  @Override
-  public synchronized void deleteProfile(@NotNull String name) {
-    myProfiles.remove(name);
-
-    final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
-    if (profileWrapper != null) {
-      profileWrapper.cleanup(myProject);
-    }
-  }
-
-  @Override
-  public void projectOpened() {
-    StartupManager startupManager = StartupManager.getInstance(myProject);
-    if (startupManager == null) {
-      return; // upsource
-    }
-    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        Profile profile = getInspectionProfile();
-        final Application app = ApplicationManager.getApplication();
-        Runnable initInspectionProfilesRunnable = () -> {
-          initProfileWrapper(profile);
-          fireProfilesInitialized();
-        };
-        if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-          initInspectionProfilesRunnable.run();
-          //do not restart daemon in the middle of the test
-          //noinspection TestOnlyProblems
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        else {
-          app.executeOnPooledThread(initInspectionProfilesRunnable);
-        }
-        myScopeListener = new NamedScopesHolder.ScopeListener() {
-          @Override
-          public void scopesChanged() {
-            for (Profile profile : getProfiles()) {
-              ((InspectionProfile)profile).scopesChanged();
-            }
-          }
-        };
-        myHolder.addScopeListener(myScopeListener);
-        myLocalScopesHolder.addScopeListener(myScopeListener);
-        Disposer.register(myProject, new Disposable() {
-          @Override
-          public void dispose() {
-            myHolder.removeScopeListener(myScopeListener);
-            myLocalScopesHolder.removeScopeListener(myScopeListener);
-          }
-        });
+  val profileWrapper: InspectionProfileWrapper
+    get() {
+      val profile = inspectionProfile
+      val profileName = profile.name
+      val nameToProfile = if (profile.profileManager === this) nameToProfile else appNameToProfile
+      val wrapper = nameToProfile[profileName]
+      if (wrapper == null) {
+        initProfileWrapper(profile)
+        return nameToProfile.get(profileName)!!
       }
-    });
+      return wrapper
+    }
+
+  @Synchronized override fun updateProfile(profile: Profile) {
+    profiles.put(profile.name, profile as InspectionProfile)
+    for (profileChangeAdapter in profileListeners) {
+      profileChangeAdapter.profileChanged(profile)
+    }
+
+    initProfileWrapper(profile)
   }
 
-  @Override
-  public void initProfileWrapper(@NotNull Profile profile) {
-    InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
-    if (profile instanceof InspectionProfileImpl) {
-      ((InspectionProfileImpl)profile).initInspectionTools(myProject);
-    }
-    if (profile.getProfileManager() == this) {
-      myName2Profile.put(profile.getName(), wrapper);
-    }
-    else {
-      myAppName2Profile.put(profile.getName(), wrapper);
-    }
+  @Synchronized override fun deleteProfile(name: String) {
+    profiles.remove(name)
+    nameToProfile.remove(name)?.cleanup(myProject)
   }
 
-  @Override
-  public void projectClosed() {
-    final Application app = ApplicationManager.getApplication();
-    Runnable cleanupInspectionProfilesRunnable = () -> {
-      for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
-        wrapper.cleanup(myProject);
+  override fun projectOpened() {
+    // upsource
+    val startupManager = StartupManager.getInstance(myProject) ?: return
+    startupManager.registerPostStartupActivity {
+      val inspectionProfile = inspectionProfile
+      val app = ApplicationManager.getApplication()
+      val initInspectionProfilesRunnable = {
+        initProfileWrapper(inspectionProfile)
+        fireProfilesInitialized()
       }
-      for (InspectionProfileWrapper wrapper : myAppName2Profile.values()) {
-        wrapper.cleanup(myProject);
-      }
-      fireProfilesShutdown();
-    };
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      cleanupInspectionProfilesRunnable.run();
-    }
-    else {
-      app.executeOnPooledThread(cleanupInspectionProfilesRunnable);
-    }
-  }
-
-  @NotNull
-  @Override
-  public SeverityRegistrar getSeverityRegistrar() {
-    return mySeverityRegistrar;
-  }
-
-  @NotNull
-  @Override
-  public SeverityRegistrar getOwnSeverityRegistrar() {
-    return mySeverityRegistrar;
-  }
-
-  @Override
-  public synchronized void loadState(Element state) {
-    try {
-      mySeverityRegistrar.readExternal(state);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-
-    final Set<String> profileKeys = new THashSet<String>();
-    profileKeys.addAll(myProfiles.keySet());
-    myProfiles.clear();
-    XmlSerializer.deserializeInto(this, state);
-    for (Element o : state.getChildren(PROFILE)) {
-      Profile profile = myApplicationProfileManager.createProfile();
-      profile.setProfileManager(this);
-      profile.readExternal(o);
-      profile.setProjectLevel(true);
-      if (profileKeys.contains(profile.getName())) {
-        updateProfile(profile);
+      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+        initInspectionProfilesRunnable.invoke()
+        //do not restart daemon in the middle of the test
+        //noinspection TestOnlyProblems
+        UIUtil.dispatchAllInvocationEvents()
       }
       else {
-        myProfiles.put(profile.getName(), profile);
+        app.executeOnPooledThread(initInspectionProfilesRunnable)
+      }
+      scopeListener = NamedScopesHolder.ScopeListener {
+        for (profile in profiles.values) {
+          profile.scopesChanged()
+        }
+      }
+      myHolder.addScopeListener(scopeListener!!)
+      myLocalScopesHolder.addScopeListener(scopeListener!!)
+      Disposer.register(myProject, Disposable {
+        myHolder.removeScopeListener(scopeListener!!)
+        myLocalScopesHolder.removeScopeListener(scopeListener!!)
+      })
+    }
+  }
+
+  override fun initProfileWrapper(profile: Profile) {
+    val wrapper = InspectionProfileWrapper(profile as InspectionProfile)
+    if (profile is InspectionProfileImpl) {
+      profile.initInspectionTools(myProject)
+    }
+    if (profile.getProfileManager() === this) {
+      nameToProfile.put(profile.name, wrapper)
+    }
+    else {
+      appNameToProfile.put(profile.name, wrapper)
+    }
+  }
+
+  override fun projectClosed() {
+    val app = ApplicationManager.getApplication()
+    val cleanupInspectionProfilesRunnable = {
+      for (wrapper in nameToProfile.values) {
+        wrapper.cleanup(myProject)
+      }
+      for (wrapper in appNameToProfile.values) {
+        wrapper.cleanup(myProject)
+      }
+      fireProfilesShutdown()
+    }
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      cleanupInspectionProfilesRunnable.invoke()
+    }
+    else {
+      app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
+    }
+  }
+
+  override fun getSeverityRegistrar() = severityRegistrar
+
+  override fun getOwnSeverityRegistrar() = severityRegistrar
+
+  @Synchronized override fun loadState(state: Element) {
+    try {
+      severityRegistrar.readExternal(state)
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+
+    val profileKeys = THashSet<String>()
+    profileKeys.addAll(profiles.keys)
+    profiles.clear()
+    XmlSerializer.deserializeInto(this, state)
+    for (o in state.getChildren(PROFILE)) {
+      val profile = applicationProfileManager.createProfile()
+      profile.profileManager = this
+      profile.readExternal(o)
+      profile.isProjectLevel = true
+      if (profileKeys.contains(profile.name)) {
+        updateProfile(profile)
+      }
+      else {
+        profiles.put(profile.name, profile as InspectionProfile?)
       }
     }
     if (state.getChild("version") == null || !Comparing.strEqual(state.getChild("version").getAttributeValue("value"), VERSION)) {
-      boolean toConvert = true;
-      for (Element o : state.getChildren("option")) {
+      var toConvert = true
+      for (o in state.getChildren("option")) {
         if (Comparing.strEqual(o.getAttributeValue("name"), "USE_PROJECT_LEVEL_SETTINGS")) {
-          toConvert = Boolean.parseBoolean(o.getAttributeValue("value"));
-          break;
+          toConvert = java.lang.Boolean.parseBoolean(o.getAttributeValue("value"))
+          break
         }
       }
       if (toConvert) {
-        convert(state);
+        convert(state)
       }
     }
   }
 
-  @Override
-  public synchronized Element getState() {
-    Element state = new Element("settings");
+  @Synchronized override fun getState(): Element? {
+    val state = Element("settings")
 
-    String[] sortedProfiles = myProfiles.keySet().toArray(new String[myProfiles.size()]);
-    Arrays.sort(sortedProfiles);
-    for (String profile : sortedProfiles) {
-      final Profile projectProfile = myProfiles.get(profile);
+    val sortedProfiles = profiles.keys.toTypedArray<String>()
+    Arrays.sort(sortedProfiles)
+    for (profile in sortedProfiles) {
+      val projectProfile = profiles[profile]
       if (projectProfile != null) {
-        Element profileElement = ProfileEx.serializeProfile(projectProfile);
-        boolean hasSmthToSave = sortedProfiles.length > 1 || isCustomProfileUsed();
+        val profileElement = ProfileEx.serializeProfile(projectProfile)
+        var hasSmthToSave = sortedProfiles.size > 1 || isCustomProfileUsed
         if (!hasSmthToSave) {
-          for (Element child : profileElement.getChildren()) {
-            if (!child.getName().equals("option")) {
-              hasSmthToSave = true;
-              break;
+          for (child in profileElement.children) {
+            if (child.name != "option") {
+              hasSmthToSave = true
+              break
             }
           }
         }
         if (hasSmthToSave) {
-          state.addContent(profileElement);
+          state.addContent(profileElement)
         }
       }
     }
 
-    if (!state.getChildren().isEmpty() || isCustomProfileUsed()) {
-      XmlSerializer.serializeInto(this, state);
-      state.addContent(new Element("version").setAttribute("value", VERSION));
+    if (!state.children.isEmpty() || isCustomProfileUsed) {
+      XmlSerializer.serializeInto(this, state)
+      state.addContent(Element("version").setAttribute("value", VERSION))
     }
 
-    mySeverityRegistrar.writeExternal(state);
-    return state;
+    severityRegistrar.writeExternal(state)
+    return state
   }
 
-  private boolean isCustomProfileUsed() {
-    return myProjectProfile != null && !Comparing.strEqual(myProjectProfile, PROJECT_DEFAULT_PROFILE_NAME);
+  private val isCustomProfileUsed: Boolean
+    get() = projectProfile != null && !Comparing.strEqual(projectProfile, PROJECT_DEFAULT_PROFILE_NAME)
+
+  override fun getProfile(name: String) = getProfile(name, true)
+
+  override fun getScopesManager() = myHolder
+
+  @Synchronized override fun getProfiles(): Collection<Profile> {
+    inspectionProfile
+    return profiles.values
   }
 
-  @Override
-  public Profile getProfile(@NotNull final String name) {
-    return getProfile(name, true);
-  }
+  @Synchronized override fun getAvailableProfileNames() = profiles.keys.toTypedArray()
 
-  @NotNull
-  @Override
-  public NamedScopesHolder getScopesManager() {
-    return myHolder;
-  }
-
-  @NotNull
-  @Override
-  public synchronized Collection<Profile> getProfiles() {
-    getInspectionProfile();
-    return myProfiles.values();
-  }
-
-  @NotNull
-  @Override
-  public synchronized String[] getAvailableProfileNames() {
-    return ArrayUtil.toStringArray(myProfiles.keySet());
-  }
-
-  @Override
   @OptionTag("PROJECT_PROFILE")
-  public synchronized String getProjectProfile() {
-    return myProjectProfile;
-  }
+  @Synchronized override fun getProjectProfile() = projectProfile
 
-  @Override
-  public synchronized void setProjectProfile(@Nullable String newProfile) {
-    if (Comparing.strEqual(newProfile, myProjectProfile)) {
-      return;
+  @Synchronized override fun setProjectProfile(newProfile: String?) {
+    if (Comparing.strEqual(newProfile, projectProfile)) {
+      return
     }
 
-    String oldProfile = myProjectProfile;
-    myProjectProfile = newProfile;
-    useProjectProfile = newProfile != null;
+    val oldProfile = projectProfile
+    projectProfile = newProfile
+    useProjectProfile = newProfile != null
     if (oldProfile != null) {
-      for (ProfileChangeAdapter adapter : myProfilesListener) {
-        adapter.profileActivated(getProfile(oldProfile), newProfile != null ? getProfile(newProfile) : null);
+      for (adapter in profileListeners) {
+        adapter.profileActivated(getProfile(oldProfile), if (newProfile != null) getProfile(newProfile) else null)
       }
     }
   }
 
-  @NotNull
-  public synchronized InspectionProfile getInspectionProfile() {
+  @Synchronized override fun getInspectionProfile(): InspectionProfile {
     if (!useProjectProfile) {
-      return (InspectionProfile)myApplicationProfileManager.getRootProfile();
+      return applicationProfileManager.rootProfile as InspectionProfile
     }
-    if (myProjectProfile == null || myProfiles.isEmpty()) {
-      setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
-      final Profile projectProfile = myApplicationProfileManager.createProfile();
-      projectProfile.copyFrom(myApplicationProfileManager.getRootProfile());
-      projectProfile.setProjectLevel(true);
-      projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME);
-      myProfiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile);
+    if (projectProfile == null || profiles.isEmpty) {
+      projectProfile = PROJECT_DEFAULT_PROFILE_NAME
+      val projectProfile = applicationProfileManager.createProfile()
+      projectProfile.copyFrom(applicationProfileManager.rootProfile)
+      projectProfile.isProjectLevel = true
+      projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
+      profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile as InspectionProfile?)
     }
-    else if (!myProfiles.containsKey(myProjectProfile)) {
-      setProjectProfile(myProfiles.keySet().iterator().next());
+    else if (!profiles.containsKey(projectProfile)) {
+      projectProfile = profiles.keys.iterator().next()
     }
-    final Profile profile = myProfiles.get(myProjectProfile);
-    if (profile.isProjectLevel()) {
-      profile.setProfileManager(this);
+    val profile = profiles.get(projectProfile)!!
+    if (profile.isProjectLevel) {
+      profile.profileManager = this
     }
-    return (InspectionProfile)profile;
+    return profile
   }
 
-  public void addProfilesListener(@NotNull ProfileChangeAdapter profilesListener, @NotNull Disposable parent) {
-    myProfilesListener.add(profilesListener);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myProfilesListener.remove(profilesListener);
-      }
-    });
+  override fun addProfilesListener(listener: ProfileChangeAdapter, parent: Disposable) {
+    profileListeners.add(listener)
+    Disposer.register(parent, Disposable { profileListeners.remove(listener) })
   }
 
-  protected void fireProfilesInitialized() {
-    for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
-      profileChangeAdapter.profilesInitialized();
+  private fun fireProfilesInitialized() {
+    for (listener in profileListeners) {
+      listener.profilesInitialized()
     }
   }
 
-  protected void fireProfilesShutdown() {
-    for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
-      profileChangeAdapter.profilesShutdown();
+  private fun fireProfilesShutdown() {
+    for (profileChangeAdapter in profileListeners) {
+      profileChangeAdapter.profilesShutdown()
     }
   }
 
-  @Override
-  public synchronized Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
-    Profile profile = myProfiles.get(name);
-    return profile == null ? myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent) : profile;
+  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile {
+    val profile = profiles.get(name)
+    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
 
-  public void convert(Element element) {
-    if (getProjectProfile() != null) {
-      ((ProfileEx)getInspectionProfile()).convert(element, getProject());
+  fun convert(element: Element) {
+    if (projectProfile != null) {
+      (inspectionProfile as ProfileEx).convert(element, project)
     }
   }
 
-  public static class ProfileStateSplitter extends MainConfigurationStateSplitter {
-    @NotNull
-    @Override
-    protected String getComponentStateFileName() {
-      return "profiles_settings";
-    }
+  override fun getComponentName() = "InspectionProjectProfileManager"
 
-    @NotNull
-    @Override
-    protected String getSubStateTagName() {
-      return PROFILE;
-    }
+  override fun initComponent() {
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "InspectionProjectProfileManager";
+  override fun disposeComponent() {
   }
+}
 
-  @Override
-  public void initComponent() {
-  }
+private class ProfileStateSplitter : MainConfigurationStateSplitter() {
+  override fun getComponentStateFileName(): String = "profiles_settings"
 
-  @Override
-  public void disposeComponent() {
-  }
+  override fun getSubStateTagName() = PROFILE
 }
