@@ -81,6 +81,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     }
   }
 
+  public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
+    final RegExpLanguageHost host = findRegExpHost(context);
+    return host == null || host.supportsInlineOptionFlag(flag, context);
+  }
+
   public boolean supportsExtendedHexCharacter(@Nullable RegExpChar regExpChar) {
     final RegExpLanguageHost host = findRegExpHost(regExpChar);
     try {
