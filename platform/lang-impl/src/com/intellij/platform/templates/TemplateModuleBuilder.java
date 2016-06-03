@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -284,6 +283,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           return null;
         }
       });
+
+      if(pI != null) {
+        pI.setText("Refreshing...");
+      }
 
       String iml = ContainerUtil.find(dir.list(), s -> s.endsWith(".iml"));
       if (moduleMode) {
