@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.options.*;
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.openapi.options.LazySchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jetbrains.annotations.NonNls;

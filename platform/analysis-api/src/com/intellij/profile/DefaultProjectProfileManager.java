@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ public abstract class DefaultProjectProfileManager implements ProjectProfileMana
   @NonNls protected static final String NAME = "name";
 
   private static final String VERSION = "1.0";
+  @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
   @NotNull
   protected final Project myProject;
@@ -63,7 +65,6 @@ public abstract class DefaultProjectProfileManager implements ProjectProfileMana
   private final Map<String, Profile> myProfiles = new THashMap<>();
   protected final DependencyValidationManager myHolder;
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
-  @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
   public DefaultProjectProfileManager(@NotNull final Project project,
                                       @NotNull ApplicationProfileManager applicationProfileManager,
@@ -80,7 +81,8 @@ public abstract class DefaultProjectProfileManager implements ProjectProfileMana
 
   @Override
   public synchronized Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
-    return myProfiles.containsKey(name) ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
+    Profile profile = myProfiles.get(name);
+    return profile == null ? myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent) : profile;
   }
 
   @Override
@@ -126,7 +128,7 @@ public abstract class DefaultProjectProfileManager implements ProjectProfileMana
 
   @Override
   public synchronized void loadState(Element state) {
-    final Set<String> profileKeys = new HashSet<String>();
+    final Set<String> profileKeys = new THashSet<String>();
     profileKeys.addAll(myProfiles.keySet());
     myProfiles.clear();
     XmlSerializer.deserializeInto(this, state);

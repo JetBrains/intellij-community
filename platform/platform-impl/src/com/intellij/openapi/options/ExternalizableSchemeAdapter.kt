@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.options
 
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.SchemeExtensionProvider
+import com.intellij.configurationStore.SerializableScheme
 import org.jdom.Element
 import java.util.function.Function
 import kotlin.properties.Delegates
@@ -23,10 +26,6 @@ abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   override var name: String by Delegates.notNull()
 
   override fun toString() = name
-}
-
-interface SchemeDataHolder {
-  fun read(): Element
 }
 
 abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {

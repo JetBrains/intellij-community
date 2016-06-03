@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableScheme;
-import com.intellij.openapi.options.SchemeDataHolder;
-import com.intellij.openapi.options.SerializableScheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;

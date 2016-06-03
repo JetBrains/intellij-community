@@ -19,7 +19,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
-import org.jdom.Element
 import org.jdom.Parent
 
 interface Scheme {
@@ -28,31 +27,6 @@ interface Scheme {
 
 interface ExternalizableScheme : Scheme {
   override var name: String
-}
-
-/**
- * A scheme processor can implement this interface to provide a file extension different from default .xml.
- * @see SchemeProcessor
- */
-interface SchemeExtensionProvider {
-  /**
-   * @return The scheme file extension **with e leading dot**, for example ".ext".
-   */
-  val schemeExtension: String
-
-  /**
-   * @return True if the upgrade from the old default .xml extension is needed.
-   */
-  val isUpgradeNeeded: Boolean
-}
-
-interface SchemeDataHolder {
-  /**
-   * You should call updateDigest() after read on init.
-   */
-  fun read(): Element
-
-  fun updateDigest()
 }
 
 abstract class SchemeManagerFactory {
@@ -102,8 +76,4 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
   }
 
   open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
-}
-
-interface SerializableScheme {
-  fun writeScheme(): Element
 }
