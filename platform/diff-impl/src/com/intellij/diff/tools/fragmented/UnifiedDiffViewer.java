@@ -410,8 +410,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (!myEditor.isViewer()) {
         for (ChangedBlock block : blocks) {
           LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+          if (range.isEmpty()) continue;
           TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
-          if (textRange.isEmpty()) continue;
           guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
         }
         int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
