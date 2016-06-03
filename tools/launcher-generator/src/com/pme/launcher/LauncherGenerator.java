@@ -32,6 +32,7 @@ import com.pme.exe.res.vi.VersionInfo;
 import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Date: May 6, 2006
@@ -135,12 +136,7 @@ public class LauncherGenerator {
 
   public void injectIcon(int id, final InputStream iconStream) throws IOException {
     File f = File.createTempFile("launcher", "ico");
-    Files.copy(new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return iconStream;
-      }
-    }, f);
+    java.nio.file.Files.copy(iconStream, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
     IconResourceInjector iconInjector = new IconResourceInjector();
     iconInjector.injectIcon(f, myRoot, "IRD" + id);
   }
