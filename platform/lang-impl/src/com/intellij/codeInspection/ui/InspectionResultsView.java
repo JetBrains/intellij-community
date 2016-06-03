@@ -145,7 +145,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
-                                                                                  !myInspectionProfile.isEditable());
+                                                                                  isSingleInspectionRun());
 
     myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
@@ -625,11 +625,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myExcludedInspectionTreeNodesManager;
   }
 
-  @Nullable
+  @NotNull
   public String getCurrentProfileName() {
-    return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
+    return myInspectionProfile.getDisplayName();
   }
 
+  @NotNull
   public InspectionProfile getCurrentProfile() {
     return myInspectionProfile;
   }
@@ -696,7 +697,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     synchronized (myTreeStructureUpdateLock) {
       InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
       boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-      boolean singleInspectionRun = !myInspectionProfile.isEditable();
+      boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
         InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
@@ -953,8 +954,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return rerun;
   }
 
-  public boolean isProfileDefined() {
-    return myInspectionProfile != null && myInspectionProfile.isEditable();
+  public boolean isSingleInspectionRun() {
+    return myInspectionProfile.getSingleTool() != null;
   }
 
   public static void showPopup(AnActionEvent e, JBPopup popup) {

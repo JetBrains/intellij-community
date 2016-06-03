@@ -222,7 +222,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           final AnalysisUIOptions uiOptions = context.getUIOptions();
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                  uiOptions.GROUP_BY_SEVERITY, !view.getCurrentProfile().isEditable()) : myToolNode;
+                                  uiOptions.GROUP_BY_SEVERITY, view.isSingleInspectionRun()) : myToolNode;
 
           final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
           problems.put(refElement, descriptors);

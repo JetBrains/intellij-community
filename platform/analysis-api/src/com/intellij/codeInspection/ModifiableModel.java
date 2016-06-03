@@ -78,7 +78,10 @@ public interface ModifiableModel extends Profile {
 
   void copyFrom(@NotNull InspectionProfile profile);
 
-  void setEditable(String toolDisplayName);
+  /**
+   * @see InspectionProfile#getSingleTool()
+   */
+  void setSingleTool(@NotNull String toolShortName);
 
   void save() throws IOException;
 

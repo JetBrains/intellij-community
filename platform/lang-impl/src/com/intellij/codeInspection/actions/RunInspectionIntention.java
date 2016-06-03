@@ -144,7 +144,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     }
     catch (InvalidDataException ignored) {
     }
-    model.setEditable(toolWrapper.getDisplayName());
+    model.setSingleTool(toolWrapper.getShortName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     return inspectionContext;
