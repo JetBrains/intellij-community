@@ -165,7 +165,7 @@ public abstract class SemanticEditorPosition {
   
   public boolean isAtLanguage(@Nullable Language language) {
     if (language != null && !myIterator.atEnd()) {
-      return myIterator.getTokenType().getLanguage().is(language); 
+      return language== Language.ANY || myIterator.getTokenType().getLanguage().is(language); 
     }
     return false;
   }
