@@ -62,11 +62,6 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void copyFrom(@NotNull Profile profile) {
-    readExternal(ProjectProfileManager.serializeProfile(profile));
-  }
-
-  @Override
   @Transient
   public boolean isProjectLevel() {
     return myIsProjectLevel;

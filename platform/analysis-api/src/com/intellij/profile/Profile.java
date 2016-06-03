@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * Date: 20-Nov-2005
  */
 public interface Profile extends Comparable, Scheme {
-  void copyFrom(@NotNull Profile profile);
+  default void copyFrom(@NotNull Profile profile) {
+    readExternal(ProjectProfileManager.serializeProfile(profile));
+  }
 
   void setLocal(boolean isLocal);
 
