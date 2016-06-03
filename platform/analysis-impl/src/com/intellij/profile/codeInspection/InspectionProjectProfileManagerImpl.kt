@@ -58,10 +58,10 @@ private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles", stateSplitter = ProfileStateSplitter::class)))
-class InspectionProjectProfileManagerImpl(private val myProject: Project,
+class InspectionProjectProfileManagerImpl(private val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
-                                          private val myHolder: DependencyValidationManager,
-                                          private val myLocalScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
+                                          private val holder: DependencyValidationManager,
+                                          private val localScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): InspectionProjectProfileManagerImpl {
@@ -72,7 +72,7 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
   private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
   private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
 
-  private val severityRegistrar = SeverityRegistrar(myProject.messageBus)
+  private val severityRegistrar = SeverityRegistrar(project.messageBus)
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private val profiles = THashMap<String, InspectionProfile>()
@@ -85,13 +85,13 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
 
   init {
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
-      override fun projectClosed(project: Project?) {
+      override fun projectClosed(project: Project) {
         val cleanupInspectionProfilesRunnable = {
           for (wrapper in nameToProfile.values) {
-            wrapper.cleanup(myProject)
+            wrapper.cleanup(project)
           }
           for (wrapper in appNameToProfile.values) {
-            wrapper.cleanup(myProject)
+            wrapper.cleanup(project)
           }
           fireProfilesShutdown()
         }
@@ -107,7 +107,7 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
     })
   }
 
-  override fun getProject() = myProject
+  override fun getProject() = project
 
   override fun isProfileLoaded(): Boolean {
     val profile = inspectionProfile
@@ -139,7 +139,7 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
 
   @Synchronized override fun deleteProfile(name: String) {
     profiles.remove(name)
-    nameToProfile.remove(name)?.cleanup(myProject)
+    nameToProfile.remove(name)?.cleanup(project)
   }
 
   @Suppress("unused")
@@ -167,11 +167,11 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
         }
       }
       profileManager.apply {
-        myHolder.addScopeListener(scopeListener!!)
-        myLocalScopesHolder.addScopeListener(scopeListener!!)
-        Disposer.register(myProject, Disposable {
-          myHolder.removeScopeListener(scopeListener!!)
-          myLocalScopesHolder.removeScopeListener(scopeListener!!)
+        holder.addScopeListener(scopeListener!!)
+        localScopesHolder.addScopeListener(scopeListener!!)
+        Disposer.register(project, Disposable {
+          holder.removeScopeListener(scopeListener!!)
+          localScopesHolder.removeScopeListener(scopeListener!!)
         })
       }
     }
@@ -180,7 +180,7 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
   override fun initProfileWrapper(profile: Profile) {
     val wrapper = InspectionProfileWrapper(profile as InspectionProfile)
     if (profile is InspectionProfileImpl) {
-      profile.initInspectionTools(myProject)
+      profile.initInspectionTools(project)
     }
     if (profile.getProfileManager() === this) {
       nameToProfile.put(profile.name, wrapper)
@@ -270,7 +270,7 @@ class InspectionProjectProfileManagerImpl(private val myProject: Project,
 
   override fun getProfile(name: String) = getProfile(name, true)
 
-  override fun getScopesManager() = myHolder
+  override fun getScopesManager() = holder
 
   @Synchronized override fun getProfiles(): Collection<Profile> {
     inspectionProfile
