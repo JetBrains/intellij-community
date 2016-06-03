@@ -20,7 +20,6 @@ import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacHostProperties
 
 import java.time.LocalDateTime
@@ -55,7 +54,7 @@ class MacDmgBuilder {
     else {
       buildContext.messages.info("Skipping building Mac OS X distribution with bundled JRE because JRE archive doesn't exist: $buildContext.paths.macJreTarGz")
     }
-    if (BuildOptions.BUILD_DMG_WITHOUT_BUNDLED_JRE) {
+    if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, false)
     }
   }
