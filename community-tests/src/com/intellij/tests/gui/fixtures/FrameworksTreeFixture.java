@@ -24,6 +24,7 @@ import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.core.Robot;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -63,11 +64,16 @@ public class FrameworksTreeFixture {
       FrameworkSupportElement frameworkSupportElement =
         (FrameworkSupportElement)((ComponentNode)myAdaptiveTree.getChild(parent, i)).getComponent();
       if (frameworkSupportElement.getText().equals(frameworkName)) {
+        //scroll tree to path
+        final TreePath treePath = myFrameworksTree.getPathForRow(i);
+        myFrameworksTree.scrollPathToVisible(treePath);
+
         final JCheckBox checkbox = frameworkSupportElement.getCheckbox();
         myRobot.click(checkbox);
+        return this;
       }
     }
-
+    Assert.fail();
     return this;
   }
 

@@ -17,21 +17,29 @@ package com.intellij.tests.gui.fixtures.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tests.gui.fixtures.FrameworksTreeFixture;
 import com.intellij.tests.gui.fixtures.SelectSdkDialogFixture;
 import com.intellij.tests.gui.framework.GuiTests;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
+import org.fest.swing.edt.GuiQuery;
+import org.fest.swing.edt.GuiTask;
 import org.fest.swing.fixture.JListFixture;
+import org.fest.swing.fixture.JTextComponentFixture;
 import org.fest.swing.fixture.JTreeFixture;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 
+import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 
 public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWizardFixture> {
@@ -71,7 +79,9 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
   }
 
   public NewProjectWizardFixture selectSdkPath(@NotNull File sdkPath, String sdkType){
+
     final SelectSdkDialogFixture sdkDialogFixture = SelectSdkDialogFixture.find(robot(), sdkType);
+
     sdkDialogFixture.selectPathToSdk(sdkPath).clickOk();
     pause(new Condition("Waiting for the returning of focus to dialog: " + target().getTitle()) {
       @Override
@@ -80,6 +90,38 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
       }
     }, GuiTests.SHORT_TIMEOUT);
     return this;
+  }
+
+  @NotNull
+  public NewProjectWizardFixture setProjectName(@NotNull String projectName){
+    String labelText = GuiTests.adduction(IdeBundle.message("label.project.name"));
+
+    pause(new Condition("Waiting for the sliding to project name settings") {
+      @Override
+      public boolean test() {
+        final Component label = robot().finder().findByLabel(labelText);
+        return label != null;
+      }
+    }, GuiTests.SHORT_TIMEOUT);
+    final JTextComponentFixture textField = findTextField(labelText);
+    robot().click(textField.target());
+    textField.setText(projectName);
+    return this;
+  }
+
+  @NotNull
+  public File getLocationInFileSystem() {
+    String labelText = GuiTests.adduction(IdeBundle.message("label.project.files.location"));
+    //noinspection ConstantConditions
+    final JTextComponentFixture locationTextField = findTextField(labelText);
+    return execute(new GuiQuery<File>() {
+      @Override
+      protected File executeInEDT() throws Throwable {
+        String location = locationTextField.text();
+        assertThat(location).isNotNull().isNotEmpty();
+        return new File(location);
+      }
+    });
   }
 
   @NotNull

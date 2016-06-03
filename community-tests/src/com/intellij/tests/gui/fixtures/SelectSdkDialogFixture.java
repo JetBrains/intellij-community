@@ -90,6 +90,14 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
   }
 
   public void clickOk(){
+    pause(new Condition("Waiting when ok button at SDK select dialog will be ready for a click") {
+      @Override
+      public boolean test() {
+        JButton button = GuiTests.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
+        return button.isEnabled();
+      }
+    }, GuiTests.SHORT_TIMEOUT);
+
     GuiTests.findAndClickOkButton(this);
   }
 
