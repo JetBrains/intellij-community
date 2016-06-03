@@ -18,7 +18,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
@@ -234,8 +234,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private Object instantiate(Class clazz) {
-    ConstructorInjectionComponentAdapter adapter =
-      new ConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
+    CachingConstructorInjectionComponentAdapter adapter =
+      new CachingConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
 
     return adapter.getComponentInstance(getPicoContainer());
   }

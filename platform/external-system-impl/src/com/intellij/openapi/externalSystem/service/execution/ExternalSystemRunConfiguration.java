@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -30,6 +31,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -236,11 +238,17 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     }
   }
 
-  private static class MyProcessHandler extends ProcessHandler {
+  private static class MyProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final ExternalSystemExecuteTaskTask myTask;
+    private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;
+    }
+
+    @Override
+    public void notifyTextAvailable(final String text, final Key outputType) {
+      myAnsiEscapeDecoder.escapeText(text, outputType, this);
     }
 
     @Override
@@ -267,6 +275,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     @Override
     public void notifyProcessTerminated(int exitCode) {
       super.notifyProcessTerminated(exitCode);
+    }
+
+    @Override
+    public void coloredTextAvailable(String text, Key attributes) {
+      super.notifyTextAvailable(text, attributes);
     }
   }
 

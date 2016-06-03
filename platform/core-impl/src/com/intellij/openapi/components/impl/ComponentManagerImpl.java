@@ -37,7 +37,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -461,7 +461,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myNameToComponent.get(name);
   }
 
-  private final class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
+  private final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {
     private final PluginId myPluginId;
     private volatile Object myInitializedComponentInstance;
     private boolean myInitializing;

@@ -44,7 +44,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,7 +135,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
-    handler.putUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY, getConfiguration().getName());
     
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();

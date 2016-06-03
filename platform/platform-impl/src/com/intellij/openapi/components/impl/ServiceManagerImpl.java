@@ -36,7 +36,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
@@ -263,7 +263,7 @@ public class ServiceManagerImpl implements BaseComponent {
           throw new RuntimeException(e);
         }
 
-        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
+        myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
       }
       return myDelegate;
     }

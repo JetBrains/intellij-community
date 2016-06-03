@@ -27,27 +27,26 @@ import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
- * A drop-in replacement of {@link org.picocontainer.defaults.ConstructorInjectionComponentAdapter}
+ * A drop-in replacement of {@link ConstructorInjectionComponentAdapter}
  * The same code (generified and cleaned up) but without constructor caching (hence taking up less memory).
  * This class also inlines instance caching (e.g. it doesn't need to be wrapped in a CachingComponentAdapter).
  */
-@SuppressWarnings("ClassNameSameAsAncestorName")
-public class ConstructorInjectionComponentAdapter extends org.picocontainer.defaults.ConstructorInjectionComponentAdapter {
+public class CachingConstructorInjectionComponentAdapter extends ConstructorInjectionComponentAdapter {
   private Object myInstance;
 
-  public ConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, lifecycleStrategy);
   }
 
-  public ConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
   }
 
-  public ConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
     this(componentKey, componentImplementation, parameters, false);
   }
 
-  public ConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     this(componentKey, componentImplementation, null);
   }
 
