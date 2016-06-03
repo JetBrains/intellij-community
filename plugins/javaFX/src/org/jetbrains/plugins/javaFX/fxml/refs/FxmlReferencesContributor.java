@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.XmlAttributeValuePattern;
-import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -90,7 +88,9 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         new JavaFxEventHandlerReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@"))
+                                          .withParent(StandardPatterns.not(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)))
+                                          .and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("$"))
@@ -124,7 +124,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)
                                                         .withParent(XmlPatterns.xmlTag().withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
                                           .and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider(true, "css"));
+                                        new JavaFxLocationReferenceProvider(false, "css"));
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttribute().withLocalName(string().contains("."))
                                           .inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
