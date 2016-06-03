@@ -18,7 +18,6 @@ package com.intellij.profile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -42,8 +41,6 @@ import java.util.*;
  * Date: 30-Nov-2005
  */
 public abstract class DefaultProjectProfileManager implements ProjectProfileManager, PersistentStateComponent<Element> {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
-
   @NonNls public static final String SCOPES = "scopes";
   @NonNls protected static final String SCOPE = "scope";
   @NonNls public static final String PROFILE = "profile";

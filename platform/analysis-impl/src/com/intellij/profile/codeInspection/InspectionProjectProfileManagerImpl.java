@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -50,6 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
   storages = @Storage(value = "inspectionProfiles", stateSplitter = DefaultProjectProfileManager.ProfileStateSplitter.class)
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
+
   private final Map<String, InspectionProfileWrapper> myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
   private final Map<String, InspectionProfileWrapper> myAppName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
 
