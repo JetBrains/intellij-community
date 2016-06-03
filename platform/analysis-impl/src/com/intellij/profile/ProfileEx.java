@@ -68,12 +68,6 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   @Transient
-  public boolean isLocal() {
-    return !myIsProjectLevel;
-  }
-
-  @Override
-  @Transient
   public boolean isProjectLevel() {
     return myIsProjectLevel;
   }

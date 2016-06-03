@@ -29,10 +29,12 @@ public interface Profile extends Comparable, Scheme {
   void setLocal(boolean isLocal);
 
   /**
-   * @deprecated Use {@link #isProjectLevel()}
+   * @deprecated Use !{@link #isProjectLevel()}
    */
   @Deprecated
-  boolean isLocal();
+  default boolean isLocal() {
+    return !isProjectLevel();
+  }
 
   boolean isProjectLevel();
 
