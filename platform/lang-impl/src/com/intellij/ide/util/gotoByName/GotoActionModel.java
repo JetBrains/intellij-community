@@ -40,7 +40,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
@@ -66,8 +65,7 @@ import java.util.regex.Pattern;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
-@SuppressWarnings("TestOnlyProblems")
-public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel, DumbAware {
+public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, EdtSortingModel, DumbAware {
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
@@ -82,10 +80,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
-
-  public GotoActionModel(@Nullable Project project, Component component) {
-    this(project, component, null, null);
-  }
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
     myProject = project;
@@ -254,37 +248,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return new JLabel(layeredIcon);
   }
 
-
-  @NotNull
-  protected JLabel createActionLabel(@NotNull AnAction anAction, String anActionName,
-                                     Color fg, Color bg,
-                                     @Nullable Icon icon) {
-    LayeredIcon layeredIcon = new LayeredIcon(2);
-    layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
-    }
-
-    Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
-    String actionName = anActionName + (shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "");
-    JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
-    actionLabel.setBackground(bg);
-    actionLabel.setForeground(fg);
-    return actionLabel;
-  }
-
-  @Nullable
-  private static Shortcut preferKeyboardShortcut(@Nullable Shortcut[] shortcuts) {
-    if (shortcuts != null) {
-      for (Shortcut shortcut : shortcuts) {
-        if (shortcut.isKeyboard()) return shortcut;
-      }
-      return shortcuts.length > 0 ? shortcuts[0] : null;
-    }
-    return null;
-  }
-
   @Override
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
@@ -300,7 +263,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return event;
   }
 
-  protected static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
+  public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
     if (isSelected) return UIUtil.getListSelectionForeground();
     if (presentation != null && (!presentation.isEnabled() || !presentation.isVisible())) return UIUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
@@ -396,14 +359,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   public String getElementName(@NotNull Object mv) {
     return ((MatchedValue) mv).getValueText();
-  }
-
-  @Override
-  public boolean matches(@NotNull String name, @NotNull String pattern) {
-    AnAction anAction = myActionManager.getAction(name);
-    if (anAction == null) return true;
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    return actionMatches(pattern, matcher, anAction) != MatchMode.NONE;
   }
 
   protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
@@ -587,9 +542,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
 
-        Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction)));
-        if (shortcut != null) {
-          nameComponent.append(" " + KeymapUtil.getShortcutText(shortcut),
+        Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction));
+        String shortcutText = KeymapUtil.getPreferredShortcutText(
+          shortcuts);
+        if (StringUtil.isNotEmpty(shortcutText)) {
+          nameComponent.append(" " + shortcutText,
                                new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
                                                         UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
         }
