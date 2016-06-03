@@ -40,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -457,6 +456,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
     //noinspection deprecation,unchecked
     if (item == null ||
+        !item.isValid() ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
         item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
