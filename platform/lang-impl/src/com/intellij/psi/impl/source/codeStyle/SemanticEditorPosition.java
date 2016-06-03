@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
@@ -28,10 +29,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SemanticEditorPosition {
   public interface SyntaxElement {}
   
+  private final EditorEx myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
 
   public SemanticEditorPosition(@NotNull EditorEx editor, int offset) {
+    myEditor = editor;
     myChars = editor.getDocument().getCharsSequence();
     myIterator = editor.getHighlighter().createIterator(offset);
   }
@@ -149,6 +152,22 @@ public abstract class SemanticEditorPosition {
       myIterator.retreat();
     }
     return -1;
+  }
+
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+  
+  @Nullable
+  public Language getLanguage() {
+    return !myIterator.atEnd() ? myIterator.getTokenType().getLanguage() : null;
+  }
+  
+  public boolean isAtLanguage(@Nullable Language language) {
+    if (language != null && !myIterator.atEnd()) {
+      return myIterator.getTokenType().getLanguage().is(language); 
+    }
+    return false;
   }
 
   @Nullable

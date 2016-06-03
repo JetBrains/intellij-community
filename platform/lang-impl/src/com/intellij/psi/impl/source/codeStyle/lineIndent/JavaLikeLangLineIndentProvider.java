@@ -90,7 +90,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
           position -> {
             position.findLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
             if (!position.isAtEnd()) {
-              return getBlockStartOffset(position);
+              return getBlockStatementStartOffset(position);
             }
             return -1;
           });
@@ -111,8 +111,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(BlockOpeningBrace)
       )) {
-        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language),
-                                                JavaLikeLangLineIndentProvider::getBlockStartOffset);
+        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> position.before().isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault)
@@ -154,7 +153,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
 
 
-  private static int getBlockStartOffset(@NotNull SemanticEditorPosition position) {
+  private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
+    Language currLanguage = position.getLanguage();
     position.before().beforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
       if (position.isAtMultiline()) return position.after().getStartOffset();
@@ -164,8 +164,16 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       position.beforeParentheses(LeftParenthesis, RightParenthesis);
     }
     while (!position.isAtEnd()) {
-      if (position.isAt(Whitespace) && position.isAtMultiline()) {
-        return position.after().getStartOffset();
+      if (position.isAt(Semicolon) ||
+          position.isAt(BlockOpeningBrace) ||
+          position.isAt(BlockClosingBrace) ||
+          !position.isAtLanguage(currLanguage)) {
+        SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
+        if (statementStart.after().isAt(Whitespace) && statementStart.isAtMultiline()) {
+          if (!statementStart.after().isAtEnd()) {
+            return statementStart.getStartOffset();
+          }
+        }
       }
       position.before();
     }
