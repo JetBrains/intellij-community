@@ -22,10 +22,11 @@ import java.util.Set;
  * User : ktisha
  */
 public class SimpleDuplicatesFinder {
+  private static final Key<PsiElement> PARAMETER = Key.create("PARAMETER");
+  
   protected PsiElement myReplacement;
   private final ArrayList<PsiElement> myPattern;
   private final Set<String> myParameters;
-  public static final Key<PsiElement> PARAMETER = Key.create("PARAMETER");
   private final Collection<String> myOutputVariables;
 
   @Deprecated

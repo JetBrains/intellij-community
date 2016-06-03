@@ -49,7 +49,6 @@ import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -66,7 +65,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
-  private PsiElement myPrimaryElement;
+  private @NotNull PsiElement myPrimaryElement;
   private String myNewName = null;
 
   private boolean mySearchInComments;
@@ -81,7 +80,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<UnresolvableCollisionUsageInfo>();
 
   public RenameProcessor(Project project,
-                         PsiElement element,
+                         @NotNull PsiElement element,
                          @NotNull @NonNls String newName,
                          boolean isSearchInComments,
                          boolean isSearchTextOccurrences) {
@@ -95,11 +94,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     mySearchTextOccurrences = isSearchTextOccurrences;
 
     setNewName(newName);
-  }
-
-  @Deprecated
-  public RenameProcessor(Project project) {
-    this(project, null, "", false, false);
   }
 
   public Set<PsiElement> getElements() {
@@ -262,11 +256,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void setNewName(@NotNull String newName) {
-    if (myPrimaryElement == null) {
-      myCommandName = RefactoringBundle.message("renaming.something");
-      return;
-    }
-
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
     myCommandName = RefactoringBundle
@@ -318,9 +307,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length > 0);
-    if (myPrimaryElement != null) {
-      myPrimaryElement = elements[0];
-    }
+    myPrimaryElement = elements[0];
 
     final Iterator<String> newNames = myAllRenames.values().iterator();
     LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<PsiElement, String>();

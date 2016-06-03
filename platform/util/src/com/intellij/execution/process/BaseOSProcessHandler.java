@@ -274,7 +274,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   private class SimpleOutputReader extends BaseOutputReader {
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(Reader reader, Key outputType, Options options, String presentableName) {
+    private SimpleOutputReader(Reader reader, Key outputType, Options options, @NotNull String presentableName) {
       super(reader, options);
       myProcessOutputType = outputType;
       start(presentableName);

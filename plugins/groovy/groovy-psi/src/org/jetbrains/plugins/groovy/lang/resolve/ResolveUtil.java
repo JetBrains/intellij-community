@@ -925,19 +925,6 @@ public class ResolveUtil {
     return null;
   }
 
-  @NotNull
-  public static String inferExpectedPackageName(PsiElement place) {
-    PsiFile file = place.getContainingFile();
-    PsiDirectory psiDirectory = file.getContainingDirectory();
-    if (psiDirectory != null && file instanceof GroovyFile) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-      if (aPackage != null) {
-        return aPackage.getQualifiedName();
-      }
-    }
-    return "";
-  }
-
   public static PsiNamedElement findDuplicate(@NotNull GrVariable variable) {
     if (isScriptField(variable)) {
       final String name = variable.getName();

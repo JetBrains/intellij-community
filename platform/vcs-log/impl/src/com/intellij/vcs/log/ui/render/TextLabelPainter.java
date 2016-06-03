@@ -15,9 +15,11 @@
  */
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,9 +59,9 @@ public class TextLabelPainter {
                             int paddingY,
                             int textPadding,
                             @NotNull Color color) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
     g2.setFont(getFont());
     g2.setStroke(new BasicStroke(1.5f));
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     FontMetrics fontMetrics = g2.getFontMetrics();
     int width = fontMetrics.stringWidth(text) + 2 * TEXT_PADDING_X + textPadding;
@@ -78,6 +80,7 @@ public class TextLabelPainter {
     int y = paddingY + SimpleColoredComponent.getTextBaseLine(fontMetrics, height);
     g2.drawString(text, x, y);
 
+    config.restore();
     return new Rectangle(x, y, width, height);
   }
 
@@ -116,6 +119,7 @@ public class TextLabelPainter {
                            int paddingY,
                            @NotNull Color labelColor,
                            @NotNull Color flagColor) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
       Rectangle rectangle =
         super.paint(g2, text, paddingX, paddingY + FLAG_TOP_INDENT, FLAG_WIDTH + 2 * FLAG_PADDING - TEXT_PADDING_X, labelColor);
@@ -133,6 +137,7 @@ public class TextLabelPainter {
       Polygon polygon = new Polygon(new int[]{x0, xRight, xRight, xMid, x0}, new int[]{y0, y0, yMid, yBottom, yMid}, 5);
       g2.fillPolygon(polygon);
 
+      config.restore();
       return new Rectangle(paddingX, paddingY, rectangle.width, rectangle.height + FLAG_TOP_INDENT);
     }
 
@@ -159,12 +164,14 @@ public class TextLabelPainter {
                            int paddingY,
                            @NotNull Color labelColor,
                            @NotNull Color flagColor) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
       Rectangle rectangle = super.paint(g2, text, paddingX, paddingY, 0, labelColor);
 
       g2.setColor(flagColor);
       g2.fillRect(paddingX, paddingY + rectangle.height + LINE_GAP, rectangle.width, LINE_HEIGHT);
 
+      config.restore();
       return new Rectangle(paddingX, paddingY, rectangle.width, rectangle.height + LINE_GAP + LINE_HEIGHT);
     }
 

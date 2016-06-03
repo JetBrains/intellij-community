@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -187,13 +188,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private static void collectSiblingInheritedMethods(@NotNull final Collection<PsiMethod> methods,
                                                      @NotNull Collection<LineMarkerInfo> result) {
-    for (PsiMethod method : methods) {
-      ProgressManager.checkCanceled();
-
-      PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
-      if (siblingInheritedViaSubClass == null) {
-        continue;
-      }
+    Map<PsiMethod, FindSuperElementsHelper.SiblingInfo> map = FindSuperElementsHelper.getSiblingInheritanceInfos(methods);
+    for (PsiMethod method : map.keySet()) {
       PsiElement range = getMethodRange(method);
       ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
                                                               Pass.UPDATE_OVERRIDDEN_MARKERS);

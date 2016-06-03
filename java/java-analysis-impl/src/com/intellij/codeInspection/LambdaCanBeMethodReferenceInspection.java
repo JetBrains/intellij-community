@@ -152,8 +152,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         }
       }
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
-      PsiMethodReferenceExpression methodReferenceExpression = 
-        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
+      PsiMethodReferenceExpression methodReferenceExpression;
+      try {
+        methodReferenceExpression = (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(callExpression.getText(), e);
+        return null;
+      }
       final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         map.put(methodReferenceExpression, functionalInterfaceType);

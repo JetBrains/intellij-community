@@ -242,7 +242,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         }
       }
     });
-    //myModel.setType(JUnitConfigurationModel.CLASS);
+    myModel.setType(JUnitConfigurationModel.CLASS);
     installDocuments();
     addRadioButtonsListeners(new JRadioButton[]{myWholeProjectScope, mySingleModuleScope, myModuleWDScope}, null);
     myWholeProjectScope.addChangeListener(new ChangeListener() {

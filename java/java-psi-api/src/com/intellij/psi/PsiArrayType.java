@@ -42,12 +42,6 @@ public class PsiArrayType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public PsiArrayType annotate(@NotNull TypeAnnotationProvider provider) {
-    return provider == getAnnotationProvider() ? this : new PsiArrayType(myComponentType, provider);
-  }
-
-  @NotNull
-  @Override
   public String getPresentableText() {
     return getText(myComponentType.getPresentableText(), "[]", false, true);
   }

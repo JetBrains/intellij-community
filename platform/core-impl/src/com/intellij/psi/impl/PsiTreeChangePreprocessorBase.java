@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
   @NotNull private final Project myProject;
-  @Nullable private final PsiManagerImpl myPsiManager;
 
   public PsiTreeChangePreprocessorBase(@NotNull Project project) {
     myProject = project;
-    myPsiManager = null;
   }
 
-  /**
-   * Note that this constructor can't be used for preprocessors that is defined in extensions
-   * because it will be invoke during constructing PsiManager.
-   *
-   * @deprecated to delete in IDEA 15, define preprocessor as an extension of {@link PsiTreeChangePreprocessor#EP_NAME} and
-   * use {@link this#PsiTreeChangePreprocessorBase(Project)} instead
-   */
-  public PsiTreeChangePreprocessorBase(@NotNull PsiManagerImpl psiManager) {
-    myPsiManager = psiManager;
-    myProject = psiManager.getProject();
-    psiManager.addTreeChangePreprocessor(this);
+  @NotNull
+  protected Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -68,7 +56,12 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
       case BEFORE_CHILD_REMOVAL:
       case CHILD_ADDED:
       case CHILD_REMOVED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
+      case BEFORE_CHILD_REPLACEMENT:
+      case CHILD_REPLACED :
+        changedInsideCodeBlock = isInsideCodeBlock(event.getParent()) &&
+                                 isInsideCodeBlock(event.getChild()) &&
+                                 isInsideCodeBlock(event.getOldChild()) &&
+                                 isInsideCodeBlock(event.getNewChild());
         break;
 
       case BEFORE_PROPERTY_CHANGE:
@@ -76,25 +69,26 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
         changedInsideCodeBlock = false;
         break;
 
-      case BEFORE_CHILD_REPLACEMENT:
-      case CHILD_REPLACED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-        break;
-
       case BEFORE_CHILD_MOVEMENT:
       case CHILD_MOVED:
-        changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
+        changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && 
+                                 isInsideCodeBlock(event.getNewParent()) && 
+                                 isInsideCodeBlock(event.getChild());
         break;
     }
 
     if (!changedInsideCodeBlock) {
-      getModificationTracker().incOutOfCodeBlockModificationCounter();
+      processOutOfCodeBlockModification(event);
     }
   }
 
   @NotNull
   private PsiModificationTrackerImpl getModificationTracker() {
-    return (PsiModificationTrackerImpl)ObjectUtils.notNull(myPsiManager, PsiManager.getInstance(myProject)).getModificationTracker();
+    return (PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker();
+  }
+
+  protected void processOutOfCodeBlockModification(final PsiTreeChangeEventImpl event) {
+    getModificationTracker().incOutOfCodeBlockModificationCounter();
   }
 
   protected abstract boolean isInsideCodeBlock(PsiElement element);

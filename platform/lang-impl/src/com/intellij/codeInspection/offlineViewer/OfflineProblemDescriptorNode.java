@@ -35,6 +35,7 @@ import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -52,10 +53,11 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
                                @NotNull LocalInspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
                                @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(refEntity, descriptor, toolWrapper, presentation);
+    super(refEntity, descriptor, toolWrapper, presentation, false);
     if (descriptor == null) {
       setUserObject(offlineDescriptor);
     }
+    init(presentation.getContext().getProject());
   }
 
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
@@ -67,13 +69,17 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   @Override
-  public boolean calculateIsValid() {
-    return true;
-  }
-
-  @Override
   public FileStatus getNodeStatus() {
     return FileStatus.NOT_CHANGED;
+  }
+
+  @NotNull
+  @Override
+  protected String calculatePresentableName() {
+    String presentableName = super.calculatePresentableName();
+    return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
+           ? StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())
+           : presentableName;
   }
 
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {

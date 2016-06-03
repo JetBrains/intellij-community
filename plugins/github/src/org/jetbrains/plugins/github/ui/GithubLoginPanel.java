@@ -102,9 +102,9 @@ public class GithubLoginPanel {
     List<Component> order = new ArrayList<Component>();
     order.add(myHostTextField);
     order.add(myAuthTypeComboBox);
+    order.add(mySavePasswordCheckBox);
     order.add(myLoginTextField);
     order.add(myPasswordField);
-    order.add(mySavePasswordCheckBox);
     myPane.setFocusTraversalPolicyProvider(true);
     myPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(order));
   }

@@ -40,7 +40,9 @@ import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
 import java.lang.reflect.Field;
@@ -182,7 +184,7 @@ public class JBScrollPane extends JScrollPane {
         if (value instanceof MouseWheelListener) {
           MouseWheelListener oldListener = (MouseWheelListener)value;
           MouseWheelListener newListener = event -> {
-            if (UIUtil.isScrollEvent(event)) {
+            if (isScrollEvent(event)) {
               Object source = event.getSource();
               if (source instanceof JScrollPane) {
                 JScrollPane pane = (JScrollPane)source;
@@ -987,5 +989,18 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public void dispose() {
     }
+  }
+
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    int modifiers = ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & event.getModifiers();
+    return modifiers == 0; // no modifiers expected except SHIFT for horizontal scrolling
   }
 }

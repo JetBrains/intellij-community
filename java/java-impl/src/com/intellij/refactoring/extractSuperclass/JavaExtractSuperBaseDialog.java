@@ -126,6 +126,11 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return directories[0];
   }
 
+  @Override
+  protected boolean isPossibleToRenameOriginal() {
+    //disable for anonymous classes
+    return mySourceClass.getNameIdentifier() != null;
+  }
 
   @Override
   protected void preparePackage() throws OperationFailedException {

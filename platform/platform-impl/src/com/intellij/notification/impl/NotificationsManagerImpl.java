@@ -282,8 +282,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
 
             if (!sticky) {
-              ((BalloonImpl)balloon).startFadeoutTimer(0);
-              ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              if (newEnabled()) {
+                ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+              }
+              else {
+                ((BalloonImpl)balloon).startFadeoutTimer(0);
+                ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              }
             }
             else //noinspection ConstantConditions
               if (noProjects && !newEnabled()) {
@@ -502,6 +507,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     else {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
     }
     layoutDataRef.set(layoutData);
 
@@ -775,6 +781,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     JPanel buttons = createButtons(notification, content, listener);
     if (buttons != null) {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 

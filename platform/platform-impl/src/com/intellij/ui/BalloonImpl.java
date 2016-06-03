@@ -16,16 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.RemoteDesktopDetector;
+import com.intellij.ide.*;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -86,6 +83,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private long myFadeoutRequestMillis = 0;
   private int myFadeoutRequestDelay = 0;
 
+  private boolean mySmartFadeout;
+  private boolean mySmartFadeoutPaused;
+  private int mySmartFadeoutDelay;
+
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
   private AbstractPosition myPosition;
@@ -109,6 +110,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
     public void eventDispatched(final AWTEvent e) {
+      if (mySmartFadeoutDelay > 0) {
+        startFadeoutTimer(mySmartFadeoutDelay);
+        mySmartFadeoutDelay = 0;
+      }
+
       final int id = e.getID();
       if (e instanceof MouseEvent) {
         final MouseEvent me = (MouseEvent)e;
@@ -843,12 +849,45 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myAnimator.resume();
   }
 
+  public void runWithSmartFadeoutPause(@NotNull Runnable handler) {
+    if (mySmartFadeout) {
+      mySmartFadeoutPaused = true;
+      handler.run();
+      if (mySmartFadeoutPaused) {
+        mySmartFadeoutPaused = false;
+      }
+      else {
+        hide();
+      }
+    }
+    else {
+      handler.run();
+    }
+  }
+
+  public void startSmartFadeoutTimer(int delay) {
+    mySmartFadeout = true;
+    mySmartFadeoutDelay = delay;
+    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+      @Override
+      public void onFrameDeactivated() {
+        if (myFadeoutAlarm.getActiveRequestCount() > 0) {
+          myFadeoutAlarm.cancelAllRequests();
+          mySmartFadeoutDelay = myFadeoutRequestDelay - (int)(System.currentTimeMillis() - myFadeoutRequestMillis);
+          if (mySmartFadeoutDelay <= 0) {
+            mySmartFadeoutDelay = 1;
+          }
+        }
+      }
+    }, this);
+  }
+
   public void startFadeoutTimer(final int fadeoutDelay) {
     if (fadeoutDelay > 0) {
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(() -> hide(), fadeoutDelay, null);
+      myFadeoutAlarm.addRequest(this::hide, fadeoutDelay, null);
     }
   }
 
@@ -910,6 +949,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
+
+    if (mySmartFadeoutPaused) {
+      mySmartFadeoutPaused = false;
+      return;
+    }
 
     if (myTraceDispose) {
       Logger.getInstance("#com.intellij.ui.BalloonImpl").error("Dispose balloon before showing", new Throwable());
@@ -1448,15 +1492,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public class ActionButton extends NonOpaquePanel {
     private final Icon myIcon;
     private final Icon myHoverIcon;
-    private final String myHint;
     private final Consumer<MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
     public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
-      myHint = hint;
       myListener = listener;
+
+      setToolTipText(hint);
 
       myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
         @Override
@@ -1475,20 +1519,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       if (hasPaint()) {
-        if (myHoverIcon != null && myButton.isHovered()) {
-          paintIcon(g, myHoverIcon);
-          showHint(true);
-        }
-        else {
-          paintIcon(g, myIcon);
-          showHint(false);
-        }
-      }
-    }
-
-    private void showHint(boolean show) {
-      if (myHint != null) {
-        ActionMenu.showDescriptionInStatusBar(true, this, show ? myHint : null);
+        paintIcon(g, myHoverIcon != null && myButton.isHovered() ? myHoverIcon : myIcon);
       }
     }
 

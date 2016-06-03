@@ -299,6 +299,11 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
                                                                 final Collection<PsiElement> parametersToDelete) {
       ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();

@@ -219,8 +219,14 @@ public class VcsLogManager implements Disposable {
 
     protected void processErrorFirstTime(@NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        LOG.info(e);
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Fatal error, VCS Log recreated: " + e.getMessage(), MessageType.ERROR);
+        String message = "Fatal error, VCS Log recreated: " + e.getMessage();
+        if (isLogVisible()) {
+          LOG.info(e);
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+        }
+        else {
+          LOG.error(message, e);
+        }
         myRecreateMainLogHandler.run();
       }
       else {

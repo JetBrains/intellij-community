@@ -49,6 +49,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
+    this(element, descriptor, toolWrapper, presentation, true);
+  }
+
+  protected ProblemDescriptionNode(RefEntity element,
+                                CommonProblemDescriptor descriptor,
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation,
+                                boolean doInit) {
     super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
@@ -57,7 +65,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
-    init(presentation.getContext().getProject());
+    if (doInit) {
+      init(presentation.getContext().getProject());
+    }
 }
 
   @Override
@@ -94,10 +104,10 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   protected boolean calculateIsValid() {
+    if (myDescriptor == null) return false;
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
-    final CommonProblemDescriptor descriptor = getDescriptor();
-    if (descriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+    if (myDescriptor instanceof ProblemDescriptor) {
+      final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;
@@ -139,6 +149,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     }
   }
 
+  @NotNull
   @Override
   protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
@@ -150,7 +161,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   public boolean isQuickFixAppliedFromView() {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !isAlreadySuppressedFromView();
+    return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

@@ -65,7 +65,7 @@ import java.util.List;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             QuickActionProvider, Accessible {
+             UISettingsListener, QuickActionProvider, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
@@ -255,33 +255,6 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings source) {
-        myImage = null;
-        for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-          entry.getKey().revalidate();
-          entry.getValue().setInactiveStateImage(null);
-        }
-        boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-        boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
-        boolean wasSingleRow = isSingleRow();
-        if (oldHideTabsIfNeed != newHideTabsIfNeed) {
-          if (mySingleRowLayout != null) {
-            remove(mySingleRowLayout.myLeftGhost);
-            remove(mySingleRowLayout.myRightGhost);
-          }
-          mySingleRowLayout = createSingleRowLayout();
-          if (wasSingleRow) {
-            myLayout = mySingleRowLayout;
-          }
-          add(mySingleRowLayout.myLeftGhost);
-          add(mySingleRowLayout.myRightGhost);
-          relayout(true, true);
-        }
-      }
-    }, this);
-
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
       @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
@@ -353,6 +326,31 @@ public class JBTabsImpl extends JComponent
             info -> info.getComponent()).iterator();
         }
       });
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    myImage = null;
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      entry.getKey().revalidate();
+      entry.getValue().setInactiveStateImage(null);
+    }
+    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
+    boolean wasSingleRow = isSingleRow();
+    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+      if (mySingleRowLayout != null) {
+        remove(mySingleRowLayout.myLeftGhost);
+        remove(mySingleRowLayout.myRightGhost);
+      }
+      mySingleRowLayout = createSingleRowLayout();
+      if (wasSingleRow) {
+        myLayout = mySingleRowLayout;
+      }
+      add(mySingleRowLayout.myLeftGhost);
+      add(mySingleRowLayout.myRightGhost);
+      relayout(true, true);
+    }
   }
 
   protected SingleRowLayout createSingleRowLayout() {

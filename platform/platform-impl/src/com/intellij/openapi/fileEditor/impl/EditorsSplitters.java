@@ -107,7 +107,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
     };
     KeymapManager.getInstance().addKeymapManagerListener(keymapListener, this);
-    UISettings.getInstance().addUISettingsListener(this, this);
   }
   
   public FileEditorManagerImpl getManager() {

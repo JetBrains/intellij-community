@@ -47,6 +47,10 @@ import java.util.List;
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
 
+  public static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
+  public static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
+  public static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
+  public static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
   @NotNull public static final Comparator<ExternalSystemNode> ORDER_AWARE_COMPARATOR = new Comparator<ExternalSystemNode>() {
 

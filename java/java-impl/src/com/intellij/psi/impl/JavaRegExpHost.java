@@ -15,14 +15,12 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -113,9 +111,6 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Nullable
   private static JavaSdkVersion getJavaVersion(PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return JavaSdkVersion.JDK_1_9;
-    }
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -124,13 +119,6 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         if (version != null) {
           return version;
         }
-      }
-    }
-    final Sdk sdk = ProjectRootManager.getInstance(element.getProject()).getProjectSdk();
-    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-      final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
-      if (version != null) {
-        return version;
       }
     }
     return JavaSdkVersion.JDK_1_9;

@@ -214,7 +214,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       catch (IndexNotReadyException ignored) { }
     }
 
-    myHolder.add(DefaultHighlightUtil.checkBadCharacter(element));
+    if (!(myFile instanceof ServerPageFile)) {
+      myHolder.add(DefaultHighlightUtil.checkBadCharacter(element));
+    }
   }
 
   @Override

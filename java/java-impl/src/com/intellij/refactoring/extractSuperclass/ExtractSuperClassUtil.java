@@ -78,8 +78,16 @@ public class ExtractSuperClassUtil {
       final PsiReferenceList subClassExtends = subclass.getExtendsList();
       if (subClassExtends != null) {
         copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
-      } else if (subclass instanceof PsiAnonymousClass) {
-        superclass.getExtendsList().add(((PsiAnonymousClass)subclass).getBaseClassReference());
+      }
+      else if (subclass instanceof PsiAnonymousClass) {
+        PsiJavaCodeReferenceElement classReference = ((PsiAnonymousClass)subclass).getBaseClassReference();
+        PsiElement baseClass = classReference.resolve();
+        if (baseClass instanceof PsiClass && ((PsiClass)baseClass).isInterface()) {
+          superclass.getImplementsList().add(classReference);
+        }
+        else {
+          superclass.getExtendsList().add(classReference);
+        }
       }
 
       // create constructors if neccesary
