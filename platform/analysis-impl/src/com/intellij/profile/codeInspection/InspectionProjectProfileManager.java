@@ -35,7 +35,7 @@ public interface InspectionProjectProfileManager extends ProjectProfileManager, 
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
-  void addProfilesListener(@NotNull ProfileChangeAdapter profilesListener, @NotNull Disposable parent);
+  void addProfilesListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 
   @Override
   default String getProfileName() {

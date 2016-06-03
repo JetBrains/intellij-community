@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,8 +132,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     try {
       if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) return;
       final InspectionManager iManager = InspectionManager.getInstance(myProject);
-      final InspectionProfileWrapper profile = myProfileWrapper;
-      inspect(getInspectionTools(profile), iManager, true, true, progress);
+      inspect(getInspectionTools(myProfileWrapper), iManager, true, true, progress);
     }
     finally {
       disposeDescriptors();

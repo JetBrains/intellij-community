@@ -340,7 +340,7 @@ public class DaemonListeners implements Disposable {
       });
     }
   }
-  
+
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
            action == DocumentRunnable.IgnoreDocumentRunnable.class ||
@@ -489,7 +489,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyProfileChangeListener extends ProfileChangeAdapter {
+  private class MyProfileChangeListener implements ProfileChangeAdapter {
     @Override
     public void profileChanged(Profile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
