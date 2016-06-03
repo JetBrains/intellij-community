@@ -80,9 +80,6 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
 
   private var state = State()
 
-  @OptionTag("USE_PROJECT_PROFILE")
-  private var useProjectProfile = true
-
   init {
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
       override fun projectClosed(project: Project) {
@@ -110,6 +107,9 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   private class State {
     @OptionTag("PROJECT_PROFILE")
     var projectProfile: String? = null
+
+    @OptionTag("USE_PROJECT_PROFILE")
+    var useProjectProfile = true
   }
 
   override fun getProject() = project
@@ -210,7 +210,9 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     val profileKeys = THashSet<String>()
     profileKeys.addAll(profiles.keys)
     profiles.clear()
-    XmlSerializer.deserializeInto(this, state)
+    val newState = State()
+    XmlSerializer.deserializeInto(newState, state)
+    this.state = newState
     for (o in state.getChildren(PROFILE)) {
       val profile = applicationProfileManager.createProfile()
       profile.profileManager = this
@@ -223,16 +225,16 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
         profiles.put(profile.name, profile as InspectionProfile?)
       }
     }
-    if (state.getChild("version") == null || !Comparing.strEqual(state.getChild("version").getAttributeValue("value"), VERSION)) {
-      var toConvert = true
+    if (state.getChild("version")?.getAttributeValue("value") != VERSION) {
       for (o in state.getChildren("option")) {
-        if (Comparing.strEqual(o.getAttributeValue("name"), "USE_PROJECT_LEVEL_SETTINGS")) {
-          toConvert = java.lang.Boolean.parseBoolean(o.getAttributeValue("value"))
+        if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
+          if (o.getAttributeValue("value").toBoolean()) {
+            if (newState.projectProfile != null) {
+              (inspectionProfile as ProfileEx).convert(state, project)
+            }
+          }
           break
         }
-      }
-      if (toConvert) {
-        convert(state)
       }
     }
   }
@@ -262,7 +264,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     }
 
     if (!state.children.isEmpty() || isCustomProfileUsed) {
-      XmlSerializer.serializeInto(this, state)
+      XmlSerializer.serializeInto(state, state)
       state.addContent(Element("version").setAttribute("value", VERSION))
     }
 
@@ -294,7 +296,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
 
     val oldProfile = state.projectProfile
     state.projectProfile = newProfile
-    useProjectProfile = newProfile != null
+    state.useProjectProfile = newProfile != null
     if (oldProfile != null) {
       for (adapter in profileListeners) {
         adapter.profileActivated(getProfile(oldProfile), if (newProfile != null) getProfile(newProfile) else null)
@@ -303,7 +305,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   }
 
   @Synchronized override fun getInspectionProfile(): InspectionProfile {
-    if (!useProjectProfile) {
+    if (!state.useProjectProfile) {
       return applicationProfileManager.rootProfile as InspectionProfile
     }
     if (state.projectProfile == null || profiles.isEmpty) {
@@ -344,12 +346,6 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile {
     val profile = profiles.get(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
-  }
-
-  fun convert(element: Element) {
-    if (state.projectProfile != null) {
-      (inspectionProfile as ProfileEx).convert(element, project)
-    }
   }
 }
 
