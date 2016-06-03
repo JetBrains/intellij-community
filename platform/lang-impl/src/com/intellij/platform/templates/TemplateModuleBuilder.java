@@ -22,22 +22,29 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -54,6 +61,7 @@ import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -157,7 +165,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     final ExistingModuleLoader loader = ExistingModuleLoader.setUpLoader(getModuleFilePath());
-    unzip(loader.getName(), path, true);
+    unzip(loader.getName(), path, true, null, true);
     Module module = loader.createModule(moduleModel);
     if (myProjectMode) {
       moduleModel.renameModule(module, module.getProject().getName());
@@ -190,7 +198,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return null;
   }
 
-  private void unzip(final @Nullable String projectName, String path, final boolean moduleMode) {
+  private void unzip(final @Nullable String projectName,
+                     String path,
+                     final boolean moduleMode,
+                     @Nullable ProgressIndicator pI,
+                     boolean reportFailuresWithDialog) {
     final WizardInputField basePackage = getBasePackageField();
     try {
       final NullableFunction<String, String> pathConvertor = path1 -> {
@@ -224,20 +236,21 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             return;
           }
 
-          String dialogMessage;
-          if (myFailures.size() == 1) {
-            dialogMessage = "Failed to decode file \'" + myFailures.get(0).getFirst() + "\'";
-          }
-          else {
-            StringBuilder dialogMessageBuilder = new StringBuilder();
-            dialogMessageBuilder.append("Failed to decode files: \n");
-            for (Trinity<String, String, VelocityException> failure : myFailures) {
-              dialogMessageBuilder.append(failure.getFirst()).append("\n");
+          if(reportFailuresWithDialog) {
+            String dialogMessage;
+            if (myFailures.size() == 1) {
+              dialogMessage = "Failed to decode file \'" + myFailures.get(0).getFirst() + "\'";
             }
-            dialogMessage = dialogMessageBuilder.toString();
+            else {
+              StringBuilder dialogMessageBuilder = new StringBuilder();
+              dialogMessageBuilder.append("Failed to decode files: \n");
+              for (Trinity<String, String, VelocityException> failure : myFailures) {
+                dialogMessageBuilder.append(failure.getFirst()).append("\n");
+              }
+              dialogMessage = dialogMessageBuilder.toString();
+            }
+            Messages.showErrorDialog(dialogMessage, "Decoding Template");
           }
-          Messages.showErrorDialog(dialogMessage, "Decoding Template");
-
 
           StringBuilder reportBuilder = new StringBuilder();
           for (Trinity<String, String, VelocityException> failure : myFailures) {
@@ -259,6 +272,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, pathConvertor, new ZipUtil.ContentProcessor() {
             @Override
             public byte[] processContent(byte[] content, File file) throws IOException {
+              if(pI != null){
+                pI.checkCanceled();
+              }
               FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
               String text = new String(content, CharsetToolkit.UTF8_CHARSET);
               consumer.setCurrentFile(file.getName(), text);
@@ -318,21 +334,82 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Nullable
   @Override
   public Project createProject(String name, final String path) {
-    myProjectMode = true;
-    unzip(name, path, false);
-    return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
-      @Nullable
-      @Override
-      public Project compute() {
-        try {
-          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return null;
-        }
+    final File location = new File(FileUtil.toSystemDependentName(path));
+    LOG.assertTrue(location.exists());
+
+    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
       }
     });
+    if (baseDir == null) {
+      LOG.error("Couldn't find path '" + path + "' in VFS");
+      return null;
+    }
+
+    VirtualFile[] children = baseDir.getChildren();
+    boolean isSomehowOverwriting = children.length > 1 ||
+                                   (children.length == 1 && !PathMacroUtil.DIRECTORY_STORE_NAME.equals(children[0].getName()));
+
+    Ref<Boolean> canceledRef = new Ref<>();
+    Ref<Project> projectRef = new Ref<>();
+    Task.Modal task = new Task.Modal(null, "Applying Template", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          projectRef.set(createProject(name, path, indicator));
+        }
+        finally {
+          cleanup();
+          if(indicator.isCanceled()){
+            canceledRef.set(true);
+            if (!isSomehowOverwriting) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(TemplateProjectDirectoryGenerator.class);
+                try {
+                  baseDir.delete(TemplateProjectDirectoryGenerator.class);
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
+                finally {
+                  token.close();
+                }
+              });
+            }
+          }
+        }
+      }
+    };
+    ProgressManager.getInstance().run(task);
+    if(canceledRef.get() == Boolean.TRUE){
+      throw new ProcessCanceledException();
+    }
+    return projectRef.get();
+  }
+
+  @Nullable
+  private Project createProject(String name, final String path, @Nullable ProgressIndicator  progressIndicator) {
+    myProjectMode = true;
+    unzip(name, path, false, progressIndicator, false);
+    Ref<Project> projectRef = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(()->{
+      projectRef.set(
+        ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
+        @Nullable
+        @Override
+        public Project compute() {
+          try {
+            return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+            return null;
+          }
+        }
+      }));
+    }, ModalityState.any());
+    return projectRef.get();
   }
 
   private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
