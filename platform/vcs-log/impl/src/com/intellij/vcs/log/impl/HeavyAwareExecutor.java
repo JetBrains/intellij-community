@@ -15,53 +15,21 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
-public class HeavyAwareExecutor implements Disposable {
-  private static final int DELAY_MILLIS = 5000;
-  @NotNull private final AtomicBoolean myIsExecuted = new AtomicBoolean(false);
-
-  public HeavyAwareExecutor(@NotNull Disposable parentDisposable) {
-    Disposer.register(parentDisposable, this);
-  }
-
-  public void execute(@NotNull Runnable command) {
-    SingleAlarm alarm = new SingleAlarm(() -> {
-      if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-        if (myIsExecuted.compareAndSet(false, true)) {
-          Disposer.dispose(this);
-          command.run();
-        }
+class HeavyAwareExecutor {
+  static void executeOutOfHeavyProcessLater(@NotNull Runnable command, int delayMs) {
+    HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        executeOutOfHeavyProcessLater(command, delayMs);
       }
-    }, DELAY_MILLIS, Alarm.ThreadToUse.SWING_THREAD, this);
-
-    HeavyProcessLatch.INSTANCE.addListener(alarm, new HeavyProcessLatch.HeavyProcessListener() {
-      @Override
-      public void processStarted() {
-        alarm.cancel();
+      else {
+        command.run();
       }
-
-      @Override
-      public void processFinished() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          alarm.request();
-        }
-      }
-    });
-
-    if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-      alarm.request();
-    }
-  }
-
-  @Override
-  public void dispose() {
+    }, delayMs, TimeUnit.MILLISECONDS));
   }
 }
