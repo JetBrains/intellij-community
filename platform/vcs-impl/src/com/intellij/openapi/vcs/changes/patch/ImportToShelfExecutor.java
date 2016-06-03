@@ -17,9 +17,9 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -44,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
@@ -90,24 +93,10 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
           }));
         }
         if (!allPatches.isEmpty()) {
-          PatchEP[] patchTransitExtensions = null;
+          Map<String, Map<String, CharSequence>> additionalInfoMap = Collections.emptyMap();
           if (additionalInfo != null) {
             try {
-              final Map<String, PatchEP> extensions = new HashMap<String, PatchEP>();
-              for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.get().entrySet()) {
-                final String filePath = entry.getKey();
-                Map<String, CharSequence> extToValue = entry.getValue();
-                for (Map.Entry<String, CharSequence> innerEntry : extToValue.entrySet()) {
-                  TransitExtension patchEP = (TransitExtension)extensions.get(innerEntry.getKey());
-                  if (patchEP == null) {
-                    patchEP = new TransitExtension(innerEntry.getKey());
-                    extensions.put(innerEntry.getKey(), patchEP);
-                  }
-                  patchEP.put(filePath, innerEntry.getValue());
-                }
-              }
-              Collection<PatchEP> values = extensions.values();
-              patchTransitExtensions = values.toArray(new PatchEP[values.size()]);
+              additionalInfoMap = additionalInfo.get();
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier
@@ -116,7 +105,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
           }
           try {
             final ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject).
-              importFilePatches(fileName, allPatches, patchTransitExtensions);
+              importFilePatches(fileName, allPatches, new FromPatchToShelfPatchWriter(myProject, additionalInfoMap));
             ShelvedChangesViewManager.getInstance(myProject).activateView(shelvedChangeList);
           }
           catch (IOException e) {
@@ -131,40 +120,20 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
     }
   }
 
-  private static class TransitExtension implements PatchEP {
-    private final String myName;
-    private final Map<String, CharSequence> myMap;
+  private static class FromPatchToShelfPatchWriter extends UnifiedDiffWriter {
+    private final Map<String, Map<String, CharSequence>> myMap;
 
-    private TransitExtension(String name) {
-      myName = name;
-      myMap = new HashMap<String, CharSequence>();
+    public FromPatchToShelfPatchWriter(@NotNull Project project,
+                                       @NotNull Map<String, Map<String, CharSequence>> infoMap) {
+      super(project);
+      myMap = infoMap;
     }
 
     @NotNull
     @Override
-    public String getName() {
-      return myName;
-    }
-
-    @Override
-    public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
-      return myMap.get(path);
-    }
-
-    @Override
-    public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void consumeContentBeforePatchApplied(@NotNull String path,
-                                                 @NotNull CharSequence content,
-                                                 CommitContext commitContext) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void put(String fileName, CharSequence value) {
-      myMap.put(fileName, value);
+    protected Map<String, CharSequence> constructAdditionalInfoMap(@Nullable CommitContext commitContext, String path) {
+      Map<String, CharSequence> additionalInfoPerFile = myMap.get(path);
+      return additionalInfoPerFile != null ? additionalInfoPerFile : Collections.emptyMap();
     }
   }
 }

@@ -393,7 +393,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  public ShelvedChangeList importFilePatches(final String fileName, final List<FilePatch> patches, final PatchEP[] patchTransitExtensions)
+  public ShelvedChangeList importFilePatches(@NotNull final String fileName,
+                                             @NotNull final List<FilePatch> patches,
+                                             @NotNull final UnifiedDiffWriter diffWriter)
     throws IOException {
     try {
       File schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
@@ -403,7 +405,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           @Override
           public void writeContentTo(@NotNull final Writer writer, @NotNull CommitContext commitContext)
             throws IOException {
-            UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions, commitContext);
+            diffWriter.write(patches, writer, "\n", commitContext);
           }
         },
         patchPath, new CommitContext());
