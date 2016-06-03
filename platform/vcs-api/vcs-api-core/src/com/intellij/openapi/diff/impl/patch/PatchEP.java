@@ -20,17 +20,12 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- *         Date: 7/11/11
- *         Time: 11:43 AM
- */
 public interface PatchEP {
   ExtensionPointName<PatchEP> EP_NAME = ExtensionPointName.create("com.intellij.patch.extension");
   @NotNull
   String getName();
   /**
-   * @param path - before path, if exist, otherwise after path
+   * @param path - before path from project dir, if exist, otherwise after path
    * @param commitContext
    */
   @Nullable
