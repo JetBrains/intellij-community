@@ -40,17 +40,7 @@ public interface DebugEnvironment {
 
   RemoteConnection getRemoteConnection();
 
-  /**
-   * @deprecated use {@link #getPollTimeout()}
-   */
-  default boolean isPollConnection() {
-    return false;
-  }
-
-  default long getPollTimeout() {
-    //noinspection deprecation
-    return isPollConnection() ? LOCAL_START_TIMEOUT : 0;
-  }
+  long getPollTimeout();
 
   String getSessionName();
 }
