@@ -67,6 +67,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   private JComponent myToolbar;
   private IdeStatusBarImpl myStatusBar;
+  private boolean myStatusBarDisposed;
 
   private final Box myNorthPanel = Box.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
@@ -156,6 +157,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void removeNotify(){
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      if (!myStatusBarDisposed) {
+        myStatusBarDisposed = true;
+        Disposer.dispose(myStatusBar);
+      }
       removeToolbar();
     }
     super.removeNotify();
@@ -275,7 +280,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
+    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
 
     setMemoryIndicatorVisible(UISettings.getInstance().SHOW_MEMORY_INDICATOR);
   }
