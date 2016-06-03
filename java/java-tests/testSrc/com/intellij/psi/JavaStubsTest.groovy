@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,18 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
   public void "test resolve from annotation method default"() {
     def cls = myFixture.addClass("""
-public @interface BrokenAnnotation {
+      public @interface BrokenAnnotation {
+        enum Foo {DEFAULT, OTHER}
+        Foo value() default Foo.DEFAULT;
+      }
+      """.stripIndent())
 
-  public enum Foo {
-    DEFAULT,
-    OTHER
-  }
-
-  Foo value() default Foo.DEFAULT;
-}
-""")
-    
     def file = cls.containingFile as PsiFileImpl
     assert file.stub
-    
+
     def ref = (cls.methods[0] as PsiAnnotationMethod).defaultValue
     assert file.stub
-    
+
     assert ref instanceof PsiReferenceExpression
     assert ref.resolve() == cls.innerClasses[0].fields[0]
     assert file.stub
@@ -47,16 +42,16 @@ public @interface BrokenAnnotation {
 
   public void "test literal annotation value"() {
     def cls = myFixture.addClass("""
-class Foo {
-  @org.jetbrains.annotations.Contract(pure=true)
-  native int foo();
-}
-""")
+      class Foo {
+        @org.jetbrains.annotations.Contract(pure=true)
+        native int foo();
+      }
+      """.stripIndent())
 
     def file = cls.containingFile as PsiFileImpl
     assert ControlFlowAnalyzer.isPure(cls.methods[0])
     assert file.stub
     assert !file.contentsLoaded
   }
-  
+
 }

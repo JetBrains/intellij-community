@@ -147,6 +147,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
     PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
     if (elementAt instanceof PsiNameIdentifierOwner) {
+      LOG.assertTrue(elementAt.isValid(), elementAt);
       return (PsiNameIdentifierOwner)elementAt;
     }
     return null;

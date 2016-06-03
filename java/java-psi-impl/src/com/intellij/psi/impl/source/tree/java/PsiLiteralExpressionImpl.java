@@ -287,7 +287,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    return getValue() instanceof String;
+    return getLiteralElementType() == JavaTokenType.STRING_LITERAL;
   }
 
   @Override

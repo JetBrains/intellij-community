@@ -299,6 +299,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor;
   }
 
+  protected final synchronized void resetText(@NotNull CharSequence text) {
+    myText = null;
+    doSetText(text);
+  }
+
   @Override
   public void setText(@NotNull CharSequence text) {
     synchronized (this) {

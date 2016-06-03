@@ -70,7 +70,7 @@ public class StudyGenerator {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
-          if (!StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
+          if (!StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName) && !EduNames.TASK_MD.equals(fileName)) {
             StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
           }
         }

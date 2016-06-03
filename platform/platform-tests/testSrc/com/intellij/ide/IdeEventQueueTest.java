@@ -38,7 +38,7 @@ public class IdeEventQueueTest extends PlatformTestCase {
       }
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(N, count.get());
-    }).assertTiming();
+    }).cpuBound().assertTiming();
   }
 
   public void testKeyboardEventsAreDetected() throws InterruptedException {

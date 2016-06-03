@@ -54,7 +54,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     }
     Rectangle r = rectangleForCurrentValue();
     g.setColor(getComboBackGround());
-    g.fillRect(1, 2, w-2, h-4);
+    g.fillRect(JBUI.scale(1), JBUI.scale(1), w-2*JBUI.scale(1), h-2*JBUI.scale(1));
     if (!isTableCellEditor(c)) {
       paintBorder(c, g, 0, 0, w, h);
       hasFocus = comboBox.hasFocus();
@@ -112,7 +112,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     } else {
       g2.setColor(UIManager.getColor("ComboBox.borderColor"));
     }
-    g2.drawRect(x + 1, y + 2, width - 2, height - 4);
+    g2.translate(x, y);
+    g2.drawRect(JBUI.scale(1), JBUI.scale(1), width-2*JBUI.scale(1), height-2*JBUI.scale(1));
+    g2.translate(-x, -y);
     config.restore();
   }
 }

@@ -66,8 +66,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +125,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
-  private final Set<Object> mySuppressedNodes = new HashSet<>();
+  private final FactoryMap<String, Set<Object>> mySuppressedNodes = new FactoryMap<String, Set<Object>>() {
+    @Nullable
+    @Override
+    protected Set<Object> create(String key) {
+      return new THashSet<>();
+    }
+  };
   private final ConcurrentMap<String, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -608,8 +616,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
-  public Set<Object> getSuppressedNodes() {
-    return mySuppressedNodes;
+  public Set<Object> getSuppressedNodes(String toolId) {
+    return mySuppressedNodes.get(toolId);
   }
 
   @NotNull

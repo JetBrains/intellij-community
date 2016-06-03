@@ -102,6 +102,6 @@
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicOptionsProvider"/>
+    <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
   </extensions>
 </idea-plugin>

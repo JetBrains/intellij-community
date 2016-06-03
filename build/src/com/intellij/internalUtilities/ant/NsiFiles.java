@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * Ant task to facilitate building NSIS installer.
@@ -118,10 +119,10 @@ public class NsiFiles extends MatchingTask {
       for (String file : allFiles) {
         uninstWriter.newLine();
         final String relPath = myAbsoluteToRelative.get(file);
-        uninstWriter.write("Delete \"$INSTDIR\\" + relPath + "\"");
+        uninstWriter.write("Delete \"$INSTDIR\\" + toWinPath(relPath) + "\"");
         if (relPath.endsWith(".py")) {
           uninstWriter.newLine();
-          uninstWriter.write("Delete \"$INSTDIR\\" + relPath + "c\"");  // .pyc
+          uninstWriter.write("Delete \"$INSTDIR\\" + toWinPath(relPath) + "c\"");  // .pyc
         }
       }
 
@@ -132,9 +133,9 @@ public class NsiFiles extends MatchingTask {
         final String dir = dirs.get(i);
         if (dir.length() == 0) continue;
         uninstWriter.newLine();
-        uninstWriter.write("RmDir /r \"$INSTDIR\\" + dir + "\\__pycache__\"");
+        uninstWriter.write("RmDir /r \"$INSTDIR\\" + toWinPath(dir) + "\\__pycache__\"");
         uninstWriter.newLine();
-        uninstWriter.write("RmDir \"$INSTDIR\\" + dir + "\"");
+        uninstWriter.write("RmDir \"$INSTDIR\\" + toWinPath(dir) + "\"");
       }
       uninstWriter.newLine();
       uninstWriter.write("RmDir \"$INSTDIR\"");
@@ -154,7 +155,7 @@ public class NsiFiles extends MatchingTask {
         instWriter.newLine();
         instWriter.newLine();
         if (dir.length() > 0) {
-          instWriter.write("SetOutPath $INSTDIR\\" + dir);
+          instWriter.write("SetOutPath $INSTDIR" + "\\" + toWinPath(dir));
         }
         else {
           instWriter.write("SetOutPath $INSTDIR");
@@ -169,6 +170,10 @@ public class NsiFiles extends MatchingTask {
     finally {
       instWriter.close();
     }
+  }
+
+  private static String toWinPath(String dir) {
+    return File.separatorChar == '\\' ? dir : dir.replaceAll(File.separator, Matcher.quoteReplacement("\\"));
   }
 
   private void processFileSet(final FileSet fileSet) throws IOException {

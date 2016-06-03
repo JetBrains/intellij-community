@@ -36,6 +36,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     String name = createdFile.getName();
     if (CCUtils.isTestsFile(project, createdFile)
         || EduNames.TASK_HTML.equals(name)
+        || EduNames.TASK_MD.equals(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
         || name.contains(EduNames.WINDOWS_POSTFIX)
         || name.contains(EduNames.ANSWERS_POSTFIX)) {

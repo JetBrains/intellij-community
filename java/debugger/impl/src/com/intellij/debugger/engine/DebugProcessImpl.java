@@ -217,35 +217,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final Value value = descriptor.getValue();
-    Type type = value != null ? value.type() : null;
+    Type type = descriptor.getType();
 
     // in case evaluation is not possible, force default renderer
     if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
 
-    NodeRenderer renderer = myNodeRenderersMap.get(type);
-    if(renderer == null) {
-      for (final NodeRenderer nodeRenderer : myRenderers) {
-        if (nodeRenderer.isApplicable(type)) {
-          renderer = nodeRenderer;
-          break;
-        }
-      }
-      if (renderer == null) {
-        renderer = getDefaultRenderer(type);
-      }
-      myNodeRenderersMap.put(type, renderer);
-    }
-
-    return renderer;
+    return myNodeRenderersMap.computeIfAbsent(type, t ->
+      myRenderers.stream().filter(r -> r.isApplicable(type)).findFirst().orElseGet(() -> getDefaultRenderer(type)));
   }
 
+  @NotNull
   public static NodeRenderer getDefaultRenderer(Value value) {
     return getDefaultRenderer(value != null ? value.type() : null);
   }
 
+  @NotNull
   public static NodeRenderer getDefaultRenderer(Type type) {
     final NodeRendererSettings settings = NodeRendererSettings.getInstance();
 

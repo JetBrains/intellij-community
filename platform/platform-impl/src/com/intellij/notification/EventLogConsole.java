@@ -42,6 +42,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
@@ -358,7 +359,7 @@ class EventLogConsole {
         markupModel.removeHighlighter(colorHighlighter);
       }
 
-      TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+      TextAttributes italic = new TextAttributes(Gray.x80, null, null, null, Font.PLAIN);
       for (int line = startLine; line < endLine; line++) {
         for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
           markupModel
