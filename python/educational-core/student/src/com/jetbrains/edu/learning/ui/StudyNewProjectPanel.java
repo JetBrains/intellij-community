@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.DefaultProjectFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -19,8 +20,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.jetbrains.edu.learning.courseFormat.Course;
+import com.intellij.util.TimeoutUtil;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -38,7 +40,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * author: liana
@@ -88,7 +89,6 @@ public class StudyNewProjectPanel {
 
     myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
   }
-
   private void setupBrowseButton() {
     myBrowseButton.putClientProperty("JButton.buttonType", "null");
     myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
@@ -190,12 +190,18 @@ public class StudyNewProjectPanel {
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      refreshCoursesList();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+        final List<CourseInfo> courses;
+        courses = execCancelable(() -> myGenerator.getCourses(true));
+        if (courses != null) {
+          ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
+        }        
+      }, "Refreshing Course List", true, DefaultProjectFactory.getInstance().getDefaultProject());
     }
   }
 
-  private void refreshCoursesList() {
-    final List<CourseInfo> courses = myGenerator.getCourses(true);
+  private void refreshCoursesList(@NotNull final List<CourseInfo> courses) {
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
       return;
@@ -203,7 +209,9 @@ public class StudyNewProjectPanel {
     myCoursesComboBox.removeAllItems();
 
     for (CourseInfo courseInfo : courses) {
-      myCoursesComboBox.addItem(courseInfo);
+      if (!courseInfo.isAdaptive()) {
+        myCoursesComboBox.addItem(courseInfo);
+      }
     }
     myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
 
@@ -269,6 +277,7 @@ public class StudyNewProjectPanel {
 
     @Override
     protected void doOKAction() {
+      super.doOKAction();
       if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getLogin())) {
         myRemoteCourse.setError("Please, enter your login");
         return;
@@ -278,46 +287,42 @@ public class StudyNewProjectPanel {
         return;
       }
 
-      super.doOKAction();
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      progressManager.runProcessWithProgressSynchronously(() -> {
-        final Future<StepicUser> future = ApplicationManager.getApplication().executeOnPooledThread(
-          new Callable<StepicUser>() {
-            @Override
-            public StepicUser call() throws Exception {
-              return EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
-            }
-          });
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        while (!future.isCancelled() && !future.isDone()) {
-          progressManager.getProgressIndicator().checkCanceled();
-          try {
-            TimeUnit.MILLISECONDS.sleep(500);
-          }
-          catch (final InterruptedException e) {
-            LOG.warn(e.getMessage());
-          }
-        }
+        final StepicUser stepicUser = execCancelable(() -> EduStepicConnector.login(myRemoteCourse.getLogin(), 
+                                                                                           myRemoteCourse.getPassword()));
+        if (stepicUser != null) {
+          stepicUser.setEmail(myRemoteCourse.getLogin());
+          stepicUser.setPassword(myRemoteCourse.getPassword());
+          myGenerator.myUser = stepicUser;
 
-        try {
-          final StepicUser stepicUser = future.get();
-          if (stepicUser != null) {
-            stepicUser.setEmail(myRemoteCourse.getLogin());
-            stepicUser.setPassword(myRemoteCourse.getPassword());
-            myGenerator.myUser = stepicUser;
-            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
+
+          final List<CourseInfo> courses = execCancelable(() -> myGenerator.getCourses(true));
+          if (courses != null) {
+            ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
-          else {
-            setError("Failed to log in");
-          }
-        }
-        catch (InterruptedException e) {
-          LOG.warn(e.getMessage());
-        }
-        catch (ExecutionException e) {
-          LOG.warn(e.getMessage());
         }
       }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
+  }
+  
+  @Nullable
+  private static <T> T execCancelable(@NotNull final Callable<T> callable) {
+    final Future<T> future =
+      ApplicationManager.getApplication().executeOnPooledThread(callable);
+
+    while (!future.isCancelled() && !future.isDone()) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(500);
+    }
+    T result = null;
+    try {
+      result = future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.warn(e.getMessage());
+    }
+    return result;
   }
 }
