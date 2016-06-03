@@ -29,7 +29,7 @@ public interface Profile extends Comparable, Scheme {
   void setLocal(boolean isLocal);
 
   /**
-   * @deprecated Use !{@link #isProjectLevel()}
+   * @deprecated Use {@link #isProjectLevel()}
    */
   @Deprecated
   boolean isLocal();
@@ -51,12 +51,5 @@ public interface Profile extends Comparable, Scheme {
 
   void readExternal(Element element);
 
-  default void writeExternal(Element element) {
-    Element result = writeExternal();
-    element.getAttributes().addAll(result.getAttributes());
-    element.addContent(result.getContent());
-  }
-
-  @NotNull
-  Element writeExternal();
+  void writeExternal(Element element);
 }

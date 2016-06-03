@@ -22,8 +22,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.profile.DefaultProjectProfileManager.PROFILE;
-
 /**
  * User: anna
  * Date: 01-Dec-2005
@@ -65,7 +63,7 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public void copyFrom(@NotNull Profile profile) {
-    readExternal(profile.writeExternal());
+    readExternal(ProjectProfileManager.serializeProfile(profile));
   }
 
   @Override
@@ -116,11 +114,9 @@ public abstract class ProfileEx implements Profile {
     mySerializer.writeExternal(this, element, preserveCompatibility);
   }
 
-  @NotNull
-  public Element writeExternal() {
-    Element result = new Element(PROFILE);
-    serializeInto(result, true);
-    return result;
+  @Override
+  public final void writeExternal(Element element) {
+    serializeInto(element, true);
   }
 
   public void profileChanged() {

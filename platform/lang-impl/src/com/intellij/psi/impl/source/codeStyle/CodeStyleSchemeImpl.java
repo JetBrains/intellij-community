@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SchemeDataHolder;
+import com.intellij.openapi.options.SerializableScheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -26,7 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableScheme {
+public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableScheme, SerializableScheme {
   private String myName;
 
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);

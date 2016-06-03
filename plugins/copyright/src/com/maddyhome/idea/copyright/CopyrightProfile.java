@@ -18,8 +18,6 @@ package com.maddyhome.idea.copyright;
 import com.intellij.profile.ProfileEx;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 public class CopyrightProfile extends ProfileEx {
   @SuppressWarnings("SpellCheckingInspection")
@@ -65,13 +63,5 @@ public class CopyrightProfile extends ProfileEx {
 
   public void setAllowReplaceKeyword(String allowReplaceKeyword) {
     this.allowReplaceKeyword = allowReplaceKeyword;
-  }
-
-  @NotNull
-  @Override
-  public Element writeExternal() {
-    Element result = new Element(CopyrightManager.COPYRIGHT);
-    serializeInto(result, true);
-    return result;
   }
 }

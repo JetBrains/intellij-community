@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.profile;
 
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.profile.DefaultProjectProfileManager.PROFILE;
 
 /**
  * User: anna
@@ -27,4 +31,11 @@ public abstract class ProjectProfileManager implements ProfileManager {
   public abstract String getProjectProfile();
 
   public abstract void setProjectProfile(@Nullable String projectProfile);
+
+  @NotNull
+  public static Element serializeProfile(@NotNull Profile profile) {
+    Element result = new Element(PROFILE);
+    profile.writeExternal(result);
+    return result;
+  }
 }

@@ -135,7 +135,8 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     try {
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
-          Element copyrightElement = copyright.writeExternal();
+          Element copyrightElement = new Element(COPYRIGHT);
+          copyright.serializeInto(copyrightElement, true);
           if (!JDOMUtil.isEmpty(copyrightElement)) {
             state.addContent(copyrightElement);
           }

@@ -101,7 +101,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     for (String profile : sortedProfiles) {
       final Profile projectProfile = myProfiles.get(profile);
       if (projectProfile != null) {
-        Element profileElement = projectProfile.writeExternal();
+        Element profileElement = ProjectProfileManager.serializeProfile(projectProfile);
         boolean hasSmthToSave = sortedProfiles.length > 1 || isCustomProfileUsed();
         if (!hasSmthToSave) {
           for (Element child : profileElement.getChildren()) {

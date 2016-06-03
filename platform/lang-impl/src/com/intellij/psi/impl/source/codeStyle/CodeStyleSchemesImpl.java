@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +38,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       @Override
       public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull String name, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
-      }
-
-      @NotNull
-      @Override
-      public Element writeScheme(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-        return scheme.writeScheme();
       }
 
       @NotNull

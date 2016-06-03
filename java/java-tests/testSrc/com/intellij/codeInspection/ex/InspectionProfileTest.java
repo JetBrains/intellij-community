@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.profile.ProjectProfileManager.serializeProfile;
 import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
 
 /**
@@ -75,7 +76,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, profile.writeExternal());
+    assertElementsEqual(element, serializeProfile(profile));
   }
 
   private static InspectionProfileImpl createProfile() {
@@ -145,7 +146,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
 
-    assertElementsEqual(loadProfile(), profile.writeExternal());
+    assertElementsEqual(loadProfile(), serializeProfile(profile));
   }
 
   private static Element loadProfile() throws IOException, JDOMException {
@@ -201,7 +202,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, profile.writeExternal());
+    assertElementsEqual(element, serializeProfile(profile));
   }
 
   public void testMergeUnusedDeclarationAndUnusedSymbol() throws Exception {
@@ -213,7 +214,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(element);
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(element, profile.writeExternal());
+    assertElementsEqual(element, serializeProfile(profile));
 
 
     //settings to merge
@@ -285,7 +286,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                         "</profile>";
     assertEquals(mergedText, serialize(profile));
 
-    Element toImportElement = profile.writeExternal();
+    Element toImportElement = serializeProfile(profile);
     final InspectionProfileImpl importedProfile =
       InspectionToolsConfigurable.importInspectionProfile(toImportElement, InspectionProfileManager.getInstance(), getProject(), null);
 
@@ -295,9 +296,9 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile.readExternal(mergedElement);
     model = profile.getModifiableModel();
     model.commit();
-    assertElementsEqual(mergedElement, profile.writeExternal());
+    assertElementsEqual(mergedElement, serializeProfile(profile));
 
-    assertElementsEqual(mergedElement, importedProfile.writeExternal());
+    assertElementsEqual(mergedElement, serializeProfile(importedProfile));
   }
 
   public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {
@@ -407,7 +408,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                  "</profile>",
                  serialize(profile));
 
-    Element element = profile.writeExternal();
+    Element element = serializeProfile(profile);
 
     list.add(createTool("bar", true));
     list.add(createTool("disabled", false));
@@ -434,7 +435,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static String serialize(InspectionProfileImpl profile) throws WriteExternalException {
-    return JDOMUtil.writeElement(profile.writeExternal());
+    return JDOMUtil.writeElement(serializeProfile(profile));
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
@@ -493,7 +494,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       profile.enableTool(id, getProject());
     }
     assertEquals(0, countInitializedTools(profile));
-    profile.writeExternal();
+    serializeProfile(profile);
     List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
     if (initializedTools.size() > 0) {
       for (InspectionToolWrapper initializedTool : initializedTools) {
@@ -528,7 +529,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                  "</profile>";
     foo.readExternal(JDOMUtil.loadDocument(test).getRootElement());
     foo.initInspectionTools(getProject());
-    assertEquals(test, JDOMUtil.writeElement(foo.writeExternal()));
+    assertEquals(test, JDOMUtil.writeElement(serializeProfile(foo)));
   }
 
   public static int countInitializedTools(Profile foo) {

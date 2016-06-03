@@ -103,3 +103,7 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
 
   open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
 }
+
+interface SerializableScheme {
+  fun writeScheme(): Element
+}

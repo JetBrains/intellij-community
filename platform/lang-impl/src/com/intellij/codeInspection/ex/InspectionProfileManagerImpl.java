@@ -111,15 +111,6 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         }
       }
 
-      @NotNull
-      @Override
-      public Element writeScheme(@NotNull InspectionProfileImpl scheme) {
-        Element root = new Element("inspections");
-        root.setAttribute("profile_name", scheme.getName());
-        scheme.serializeInto(root, false);
-        return root;
-      }
-
       @Override
       public void onSchemeAdded(@NotNull final InspectionProfileImpl scheme) {
         updateProfileImpl(scheme);

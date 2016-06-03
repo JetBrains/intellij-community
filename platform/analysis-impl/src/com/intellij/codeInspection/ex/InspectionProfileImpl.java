@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SchemeDataHolder;
+import com.intellij.openapi.options.SerializableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -62,7 +63,8 @@ import java.util.*;
 /**
  * @author max
  */
-public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme {
+public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme,
+                                                                SerializableScheme {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
   @NonNls static final String CLASS_TAG = "class";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
@@ -263,17 +265,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
-  @Override
-  public Element writeExternal() {
-    if (myDataHolder == null) {
-      return super.writeExternal();
-    }
-    else {
-      return myDataHolder.read();
-    }
-  }
-
-  @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
     LOG.assertTrue(myInitialized);
     final Set<HighlightSeverity> result = new HashSet<>();
@@ -282,6 +273,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         result.add(state.getLevel().getSeverity());
       }
     }
+    return result;
+  }
+
+  @NotNull
+  public Element writeScheme() {
+    if (myDataHolder != null) {
+      return myDataHolder.read();
+    }
+
+    Element result = new Element("inspections");
+    result.setAttribute("profile_name", getName());
+    serializeInto(result, false);
+    result.setName("inspections");
     return result;
   }
 
@@ -608,7 +612,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : (Computable<String>)() -> extension.getDisplayName();
+      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : (Computable<String>)extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
