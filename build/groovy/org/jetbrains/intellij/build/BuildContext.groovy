@@ -35,6 +35,7 @@ abstract class BuildContext {
   ProductProperties productProperties
   MacHostProperties macHostProperties
   BuildOptions options
+  SignTool signTool
 
   /**
    * Build number without product code (e.g. '162.500.10')
@@ -70,13 +71,15 @@ abstract class BuildContext {
 
   abstract JpsModule findModule(String name)
 
+  abstract void signExeFile(String path)
+
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
   public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null) {
+                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null) {
     return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                options, macHostProperties)
+                                options, macHostProperties, signTool)
   }
 }
 

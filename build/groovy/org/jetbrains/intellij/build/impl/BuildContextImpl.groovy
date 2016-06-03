@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.SignTool
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
@@ -43,7 +44,7 @@ class BuildContextImpl extends BuildContext {
 
   BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                   BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null) {
+                   BuildOptions options, MacHostProperties macHostProperties, SignTool signTool) {
     this.projectBuilder = projectBuilder
     this.ant = ant
     this.project = project
@@ -51,6 +52,7 @@ class BuildContextImpl extends BuildContext {
     this.productProperties = productProperties
     this.options = options
     this.macHostProperties = macHostProperties
+    this.signTool = signTool
     underTeamCity = System.getProperty("teamcity.buildType.id") != null
     messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
 
@@ -134,6 +136,18 @@ class BuildContextImpl extends BuildContext {
 
   JpsModule findModule(String name) {
     project.modules.find { it.name == name }
+  }
+
+  @Override
+  void signExeFile(String path) {
+    if (signTool != null) {
+      messages.progress("Signing $path")
+      signTool.signExeFile(path, this)
+      messages.info("Signing done")
+    }
+    else {
+      messages.warning("Sign tool isn't defined, $path won't be signed")
+    }
   }
 
   @Override

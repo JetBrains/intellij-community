@@ -114,23 +114,7 @@ class WinExeInstallerBuilder {
       buildContext.messages.error("Windows installer wasn't created.")
     }
 
-    //todo[nik] improve, probably it would be better to automatically download jet-sign.jar or pass it via property
-    def signJarPath = "${buildContext.paths.projectHome}/build/lib/jet-sign.jar"
-    if (new File(signJarPath).exists()) {
-      buildContext.messages.progress("Signing $installerPath")
-      ant.taskdef(name: "jet-sign", classname: "jetbrains.sign.JetSignTask") {
-        classpath(path: signJarPath)
-      }
-      ant."jet-sign"() {
-        ant.fileset(dir: buildContext.paths.artifacts) {
-          include(name: "${outFileName}.exe")
-        }
-      }
-      buildContext.messages.info("Signing done")
-    }
-    else {
-      buildContext.messages.warning("$signJarPath not found, installer won't be signed")
-    }
+    buildContext.signExeFile(installerPath)
     buildContext.notifyArtifactBuilt(installerPath)
   }
 

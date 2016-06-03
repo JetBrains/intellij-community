@@ -122,13 +122,14 @@ class WindowsDistributionBuilder {
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
+      def outputPath = "$winDistPath/bin/$exeFileName"
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
         arg(value: buildContext.findApplicationInfoInSources().absolutePath)
         arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath)
-        arg(value: "$winDistPath/bin/$exeFileName")
+        arg(value: outputPath)
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
           fileset(dir: "$communityHome/lib") {
@@ -141,6 +142,7 @@ class WindowsDistributionBuilder {
           }
         }
       }
+      buildContext.signExeFile(outputPath)
     }
   }
 
