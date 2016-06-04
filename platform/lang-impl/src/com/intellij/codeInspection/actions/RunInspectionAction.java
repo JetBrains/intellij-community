@@ -25,6 +25,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
@@ -180,8 +181,9 @@ public class RunInspectionAction extends GotoActionBase {
           actions.add(new AbstractAction("Fix All") {
             @Override
             public void actionPerformed(ActionEvent e) {
+              InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(toolWrapper, managerEx, element);
               managerEx.createNewGlobalContext(false)
-                .codeCleanup(getScope(), currentProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
+                .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }
           });
