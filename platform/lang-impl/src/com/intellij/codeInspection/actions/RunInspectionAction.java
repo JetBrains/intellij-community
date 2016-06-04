@@ -181,7 +181,7 @@ public class RunInspectionAction extends GotoActionBase {
             @Override
             public void actionPerformed(ActionEvent e) {
               managerEx.createNewGlobalContext(false)
-                .codeCleanup(project, getScope(), currentProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
+                .codeCleanup(getScope(), currentProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }
           });

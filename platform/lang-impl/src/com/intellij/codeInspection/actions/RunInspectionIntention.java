@@ -117,14 +117,14 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
                                      @NotNull InspectionManagerEx managerEx,
                                      @NotNull AnalysisScope scope,
-                                     PsiElement psiElement) {
+                                     @Nullable PsiElement psiElement) {
     GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
     inspectionContext.doInspections(scope);
   }
 
   public static GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
                                                           @NotNull InspectionManagerEx managerEx,
-                                                          PsiElement psiElement) {
+                                                          @Nullable PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
     allWrappers.add(toolWrapper);
