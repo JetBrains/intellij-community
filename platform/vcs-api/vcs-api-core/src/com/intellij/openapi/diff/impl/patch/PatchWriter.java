@@ -26,7 +26,7 @@ public interface PatchWriter {
 
   void writeAdditionalInfo(@NotNull FilePatch patch,
                            @NotNull Writer writer,
-                           @NotNull String lineSeparator,
+                           @Nullable String basePath, @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext) throws IOException;
 
   void writePathHeading(@NotNull Writer writer, @NotNull String lineSeparator, @NotNull TextFilePatch patch) throws IOException;

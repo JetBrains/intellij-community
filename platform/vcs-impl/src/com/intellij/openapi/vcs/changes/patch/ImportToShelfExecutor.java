@@ -128,7 +128,8 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
 
     @NotNull
     @Override
-    protected Map<String, CharSequence> constructAdditionalInfoMap(@Nullable CommitContext commitContext, String path) {
+    protected Map<String, CharSequence> constructAdditionalInfoMap(@Nullable CommitContext commitContext, String path, String basePath) {
+    //todo should use ioBase, not path
       Map<String, CharSequence> additionalInfoPerFile = myMap.get(path);
       return additionalInfoPerFile != null ? additionalInfoPerFile : Collections.emptyMap();
     }

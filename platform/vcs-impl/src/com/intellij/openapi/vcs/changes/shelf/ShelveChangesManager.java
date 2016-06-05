@@ -390,7 +390,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           @Override
           public void writeContentTo(@NotNull final Writer writer, @NotNull CommitContext commitContext)
             throws IOException {
-            diffWriter.write(patches, writer, "\n", commitContext);
+            diffWriter.write(patches, writer, myProject.getBasePath(), "\n", commitContext);
           }
         },
         patchPath, new CommitContext());

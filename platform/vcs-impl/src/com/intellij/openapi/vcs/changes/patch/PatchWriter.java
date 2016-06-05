@@ -37,16 +37,25 @@ import java.util.List;
 public class PatchWriter {
   private PatchWriter() {
   }
-
+                       
   public static void writePatches(final Project project,
                                   String fileName,
                                   List<FilePatch> patches,
                                   CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
+    writePatches(project, fileName, patches, project.getBasePath(), commitContext, charset);
+  }
+
+  public static void writePatches(final Project project,
+                                  String fileName,
+                                  List<FilePatch> patches,
+                                  String basePath,
+                                  CommitContext commitContext,
+                                  @NotNull Charset charset) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset);
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-      UnifiedDiffWriter.write(project, patches, writer, lineSeparator, commitContext);
+      new UnifiedDiffWriter(project).write(patches, writer, basePath, lineSeparator, commitContext);
     }
     finally {
       writer.close();

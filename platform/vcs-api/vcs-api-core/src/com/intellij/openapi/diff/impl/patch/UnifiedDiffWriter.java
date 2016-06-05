@@ -24,17 +24,21 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -47,13 +51,14 @@ public class UnifiedDiffWriter implements PatchWriter {
   @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
   @Nullable private final Project myProject;
 
-  protected UnifiedDiffWriter(@Nullable Project project) {
+  public UnifiedDiffWriter(@Nullable Project project) {
     myProject = project;
   }
 
   public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
                            @Nullable final CommitContext commitContext) throws IOException {
-    new UnifiedDiffWriter(project).write(patches, writer, lineSeparator, commitContext);
+    String basePath = project == null ? null : project.getBasePath();
+    new UnifiedDiffWriter(project).write(patches, writer, basePath, lineSeparator, commitContext);
   }
 
   /**
@@ -67,14 +72,14 @@ public class UnifiedDiffWriter implements PatchWriter {
   }
 
 
-  public void write(Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public void write(Collection<FilePatch> patches, Writer writer, @Nullable String basePath, final String lineSeparator,
                     final CommitContext commitContext) throws IOException {
 
     for (FilePatch filePatch : patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch)filePatch;
 
-      writeAdditionalInfo(patch, writer, lineSeparator, commitContext);
+      writeAdditionalInfo(patch, writer, basePath, lineSeparator, commitContext);
       writePathHeading(writer, lineSeparator, patch);
       writeHunks(writer, lineSeparator, patch);
     }
@@ -121,11 +126,12 @@ public class UnifiedDiffWriter implements PatchWriter {
   @Override
   public void writeAdditionalInfo(@NotNull FilePatch patch,
                                   @NotNull Writer writer,
-                                  @NotNull String lineSeparator, @Nullable CommitContext commitContext) throws IOException {
+                                  @Nullable String basePath, @NotNull String lineSeparator, @Nullable CommitContext commitContext)
+    throws IOException {
 
     final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
-    final Map<String, CharSequence> additionalMap = constructAdditionalInfoMap(commitContext, path);
+    final Map<String, CharSequence> additionalMap = constructAdditionalInfoMap(commitContext, path, basePath);
     writeAdditionalInfoMap(writer, lineSeparator, additionalMap);
     writer.write(HEADER_SEPARATOR + lineSeparator);
   }
@@ -150,11 +156,18 @@ public class UnifiedDiffWriter implements PatchWriter {
   }
 
   @NotNull
-  protected Map<String, CharSequence> constructAdditionalInfoMap(@Nullable CommitContext commitContext, String path) {
-    final PatchEP[] extensions = myProject == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, myProject);
+  protected Map<String, CharSequence> constructAdditionalInfoMap(@Nullable CommitContext commitContext,
+                                                                 String path,
+                                                                 @Nullable String basePath) {
+    if (myProject == null) return Collections.emptyMap();
+    String pathRelatedToProjectDir = basePath == null ? null :
+                                     FileUtil.getRelativePath(new File(ObjectUtils.assertNotNull(myProject.getBasePath())),
+                                                              new File(basePath, path));
+    final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, myProject);
     final Map<String, CharSequence> additionalMap = new HashMap<String, CharSequence>();
     for (PatchEP extension : extensions) {
-      final CharSequence charSequence = extension.provideContent(path, commitContext);
+      final CharSequence charSequence =
+        extension.provideContent(pathRelatedToProjectDir == null ? path : pathRelatedToProjectDir, commitContext);
       if (!StringUtil.isEmpty(charSequence)) {
         additionalMap.put(extension.getName(), charSequence);
       }

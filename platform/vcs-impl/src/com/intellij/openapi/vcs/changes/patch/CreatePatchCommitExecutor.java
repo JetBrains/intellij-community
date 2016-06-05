@@ -208,8 +208,9 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = PATCH_PATH;
         final boolean reversePatch = myPanel.isReversePatch();
 
-        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myPanel.getBaseDirName(), reversePatch);
-        PatchWriter.writePatches(myProject, fileName, patches, myCommitContext, myPanel.getEncoding());
+        String baseDirName = myPanel.getBaseDirName();
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
+        PatchWriter.writePatches(myProject, fileName, patches, baseDirName, myCommitContext, myPanel.getEncoding());
         final String message;
         if (binaryCount == 0) {
           message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
