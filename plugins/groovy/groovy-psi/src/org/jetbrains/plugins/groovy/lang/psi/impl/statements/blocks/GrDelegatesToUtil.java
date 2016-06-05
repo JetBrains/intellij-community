@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -205,7 +206,7 @@ public class GrDelegatesToUtil {
     if (!(element instanceof PsiMethod)) return null;
 
     String typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type");
-    if (typeValue == null) return null;
+    if (StringUtil.isEmptyOrSpaces(typeValue)) return null;
 
     PsiElement context = FromStringHintProcessor.createContext((PsiMethod)element);
     PsiType type = JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(typeValue, context);
