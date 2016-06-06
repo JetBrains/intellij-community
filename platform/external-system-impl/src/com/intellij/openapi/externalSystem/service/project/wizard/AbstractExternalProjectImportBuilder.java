@@ -138,7 +138,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         modules.add(module);
         return module;
       }
-    } : new IdeModifiableModelsProviderImpl(project);
+    } : new IdeModifiableModelsProviderImpl(project){
+      @NotNull
+      @Override
+      public Module newModule(@NotNull @NonNls String filePath,
+                              String moduleTypeId) {
+        final Module module = super.newModule(filePath, moduleTypeId);
+        modules.add(module);
+        return module;
+      }
+    };
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
