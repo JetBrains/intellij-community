@@ -33,6 +33,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.IntSupplier;
+
 import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
@@ -40,35 +42,43 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
  * @author max
  */
 public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
-  protected RefEntity myElement;
-  private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
+  private final CommonProblemDescriptor myDescriptor;
   private final HighlightDisplayLevel myLevel;
+  protected final int myLineNumber;
+  protected final RefEntity myElement;
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
-    this(element, descriptor, toolWrapper, presentation, true);
+    this(element, descriptor, toolWrapper, presentation, true, null);
   }
 
   protected ProblemDescriptionNode(RefEntity element,
-                                CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation,
-                                boolean doInit) {
+                                   CommonProblemDescriptor descriptor,
+                                   @NotNull InspectionToolWrapper toolWrapper,
+                                   @NotNull InspectionToolPresentation presentation,
+                                   boolean doInit,
+                                   @Nullable IntSupplier lineNumberCounter) {
     super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
     final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
-              ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
+              ? profile
+                .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
-}
+    myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
+  }
+
+  public int getLineNumber() {
+    return myLineNumber;
+  }
 
   @Override
   public boolean canSuppress() {
@@ -136,7 +146,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement){
+    if (myElement instanceof RefElement) {
       return getPresentation().getProblemStatus(myDescriptor);
     }
     return FileStatus.NOT_CHANGED;
