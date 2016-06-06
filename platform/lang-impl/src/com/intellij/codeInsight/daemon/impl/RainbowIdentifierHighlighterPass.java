@@ -18,12 +18,14 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +36,13 @@ public class RainbowIdentifierHighlighterPass extends TextEditorHighlightingPass
   protected final PsiFile myFile;
   protected final RainbowHighlighter myRainbowHighlighter;
   protected List<HighlightInfo> toHighlight;
+  protected final EditorColorsScheme myEditorColorsScheme;
 
   protected RainbowIdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor) {
     super(file.getProject(), editor.getDocument(), false);
     myFile = file;
-    myRainbowHighlighter = new RainbowHighlighter(editor.getColorsScheme());
+    myEditorColorsScheme = editor.getColorsScheme();
+    myRainbowHighlighter = new RainbowHighlighter(myEditorColorsScheme);
   }
 
   @Override
@@ -50,11 +54,11 @@ public class RainbowIdentifierHighlighterPass extends TextEditorHighlightingPass
       public void visitElement(PsiElement e) {
         final HighlightInfo attrs;
         if (e instanceof PsiReference) {
-          attrs = getInfo(e.getText(), e);
+          attrs = getInfo(e.getText(), e, null);
         }
         else if (e instanceof PsiNameIdentifierOwner) {
           PsiNameIdentifierOwner identifierOwner = (PsiNameIdentifierOwner)e;
-          attrs = getInfo(identifierOwner.getName(), identifierOwner.getNameIdentifier());
+          attrs = getInfo(identifierOwner.getName(), identifierOwner.getNameIdentifier(), null);
         }
         else {
           attrs = null;
@@ -74,9 +78,11 @@ public class RainbowIdentifierHighlighterPass extends TextEditorHighlightingPass
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
   }
 
-  protected HighlightInfo getInfo(@Nullable String colorKey, @Nullable PsiElement id) {
-    if (id == null || colorKey == null || StringUtil.isEmpty(colorKey)) return null;
-    final TextAttributes attributes = myRainbowHighlighter.getAttributes(colorKey);
+  protected HighlightInfo getInfo(@Nullable String nameKey, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
+    if (id == null || nameKey == null || StringUtil.isEmpty(nameKey)) return null;
+    if (colorKey == null) colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
+    final TextAttributes attributes = myRainbowHighlighter.getAttributes(nameKey,
+                                                                         myEditorColorsScheme.getAttributes(colorKey));
     return HighlightInfo
       .newHighlightInfo(RainbowHighlighter.RAINBOW_ELEMENT)
       .textAttributes(attributes)

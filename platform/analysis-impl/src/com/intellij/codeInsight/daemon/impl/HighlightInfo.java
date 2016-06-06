@@ -180,12 +180,13 @@ public class HighlightInfo implements Segment {
     }
 
     TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
-    if (RainbowHighlighter.isRainbowEnabled() &&
-        isLikeVariable(type.getAttributesKey()) && element != null) {
+    if (element != null &&
+        RainbowHighlighter.isRainbowEnabled() &&
+        !RainbowHighlighter.isByPassLanguage(element.getLanguage()) &&
+        isLikeVariable(type.getAttributesKey())) {
       String text = element.getContainingFile().getText();
       String name = text.substring(startOffset, endOffset);
-      TextAttributes rainAttributes = new RainbowHighlighter(colorsScheme).getAttributes(name);
-      attributes = TextAttributes.merge(attributes, rainAttributes);
+      attributes = new RainbowHighlighter(colorsScheme).getAttributes(name, attributes);
     }
     return attributes;
   }
