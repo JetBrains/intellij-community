@@ -141,8 +141,6 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + "     -Test\n"
                                            + "      -foo()\n"
                                            + "       " + varMessage("j") + "\n"
-                                           + "      -main(String[])\n"
-                                           + "       " + varMessage("test") + "\n"
                                            + "      -f()\n"
                                            + "       -D\n"
                                            + "        -b()\n"
@@ -152,7 +150,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + "           " + varMessage("i") + "\n"
                                            + "      -ff()\n"
                                            + "       " + varMessage("d") + "\n"
-                                           + "       " + varMessage("a") + "\n");
+                                           + "       " + varMessage("a") + "\n"
+                                           + "      -main(String[])\n"
+                                           + "       " + varMessage("test") + "\n");
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
@@ -160,11 +160,11 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + "  -" + myToolWrapper + "\n"
                                            + "   -Test\n"
                                            + "    " + varMessage("j") + "\n"
-                                           + "    " + varMessage("test") + "\n"
                                            + "    " + varMessage("r") + "\n"
                                            + "    " + varMessage("i") + "\n"
                                            + "    " + varMessage("d") + "\n"
-                                           + "    " + varMessage("a") + "\n");
+                                           + "    " + varMessage("a") + "\n"
+                                           + "    " + varMessage("test") + "\n");
     TreeUtil.selectFirstNode(tree);
     final InspectionTreeNode root = (InspectionTreeNode)tree.getLastSelectedPathComponent();
     root.excludeElement(myView.getExcludedManager());
@@ -185,11 +185,11 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + "  -" + myToolWrapper + "\n"
                                            + "   -Test\n"
                                            + "    " + varMessage("j") + "\n"
-                                           + "    " + varMessage("test") + "\n"
                                            + "    " + varMessage("r") + "\n"
                                            + "    " + varMessage("i") + "\n"
                                            + "    " + varMessage("d") + "\n"
-                                           + "    " + varMessage("a") + "\n");
+                                           + "    " + varMessage("a") + "\n"
+                                           + "    " + varMessage("test") + "\n");
   }
 
   private InspectionTree updateTree() {
