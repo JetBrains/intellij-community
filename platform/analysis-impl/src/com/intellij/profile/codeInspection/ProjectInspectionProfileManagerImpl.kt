@@ -36,11 +36,9 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
-import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.profile.ProfileEx
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -78,7 +76,6 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private val profiles = THashMap<String, InspectionProfile>()
-  private val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
   private var state = State()
 
@@ -147,10 +144,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
 
   @Synchronized override fun updateProfile(profile: Profile) {
     profiles.put(profile.name, profile as InspectionProfile)
-    for (profileChangeAdapter in profileListeners) {
-      profileChangeAdapter.profileChanged(profile)
-    }
-
+    fireProfileChanged(profile)
     initProfileWrapper(profile)
   }
 
@@ -290,7 +284,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
 
   @Synchronized override fun getAvailableProfileNames() = profiles.keys.toTypedArray()
 
-   val projectProfile: String?
+  val projectProfile: String?
     get() = state.projectProfile
 
   @Synchronized override fun setProjectProfile(newProfile: String?) {
@@ -301,9 +295,9 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
     val oldProfile = state.projectProfile
     state.projectProfile = newProfile
     state.useProjectProfile = newProfile != null
-    if (oldProfile != null) {
+    oldProfile?.let {
       for (adapter in profileListeners) {
-        adapter.profileActivated(getProfile(oldProfile), if (newProfile != null) getProfile(newProfile) else null)
+        adapter.profileActivated(getProfile(oldProfile), newProfile?.let { getProfile(it) })
       }
     }
   }
@@ -328,11 +322,6 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
       profile.profileManager = this
     }
     return profile
-  }
-
-  override fun addProfilesListener(listener: ProfileChangeAdapter, parent: Disposable) {
-    profileListeners.add(listener)
-    Disposer.register(parent, Disposable { profileListeners.remove(listener) })
   }
 
   private fun fireProfilesInitialized() {

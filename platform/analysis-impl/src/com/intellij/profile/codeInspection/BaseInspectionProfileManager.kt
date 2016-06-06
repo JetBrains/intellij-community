@@ -16,16 +16,51 @@
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.profile.Profile
+import com.intellij.profile.ProfileChangeAdapter
+import com.intellij.profile.ProfileEx
+import com.intellij.profile.ProfileManager
+import com.intellij.psi.search.scope.packageSet.NamedScope
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 
 @JvmField
 internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
 
-abstract class BaseInspectionProfileManager(messageBus: MessageBus) : SeverityProvider {
+abstract class BaseInspectionProfileManager(messageBus: MessageBus) : SeverityProvider, ProfileManager {
+  protected val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
   private val severityRegistrar = SeverityRegistrar(messageBus)
 
   override final fun getSeverityRegistrar() = severityRegistrar
 
-  override fun getOwnSeverityRegistrar() = severityRegistrar
+  override final fun getOwnSeverityRegistrar() = severityRegistrar
+
+  override final fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+    ContainerUtil.add(listener, profileListeners, parentDisposable)
+  }
+
+  final fun addProfileChangeListener(listener: ProfileChangeAdapter) {
+    profileListeners.add(listener)
+  }
+
+  final fun removeProfileChangeListener(listener: ProfileChangeAdapter) {
+    profileListeners.remove(listener)
+  }
+
+  final fun fireProfileChanged(profile: Profile) {
+    if (profile is ProfileEx) {
+      profile.profileChanged()
+    }
+    for (adapter in profileListeners) {
+      adapter.profileChanged(profile)
+    }
+  }
+
+  final fun fireProfileChanged(oldProfile: Profile, profile: Profile, scope: NamedScope?) {
+    for (adapter in profileListeners) {
+      adapter.profileActivated(oldProfile, profile)
+    }
+  }
 }

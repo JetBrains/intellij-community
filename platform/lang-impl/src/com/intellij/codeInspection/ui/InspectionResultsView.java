@@ -204,7 +204,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
 
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-    profileManager.addProfilesListener(new ProfileChangeAdapter() {
+    profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(Profile profile) {
         if (profile == profileManager.getInspectionProfile()) {

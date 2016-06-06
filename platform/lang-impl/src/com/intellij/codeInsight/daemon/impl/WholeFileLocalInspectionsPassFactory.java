@@ -80,7 +80,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         myFileToolsCache.clear();
       }
     };
-    myProfileManager.addProfilesListener(myProfilesListener, myProject);
+    myProfileManager.addProfileChangeListener(myProfilesListener, myProject);
     Disposer.register(myProject, myFileToolsCache::clear);
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImplKt;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImplKt;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -138,7 +138,7 @@ public abstract class ProfileEx implements Profile {
 
   @NotNull
   public static Element serializeProfile(@NotNull Profile profile) {
-    Element result = new Element(InspectionProjectProfileManagerImplKt.PROFILE);
+    Element result = new Element(ProjectInspectionProfileManagerImplKt.PROFILE);
     profile.writeExternal(result);
     return result;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,9 @@ public interface ProfileManager {
 
   Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
-  Profile getProfile(@NotNull String name);
+  default Profile getProfile(@NotNull String name) {
+    return getProfile(name, true);
+  }
 
   void updateProfile(@NotNull Profile profile);
 
@@ -40,4 +43,6 @@ public interface ProfileManager {
   String[] getAvailableProfileNames();
 
   void deleteProfile(@NotNull String name);
+
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 }

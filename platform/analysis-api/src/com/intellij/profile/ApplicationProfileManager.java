@@ -15,7 +15,6 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +32,6 @@ public interface ApplicationProfileManager extends ProfileManager {
 
   @SuppressWarnings("unused")
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
-
-  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable);
 
   void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 

@@ -39,10 +39,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
@@ -70,7 +67,9 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
   },
   additionalExportFile = ApplicationProfileManager.INSPECTION_DIR
 )
-public class ApplicationInspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
+public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfileManager implements InspectionProfileManager,
+                                                                                                     SeverityProvider,
+                                                                                                     PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<Profile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -166,7 +165,6 @@ public class ApplicationInspectionProfileManagerImpl extends InspectionProfileMa
     myProfilesAreInitialized.set(false);
   }
 
-  @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
       if (mySchemeManager.getAllSchemes().isEmpty()) {
@@ -197,8 +195,9 @@ public class ApplicationInspectionProfileManagerImpl extends InspectionProfileMa
         throw e;
       }
       catch (Exception ignored) {
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
-                                                                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title")), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> Messages
+          .showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
+                           InspectionsBundle.message("inspection.errors.occurred.dialog.title")), ModalityState.NON_MODAL);
       }
     }
     return getProfile(path, false);

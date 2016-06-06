@@ -16,11 +16,9 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.ProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -35,8 +33,6 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
   static InspectionProjectProfileManager getInstance(Project project){
     return project.getComponent(InspectionProjectProfileManager.class);
   }
-
-  void addProfilesListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
 
   default String getProfileName() {
     return getInspectionProfile().getName();
