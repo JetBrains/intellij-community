@@ -42,7 +42,7 @@ public class ExcludedInspectionTreeNodesManager {
     }
   };
 
-  private final Map<String, Set<Object>> myExcludedEntities = new FactoryMap<String, Set<Object>>() {
+  private final Map<String, Set<Object>> myExcludedByTool = new FactoryMap<String, Set<Object>>() {
     @Nullable
     @Override
     protected Set<Object> create(String key) {
@@ -59,8 +59,8 @@ public class ExcludedInspectionTreeNodesManager {
   }
 
   public synchronized boolean isExcluded(InspectionTreeNode node) {
-    if (!mySingleInspectionRun && node instanceof RefElementNode) {
-      return myExcludedEntities.get(findContainingToolName(node)).contains(node.getUserObject());
+    if (!mySingleInspectionRun && (node instanceof RefElementNode || node instanceof InspectionModuleNode || node instanceof InspectionPackageNode)) {
+      return myExcludedByTool.get(findContainingToolName(node)).contains(node.getUserObject());
     } else {
       final Set<?> excluded = myExcludedNodeObjects.get(node.getClass());
       return excluded.contains(node.getUserObject());
@@ -68,16 +68,16 @@ public class ExcludedInspectionTreeNodesManager {
   }
 
   public synchronized void exclude(InspectionTreeNode node) {
-    if (!mySingleInspectionRun && node instanceof RefElementNode) {
-      myExcludedEntities.get(findContainingToolName(node)).add(node.getUserObject());
+    if (!mySingleInspectionRun && (node instanceof RefElementNode || node instanceof InspectionModuleNode || node instanceof InspectionPackageNode)) {
+      myExcludedByTool.get(findContainingToolName(node)).add(node.getUserObject());
     } else {
       myExcludedNodeObjects.get(node.getClass()).add(node.getUserObject());
     }
   }
 
   public synchronized void amnesty(InspectionTreeNode node) {
-    if (!mySingleInspectionRun && node instanceof RefElementNode) {
-      myExcludedEntities.get(findContainingToolName(node)).remove(node.getUserObject());
+    if (!mySingleInspectionRun && (node instanceof RefElementNode || node instanceof InspectionModuleNode || node instanceof InspectionPackageNode)) {
+      myExcludedByTool.get(findContainingToolName(node)).remove(node.getUserObject());
     }
     else {
       myExcludedNodeObjects.get(node.getClass()).remove(node.getUserObject());
@@ -85,7 +85,7 @@ public class ExcludedInspectionTreeNodesManager {
   }
 
   public synchronized boolean containsRefEntity(@NotNull RefEntity entity, @NotNull InspectionToolWrapper wrapper) {
-    return myExcludedEntities.get(wrapper.getShortName()).contains(entity);
+    return myExcludedByTool.get(wrapper.getShortName()).contains(entity);
   }
 
   public synchronized boolean containsProblemDescriptor(@NotNull CommonProblemDescriptor descriptor) {
