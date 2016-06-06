@@ -20,10 +20,7 @@ import com.google.common.collect.Lists;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -32,6 +29,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
@@ -170,10 +168,10 @@ public class ProjectViewFixture extends ToolWindowFixture {
     public void selectByPath(@NotNull final String... paths) {
       final AbstractTreeStructure treeStructure = getTreeStructure();
 
-      final PsiDirectoryNode node = GuiActionRunner.execute(new GuiQuery<PsiDirectoryNode>() {
+      final BasePsiNode node = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
         @Nullable
         @Override
-        protected PsiDirectoryNode executeInEDT() throws Throwable {
+        protected BasePsiNode executeInEDT() throws Throwable {
           Object root = treeStructure.getRootElement();
           final List<Object> treePath = Lists.newArrayList(root);
 
@@ -184,6 +182,14 @@ public class ProjectViewFixture extends ToolWindowFixture {
               if (child instanceof PsiDirectoryNode) {
                 PsiDirectory dir = ((PsiDirectoryNode)child).getValue();
                 if (dir != null && path.equals(dir.getName())) {
+                  newRoot = child;
+                  treePath.add(newRoot);
+                  break;
+                }
+              }
+              if (child instanceof PsiFileNode){
+                PsiFile file = ((PsiFileNode)child).getValue();
+                if (file != null && path.equals(file.getName())) {
                   newRoot = child;
                   treePath.add(newRoot);
                   break;
@@ -202,8 +208,8 @@ public class ProjectViewFixture extends ToolWindowFixture {
           }
 
           myPane.expand(treePath.toArray(), true);
-          myPane.select(root, ((PsiDirectoryNode)root).getVirtualFile(), true);
-          return (PsiDirectoryNode)root;
+          myPane.select(root, ((BasePsiNode)root).getVirtualFile(), true);
+          return (BasePsiNode)root;
         }
       });
 

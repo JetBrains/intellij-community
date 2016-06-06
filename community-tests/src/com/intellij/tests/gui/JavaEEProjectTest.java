@@ -17,7 +17,7 @@ package com.intellij.tests.gui;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.tests.gui.fixtures.ProjectViewFixture;
+import com.intellij.tests.gui.fixtures.ToolWindowFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
 import com.intellij.tests.gui.framework.GuiTests;
@@ -37,12 +37,12 @@ import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
 /**
  * Created by karashevich on 27/05/16.
  */
-public class NewProjectTest extends GuiTestCase {
+public class JavaEEProjectTest extends GuiTestCase {
 
 
   //Should run with main_idea_tests module classpath
   @Test @IdeGuiTest
-  public void testNewProject() throws IOException, InterruptedException {
+  public void testJavaEEProject() throws IOException, InterruptedException {
 
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
     Date date = new Date();
@@ -68,11 +68,6 @@ public class NewProjectTest extends GuiTestCase {
 
     myProjectFrame = findIdeFrame(projectName, locationInFileSystem);
 
-    final ProjectViewFixture projectView = myProjectFrame.getProjectView();
-    final ProjectViewFixture.PaneFixture paneFixture = projectView.selectProjectPane();
-
-    paneFixture.selectByPath(projectName, "src", "META-INF", "persistence.xml");
-    Thread.sleep(10000);
 
   }
 
