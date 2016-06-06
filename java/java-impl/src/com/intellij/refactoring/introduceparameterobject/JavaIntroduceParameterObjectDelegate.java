@@ -293,7 +293,7 @@ public class JavaIntroduceParameterObjectDelegate
         conflicts.putValue(method, "Created class won't be accessible");
       }
 
-      if (!classDescriptor.isCreateInnerClass()) {
+      if (!classDescriptor.isCreateInnerClass() && !classDescriptor.isUseExistingClass()) {
         final PsiFile containingFile = method.getContainingFile();
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
         PsiDirectory directory = moveDestination.getTargetDirectory(containingDirectory);

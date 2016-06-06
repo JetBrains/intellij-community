@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -37,9 +38,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 
-public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
+public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
   private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
@@ -87,6 +89,28 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public String getCanonicalText() {
     return myCanonicalText;
+  }
+
+  @NotNull
+  @Override
+  public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations) {
+    String text = getCanonicalText();
+    if (!annotated || annotations == null) return text;
+
+    StringBuilder sb = new StringBuilder();
+
+    String prefix = getOuterClassRef(text);
+    int tailStart = 0;
+    if (!StringUtil.isEmpty(prefix)) {
+      sb.append(prefix).append('.');
+      tailStart = prefix.length() + 1;
+    }
+
+    PsiNameHelper.appendAnnotations(sb, Arrays.asList(annotations), true);
+
+    sb.append(text, tailStart, text.length());
+
+    return sb.toString();
   }
 
   private static class Resolver implements ResolveCache.PolyVariantContextResolver<ClsJavaCodeReferenceElementImpl> {

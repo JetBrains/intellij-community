@@ -16,6 +16,7 @@
 package com.intellij.psi
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -54,4 +55,26 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     assert !file.contentsLoaded
   }
 
+  public void "test applying type annotations"() {
+    def cls = myFixture.addClass("""
+      import java.lang.annotation.*;
+      class Foo {
+        @Target(ElementType.TYPE_USE)
+        @interface TA { String value(); }
+
+        private @TA String f1;
+
+        private static @TA int m1(@TA int p1) { return 0; }
+      }
+      """.stripIndent())
+
+    def f1 = cls.fields[0].type
+    def m1 = cls.methods[0].returnType
+    def p1 = cls.methods[0].parameterList.parameters[0].type
+    assert (cls as PsiClassImpl).stub
+
+    assert f1.getCanonicalText(true) == "java.lang.@Foo.TA String"
+    assert m1.getCanonicalText(true) == "@Foo.TA int"
+    assert p1.getCanonicalText(true) == "@Foo.TA int"
+  }
 }

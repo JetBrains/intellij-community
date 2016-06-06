@@ -26,28 +26,26 @@ import java.util.List;
 
 public class ColorGenerator {
   @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull List<Color> anchorColors, int count) {
-    if (count == 0) return Collections.emptyList();
-    if (anchorColors.isEmpty()) return Collections.nCopies(count, JBColor.GRAY);
-    if (anchorColors.size() == 1) return Collections.nCopies(count, anchorColors.get(0));
+  public static List<Color> generateLinearColorSequence(@NotNull List<Color> anchorColors, int colorsBetweenAnchors) {
+    assert colorsBetweenAnchors >= 0;
+    if (anchorColors.isEmpty()) return Collections.singletonList(JBColor.GRAY);
+    if (anchorColors.size() == 1) return Collections.singletonList(anchorColors.get(0));
 
     List<Color> result = new ArrayList<>();
     result.add(anchorColors.get(0));
 
     int segmentCount = anchorColors.size() - 1;
-    int colorPerSegment = (count - 1) / segmentCount;
-    if (count - 1 > colorPerSegment * segmentCount) colorPerSegment++; // divide rounding up
 
     for (int i = 0; i < segmentCount; i++) {
       Color color1 = anchorColors.get(i);
       Color color2 = anchorColors.get(i + 1);
 
-      List<Color> linearColors = generateLinearColorSequence(color1, color2, colorPerSegment + 1);
+      List<Color> linearColors = generateLinearColorSequence(color1, color2, colorsBetweenAnchors + 2);
 
       // skip first element from sequence to avoid duplication from connected segments
       result.addAll(linearColors.subList(1, linearColors.size()));
     }
-    return result.subList(0, count);
+    return result;
   }
 
   @NotNull
