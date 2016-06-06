@@ -38,7 +38,7 @@ public class XmlHighlightingLexer extends DelegateLexer {
   }
 
   private IElementType fixWrongTokenTypes(IElementType tokenType) {
-    int state = getState();
+    int state = getState() & 0x1f; // __XmlLexer.C_COMMENT_END is last state with value 30
     if (tokenType == XmlTokenType.XML_NAME) {
       if (state == __XmlLexer.TAG || state == __XmlLexer.END_TAG) {
         // translate XML names for tags into XmlTagName
