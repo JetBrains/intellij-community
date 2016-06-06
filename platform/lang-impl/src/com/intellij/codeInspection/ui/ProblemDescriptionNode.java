@@ -64,7 +64,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
+              : profile.getTools(toolWrapper.getShortName(), element.getRefManager().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
