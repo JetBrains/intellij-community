@@ -240,14 +240,13 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   }
 
   @Synchronized override fun getState(): Element? {
-    val state = Element("settings")
+    val result = Element("settings")
 
     val sortedProfiles = profiles.keys.toTypedArray<String>()
     Arrays.sort(sortedProfiles)
     for (profile in sortedProfiles) {
-      val projectProfile = profiles[profile]
-      if (projectProfile != null) {
-        val profileElement = ProfileEx.serializeProfile(projectProfile)
+      profiles.get(profile)?.let {
+        val profileElement = ProfileEx.serializeProfile(it)
         var hasSmthToSave = sortedProfiles.size > 1 || isCustomProfileUsed
         if (!hasSmthToSave) {
           for (child in profileElement.children) {
@@ -258,22 +257,22 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
           }
         }
         if (hasSmthToSave) {
-          state.addContent(profileElement)
+          result.addContent(profileElement)
         }
       }
     }
 
-    if (!state.children.isEmpty() || isCustomProfileUsed) {
-      XmlSerializer.serializeInto(state, state)
-      state.addContent(Element("version").setAttribute("value", VERSION))
+    if (!result.children.isEmpty() || isCustomProfileUsed) {
+      XmlSerializer.serializeInto(this.state, result)
+      result.addContent(Element("version").setAttribute("value", VERSION))
     }
 
-    severityRegistrar.writeExternal(state)
-    return state
+    severityRegistrar.writeExternal(result)
+    return result
   }
 
   private val isCustomProfileUsed: Boolean
-    get() = state.projectProfile != null && !Comparing.strEqual(state.projectProfile, PROJECT_DEFAULT_PROFILE_NAME)
+    get() = state.projectProfile != null && state.projectProfile != PROJECT_DEFAULT_PROFILE_NAME
 
   override fun getProfile(name: String) = getProfile(name, true)
 
