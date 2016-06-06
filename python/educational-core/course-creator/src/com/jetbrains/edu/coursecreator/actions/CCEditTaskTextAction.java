@@ -10,11 +10,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +50,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
     final StudyState studyState = new StudyState(selectedEditor);
-    VirtualFile taskTextFile = studyState.getTaskDir().findChild(CCSettings.getInstance().useHtmlAsDefaultTaskFormat() ? 
-                                                                 EduNames.TASK_HTML : EduNames.TASK_MD);
+    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(studyState.getTaskDir());
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
       return;

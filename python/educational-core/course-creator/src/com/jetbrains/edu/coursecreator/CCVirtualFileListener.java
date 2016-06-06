@@ -6,11 +6,13 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 public class CCVirtualFileListener extends VirtualFileAdapter {
@@ -35,8 +37,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
 
     String name = createdFile.getName();
     if (CCUtils.isTestsFile(project, createdFile)
-        || EduNames.TASK_HTML.equals(name)
-        || EduNames.TASK_MD.equals(name)
+        || StudyUtils.isTaskDescriptionFile(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
         || name.contains(EduNames.WINDOWS_POSTFIX)
         || name.contains(EduNames.ANSWERS_POSTFIX)) {
