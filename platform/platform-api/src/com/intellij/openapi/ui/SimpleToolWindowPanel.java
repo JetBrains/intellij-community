@@ -129,10 +129,6 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     repaint();
   }
   
-  protected JComponent getToolbar() {
-    return myToolbar;
-  }
-
   @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);

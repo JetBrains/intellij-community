@@ -2,8 +2,10 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
+import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,8 +39,6 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -109,7 +109,7 @@ public class TerminalView {
 
   private Content createTerminalInContentPanel(@NotNull AbstractTerminalRunner terminalRunner,
                                                final @NotNull ToolWindow toolWindow) {
-    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(false, true, toolWindow);
+    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
@@ -133,7 +133,7 @@ public class TerminalView {
     toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
-    panel.initDistractionFreeMode();
+    panel.uiSettingsChanged(null);
     
     content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
@@ -346,10 +346,12 @@ public class TerminalView {
 
 
 class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
+  private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 
-  public TerminalToolWindowPanel(boolean vertical, boolean borderless, ToolWindow window) {
-    super(vertical, borderless);
+  public TerminalToolWindowPanel(PropertiesComponent propertiesComponent, ToolWindow window) {
+    super(false, true);
+    myPropertiesComponent = propertiesComponent;
     myWindow = window;
   }
 
@@ -366,33 +368,13 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
     setToolWindowHeaderVisible(isVisible);
   }
 
-  private void setToolbarVisible(boolean value) {
-    JComponent toolbar = getToolbar();
-    if (toolbar != null) {
-      toolbar.setVisible(value);
-    }
+  private void setToolbarVisible(boolean isVisible) {
+    ToggleToolbarAction.setToolbarVisible(myWindow, myPropertiesComponent, isVisible);
   }
 
   private void setToolWindowHeaderVisible(boolean isVisible) {
     InternalDecorator decorator = ((ToolWindowEx)myWindow).getDecorator();
     decorator.setHeaderVisible(isVisible);
-  }
-
-  public void initDistractionFreeMode() {
-    if (isDfmSupportEnabled() && shouldMakeDistractionFree()) {
-      setDistractionFree(true);
-      JComponent toolbar = getToolbar();
-      if (toolbar == null) return;
-      //Someone upper will call toolbar.setVisible(true), so we need to overwrite it
-      toolbar.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentShown(ComponentEvent e) {
-          if (shouldMakeDistractionFree()) {
-            setToolbarVisible(false);
-          }
-        }
-      });
-    }
   }
 
   private boolean shouldMakeDistractionFree() {
