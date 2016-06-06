@@ -40,15 +40,25 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.TitledSeparator;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +68,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class RunInspectionAction extends GotoActionBase {
-  private static final Logger LOGGER = Logger.getInstance("#" + RunInspectionAction.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
 
   public RunInspectionAction() {
     getTemplatePresentation().setText(IdeBundle.message("goto.inspection.action.text"));
@@ -100,7 +110,8 @@ public class RunInspectionAction extends GotoActionBase {
                                     PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
     final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    final InspectionToolWrapper toolWrapper = currentProfile.getInspectionTool(shortName, project);
+    final InspectionToolWrapper toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
+                                                              : currentProfile.getInspectionTool(shortName, project);
     LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
 
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -136,9 +147,18 @@ public class RunInspectionAction extends GotoActionBase {
       project, analysisScope, module != null ? module.getName() : null,
       true, options, psiElement) {
 
+      private InheritOptionsForToolPanel myToolOptionsPanel;
+
+      @NotNull
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
-        return fileFilterPanel.getPanel();
+      protected JComponent[] getCompoundAdditionalActionSettings(Project project) {
+        final SmartList<JComponent> additions = new SmartList<>();
+        additions.add(fileFilterPanel.getPanel());
+        if (toolWrapper.getTool().createOptionsPanel() != null) {
+          myToolOptionsPanel = new InheritOptionsForToolPanel((InspectionProfileImpl)currentProfile, toolWrapper.getShortName(), project);
+          additions.add(myToolOptionsPanel);
+        }
+        return additions.toArray(new JComponent[additions.size()]);
       }
 
       @NotNull
@@ -157,8 +177,11 @@ public class RunInspectionAction extends GotoActionBase {
       }
 
       private AnalysisScope getScope() {
-        final AnalysisUIOptions uiOptions = options;
-        return getScope(uiOptions, initialAnalysisScope, project, module);
+        return getScope(options, initialAnalysisScope, project, module);
+      }
+
+      private InspectionToolWrapper getToolWrapper() {
+        return myToolOptionsPanel == null ? toolWrapper : myToolOptionsPanel.getSelectedWrapper();
       }
 
       @NotNull
@@ -173,7 +196,7 @@ public class RunInspectionAction extends GotoActionBase {
           }
           @Override
           public void actionPerformed(ActionEvent e) {
-            RunInspectionIntention.rerunInspection(toolWrapper, managerEx, getScope(), element);
+            RunInspectionIntention.rerunInspection(getToolWrapper(), managerEx, getScope(), null);
             close(DialogWrapper.OK_EXIT_CODE);
           }
         });
@@ -181,9 +204,10 @@ public class RunInspectionAction extends GotoActionBase {
           actions.add(new AbstractAction("Fix All") {
             @Override
             public void actionPerformed(ActionEvent e) {
-              InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(toolWrapper, managerEx, element);
+              InspectionToolWrapper wrapper = getToolWrapper();
+              InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
               managerEx.createNewGlobalContext(false)
-                .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
+                .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }
           });
@@ -197,5 +221,63 @@ public class RunInspectionAction extends GotoActionBase {
     };
 
     dialog.showAndGet();
+  }
+
+  private static class InheritOptionsForToolPanel extends JPanel {
+    private final ProfilesComboBox myProfilesComboBox;
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private final FactoryMap<InspectionProfile, Pair<InspectionToolWrapper, JComponent>> myProfile2ModifiedWrapper;
+
+    public InheritOptionsForToolPanel(final InspectionProfileImpl initial, final String toolShortName, final Project project) {
+      myProfile2ModifiedWrapper = new FactoryMap<InspectionProfile, Pair<InspectionToolWrapper, JComponent>>() {
+        @Nullable
+        @Override
+        protected Pair<InspectionToolWrapper, JComponent> create(InspectionProfile profile) {
+          InspectionToolWrapper tool = profile.getInspectionTool(toolShortName, project);
+          LOGGER.assertTrue(tool != null);
+          tool = tool.createCopy();
+          return Pair.create(tool, tool.getTool().createOptionsPanel());
+        }
+      };
+      JPanel settingsAnchor = new JPanel(new BorderLayout());
+      myProfilesComboBox = new ProfilesComboBox() {
+        @Override
+        protected void onProfileChosen(InspectionProfileImpl inspectionProfile) {
+          settingsAnchor.removeAll();
+          settingsAnchor.add(myProfile2ModifiedWrapper.get(inspectionProfile).getSecond(), BorderLayout.CENTER);
+          settingsAnchor.invalidate();
+          settingsAnchor.validate();
+          settingsAnchor.repaint();
+        }
+
+        @Override
+        protected boolean isProjectLevel(InspectionProfileImpl p) {
+          return p.isProjectLevel();
+        }
+
+        @NotNull
+        @Override
+        protected String getProfileName(InspectionProfileImpl p) {
+          return p.getName();
+        }
+      };
+
+      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+      add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
+      add(LabeledComponent.create(myProfilesComboBox, "Profile:", BorderLayout.WEST));
+      add(Box.createVerticalStrut(JBUI.scale(10)));
+      add(settingsAnchor);
+
+      final List<Profile> profiles = new ArrayList<>();
+      profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
+      profiles.addAll(InspectionProjectProfileManager.getInstance(project).getProfiles());
+      myProfilesComboBox.reset(profiles);
+      myProfilesComboBox.selectProfile(initial);
+    }
+
+    @NotNull
+    public InspectionToolWrapper getSelectedWrapper() {
+      return myProfile2ModifiedWrapper.get((InspectionProfileImpl)myProfilesComboBox.getSelectedItem()).getFirst();
+    }
   }
 }

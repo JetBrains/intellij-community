@@ -625,12 +625,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myExcludedInspectionTreeNodesManager;
   }
 
-  @NotNull
+  @Nullable
   public String getCurrentProfileName() {
-    return myInspectionProfile.getDisplayName();
+    return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
-  @NotNull
   public InspectionProfile getCurrentProfile() {
     return myInspectionProfile;
   }

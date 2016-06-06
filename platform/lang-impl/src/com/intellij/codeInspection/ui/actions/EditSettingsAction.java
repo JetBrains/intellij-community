@@ -21,16 +21,17 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.ui.docking.DockContainer;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.swing.*;
 
 /**
  * @author Dmitry Batkovich
@@ -45,52 +46,41 @@ public class EditSettingsAction extends InspectionViewActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionResultsView view = getView(e);
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(view.getProject());
-    final InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
     InspectionProfile inspectionProfile = view.getCurrentProfile();
-    final boolean profileIsDefined = view.isSingleInspectionRun();
-    if (!profileIsDefined) {
-      inspectionProfile = guessProfileToSelect(view, profileManager);
-    }
 
-    if (toolWrapper != null) {
-      final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
-      if (key != null) {
-        if (new EditInspectionToolsSettingsAction(key)
-              .editToolSettings(view.getProject(), (InspectionProfileImpl)inspectionProfile, profileIsDefined)
-            && profileIsDefined) {
-          view.updateCurrentProfile();
-        }
-        return;
+    if (view.isSingleInspectionRun()) {
+      InspectionToolWrapper tool = inspectionProfile.getInspectionTool(inspectionProfile.getSingleTool(), view.getProject());
+      JComponent panel = tool.getTool().createOptionsPanel();
+      if (panel != null) {
+        new DialogBuilder()
+          .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()))
+          .centerPanel(panel)
+          .show();
+      } else {
+        Messages.showInfoMessage(view.getProject(),
+                                 InspectionsBundle.message("inspection.tool.window.dialog.no.options", tool.getDisplayName()),
+                                 InspectionsBundle.message("inspection.tool.window.dialog.title"));
       }
-    }
-
-    final String[] path = view.getTree().getSelectedGroupPath();
-    if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, profileIsDefined, (c) -> {
-      if (path != null) {
-        c.selectInspectionGroup(path);
-      }
-    })) {
-      view.updateCurrentProfile();
-    }
-  }
-
-  private static InspectionProfile guessProfileToSelect(final InspectionResultsView view,
-                                                        final InspectionProjectProfileManager profileManager) {
-    final Set<InspectionProfile> profiles = new HashSet<InspectionProfile>();
-    final RefEntity[] selectedElements = view.getTree().getSelectedElements();
-    for (RefEntity selectedElement : selectedElements) {
-      if (selectedElement instanceof RefElement) {
-        final RefElement refElement = (RefElement)selectedElement;
-        final PsiElement element = refElement.getElement();
-        if (element != null) {
-          profiles.add(profileManager.getInspectionProfile());
+    } else {
+      final InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
+      if (toolWrapper != null) {
+        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
+        if (key != null) {
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), (InspectionProfileImpl)inspectionProfile, true)) {
+            view.updateCurrentProfile();
+          }
+          return;
         }
       }
+
+      final String[] path = view.getTree().getSelectedGroupPath();
+      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, true, (c) -> {
+        if (path != null) {
+          c.selectInspectionGroup(path);
+        }
+      })) {
+        view.updateCurrentProfile();
+      }
     }
-    if (profiles.isEmpty()) {
-      return (InspectionProfile)profileManager.getProjectProfileImpl();
-    }
-    return profiles.iterator().next();
   }
 }
