@@ -36,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
@@ -277,7 +278,7 @@ public class StudyUtils {
       return null;
     }
     //need this because of multi-module generation
-    if ("src".equals(taskDir.getName())) {
+    if (EduNames.SRC.equals(taskDir.getName())) {
       taskDir = taskDir.getParent();
       if (taskDir == null) {
         return null;
@@ -394,7 +395,7 @@ public class StudyUtils {
         return false;
       }
       String name = virtualFile.getName();
-      return !isTestsFile(project, name) && !EduNames.TASK_HTML.equals(name) && !EduNames.TASK_MD.equals(name);
+      return !isTestsFile(project, name) && !isTaskDescriptionFile(name);
     }
     if (element instanceof PsiDirectory) {
       VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
@@ -580,5 +581,29 @@ public class StudyUtils {
     MarkdownUtil.replaceCodeBlock(lines);
     
     return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
+  }
+  
+  public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
+    return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
+  }
+  
+  @Nullable
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull final VirtualFile parent) {
+    return ObjectUtils.chooseNotNull(parent.findChild(EduNames.TASK_HTML), parent.findChild(EduNames.TASK_MD));
+  }
+  
+  @NotNull
+  public static String getTaskDescriptionFileName(final boolean useHtml) {
+    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
+  }
+  
+  @Nullable
+  public static File createTaskDescriptionFile(@NotNull final File parent) {
+    if(new File(parent, EduNames.TASK_HTML).exists()) {
+      return new File(parent, EduNames.TASK_HTML);
+    }
+    else {
+      return new File(parent, EduNames.TASK_MD);
+    }
   }
 }

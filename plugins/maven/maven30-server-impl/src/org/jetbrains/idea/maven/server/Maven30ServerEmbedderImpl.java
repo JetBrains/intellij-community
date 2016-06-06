@@ -38,6 +38,8 @@ import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
+import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.plugin.LegacySupport;
@@ -261,7 +263,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   private static MavenExecutionResult handleException(Throwable e) {
     if (e instanceof Error) throw (Error)e;
 
-    return new MavenExecutionResult(null, Collections.singletonList((Exception)e));
+    return new MavenExecutionResult(Collections.singletonList((Exception)e));
   }
 
   private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
@@ -538,9 +540,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public MavenServerExecutionResult fun(MavenExecutionResult result) {
         try {
-          if (result != null && result.getMavenProject() != null && result.getMavenProject().getFile() != null) {
-            return createExecutionResult(result.getMavenProject().getFile(), result, listener.getRootNode());
-          }
+          return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
         }
         catch (RemoteException e) {
           ExceptionUtil.rethrowAllAsUnchecked(e);
@@ -614,16 +614,29 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
           List<ProjectBuildingResult> buildingResults;
 
           try {
-            // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
-            buildingResults = builder.build(new ArrayList<File>(files), false, request.getProjectBuildingRequest());
+            ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+            projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+            buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
+          }
+          catch (ProjectBuildingException e) {
+            buildingResults = e.getResults();
           }
           finally {
             modelInterpolator.setLocalRepository(savedLocalRepository);
           }
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
-
             MavenProject project = buildingResult.getProject();
+
+            if (project == null) {
+              List<Exception> exceptions = new ArrayList<Exception>();
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                exceptions.add(problem.getException());
+              }
+              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
+              executionResults.add(mavenExecutionResult);
+              continue;
+            }
 
             RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
             if (repositorySession instanceof DefaultRepositorySystemSession) {
@@ -806,7 +819,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
-  public MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
+  public MavenExecutionRequest createRequest(@Nullable File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles,
+                                             List<String> goals)
     throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
@@ -828,6 +844,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setActiveProfiles(activeProfiles);
       result.setInactiveProfiles(inactiveProfiles);
+      result.setCacheNotFound(true);
+      result.setCacheTransferError(true);
 
       result.setStartTime(myBuildStartTime);
 
@@ -844,7 +862,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode)
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
@@ -895,34 +913,42 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private void validate(@NotNull File file,
+  private void validate(@Nullable File file,
                         @NotNull Collection<Exception> exceptions,
                         @NotNull Collection<MavenProjectProblem> problems,
                         @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
     for (Throwable each : exceptions) {
+      if(each == null) continue;
+
       Maven3ServerGlobals.getLogger().info(each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
       }
 
+      String path = file == null ? "" : file.getPath();
+      if (path.isEmpty() && each instanceof ProjectBuildingException) {
+        File pomFile = ((ProjectBuildingException)each).getPomFile();
+        path = pomFile == null ? "" : pomFile.getPath();
+      }
+
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
         if (modelValidationResult != null) {
           for (Object eachValidationProblem : modelValidationResult.getMessages()) {
-            problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), (String)eachValidationProblem));
+            problems.add(MavenProjectProblem.createStructureProblem(path, (String)eachValidationProblem));
           }
         }
         else {
-          problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getCause().getMessage()));
+          problems.add(MavenProjectProblem.createStructureProblem(path, each.getCause().getMessage()));
         }
       }
       else if (each instanceof ProjectBuildingException) {
         String causeMessage = each.getCause() != null ? each.getCause().getMessage() : each.getMessage();
-        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), causeMessage));
+        problems.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
       }
       else {
-        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getMessage()));
+        problems.add(MavenProjectProblem.createStructureProblem(path, each.getMessage()));
       }
     }
     if (unresolvedArtifacts != null) {

@@ -54,8 +54,7 @@ public class ScratchUtil {
 
     if (file == null) return;
     Language language = LanguageUtil.getLanguageForPsi(project, file);
-    String extension = file.getExtension();
-    FileType expected = extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
+    FileType expected = getFileTypeFromName(file);
     FileType actual = language == null ? null : language.getAssociatedFileType();
     if (expected == actual || actual == null) return;
     String ext = actual.getDefaultExtension();
@@ -68,10 +67,15 @@ public class ScratchUtil {
   }
 
   public static boolean hasMatchingExtension(@NotNull Project project, @NotNull VirtualFile file) {
-    String extension = file.getExtension();
+    FileType expected = getFileTypeFromName(file);
     Language language = LanguageUtil.getLanguageForPsi(project, file);
-    FileType expected = extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
     FileType actual = language == null ? null : language.getAssociatedFileType();
     return expected == actual && actual != null;
+  }
+
+  @Nullable
+  public static FileType getFileTypeFromName(@NotNull VirtualFile file) {
+    String extension = file.getExtension();
+    return extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
   }
 }

@@ -10,6 +10,6 @@ class Foo<E> {
   Foo(E e, E e1) {}
 
   {
-    Foo foo = new Foo<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>(new B.C(), new B.D()) {};
+    Foo foo = new Foo<error descr="Cannot use ''<>'' with anonymous inner classes"><></error>(new B.C(), new B.D()) {};
   }
 }

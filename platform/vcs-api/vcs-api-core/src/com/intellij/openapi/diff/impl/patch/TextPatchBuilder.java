@@ -45,20 +45,18 @@ public class TextPatchBuilder {
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
   @NonNls private static final String EMPTY_REVISION_INFO = "\\(\\s*revision\\s*\\)";
 
-  private final String myBasePath;
+  @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
   private final boolean myIsCaseSensitive;
   @Nullable
   private final Runnable myCancelChecker;
-  private final boolean myIncludeBaseText;
 
-  private TextPatchBuilder(final String basePath, final boolean isReversePath, final boolean isCaseSensitive,
+  private TextPatchBuilder(@NotNull final String basePath, final boolean isReversePath, final boolean isCaseSensitive,
                            @Nullable final Runnable cancelChecker, boolean includeBaseText) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
     myIsCaseSensitive = isCaseSensitive;
     myCancelChecker = cancelChecker;
-    myIncludeBaseText = includeBaseText;
   }
 
   private void checkCanceled() {
@@ -72,7 +70,7 @@ public class TextPatchBuilder {
     return EMPTY_REVISION_INFO;
   }
 
-  public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, final String basePath,
+  public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, @NotNull final String basePath,
                                            final boolean reversePatch,
                                            final boolean isCaseSensitive,
                                            @Nullable final Runnable cancelChecker,
@@ -196,7 +194,7 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private void checkPathEndLine(TextFilePatch filePatch, final AirContentRevision cr) throws VcsException {
+  private static void checkPathEndLine(TextFilePatch filePatch, final AirContentRevision cr) throws VcsException {
     if (cr == null) return;
     if (filePatch.isDeletedFile() || filePatch.getAfterName() == null) return;
     final List<PatchHunk> hunks = filePatch.getHunks();
@@ -216,7 +214,7 @@ public class TextPatchBuilder {
     return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
   }
 
-  private FilePatch buildBinaryPatch(final String basePath,
+  private FilePatch buildBinaryPatch(@NotNull final String basePath,
                                             final AirContentRevision beforeRevision,
                                             final AirContentRevision afterRevision) throws VcsException {
     AirContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
@@ -240,7 +238,7 @@ public class TextPatchBuilder {
     hunk.addLine(patchLine);
   }
 
-  private TextFilePatch buildMovedFile(final String basePath, final AirContentRevision beforeRevision,
+  private TextFilePatch buildMovedFile(@NotNull final String basePath, final AirContentRevision beforeRevision,
                                        final AirContentRevision afterRevision) throws VcsException {
     final TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
     final PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
@@ -248,7 +246,7 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision) throws VcsException {
+  private TextFilePatch buildAddedFile(@NotNull final String basePath, final AirContentRevision afterRevision) throws VcsException {
     final DiffString content = DiffString.createNullable(afterRevision.getContentAsString());
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath().getPath());
@@ -264,7 +262,7 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision) throws VcsException {
+  private TextFilePatch buildDeletedFile(@NotNull String basePath, AirContentRevision beforeRevision) throws VcsException {
     final DiffString content = DiffString.createNullable(beforeRevision.getContentAsString());
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath().getPath());
@@ -302,7 +300,7 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private String getRelativePath(final String basePath, final String secondPath) {
+  private String getRelativePath(@NotNull final String basePath, final String secondPath) {
     final String baseModified = FileUtil.toSystemIndependentName(basePath);
     final String secondModified = FileUtil.toSystemIndependentName(secondPath);
     
@@ -319,13 +317,15 @@ public class TextPatchBuilder {
     return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
   }
 
-  private TextFilePatch buildPatchHeading(final String basePath, final AirContentRevision beforeRevision, final AirContentRevision afterRevision) {
+  private TextFilePatch buildPatchHeading(@NotNull final String basePath,
+                                          final AirContentRevision beforeRevision,
+                                          final AirContentRevision afterRevision) {
     TextFilePatch result = new TextFilePatch(afterRevision == null ? null : afterRevision.getCharset());
     setPatchHeading(result, basePath, beforeRevision, afterRevision);
     return result;
   }
 
-  private void setPatchHeading(final FilePatch result, final String basePath,
+  private void setPatchHeading(final FilePatch result, @NotNull final String basePath,
                                       @NotNull final AirContentRevision beforeRevision,
                                       @NotNull final AirContentRevision afterRevision) {
     result.setBeforeName(getRelativePath(basePath, beforeRevision.getPath().getPath()));

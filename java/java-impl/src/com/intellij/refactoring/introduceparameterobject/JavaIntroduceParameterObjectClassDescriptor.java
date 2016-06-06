@@ -204,7 +204,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final PsiVariable[] constructorParams = compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters()
                                                                           : fields;
     for (int i = 0; i < getParamsToMerge().length; i++) {
-      final ParameterInfoImpl methodParam = getParameterInfo(i);
+      final int oldIndex = getParamsToMerge()[i].getOldIndex();
+      final ParameterInfoImpl methodParam = getParameterInfo(oldIndex);
       final ParameterBean bean = new ParameterBean();
       myExistingClassProperties.put(methodParam, bean);
 
@@ -230,18 +231,18 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return compatibleConstructor;
   }
 
-  private boolean isConstructorCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
+  private static boolean isConstructorCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] constructorParams = parameterList.getParameters();
     return areTypesCompatible(paramsToMerge, constructorParams, context);
   }
 
-  private boolean areTypesCompatible(ParameterInfoImpl[] expected, PsiVariable[] actual, PsiElement context) {
+  private static boolean areTypesCompatible(ParameterInfoImpl[] expected, PsiVariable[] actual, PsiElement context) {
     if (actual.length != expected.length) {
       return false;
     }
     for (int i = 0; i < actual.length; i++) {
-      if (!TypeConversionUtil.isAssignable(actual[i].getType(), getParameterInfo(i).getTypeWrapper().getType(context))) {
+      if (!TypeConversionUtil.isAssignable(actual[i].getType(), expected[i].getTypeWrapper().getType(context))) {
         return false;
       }
     }

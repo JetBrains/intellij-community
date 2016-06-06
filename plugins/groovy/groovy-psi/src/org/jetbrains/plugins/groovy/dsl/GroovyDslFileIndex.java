@@ -190,7 +190,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   public static PsiClassType processScriptSuperClasses(@NotNull GroovyFile scriptFile) {
     if (!scriptFile.isScript()) return null;
 
-    final VirtualFile virtualFile = scriptFile.getVirtualFile();
+    final VirtualFile virtualFile = scriptFile.getOriginalFile().getVirtualFile();
     if (virtualFile == null) return null;
     final String filePath = virtualFile.getPath();
 

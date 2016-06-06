@@ -56,7 +56,13 @@ public class InheritanceImplUtil {
                                      @Nullable Set<PsiClass> checkedClasses) {
     if (candidateClass instanceof PsiAnonymousClass) {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
-      return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
+      if (baseCandidateClass != null) {
+        if (!checkDeep) {
+          return baseCandidateClass.equals(baseClass);
+        }
+        return InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, true);
+      }
+      return false;
     }
     if(checkDeep && LOG.isDebugEnabled()){
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);

@@ -141,23 +141,19 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   @NotNull
+  @SuppressWarnings("Duplicates")
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
-      if (type != null) return type;
-
-      String typeText = TypeInfo.createTypeText(stub.getType(true));
-      assert typeText != null : stub;
-      try {
+      if (type == null) {
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
         myCachedType = new SoftReference<PsiType>(type);
-        return type;
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
+      return type;
     }
 
     myCachedType = null;
@@ -232,6 +228,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
   }
 
+  @Override
   public String toString() {
     return "PsiParameter:" + getName();
   }
@@ -322,5 +319,4 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
     return this;
   }
-
 }

@@ -60,7 +60,7 @@ public class RedundantCastUtil {
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
     if (parent instanceof PsiAnonymousClass) parent = parent.getParent();
-    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor(false);
+    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor(true);
     parent.accept(visitor);
     return visitor.isRedundant;
   }
@@ -537,7 +537,8 @@ public class RedundantCastUtil {
             final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
             final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
             final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
-            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
+            if (opposite == null || conditionalType instanceof PsiPrimitiveType &&
+                                    !Comparing.equal(conditionalType, opposite.getType())) return;
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;

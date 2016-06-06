@@ -36,11 +36,11 @@ public class CCOptions implements StudyOptionsProvider {
   public JComponent createComponent() {
     if (CCSettings.getInstance().useHtmlAsDefaultTaskFormat()) {
       myHtmlRadioButton.setSelected(true);
-      myMarkdownRadioButton.setSelected(false);
+      myHtmlRadioButton.requestFocus();
     }
     else {
-      myHtmlRadioButton.setSelected(false);
       myMarkdownRadioButton.setSelected(true);
+      myMarkdownRadioButton.requestFocus();
     }
     return myPanel;
   }
@@ -52,16 +52,12 @@ public class CCOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myHtmlRadioButton.isSelected()) {
-      CCSettings.getInstance().setUseHtmlAsDefaultTaskFormat(true);
-    }
-    else if (myMarkdownRadioButton.isSelected()) {
-      CCSettings.getInstance().setUseHtmlAsDefaultTaskFormat(false);
-    }
+    CCSettings.getInstance().setUseHtmlAsDefaultTaskFormat(myHtmlRadioButton.isSelected());
   }
 
   @Override
   public void reset() {
+    createComponent();    
   }
 
   @Override

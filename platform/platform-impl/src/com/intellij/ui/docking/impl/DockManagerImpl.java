@@ -45,6 +45,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -123,7 +124,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public Set<DockContainer> getContainers() {
-    return Collections.unmodifiableSet(new HashSet<DockContainer>(myContainers));
+    return Collections.unmodifiableSet(ContainerUtil.newHashSet(myContainers));
   }
 
   @Override

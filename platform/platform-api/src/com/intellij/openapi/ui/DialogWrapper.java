@@ -433,6 +433,10 @@ public abstract class DialogWrapper {
     return ourDefaultBorder;
   }
 
+  protected static boolean isMoveHelpButtonLeft() {
+    return UIUtil.isUnderAquaBasedLookAndFeel() || SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui");
+  }
+
   /**
    * Creates panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
@@ -447,8 +451,7 @@ public abstract class DialogWrapper {
     Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if ((UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))
-        && Arrays.asList(actions).contains(getHelpAction())) {
+    if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
     } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
@@ -520,6 +523,12 @@ public abstract class DialogWrapper {
         }
 
         JPanel buttonsPanel = createButtons(actions, buttonMap);
+        if (shouldAddErrorNearButtons()) {
+          lrButtonsPanel.add(myErrorText, new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                 insets, 0, 0));
+          lrButtonsPanel.add(Box.createHorizontalStrut(10), new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
+                                                                                   GridBagConstraints.NONE, insets, 0, 0));
+        }
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
                                                   0));
@@ -569,6 +578,10 @@ public abstract class DialogWrapper {
       panel.setBorder(JBUI.Borders.emptyTop(8));
     }
     return panel;
+  }
+
+  protected boolean shouldAddErrorNearButtons() {
+    return false;
   }
 
   @NotNull
@@ -1192,7 +1205,7 @@ public abstract class DialogWrapper {
 
   protected void init() {
     ensureEventDispatchThread();
-    myErrorText = new ErrorText();
+    myErrorText = new ErrorText(getErrorTextAlignment());
     myErrorText.setVisible(false);
     final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
@@ -1208,7 +1221,7 @@ public abstract class DialogWrapper {
           if (root != null) {
             root.validate();
           }
-          if (myActualSize != null) {
+          if (myActualSize != null && !shouldAddErrorNearButtons()) {
             myPeer.setSize(myActualSize.width, myActualSize.height + height);
           }
           myErrorText.revalidate();
@@ -1285,6 +1298,10 @@ public abstract class DialogWrapper {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
+  }
+
+  protected int getErrorTextAlignment() {
+    return SwingConstants.LEADING;
   }
 
   @NotNull
@@ -1949,10 +1966,11 @@ public abstract class DialogWrapper {
     private final JLabel myLabel = new JLabel();
     private String myText;
 
-    private ErrorText() {
+    private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
       myLabel.setIcon(AllIcons.Actions.Lightning);
       myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
+      myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       pane.setBorder(JBUI.Borders.empty());

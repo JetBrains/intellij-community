@@ -2752,12 +2752,13 @@ public class HighlightUtil extends HighlightUtilBase {
       highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
     else if (resolved instanceof PsiClass) {
-      if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
-        final PsiElement parent = ref.getParent();
-        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStatementBase) {
-          String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
-        }
+      final PsiFile fileWithImportedClass = resolved.getContainingFile();
+      if (((PsiClass)resolved).getContainingClass() == null &&
+          fileWithImportedClass instanceof PsiClassOwner &&
+          PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
+          StringUtil.isEmptyOrSpaces(((PsiClassOwner)fileWithImportedClass).getPackageName())) {
+        String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
       }
     }
     return highlightInfo;

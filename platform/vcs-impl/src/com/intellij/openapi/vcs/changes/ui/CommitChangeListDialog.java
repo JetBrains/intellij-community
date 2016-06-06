@@ -1024,7 +1024,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
       JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
 
-      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, 150));
+      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, JBUI.scale(250)));
       mainPanel.add(mySplitter);
       mainPanel.add(infoPanel);
     } else {

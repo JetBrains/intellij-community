@@ -172,6 +172,14 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     });
   }
 
+  public void testIncludeOneParameter() throws Exception {
+    doTestExistingClass("Param", "", false, "public", method -> {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiParameter parameter = parameters[1];
+      return new ParameterInfoImpl[]{new ParameterInfoImpl(1, parameter.getName(), parameter.getType())};
+    });
+  }
+
   public void testTypeParametersWithChosenSubtype() throws Exception {
     doTest(false, true, psiMethod -> {
       final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
@@ -196,6 +204,15 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
                                    final String newVisibility) throws Exception {
+    doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, newVisibility,
+                        IntroduceParameterObjectTest::generateParams);
+  }
+
+  private void doTestExistingClass(final String existingClassName,
+                                   final String existingClassPackage,
+                                   final boolean generateAccessors,
+                                   final String newVisibility,
+                                   final Function<PsiMethod, ParameterInfoImpl[]> function) throws Exception {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
       if (aClass == null) {
@@ -204,7 +221,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
       assertNotNull("Class Test not found", aClass);
 
       final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-      final ParameterInfoImpl[] mergedParams = generateParams(method);
+      final ParameterInfoImpl[] mergedParams = function.fun(method);
       final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
         new JavaIntroduceParameterObjectClassDescriptor(existingClassName, existingClassPackage, null, true, false, newVisibility,
                                                         mergedParams, method, generateAccessors);

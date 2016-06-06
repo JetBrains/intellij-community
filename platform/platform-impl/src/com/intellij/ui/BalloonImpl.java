@@ -857,6 +857,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         mySmartFadeoutPaused = false;
       }
       else {
+        setAnimationEnabled(true);
         hide();
       }
     }
@@ -887,7 +888,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(this::hide, fadeoutDelay, null);
+      myFadeoutAlarm.addRequest(() -> {
+        if (mySmartFadeout) {
+          setAnimationEnabled(true);
+        }
+        hide();
+      }, fadeoutDelay, null);
     }
   }
 

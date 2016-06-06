@@ -307,7 +307,7 @@ public class MergeFromTheirsResolver {
       final Project project = myVcs.getProject();
       final List<FilePatch> patches;
       try {
-        patches = IdeaTextPatchBuilder.buildPatch(project, myTheirsChanges, myBaseForPatch.getPath(), false);
+        patches = IdeaTextPatchBuilder.buildPatch(project, myTheirsChanges, ObjectUtils.assertNotNull(myBaseForPatch).getPath(), false);
         myTextPatches = ObjectsConvertor.convert(patches, new Convertor<FilePatch, TextFilePatch>() {
           @Override
           public TextFilePatch convert(FilePatch o) {
