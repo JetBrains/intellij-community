@@ -118,7 +118,7 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
       file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun isToolEnabled(file: PsiFile) =
-      manual || InspectionProjectProfileManager.getInstance(file.project).inspectionProfile.isToolEnabled(key.value, file)
+      manual || InspectionProjectProfileManager.getInstance(file.project).currentProfile.isToolEnabled(key.value, file)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")

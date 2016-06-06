@@ -31,9 +31,6 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
   }
 
   @NotNull
-  Project getProject();
-
-  @NotNull
   @Deprecated
   default InspectionProfile getInspectionProfile() {
     return getCurrentProfile();
@@ -47,6 +44,4 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
   default InspectionProfile getInspectionProfile(PsiElement element){
     return getCurrentProfile();
   }
-
-  boolean isProfileLoaded();
 }

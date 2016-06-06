@@ -57,7 +57,7 @@ private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage("inspectionProfiles/profiles_settings")))
-class ProjectInspectionProfileManagerImpl(private val project: Project,
+class ProjectInspectionProfileManagerImpl(val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
                                           private val localScopesHolder: NamedScopeManager,
@@ -120,9 +120,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
     var useProjectProfile = true
   }
 
-  override fun getProject() = project
-
-  override fun isProfileLoaded(): Boolean {
+  fun isProfileLoaded(): Boolean {
     val profile = currentProfile
     val name = profile.name
     return if (profile.profileManager === this) nameToProfile.containsKey(name) else appNameToProfile.containsKey(name)

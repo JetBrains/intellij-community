@@ -109,7 +109,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -1199,8 +1199,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testDaemonIgnoresFrameDeactivation() throws Throwable {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    inspectionProfileManager.setRootProfile(InspectionProfileImpl.getDefaultProfile().getName()); // reset to default profile from the custom one to avoid unnecessary save
+    ApplicationProfileManager.getInstance().setRootProfile(InspectionProfileImpl.getDefaultProfile().getName()); // reset to default profile from the custom one to avoid unnecessary save
 
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(StdFileTypes.JAVA, text);

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -92,7 +93,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null; //optimization
     }
 
-    if (!InspectionProjectProfileManager.getInstance(file.getProject()).isProfileLoaded() ||
+    if (!ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isProfileLoaded() ||
         myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
       return null;
     }

@@ -25,6 +25,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -81,10 +82,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile() {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), ApplicationProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
   }
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base, null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), ApplicationProfileManager.getInstance(), base, null);
   }
 
   public void testSameNameSharedProfile() throws Exception {

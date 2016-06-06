@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -82,7 +82,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   @NotNull
   public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
     return project == null
-           ? InspectionProfileManager.getInstance().getSeverityRegistrar()
+           ? ApplicationProfileManager.getInstance().getSeverityRegistrar()
            : InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar();
   }
 
