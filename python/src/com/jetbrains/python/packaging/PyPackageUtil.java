@@ -285,7 +285,7 @@ public class PyPackageUtil {
         packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
-        LOG.error(e);
+        LOG.warn(e);
       }
     });
     return packagesRef.get();
