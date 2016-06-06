@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,18 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
+@CompileStatic
 public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
-  private static descriptor = new DefaultLightProjectDescriptor() {
+  private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
@@ -312,5 +315,27 @@ contribute(currentType("Myenum")) {
     constructor params:[foo:Integer, bar:Integer, goo:Integer]
 }''')
     assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void 'test complete base script members'() {
+    myFixture.with {
+      addFileToProject 'pckg/MyBaseScriptClass.groovy', '''
+package pckg
+
+abstract class MyBaseScriptClass extends Script {
+    def foo() {}
+    def prop
+}
+'''
+      addGdsl '''
+scriptSuperClass(pattern: 'a.groovy', superClass: 'pckg.MyBaseScriptClass')
+'''
+      configureByText 'a.groovy', '<caret>'
+      completeBasic()
+      lookupElementStrings.with {
+        assert 'foo' in it
+        assert 'prop' in it
+      }
+    }
   }
 }
