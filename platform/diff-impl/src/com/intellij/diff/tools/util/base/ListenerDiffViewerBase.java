@@ -25,43 +25,31 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public abstract class ListenerDiffViewerBase extends DiffViewerBase {
-  @NotNull private final DocumentListener myDocumentListener;
-  @Nullable private final VirtualFileListener myFileListener;
-
   public ListenerDiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
-    myDocumentListener = createDocumentListener();
-    myFileListener = createFileListener(request);
   }
 
   @Override
   protected void onInit() {
     super.onInit();
-    if (myFileListener != null) VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
 
-    for (Document document : getDocuments()) {
-      document.addDocumentListener(myDocumentListener);
-    }
-  }
+    VirtualFileListener fileListener = createFileListener(myRequest);
+    if (fileListener != null) VirtualFileManager.getInstance().addVirtualFileListener(fileListener, this);
 
-  @Override
-  protected void onDispose() {
-    if (myFileListener != null) VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
-
-    for (Document document : getDocuments()) {
-      document.removeDocumentListener(myDocumentListener);
-    }
-    super.onDispose();
+    DocumentListener documentListener = createDocumentListener();
+    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> {
+      return content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null;
+    });
+    TextDiffViewerUtil.installDocumentListeners(documentListener, documents, this);
   }
 
   @NotNull
@@ -123,20 +111,5 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   @CalledInAwt
   protected void onFileChange(@NotNull VirtualFileEvent event) {
     scheduleRediff();
-  }
-
-  //
-  // Helpers
-  //
-
-  @NotNull
-  private Set<Document> getDocuments() {
-    Set<Document> documents = new HashSet<>();
-    for (DiffContent content : myRequest.getContents()) {
-      if (content instanceof DocumentContent) {
-        documents.add(((DocumentContent)content).getDocument());
-      }
-    }
-    return documents;
   }
 }

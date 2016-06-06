@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface DebugEnvironment {
 
+  int LOCAL_START_TIMEOUT = 30000;
+
   @Nullable
   ExecutionResult createExecutionResult() throws ExecutionException;
 
@@ -38,7 +40,7 @@ public interface DebugEnvironment {
 
   RemoteConnection getRemoteConnection();
 
-  boolean isPollConnection();
+  long getPollTimeout();
 
   String getSessionName();
 }

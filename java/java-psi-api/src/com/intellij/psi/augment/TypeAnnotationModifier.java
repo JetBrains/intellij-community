@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.TypeAnnotationProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TypeAnnotationModifier {
@@ -36,6 +37,6 @@ public abstract class TypeAnnotationModifier {
    * @return provider based on modified annotations or null if no applicable annotations found
    */
   @Nullable
-  public abstract TypeAnnotationProvider getTypeAnnotationProvider(PsiType inferenceVariableType, PsiClassType boundType);
+  public abstract TypeAnnotationProvider modifyAnnotations(@NotNull PsiType inferenceVariableType, @NotNull PsiClassType boundType);
 
 }

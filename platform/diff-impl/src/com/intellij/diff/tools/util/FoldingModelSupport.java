@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
@@ -22,6 +23,7 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -75,12 +77,14 @@ public class FoldingModelSupport {
     myShouldUpdateLineNumbers = new boolean[myCount];
 
     MyDocumentListener documentListener = new MyDocumentListener();
+    List<Document> documents = ContainerUtil.map(myEditors, EditorEx::getDocument);
+    TextDiffViewerUtil.installDocumentListeners(documentListener, documents, disposable);
+
     for (int i = 0; i < myCount; i++) {
       if (myCount > 1) {
         myEditors[i].getFoldingModel().addListener(new MyFoldingListener(i), disposable);
       }
       myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
-      myEditors[i].getDocument().addDocumentListener(documentListener, disposable);
     }
   }
 

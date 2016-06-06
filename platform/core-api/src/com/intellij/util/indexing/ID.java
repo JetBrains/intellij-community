@@ -17,7 +17,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +32,7 @@ import java.io.*;
  *         Date: Feb 12, 2008
  */
 public class ID<K, V> {
-  private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
+  private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 

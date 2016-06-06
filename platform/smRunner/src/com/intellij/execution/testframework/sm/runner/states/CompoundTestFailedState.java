@@ -26,28 +26,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestComparisonFailedStates extends TestFailedState {
+public class CompoundTestFailedState extends TestFailedState {
   
-  final List<TestComparisionFailedState> myStates = new ArrayList<TestComparisionFailedState>();
+  final List<TestFailedState> myStates = new ArrayList<TestFailedState>();
 
-  public TestComparisonFailedStates(@Nullable String localizedMessage, @Nullable String stackTrace) {
+  public CompoundTestFailedState(@Nullable String localizedMessage, @Nullable String stackTrace) {
     super(localizedMessage, stackTrace);
   }
 
-  public void addComparisonFailure(TestComparisionFailedState state) {
+  public void addFailure(TestFailedState state) {
     myStates.add(state);
   }
 
   @Override
   public void printOn(Printer printer) {
  
-    for (TestComparisionFailedState state : myStates) {
+    for (TestFailedState state : myStates) {
       state.printOn(printer);
     }
   }
 
   @NotNull
   public List<DiffHyperlink> getHyperlinks() {
-    return ContainerUtil.map(myStates, state -> state.getHyperlink());
+    return ContainerUtil.map(ContainerUtil.filter(myStates, state -> state instanceof TestComparisionFailedState),
+                             state -> ((TestComparisionFailedState)state).getHyperlink());
   }
 }

@@ -78,7 +78,7 @@ public class Restarter {
     if (beforeRestart.length == 0) return;
 
     File restartDir = new File(getRestarterDir());
-    String systemPath = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/system/restart";
+    String systemPath = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/system/restart").getPath();
     if (! systemPath.equals(restartDir.getPath())){
       throw new IOException("idea.system.path was changed. Restart is not supported.");
     }

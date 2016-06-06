@@ -31,7 +31,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
@@ -98,6 +100,14 @@ public class TextDiffViewerUtil {
     }
 
     return result;
+  }
+
+  public static void installDocumentListeners(@NotNull DocumentListener listener,
+                                              @NotNull List<Document> documents,
+                                              @NotNull Disposable disposable) {
+    for (Document document : ContainerUtil.newHashSet(documents)) {
+      document.addDocumentListener(listener, disposable);
+    }
   }
 
   public static void checkDifferentDocuments(@NotNull ContentDiffRequest request) {

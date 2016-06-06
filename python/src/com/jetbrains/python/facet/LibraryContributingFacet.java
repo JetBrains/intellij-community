@@ -36,14 +36,14 @@ public abstract class LibraryContributingFacet<T extends FacetConfiguration> ext
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
       @Override
       public void beforeFacetRemoved(@NotNull Facet facet) {
-        if (facet instanceof LibraryContributingFacet) {
+        if (facet == LibraryContributingFacet.this) {
           ((LibraryContributingFacet) facet).removeLibrary();
         }
       }
 
       @Override
       public void facetConfigurationChanged(@NotNull Facet facet) {
-        if (facet instanceof LibraryContributingFacet) {
+        if (facet == LibraryContributingFacet.this) {
           ((LibraryContributingFacet) facet).updateLibrary();
         }
       }

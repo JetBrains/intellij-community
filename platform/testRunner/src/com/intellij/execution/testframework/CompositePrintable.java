@@ -356,7 +356,7 @@ public class CompositePrintable implements Printable, Disposable {
               for (ConsoleViewContentType contentType : ConsoleViewContentType.OUTPUT_TYPES) {
                 final String prefix = contentType.toString();
                 if (line.startsWith(prefix)) {
-                  printer.print(line.substring(prefix.length()), contentType);
+                  printer.printWithAnsiColoring(line.substring(prefix.length()), contentType);
                   myLastSelected = contentType;
                   printed = true;
                   break;
@@ -368,7 +368,7 @@ public class CompositePrintable implements Printable, Disposable {
                     .printOn(printer);
                 }
                 else {
-                  printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
+                  printer.printWithAnsiColoring(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
                 }
               }
               lineNum++;

@@ -209,10 +209,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     if (myProtectedRadioButton.isSelected()) {
       return PsiModifier.PROTECTED;
     }
-    if (myPrivateRadioButton.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
-    return null;
+    return PsiModifier.PRIVATE;
   }
 
 

@@ -42,7 +42,7 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     sendTree(myRootDescription);
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
-      if (RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {
+      if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {
         return startChildFork(createChildArgs(myRootDescription), null, classpath, repeatCount);
       }
       final List children = getChildren(myRootDescription);

@@ -54,10 +54,16 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
   @NotNull
   public static TextRange getValueRange(@NotNull PsiLiteralExpression element) {
     int length = element.getTextLength();
-    IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
-    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.CHARACTER_LITERAL) {
-      return TextRange.from(0, length);
+    boolean isQuoted;
+    if (element instanceof PsiLiteralExpressionImpl) {
+      // avoid calling getValue(): it allocates new string, it returns null for invalid escapes
+      IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
+      isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
     }
-    return new TextRange(1, Math.max(1, length - 1));
+    else {
+      final Object value = element.getValue();
+      isQuoted = value instanceof String || value instanceof Character;
+    }
+    return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
   }
 }

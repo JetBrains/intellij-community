@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
@@ -46,7 +45,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -70,8 +68,6 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
@@ -801,11 +797,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         for (SMTestProxy proxy : tests) {
           String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
           if (url != null) {
-            ProcessHandler handler = myRoot.getHandler();
-            String configurationName = null;
-            if (handler != null) {
-              configurationName = handler.getUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY);    
-            }
+            String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(), 
                                                                 configurationName == null ? 0 : configurationName.hashCode()));
           }

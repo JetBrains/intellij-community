@@ -224,7 +224,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       TextRange textRange = place.getRangeInsideHost().shiftRight(host.getTextRange().getStartOffset());
       if (textRange.isEmpty()) continue;
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
-      if (injectedAttributes != null) {
+      if (injectedAttributes != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
         builder.textAttributes(injectedAttributes);
       }
       if (addTooltips) {
@@ -248,7 +248,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     highlightInjectedSyntax(injectedPsi, holder);
     for (int i = injectedStart; i < holder.size(); i++) {
       HighlightInfo info = holder.get(i);
-      final TextRange fixedTextRange = getFixedTextRange(documentWindow, info.startOffset);
+      final int startOffset = info.startOffset;
+      final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
       if (fixedTextRange == null) {
         info.setFromInjection(true);
         outInfos.add(info);

@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -129,22 +130,25 @@ public class MacOSApplicationProvider implements ApplicationComponent {
 
         @Override
         public void handlePreferences(ApplicationEvent applicationEvent) {
-          Project project = getProject();
-
-          if (project == null) {
-            project = ProjectManager.getInstance().getDefaultProject();
-          }
-
-          Project finalProject = project;
-          if (!((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).isAlreadyShown()) {
-            TransactionGuard.submitTransaction(project, () -> ShowSettingsUtil.getInstance().showSettingsDialog(finalProject, ShowSettingsUtilImpl.getConfigurableGroups(finalProject, true)));
+          Project project = getNotNullProject();
+          ShowSettingsUtilImpl showSettingsUtil = (ShowSettingsUtilImpl)ShowSettingsUtil.getInstance();
+          if (!showSettingsUtil.isAlreadyShown()) {
+            TransactionGuard.submitTransaction(project, () ->
+              showSettingsUtil.showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true)));
           }
           applicationEvent.setHandled(true);
         }
 
+        @NotNull
+        private Project getNotNullProject() {
+          Project project = getProject();
+          return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+        }
+
         @Override
         public void handleQuit(ApplicationEvent applicationEvent) {
-          ApplicationManagerEx.getApplicationEx().exit();
+          ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+          TransactionGuard.submitTransaction(app, app::exit);
         }
 
         @Override
@@ -153,15 +157,17 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           String filename = applicationEvent.getFilename();
           if (filename == null) return;
 
-          File file = new File(filename);
-          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-            IdeaApplication.getInstance().setPerformProjectLoad(false);
-            return;
-          }
-          if (project != null && file.exists()) {
-            OpenFileAction.openFile(filename, project);
-            applicationEvent.setHandled(true);
-          }
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            File file = new File(filename);
+            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+              IdeaApplication.getInstance().setPerformProjectLoad(false);
+              return;
+            }
+            if (project != null && file.exists()) {
+              OpenFileAction.openFile(filename, project);
+              applicationEvent.setHandled(true);
+            }
+          });
         }
       });
 

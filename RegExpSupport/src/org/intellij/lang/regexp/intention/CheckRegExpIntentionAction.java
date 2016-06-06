@@ -16,7 +16,9 @@
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
+import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +47,19 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
       Language language = pair.first.getLanguage();
       return language.isKindOf(RegExpLanguage.INSTANCE);
     }
-    return false;
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    return baseFile != null && baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    if (baseFile == null || !baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE)) {
+      super.invoke(project, editor, file);
+      return;
+    }
+    JComponent component = createBalloonComponent(file);
+    if (component != null) QuickEditHandler.showBalloon(editor, file, component);
   }
 
   @Override

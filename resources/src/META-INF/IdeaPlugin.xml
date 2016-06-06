@@ -543,6 +543,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
 
+    <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
+
     <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
 
