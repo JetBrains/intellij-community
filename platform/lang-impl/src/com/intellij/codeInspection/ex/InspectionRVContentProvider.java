@@ -192,8 +192,9 @@ public abstract class InspectionRVContentProvider {
         }
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
-            moduleNode.insertByOrder(packageNode, false);
-            for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
+            Collection<UserObjectContainer<T>> objectContainers = packageDescriptors.get(packageNode);
+            packageNode = (InspectionPackageNode)merge(packageNode, moduleNode, true);
+            for (UserObjectContainer<T> container : objectContainers) {
               appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
             }
           }
