@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public static InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
                                                     @NotNull InspectionManagerEx managerEx,
                                                     @Nullable PsiElement psiElement) {
-    final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
+    final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getCurrentProfile();
     LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());

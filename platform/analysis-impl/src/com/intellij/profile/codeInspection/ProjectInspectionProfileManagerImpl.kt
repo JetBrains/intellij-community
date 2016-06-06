@@ -123,14 +123,14 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   override fun getProject() = project
 
   override fun isProfileLoaded(): Boolean {
-    val profile = inspectionProfile
+    val profile = currentProfile
     val name = profile.name
     return if (profile.profileManager === this) nameToProfile.containsKey(name) else appNameToProfile.containsKey(name)
   }
 
   val profileWrapper: InspectionProfileWrapper
     get() {
-      val profile = inspectionProfile
+      val profile = currentProfile
       val profileName = profile.name
       val nameToProfile = if (profile.profileManager === this) nameToProfile else appNameToProfile
       val wrapper = nameToProfile[profileName]
@@ -156,7 +156,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   private inner class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       val profileManager = getInstanceImpl(project)
-      val inspectionProfile = profileManager.inspectionProfile
+      val inspectionProfile = profileManager.currentProfile
       val app = ApplicationManager.getApplication()
       val initInspectionProfilesRunnable = {
         profileManager.initProfileWrapper(inspectionProfile)
@@ -228,7 +228,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
         if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
           if (o.getAttributeValue("value").toBoolean()) {
             if (newState.projectProfile != null) {
-              (inspectionProfile as ProfileEx).convert(state, project)
+              (currentProfile as ProfileEx).convert(state, project)
             }
           }
           break
@@ -275,7 +275,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   override fun getScopesManager() = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<Profile> {
-    inspectionProfile
+    currentProfile
     return profiles.values
   }
 
@@ -299,14 +299,14 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
     }
   }
 
-  @Synchronized override fun getInspectionProfile(): InspectionProfile {
+  @Synchronized override fun getCurrentProfile(): InspectionProfile {
     if (!state.useProjectProfile) {
-      return applicationProfileManager.rootProfile as InspectionProfile
+      return applicationProfileManager.currentProfile
     }
     if (state.projectProfile == null || profiles.isEmpty) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
       val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), null)
-      projectProfile.copyFrom(applicationProfileManager.rootProfile)
+      projectProfile.copyFrom(applicationProfileManager.currentProfile)
       projectProfile.isProjectLevel = true
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
       profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile)

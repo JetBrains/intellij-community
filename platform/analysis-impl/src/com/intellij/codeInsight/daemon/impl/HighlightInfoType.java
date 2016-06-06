@@ -341,8 +341,8 @@ public interface HighlightInfoType {
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
-                                  ? (InspectionProfile)ApplicationProfileManager.getInstance().getRootProfile()
-                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
+                                  ? ApplicationProfileManager.getInstance().getCurrentProfile()
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
       HighlightDisplayLevel level = profile.getErrorLevel(myToolKey, psiElement);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level.getSeverity();

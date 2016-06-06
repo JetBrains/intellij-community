@@ -176,7 +176,7 @@ public class ViewOfflineResultsAction extends AnAction {
 
         @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
-          return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
+          return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
         }
       };
     }

@@ -177,7 +177,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
     if (myCurrentProfileName == null) {
       myCurrentProfileName = ProjectInspectionProfileManagerImpl.getInstanceImpl(getProject()).getProjectProfile();
       if (myCurrentProfileName == null) {
-        myCurrentProfileName = ApplicationProfileManager.getInstance().getRootProfile().getName();
+        myCurrentProfileName = ApplicationProfileManager.getInstance().getCurrentProfile().getName();
       }
     }
     return myCurrentProfileName;

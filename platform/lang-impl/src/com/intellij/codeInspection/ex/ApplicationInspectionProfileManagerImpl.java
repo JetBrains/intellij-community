@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -247,20 +248,20 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     if (found != null) return found;
     //profile was deleted
     if (returnRootProfileIfNamedIsAbsent) {
-      return getRootProfile();
+      return getCurrentProfile();
     }
     return null;
   }
 
   @NotNull
   @Override
-  public Profile getRootProfile() {
+  public InspectionProfile getCurrentProfile() {
     initProfiles();
     Profile current = mySchemeManager.getCurrentScheme();
-    if (current != null) return current;
+    if (current != null) return (InspectionProfile)current;
     Collection<Profile> profiles = getProfiles();
     if (profiles.isEmpty()) return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
-    return profiles.iterator().next();
+    return (InspectionProfile)profiles.iterator().next();
   }
 
   @NotNull

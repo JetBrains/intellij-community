@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -47,4 +48,7 @@ public interface ProfileManager {
   void deleteProfile(@NotNull String name);
 
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parent);
+
+  @NotNull
+  InspectionProfile getCurrentProfile();
 }

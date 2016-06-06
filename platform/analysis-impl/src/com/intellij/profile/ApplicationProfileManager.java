@@ -33,6 +33,7 @@ public interface ApplicationProfileManager extends ProfileManager, SeverityProvi
   @SuppressWarnings("unused")
   Profile createProfile();
 
+  @Deprecated
   @SuppressWarnings("unused")
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
@@ -46,8 +47,12 @@ public interface ApplicationProfileManager extends ProfileManager, SeverityProvi
 
   void setRootProfile(@Nullable String profileName);
 
+  @SuppressWarnings("unused")
   @NotNull
-  Profile getRootProfile();
+  @Deprecated
+  default Profile getRootProfile() {
+    return getCurrentProfile();
+  }
 
   void addProfile(@NotNull Profile profile);
 }

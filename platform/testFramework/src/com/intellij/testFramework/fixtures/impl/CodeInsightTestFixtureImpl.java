@@ -203,7 +203,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);
 
     final ApplicationProfileManager inspectionProfileManager = ApplicationProfileManager.getInstance();
-    final Profile oldRootProfile = inspectionProfileManager.getRootProfile();
+    final Profile oldRootProfile = inspectionProfileManager.getCurrentProfile();
     inspectionProfileManager.addProfile(profile);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
