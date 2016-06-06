@@ -260,6 +260,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected List<PyPackage> collectPackages() throws ExecutionException {
     final String output;
     try {
+      LOG.debug("Collecting installed packages for the SDK " + mySdk.getName(), new Throwable());
       output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
     }
     catch (final ProcessNotCreatedException ex) {
