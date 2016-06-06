@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * Date: 29-Nov-2005
  */
 public abstract class ApplicationProfileManager implements ProfileManager {
+  public static final String INSPECTION_DIR = "inspection";
+
   @SuppressWarnings("unused")
   public abstract Profile createProfile();
 

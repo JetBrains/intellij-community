@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -25,7 +24,6 @@ import com.intellij.profile.ProfileEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -36,11 +34,7 @@ import java.util.List;
  * Date: 29-Nov-2005
  */
 public abstract class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider {
-  @NonNls public static final String INSPECTION_DIR = "inspection";
-
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
   public static InspectionProfileManager getInstance() {
     return ServiceManager.getService(InspectionProfileManager.class);

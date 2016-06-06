@@ -38,6 +38,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -68,7 +69,7 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
     @Storage("editor.xml"),
     @Storage(value = "other.xml", deprecated = true)
   },
-  additionalExportFile = InspectionProfileManager.INSPECTION_DIR
+  additionalExportFile = ApplicationProfileManager.INSPECTION_DIR
 )
 public class ApplicationInspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;

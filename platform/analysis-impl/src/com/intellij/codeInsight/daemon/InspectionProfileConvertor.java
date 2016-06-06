@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -33,16 +34,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: anna
  * Date: Dec 20, 2004
  */
 public class InspectionProfileConvertor {
-  private final HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
+  private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
   @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
   @NonNls public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
@@ -129,7 +130,7 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + InspectionProfileManager.INSPECTION_DIR;
+    String directoryPath = PathManager.getConfigPath() + File.separator + ApplicationProfileManager.INSPECTION_DIR;
     File profileDirectory = new File(directoryPath);
     if (!profileDirectory.exists()) {
       return;
@@ -180,7 +181,6 @@ public class InspectionProfileConvertor {
     }
   }
 
-
   @Nullable
   private static String convertToShortName(String displayName, InspectionToolWrapper[] tools) {
     if (displayName == null) return null;
@@ -191,5 +191,4 @@ public class InspectionProfileConvertor {
     }
     return null;
   }
-
 }
