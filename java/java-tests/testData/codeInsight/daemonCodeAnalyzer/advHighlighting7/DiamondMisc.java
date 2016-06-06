@@ -85,7 +85,7 @@ class MyTest {
 
 class NonParameterized {
   void foo() {
-    new NonParameterized<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+    new NonParameterized<error descr="Diamond operator is not applicable for non-parameterized types"><></error>();
   }
 }
 
@@ -95,14 +95,14 @@ interface I<T> {
 }
 
 class FI1 {
-  I<? extends String> i1 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
+  I<? extends String> i1 = new I<error descr="Cannot use ''<>'' with anonymous inner classes"><></error>() {
     @Override
     public String m() {
       return null;
     }
   };
 
-  I<?> i2 = new I<<error descr="Cannot use ''<>'' with anonymous inner classes"></error>>() {
+  I<?> i2 = new I<error descr="Cannot use ''<>'' with anonymous inner classes"><></error>() {
     @Override
     public Object m() {
       return null;
@@ -126,9 +126,9 @@ class TestLocal<X> {
     void test() {
         class Local {}
 
-        Member m = new Member<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
-        Nested n = new Nested<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
-        Local l = new Local<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+        Member m = new Member<error descr="Diamond operator is not applicable for non-parameterized types"><></error>();
+        Nested n = new Nested<error descr="Diamond operator is not applicable for non-parameterized types"><></error>();
+        Local l = new Local<error descr="Diamond operator is not applicable for non-parameterized types"><></error>();
     }
 }
 
@@ -178,7 +178,7 @@ class PredefinedErrorsOverRaw<T> {
   }
 
   void test() {
-    PredefinedErrorsOverRaw mc = new <Boolean>PredefinedErrorsOverRaw<<error descr="Cannot use diamonds with explicit type parameters for constructor"></error>>("");
+    PredefinedErrorsOverRaw mc = new <Boolean>PredefinedErrorsOverRaw<error descr="Cannot use diamonds with explicit type parameters for constructor"><></error>("");
   }
 }
 
