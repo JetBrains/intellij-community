@@ -93,8 +93,11 @@ public class InspectionResultsViewComparator implements Comparator {
       final Object userObject2 = ((OfflineRefElementNode)node2).getOfflineDescriptor();
       final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
       final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
-      if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
-      return descriptor1.getFQName().compareToIgnoreCase(descriptor2.getFQName());
+      final int res = descriptor1.getFQName().compareToIgnoreCase(descriptor2.getFQName());
+      if (res != 0) {
+        return res;
+      }
+      return descriptor1.getLine() - descriptor2.getLine();
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset

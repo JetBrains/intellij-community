@@ -1032,7 +1032,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myScope.isValid());
+      e.getPresentation().setEnabled(!(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid());
     }
 
     @Override

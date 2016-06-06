@@ -113,10 +113,10 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
-      parentNode.add(toolNode);
+      parentNode.insertByOrder(toolNode, false);
       buildTree(context, filteredContent, false, toolWrapper, OfflineProblemDescriptorContainer::new, showStructure,
                 (newChild) -> {
-                  toolNode.add(newChild);
+                  toolNode.insertByOrder(newChild, false);
                   return newChild;
                 });
     }
