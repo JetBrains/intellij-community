@@ -84,8 +84,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.psi.*;
@@ -202,7 +202,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
     profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);
 
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    final ApplicationProfileManager inspectionProfileManager = ApplicationProfileManager.getInstance();
     final Profile oldRootProfile = inspectionProfileManager.getRootProfile();
     inspectionProfileManager.addProfile(profile);
     Disposer.register(parentDisposable, new Disposable() {

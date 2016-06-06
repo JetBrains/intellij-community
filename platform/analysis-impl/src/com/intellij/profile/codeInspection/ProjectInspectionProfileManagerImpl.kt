@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
@@ -188,7 +187,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
     }
   }
 
-  override fun initProfileWrapper(profile: Profile) {
+  fun initProfileWrapper(profile: Profile) {
     val wrapper = InspectionProfileWrapper(profile as InspectionProfile)
     if (profile is InspectionProfileImpl) {
       profile.initInspectionTools(project)
@@ -287,8 +286,8 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   val projectProfile: String?
     get() = state.projectProfile
 
-  @Synchronized override fun setProjectProfile(newProfile: String?) {
-    if (Comparing.strEqual(newProfile, state.projectProfile)) {
+  @Synchronized fun setProjectProfile(newProfile: String?) {
+    if (newProfile == state.projectProfile) {
       return
     }
 
@@ -336,7 +335,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
     }
   }
 
-  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile {
+  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile? {
     val profile = profiles.get(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }

@@ -77,7 +77,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -453,7 +453,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         lookupManager.hideActiveLookup();
       }
       ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
-      InspectionProfileManager.getInstance().deleteProfile(PROFILE);
+      ApplicationProfileManager.getInstance().deleteProfile(PROFILE);
       if (ProjectManager.getInstance() == null) {
         exceptions.add(new AssertionError("Application components damaged"));
       }

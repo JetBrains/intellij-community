@@ -15,22 +15,10 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.profile.ApplicationProfileManager;
-import com.intellij.profile.Profile;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-/**
- * User: anna
- * Date: 29-Nov-2005
- */
-public interface InspectionProfileManager extends SeverityProvider, ApplicationProfileManager {
+public interface InspectionProfileManager extends ApplicationProfileManager {
   static InspectionProfileManager getInstance() {
-    return ServiceManager.getService(InspectionProfileManager.class);
+    return (InspectionProfileManager)ApplicationProfileManager.getInstance();
   }
-
-  Profile loadProfile(@NotNull String path) throws IOException, JDOMException;
 }

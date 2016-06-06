@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,8 +21,8 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 
 import javax.swing.*;
@@ -50,10 +49,8 @@ public class CodeCleanupAction extends CodeInspectionAction {
   }
 
   @Override
-  protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
-                                                           InspectionProfileManager profileManager,
-                                                           JComboBox profilesCombo) {
-    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo) {
+  protected InspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManagerImpl projectProfileManager, JComboBox profilesCombo) {
+    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo) {
       @Override
       protected boolean acceptTool(InspectionToolWrapper entry) {
         return super.acceptTool(entry) && entry.isCleanupTool();

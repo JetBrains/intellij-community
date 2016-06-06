@@ -184,7 +184,6 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     addProfile(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
   }
 
-  @Override
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()) {
@@ -211,7 +210,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
   private static void updateProfileImpl(@NotNull Profile profile) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
+      ProjectInspectionProfileManagerImpl.getInstanceImpl(project).initProfileWrapper(profile);
     }
   }
 

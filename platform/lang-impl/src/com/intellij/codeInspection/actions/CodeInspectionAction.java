@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -113,13 +114,13 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    final ApplicationProfileManager profileManager = ApplicationProfileManager.getInstance();
+    final ProjectInspectionProfileManagerImpl projectProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final InspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager, profiles);
+        final InspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profiles);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
         if (editor.showAndGet()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
@@ -148,19 +149,15 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return panel.myAdditionalPanel;
   }
 
-  protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
-                                                           InspectionProfileManager profileManager,
-                                                           final JComboBox profilesCombo) {
-    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo);
+  protected InspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManagerImpl projectProfileManager, JComboBox profilesCombo) {
+    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo);
   }
 
   protected static class ExternalProfilesComboboxAwareInspectionToolsConfigurable extends InspectionToolsConfigurable {
     private final JComboBox myProfilesCombo;
 
-    public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull InspectionProjectProfileManager projectProfileManager,
-                                                                    InspectionProfileManager profileManager,
-                                                                    JComboBox profilesCombo) {
-      super(projectProfileManager, profileManager);
+    public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager, JComboBox profilesCombo) {
+      super(projectProfileManager);
       myProfilesCombo = profilesCombo;
     }
 
@@ -189,7 +186,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
 
   private void reloadProfiles(JComboBox profiles,
-                              InspectionProfileManager inspectionProfileManager,
+                              ApplicationProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {
     final InspectionProfile selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
@@ -206,7 +203,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       model.addElement(profile);
     }
   }
-
 
   private static class AdditionalPanel {
     public ComboboxWithBrowseButton myBrowseProfilesCombo;

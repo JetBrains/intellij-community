@@ -19,7 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
@@ -46,7 +46,7 @@ public class InspectionProfilesConverterTest extends LightIdeaTestCase {
       final File projectFile = new File(JavaTestUtil.getJavaTestDataPath() + relativePath + dirName + "/options.ipr");
       for (Element element : JDOMUtil.load(projectFile).getChildren("component")) {
         if (Comparing.strEqual(element.getAttributeValue("name"), "InspectionProjectProfileManager")) {
-          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
+          final ProjectInspectionProfileManagerImpl profileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(getProject());
           profileManager.loadState(element);
 
           Element configElement = profileManager.getState();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
@@ -40,9 +40,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
- */
 public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
@@ -168,7 +165,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       //correct save settings
-      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      ApplicationProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya
       /*
       try {

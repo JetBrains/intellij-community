@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
@@ -103,8 +103,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     final ErrorsConfigurable errorsConfigurable;
     if (!canChooseDifferentProfile) {
-      errorsConfigurable = new ProjectInspectionToolsConfigurable(InspectionProfileManager.getInstance(),
-                                                                  InspectionProjectProfileManager.getInstance(project));
+      errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManagerImpl.getInstanceImpl(project));
     }
     else {
       errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);

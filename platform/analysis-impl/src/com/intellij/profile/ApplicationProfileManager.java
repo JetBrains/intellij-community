@@ -15,24 +15,30 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 29-Nov-2005
- */
-public interface ApplicationProfileManager extends ProfileManager {
+public interface ApplicationProfileManager extends ProfileManager, SeverityProvider {
   String INSPECTION_DIR = "inspection";
 
+  @NotNull
+  static ApplicationProfileManager getInstance() {
+    return ServiceManager.getService(ApplicationProfileManager.class);
+  }
+
+  @Deprecated
   @SuppressWarnings("unused")
   Profile createProfile();
 
   @SuppressWarnings("unused")
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
+  @Deprecated
+  @SuppressWarnings("unused")
   void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   void fireProfileChanged(Profile profile);

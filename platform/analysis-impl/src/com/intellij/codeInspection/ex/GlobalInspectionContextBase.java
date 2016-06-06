@@ -33,8 +33,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -113,7 +113,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     Profile profile = inspectionProfileManager.getProfile(currentProfile, false);
     if (profile == null) {
-      profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
+      profile = ApplicationProfileManager.getInstance().getProfile(currentProfile);
       if (profile != null) return (InspectionProfile)profile;
 
       final String[] availableProfileNames = inspectionProfileManager.getAvailableProfileNames();

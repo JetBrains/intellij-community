@@ -16,21 +16,18 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.psi.PsiElement;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
-public interface InspectionProjectProfileManager extends ProfileManager, SeverityProvider, PersistentStateComponent<Element> {
-  static InspectionProjectProfileManager getInstance(Project project){
+public interface InspectionProjectProfileManager extends ProfileManager, SeverityProvider {
+  static InspectionProjectProfileManager getInstance(@NotNull Project project){
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
@@ -55,12 +52,8 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
 
   boolean isProfileLoaded();
 
-  void initProfileWrapper(@NotNull Profile profile);
-
   @Override
   default Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
   }
-
-  void setProjectProfile(@Nullable String projectProfile);
 }

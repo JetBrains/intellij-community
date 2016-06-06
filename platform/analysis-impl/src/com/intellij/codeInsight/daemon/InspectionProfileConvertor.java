@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.ApplicationProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -61,9 +61,9 @@ public class InspectionProfileConvertor {
   @NonNls private static final String DEFAULT_XML = "Default.xml";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls public static final String LEVEL_ATT = "level";
-  private final InspectionProfileManager myManager;
+  private final SeverityProvider myManager;
 
-  public InspectionProfileConvertor(InspectionProfileManager manager) {
+  public InspectionProfileConvertor(@NotNull SeverityProvider manager) {
     myManager = manager;
     renameOldDefaultsProfile();
   }
