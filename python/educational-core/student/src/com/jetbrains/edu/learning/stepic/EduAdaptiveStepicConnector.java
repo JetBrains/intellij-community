@@ -134,7 +134,7 @@ public class EduAdaptiveStepicConnector {
       LOG.warn("Got unexpected numbers of units: " + unitContainer.units.size());
       return;
     }
-    
+
     final URIBuilder builder = new URIBuilder(ASSIGNMENT_URL);
     for (Integer step : unitContainer.units.get(0).assignments) {
       builder.addParameter("ids[]", String.valueOf(step));
@@ -182,7 +182,7 @@ public class EduAdaptiveStepicConnector {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-      
+
       final boolean recommendationReaction =
         user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
                                                    String.valueOf(user.id), reaction);
@@ -198,7 +198,7 @@ public class EduAdaptiveStepicConnector {
             unsolvedTask.setText(task.getText());
             unsolvedTask.getTestsText().clear();
             final Map<String, String> testsText = task.getTestsText();
-            for (String testName: testsText.keySet()) {
+            for (String testName : testsText.keySet()) {
               unsolvedTask.addTestsTexts(testName, testsText.get(testName));
             }
             final Map<String, TaskFile> taskFiles = task.getTaskFiles();
@@ -220,7 +220,7 @@ public class EduAdaptiveStepicConnector {
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
             final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
             StudyProjectGenerator.flushTask(task, taskDirectory);
-            flushAdaptiveCourse(course, adaptive, unsolvedTask);
+            StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
             final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
 
             if (lessonDir != null) {
@@ -249,9 +249,9 @@ public class EduAdaptiveStepicConnector {
 
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
             StudyProjectGenerator.flushLesson(lessonDirectory, adaptive);
-            flushAdaptiveCourse(course, adaptive, unsolvedTask);
+            StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
             adaptive.initLesson(course, true);
-            ApplicationManager.getApplication().invokeLater(()->new StudyNextStudyTaskAction().navigateTask(project));
+            ApplicationManager.getApplication().invokeLater(() -> new StudyNextStudyTaskAction().navigateTask(project));
           }
         }
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -263,17 +263,6 @@ public class EduAdaptiveStepicConnector {
         LOG.warn("Recommendation reactions weren't posted");
       }
     }
-  }
-
-  private static void flushAdaptiveCourse(Course course, Lesson adaptive, Task unsolvedTask) {
-    unsolvedTask.setLesson(null);
-    final TaskFile file = unsolvedTask.getTaskFile(DEFAULT_TASKFILE_NAME);
-    if (file != null) {
-      file.setTask(null);
-    }
-    adaptive.setCourse(null);
-    StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-    course.initCourse(true);
   }
 
   private static void createTestFiles(Course course, Task task, Task unsolvedTask, VirtualFile lessonDir) {
@@ -406,7 +395,7 @@ public class EduAdaptiveStepicConnector {
             return Pair.create(isSolved, wrapper.submissions[0].hint);
           }
           else {
-            LOG.warn("Got a submission wrapper with incorrect submissions numer: " + wrapper.submissions.length);
+            LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
           }
         }
         else {
@@ -516,7 +505,7 @@ public class EduAdaptiveStepicConnector {
 
   private static void createTestFileFromSamples(@NotNull final Task task,
                                                 @NotNull final List<List<String>> samples) {
-    
+
     String testText = "from test_helper import check_samples\n\n" +
                       "if __name__ == '__main__':\n" +
                       "    check_samples(samples=" + new GsonBuilder().create().toJson(samples) + ")";

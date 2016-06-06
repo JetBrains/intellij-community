@@ -212,6 +212,12 @@ public class StudyNewProjectPanel {
       if (!courseInfo.isAdaptive()) {
         myCoursesComboBox.addItem(courseInfo);
       }
+      else {
+        final boolean isLoggedIn = myGenerator.myUser != null;
+        if (courseInfo.isPublic() || isLoggedIn) {
+          myCoursesComboBox.addItem(courseInfo);
+        }
+      }
     }
     myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
 

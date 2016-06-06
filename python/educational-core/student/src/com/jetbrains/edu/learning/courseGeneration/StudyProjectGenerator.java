@@ -262,7 +262,7 @@ public class StudyProjectGenerator {
   }
 
   public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;

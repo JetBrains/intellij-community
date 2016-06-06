@@ -14,29 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Course {
-  @Expose
-  private List<Lesson> lessons = new ArrayList<Lesson>();
-
+  @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
+  @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
   @Expose private String description;
   @Expose private String name;
-  private String myCourseDirectory = "";
-  @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
-  private boolean myUpToDate;
-
-  @Expose @SerializedName("language")
-  private String myLanguage = "Python";
-
-  //this field is used to distinguish ordinary and CheckIO projects
-  //"PyCharm" is used here for historical reasons
-  private String courseType = EduNames.PYCHARM;
-
-  //this field is used to distinguish study and course creator modes
-  private String courseMode = EduNames.STUDY;
-  
+  @Expose private String myCourseDirectory = "";
+  @Expose private int id;
+  @Expose private boolean myUpToDate;
   @Expose private boolean isAdaptive;
-  
-  @Expose
-  private int id;
+  @Expose @SerializedName("language") private String myLanguage = "Python";
+
+  //this field is used to distinguish ordinary and CheckIO projects,
+  //"PyCharm" is used here for historical reasons
+  @Expose private String courseType = EduNames.PYCHARM;
+  @Expose private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
 
   /**
    * Initializes state of course
