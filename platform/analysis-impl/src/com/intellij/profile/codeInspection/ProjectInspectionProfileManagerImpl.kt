@@ -272,8 +272,6 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   private val isCustomProfileUsed: Boolean
     get() = state.projectProfile != null && state.projectProfile != PROJECT_DEFAULT_PROFILE_NAME
 
-  override fun getProfile(name: String) = getProfile(name, true)
-
   override fun getScopesManager() = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<Profile> {

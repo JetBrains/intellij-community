@@ -17,7 +17,6 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +46,4 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
   }
 
   boolean isProfileLoaded();
-
-  @Override
-  default Profile getProfile(@NotNull String name) {
-    return getProfile(name, true);
-  }
 }

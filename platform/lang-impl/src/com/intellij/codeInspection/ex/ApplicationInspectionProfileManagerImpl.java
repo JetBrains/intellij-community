@@ -287,11 +287,6 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     return ArrayUtil.toStringArray(mySchemeManager.getAllSchemeNames());
   }
 
-  @Override
-  public Profile getProfile(@NotNull final String name) {
-    return getProfile(name, true);
-  }
-
   public static void onProfilesChanged() {
     //cleanup caches blindly for all projects in case ide profile was modified
     for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
