@@ -22,6 +22,7 @@ import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
 import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.tests.gui.framework.IdeGuiTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ public class NewProjectTest extends GuiTestCase {
 
   //Should run with main_idea_tests module classpath
   @Test @IdeGuiTest
+  @Ignore
   public void testNewProject() throws IOException, InterruptedException {
 
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
