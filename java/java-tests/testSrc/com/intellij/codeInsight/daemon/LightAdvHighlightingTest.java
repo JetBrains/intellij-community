@@ -379,6 +379,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testAmbiguousConstants() throws Exception {
+    doTest(false, false);
+  }
+
   public void testInsane() throws IOException {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
