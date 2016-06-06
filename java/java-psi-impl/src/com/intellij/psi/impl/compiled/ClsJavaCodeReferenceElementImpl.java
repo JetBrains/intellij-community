@@ -142,7 +142,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
                                          final String canonicalText,
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
-    if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if (containingClass != null) {
       final String outerClassRef = getOuterClassRef(canonicalText);
       final String[] classParameters = PsiNameHelper.getClassParametersText(outerClassRef);
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
@@ -152,7 +152,9 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
           substitutionMap.put(typeParameters[i], args[i]);
         }
       }
-      collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
+      if (!containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
+      }
     }
   }
 
