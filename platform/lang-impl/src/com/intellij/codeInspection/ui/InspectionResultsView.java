@@ -172,10 +172,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
           synchronized (myTreeStructureUpdateLock) {
-            parent.remove(node);
-            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
+            if (parent != null) {
+              parent.remove(node);
+              ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            }
           }
         }
       }
