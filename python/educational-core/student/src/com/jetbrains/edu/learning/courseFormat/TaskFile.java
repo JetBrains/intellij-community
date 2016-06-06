@@ -18,19 +18,14 @@ import java.util.List;
  */
 
 public class TaskFile {
-  @SerializedName("placeholders")
-  @Expose
-  private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
-  private int myIndex = -1;
-
-  @Expose
-  public String name;
-  @Expose
-  public String text;
+  @Expose public String name;
+  @Expose public String text;
+  @Expose private int myIndex = -1;
+  @Expose private boolean myUserCreated = false;
+  @Expose private boolean myTrackChanges = true;
+  @Expose private boolean myHighlightErrors = false;
+  @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   @Transient private Task myTask;
-  private boolean myUserCreated = false;
-  private boolean myTrackChanges = true;
-  private boolean myHighlightErrors = false;
 
   public void initTaskFile(final Task task, boolean isRestarted) {
     setTask(task);

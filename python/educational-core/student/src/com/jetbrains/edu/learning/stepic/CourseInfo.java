@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,25 +13,19 @@ import java.util.List;
  * and when project is being created
  */
 public class CourseInfo {
-  @SerializedName("title")
-  private String myName;
-  
-  @SerializedName("summary")
-  private String myDescription;
-  
-  @SerializedName("course_format")
-  //course type in format "pycharm <language>"
-  private String myType = "pycharm Python";
-
-  private boolean isAdaptive;
-  
-  int id;
-  boolean is_public;
-  public List<Integer> sections;
-  List<Integer> instructors = new ArrayList<Integer>();
-  List<StepicUser> myAuthors = new ArrayList<>();
-
   public static CourseInfo INVALID_COURSE = new CourseInfo();
+
+  @SerializedName("title") private String myName;
+  int id;
+  boolean isAdaptive;
+  boolean isPublic;
+  List<Integer> sections;
+  List<Integer> instructors = new ArrayList<Integer>();
+
+  List<StepicUser> myAuthors = new ArrayList<>();
+  @SerializedName("summary") private String myDescription;
+  @SerializedName("course_format") private String myType = "pycharm Python"; //course type in format "pycharm <language>"
+  @Nullable private String username;
 
   public String getName() {
     return myName;
@@ -51,7 +46,7 @@ public class CourseInfo {
 
   @Override
   public String toString() {
-    return myName;
+    return getName();
   }
 
   @Override
@@ -60,15 +55,24 @@ public class CourseInfo {
     if (o == null || getClass() != o.getClass()) return false;
     CourseInfo that = (CourseInfo)o;
     if (that.getName() == null || that.getDescription() == null) return false;
-    return that.getName().equals(myName)
+    return that.getName().equals(getName())
            && that.getDescription().equals(myDescription);
   }
 
   @Override
   public int hashCode() {
-    int result = myName != null ? myName.hashCode() : 0;
+    int result = getName() != null ? getName().hashCode() : 0;
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     return result;
+  }
+
+  @Nullable
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(@Nullable String username) {
+    this.username = username;
   }
 
   public static class Author {
@@ -126,5 +130,13 @@ public class CourseInfo {
 
   public void setAdaptive(boolean adaptive) {
     isAdaptive = adaptive;
+  }
+
+  public boolean isPublic() {
+    return isPublic;
+  }
+
+  public void setPublic(boolean aPublic) {
+    isPublic = aPublic;
   }
 }
