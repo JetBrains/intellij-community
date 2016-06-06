@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.jps.gant.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -29,22 +31,28 @@ requireProperty("out", "$home/out")
 // with mysterious errors
 String out = new File(out).getCanonicalPath()
 
-loadProductProperties(home)
-
-def loadProductProperties(String home) {
-  //todo[nik] improve (load implementation class from groovy resources root directly?)
-  requireProperty("product", "idea")
-  requireProperty("productPropertiesPath", "")
-  if (productPropertiesPath.isEmpty()) {
-    productPropertiesPath = "$home/build/scripts/" + p("product") + "_properties.gant";
-  }
-  if (!new File(productPropertiesPath).exists()) {
-    throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
-  }
-  setProperty("productProperties", includeFile(productPropertiesPath).getProperties(home))
-}
-
 private BuildContext createBuildContext(String out, BuildOptions options = new BuildOptions()) {
+  def classesRootPropertyName = "intellij.build.additional.classes.root"
+  def additionalClassesRoot = System.getProperty(classesRootPropertyName)
+  def classLoader = (GroovyClassLoader)this.class.classLoader
+  if (additionalClassesRoot != null) {
+    if (new File(additionalClassesRoot).exists()) {
+      projectBuilder.info("'$additionalClassesRoot' added to classpath.")
+      classLoader.addClasspath(additionalClassesRoot)
+    }
+    else {
+      projectBuilder.warning("'$classesRootPropertyName' property specifies non-existing file: $additionalClassesRoot")
+    }
+  }
+  def productPropertiesClassName = System.getProperty("intellij.build.product.properties.class", "org.jetbrains.intellij.build.IdeaCommunityProperties")
+  def productPropertiesClass
+  try {
+    productPropertiesClass = Class.forName(productPropertiesClassName, true, classLoader)
+  }
+  catch (ClassNotFoundException e) {
+    throw new BuildException("Cannot load product properties class '$productPropertiesClassName'. Specify its root with '$classesRootPropertyName' property.", e)
+  }
+  def productProperties = (ProductProperties)productPropertiesClass.newInstance([home].toArray())
 //todo[nik] construct buildOutputRoot automatically based on product name
   BuildContext.createContext(ant, projectBuilder, project, global, home, home, "$out/release", productProperties, options)
 }
@@ -87,8 +95,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
 def layoutAll(BuildContext buildContext, buildJps = false) {
   def layouts = includeFile("$buildContext.paths.communityHome/build/scripts/layouts.gant")
   def tasks = BuildTasks.create(buildContext)
-  def applicationInfo = tasks.patchApplicationInfo()
-  LayoutInfo info = layouts.layoutFull(buildContext.paths.projectHome, buildContext.paths.distAll, applicationInfo)
+  LayoutInfo info = layouts.layoutFull(buildContext)
 
   buildContext.messages.block("Build intellij-core") {
     String coreArtifactDir = "$buildContext.paths.artifacts/core"
