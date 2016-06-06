@@ -458,7 +458,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setFileName(getDefaultPatchFile());
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch());
+      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
       showNotification(LocalHistoryBundle.message("message.patch.created"));
       ShowFilePathAction.openFile(new File(p.getFileName()));
