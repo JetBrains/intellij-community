@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
@@ -279,7 +280,8 @@ public class PyPackageUtil {
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
     final Ref<List<PyPackage>> packagesRef = Ref.create();
-    PyUtil.runWithProgress(null, "Scanning Installed Packages", true, false, indicator -> {
+    LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
+    PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
       try {
         packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
