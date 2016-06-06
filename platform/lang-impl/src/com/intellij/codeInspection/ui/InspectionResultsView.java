@@ -1032,7 +1032,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(!(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid());
+      e.getPresentation().setEnabled(isRerunAvailable());
     }
 
     @Override
@@ -1041,12 +1041,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
 
     private void rerun() {
-      myRerun = true;
-      if (myScope.isValid()) {
-        AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
-        myGlobalInspectionContext.setTreeState(getTree().getTreeState());
-        myGlobalInspectionContext.doInspections(myScope);
-      }
+      InspectionResultsView.this.rerun();
+    }
+  }
+
+  public boolean isRerunAvailable() {
+    return !(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid();
+  }
+
+  public void rerun() {
+    myRerun = true;
+    if (myScope.isValid()) {
+      AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
+      myGlobalInspectionContext.setTreeState(getTree().getTreeState());
+      myGlobalInspectionContext.doInspections(myScope);
     }
   }
 }

@@ -24,14 +24,12 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.ui.docking.DockContainer;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author Dmitry Batkovich
@@ -52,10 +50,26 @@ public class EditSettingsAction extends InspectionViewActionBase {
       InspectionToolWrapper tool = inspectionProfile.getInspectionTool(inspectionProfile.getSingleTool(), view.getProject());
       JComponent panel = tool.getTool().createOptionsPanel();
       if (panel != null) {
-        new DialogBuilder()
+        final DialogBuilder builder = new DialogBuilder()
           .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()))
-          .centerPanel(panel)
-          .show();
+          .centerPanel(panel);
+        builder.removeAllActions();
+        builder.addOkAction();
+        if (view.isRerunAvailable()) {
+          builder.addActionDescriptor(new DialogBuilder.DialogActionDescriptor(InspectionsBundle.message("inspection.action.rerun"), 'R') {
+            @Override
+            protected Action createAction(DialogWrapper dialogWrapper) {
+              return new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                  view.rerun();
+                  dialogWrapper.close(DialogWrapper.OK_EXIT_CODE);
+                }
+              };
+            }
+          });
+        }
+        builder.show();
       } else {
         Messages.showInfoMessage(view.getProject(),
                                  InspectionsBundle.message("inspection.tool.window.dialog.no.options", tool.getDisplayName()),
