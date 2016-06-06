@@ -41,6 +41,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +54,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +240,15 @@ public class RunInspectionAction extends GotoActionBase {
         protected Pair<InspectionToolWrapper, JComponent> create(InspectionProfile profile) {
           InspectionToolWrapper tool = profile.getInspectionTool(toolShortName, project);
           LOGGER.assertTrue(tool != null);
+          final Element options = new Element("copy");
+          tool.getTool().writeSettings(options);
           tool = tool.createCopy();
+          try {
+            tool.getTool().readSettings(options);
+          }
+          catch (InvalidDataException e) {
+            throw new RuntimeException(e);
+          }
           return Pair.create(tool, tool.getTool().createOptionsPanel());
         }
       };
