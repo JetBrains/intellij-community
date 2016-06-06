@@ -922,7 +922,6 @@ private bundledJDK(boolean win64) {
       ant.copy(todir: "${paths.sandbox}/jdk.mac/jre/jdk") {
         fileset(dir: customJdkDir, followsymlinks: "false")
       }
-      ant.symlink(link: "${paths.sandbox}/jdk.mac/jre/jdk/Contents/MacOS/libjli.dylib", resource: "../Home/jre/lib/jli/libjli.dylib")
     }
     customJdkDir = new File("${home}/../../prebuilts/studio/jdk/linux")
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
