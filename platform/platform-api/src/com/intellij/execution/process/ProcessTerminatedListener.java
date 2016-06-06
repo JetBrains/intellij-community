@@ -90,6 +90,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
       result.append(')');
     }
     else if (SystemInfo.isUnix && exitCode >= 129 && exitCode <= 159) {
+      // "Exit Codes With Special Meanings" (http://www.tldp.org/LDP/abs/html/exitcodes.html)
       @SuppressWarnings("SpellCheckingInspection") String[] signals = {
         "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "EMT", "FPE", "KILL", "BUS", "SEGV", "SYS", "PIPE", "ALRM", "TERM", "URG",
         "STOP", "TSTP", "CONT", "CHLD", "TTIN", "TTOU", "IO", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "INFO", "USR1", "USR2"};
