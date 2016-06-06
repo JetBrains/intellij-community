@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.google.common.base.Strings;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StartupProgress;
@@ -206,7 +205,7 @@ public class PluginManagerCore {
   }
 
   private static boolean isUITestMode() {
-    return !Strings.isNullOrEmpty(System.getenv("UI_TEST_MODE"));
+    return !StringUtil.isEmpty(System.getenv("UI_TEST_MODE"));
   }
 
   public static void savePluginsList(@NotNull Collection<String> ids, boolean append, @NotNull File plugins) throws IOException {
