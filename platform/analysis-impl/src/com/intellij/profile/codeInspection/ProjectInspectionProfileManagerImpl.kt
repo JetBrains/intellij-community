@@ -56,22 +56,22 @@ import java.util.function.Function
 const val PROFILE = "profile"
 const val SCOPES = "scopes"
 
-private val LOG = Logger.getInstance(InspectionProjectProfileManagerImpl::class.java)
+private val LOG = Logger.getInstance(ProjectInspectionProfileManagerImpl::class.java)
 private const val VERSION = "1.0"
 private const val SCOPE = "scope"
 private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage("inspectionProfiles/profiles_settings")))
-class InspectionProjectProfileManagerImpl(private val project: Project,
+class ProjectInspectionProfileManagerImpl(private val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
                                           private val localScopesHolder: NamedScopeManager,
                                           private val schemeManagerFactory: SchemeManagerFactory) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): InspectionProjectProfileManagerImpl {
-      return InspectionProjectProfileManager.getInstance(project) as InspectionProjectProfileManagerImpl
+    fun getInstanceImpl(project: Project): ProjectInspectionProfileManagerImpl {
+      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManagerImpl
     }
   }
 
@@ -113,7 +113,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
 
     schemeManager = schemeManagerFactory.create("inspectionProfiles", object : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@InspectionProjectProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
+        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
         profile.isProjectLevel = true
         return profile
       }
@@ -322,7 +322,7 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     }
     if (state.projectProfile == null || profiles.isEmpty) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
-      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this@InspectionProjectProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), null)
+      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), null)
       projectProfile.copyFrom(applicationProfileManager.rootProfile)
       projectProfile.isProjectLevel = true
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)

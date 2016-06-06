@@ -47,7 +47,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -105,7 +105,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
-    InspectionProfileWrapper profileToUse = InspectionProjectProfileManagerImpl.getInstanceImpl(myProject).getProfileWrapper();
+    InspectionProfileWrapper profileToUse = ProjectInspectionProfileManagerImpl.getInstanceImpl(myProject).getProfileWrapper();
 
     Function<InspectionProfileWrapper,InspectionProfileWrapper> custom = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
     if (custom != null) {

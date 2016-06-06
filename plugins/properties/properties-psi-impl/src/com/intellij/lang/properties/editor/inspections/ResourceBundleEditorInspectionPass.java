@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,22 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author Dmitry Batkovich
@@ -60,7 +60,7 @@ public class ResourceBundleEditorInspectionPass {
 
     final Project project = representativeElement.getProject();
 
-    InspectionProfileWrapper profileToUse = InspectionProjectProfileManagerImpl.getInstanceImpl(project).getProfileWrapper();
+    InspectionProfileWrapper profileToUse = ProjectInspectionProfileManagerImpl.getInstanceImpl(project).getProfileWrapper();
     final PsiFile containingFile = representativeFile.getContainingFile();
     final InspectionToolWrapper[] propertiesTools = profileToUse.getInspectionTools(containingFile);
 
