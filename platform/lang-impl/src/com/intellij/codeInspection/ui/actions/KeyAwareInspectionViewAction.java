@@ -82,7 +82,8 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       final boolean enabled = super.isEnabled(view, e);
       if (!enabled) return false;
       final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getInspectionProfile();
+      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject())
+        .getCurrentProfile();
       return profile.isToolEnabled(key);
     }
 
@@ -105,7 +106,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
               files.add(element);
             }
           }
-          ModifiableModel model = profileManager.getInspectionProfile().getModifiableModel();
+          ModifiableModel model = profileManager.getCurrentProfile().getModifiableModel();
           for (PsiElement element : files) {
             model.disableTool(key.toString(), element);
           }

@@ -50,7 +50,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -160,7 +159,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void disableInspectionTool(@NotNull String shortName){
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
       ((InspectionProfileImpl)profile).disableTool(shortName, getProject());
     }

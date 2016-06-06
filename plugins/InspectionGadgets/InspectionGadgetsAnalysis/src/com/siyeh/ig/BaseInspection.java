@@ -211,7 +211,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   public static boolean isInspectionEnabled(@NonNls String shortName, PsiElement context) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getInspectionProfile();
+    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getCurrentProfile();
     return profile.isToolEnabled(HighlightDisplayKey.find(shortName), context);
   }
 }

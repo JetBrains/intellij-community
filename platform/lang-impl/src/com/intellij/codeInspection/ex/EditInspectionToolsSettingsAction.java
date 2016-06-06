@@ -74,7 +74,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
-    InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile();
+    InspectionProfile inspectionProfile = projectProfileManager.getCurrentProfile();
     editToolSettings(project,
                      inspectionProfile, true,
                      myShortName);

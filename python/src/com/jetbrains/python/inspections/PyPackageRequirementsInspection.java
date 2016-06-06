@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
@@ -81,7 +80,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Nullable
   public static PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
     return (PyPackageRequirementsInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
@@ -467,7 +466,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             }
           }
           if (changed) {
-            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
             InspectionProfileManager.getInstance().fireProfileChanged(profile);
           }
         }

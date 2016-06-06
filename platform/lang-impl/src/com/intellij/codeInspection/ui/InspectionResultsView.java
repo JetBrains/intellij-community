@@ -207,7 +207,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(Profile profile) {
-        if (profile == profileManager.getInspectionProfile()) {
+        if (profile == profileManager.getCurrentProfile()) {
           myTree.revalidate();
           myTree.repaint();
           syncRightPanel();

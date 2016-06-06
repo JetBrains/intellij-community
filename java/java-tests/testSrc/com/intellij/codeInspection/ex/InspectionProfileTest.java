@@ -101,7 +101,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       projectProfileManager.updateProfile(profile);
       projectProfileManager.setProjectProfile(profile.getName());
 
-      assertTrue(projectProfileManager.getInspectionProfile() == profile);
+      assertTrue(projectProfileManager.getCurrentProfile() == profile);
     }
     finally {
       projectProfileManager.deleteProfile(PROFILE);

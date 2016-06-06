@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyNames;
@@ -284,7 +283,7 @@ public class PyPep8NamingInspection extends PyInspection {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final JBList list = new JBList(getBaseClassNames());
       final Runnable updateBlackList = () -> {
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
         profile.modifyProfile(model -> {
           final PyPep8NamingInspection inspection = (PyPep8NamingInspection)model
             .getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
@@ -334,7 +333,7 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(model -> {
+      InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyProfile(model -> {
         PyPep8NamingInspection tool = (PyPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
         if (!tool.ignoredErrors.contains(myCode)) {
           tool.ignoredErrors.add(myCode);

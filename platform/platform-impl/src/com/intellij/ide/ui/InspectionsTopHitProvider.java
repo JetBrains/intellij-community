@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class InspectionsTopHitProvider extends OptionsTopHitProvider {
   public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
     if (project == null) return ContainerUtil.emptyList();
     List<BooleanOptionDescription> result = ContainerUtil.newArrayList();
-    List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getAllEnabledInspectionTools(project);
+    List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllEnabledInspectionTools(project);
     for (Tools tool : tools) {
       result.add(new ToolOptionDescription(tool, project));
     }

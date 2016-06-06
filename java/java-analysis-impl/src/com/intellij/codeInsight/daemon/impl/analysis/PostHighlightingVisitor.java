@@ -120,7 +120,7 @@ class PostHighlightingVisitor {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
 
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
 
@@ -138,7 +138,7 @@ class PostHighlightingVisitor {
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
 
     boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
     GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, unusedSymbolEnabled);
@@ -191,7 +191,7 @@ class PostHighlightingVisitor {
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     if (profile.isToolEnabled(unusedImportKey, myFile) &&
         myFile instanceof PsiJavaFile &&
         HighlightingLevelManager.getInstance(myProject).shouldHighlight(myFile)) {

@@ -337,7 +337,7 @@ public class InspectionApplication {
         if (inspectionProfile != null) return inspectionProfile;
       }
 
-      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       logError("Using default project profile");
     }
     return inspectionProfile;

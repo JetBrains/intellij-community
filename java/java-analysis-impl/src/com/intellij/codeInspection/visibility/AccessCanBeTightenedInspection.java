@@ -83,7 +83,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
 
     public MyVisitor(@NotNull ProblemsHolder holder) {
       myHolder = holder;
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getInspectionProfile();
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
       myDeadCodeInspection = tool == null ? new UnusedDeclarationInspectionBase() : tool;
     }

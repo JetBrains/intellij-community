@@ -163,7 +163,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       groups.add(myGroupName);
       final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+        InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       //correct save settings
       ApplicationProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya

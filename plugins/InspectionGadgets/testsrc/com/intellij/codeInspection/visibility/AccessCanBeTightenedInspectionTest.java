@@ -91,7 +91,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
   }
 
   public void testDoNotSuggestPrivateInAnonymousClassIfPrivatesForInnersIsOff() {
-    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     AccessCanBeTightenedInspection inspection = (AccessCanBeTightenedInspection)profile.getInspectionTool(VisibilityInspection.SHORT_NAME, getProject()).getTool();
     VisibilityInspection visibilityInspection =
       ReflectionUtil.getField(inspection.getClass(), inspection, VisibilityInspection.class, "myVisibilityInspection");

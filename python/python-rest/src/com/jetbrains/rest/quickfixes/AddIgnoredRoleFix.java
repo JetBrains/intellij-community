@@ -54,7 +54,7 @@ public class AddIgnoredRoleFix implements LocalQuickFix, LowPriorityAction {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!myInspection.ignoredRoles.contains(myRole)) {
       myInspection.ignoredRoles.add(myRole);
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       ApplicationProfileManager.getInstance().fireProfileChanged(profile);
     }
   }

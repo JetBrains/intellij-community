@@ -120,7 +120,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         }
       }
 
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
       final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
       return level.getSeverity();
     }
@@ -506,7 +506,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         severity = getSeverity(refElement);
       }
       else {
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile();
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getCurrentProfile();
         final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
         severity = level.getSeverity();
       }

@@ -31,7 +31,7 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final ProjectInspectionProfileManagerImpl projectProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
-    InspectionProfile current = projectProfileManager.getInspectionProfile();
+    InspectionProfile current = projectProfileManager.getCurrentProfile();
     for (Profile profile : projectProfileManager.getProfiles()) {
       addScheme(group, projectProfileManager, current, profile);
     }

@@ -260,7 +260,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
-    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getInspectionProfile();
+    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getCurrentProfile();
   }
 
   @Nullable

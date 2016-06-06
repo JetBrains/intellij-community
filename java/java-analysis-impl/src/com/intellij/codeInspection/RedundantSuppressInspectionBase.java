@@ -311,7 +311,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
-    return InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel()
+    return InspectionProjectProfileManager.getInstance(manager.getProject()).getCurrentProfile().getModifiableModel()
       .getInspectionTools(psiElement);
   }
 

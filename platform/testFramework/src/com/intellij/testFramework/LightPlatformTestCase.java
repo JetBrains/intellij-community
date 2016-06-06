@@ -381,7 +381,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void enableInspectionTool(@NotNull final Project project, @NotNull final InspectionToolWrapper toolWrapper) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
