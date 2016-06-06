@@ -47,6 +47,11 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     myPresentation = presentation;
   }
 
+  @NotNull
+  public InspectionToolPresentation getPresentation() {
+    return myPresentation;
+  }
+
   public boolean canSuppress() {
     return isLeaf();
   }

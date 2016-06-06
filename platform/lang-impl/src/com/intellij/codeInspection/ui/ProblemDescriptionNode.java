@@ -139,8 +139,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     super.amnestyElement(manager);
   }
 
+  @Override
   @NotNull
-  private InspectionToolPresentation getPresentation() {
+  public InspectionToolPresentation getPresentation() {
     return myPresentation;
   }
 

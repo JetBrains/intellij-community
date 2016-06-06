@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptorBase;
-import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -73,7 +72,6 @@ public class InspectionTreeHtmlWriter {
   private void serializeTreeToHtml() {
     appendHeader();
     appendTree((builder) -> {
-      final HTMLComposerImpl[] exporter = new HTMLComposerImpl[] {null};
       final InspectionTreeTailRenderer tailRenderer = new InspectionTreeTailRenderer(myTree.getContext()) {
         @Override
         protected void appendText(String text, SimpleTextAttributes attributes) {
@@ -99,22 +97,17 @@ public class InspectionTreeHtmlWriter {
                                if (n instanceof InspectionRootNode) {
                                  builder.append("checked");
                                }
-                               if (n instanceof InspectionNode) {
-                                 exporter[0] = myTree.getContext().getPresentation(((InspectionNode)n).getToolWrapper()).getComposer();
-                               }
                                builder.append(" onclick=\"navigate(").append(nodeId).append(")\" ");
                                builder.append(" id=\"").append(nodeId).append("\" />");
                                if (n instanceof RefElementAndDescriptorAware) {
                                  RefEntity e = ((RefElementAndDescriptorAware)n).getElement();
                                  if (e != null) {
-                                   if (exporter[0] != null) {
-                                     builder
-                                       .append("<div id=\"d")
-                                       .append(nodeId)
-                                       .append("\" style=\"display:none\">");
-                                     exporter[0].compose(builder, e);
-                                     builder.append("</div>");
-                                   }
+                                   builder
+                                     .append("<div id=\"d")
+                                     .append(nodeId)
+                                     .append("\" style=\"display:none\">");
+                                   ((RefElementAndDescriptorAware)n).getPresentation().getComposer().compose(builder, e);
+                                   builder.append("</div>");
                                  }
                                }
                                builder.append("<ol class=\"tree\">");

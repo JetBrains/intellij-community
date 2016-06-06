@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,4 +29,7 @@ public interface RefElementAndDescriptorAware {
 
   @Nullable
   CommonProblemDescriptor getDescriptor();
+
+  @NotNull
+  InspectionToolPresentation getPresentation();
 }
