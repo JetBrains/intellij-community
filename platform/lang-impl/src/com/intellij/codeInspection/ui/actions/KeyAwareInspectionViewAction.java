@@ -90,7 +90,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
       try {
-        if (view.isProfileDefined()) {
+        if (view.isSingleInspectionRun()) {
           final ModifiableModel model = view.getCurrentProfile().getModifiableModel();
           model.disableTool(key.toString(), view.getProject());
           model.commit();

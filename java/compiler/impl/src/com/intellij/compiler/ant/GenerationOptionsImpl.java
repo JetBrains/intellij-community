@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Chunk;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.util.*;
 
@@ -248,7 +248,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
             }
 
             public void remove() {
-              new OperationNotSupportedException();
+              throw new IncorrectOperationException("Method is not supported");
             }
           };
         }

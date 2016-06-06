@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,15 +205,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       statement = (PsiStatement) codeStyle.reformat(statement);
       if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
-        int len = statements.length;
-        if (len > 0) {
-          if (len > 0) {
-            PsiElement firstElement = statements [0];
-            while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
-              firstElement = firstElement.getPrevSibling();
-            }
-            ifStatement.getParent().addRangeAfter(firstElement, statements[len - 1], ifStatement);
+        if (statements.length > 0) {
+          PsiElement firstElement = statements [0];
+          while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
+            firstElement = firstElement.getPrevSibling();
           }
+          ifStatement.getParent().addRangeAfter(firstElement, statements[statements.length - 1], ifStatement);
         }
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {

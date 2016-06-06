@@ -39,7 +39,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -82,7 +81,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Attribute("is_locked")
   private boolean myLockedProfile;
   private final InspectionProfileImpl myBaseProfile;
-  private String myEnabledTool = null;
+  private volatile String myToolShortName = null;
   private String[] myScopesOrder;
   private String myDescription;
   private boolean myModified;
@@ -452,20 +451,21 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
+  @Nullable
   @Override
-  public boolean isEditable() {
-    return myEnabledTool == null;
+  public String getSingleTool() {
+    return myToolShortName;
   }
 
   @Override
-  public void setEditable(final String displayName) {
-    myEnabledTool = displayName;
+  public void setSingleTool(@NotNull final String toolShortName) {
+    myToolShortName = toolShortName;
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return isEditable() ? getName() : myEnabledTool;
+    return getName();
   }
 
   @Override

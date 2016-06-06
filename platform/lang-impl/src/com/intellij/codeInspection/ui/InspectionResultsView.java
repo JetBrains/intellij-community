@@ -145,7 +145,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
-                                                                                  globalInspectionContext.isSingleInspectionRun());
+                                                                                  isSingleInspectionRun());
 
     myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
@@ -699,7 +699,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     synchronized (myTreeStructureUpdateLock) {
       InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
       boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-      boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
+      boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
         InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
@@ -956,8 +956,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return rerun;
   }
 
-  public boolean isProfileDefined() {
-    return myInspectionProfile != null && myInspectionProfile.isEditable();
+  public boolean isSingleInspectionRun() {
+    return myInspectionProfile.getSingleTool() != null;
   }
 
   public static void showPopup(AnActionEvent e, JBPopup popup) {

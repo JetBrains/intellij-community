@@ -318,13 +318,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement firstElement = elements[0];
     final PsiElement secondElement = elements[1];
 
-    if (firstElement instanceof PsiDeclarationStatement && getLastLeaf(firstElement) instanceof PsiErrorElement) {
+    if (firstElement instanceof PsiDeclarationStatement && PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement) {
       // might be method
       return true;
     }
     else if (firstElement instanceof PsiErrorElement &&
              secondElement instanceof PsiExpressionStatement &&
-             getLastLeaf(secondElement) instanceof PsiErrorElement) {
+             PsiTreeUtil.lastChild(secondElement) instanceof PsiErrorElement) {
       // might be generic method
       return true;
     }
@@ -334,15 +334,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return true;
     }
     return false;
-  }
-
-  private static PsiElement getLastLeaf(PsiElement element) {
-    PsiElement lastChild = element.getLastChild();
-    while (lastChild != null) {
-      element = lastChild;
-      lastChild = lastChild.getLastChild();
-    }
-    return element;
   }
 
   @NotNull

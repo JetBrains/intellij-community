@@ -64,7 +64,6 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox nose runner
    */
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxNose() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner(wrapPathWithSandbox(
@@ -84,7 +83,6 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox pytest runner
    */
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxPyTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner(wrapPathWithSandbox(
@@ -104,7 +102,6 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox unit runner
    */
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxUnitTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner(wrapPathWithSandbox(
@@ -124,7 +121,6 @@ public final class PyToxTest extends PyEnvTestCase {
    * Big test which should run on any interpreter and check its output
    */
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxSuccessTest() throws IOException {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner(wrapPathWithSandbox(

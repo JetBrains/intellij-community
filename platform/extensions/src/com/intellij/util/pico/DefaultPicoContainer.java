@@ -353,7 +353,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
 
   @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
-    ComponentAdapter componentAdapter = new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
+    ComponentAdapter componentAdapter = new CachingConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
     return registerComponent(componentAdapter);
   }
 

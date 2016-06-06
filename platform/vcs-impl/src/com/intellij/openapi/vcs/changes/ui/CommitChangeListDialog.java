@@ -101,6 +101,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable private final AbstractVcs myVcs;
   private final boolean myIsAlien;
   private boolean myDisposed = false;
+  private boolean myUpdateDisabled = false;
   @NotNull private final JLabel myWarningLabel;
 
   @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
@@ -855,12 +856,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void stopUpdate() {
-    myDisposed = true;
+    myUpdateDisabled = true;
     myUpdateButtonsRunnable.cancel();
   }
 
   private void restartUpdate() {
-    myDisposed = false;
+    myUpdateDisabled = false;
     myUpdateButtonsRunnable.restart(this);
   }
 
@@ -1213,7 +1214,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateButtons() {
-    if (myDisposed) return;
+    if (myDisposed || myUpdateDisabled) return;
     final boolean enabled = hasDiffs();
     setOKActionEnabled(enabled);
     if (myCommitAction != null) {
@@ -1229,7 +1230,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateLegend() {
-    if (myDisposed) return;
+    if (myDisposed || myUpdateDisabled) return;
     myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), getIncludedChanges(), myBrowser.getUnversionedFilesCount(),
                                    myBrowser.getIncludedUnversionedFiles().size());
     myLegend.update();

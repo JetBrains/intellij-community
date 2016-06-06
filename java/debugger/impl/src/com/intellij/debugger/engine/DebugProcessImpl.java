@@ -129,7 +129,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   private final DebuggerManagerThreadImpl myDebuggerManagerThread;
-  private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
@@ -1839,7 +1838,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myState.set(State.INITIAL);
           myConnection = environment.getRemoteConnection();
           getManagerThread().restartIfNeeded();
-          createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
+          createVirtualMachine(environment);
         });
       }
     });
@@ -1856,7 +1855,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     myConnection = environment.getRemoteConnection();
 
-    createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
+    createVirtualMachine(environment);
 
     ExecutionResult executionResult;
     try {
@@ -1919,7 +1918,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private void createVirtualMachine(final String sessionName, final boolean pollConnection) {
+  private void createVirtualMachine(final DebugEnvironment environment) {
+    final String sessionName = environment.getSessionName();
+    final long pollTimeout = environment.getPollTimeout();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -1943,13 +1944,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         try {
           final long time = System.currentTimeMillis();
-          while (System.currentTimeMillis() - time < LOCAL_START_TIMEOUT) {
+          do {
             try {
               vm = createVirtualMachineInt();
               break;
             }
             catch (final ExecutionException e) {
-              if (pollConnection && !myConnection.isServerMode() && e.getCause() instanceof IOException) {
+              if (pollTimeout > 0 && !myConnection.isServerMode() && e.getCause() instanceof IOException) {
                 synchronized (this) {
                   try {
                     wait(500);
@@ -1973,6 +1974,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               }
             }
           }
+          while (System.currentTimeMillis() - time < pollTimeout);
         }
         finally {
           semaphore.up();

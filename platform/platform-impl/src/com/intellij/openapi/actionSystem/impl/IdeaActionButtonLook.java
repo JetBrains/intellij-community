@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
     final int width = icon.getIconWidth();
     final int height = icon.getIconHeight();
-    final int x = (int)Math.ceil((actionButton.getWidth() - width) / 2);
-    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2);
+    final int x = (actionButton.getWidth() - width) / 2;
+    final int y = (actionButton.getHeight() - height) / 2;
     paintIconAt(g, actionButton, icon, x, y);
   }
 
