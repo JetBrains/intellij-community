@@ -51,7 +51,6 @@ import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -149,16 +148,20 @@ public class RunInspectionAction extends GotoActionBase {
 
       private InheritOptionsForToolPanel myToolOptionsPanel;
 
-      @NotNull
+      @Nullable
       @Override
-      protected JComponent[] getCompoundAdditionalActionSettings(Project project) {
-        final SmartList<JComponent> additions = new SmartList<>();
-        additions.add(fileFilterPanel.getPanel());
+      protected JComponent getAdditionalActionSettings(Project project) {
+        final JPanel fileFilter = fileFilterPanel.getPanel();
         if (toolWrapper.getTool().createOptionsPanel() != null) {
+          JPanel additionPanel = new JPanel();
+          additionPanel.setLayout(new BoxLayout(additionPanel, BoxLayout.Y_AXIS));
+          additionPanel.add(fileFilter);
           myToolOptionsPanel = new InheritOptionsForToolPanel((InspectionProfileImpl)currentProfile, toolWrapper.getShortName(), project);
-          additions.add(myToolOptionsPanel);
+          additionPanel.add(myToolOptionsPanel);
+          return additionPanel;
+        } else {
+          return fileFilter;
         }
-        return additions.toArray(new JComponent[additions.size()]);
       }
 
       @NotNull

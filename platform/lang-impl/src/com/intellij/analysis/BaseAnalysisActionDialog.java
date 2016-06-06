@@ -194,14 +194,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     //additional panel - inspection profile chooser
     JPanel wholePanel = new JPanel(new BorderLayout());
     wholePanel.add(myPanel, BorderLayout.NORTH);
-    final JComponent[] additions = getCompoundAdditionalActionSettings(myProject);
-    if (additions.length != 0) {
-      JPanel additionPanel = new JPanel();
-      additionPanel.setLayout(new BoxLayout(additionPanel, BoxLayout.Y_AXIS));
-      for (JComponent addition : additions) {
-        additionPanel.add(addition);
-      }
-      wholePanel.add(additionPanel, BorderLayout.CENTER);
+    final JComponent additionalPanel = getAdditionalActionSettings(myProject);
+    if (additionalPanel!= null){
+      wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
     new RadioUpDownListener(myProjectButton, myModuleButton, myUncommitedFilesButton, myFileButton, myCustomScopeButton);
     return wholePanel;
@@ -237,12 +232,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       }
     }
     return myPanel;
-  }
-
-  @NotNull
-  protected JComponent[] getCompoundAdditionalActionSettings(final Project project) {
-    final JComponent settings = getAdditionalActionSettings(project);
-    return settings == null ? new JComponent[0] : new JComponent[]{settings};
   }
 
   @Nullable
