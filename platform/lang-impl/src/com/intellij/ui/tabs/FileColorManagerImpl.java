@@ -216,6 +216,14 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     final String colorName = myModel.getColor(file, getProject());
     return colorName == null ? null : getColor(colorName);
   }
+  
+  @Nullable
+  public Color getScopeColor(@NotNull String scopeName) {
+    initProjectLevelConfigurations();
+
+    final String colorName = myModel.getScopeColor(scopeName, getProject());
+    return colorName == null ? null : getColor(colorName);
+  }
 
   @Override
   public boolean isShared(@NotNull final String scopeName) {
