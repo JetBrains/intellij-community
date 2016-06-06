@@ -55,6 +55,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -72,7 +73,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
                                                                                                      SeverityProvider,
                                                                                                      PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
-  private final SchemeManager<Profile> mySchemeManager;
+  private final SchemeManager<InspectionProfile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
 
   public static ApplicationInspectionProfileManagerImpl getInstanceImpl() {
@@ -85,7 +86,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new LazySchemeProcessor<Profile, InspectionProfileImpl>() {
+    mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
       @NotNull
       @Override
       public String getName(@NotNull Function<String, String> attributeProvider) {
@@ -102,7 +103,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
       @NotNull
       @Override
-      public SchemeState getState(@NotNull Profile scheme) {
+      public SchemeState getState(@NotNull InspectionProfile scheme) {
         if (!(scheme instanceof InspectionProfileImpl) || scheme.isProjectLevel()) {
           return SchemeState.NON_PERSISTENT;
         }
@@ -156,7 +157,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
   @NotNull
   public Collection<Profile> getProfiles() {
     initProfiles();
-    return mySchemeManager.getAllSchemes();
+    return Collections.unmodifiableList(mySchemeManager.getAllSchemes());
   }
 
   private volatile boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
@@ -205,7 +206,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
   @Override
   public void updateProfile(@NotNull Profile profile) {
-    mySchemeManager.addScheme(profile);
+    mySchemeManager.addScheme((InspectionProfile)profile);
     updateProfileImpl(profile);
   }
 
@@ -271,15 +272,15 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
   @Override
   public void deleteProfile(@NotNull final String profile) {
-    Profile found = mySchemeManager.findSchemeByName(profile);
+    InspectionProfile found = mySchemeManager.findSchemeByName(profile);
     if (found != null) {
       mySchemeManager.removeScheme(found);
     }
   }
 
   @Override
-  public void addProfile(@NotNull final Profile profile) {
-    mySchemeManager.addScheme(profile);
+  public void addProfile(@NotNull Profile profile) {
+    mySchemeManager.addScheme((InspectionProfile)profile);
   }
 
   @Override
