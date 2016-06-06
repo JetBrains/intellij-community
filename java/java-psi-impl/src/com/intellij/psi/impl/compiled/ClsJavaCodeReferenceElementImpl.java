@@ -205,23 +205,23 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Nullable
   private PsiElement resolveElement(@NotNull PsiFile containingFile) {
     PsiElement element = getParent();
-    while(element != null && (!(element instanceof PsiClass) || element instanceof PsiTypeParameter)) {
-      if(element instanceof PsiMethod){
-        final PsiMethod method = (PsiMethod)element;
-        final PsiTypeParameterList list = method.getTypeParameterList();
-        if (list != null) {
-          final PsiTypeParameter[] parameters = list.getTypeParameters();
-          for (int i = 0; parameters != null && i < parameters.length; i++) {
-            final PsiTypeParameter parameter = parameters[i];
-            if (myQualifiedName.equals(parameter.getName())) return parameter;
-          }
+    while (element != null && !(element instanceof PsiFile)) {
+      if (element instanceof PsiMethod) {
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiMethod)element)) {
+          if (myQualifiedName.equals(parameter.getName())) return parameter;
+        }
+      }
+      else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+        PsiClass psiClass = (PsiClass)element;
+        if (myQualifiedName.equals(psiClass.getQualifiedName())) return element;
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+          if (myQualifiedName.equals(parameter.getName())) return parameter;
+        }
+        for (PsiClass innerClass : psiClass.getInnerClasses()) {
+          if (myQualifiedName.equals(innerClass.getQualifiedName())) return innerClass;
         }
       }
       element = element.getParent();
-    }
-    if (element == null) return null;
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
-      if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
 
     Project project = containingFile.getProject();
