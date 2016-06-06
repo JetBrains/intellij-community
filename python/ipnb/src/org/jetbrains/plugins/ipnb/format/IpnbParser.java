@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +78,8 @@ public class IpnbParser {
       if (module != null) {
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+          // It should be called first before IpnbConnectionManager#startIpythonServer()
+          final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
           final PyPackage ipython = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
           final PyPackage jupyter = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
           if (jupyter == null && ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
