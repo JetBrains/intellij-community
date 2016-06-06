@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 29-Nov-2005
  */
-public abstract class ApplicationProfileManager implements ProfileManager{
+public abstract class ApplicationProfileManager implements ProfileManager {
+  @SuppressWarnings("unused")
   public abstract Profile createProfile();
 
+  @SuppressWarnings("unused")
   public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable);

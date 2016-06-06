@@ -19,13 +19,17 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.LazySchemeProcessor
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -47,6 +51,7 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 
 const val PROFILE = "profile"
 const val SCOPES = "scopes"
@@ -57,11 +62,12 @@ private const val SCOPE = "scope"
 private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
-@State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles", stateSplitter = ProfileStateSplitter::class)))
+@State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage("inspectionProfiles/profiles_settings")))
 class InspectionProjectProfileManagerImpl(private val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
-                                          private val localScopesHolder: NamedScopeManager) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
+                                          private val localScopesHolder: NamedScopeManager,
+                                          private val schemeManagerFactory: SchemeManagerFactory) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): InspectionProjectProfileManagerImpl {
@@ -79,6 +85,8 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
   private val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
   private var state = State()
+
+  private val schemeManager: SchemeManager<InspectionProfile>
 
   init {
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
@@ -100,6 +108,14 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
         else {
           app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
         }
+      }
+    })
+
+    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
+      override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
+        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@InspectionProjectProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
+        profile.isProjectLevel = true
+        return profile
       }
     })
   }
@@ -213,18 +229,15 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     val newState = State()
     XmlSerializer.deserializeInto(newState, state)
     this.state = newState
-    for (o in state.getChildren(PROFILE)) {
-      val profile = applicationProfileManager.createProfile()
-      profile.profileManager = this
-      profile.readExternal(o)
-      profile.isProjectLevel = true
-      if (profileKeys.contains(profile.name)) {
-        updateProfile(profile)
-      }
-      else {
-        profiles.put(profile.name, profile as InspectionProfile?)
-      }
-    }
+//    for (o in state.getChildren(PROFILE)) {
+//      val profile = applicationProfileManager.createProfile()
+//      if (profileKeys.contains(profile.name)) {
+//        updateProfile(profile)
+//      }
+//      else {
+//        profiles.put(profile.name, profile as InspectionProfile?)
+//      }
+//    }
     if (state.getChild("version")?.getAttributeValue("value") != VERSION) {
       for (o in state.getChildren("option")) {
         if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
@@ -309,11 +322,11 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     }
     if (state.projectProfile == null || profiles.isEmpty) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
-      val projectProfile = applicationProfileManager.createProfile()
+      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this@InspectionProjectProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), null)
       projectProfile.copyFrom(applicationProfileManager.rootProfile)
       projectProfile.isProjectLevel = true
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
-      profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile as InspectionProfile?)
+      profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile)
     }
     else if (!profiles.containsKey(state.projectProfile)) {
       state.projectProfile = profiles.keys.iterator().next()
@@ -346,10 +359,4 @@ class InspectionProjectProfileManagerImpl(private val project: Project,
     val profile = profiles.get(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
-}
-
-private class ProfileStateSplitter : MainConfigurationStateSplitter() {
-  override fun getComponentStateFileName(): String = "profiles_settings"
-
-  override fun getSubStateTagName() = PROFILE
 }

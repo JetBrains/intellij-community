@@ -132,7 +132,7 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void copyFrom(@NotNull Profile profile) {
+  public final void copyFrom(@NotNull Profile profile) {
     readExternal(serializeProfile(profile));
   }
 

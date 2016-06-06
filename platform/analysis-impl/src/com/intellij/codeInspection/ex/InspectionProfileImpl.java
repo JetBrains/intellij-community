@@ -41,7 +41,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -114,16 +113,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), null, null);
   }
 
-  InspectionProfileImpl(@NotNull final String profileName,
-                        @NotNull InspectionToolRegistrar registrar,
-                        @NotNull final ProfileManager profileManager,
-                        InspectionProfileImpl baseProfile,
-                        @Nullable SchemeDataHolder dataHolder) {
+  public InspectionProfileImpl(@NotNull String profileName,
+                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull ProfileManager profileManager,
+                               @Nullable InspectionProfileImpl baseProfile,
+                               @Nullable SchemeDataHolder dataHolder) {
     super(profileName);
+
     myRegistrar = registrar;
     myBaseProfile = baseProfile;
     myDataHolder = dataHolder;
-    setProfileManager(profileManager);
+    myProfileManager = profileManager;
   }
 
   @NotNull
