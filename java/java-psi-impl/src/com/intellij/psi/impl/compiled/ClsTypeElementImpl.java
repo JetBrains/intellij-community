@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -148,6 +149,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @NotNull
   private PsiType calculateType() {
+    PsiModifierList modifierList = myParent instanceof PsiModifierListOwner ? ((PsiModifierListOwner)myParent).getModifierList() : null;
+    return JavaSharedImplUtil.applyAnnotations(calculateBaseType(), modifierList);
+  }
+
+  @NotNull
+  private PsiType calculateBaseType() {
     PsiType result = PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText);
     if (result != null) return result;
 
