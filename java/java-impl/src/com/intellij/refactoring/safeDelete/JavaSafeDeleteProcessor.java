@@ -267,7 +267,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (methodRefFound != null) {
       Collection<String> result = new ArrayList<>();
       result.add(methodRefFound);
-      result.addAll(super.findConflicts(element, elements, usages));
+      final Collection<String> conflicts = super.findConflicts(element, elements, usages);
+      if (conflicts != null) {
+        result.addAll(conflicts);
+      }
       return result;
     }
     return super.findConflicts(element, elements, usages);
