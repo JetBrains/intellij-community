@@ -55,16 +55,15 @@ import java.util.*;
  */
 public class PyPackageManagerImpl extends PyPackageManager {
   // Python 2.4-2.5 compatible versions
-  public static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
-  public static final String PIP_PRE_26_VERSION = "1.1";
-  public static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
+  private static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
+  private static final String PIP_PRE_26_VERSION = "1.1";
+  private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
-  public static final String SETUPTOOLS_VERSION = "18.1";
-  public static final String PIP_VERSION = "7.1.0";
-  public static final String VIRTUALENV_VERSION = "13.1.0";
+  private static final String SETUPTOOLS_VERSION = "18.1";
+  private static final String PIP_VERSION = "7.1.0";
+  private static final String VIRTUALENV_VERSION = "13.1.0";
 
-  public static final int OK = 0;
-  public static final int ERROR_NO_SETUPTOOLS = 3;
+  private static final int ERROR_NO_SETUPTOOLS = 3;
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -73,9 +72,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private static final String BUILD_DIR_OPTION = "--build-dir";
 
-  public static final String INSTALL = "install";
-  public static final String UNINSTALL = "uninstall";
-  public static final String UNTAR = "untar";
+  private static final String INSTALL = "install";
+  private static final String UNINSTALL = "uninstall";
+  private static final String UNTAR = "untar";
 
   @Nullable private volatile List<PyPackage> myPackagesCache = null;
   private volatile boolean myUpdatingCache = false;
@@ -118,7 +117,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private boolean refreshAndCheckForSetuptools() throws ExecutionException {
     try {
       final List<PyPackage> packages = refreshAndGetPackages(false);
-      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null || PyPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
+      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null || 
+             PyPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
     }
     catch (PyExecutionException e) {
       if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
@@ -170,12 +170,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
     installManagement();
-    install(Collections.singletonList(PyRequirement.fromLine(requirementString)), Collections.<String>emptyList());
+    install(Collections.singletonList(PyRequirement.fromLine(requirementString)), Collections.emptyList());
   }
 
   @Override
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     args.add(INSTALL);
     final File buildDir;
     try {
@@ -188,7 +188,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       args.addAll(Arrays.asList(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
     }
 
-    boolean useUserSite = extraArgs.contains(USE_USER_SITE);
+    final boolean useUserSite = extraArgs.contains(USE_USER_SITE);
 
     final String proxyString = getProxyString();
     if (proxyString != null) {
@@ -203,7 +203,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
     }
     catch (PyExecutionException e) {
-      final List<String> simplifiedArgs = new ArrayList<String>();
+      final List<String> simplifiedArgs = new ArrayList<>();
       simplifiedArgs.add("install");
       if (proxyString != null) {
         simplifiedArgs.add("--proxy");
@@ -222,8 +222,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  @Override
   public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     try {
       args.add(UNINSTALL);
       boolean canModify = true;
@@ -264,8 +265,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     catch (final ProcessNotCreatedException ex) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.info("Not-env unit test mode, will return mock packages");
-        return Lists.newArrayList(new PyPackage(PyPackageUtil.PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
-                                  new PyPackage(PyPackageUtil.SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+        return Lists.newArrayList(new PyPackage(PyPackageUtil.PIP, PIP_VERSION, null, Collections.emptyList()),
+                                  new PyPackage(PyPackageUtil.SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.emptyList()));
       }
       else {
         throw ex;
@@ -275,10 +276,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return parsePackagingToolOutput(output);
   }
 
+  @Override
   @Nullable
   public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
     final List<PyPackage> packages = refreshAndGetPackages(false);
-    final Set<PyPackage> dependents = new HashSet<PyPackage>();
+    final Set<PyPackage> dependents = new HashSet<>();
     for (PyPackage p : packages) {
       final List<PyRequirement> requirements = p.getRequirements();
       for (PyRequirement requirement : requirements) {
@@ -290,9 +292,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return dependents;
   }
 
+  @Override
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
@@ -338,6 +341,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return path;
   }
 
+  @Override
   @Nullable
   public List<PyRequirement> getRequirements(@NotNull Module module) {
     return Optional
@@ -346,7 +350,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
 
-//   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
+  //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
 
   @Override
   @NotNull
@@ -356,7 +360,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       myUpdatingCache = true;
       try {
         final List<PyPackage> packages = collectPackages();
-        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages); 
+        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
         myPackagesCache = packages;
         return packages;
       }
@@ -436,7 +440,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (workingDir == null) {
       workingDir = new File(homePath).getParent();
     }
-    final List<String> cmdline = new ArrayList<String>();
+    final List<String> cmdline = new ArrayList<>();
     cmdline.add(homePath);
     cmdline.add(helperPath);
     cmdline.addAll(args);
@@ -446,11 +450,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
 
     try {
-      final Map<String, String> environment = new HashMap<String, String>(System.getenv());
+      final Map<String, String> environment = new HashMap<>(System.getenv());
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
-      GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
-      Process process;
+      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
+      final Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
@@ -503,16 +507,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   private static List<PyPackage> parsePackagingToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
-    final List<PyPackage> packages = new ArrayList<PyPackage>();
+    final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.<String>emptyList());
+        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.emptyList());
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
-      final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
+      final List<PyRequirement> requirements = new ArrayList<>();
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
