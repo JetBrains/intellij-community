@@ -22,12 +22,12 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.JavaAwareInspectionProfileCoverter;
-import com.intellij.codeInspection.ex.InspectionProfileManagerImpl;
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.util.messages.MessageBus;
 
-public class JavaAwareInspectionProfileManager extends InspectionProfileManagerImpl {
+public class JavaAwareInspectionProfileManager extends ApplicationInspectionProfileManagerImpl {
   public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar,
                                            SchemeManagerFactory schemeManagerFactory,
                                            MessageBus messageBus) {

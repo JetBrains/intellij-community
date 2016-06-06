@@ -70,7 +70,7 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
   },
   additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
-public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
+public class ApplicationInspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<Profile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -78,11 +78,11 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
-  public static InspectionProfileManagerImpl getInstanceImpl() {
-    return (InspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
+  public static ApplicationInspectionProfileManagerImpl getInstanceImpl() {
+    return (ApplicationInspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public InspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
+  public ApplicationInspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
     myRegistrar = registrar;
     registerProvidedSeverities();
 
@@ -98,7 +98,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
-        return new InspectionProfileImpl(name, myRegistrar, InspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
+        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
       }
 
       @NotNull
