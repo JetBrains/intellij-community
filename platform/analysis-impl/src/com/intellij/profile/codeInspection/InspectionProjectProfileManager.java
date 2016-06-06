@@ -31,10 +31,6 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
-  default String getProfileName() {
-    return getInspectionProfile().getName();
-  }
-
   @NotNull
   Project getProject();
 
@@ -53,7 +49,7 @@ public interface InspectionProjectProfileManager extends ProfileManager, Severit
   boolean isProfileLoaded();
 
   @Override
-  default Profile getProfile(@NotNull final String name) {
+  default Profile getProfile(@NotNull String name) {
     return getProfile(name, true);
   }
 }

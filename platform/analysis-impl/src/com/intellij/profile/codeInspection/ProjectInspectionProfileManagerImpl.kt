@@ -153,7 +153,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   }
 
   @Suppress("unused")
-  private class ProjectInspectionProfileStartUpActivity : StartupActivity {
+  private inner class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       val profileManager = getInstanceImpl(project)
       val inspectionProfile = profileManager.inspectionProfile

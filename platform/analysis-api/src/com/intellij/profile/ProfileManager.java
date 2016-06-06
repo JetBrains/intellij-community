@@ -26,7 +26,9 @@ import java.util.Collection;
  * Date: 09-Dec-2005
  */
 public interface ProfileManager {
-  NamedScopesHolder getScopesManager();
+  default NamedScopesHolder getScopesManager() {
+    return null;
+  }
 
   @NotNull
   Collection<Profile> getProfiles();

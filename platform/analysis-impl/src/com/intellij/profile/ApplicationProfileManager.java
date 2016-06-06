@@ -18,7 +18,6 @@ package com.intellij.profile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,9 +50,4 @@ public interface ApplicationProfileManager extends ProfileManager, SeverityProvi
   Profile getRootProfile();
 
   void addProfile(@NotNull Profile profile);
-
-  @Override
-  default NamedScopesHolder getScopesManager() {
-    return null;
-  }
 }
