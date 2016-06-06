@@ -16,8 +16,10 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -26,7 +28,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.MemoryDumpHelper;
@@ -794,5 +798,30 @@ public class PsiEventsTest extends PsiTestCase {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
     assertEquals(shouldBeCommitted, documentManager.isCommitted(document));
+  }
+
+  public void testTreeChangePreprocessorThrowsException() throws Exception {
+    VirtualFile vFile = createFile("a.xml", "<tag/>").getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    assert document != null;
+
+    PsiTreeChangePreprocessor preprocessor = event -> {
+      if (!event.getCode().name().startsWith("BEFORE") && !event.isGenericChange()) {
+        throw new NullPointerException();
+      }
+    };
+    ((PsiManagerImpl)getPsiManager()).addTreeChangePreprocessor(preprocessor);
+    try {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      fail("NPE expected");
+    } catch (NullPointerException ignore) {
+    } finally {
+      ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
+    }
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
   }
 }
