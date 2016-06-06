@@ -216,7 +216,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
-      LOG.debug("Packages cache is about to be cleared because these requirements were installed: " + requirements);
+      LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
       refreshPackagesSynchronously();
       FileUtil.delete(buildDir);
     }
@@ -242,7 +242,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
-      LOG.debug("Packages cache is about to be cleared because these packages were uninstalled: " + packages);
+      LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
   }
@@ -356,6 +356,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       myUpdatingCache = true;
       try {
         final List<PyPackage> packages = collectPackages();
+        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages); 
         myPackagesCache = packages;
         return packages;
       }
@@ -376,7 +377,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       refreshAndGetPackages(true);
     }
     catch (ExecutionException e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
   }
 
@@ -534,7 +535,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (file != null) {
           for (VirtualFile root : roots) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
-              LOG.debug("Clearing packages cache on SDK change");
+              LOG.debug("Refreshing packages cache on SDK change");
               ApplicationManager.getApplication().executeOnPooledThread(PyPackageManagerImpl.this::refreshPackagesSynchronously);
               return;
             }
