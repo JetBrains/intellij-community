@@ -228,6 +228,9 @@ public class TabbedPaneWrapper  {
     myTabbedPane.setForegroundAt(index,color);
   }
 
+  public final Component getTabComponentAt(final int index) {
+    return myTabbedPane.getTabComponentAt(index);
+  }
   /**
    * @see javax.swing.JTabbedPane#setComponentAt(int, java.awt.Component)
    */
@@ -413,7 +416,7 @@ public class TabbedPaneWrapper  {
     }
   }
 
-  protected static class TabbedPaneHolder extends JPanel {
+  public static class TabbedPaneHolder extends JPanel {
 
     private final TabbedPaneWrapper myWrapper;
 
@@ -447,6 +450,10 @@ public class TabbedPaneWrapper  {
       if (myWrapper != null) {
         myWrapper.myTabbedPane.updateUI();
       }
+    }
+
+    public TabbedPaneWrapper getTabbedPaneWrapper() {
+      return myWrapper;
     }
   }
 
