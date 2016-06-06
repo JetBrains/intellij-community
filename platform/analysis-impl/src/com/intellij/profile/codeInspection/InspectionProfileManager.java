@@ -23,6 +23,7 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.ProfileEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,14 +34,15 @@ import java.util.List;
  * User: anna
  * Date: 29-Nov-2005
  */
-public abstract class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider {
+public abstract class InspectionProfileManager extends BaseInspectionProfileManager implements SeverityProvider, ApplicationProfileManager {
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  public InspectionProfileManager(@NotNull MessageBus messageBus) {
+    super(messageBus);
+  }
 
   public static InspectionProfileManager getInstance() {
     return ServiceManager.getService(InspectionProfileManager.class);
-  }
-
-  public InspectionProfileManager() {
   }
 
   protected abstract void initProfiles();

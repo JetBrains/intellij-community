@@ -25,32 +25,32 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 29-Nov-2005
  */
-public abstract class ApplicationProfileManager implements ProfileManager {
-  public static final String INSPECTION_DIR = "inspection";
+public interface ApplicationProfileManager extends ProfileManager {
+  String INSPECTION_DIR = "inspection";
 
   @SuppressWarnings("unused")
-  public abstract Profile createProfile();
+  Profile createProfile();
 
   @SuppressWarnings("unused")
-  public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
-  public abstract void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable);
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
+  void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
-  public abstract void fireProfileChanged(Profile profile);
+  void fireProfileChanged(Profile profile);
 
-  public abstract void fireProfileChanged(Profile oldProfile, Profile profile, @Nullable NamedScope scope);
+  void fireProfileChanged(Profile oldProfile, Profile profile, @Nullable NamedScope scope);
 
-  public abstract void setRootProfile(@Nullable String profileName);
+  void setRootProfile(@Nullable String profileName);
 
   @NotNull
-  public abstract Profile getRootProfile();
+  Profile getRootProfile();
 
-  public abstract void addProfile(@NotNull Profile profile);
+  void addProfile(@NotNull Profile profile);
 
   @Override
-  public NamedScopesHolder getScopesManager() {
+  default NamedScopesHolder getScopesManager() {
     return null;
   }
 }

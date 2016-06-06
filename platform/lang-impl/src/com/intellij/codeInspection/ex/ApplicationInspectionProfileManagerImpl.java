@@ -31,7 +31,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
@@ -75,15 +74,14 @@ public class ApplicationInspectionProfileManagerImpl extends InspectionProfileMa
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<Profile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
-  private final SeverityRegistrar mySeverityRegistrar;
-
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
   public static ApplicationInspectionProfileManagerImpl getInstanceImpl() {
     return (ApplicationInspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
   }
 
   public ApplicationInspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
+    super(messageBus);
+
     myRegistrar = registrar;
     registerProvidedSeverities();
 
@@ -134,7 +132,6 @@ public class ApplicationInspectionProfileManagerImpl extends InspectionProfileMa
         onProfilesChanged();
       }
     });
-    mySeverityRegistrar = new SeverityRegistrar(messageBus);
   }
 
   @NotNull
@@ -219,29 +216,17 @@ public class ApplicationInspectionProfileManagerImpl extends InspectionProfileMa
     }
   }
 
-  @NotNull
-  @Override
-  public SeverityRegistrar getSeverityRegistrar() {
-    return mySeverityRegistrar;
-  }
-
-  @NotNull
-  @Override
-  public SeverityRegistrar getOwnSeverityRegistrar() {
-    return mySeverityRegistrar;
-  }
-
   @Nullable
   @Override
   public Element getState() {
     Element state = new Element("state");
-    mySeverityRegistrar.writeExternal(state);
+    getSeverityRegistrar().writeExternal(state);
     return state;
   }
 
   @Override
   public void loadState(Element state) {
-    mySeverityRegistrar.readExternal(state);
+    getSeverityRegistrar().readExternal(state);
   }
 
   public InspectionProfileConvertor getConverter() {

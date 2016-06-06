@@ -15,7 +15,6 @@
  */
 package com.intellij.profile.codeInspection
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
@@ -26,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.LazySchemeProcessor
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -56,7 +54,6 @@ import java.util.function.Function
 const val PROFILE = "profile"
 const val SCOPES = "scopes"
 
-private val LOG = Logger.getInstance(ProjectInspectionProfileManagerImpl::class.java)
 private const val VERSION = "1.0"
 private const val SCOPE = "scope"
 private const val NAME = "name"
@@ -67,7 +64,7 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
                                           private val localScopesHolder: NamedScopeManager,
-                                          private val schemeManagerFactory: SchemeManagerFactory) : PersistentStateComponent<Element>, InspectionProjectProfileManager {
+                                          private val schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): ProjectInspectionProfileManagerImpl {
@@ -78,7 +75,6 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
   private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
   private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
 
-  private val severityRegistrar = SeverityRegistrar(project.messageBus)
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private val profiles = THashMap<String, InspectionProfile>()
@@ -210,10 +206,6 @@ class ProjectInspectionProfileManagerImpl(private val project: Project,
       appNameToProfile.put(profile.name, wrapper)
     }
   }
-
-  override fun getSeverityRegistrar() = severityRegistrar
-
-  override fun getOwnSeverityRegistrar() = severityRegistrar
 
   @Synchronized override fun loadState(state: Element) {
     try {
