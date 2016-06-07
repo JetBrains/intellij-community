@@ -292,17 +292,9 @@ public class SaveProjectAsTemplateAction extends AnAction {
       }
 
       char c = input.charAt(i);
-      if (c == '#' || c == '[' || c == ']' || c =='{' || c == '}' || c =='(' || c == ')') {
+      if (c == '$' || c == '#') {
         builder.append('\\');
       }
-      if (c == '$') {
-        builder.append('\\');
-        if(input.startsWith("$true", i) || input.startsWith("$false", i) || input.startsWith("$.", i)){
-          builder.append(c).append('\\');
-          continue;
-        }
-      }
-
       builder.append(c);
     }
     return builder.toString();
