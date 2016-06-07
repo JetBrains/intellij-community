@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,8 +236,7 @@ public class ExpressionParser {
 
       final PsiBuilder.Marker right = parseExpression(builder, toParse);
       if (right == null) {
-        error(builder, toParse == ExprType.TYPE ?
-                       JavaErrorMessages.message("expected.type") : JavaErrorMessages.message("expected.expression"));
+        error(builder, JavaErrorMessages.message(toParse == ExprType.TYPE ? "expected.type" : "expected.expression"));
         expression.done(toCreate);
         return expression;
       }
@@ -711,7 +710,7 @@ public class ExpressionParser {
 
     if (builder.getTokenType() != JavaTokenType.LBRACKET) {
       rollbackTo(anno);
-      error(builder, refOrType == null ? JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
+      error(builder, JavaErrorMessages.message(refOrType == null ? "expected.lbracket" : "expected.lparen.or.lbracket"));
       newExpr.done(JavaElementType.NEW_EXPRESSION);
       return newExpr;
     }
