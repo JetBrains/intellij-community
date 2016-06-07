@@ -366,6 +366,13 @@ public class AnalyticsUploader {
       }
 
       String fileName = getBaseName(el.getFileName());
+
+      // The Kotlin plugin repackages some of our familiar classes (but
+      // from older versions)
+      if (className != null && className.contains(".klint.")) {
+        fileName = "Kt:" + fileName;
+      }
+
       // skip filename if it is the same as the previous stack element
       if (!StringUtil.equals(fileName, lastFileName)) {
         sb.append(fileName);
