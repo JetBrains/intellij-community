@@ -210,6 +210,7 @@ public class LazyParseableElement extends CompositeElement {
 
         AstPath.cacheNodePaths(this);
 
+        assert super.textMatches(text) : "Text mismatch in " + getElementType();
         myText = new SoftReference<CharSequence>(text);
       }
     }

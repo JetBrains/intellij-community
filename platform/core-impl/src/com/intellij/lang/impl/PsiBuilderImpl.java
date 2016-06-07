@@ -1145,13 +1145,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new BlockSupport.ReparsedSuccessfullyException(diffLog);
     }
 
-    final ASTNode rootNode = createRootAST(rootMarker);
+    final TreeElement rootNode = createRootAST(rootMarker);
     bind(rootMarker, (CompositeElement)rootNode);
 
     if (isTooDeep && !(rootNode instanceof FileElement)) {
       final ASTNode childNode = rootNode.getFirstChildNode();
       childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
+
+    assert rootNode.textMatches(myText) : rootNode.getElementType();
 
     return rootNode;
   }
@@ -1164,10 +1166,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private ASTNode createRootAST(@NotNull StartMarker rootMarker) {
+  private TreeElement createRootAST(@NotNull StartMarker rootMarker) {
     final IElementType type = rootMarker.getTokenType();
     @SuppressWarnings("NullableProblems")
-    final ASTNode rootNode = type instanceof ILazyParseableElementType ?
+    final TreeElement rootNode = type instanceof ILazyParseableElementType ?
                              ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
