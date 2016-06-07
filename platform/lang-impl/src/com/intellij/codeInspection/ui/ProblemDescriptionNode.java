@@ -132,9 +132,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
-    if (!isAlreadySuppressedFromView() && !isQuickFixAppliedFromView()) {
+    if (!isAlreadySuppressedFromView()) {
       InspectionToolPresentation presentation = getPresentation();
-      presentation.amnesty(getElement());
+      presentation.amnesty(getElement(), getDescriptor());
     }
     super.amnestyElement(manager);
   }
