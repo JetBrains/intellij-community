@@ -24,9 +24,12 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
+import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
@@ -608,10 +611,21 @@ public class ExpressionParser {
     return null;
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseArrayInitializer(final PsiBuilder builder) {
-    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
+  @NotNull
+  private PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
+    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, new Function<PsiBuilder, Boolean>() {
+      @Override
+      public Boolean fun(PsiBuilder builder) {
+        return parse(builder) != null;
+      }
+    }, "expected.expression");
+  }
 
+  @NotNull
+  public PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
+                                                 @NotNull IElementType type,
+                                                 @NotNull Function<PsiBuilder, Boolean> elementParser,
+                                                 @NotNull @PropertyKey(resourceBundle = BUNDLE) String missingElementKey) {
     final PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();
 
@@ -627,13 +641,13 @@ public class ExpressionParser {
         break;
       }
 
-      if (parse(builder) == null) {
+      if (!elementParser.fun(builder)) {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
           if (first && builder.lookAhead(1) == JavaTokenType.RBRACE) {
             advance(builder, 2);
             break;
           }
-          builder.error(JavaErrorMessages.message("expected.expression"));
+          builder.error(JavaErrorMessages.message(missingElementKey));
         }
         else if (builder.getTokenType() != JavaTokenType.RBRACE) {
           error(builder, JavaErrorMessages.message("expected.rbrace"));
@@ -652,7 +666,7 @@ public class ExpressionParser {
       }
     }
 
-    arrayInit.done(JavaElementType.ARRAY_INITIALIZER_EXPRESSION);
+    arrayInit.done(type);
     return arrayInit;
   }
 
