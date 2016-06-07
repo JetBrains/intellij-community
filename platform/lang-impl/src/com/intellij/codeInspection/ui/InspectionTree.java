@@ -52,8 +52,6 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
@@ -273,14 +271,17 @@ public class InspectionTree extends Tree {
           }
         }
       } else {
-        Stream<CommonProblemDescriptor> descriptorStream = siblings.stream().map(ProblemDescriptionNode::getDescriptor);
-        if (sortedByPosition) {
-          descriptorStream = descriptorStream.sorted(DESCRIPTOR_COMPARATOR);
+        Collection<CommonProblemDescriptor> currentDescriptors = sortedByPosition ? new TreeSet<>(DESCRIPTOR_COMPARATOR) : new ArrayList<>();
+        for (ProblemDescriptionNode sibling : siblings) {
+          final CommonProblemDescriptor descriptor = sibling.getDescriptor();
+          if (descriptor != null) {
+            if (readOnlyFilesSink != null) {
+              checkDescriptorFileIsWritable(descriptor, readOnlyFilesSink);
+            }
+            currentDescriptors.add(descriptor);
+          }
         }
-        descriptorStream = descriptorStream.filter(descriptors::add);
-        if (readOnlyFilesSink != null) {
-          checkDescriptorsFileIsWritable(descriptorStream.collect(Collectors.toList()), readOnlyFilesSink);
-        }
+        descriptors.addAll(currentDescriptors);
       }
     }
 
