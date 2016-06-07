@@ -141,6 +141,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       if (handler != null) {
         LOG.warn("We have leaked process, will kill it");
         handler.destroyProcess(); // To prevent process leak
+        handler.waitFor();
         Thread.sleep(1000); // Give time to listening threads to process process death
       }
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
