@@ -219,6 +219,26 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
+  private static boolean isAlignmentNeeded(JComponent view) {
+    return !SystemInfo.isMac && (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
+  }
+
+  static void fixPreferredSize(Dimension size, JComponent view, JScrollBar vsb, JScrollBar hsb) {
+    if (!view.isPreferredSizeSet()) {
+      Border border = view.getBorder();
+      if (border instanceof ViewBorder) {
+        Alignment va = getAlignment(vsb);
+        if (va == Alignment.LEFT || va == Alignment.RIGHT && isAlignmentNeeded(view)) {
+          size.width -= vsb.getWidth();
+        }
+        Alignment ha = getAlignment(hsb);
+        if (ha == Alignment.TOP || ha == Alignment.BOTTOM && isAlignmentNeeded(view)) {
+          size.height -= hsb.getHeight();
+        }
+      }
+    }
+  }
+
   private static void doLayout(JScrollPane pane, JViewport viewport, Component view) {
     updateBorder(view);
 
@@ -388,10 +408,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
           }
         }
       }
-    }
-
-    private static boolean isAlignmentNeeded(JComponent view) {
-      return !SystemInfo.isMac && (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
     }
   }
 }
