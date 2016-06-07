@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,7 +57,7 @@ public class ParagraphFillHandler {
                                       CodeStyleSettingsManager.getSettings(element.getProject()), element.getLanguage());
       codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
                                                textRange.getStartOffset(),
-                                               textRange.getStartOffset() + replacementText.length() + 1);
+                                               textRange.getStartOffset() + replacementText.length() + 1, Collections.emptyList());
     }, null, document);
 
   }
