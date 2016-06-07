@@ -162,7 +162,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
   //        }
         }
       }
-      System.out.println("Done!");
+//      System.out.println("Done!");
       return true;
     }
     catch (Throwable e) {
