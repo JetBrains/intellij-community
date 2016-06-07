@@ -32,7 +32,6 @@ import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +41,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author yole
@@ -135,15 +132,12 @@ public class PyStructuredDocstringFormatter {
     final byte[] data = new byte[encoded.limit()];
     encoded.get(data);
 
-    final Map<String, String> env = new HashMap<String, String>();
-    PythonEnvUtil.setPythonDontWriteBytecode(env);
-
-    final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.<String>newArrayList());
+    final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.newArrayList());
     commandLine.setCharset(DEFAULT_CHARSET);
     
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
-    final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, false);
+    final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), null, 5000, data, false);
     if (!output.checkSuccess(LOG)) {
       LOG.info("Malformed docstring:\n" + docstring);
       return null;
