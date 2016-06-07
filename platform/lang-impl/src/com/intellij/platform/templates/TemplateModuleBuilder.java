@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -330,7 +331,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
-    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").
+    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), CodeStyleFacade.getInstance().getLineSeparator()).
       getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
