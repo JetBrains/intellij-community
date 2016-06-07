@@ -17,12 +17,14 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -161,7 +163,12 @@ public class NamePathComponent extends JPanel{
 
     File file = new File(projectDirectory);
     if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(String.format("Directory '%s' is not writable!\nPlease choose another project location.", projectDirectory));
+      throw new ConfigurationException(String.format("Directory '%s' is not seem to be writable. Please consider another location.", projectDirectory));
+    }
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectUtil.isSameProject(projectDirectory, p)) {
+        throw new ConfigurationException(String.format("Directory '%s' is already taken by the project '%s'. Please consider another location.", projectDirectory, p.getName()));
+      }
     }
 
     boolean shouldContinue = true;
