@@ -20,8 +20,19 @@ import com.intellij.util.messages.Topic;
 
 import java.util.EventListener;
 
-public interface UISettingsListener extends EventListener{
+/**
+ * A listener for <code>UISettings</code> changes.
+ * <p/>
+ * <em>NOTE: </em>The main <code>UISettings</code> instance pushes its events down
+ * the UI components hierarchy so there's no need to add a <code>JComponent</code> as a listener.
+ *
+ * @see UISettings#fireUISettingsChanged()
+ * @see com.intellij.util.ComponentTreeEventDispatcher
+ */
+public interface UISettingsListener extends EventListener {
+
   Topic<UISettingsListener> TOPIC = Topic.create("UI settings", UISettingsListener.class);
 
   void uiSettingsChanged(UISettings source);
+
 }

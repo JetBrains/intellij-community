@@ -25,6 +25,8 @@ import java.util.EventListener;
 import static com.intellij.util.ui.UIUtil.uiTraverser;
 
 /**
+ * Pushes events down the UI components hierarchy.
+ *
  * @author gregsh
  */
 public class ComponentTreeEventDispatcher<T extends EventListener> {
