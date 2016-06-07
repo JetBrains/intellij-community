@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.file;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -58,6 +59,7 @@ public class PsiFileImplUtil {
   }
 
   public static void checkSetName(@NotNull PsiFile file, @NotNull String name) throws IncorrectOperationException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = file.getVirtualFile();
     VirtualFile parentFile = vFile.getParent();
     if (parentFile == null) return;
