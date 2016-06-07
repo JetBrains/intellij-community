@@ -213,7 +213,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
             showUsages(Arrays.stream(usages)
                          .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
-                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new));
+                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new),
+                       usages);
           }
           return false;
         }
@@ -237,7 +238,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void showUsages(final UsageInfo[] usages) {
+  private void showUsages(final UsageInfo[] conflictUsages, final UsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabText("Safe Delete Conflicts");
     presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
@@ -249,7 +250,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
-    final UsageView usageView = showUsages(usages, presentation, manager);
+    final UsageView usageView = showUsages(conflictUsages, presentation, manager);
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(() -> {
