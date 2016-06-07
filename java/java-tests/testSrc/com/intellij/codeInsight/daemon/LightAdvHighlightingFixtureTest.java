@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +35,16 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
 
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testPackageNamedAsClassInDefaultPackage() throws Exception {
+    myFixture.addClass("package test; public class A {}");
+    final PsiClass aClass = myFixture.addClass("public class test {}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+
+    assertNull(ReferencesSearch.search(aClass).findFirst());
   }
 
   @Override
