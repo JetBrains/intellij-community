@@ -31,7 +31,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -98,7 +98,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           ADDITIONAL_ANNOS = null;
           UIUtil.invokeLaterIfNeeded(() -> {
             if (ApplicationManager.getApplication().isDisposed()) return;
-            ApplicationProfileManager.getInstance().fireProfileChanged(null);
+            InspectionProfileManager.getInstance().fireProfileChanged(null);
           });
         }
         DaemonCodeAnalyzer.getInstance(project).restart(); // annotations changed

@@ -17,7 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
@@ -177,7 +177,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
     if (myCurrentProfileName == null) {
       myCurrentProfileName = ProjectInspectionProfileManagerImpl.getInstanceImpl(getProject()).getProjectProfile();
       if (myCurrentProfileName == null) {
-        myCurrentProfileName = ApplicationProfileManager.getInstance().getCurrentProfile().getName();
+        myCurrentProfileName = InspectionProfileManager.getInstance().getCurrentProfile().getName();
       }
     }
     return myCurrentProfileName;

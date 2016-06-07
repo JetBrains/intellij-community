@@ -32,9 +32,9 @@ import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImplKt;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
@@ -110,7 +110,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
-    this(profileName, InspectionToolRegistrar.getInstance(), ApplicationProfileManager.getInstance(), null, null);
+    this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), null, null);
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
@@ -148,7 +148,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         return Arrays.asList(toolWrappers);
       }
     };
-    final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, ApplicationProfileManager.getInstance());
+    final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, InspectionProfileManager.getInstance());
     initAndDo((Computable)() -> {
       profile.initInspectionTools(project);
       return null;
@@ -455,7 +455,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @Override
   public void save() {
-    ApplicationProfileManager.getInstance().fireProfileChanged(this);
+    InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
   @Nullable
@@ -480,7 +480,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     for (ScopeToolState toolState : getAllTools(null)) {
       toolState.scopesChanged();
     }
-    ApplicationProfileManager.getInstance().fireProfileChanged(this);
+    InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
   @Override
@@ -818,7 +818,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myTools = model.myTools;
     myProfileManager = model.getProfileManager();
 
-    ApplicationProfileManager.getInstance().fireProfileChanged(model);
+    InspectionProfileManager.getInstance().fireProfileChanged(model);
   }
 
   @Tag

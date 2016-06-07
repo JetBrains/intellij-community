@@ -45,7 +45,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -150,11 +149,11 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
-    if (profile.getProfileManager() instanceof ApplicationProfileManager) {
-      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
+    if (profile.isProjectLevel()) {
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManagerImpl)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
     }
     else {
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManagerImpl)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
+      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
     }
   }
 

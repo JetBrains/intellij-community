@@ -39,11 +39,11 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   @Override
   protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
     if (isProjectLevel) {
-      myProjectProfileManager.setProjectProfile(name);
+      myProjectProfileManager.setRootProfile(name);
     }
     else {
       myApplicationProfileManager.setRootProfile(name);
-      myProjectProfileManager.setProjectProfile(null);
+      myProjectProfileManager.setRootProfile(null);
     }
     ApplicationInspectionProfileManagerImpl.onProfilesChanged();
   }

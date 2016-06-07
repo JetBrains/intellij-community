@@ -19,7 +19,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -109,7 +109,7 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
 
     private void saveProfile(Project project) {
       final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      ApplicationProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
     }
 
     @NotNull

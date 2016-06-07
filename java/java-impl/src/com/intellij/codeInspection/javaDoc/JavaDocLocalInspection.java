@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -398,7 +398,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       myInspection.registerAdditionalTag(myTag);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      ApplicationProfileManager.getInstance().fireProfileChanged(profile);
+      InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
 
     @Override

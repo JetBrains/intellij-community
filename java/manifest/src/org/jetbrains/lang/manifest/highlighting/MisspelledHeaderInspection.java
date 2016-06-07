@@ -27,7 +27,7 @@ package org.jetbrains.lang.manifest.highlighting;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -185,7 +185,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
       myHeaders.add(myHeaderName);
 
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      ApplicationProfileManager.getInstance().fireProfileChanged(profile);
+      InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
   }
 }

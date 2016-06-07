@@ -282,7 +282,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   val projectProfile: String?
     get() = state.projectProfile
 
-  @Synchronized fun setProjectProfile(newProfile: String?) {
+  @Synchronized override fun setRootProfile(newProfile: String?) {
     if (newProfile == state.projectProfile) {
       return
     }

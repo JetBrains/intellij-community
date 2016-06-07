@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
@@ -165,7 +165,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       //correct save settings
-      ApplicationProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya
       /*
       try {

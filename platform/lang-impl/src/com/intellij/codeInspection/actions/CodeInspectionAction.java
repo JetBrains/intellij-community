@@ -29,9 +29,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -114,7 +114,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final ApplicationProfileManager profileManager = ApplicationProfileManager.getInstance();
+    final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final ProjectInspectionProfileManagerImpl projectProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
@@ -186,7 +186,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
 
   private void reloadProfiles(JComboBox profiles,
-                              ApplicationProfileManager inspectionProfileManager,
+                              InspectionProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {
     final InspectionProfile selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();

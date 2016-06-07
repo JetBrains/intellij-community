@@ -44,7 +44,7 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
     group.add(new DumbAwareAction(scheme.getName(), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@Nullable AnActionEvent e) {
-        projectProfileManager.setProjectProfile(scheme.getName());
+        projectProfileManager.setRootProfile(scheme.getName());
       }
     });
   }

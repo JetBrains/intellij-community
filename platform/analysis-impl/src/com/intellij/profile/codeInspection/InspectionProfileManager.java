@@ -15,10 +15,46 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.ProfileManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface InspectionProfileManager extends ApplicationProfileManager {
+public interface InspectionProfileManager extends ProfileManager, SeverityProvider {
+  String INSPECTION_DIR = "inspection";
+
+  @NotNull
   static InspectionProfileManager getInstance() {
-    return (InspectionProfileManager)ApplicationProfileManager.getInstance();
+    return ServiceManager.getService(InspectionProfileManager.class);
+  }
+
+  @NotNull
+  static InspectionProfileManager getInstance(@NotNull Project project) {
+    return InspectionProjectProfileManager.getInstance(project);
+  }
+
+  @Deprecated
+  @SuppressWarnings("unused")
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
+
+  @Deprecated
+  @SuppressWarnings("unused")
+  void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
+
+  void fireProfileChanged(@NotNull Profile profile);
+
+  void fireProfileChanged(@NotNull Profile oldProfile, Profile profile, @Nullable NamedScope scope);
+
+  void setRootProfile(@Nullable String profileName);
+
+  @SuppressWarnings("unused")
+  @NotNull
+  @Deprecated
+  default Profile getRootProfile() {
+    return getCurrentProfile();
   }
 }

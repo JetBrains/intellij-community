@@ -46,9 +46,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -79,7 +79,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   private static final String COPY_SUFFIX = "copy";
-  protected final ApplicationProfileManager myApplicationProfileManager;
+  protected final InspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManagerImpl myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
   private final Map<Profile, SingleInspectionProfilePanel> myPanels =
@@ -92,7 +92,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   public InspectionToolsConfigurable(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
-    myApplicationProfileManager = ApplicationProfileManager.getInstance();
+    myApplicationProfileManager = InspectionProfileManager.getInstance();
   }
 
   private static JComponent withBorderOnTop(final JComponent component) {
@@ -441,7 +441,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                              @NotNull ApplicationProfileManager profileManager,
+                                                              @NotNull InspectionProfileManager profileManager,
                                                               @NotNull Project project,
                                                               @Nullable JPanel anchorPanel)
     throws JDOMException, IOException, InvalidDataException {

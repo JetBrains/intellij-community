@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -341,7 +341,7 @@ public interface HighlightInfoType {
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
-                                  ? ApplicationProfileManager.getInstance().getCurrentProfile()
+                                  ? InspectionProfileManager.getInstance().getCurrentProfile()
                                   : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
       HighlightDisplayLevel level = profile.getErrorLevel(myToolKey, psiElement);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);

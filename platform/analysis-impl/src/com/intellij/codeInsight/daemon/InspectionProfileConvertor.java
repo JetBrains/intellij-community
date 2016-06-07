@@ -24,7 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -130,7 +130,7 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + ApplicationProfileManager.INSPECTION_DIR;
+    String directoryPath = PathManager.getConfigPath() + File.separator + InspectionProfileManager.INSPECTION_DIR;
     File profileDirectory = new File(directoryPath);
     if (!profileDirectory.exists()) {
       return;
