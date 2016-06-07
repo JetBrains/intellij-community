@@ -318,20 +318,24 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Nullable
   private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
     throws IOException {
-    for (WizardInputField field : myAdditionalFields) {
-      if (!field.acceptFile(file)) {
-        return null;
+    String patchedContent = content;
+    if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEncoded()) {
+      for (WizardInputField field : myAdditionalFields) {
+        if (!field.acceptFile(file)) {
+          return null;
+        }
       }
+      Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
+      for (WizardInputField field : myAdditionalFields) {
+        properties.putAll(field.getValues());
+      }
+      if (projectName != null) {
+        properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+      }
+      String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
+      patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
     }
-    Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-    for (WizardInputField field : myAdditionalFields) {
-      properties.putAll(field.getValues());
-    }
-    if (projectName != null) {
-      properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
-    }
-    String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
-    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), CodeStyleFacade.getInstance().getLineSeparator()).
+    return StringUtilRt.convertLineSeparators(patchedContent, CodeStyleFacade.getInstance().getLineSeparator()).
       getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
