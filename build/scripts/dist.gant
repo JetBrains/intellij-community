@@ -77,7 +77,7 @@ target('default': 'The default target') {
     // Generate updater.jar from the updater module (patch updater)
     layoutUpdater(out)
   }
-  tasks.zipSources()
+  tasks.zipProjectSources()
 }
 
 //todo[nik] do we really need this target? updates.xml calls layout.gant directly

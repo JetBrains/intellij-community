@@ -19,9 +19,13 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModule
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
 /**
  * @author nik
  */
@@ -33,7 +37,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
-  void zipSources() {
+  void zipProjectSources() {
     buildContext.executeStep("Build sources zip archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
       String targetFile = "$buildContext.paths.artifacts/sources.zip"
       buildContext.messages.progress("Building sources archive $targetFile")
@@ -53,15 +57,40 @@ class BuildTasksImpl extends BuildTasks {
     }
   }
 
-  //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
+  @Override
+  void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
+    buildContext.executeStep("Build sources of modules archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
+      buildContext.messages.progress("Building archive of ${modules.size()} modules to $targetFilePath")
+      buildContext.ant.mkdir(dir: new File(targetFilePath).getParent())
+      buildContext.ant.delete(file: targetFilePath)
+      buildContext.ant.zip(destfile: targetFilePath) {
+        modules.each {
+          JpsModule module = buildContext.findModule(it)
+          if (module == null) {
+            buildContext.messages.error("Cannot build sources archive: '$it' module doesn't exist")
+          }
+          module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+            buildContext.ant.
+              zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+          }
+          module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
+            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false)
+          }
+        }
+      }
+
+      buildContext.notifyArtifactBuilt(targetFilePath)
+    }
+  }
+
+//todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   @Override
   void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
     //todo[nik] create searchableOptions.xml in a separate directory instead of modifying it in the module output
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
       if (!new File(javaRuntimeClasses).exists()) {
-        buildContext.messages.
-          error("Cannot build searchable options, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
+        buildContext.messages.error("Cannot build searchable options, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
       }
 
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")

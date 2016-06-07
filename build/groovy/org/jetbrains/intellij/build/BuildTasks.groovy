@@ -22,9 +22,14 @@ import org.jetbrains.intellij.build.impl.BuildTasksImpl
  */
 abstract class BuildTasks {
   /**
-   * Build archive of the project source files keeping the original layout
+   * Build sources.zip archive containing the project source files keeping the original layout
    */
-  abstract void zipSources()
+  abstract void zipProjectSources()
+
+  /**
+   * Build archive containing production source roots of the project modules
+   */
+  abstract void zipSourcesOfModules(Collection<String> modules, String targetFilePath)
 
   /**
    * Update search/searchableOptions.xml file in {@code targetModuleName} module output directory
