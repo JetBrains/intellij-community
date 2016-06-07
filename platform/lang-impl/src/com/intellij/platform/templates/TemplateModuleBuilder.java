@@ -330,26 +330,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
-    StringBuilder sb = new StringBuilder(merged.length());
-    for (int i = 0; i < merged.length(); i++) {
-      char c = merged.charAt(i);
-      if (c == '\\') {
-        if(i < merged.length() -1){
-          if(merged.startsWith("\\$\\true", i) || merged.startsWith("\\$\\false", i) || merged.startsWith("\\$\\.", i)){
-            sb.append("$");
-            i+=2;
-            continue;
-          }
-
-          char d = merged.charAt(i+1);
-          if(d == '$' || d == '#' || d == '[' || d == ']' || d =='{' || d == '}' || d =='(' || d == ')'){
-            continue;
-          }
-        }
-      }
-      sb.append(c);
-    }
-    return StringUtilRt.convertLineSeparators(sb.toString(), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(CharsetToolkit.UTF8_CHARSET);
+    return StringUtilRt.convertLineSeparators(merged.replace("\\$", "$").replace("\\#", "#"), SystemInfo.isWindows ? "\r\n" : "\n").
+      getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @Nullable
