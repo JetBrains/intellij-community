@@ -89,12 +89,12 @@ public class CreatePatchConfigurationPanel {
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
-    selectBasePath(ObjectUtils.assertNotNull(myProject.getBasePath()));
+    selectBasePath(ObjectUtils.assertNotNull(myProject.getBaseDir()));
     initEncodingCombo();
   }
 
-  public void selectBasePath(@NotNull String text) {
-    myBasePathField.setText(text);
+  public void selectBasePath(@NotNull VirtualFile baseDir) {
+    myBasePathField.setText(baseDir.getPresentableUrl());
   }
 
   private void initEncodingCombo() {

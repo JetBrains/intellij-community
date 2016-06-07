@@ -146,7 +146,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       if (affectedVcses.size() == 1 && commonAncestor != null) {
         VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(commonAncestor));
         if (vcsRoot != null) {
-          myPanel.selectBasePath(vcsRoot.getPath());
+          myPanel.selectBasePath(vcsRoot);
         }
       }
       myPanel.setReversePatch(false);
