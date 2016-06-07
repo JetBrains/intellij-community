@@ -267,7 +267,7 @@ public class InspectionTree extends Tree {
         if (descriptor != null) {
           descriptors.add(descriptor);
           if (readOnlyFilesSink != null) {
-            checkDescriptorFileIsWritable(descriptor, readOnlyFilesSink);
+            collectReadOnlyFiles(descriptor, readOnlyFilesSink);
           }
         }
       } else {
@@ -276,7 +276,7 @@ public class InspectionTree extends Tree {
           final CommonProblemDescriptor descriptor = sibling.getDescriptor();
           if (descriptor != null) {
             if (readOnlyFilesSink != null) {
-              checkDescriptorFileIsWritable(descriptor, readOnlyFilesSink);
+              collectReadOnlyFiles(descriptor, readOnlyFilesSink);
             }
             currentDescriptors.add(descriptor);
           }
@@ -365,7 +365,7 @@ public class InspectionTree extends Tree {
         Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
       }
       if (readOnlyFilesSink != null) {
-        checkDescriptorsFileIsWritable(descriptorChildren, readOnlyFilesSink);
+        collectReadOnlyFiles(descriptorChildren, readOnlyFilesSink);
       }
 
       descriptors.addAll(descriptorChildren);
@@ -422,22 +422,18 @@ public class InspectionTree extends Tree {
     return myContext;
   }
 
-  private static void checkDescriptorsFileIsWritable(@NotNull Collection<CommonProblemDescriptor> descriptors, @NotNull Set<VirtualFile> readOnlySink) {
+  private static void collectReadOnlyFiles(@NotNull Collection<CommonProblemDescriptor> descriptors, @NotNull Set<VirtualFile> readOnlySink) {
     for (CommonProblemDescriptor descriptor : descriptors) {
-      if (checkDescriptorFileIsWritable(descriptor, readOnlySink)) {
-        return;
-      }
+      collectReadOnlyFiles(descriptor, readOnlySink);
     }
   }
 
-  private static boolean checkDescriptorFileIsWritable(@NotNull CommonProblemDescriptor descriptor, @NotNull Set<VirtualFile> readOnlySink) {
+  private static void collectReadOnlyFiles(@NotNull CommonProblemDescriptor descriptor, @NotNull Set<VirtualFile> readOnlySink) {
     if (descriptor instanceof ProblemDescriptor) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       if (psiElement != null && !psiElement.isWritable()) {
         readOnlySink.add(psiElement.getContainingFile().getVirtualFile());
-        return true;
       }
     }
-    return false;
   }
 }
