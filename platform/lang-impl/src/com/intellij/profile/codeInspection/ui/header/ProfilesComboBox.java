@@ -138,7 +138,7 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     }
   }
 
-  void addProfile(InspectionProfileImpl inspectionProfile) {
+  public void addProfile(InspectionProfileImpl inspectionProfile) {
     myComboModel.add(inspectionProfile);
     if (!isProjectLevel(inspectionProfile)) {
       findFirstGlobalProfile();
