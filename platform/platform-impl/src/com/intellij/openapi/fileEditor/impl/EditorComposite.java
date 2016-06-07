@@ -40,11 +40,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,8 +293,8 @@ public abstract class EditorComposite implements Disposable {
     SmartList<JComponent> result = new SmartList<JComponent>();
     JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
     for (Component each : container.getComponents()) {
-      if (each instanceof TopBottomComponentWrapper) {
-        result.add(((TopBottomComponentWrapper)each).getWrappee());
+      if (each instanceof NonOpaquePanel) {
+        result.add(((NonOpaquePanel)each).getTargetComponent());
       }
     }
     return Collections.unmodifiableList(result);
@@ -320,8 +322,11 @@ public abstract class EditorComposite implements Disposable {
 
     if (remove) {
       container.remove(component.getParent());
-    } else {
-      container.add(new TopBottomComponentWrapper(component, top));
+    }
+    else {
+      NonOpaquePanel wrapper = new NonOpaquePanel(component);
+      wrapper.setBorder(createTopBottomSideBorder(top));
+      container.add(wrapper);
     }
     container.revalidate();
   }
@@ -488,6 +493,7 @@ public abstract class EditorComposite implements Disposable {
   private static class TopBottomPanel extends JPanel {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+      setName("editor-part");
     }
 
     @Override
@@ -495,30 +501,21 @@ public abstract class EditorComposite implements Disposable {
       Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
   }
 
-  private static class TopBottomComponentWrapper extends JPanel {
-    private final JComponent myWrappee;
-
-    public TopBottomComponentWrapper(JComponent component, boolean top) {
-      super(new BorderLayout());
-      myWrappee = component;
-      setOpaque(false);
-
-      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
-        @Override
-        public Color getLineColor() {
-          Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
-          return result == null ? JBColor.BLACK : result;
-        }
-      });
-
-      add(component);
-    }
-
-    @NotNull
-    public JComponent getWrappee() {
-      return myWrappee;
-    }
+  @NotNull
+  private static SideBorder createTopBottomSideBorder(boolean top) {
+    return new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
+      @Override
+      public Color getLineColor() {
+        Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+        return result == null ? JBColor.BLACK : result;
+      }
+    };
   }
 }
