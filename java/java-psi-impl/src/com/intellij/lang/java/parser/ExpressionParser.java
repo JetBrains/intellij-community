@@ -17,7 +17,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
@@ -28,9 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.lang.PsiBuilderUtil.drop;
-import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.PsiBuilderUtil.rollbackTo;
+import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class ExpressionParser {
@@ -618,8 +615,7 @@ public class ExpressionParser {
     final PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();
 
-    boolean expressionMissed = false;
-    PsiBuilder.Marker lastComma = null;
+    boolean first = true;
     while (true) {
       if (builder.getTokenType() == JavaTokenType.RBRACE) {
         builder.advanceLexer();
@@ -631,24 +627,21 @@ public class ExpressionParser {
         break;
       }
 
-      if (expressionMissed && lastComma != null) {
-        // before comma must be an expression
-        lastComma.precede().errorBefore(JavaErrorMessages.message("expected.expression"), lastComma);
-        lastComma.drop();
-        lastComma = null;
-      }
-
-      final PsiBuilder.Marker arg = parse(builder);
-      if (arg == null) {
+      if (parse(builder) == null) {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
-          expressionMissed = true;
-          lastComma = builder.mark();
+          if (first && builder.lookAhead(1) == JavaTokenType.RBRACE) {
+            advance(builder, 2);
+            break;
+          }
+          builder.error(JavaErrorMessages.message("expected.expression"));
         }
-        else {
+        else if (builder.getTokenType() != JavaTokenType.RBRACE) {
           error(builder, JavaErrorMessages.message("expected.rbrace"));
           break;
         }
       }
+
+      first = false;
 
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == JavaTokenType.COMMA) {
@@ -657,10 +650,6 @@ public class ExpressionParser {
       else if (tokenType != JavaTokenType.RBRACE) {
         error(builder, JavaErrorMessages.message("expected.comma"));
       }
-    }
-
-    if (lastComma != null) {
-      lastComma.drop();
     }
 
     arrayInit.done(JavaElementType.ARRAY_INITIALIZER_EXPRESSION);
@@ -983,13 +972,13 @@ public class ExpressionParser {
     final PsiBuilder.Marker gtToken = builder.mark();
 
     if (type == JavaTokenType.GTGTGTEQ) {
-      PsiBuilderUtil.advance(builder, 4);
+      advance(builder, 4);
     }
     else if (type == JavaTokenType.GTGTGT || type == JavaTokenType.GTGTEQ) {
-      PsiBuilderUtil.advance(builder, 3);
+      advance(builder, 3);
     }
     else if (type == JavaTokenType.GTGT || type == JavaTokenType.GE) {
-      PsiBuilderUtil.advance(builder, 2);
+      advance(builder, 2);
     }
     else {
       gtToken.drop();
