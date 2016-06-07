@@ -30,11 +30,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -77,15 +81,33 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
           final PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
             PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
-            if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+            String qName = aClass != null ? aClass.getQualifiedName() : null;
+            if (aClass != null &&
+                qName != null &&
+                !PsiTreeUtil.isAncestor(aClass, element, true) &&
+                !aClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+                !PsiUtil.isFromDefaultPackage(aClass)) {
               final PsiElement gParent = refExpr.getParent();
               if (gParent instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression call = (PsiMethodCallExpression)gParent.copy();
                 final PsiElement qualifier = call.getMethodExpression().getQualifier();
                 if (qualifier == null) return null;
                 qualifier.delete();
-                final PsiMethod method = call.resolveMethod();
-                if (method != null && method.getContainingClass() != aClass)  return null;
+                final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+                final PsiElement method = resolveResult.getElement();
+                if (method instanceof PsiMethod) {
+                  if (((PsiMethod)method).getContainingClass() != aClass) {
+                    final PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
+                    if (currentFileResolveScope instanceof PsiImportStaticStatement) {
+                      //don't hide another on-demand import and don't create ambiguity
+                      if (((PsiImportStaticStatement)currentFileResolveScope).isOnDemand() ||
+                          MethodSignatureUtil.areSignaturesEqual((PsiMethod)method, (PsiMethod)resolved)) {
+                        return null;
+                      }
+                    }
+                    else return null;
+                  }
+                }
               }
               else {
                 final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refExpr.copy();
@@ -95,10 +117,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                 final PsiElement target = copy.resolve();
                 if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != aClass) return null;
               }
-              String qName = aClass.getQualifiedName();
-              if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
-                return new ImportAvailability(qName + "." +refExpr.getReferenceName(), (PsiMember) resolved);
-              }
+              return new ImportAvailability(qName + "." +refExpr.getReferenceName(), (PsiMember) resolved);
             }
           }
         }
