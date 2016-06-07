@@ -371,6 +371,7 @@ public class FileUtilRt {
     return file;
   }
 
+  private static final Random RANDOM = new Random();
   @NotNull
   private static File doCreateTempFile(@NotNull File dir,
                                        @NotNull @NonNls String prefix,
@@ -412,7 +413,7 @@ public class FileUtilRt {
       }
       i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
       if (i > 2) {
-        i = 2 + (int)(System.nanoTime() % maxFileNumber); // generate random suffix if too many failures
+        i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
       }
     }
   }
