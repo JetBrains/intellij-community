@@ -75,14 +75,14 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   }
 
   @Nullable
-  private ClientPropertiesManager getDefaultManager() {
+  private static ClientPropertiesManager getDefaultManager() {
     synchronized (DEFAULT_MANAGER_LOCK) {
       return ourDefaultManager;
     }
   }
 
   private static void checkInitDefaultManager() {
-    synchronized (DEFAULT_MANAGER_LOCK) {
+    synchronized (DEFAULT_MANAGER_LOCK) { // in Upsource projectOpened can be executed concurrently for 2 projects
       if (ourDefaultManager == null) {
         ourDefaultManager = new ClientPropertiesManager();
         try {
