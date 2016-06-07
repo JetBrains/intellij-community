@@ -57,6 +57,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void ignoreCurrentElement(RefEntity refEntity);
   void amnesty(RefEntity refEntity);
+  void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void cleanup();
   void finalCleanup();
   boolean isGraphNeeded();
