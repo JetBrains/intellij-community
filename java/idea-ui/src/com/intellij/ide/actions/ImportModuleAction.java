@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -30,9 +31,9 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -132,6 +133,12 @@ public class ImportModuleAction extends AnAction {
     }
 
     final VirtualFile file = files[0];
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectUtil.isSameProject(file.getPath(), p)) {
+        ProjectUtil.focusProjectWindow(p, false);
+        return null;
+      }
+    }
     PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
     return createImportWizard(project, dialogParent, file, providers);
   }
