@@ -18,6 +18,7 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -35,13 +36,13 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,12 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String TASK_INFO_ID = "taskInfo";
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final String HARD_REACTION = "Too Hard";
+  private static final String BORING_REACTION = "Too Boring";
+  private static final String SOLVED_TASK_TOOLTIP = "Task Is Solved";
+  private static final String HARD_LABEL_TOOLTIP = "Click To Get An Easier Task";
+  private static final String BORING_LABEL_TOOLTIP = "Click To Get A More Challenging Task";
+  
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
   private final OnePixelSplitter mySplitPane;
@@ -117,63 +124,120 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
   
   public JPanel createReactionPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.border()));
-    final JPanel hardPanel = new JPanel(new BorderLayout());
-    hardPanel.add(new JLabel("Too hard"), BorderLayout.CENTER);
-    hardPanel.setBorder(BorderFactory.createEtchedBorder());
+    final JPanel mainPanel = new JPanel(new GridBagLayout());
+    mainPanel.setBackground(UIUtil.getTextFieldBackground());
 
-    final JPanel boringPanel = new JPanel(new BorderLayout());
-    boringPanel.setBorder(BorderFactory.createEtchedBorder());
-    boringPanel.add(new JLabel("Too boring"), BorderLayout.CENTER);
-
+    final JPanel hardPanel = createReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, SOLVED_TASK_TOOLTIP, 0);
+    final JPanel boringPanel = createReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, SOLVED_TASK_TOOLTIP, -1);
+    
     final GridBagConstraints c = new GridBagConstraints();
     c.fill  = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
-    c.weightx = 1;
-    panel.add(hardPanel, c);
-    c.gridx =  1;
-    panel.add(boringPanel, c);
-    c.gridy = 1;
-    c.weightx = 1;
-    panel.add(Box.createVerticalBox(), c);
-
-    final Project project = ProjectUtil.guessCurrentProject(myContentPanel);
-    addMouseListener(hardPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, 0));
-    addMouseListener(boringPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, -1));
+    mainPanel.add(Box.createVerticalStrut(3), c);
     
-    return panel;
+    c.gridx = 1;
+    c.gridy = 1;
+    mainPanel.add(Box.createHorizontalStrut(3), c);
+    c.weightx = 1;
+    c.gridx = 2;
+    mainPanel.add(hardPanel, c);
+    c.gridx = 3;
+    c.weightx = 0;
+    mainPanel.add(Box.createHorizontalStrut(3), c);
+    c.weightx = 1;
+    c.gridx = 4;
+    mainPanel.add(boringPanel, c);
+    c.gridx = 5;
+    c.weightx = 0;
+    mainPanel.add(Box.createHorizontalStrut(3), c);
+    
+    return mainPanel;
   }
 
-  private static void addMouseListener(@NotNull final JPanel panel, @NotNull Runnable onClickAction ) {
-    panel.addMouseListener(new MouseAdapter() {
+  private JPanel createReactionButtonPanel(@NotNull final String text,
+                                           @NotNull final String enabledTooltip,
+                                           @NotNull final String disabledTooltip,
+                                           int reaction) {
+    final Project project = ProjectUtil.guessCurrentProject(myContentPanel);
+    final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(project);
+    final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
+    
+    final JLabel label = new JLabel(text);
+    label.setEnabled(isEnabled);
+
+    final JPanel buttonPanel = new JPanel();
+    buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.PAGE_AXIS));
+    buttonPanel.setToolTipText(isEnabled ? enabledTooltip : disabledTooltip);
+    buttonPanel.add(Box.createVerticalStrut(5));
+    buttonPanel.add(label);
+    buttonPanel.add(Box.createVerticalStrut(5));
+
+    final JPanel mainPanel = new JPanel(new GridBagLayout());
+    mainPanel.setBorder(BorderFactory.createEtchedBorder());
+    mainPanel.add(buttonPanel);
+    addMouseListener(mainPanel, buttonPanel, label, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, reaction));
+    return mainPanel;
+  }
+
+  private static void addMouseListener(@NotNull final JPanel panel,
+                                       @NotNull final JPanel buttonPanel,
+                                       @NotNull final JLabel textLabel,
+                                       @NotNull Runnable onClickAction) {
+    final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 1) {
-          final ProgressIndicatorBase progress = new ProgressIndicatorBase();
-          progress.setText("Loading Next Recommendation");
-          ProgressManager.getInstance().run(new Task.Backgroundable(ProjectUtil.guessCurrentProject(panel),
-                                                                    "Loading Next Recommendation") {
+          final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(ProjectUtil.guessCurrentProject(panel));
+          if (task != null && task.getStatus() != StudyStatus.Solved) {
+            final ProgressIndicatorBase progress = new ProgressIndicatorBase();
+            progress.setText("Loading Next Recommendation");
+            ProgressManager.getInstance().run(new Task.Backgroundable(ProjectUtil.guessCurrentProject(panel),
+                                                                      "Loading Next Recommendation") {
 
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              onClickAction.run();
-            }
-          });
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                setEnabled(false);
+                onClickAction.run();
+              }
+
+              @Override
+              protected void onFinished() {
+                setEnabled(true);
+              }
+
+              private void setEnabled(final boolean enabled) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  panel.setEnabled(enabled);
+                  buttonPanel.setEnabled(enabled);
+                  textLabel.setEnabled(enabled);
+                });
+              }
+            });
+          }
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        panel.setBackground(UIUtil.getTreeSelectionBackground());
+        final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(ProjectUtil.guessCurrentProject(panel));
+        if (task != null && task.getStatus() != StudyStatus.Solved && panel.isEnabled()) {
+          setBackground(UIUtil.getButtonSelectColor());
+        }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        panel.setBackground(UIUtil.getLabelBackground());
+        setBackground(UIUtil.getLabelBackground());
       }
-    });
+
+      private void setBackground(Color color) {
+        panel.setBackground(color);
+        buttonPanel.setBackground(color);
+      }
+    };
+    panel.addMouseListener(mouseAdapter);
+    buttonPanel.addMouseListener(mouseAdapter);
   }
   
   public void dispose() {
