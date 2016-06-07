@@ -16,6 +16,9 @@
 package com.intellij.tests.gui.framework;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.fest.swing.core.Robot;
 import com.intellij.diagnostic.AbstractMessage;
@@ -41,7 +44,10 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.WaitTimedOutError;
+import org.fest.swing.finder.DialogFinder;
 import org.fest.swing.fixture.ContainerFixture;
+import org.fest.swing.fixture.DialogFixture;
 import org.fest.swing.fixture.JListFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
@@ -52,6 +58,7 @@ import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -71,6 +78,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.fest.swing.edt.GuiActionRunner.execute;
+import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.finder.WindowFinder.findFrame;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.swing.timing.Timeout.timeout;
@@ -225,6 +233,18 @@ public final class GuiTests {
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
       final MyProjectManagerListener listener = new MyProjectManagerListener();
+      //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
+      acceptAgreement(robot);
+      //[Complete Installation]
+      completeInstallation(robot);
+      //[EVALUATION IntelliJ IDEA License Activation]
+      evaluateIdea(robot);
+      //[License Agreement for IntelliJ IDEA]
+      acceptLicenseAgreement(robot);
+      //[Customize IntelliJ IDEA]
+      customizeIdea(robot);
+
+
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
         protected boolean isMatching(@NotNull Frame frame) {
@@ -274,6 +294,69 @@ public final class GuiTests {
       if (robot != null) {
         robot.cleanUpWithoutDisposingWindows();
       }
+    }
+  }
+
+  private static void acceptAgreement(Robot robot) {
+    final String dialogName = ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement";
+    try {
+      final DialogFixture
+        privacyDialogFixture = findDialog(dialogName)
+        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+      privacyDialogFixture.button("Accept").click();
+    } catch (WaitTimedOutError we) {
+      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+    }
+
+  }
+
+  private static void completeInstallation(Robot robot) {
+    final String dialogName = ApplicationBundle.message("title.complete.installation");
+    try {
+      final DialogFixture
+        completeInstallationDialog = findDialog(dialogName)
+        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+      completeInstallationDialog.button("OK").click();
+    } catch (WaitTimedOutError we) {
+      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+    }
+  }
+
+  private static void evaluateIdea(Robot robot) {
+    final String dialogName = ApplicationNamesInfo.getInstance().getFullProductName() + " License Activation";
+    try{
+      final DialogFixture
+        completeInstallationDialog = findDialog(dialogName)
+        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+      completeInstallationDialog.button("Evaluate for free for 30 days").click();
+    } catch (WaitTimedOutError we) {
+      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+    }
+  }
+
+  private static void acceptLicenseAgreement(Robot robot) {
+    final String dialogName = "License Agreement for" + ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
+    try{
+      final DialogFixture
+        completeInstallationDialog = findDialog(dialogName)
+        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+
+      completeInstallationDialog.button("Evaluate for free for 30 days").click();
+    } catch (WaitTimedOutError we) {
+      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+    }
+  }
+
+  private static void customizeIdea(Robot robot) {
+    final String dialogName = "Customize " + ApplicationNamesInfo.getInstance().getFullProductName();
+    try {
+      final DialogFixture
+      completeInstallationDialog = findDialog(dialogName)
+      .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+
+      completeInstallationDialog.button("Skip All and Set Defaults").click();
+    } catch (WaitTimedOutError we) {
+      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
