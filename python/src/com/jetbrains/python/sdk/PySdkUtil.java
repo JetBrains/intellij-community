@@ -123,10 +123,11 @@ public class PySdkUtil {
       return new ProcessOutput();
     }
     final Map<String, String> systemEnv = System.getenv();
-    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
+    final Map<String, String> expandedCmdEnv = mergeEnvVariables(systemEnv, cmd.getEnvironment());
+    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(expandedCmdEnv, extraEnv) : expandedCmdEnv;
     try {
 
-      GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
+      final GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -170,15 +171,15 @@ public class PySdkUtil {
 
   @NotNull
   public static Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
-                                                       @NotNull Map<String, String> extraEnvironment) {
-    final Map<String, String> result = new HashMap<String, String>(environment);
+                                                      @NotNull Map<String, String> extraEnvironment) {
+    final Map<String, String> result = new HashMap<>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
-      //TODO: merge python path also?
-      if (PATH_ENV_VARIABLE.equals(entry.getKey()) && result.containsKey(PATH_ENV_VARIABLE)) {
-        result.put(PATH_ENV_VARIABLE, result.get(PATH_ENV_VARIABLE) + File.pathSeparator + entry.getValue());
+      final String name = entry.getKey();
+      if (PATH_ENV_VARIABLE.equals(name) || PythonEnvUtil.PYTHONPATH.equals(name)) {
+        PythonEnvUtil.addPathToEnv(result, name, entry.getValue());
       }
       else {
-        result.put(entry.getKey(), entry.getValue());
+        result.put(name, entry.getValue());
       }
     }
     return result;
