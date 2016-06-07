@@ -109,6 +109,8 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   }
 
   public void scheduleInBackgroundForCommittedDocument() {
+    if (myProject.isDisposed()) return;
+    
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Continuation continuation = performInReadAction(new DumbProgressIndicator());
       if (continuation != null) {
