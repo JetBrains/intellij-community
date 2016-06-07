@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Dmitry Avdeev
@@ -69,7 +72,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myModel.reset(project);
 
     myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
-    myJdkPanel = new JPanel(new BorderLayout(4, 0));
+    myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     ModuleType moduleType = moduleBuilder.getModuleType();
@@ -94,8 +97,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
                                  null,
                                  false);
 
-    myJdkPanel.add(myJdkComboBox);
-    myJdkPanel.add(myJdkComboBox.getSetUpButton(), BorderLayout.EAST);
+    myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.insetsLeft(4), 0, 0));
+    myJdkPanel.add(myJdkComboBox.getSetUpButton(), new GridBagConstraints(1, 0, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
   }
 
   private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<SdkTypeId> sdkFilter) {
