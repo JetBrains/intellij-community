@@ -46,4 +46,14 @@ class BuildOptions {
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+
+  /**
+   * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
+   */
+  String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
+
+  /**
+   * If {@code true} the project modules will be compiled incrementally
+   */
+  boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
 }

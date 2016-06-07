@@ -17,15 +17,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SystemProperties
 import org.codehaus.gant.GantBuilder
-import org.jetbrains.intellij.build.ApplicationInfoProperties
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.MacHostProperties
-import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.SignTool
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
@@ -34,13 +27,13 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
-
 /**
  * @author nik
  */
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final underTeamCity
+  final List<String> outputDirectoriesToKeep = []
 
   BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
@@ -80,18 +73,33 @@ class BuildContextImpl extends BuildContext {
     }
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
 
-    projectBuilder.buildIncrementally = SystemProperties.getBooleanProperty("jps.build.incrementally", false)
-    def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
-    projectBuilder.dataStorageRoot = new File("$projectHome/$dataDirName")
+    checkOptions()
+    projectBuilder.buildIncrementally = options.incrementalCompilation
+    def dataDirName = options.incrementalCompilation ? ".jps-build-data-incremental" : ".jps-build-data"
+    projectBuilder.dataStorageRoot = new File(paths.buildOutputRoot, dataDirName)
     def tempDir = System.getProperty("teamcity.build.tempDir") ?: System.getProperty("java.io.tmpdir")
-    projectBuilder.setupAdditionalLogging(new File("$tempDir/system/build-log/build.log"), System.getProperty("jps.build.debug.logging.categories", ""))
+    projectBuilder.setupAdditionalLogging(new File("$tempDir/system/build-log/build.log"), System.getProperty("intellij.build.debug.logging.categories", ""))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
     projectBuilder.exportModuleOutputProperties()
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+
+    def classesDirName = "classes"
+    def classesOutput = "$paths.buildOutputRoot/$classesDirName"
+    if (options.pathToCompiledClassesArchive != null) {
+      messages.block("Unpack compiled classes archive") {
+        FileUtil.delete(new File(classesOutput))
+        ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
+      }
+      outputDirectoriesToKeep.add(classesDirName)
+    }
+    if (options.incrementalCompilation) {
+      outputDirectoriesToKeep.add(dataDirName)
+      outputDirectoriesToKeep.add(classesDirName)
+    }
     if (!options.useCompiledClassesFromProjectOutput) {
-      projectBuilder.targetFolder = "$paths.buildOutputRoot/classes"
+      projectBuilder.targetFolder = classesOutput
     }
     else {
       def outputDir = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl)
@@ -101,6 +109,21 @@ class BuildContextImpl extends BuildContext {
     }
 
     suppressWarnings()
+  }
+
+  private void checkOptions() {
+    if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
+      messages.warning("Paths to the compiled project output is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with compiled project output won't be used")
+      options.pathToCompiledClassesArchive = null
+    }
   }
 
   private void suppressWarnings() {

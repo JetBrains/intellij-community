@@ -205,7 +205,14 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("Clean output") {
       def outputPath = buildContext.paths.buildOutputRoot
       buildContext.messages.progress("Cleaning output directory $outputPath")
-      FileUtil.delete(new File(outputPath))
+      new File(outputPath).listFiles()?.each {
+        if (buildContext instanceof BuildContextImpl && buildContext.outputDirectoriesToKeep.contains(it.name)) {
+          buildContext.messages.info("Skipped cleaning for $it.absolutePath")
+        }
+        else {
+          FileUtil.delete(it)
+        }
+      }
     }
   }
 
@@ -213,6 +220,10 @@ idea.fatal.error.notification=disabled
   void compileProjectAndTests(List<String> includingTestsInModules = []) {
     if (buildContext.options.useCompiledClassesFromProjectOutput) {
       buildContext.messages.info("Compilation skipped, the compiled classes from the project output will be used")
+      return
+    }
+    if (buildContext.options.pathToCompiledClassesArchive != null) {
+      buildContext.messages.info("Compilation skipped, the compiled classes from '${buildContext.options.pathToCompiledClassesArchive}' will be used")
       return
     }
 
