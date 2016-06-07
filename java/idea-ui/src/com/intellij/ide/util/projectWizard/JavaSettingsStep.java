@@ -104,11 +104,6 @@ public class JavaSettingsStep extends SdkSettingsStep {
   }
 
   @TestOnly
-  public void setCreateSourceRoot(boolean create) {
-    myCreateSourceRoot.setSelected(create);
-  }
-
-  @TestOnly
   public void setSourcePath(String path) {
     mySourcePath.setText(path);
   }
