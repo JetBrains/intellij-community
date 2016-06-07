@@ -233,7 +233,7 @@ public class InspectionTree extends Tree {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
-    final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
+    final List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
 
     MultiMap<Object, ProblemDescriptionNode> parentToChildNode = new MultiMap<>();
     final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();
@@ -271,7 +271,7 @@ public class InspectionTree extends Tree {
           }
         }
       } else {
-        Collection<CommonProblemDescriptor> currentDescriptors = sortedByPosition ? new TreeSet<>(DESCRIPTOR_COMPARATOR) : new ArrayList<>();
+        List<CommonProblemDescriptor> currentDescriptors = new ArrayList<>();
         for (ProblemDescriptionNode sibling : siblings) {
           final CommonProblemDescriptor descriptor = sibling.getDescriptor();
           if (descriptor != null) {
@@ -280,6 +280,9 @@ public class InspectionTree extends Tree {
             }
             currentDescriptors.add(descriptor);
           }
+        }
+        if (sortedByPosition) {
+          Collections.sort(currentDescriptors, DESCRIPTOR_COMPARATOR);
         }
         descriptors.addAll(currentDescriptors);
       }
@@ -336,7 +339,7 @@ public class InspectionTree extends Tree {
   }
 
   private void processChildDescriptorsDeep(InspectionTreeNode node,
-                                           LinkedHashSet<CommonProblemDescriptor> descriptors,
+                                           List<CommonProblemDescriptor> descriptors,
                                            boolean sortedByPosition,
                                            boolean allowResolved,
                                            @Nullable Set<VirtualFile> readOnlyFilesSink) {
