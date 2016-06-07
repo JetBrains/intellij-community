@@ -29,6 +29,7 @@
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
     <studyActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyActionListener"/>
+    <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
   </extensions>
 
   <project-components>
@@ -84,9 +85,5 @@
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
   </actions>
-
-  <extensions defaultExtensionNs="Edu">
-    <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
-  </extensions>
 
 </idea-plugin>
