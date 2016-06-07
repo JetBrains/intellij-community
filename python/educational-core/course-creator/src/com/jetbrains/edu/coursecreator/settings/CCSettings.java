@@ -6,7 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.Nullable;
 
-@State(name = "CCSettings", storages = @Storage("cc_settings.xml"))
+@State(name = "CCSettings", storages = @Storage("other.xml"))
 public class CCSettings implements PersistentStateComponent<CCSettings.State> {
   private CCSettings.State myState = new CCSettings.State();
 
