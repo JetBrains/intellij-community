@@ -67,9 +67,9 @@ target(compile: "Compile project") {
 
 target('default': 'The default target') {
   def buildContext = createBuildContext(out)
-  compileModules(buildContext)
   def tasks = BuildTasks.create(buildContext)
   tasks.cleanOutput()
+  compileModules(buildContext)
   tasks.buildSearchableOptions("resources-en", ["community-main"], [])
 
   layoutAll(buildContext, true)
@@ -85,9 +85,9 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
   def buildContext = createBuildContext(out, options)
-  compileModules(buildContext)
   def tasks = BuildTasks.create(buildContext)
   tasks.cleanOutput()
+  compileModules(buildContext)
   tasks.buildSearchableOptions("resources-en", ["community-main"], [])
   layoutAll(buildContext)
 }
