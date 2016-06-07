@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -334,7 +335,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
       patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
     }
-    return StringUtilRt.convertLineSeparators(patchedContent, SystemInfo.isWindows ? "\r\n" : "\n").
+    return StringUtilRt.convertLineSeparators(patchedContent, CodeStyleFacade.getInstance().getLineSeparator()).
       getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
