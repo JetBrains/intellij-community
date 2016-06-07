@@ -259,16 +259,18 @@ public class ProjectSdksModel implements SdkModel {
       type.showCustomCreateUI(this, parent, sdk -> setupSdk(sdk, callback));
     }
     else {
-      SdkConfigurationUtil.selectSdkHome(type, home -> {
-        String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
-        final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
-        newJdk.setHomePath(home);
-        setupSdk(newJdk, callback);
-      });
+      SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));
     }
   }
 
-  private void setupSdk(Sdk newJdk, Consumer<Sdk> callback) {
+  public void addSdk(@NotNull SdkType type, @NotNull String home, @Nullable Consumer<Sdk> callback) {
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
+    final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
+    newJdk.setHomePath(home);
+    setupSdk(newJdk, callback);
+  }
+
+  private void setupSdk(Sdk newJdk, @Nullable Consumer<Sdk> callback) {
     String home = newJdk.getHomePath();
     SdkType sdkType = (SdkType)newJdk.getSdkType();
     if (!sdkType.setupSdkPaths(newJdk, this)) return;
