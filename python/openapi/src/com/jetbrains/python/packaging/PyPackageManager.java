@@ -62,6 +62,6 @@ public abstract class PyPackageManager {
   @Nullable
   public abstract List<PyRequirement> getRequirements(@NotNull Module module);
 
-  @Nullable
+  @NotNull
   public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
 }
