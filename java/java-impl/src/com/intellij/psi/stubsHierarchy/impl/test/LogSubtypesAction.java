@@ -47,7 +47,7 @@ public class LogSubtypesAction extends InheritanceAction {
         LOG.info("Subtypes of " + psiClass + " retrieve started");
         SmartClassAnchor[] classAnchors = hierarchyService.getSingleClassHierarchy().getSubtypes(psiClass);
         String[] subtypes = new String[classAnchors.length];
-        LOG.info("Subtypes of " + psiClass + " retrieve PSI started");
+        LOG.info("Subtypes of " + psiClass + " retrieve PSI started, count=" + classAnchors.length);
         for (int i = 0; i < classAnchors.length; i++) {
           PsiClass subClass = ClassAnchorUtil.retrieve(project, classAnchors[i]);
           subtypes[i] = subClass.toString() + "(" + subClass.getQualifiedName() + ", " +  subClass.getContainingFile().getVirtualFile().getPresentableUrl() +")";
