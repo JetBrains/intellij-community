@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.Unit;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HierarchyService {
   private NameEnvironment myNameEnvironment;
@@ -37,11 +39,12 @@ public class HierarchyService {
     clear();
   }
 
-  public void processUnit(IndexTree.Unit unit) {
-    Unit compUnit = Translator.translate(myNameEnvironment, unit);
-    if (compUnit != null) {
-      myStubEnter.unitEnter(compUnit);
-    }
+  void processUnit(@NotNull Unit compUnit) {
+    myStubEnter.unitEnter(compUnit);
+  }
+
+  @Nullable Unit compact(@NotNull IndexTree.Unit unit) {
+    return Translator.translate(myNameEnvironment, unit);
   }
 
   public void connect1() {
