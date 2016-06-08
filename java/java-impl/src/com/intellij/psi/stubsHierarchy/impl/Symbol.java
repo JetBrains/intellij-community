@@ -39,6 +39,11 @@ public abstract class Symbol {
     this.myShortName = name;
   }
 
+  @Override
+  public int hashCode() {
+    return myShortName;
+  }
+
   public ClassSymbol[] members() {
     return ClassSymbol.EMPTY_ARRAY;
   }
