@@ -19,7 +19,7 @@
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
-    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundUsageCollector"/>
+    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundImagesUsageCollector"/>
   </extensions>
 
   <actions>
