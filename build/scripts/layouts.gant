@@ -858,11 +858,13 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("manifest-merger.jar") {
         module("manifest-merger")
       }
+      jar("pixelprobe.jar") {
+        module("chunkio")
+        module("pixelprobe")
+      }
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("binary-resources")
-        module("chunkio")
-        module("chunkio-processor")
         module("ddmlib")
         module("dvlib")
         module("draw9patch")
@@ -872,7 +874,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("lint-checks")
         module("ninepatch")
         module("perflib")
-        module("pixelprobe")
         module("rpclib")
         //module("builder-model")
         module("builder-test-api")
