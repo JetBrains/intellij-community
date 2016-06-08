@@ -33,11 +33,11 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testPytestRunner() {
 
-    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test1.py", 0);
+        return new PyTestTestProcessRunner("test1.py", 0);
       }
 
       @Override
@@ -59,11 +59,11 @@ public class PythonPyTestingTest extends PyEnvTestCase {
 
   @Test
   public void testPytestRunner2() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test2.py", 1);
+        return new PyTestTestProcessRunner("test2.py", 1);
       }
 
       @Override
@@ -106,11 +106,11 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   public void testPyTestFileReferences() {
     final String fileName = "reference_tests.py";
 
-    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/unit", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/unit", fileName, 0);
+        return new PyTestTestProcessRunner(fileName, 0);
       }
 
       @Override

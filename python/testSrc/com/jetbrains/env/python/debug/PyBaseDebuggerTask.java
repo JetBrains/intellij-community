@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
@@ -56,6 +57,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected boolean shouldPrintOutput = false;
   protected boolean myProcessCanTerminate;
   protected ExecutionResult myExecutionResult;
+
+  protected PyBaseDebuggerTask(@Nullable final String relativeTestDataPath) {
+    super(relativeTestDataPath);
+  }
 
   protected void waitForPause() throws InterruptedException, InvocationTargetException {
     Assert.assertTrue("Debugger didn't stopped within timeout\nOutput:" + output(), waitFor(myPausedSemaphore));
@@ -163,7 +168,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   /**
    * Toggles breakpoint
    *
-   * @param file getScriptPath() or path to script
+   * @param file getScriptName() or path to script
    * @param line starting with 0
    */
   protected void toggleBreakpoint(final String file, final int line) {
@@ -204,14 +209,16 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(file);
-    Assert.assertNotNull(vFile);
+
+    // May be relative or not
+    final VirtualFile vFile = getFileByPath(file);
+    Assert.assertNotNull(String.format("There is no %s", file), vFile);
     return XDebuggerUtil.getInstance().canPutBreakpointAt(project, vFile, line);
   }
 
   private void doToggleBreakpoint(String file, int line) {
     Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
-    XDebuggerTestUtil.toggleBreakpoint(getProject(), LocalFileSystem.getInstance().findFileByPath(file), line);
+    XDebuggerTestUtil.toggleBreakpoint(getProject(),getFileByPath(file), line);
   }
 
   protected Variable eval(String name) throws InterruptedException {
@@ -226,7 +233,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     myDebugProcess.changeVariable((PyDebugValue)var, value);
   }
 
-  public void waitForOutput(String ... string) throws InterruptedException {
+  public void waitForOutput(String... string) throws InterruptedException {
     long started = System.currentTimeMillis();
 
     while (!containsOneOf(output(), string)) {
@@ -238,7 +245,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected boolean containsOneOf(String output, String[] strings) {
-    for (String s: strings) {
+    for (String s : strings) {
       if (output.contains(s)) {
         return true;
       }
