@@ -57,7 +57,7 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
 
   @Override
   public boolean shouldProcessDependenciesRecursively() {
-    return false;
+    return !myResolveModulePerSourceSet;
   }
 
   public static class GradleFactory extends Factory {
