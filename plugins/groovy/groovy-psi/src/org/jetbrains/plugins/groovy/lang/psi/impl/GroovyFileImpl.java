@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -216,7 +217,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.SIMPLE, null)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
     if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ON_DEMAND, null)) return false;
-    if (!GroovyImportHelper.processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, this)) return false;
 
     if (ResolveUtil.shouldProcessPackages(classHint)) {
 

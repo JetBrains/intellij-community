@@ -17,25 +17,23 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
-/**
- * regular: class
- * static: class member
- * star: classes in package
- * static star: members of class
- */
-class Import(
-    val name: String,
-    val static: Boolean = false,
-    val star: Boolean = false
+private val classes = listOf(
+    Import("java.math.BigInteger"),
+    Import("java.math.BigDecimal")
 )
 
-abstract class GrImportContributorBase : GrImportContributor {
+private val packages = listOf(
+    Import("java.lang", ImportType.STAR),
+    Import("java.util", ImportType.STAR),
+    Import("java.io", ImportType.STAR),
+    Import("java.net", ImportType.STAR),
+    Import("groovy.lang", ImportType.STAR),
+    Import("groovy.util", ImportType.STAR)
+)
 
-  abstract fun appendImplicitlyImportedPackages(file: GroovyFile): List<String>
+private val imports = classes + packages
 
-  final override fun getImports(file: GroovyFile): Collection<Import> {
-    return appendImplicitlyImportedPackages(file).map {
-      Import(name = it, star = true)
-    }
-  }
+class DefaultImportContributor : GrImportContributor {
+
+  override fun getImports(file: GroovyFile): Collection<Import> = imports
 }
