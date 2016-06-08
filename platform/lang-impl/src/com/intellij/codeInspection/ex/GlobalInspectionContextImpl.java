@@ -98,7 +98,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
-  private volatile boolean mySingleInspectionRun;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -154,12 +153,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   public void addView(@NotNull InspectionResultsView view) {
-    addView(view, view.getCurrentProfileName() == null
-                  ? InspectionsBundle.message("inspection.results.title")
-                  : InspectionsBundle.message(mySingleInspectionRun ?
-                                              "inspection.results.for.inspection.toolwindow.title" :
-                                              "inspection.results.for.profile.toolwindow.title",
-                                              view.getCurrentProfileName(), getCurrentScope().getShortenName()), false);
+    addView(view, InspectionsBundle.message(view.isSingleInspectionRun() ?
+                                            "inspection.results.for.inspection.toolwindow.title" :
+                                            "inspection.results.for.profile.toolwindow.title",
+                                            view.getCurrentProfileName(), getCurrentScope().getShortenName()), false);
 
   }
 
@@ -649,7 +646,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;
       }
@@ -849,21 +846,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @Override
-  public void codeCleanup(@NotNull final Project project,
-                          @NotNull final AnalysisScope scope,
+  public void codeCleanup(@NotNull final AnalysisScope scope,
                           @NotNull final InspectionProfile profile,
                           @Nullable final String commandName,
                           @Nullable final Runnable postRunnable,
                           final boolean modal) {
-    Task task = modal ? new Task.Modal(project, "Inspect code...", true) {
+    Task task = modal ? new Task.Modal(getProject(), "Inspect code...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, project, postRunnable, commandName);
+        cleanup(scope, profile, postRunnable, commandName);
       }
-    } : new Task.Backgroundable(project, "Inspect code...", true) {
+    } : new Task.Backgroundable(getProject(), "Inspect code...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, project, postRunnable, commandName);
+        cleanup(scope, profile, postRunnable, commandName);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -871,7 +867,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private void cleanup(@NotNull final AnalysisScope scope,
                        @NotNull InspectionProfile profile,
-                       @NotNull final Project project,
                        @Nullable final Runnable postRunnable,
                        @Nullable final String commandName) {
     setCurrentScope(scope);
@@ -895,7 +890,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     else {
       range = null;
     }
-    final Iterable<Tools> inspectionTools = ContainerUtil.filter(profile.getAllEnabledInspectionTools(project), tools -> {
+    final Iterable<Tools> inspectionTools = ContainerUtil.filter(profile.getAllEnabledInspectionTools(getProject()), tools -> {
       assert tools != null;
       return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
     });
@@ -916,10 +911,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }
 
         if (!lTools.isEmpty()) {
-          final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), range != null ? range.getStartOffset() : 0,
+          final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(getProject()).getDocument(file), range != null ? range.getStartOffset() : 0,
                                                                      range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                      HighlightInfoProcessor.getEmpty());
-          Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(project), lTools);
+          Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
           ApplicationManager.getApplication().runReadAction(runnable);
           final List<HighlightInfo> infos = pass.getInfos();
           if (searchScope instanceof LocalSearchScope) {
@@ -953,12 +948,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
 
       final String title = "Code Cleanup";
-      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, title, true);
+      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(getProject(), title, true);
       progressTask.setMinIterationTime(200);
-      progressTask.setTask(new SequentialCleanupTask(project, results, progressTask));
-      CommandProcessor.getInstance().executeCommand(project, () -> {
+      progressTask.setTask(new SequentialCleanupTask(getProject(), results, progressTask));
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         if (commandName != null) {
-          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
         }
         ProgressManager.getInstance().run(progressTask);
         if (postRunnable != null) {
@@ -966,7 +961,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }
       }, title, null);
     };
-    TransactionGuard.submitTransaction(project, runnable);
+    TransactionGuard.submitTransaction(getProject(), runnable);
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
@@ -975,14 +970,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isViewClosed() {
     return myViewClosed;
-  }
-
-  public void setSingleInspectionRun(boolean singleInspectionRun) {
-    mySingleInspectionRun = singleInspectionRun;
-  }
-
-  public boolean isSingleInspectionRun() {
-    return mySingleInspectionRun;
   }
 
   private InspectionRVContentProvider createContentProvider() {

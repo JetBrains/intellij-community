@@ -1,24 +1,31 @@
 import java.io.*;
 
 class Main {
-    static interface A
-    {
-        interface B  { }
+    static class Outer {
+        static interface A {
+            interface B {}
+        }
+
+        static class D implements A {
+            private interface B {}
+        }
+
+
+        static class C extends D implements A {
+            interface E extends B {}
+            interface E1 extends D.B {}
+            interface E2 extends A.B {}
+        }
     }
+    static class E {
+        {
+            D d = new D() {
+                void foo(<error descr="'D.B' has private access in 'D'">B</error> b){
 
-    static class D implements A
-    {
-        private interface B { }
+                }
+            };
+        }
     }
-
-
-    static class C extends D implements A
-    {
-        interface E extends B { }
-        interface E1 extends D.B { }
-        interface E2 extends A.B { }
-    }
-
 }
 
 

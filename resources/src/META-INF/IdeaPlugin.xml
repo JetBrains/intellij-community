@@ -372,6 +372,7 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
                            id="excludeFromCompletion" order="last"/>
 
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaReferenceCompletionConfidence"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
@@ -542,6 +543,8 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
+
+    <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
@@ -1135,6 +1138,7 @@
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
+    <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
 
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
 

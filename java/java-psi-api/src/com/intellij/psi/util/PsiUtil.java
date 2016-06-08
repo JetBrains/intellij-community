@@ -1235,6 +1235,11 @@ public final class PsiUtil extends PsiUtilCore {
     return className + "." + member.getName();
   }
 
+  public static boolean isFromDefaultPackage(PsiClass aClass) {
+    final PsiFile containingFile = aClass.getContainingFile();
+    return containingFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
+  }
+
   static boolean checkSameExpression(PsiElement templateExpr, final PsiExpression expression) {
     return templateExpr.equals(skipParenthesizedExprDown(expression));
   }

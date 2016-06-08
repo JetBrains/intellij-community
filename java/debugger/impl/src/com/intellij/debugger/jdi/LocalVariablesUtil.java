@@ -303,7 +303,7 @@ public class LocalVariablesUtil {
         }
 
         List<DecompiledLocalVariable> vars = new ArrayList<>(usedVars.values());
-        Collections.sort(vars, DecompiledLocalVariable.COMPARATOR);
+        vars.sort(Comparator.comparingInt(DecompiledLocalVariable::getSlot));
         return vars;
       }
     }

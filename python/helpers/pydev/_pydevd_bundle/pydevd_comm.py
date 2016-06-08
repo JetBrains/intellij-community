@@ -988,17 +988,7 @@ class InternalGetArray(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             var = pydevd_vars.eval_in_context(self.name, frame.f_globals, frame.f_locals)
-
-            xml = "<xml>"
-
-            var, metaxml, rows, cols, format = pydevd_vars.array_to_meta_xml(var, self.name, self.format)
-            xml += metaxml
-            self.format = '%' + format
-            if self.rows == -1 and self.cols == -1:
-                self.rows = rows
-                self.cols = cols
-            xml += pydevd_vars.array_to_xml(var, self.roffset, self.coffset, self.rows, self.cols, self.format)
-            xml += "</xml>"
+            xml = pydevd_vars.table_like_struct_to_xml(var, self.name, self.roffset, self.coffset, self.rows, self.cols, self.format )
             cmd = dbg.cmd_factory.make_get_array_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
         except:

@@ -92,7 +92,9 @@ public abstract class SubstrateRef {
       @NotNull
       @Override
       public PsiFile getContainingFile() {
-        return SharedImplUtil.getContainingFile(node);
+        PsiFile file = SharedImplUtil.getContainingFile(node);
+        if (file == null) throw new PsiInvalidElementAccessException(node.getPsi());
+        return file;
       }
     };
   }

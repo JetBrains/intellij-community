@@ -24,12 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Dmitry Avdeev
@@ -68,8 +72,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
     Project project = myWizardContext.getProject();
     myModel.reset(project);
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
-    myJdkPanel = new JPanel(new BorderLayout(4, 0));
+    myJdkComboBox = new JdkComboBox(myModel, sdkFilter, sdkFilter, true);
+    myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     ModuleType moduleType = moduleBuilder.getModuleType();
@@ -94,8 +98,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
                                  null,
                                  false);
 
-    myJdkPanel.add(myJdkComboBox);
-    myJdkPanel.add(myJdkComboBox.getSetUpButton(), BorderLayout.EAST);
+    myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    myJdkPanel.add(myJdkComboBox.getSetUpButton(), new GridBagConstraints(1, 0, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
   }
 
   private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<SdkTypeId> sdkFilter) {
@@ -153,7 +157,10 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (myJdkComboBox.getSelectedJdk() == null && !myJdkComboBox.isProjectJdkSelected()) {
+    JdkComboBox.JdkComboBoxItem item = myJdkComboBox.getSelectedItem();
+    if (myJdkComboBox.getSelectedJdk() == null &&
+        !(item instanceof JdkComboBox.ProjectJdkComboBoxItem) &&
+        !(item instanceof JdkComboBox.SuggestedJdkItem)) {
       if (Messages.showDialog(getNoSdkMessage(),
                                        IdeBundle.message("title.no.jdk.specified"),
                                        new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
@@ -161,6 +168,14 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     }
     try {
+      if (item instanceof JdkComboBox.SuggestedJdkItem) {
+        SdkType type = item.getSdkType();
+        String path = ((JdkComboBox.SuggestedJdkItem)item).getPath();
+        myModel.addSdk(type, path, sdk -> {
+          myJdkComboBox.reloadModel(new JdkComboBox.JdkComboBoxItem(sdk), myWizardContext.getProject());
+          myJdkComboBox.setSelectedJdk(sdk);
+        });
+      }
       myModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK

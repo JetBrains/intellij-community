@@ -21,6 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -305,7 +306,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) return;
         final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
         for(SmartPsiElementPointer ptr: myExpressions) {
@@ -377,6 +378,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       final PsiLiteralExpression myOriginalExpression = (PsiLiteralExpression)startElement;
       final PsiField myConstant = myConst.getElement();
       if (myConstant == null) return;
+      final PsiExpression initializer = myConstant.getInitializer();
+      if (!(initializer instanceof PsiLiteralExpression)) {
+        return;
+      }
       if (!FileModificationService.getInstance().prepareFileForWrite(myOriginalExpression.getContainingFile())) return;
       try {
         final PsiReferenceExpression reference = createReferenceTo(myConstant, myOriginalExpression);

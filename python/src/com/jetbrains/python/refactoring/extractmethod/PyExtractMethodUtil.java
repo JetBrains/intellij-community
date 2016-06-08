@@ -223,7 +223,7 @@ public class PyExtractMethodUtil {
   private static void processDuplicates(@NotNull List<SimpleMatch> duplicates,
                                         @NotNull PsiElement replacement,
                                         @NotNull Editor editor) {
-    ExtractMethodHelper.replaceDuplicatesWithPrompt(duplicates, replacement, editor, pair -> replaceElements(pair.first, pair.second.copy()));
+    ExtractMethodHelper.replaceDuplicates(replacement, editor, pair -> replaceElements(pair.first, pair.second.copy()), duplicates);
   }
 
   private static void processGlobalWrites(@NotNull final PyFunction function, @NotNull final PyCodeFragment fragment) {

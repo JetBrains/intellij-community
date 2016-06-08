@@ -15,10 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
-import org.intellij.lang.regexp.psi.RegExpSimpleClass;
+import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +37,10 @@ public interface RegExpLanguageHost {
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {
+    return true;
+  }
+
+  default boolean supportsInlineOptionFlag(char flag, PsiElement context) {
     return true;
   }
 

@@ -33,7 +33,6 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +171,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
         LOG.info("Failed to enter editing mode for StudyToolWindow");
         return;
       }
-      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(taskDirectory);
       enterEditingMode(taskTextFile, project);
       StudyTaskManager.getInstance(project).setTurnEditingMode(false);
     }

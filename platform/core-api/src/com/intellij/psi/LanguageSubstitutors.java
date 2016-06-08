@@ -17,8 +17,14 @@ package com.intellij.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +32,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
+  private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
+  private static final Key<Language> SUBSTITUTED_LANG_KEY = Key.create("SUBSTITUTED_LANG_KEY");
+
+  private boolean myReparsingInProgress;
 
   private LanguageSubstitutors() {
     super("com.intellij.lang.substitutor");
@@ -33,10 +43,47 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
 
   @NotNull
   public Language substituteLanguage(@NotNull Language lang, @NotNull VirtualFile file, @NotNull Project project) {
-    for (final LanguageSubstitutor substitutor : forKey(lang)) {
-      final Language language = substitutor.getLanguage(file, project);
-      if (language != null) return language;
+    for (LanguageSubstitutor substitutor : forKey(lang)) {
+      Language language = substitutor.getLanguage(file, project);
+      if (language != null) {
+        processLanguageSubstitution(file, lang, language);
+        return language;
+      }
     }
     return lang;
+  }
+
+
+  private void processLanguageSubstitution(@NotNull final VirtualFile file,
+                                           @NotNull Language originalLang,
+                                           @NotNull final Language substitutedLang) {
+    Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
+    final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
+    if (!substitutedLang.equals(prevLang)) {
+      if (ApplicationManager.getApplication().isDispatchThread() && myReparsingInProgress) {
+        return; // avoid recursive reparsing
+      }
+      if (file.replace(SUBSTITUTED_LANG_KEY, prevSubstitutedLang, substitutedLang)) {
+        invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            LOG.info("Reparsing " + file.getPath() + " because of language substitution " +
+                     prevLang.getID() + "->" + substitutedLang.getID());
+            myReparsingInProgress = true;
+            FileContentUtilCore.reparseFiles(file);
+            myReparsingInProgress = false;
+          }
+        }, ModalityState.defaultModalityState());
+      }
+    }
+  }
+
+  private static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+    }
   }
 }

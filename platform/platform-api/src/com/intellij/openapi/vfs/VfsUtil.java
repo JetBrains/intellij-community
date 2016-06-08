@@ -447,6 +447,8 @@ public class VfsUtil extends VfsUtilCore {
       VirtualFile parent = createDirectoryIfMissing(path.substring(0, pos));
       if (parent == null) return null;
       final String dirName = path.substring(pos + 1);
+      VirtualFile child = parent.findChild(dirName);
+      if (child != null && child.isDirectory()) return child;
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;

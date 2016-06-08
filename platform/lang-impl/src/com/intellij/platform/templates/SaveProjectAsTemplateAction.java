@@ -143,6 +143,10 @@ public class SaveProjectAsTemplateAction extends AnAction {
         writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false, indicator);
       }
 
+      final boolean shouldEncode = shouldEncode();
+      String metaDescription = getTemplateMetaText(shouldEncode);
+      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, dir, stream, true, indicator);
+
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
                         : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
@@ -163,6 +167,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
               if (system) {
                 if (!fileName.equals("description.html") &&
                     !fileName.equals(PROJECT_TEMPLATE_XML) &&
+                    !fileName.equals(LocalArchivedTemplate.TEMPLATE_META_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
                     !fileName.equals("workspace.xml") &&
@@ -175,7 +180,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
-                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName());
+                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName(), shouldEncode);
                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
                 }
               });
@@ -250,14 +255,18 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                          Project project,
                                          Map<String, String> parameters) throws IOException {
     return getEncodedContent(virtualFile, project, parameters,
-                             FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java"));
+                             FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java"), true);
   }
 
   private static String getEncodedContent(VirtualFile virtualFile,
                                           Project project,
                                           Map<String, String> parameters,
-                                          String fileHeaderTemplateName) throws IOException {
+                                          String fileHeaderTemplateName,
+                                          boolean shouldEncode) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
+    if(!shouldEncode){
+      return text;
+    }
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
     final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
@@ -309,6 +318,16 @@ public class SaveProjectAsTemplateAction extends AnAction {
       element.addContent(field);
     }
     return JDOMUtil.writeElement(element);
+  }
+
+  private static String getTemplateMetaText(boolean shouldEncode) {
+    Element element = new Element(ArchivedProjectTemplate.TEMPLATE);
+    element.setAttribute(LocalArchivedTemplate.UNENCODED_ATTRIBUTE, String.valueOf(!shouldEncode));
+    return JDOMUtil.writeElement(element);
+  }
+
+  private static boolean shouldEncode() {
+    return !PlatformUtils.isPhpStorm();
   }
 
   @Override

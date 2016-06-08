@@ -88,18 +88,13 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 28;
+    return super.getStubVersion() + 28 + (IndexTree.STUB_HIERARCHY_ENABLED ? 1 : 0);
   }
 
   @Override
   @NotNull
   public String getExternalId() {
     return "groovy.FILE";
-  }
-
-  @Override
-  public void indexStub(@NotNull PsiFileStub stub, @NotNull IndexSink sink) {
-    super.indexStub(stub, sink);
   }
 
   @Override
@@ -131,10 +126,12 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrAnnotatedMemberIndex.KEY, anno);
     }
 
-    Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-    if (fileId == null) return;
-    IndexTree.Unit unit = GrStubIndexer.translate(fileId, stub);
-    sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    if (IndexTree.STUB_HIERARCHY_ENABLED) {
+      Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+      if (fileId == null) return;
+      IndexTree.Unit unit = GrStubIndexer.translate(fileId, stub);
+      sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    }
   }
 
 }

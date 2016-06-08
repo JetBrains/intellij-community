@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
@@ -26,6 +27,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -262,24 +264,21 @@ public class JdkUtil {
       commandLine.addParameter(classpath);
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      throwUnableToCreateTempFile();
     }
     appendEncoding(javaParameters, commandLine, vmParametersList);
-    if (classpathFile != null) {
-      commandLine.addParameter(commandLineWrapper.getName());
-      commandLine.addParameter(classpathFile.getAbsolutePath());
-    }
+    commandLine.addParameter(commandLineWrapper.getName());
+    commandLine.addParameter(classpathFile.getAbsolutePath());
 
     if (vmParamsFile != null) {
       commandLine.addParameter("@vm_params");
       commandLine.addParameter(vmParamsFile.getAbsolutePath());
     }
 
-    if (classpathFile != null || vmParamsFile != null) {
-      final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
-      ContainerUtil.addIfNotNull(classpathFile, filesToDelete);
-      ContainerUtil.addIfNotNull(vmParamsFile, filesToDelete);
-    }
+    final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
+    ContainerUtil.addIfNotNull(classpathFile, filesToDelete);
+    ContainerUtil.addIfNotNull(vmParamsFile, filesToDelete);
   }
 
   private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,
@@ -326,8 +325,13 @@ public class JdkUtil {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      throwUnableToCreateTempFile();
     }
+  }
+
+  private static void throwUnableToCreateTempFile() {
+    throw new RuntimeException(new CantRunException("Failed to create temp file with long classpath in " + FileUtilRt.getTempDirectory()));
   }
 
   private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {

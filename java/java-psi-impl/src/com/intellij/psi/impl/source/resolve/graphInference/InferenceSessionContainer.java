@@ -69,7 +69,7 @@ public class InferenceSessionContainer {
     if (parent instanceof PsiCall) {
       final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-      if (properties != null && !properties.isApplicabilityCheck()) {
+      if (properties != null && !properties.isApplicabilityCheck() && !MethodCandidateInfo.isOverloadCheck()) {
         final PsiCall topLevelCall = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(parent, false,
                                                                                           new Computable<PsiCall>() {
                                                                                             @Override

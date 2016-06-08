@@ -27,6 +27,7 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,6 +47,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     return project.getComponent(ClientPropertiesManager.class);
   }
 
+  private static final Object DEFAULT_MANAGER_LOCK = new Object();
   private static ClientPropertiesManager ourDefaultManager;
 
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<String, List<ClientProperty>>();
@@ -72,17 +74,26 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     checkInitDefaultManager();
   }
 
+  @Nullable
+  private static ClientPropertiesManager getDefaultManager() {
+    synchronized (DEFAULT_MANAGER_LOCK) {
+      return ourDefaultManager;
+    }
+  }
+
   private static void checkInitDefaultManager() {
-    if (ourDefaultManager == null) {
-      ourDefaultManager = new ClientPropertiesManager();
-      try {
-        //noinspection HardCodedStringLiteral
-        final Document document = new SAXBuilder().build(ClientPropertiesManager.class.getResource("/" + COMPONENT_NAME + ".xml"));
-        final Element child = document.getRootElement();
-        ourDefaultManager.readExternal(child);
-      }
-      catch (Exception e) {
-        LOG.error(e);
+    synchronized (DEFAULT_MANAGER_LOCK) { // in Upsource projectOpened can be executed concurrently for 2 projects
+      if (ourDefaultManager == null) {
+        ourDefaultManager = new ClientPropertiesManager();
+        try {
+          //noinspection HardCodedStringLiteral
+          final Document document = new SAXBuilder().build(ClientPropertiesManager.class.getResource("/" + COMPONENT_NAME + ".xml"));
+          final Element child = document.getRootElement();
+          ourDefaultManager.readExternal(child);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -151,7 +162,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (equals(ourDefaultManager)) {
+    if (equals(getDefaultManager())) {
       throw new WriteExternalException();
     }
     for(Map.Entry<String, List<ClientProperty>> entry: myPropertyMap.entrySet()) {

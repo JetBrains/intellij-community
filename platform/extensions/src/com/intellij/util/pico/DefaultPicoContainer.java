@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
-import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.Serializable;
 import java.util.*;
@@ -354,7 +353,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
 
   @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
-    ComponentAdapter componentAdapter = new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
+    ComponentAdapter componentAdapter = new CachingConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
     return registerComponent(componentAdapter);
   }
 

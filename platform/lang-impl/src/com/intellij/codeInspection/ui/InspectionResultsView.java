@@ -66,8 +66,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +125,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
-  private final Set<Object> mySuppressedNodes = new HashSet<>();
+  private final FactoryMap<String, Set<Object>> mySuppressedNodes = new FactoryMap<String, Set<Object>>() {
+    @Nullable
+    @Override
+    protected Set<Object> create(String key) {
+      return new THashSet<>();
+    }
+  };
   private final ConcurrentMap<String, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -137,7 +145,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
-                                                                                  globalInspectionContext.isSingleInspectionRun());
+                                                                                  isSingleInspectionRun());
 
     myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
@@ -164,10 +172,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
           synchronized (myTreeStructureUpdateLock) {
-            parent.remove(node);
-            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
+            if (parent != null) {
+              parent.remove(node);
+              ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            }
           }
         }
       }
@@ -502,6 +512,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           editorPanel.add(fixToolbar, BorderLayout.NORTH);
         }
       }
+      if (previewEditor != null) {
+        new ProblemPreviewEditorPresentation(previewEditor, this);
+      }
       mySplitter.setSecondComponent(editorPanel);
     }
     finally {
@@ -608,8 +621,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
-  public Set<Object> getSuppressedNodes() {
-    return mySuppressedNodes;
+  public Set<Object> getSuppressedNodes(String toolId) {
+    return mySuppressedNodes.get(toolId);
   }
 
   @NotNull
@@ -688,7 +701,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     synchronized (myTreeStructureUpdateLock) {
       InspectionProfileImpl profile = (InspectionProfileImpl)myInspectionProfile;
       boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
-      boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
+      boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
         InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
@@ -945,8 +958,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return rerun;
   }
 
-  public boolean isProfileDefined() {
-    return myInspectionProfile != null && myInspectionProfile.isEditable();
+  public boolean isSingleInspectionRun() {
+    return myInspectionProfile.getSingleTool() != null;
   }
 
   public static void showPopup(AnActionEvent e, JBPopup popup) {
@@ -1021,7 +1034,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myScope.isValid());
+      e.getPresentation().setEnabled(isRerunAvailable());
     }
 
     @Override
@@ -1030,12 +1043,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
 
     private void rerun() {
-      myRerun = true;
-      if (myScope.isValid()) {
-        AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
-        myGlobalInspectionContext.setTreeState(getTree().getTreeState());
-        myGlobalInspectionContext.doInspections(myScope);
-      }
+      InspectionResultsView.this.rerun();
+    }
+  }
+
+  public boolean isRerunAvailable() {
+    return !(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid();
+  }
+
+  public void rerun() {
+    myRerun = true;
+    if (myScope.isValid()) {
+      AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
+      myGlobalInspectionContext.setTreeState(getTree().getTreeState());
+      myGlobalInspectionContext.doInspections(myScope);
     }
   }
 }

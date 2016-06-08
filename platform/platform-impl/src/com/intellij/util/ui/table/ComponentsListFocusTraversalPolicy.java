@@ -17,13 +17,14 @@ package com.intellij.util.ui.table;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 /**
  * @author Aleksey Pivovarov
  */
-public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalPolicy {
+public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private static final int FORWARD = 1;
   private static final int BACKWARD = -1;
 
@@ -31,16 +32,24 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) return searchShowing(components, i + 1, FORWARD);
-    return null;
+    Component after = (i != -1 ? searchShowing(components, i + 1, FORWARD) : null);
+    if (after == null) {
+      // Let LayoutFTP detect the nearest focus cycle root and handle cycle icity correctly.
+      return super.getComponentAfter(aContainer, aComponent);
+    }
+    return after;
   }
 
   @Override
   public Component getComponentBefore(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) return searchShowing(components, i - 1, BACKWARD);
-    return null;
+    Component before = (i != -1 ? searchShowing(components, i - 1, BACKWARD) : null);
+    if (before == null) {
+      // Let LayoutFTP detect the nearest focus cycle root and handle cyclicity correctly.
+      return super.getComponentBefore(aContainer, aComponent);
+    }
+    return before;
   }
 
   @Override

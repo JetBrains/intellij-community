@@ -296,31 +296,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private static String getRevisionInfo(@NotNull TreeNodeOnVcsRevision revision) {
+  @NotNull
+  private static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
+    // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    // revision
-    sb.append(RevisionColumnInfo.toString(revision, true)).append(" ");
-
-    // author
-    VcsFileRevision vcsFileRevision = revision.getRevision();
-    sb.append(vcsFileRevision.getAuthor()).append(" ");
-
-    // date
-    sb.append(formatDateTime(revision.getRevisionDate().getTime()));
-
-    // committed by
-    if (vcsFileRevision instanceof VcsFileRevisionEx) {
-      if (!Comparing.equal(vcsFileRevision.getAuthor(), ((VcsFileRevisionEx)vcsFileRevision).getCommitterName())) {
-        sb.append(" (committed by ").append(((VcsFileRevisionEx)vcsFileRevision).getCommitterName()).append(")");
+    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision, true)).append(" ");
+    sb.append(revision.getAuthor());
+    long time = revision.getRevisionDate().getTime();
+    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
+    if (revision instanceof VcsFileRevisionEx) {
+      if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
+        sb.append(" (committed by ").append(((VcsFileRevisionEx)revision).getCommitterName()).append(")");
       }
     }
-
+    if (withMessage) {
+      sb.append(" ").append(MessageColumnInfo.getSubject(revision));
+    }
     return sb.toString();
-  }
-
-  @NotNull
-  private static String formatDateTime(long time) {
-    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
   }
 
   /**
@@ -520,7 +512,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         html.append("<br/><br/>");
       }
       if (addRevisionInfo) {
-        String revisionInfo = getRevisionInfo(revision);
+        String revisionInfo = getPresentableText(revision.getRevision(), false);
         html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
           .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
         original.append(revisionInfo).append("\n");
@@ -879,8 +871,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    CopyPasteManager.getInstance()
-      .setContents(new StringSelection(StringUtil.join(getSelectedRevisions(), MessageColumnInfo::getSubject, "\n")));
+    String text = StringUtil.join(getSelectedRevisions(), revision -> getPresentableText(revision, true), "\n");
+    CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 
   @Override
@@ -962,6 +954,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static class AuthorCellRenderer extends ColoredTableCellRenderer {
     private String myTooltipText;
 
+    /** @noinspection MethodNamesDifferingOnlyByCase*/
     public void setTooltipText(final String text) {
       myTooltipText = text;
     }
@@ -1020,9 +1013,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
         if (revision instanceof VcsFileRevisionEx) {
           VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
-          StringBuilder sb = new StringBuilder(ex.getAuthor());
+          StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
-          if (ex.getCommitterName() != null && !ex.getAuthor().equals(ex.getCommitterName())) {
+          if (ex.getCommitterName() != null && !Comparing.equal(ex.getAuthor(), ex.getCommitterName())) {
             sb.append(", via ").append(ex.getCommitterName());
             if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
           }
@@ -1064,8 +1057,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       if (originalMessage == null) return "";
 
       int index = StringUtil.indexOfAny(originalMessage, "\n\r");
-      if (index == -1) return originalMessage;
-      return originalMessage.substring(0, index) + "...";
+      return index == -1 ? originalMessage : originalMessage.substring(0, index);
     }
 
     protected String getDataOf(VcsFileRevision object) {
@@ -1124,6 +1116,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
+  // TODO this class should not implements VcsFileRevision (this is too confusing)
   static class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRevision, DualTreeElement {
     private final VcsFileRevision myRevision;
 
@@ -1232,17 +1225,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  abstract static class VcsColumnInfo<T extends Comparable> extends DualViewColumnInfo<VcsFileRevision, String>
+  abstract static class VcsColumnInfo<T extends Comparable<T>> extends DualViewColumnInfo<VcsFileRevision, String>
     implements Comparator<VcsFileRevision> {
     public VcsColumnInfo(String name) {
       super(name);
-    }
-
-    private static int compareObjects(Comparable data1, Comparable data2) {
-      if (data1 == data2) return 0;
-      if (data1 == null) return -1;
-      if (data2 == null) return 1;
-      return data1.compareTo(data2);
     }
 
     protected abstract T getDataOf(VcsFileRevision o);
@@ -1257,7 +1243,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return compareObjects(getDataOf(o1), getDataOf(o2));
+      return Comparing.compare(getDataOf(o1), getDataOf(o2));
     }
 
     public boolean shouldBeShownIsTheTree() {

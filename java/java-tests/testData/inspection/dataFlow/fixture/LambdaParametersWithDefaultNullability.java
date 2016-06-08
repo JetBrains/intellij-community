@@ -9,7 +9,7 @@ class Test {
       }
     };
     Intf i2 = (Object o) -> {
-      if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+      if (o == null) {
         System.out.println();
       }
     };
@@ -18,9 +18,19 @@ class Test {
         System.out.println();
       }
     };
+    IntfNotNull i4 = (Object o) -> {
+      if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+        System.out.println();
+      }
+    };
   }
 }
 
 interface Intf {
+  void foo(Object o);
+}
+
+@ParametersAreNonnullByDefault
+interface IntfNotNull {
   void foo(Object o);
 }

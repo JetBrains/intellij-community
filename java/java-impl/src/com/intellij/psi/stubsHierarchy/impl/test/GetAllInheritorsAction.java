@@ -25,11 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class GetAllInheritorsAction extends InheritanceAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.LogSubtypesAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.impl.test.GetAllInheritorsAction");
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

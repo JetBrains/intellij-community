@@ -13,7 +13,6 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
     final StudyState studyState = new StudyState(selectedEditor);
-    VirtualFile taskTextFile = studyState.getTaskDir().findChild(EduNames.TASK_HTML);
+    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(studyState.getTaskDir());
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
       return;

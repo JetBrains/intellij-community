@@ -17,7 +17,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ public abstract class BaseDataReader {
   private static final Logger LOG = Logger.getInstance(BaseDataReader.class);
 
   protected final SleepingPolicy mySleepingPolicy;
+  protected final Object mySleepMonitor = new Object();
   protected volatile boolean isStopped;
 
   private Future<?> myFinishedFuture;
@@ -55,7 +55,7 @@ public abstract class BaseDataReader {
         public void run() {
           String oldThreadName = Thread.currentThread().getName();
           if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-            Thread.currentThread().setName(StringUtil.first("BaseDataReader: " + presentableName, 120, true));
+            Thread.currentThread().setName("BaseDataReader: " + presentableName);
           }
           try {
             doRun();
@@ -168,7 +168,10 @@ public abstract class BaseDataReader {
         if (!stopSignalled) {
           // if process stopped, there is no sense to sleep, 
           // just check if there is unread output in the stream
-          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+
+          synchronized (mySleepMonitor) {
+            mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
+          }
         }
       }
     }
@@ -187,11 +190,18 @@ public abstract class BaseDataReader {
       }
     }
   }
+  
+  private void resumeReading() {
+    synchronized (mySleepMonitor) {
+      mySleepMonitor.notifyAll();
+    }
+  }
 
   protected abstract void close() throws IOException;
 
   public void stop() {
     isStopped = true;
+    resumeReading();
   }
 
   public void waitFor() throws InterruptedException {

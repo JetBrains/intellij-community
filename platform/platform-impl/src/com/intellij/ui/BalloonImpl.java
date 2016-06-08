@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -858,6 +857,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         mySmartFadeoutPaused = false;
       }
       else {
+        setAnimationEnabled(true);
         hide();
       }
     }
@@ -888,7 +888,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(this::hide, fadeoutDelay, null);
+      myFadeoutAlarm.addRequest(() -> {
+        if (mySmartFadeout) {
+          setAnimationEnabled(true);
+        }
+        hide();
+      }, fadeoutDelay, null);
     }
   }
 
@@ -1493,15 +1498,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public class ActionButton extends NonOpaquePanel {
     private final Icon myIcon;
     private final Icon myHoverIcon;
-    private final String myHint;
     private final Consumer<MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
     public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
-      myHint = hint;
       myListener = listener;
+
+      setToolTipText(hint);
 
       myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
         @Override
@@ -1520,20 +1525,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       if (hasPaint()) {
-        if (myHoverIcon != null && myButton.isHovered()) {
-          paintIcon(g, myHoverIcon);
-          showHint(true);
-        }
-        else {
-          paintIcon(g, myIcon);
-          showHint(false);
-        }
-      }
-    }
-
-    private void showHint(boolean show) {
-      if (myHint != null) {
-        ActionMenu.showDescriptionInStatusBar(true, this, show ? myHint : null);
+        paintIcon(g, myHoverIcon != null && myButton.isHovered() ? myHoverIcon : myIcon);
       }
     }
 

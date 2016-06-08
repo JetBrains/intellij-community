@@ -100,7 +100,16 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                       @NotNull ExecutionEnvironment env,
                                                       RemoteConnection connection,
                                                       boolean pollConnection) throws ExecutionException {
-    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollConnection);
+    return attachVirtualMachine(state, env, connection, pollConnection ? DebugEnvironment.LOCAL_START_TIMEOUT : 0);
+  }
+
+
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      long pollTimeout) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
     if (debuggerSession == null) {
       return null;

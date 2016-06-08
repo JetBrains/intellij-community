@@ -216,6 +216,13 @@ public class KeymapUtil {
     return shortcut == null ? "" : getShortcutText(shortcut);
   }
 
+  @NotNull
+  public static String getPreferredShortcutText(@NotNull Shortcut[] shortcuts) {
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut != null ? getShortcutText(shortcut) :
+           shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
+  }
+
   public static String getShortcutsText(Shortcut[] shortcuts) {
     if (shortcuts.length == 0) {
       return "";

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -81,6 +82,33 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testObjectOverloadsWithDiamondsOverMultipleConstructors() throws Exception {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testCachingOfResultsDuringCandidatesIteration() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);
+
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+    for (PsiMethodCallExpression expression : methodCallExpressions) {
+      CandidateInfo[] candidates = helper.getReferencedMethodCandidates(expression, false, true);
+      PsiExpressionList argumentList = expression.getArgumentList();
+      PsiExpression[] args = argumentList.getExpressions();
+      for (JavaResolveResult result : candidates) {
+        if (result instanceof MethodCandidateInfo) {
+          final MethodCandidateInfo info = (MethodCandidateInfo)result;
+          MethodCandidateInfo.ourOverloadGuard
+            .doPreventingRecursion(argumentList, false, () -> info.inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, args, true));
+        }
+      }
+
+      PsiMethodCallExpression parentCall = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true);
+      if (parentCall != null) {
+        JavaResolveResult result = parentCall.getMethodExpression().advancedResolve(false);
+        if (result instanceof MethodCandidateInfo) {
+          assertNull(((MethodCandidateInfo)result).getInferenceErrorMessage());
+        }
+      }
+    }
   }
 
   public void testNonCachingFolding() throws Exception {

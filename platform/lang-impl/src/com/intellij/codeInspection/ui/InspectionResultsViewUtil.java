@@ -18,11 +18,17 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +55,19 @@ public class InspectionResultsViewUtil {
     if (!(element instanceof RefElement)) return null;
     PsiElement containingElement = ((RefElement)element).getElement();
     if (!(containingElement instanceof NavigatablePsiElement) || !containingElement.isValid()) return null;
+
+    final int lineNumber = node.getLineNumber();
+    if (lineNumber != -1) {
+      final PsiFile containingFile = containingElement.getContainingFile();
+      final VirtualFile file = containingFile.getVirtualFile();
+      PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments();
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null && document.getLineCount() > lineNumber - 1) {
+        return new OpenFileDescriptor(containingElement.getProject(),
+                                      file,
+                                      document.getLineStartOffset(lineNumber - 1));
+      }
+    }
     return (Navigatable)containingElement;
   }
 

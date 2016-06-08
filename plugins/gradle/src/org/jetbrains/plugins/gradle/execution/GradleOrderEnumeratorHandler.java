@@ -86,7 +86,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   @Override
   public boolean shouldProcessDependenciesRecursively() {
-    return false;
+    return !myResolveModulePerSourceSet;
   }
 
   @Override

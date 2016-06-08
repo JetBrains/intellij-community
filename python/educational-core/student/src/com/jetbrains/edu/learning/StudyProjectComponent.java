@@ -161,12 +161,18 @@ public class StudyProjectComponent implements ProjectComponent {
         final File[] tasks = file.listFiles();
         if (tasks == null) continue;
         for (File task : tasks) {
-          final File taskDescr = new File(task, EduNames.TASK_HTML);
-          String testFileName = manager.getTestFileName();
-          final File taskTests = new File(task, testFileName);
-          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), EduNames.TASK_HTML));
-          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
-                                       testFileName));
+          final File taskDescrFrom = StudyUtils.createTaskDescriptionFile(task);
+          if (taskDescrFrom != null) {
+            String testFileName = manager.getTestFileName();
+            final File taskTests = new File(task, testFileName);
+            final File taskDescrTo =
+              StudyUtils.createTaskDescriptionFile(new File(new File(myProject.getBasePath(), file.getName()), task.getName()));
+            if (taskDescrTo != null) {
+              copyFile(taskDescrFrom, taskDescrTo);
+              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
+                                           testFileName));
+            }
+          }
         }
       }
     }

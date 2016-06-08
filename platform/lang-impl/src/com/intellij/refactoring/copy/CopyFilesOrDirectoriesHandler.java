@@ -23,6 +23,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -101,6 +103,11 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   public static void copyAsFiles(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project) {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
+      doCopyAsFiles(elements, defaultTargetDirectory, project));
+  }
+
+  private static void doCopyAsFiles(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project) {
     PsiDirectory targetDirectory = null;
     String newName = null;
     boolean openInEditor = true;

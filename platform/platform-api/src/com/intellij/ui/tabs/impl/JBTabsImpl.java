@@ -794,6 +794,10 @@ public class JBTabsImpl extends JComponent
     return addTab(info, -1);
   }
 
+  public TabLabel getTabLabel(TabInfo info) {
+    return myInfo2Label.get(info);
+  }
+
   @Nullable
   public ActionGroup getPopupGroup() {
     return myPopupGroup != null ? myPopupGroup.get() : null;

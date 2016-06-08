@@ -56,7 +56,13 @@ public class InheritanceImplUtil {
                                      @Nullable Set<PsiClass> checkedClasses) {
     if (candidateClass instanceof PsiAnonymousClass) {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
-      return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
+      if (baseCandidateClass != null) {
+        if (!checkDeep) {
+          return baseCandidateClass.equals(baseClass);
+        }
+        return InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, true);
+      }
+      return false;
     }
     if(checkDeep && LOG.isDebugEnabled()){
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);
@@ -77,11 +83,11 @@ public class InheritanceImplUtil {
         String baseQName = baseClass.getQualifiedName();
         if (baseQName == null) return false;
 
-        if (CommonClassNames.JAVA_LANG_ENUM.equals(baseQName)) {
-          return candidateClass.isEnum();
+        if (CommonClassNames.JAVA_LANG_ENUM.equals(baseQName) && candidateClass.isEnum()) {
+          return facade.findClass(baseQName, candidateClass.getResolveScope()) != null;
         }
-        if (CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseQName)) {
-          return candidateClass.isAnnotationType();
+        if (CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseQName) && candidateClass.isAnnotationType()) {
+          return facade.findClass(baseQName, candidateClass.getResolveScope()) != null;
         }
 
         boolean isCandidateInterface = candidateClass.isInterface();
@@ -119,7 +125,8 @@ public class InheritanceImplUtil {
       if (referenceElements.length != 0) {
         GlobalSearchScope scope = extList.getResolveScope();
         for (PsiJavaCodeReferenceElement ref : referenceElements) {
-          if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && facade.findClass(baseQName, scope) != null)
+          if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName)
+              && facade.findClass(baseQName, scope) != null)
             return true;
         }
       }

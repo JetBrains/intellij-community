@@ -1778,6 +1778,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.toString();
   }
 
+  @NotNull
+  public String getHighlightingDescription(@NotNull List<HighlightInfo> highlighting, @NotNull String tagName) {
+    final List<Border> borders = new LinkedList<Border>();
+    for (HighlightInfo region : highlighting) {
+      borders.add(new Border(Border.LEFT, region.getStartOffset(), "", false));
+      borders.add(new Border(Border.RIGHT, region.getEndOffset(), "", false));
+    }
+    Collections.sort(borders);
+
+    StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
+    for (Border border : borders) {
+      result.insert(border.getOffset(), (border.isSide() == Border.LEFT ? "<": "</") + tagName + ">");
+    }
+
+    return result.toString();
+  }
+
   private void testFoldingRegions(@NotNull String verificationFileName, @Nullable String destinationFileName, boolean doCheckCollapseStatus) {
     String expectedContent;
     try {

@@ -675,7 +675,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return visibleArea.contains(p) ? p : null;
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - editor.getLineHeight())
+           ? null : p;
   }
 
   @Override

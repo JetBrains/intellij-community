@@ -79,8 +79,14 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    myPropertiesComponent.setValue(getProperty(), String.valueOf(state), String.valueOf(true));
-    for (Content content : myToolWindow.getContentManager().getContents()) {
+    setToolbarVisible(myToolWindow, myPropertiesComponent, state);
+  }
+
+  public static void setToolbarVisible(ToolWindow toolWindow, PropertiesComponent propertiesComponent, boolean state) {
+    String propertyName = getShowToolbarProperty(toolWindow);
+    propertiesComponent.setValue(propertyName, String.valueOf(state), String.valueOf(true));
+    
+    for (Content content : toolWindow.getContentManager().getContents()) {
       setContentToolbarVisible(content.getComponent(), state);
     }
   }

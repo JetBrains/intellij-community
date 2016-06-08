@@ -43,6 +43,23 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
+    switch (flag) {
+      case 'i': // case-insensitive matching
+      case 'd': // Unix lines mode
+      case 'm': // multiline mode
+      case 's': // dotall mode
+      case 'u': // Unicode-aware case folding
+      case 'x': // whitespace and comments in pattern
+        return true;
+      case 'U': // Enables the Unicode version of Predefined character classes and POSIX character classes
+        return hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
+      default:
+        return false;
+    }
+  }
+
+  @Override
   public boolean characterNeedsEscaping(char c) {
     return c == ']' || c == '}';
   }
@@ -105,11 +122,10 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   private static boolean hasAtLeastJdkVersion(PsiElement element, JavaSdkVersion version) {
-    final JavaSdkVersion version1 = getJavaVersion(element);
-    return version1 != null && version1.isAtLeast(version);
+    return getJavaVersion(element).isAtLeast(version);
   }
 
-  @Nullable
+  @NotNull
   private static JavaSdkVersion getJavaVersion(PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {

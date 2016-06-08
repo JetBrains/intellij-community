@@ -217,17 +217,20 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
     if (documentWindow == null) return true;
     Place places = InjectedLanguageUtil.getShreds(injectedPsi);
+    boolean addTooltips = places.size() < 100;
     for (PsiLanguageInjectionHost.Shred place : places) {
       PsiLanguageInjectionHost host = place.getHost();
       if (host == null) continue;
       TextRange textRange = place.getRangeInsideHost().shiftRight(host.getTextRange().getStartOffset());
       if (textRange.isEmpty()) continue;
-      String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
-      if (injectedAttributes != null) {
+      if (injectedAttributes != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
         builder.textAttributes(injectedAttributes);
       }
-      builder.unescapedToolTip(desc);
+      if (addTooltips) {
+        String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
+        builder.unescapedToolTip(desc);
+      }
       HighlightInfo info = builder.createUnconditionally();
       info.setFromInjection(true);
       outInfos.add(info);
@@ -245,7 +248,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     highlightInjectedSyntax(injectedPsi, holder);
     for (int i = injectedStart; i < holder.size(); i++) {
       HighlightInfo info = holder.get(i);
-      final TextRange fixedTextRange = getFixedTextRange(documentWindow, info.startOffset);
+      final int startOffset = info.startOffset;
+      final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
       if (fixedTextRange == null) {
         info.setFromInjection(true);
         outInfos.add(info);

@@ -36,7 +36,12 @@ class DebugLogManager : ApplicationComponent.Adapter() {
   }
 
   override fun initComponent() {
-    applyCategories(getSavedCategories())
+    val categories = getSavedCategories() +
+        // add categories from system properties (e.g. for tests on CI server)  
+        fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG) +
+        fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE)
+    
+    applyCategories(categories)
   }
 
   private fun fromString(text: String?, level: DebugLogLevel) =
@@ -70,4 +75,7 @@ class DebugLogManager : ApplicationComponent.Adapter() {
 
 private val LOG_DEBUG_CATEGORIES = "log.debug.categories"
 private val LOG_TRACE_CATEGORIES = "log.trace.categories"
+private val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea." + LOG_DEBUG_CATEGORIES
+private val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea." + LOG_TRACE_CATEGORIES
+
 private val LOG = Logger.getInstance(DebugLogManager::class.java)

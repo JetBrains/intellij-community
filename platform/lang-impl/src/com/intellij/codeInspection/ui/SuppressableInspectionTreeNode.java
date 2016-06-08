@@ -47,20 +47,18 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     myPresentation = presentation;
   }
 
+  @NotNull
+  public InspectionToolPresentation getPresentation() {
+    return myPresentation;
+  }
+
   public boolean canSuppress() {
     return isLeaf();
   }
 
   public final boolean isAlreadySuppressedFromView() {
     final Object usrObj = getUserObject();
-    LOG.assertTrue(usrObj != null);
-    return myView.getSuppressedNodes().contains(usrObj);
-  }
-
-  public final void markAsSuppressedFromView() {
-    final Object usrObj = getUserObject();
-    LOG.assertTrue(usrObj != null);
-    myView.getSuppressedNodes().add(usrObj);
+    return usrObj != null && myView.getSuppressedNodes(myPresentation.getToolWrapper().getShortName()).contains(usrObj);
   }
 
   @Nullable

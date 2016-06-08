@@ -614,6 +614,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     try {
+      waitUntilIndicesAreInitialized();
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;

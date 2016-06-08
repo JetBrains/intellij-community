@@ -192,8 +192,9 @@ public abstract class InspectionRVContentProvider {
         }
         for (InspectionPackageNode packageNode : packageNodes.values()) {
           if (packageNode.getPackageName() != null) {
-            moduleNode.insertByOrder(packageNode, false);
-            for (UserObjectContainer<T> container : packageDescriptors.get(packageNode)) {
+            Collection<UserObjectContainer<T>> objectContainers = packageDescriptors.get(packageNode);
+            packageNode = (InspectionPackageNode)merge(packageNode, moduleNode, true);
+            for (UserObjectContainer<T> container : objectContainers) {
               appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
             }
           }
@@ -333,8 +334,7 @@ public abstract class InspectionRVContentProvider {
           }
         }
         else if (current instanceof RefElementNode) {
-          if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0 &&
-              ((RefElementNode)current).getElement().getQualifiedName().compareTo(((RefElementNode)child).getElement().getQualifiedName()) == 0) {
+          if (InspectionResultsViewComparator.getInstance().compare(current, child) == 0) {
             processDepth(child, current);
             return current;
           }

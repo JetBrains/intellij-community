@@ -35,6 +35,10 @@ public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
     doTest();
   }
 
+  public void testOuterClassTypeArgs() throws Exception {
+    doTest();
+  }
+
   public void testCaptureContext() {
     String name = getTestName(false);
     addLibrary(name + ".jar", name + "-sources.jar");

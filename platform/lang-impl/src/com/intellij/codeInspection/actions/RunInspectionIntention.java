@@ -117,14 +117,25 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
                                      @NotNull InspectionManagerEx managerEx,
                                      @NotNull AnalysisScope scope,
-                                     PsiElement psiElement) {
+                                     @Nullable PsiElement psiElement) {
     GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
     inspectionContext.doInspections(scope);
   }
 
+  @NotNull
   public static GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
                                                           @NotNull InspectionManagerEx managerEx,
-                                                          PsiElement psiElement) {
+                                                          @Nullable PsiElement psiElement) {
+    final InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    inspectionContext.setExternalProfile(model);
+    return inspectionContext;
+  }
+
+  @NotNull
+  public static InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
+                                                    @NotNull InspectionManagerEx managerEx,
+                                                    @Nullable PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
     allWrappers.add(toolWrapper);
@@ -144,11 +155,8 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     }
     catch (InvalidDataException ignored) {
     }
-    model.setEditable(toolWrapper.getDisplayName());
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    inspectionContext.setExternalProfile(model);
-    inspectionContext.setSingleInspectionRun(true);
-    return inspectionContext;
+    model.setSingleTool(toolWrapper.getShortName());
+    return model;
   }
 
   @Override

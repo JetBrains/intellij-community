@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.actions.EOFAction;
 import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter.ResultItem;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -1075,8 +1076,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                 @Override
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
-                  myHyperlinks.addHighlighter(additionalHighlight.getStart(), additionalHighlight.getEnd(),
-                                              additionalHighlight.getTextAttributes(null));
+                  TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
+                  if (additionalAttributes != null) {
+                    ResultItem item = additionalHighlight.getResultItems().get(0);
+                    myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                        additionalAttributes);
+                  }
+                  else {
+                    myHyperlinks.highlightHyperlinks(additionalHighlight);
+                  }
                 }
 
                 @Override

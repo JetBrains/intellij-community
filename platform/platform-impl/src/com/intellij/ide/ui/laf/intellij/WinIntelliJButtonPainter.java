@@ -19,12 +19,13 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,14 +43,18 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
             //todo
         } else {
           g.setColor(UIManager.getColor("Button.intellij.native.activeBorderColor"));
-          g.setStroke(new BasicStroke(JBUI.scale(2f)));
+          int d = JBUI.scale(1);
+          int dd = JBUI.scale(2);
+          final Area s1 = new Area(new Rectangle2D.Float(d, d, width - 2 * d, height - 2 * d));
+          final Area s2 = new Area(new Rectangle2D.Float(d + dd, d + dd, width - 2*d - 2*dd, height - 2*d - 2*dd));
+          s1.subtract(s2);
+          g.fill(s1);
           g.translate(x,y);
-          g.drawRect(JBUI.scale(1), JBUI.scale(1), width-2*JBUI.scale(1), height-2*JBUI.scale(1));
 
           if (hasFocus) {
-            g.setStroke(new BasicStroke(JBUI.scale(1f)));
-            g.setColor(Gray.x00);
-            UIUtil.drawDottedRectangle(g, JBUI.scale(1) + 1, JBUI.scale(1) + 1, width-2*JBUI.scale(1) - 1, height-2*JBUI.scale(1) - 1);
+            g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1, new float[]{1}, 1));
+            g.setColor(Gray.x0F);
+            g.drawRect(2*dd, 2*dd, width - 4*dd - 1, height - 4*dd - 1);
           }
           g.translate(-x,-y);
         }

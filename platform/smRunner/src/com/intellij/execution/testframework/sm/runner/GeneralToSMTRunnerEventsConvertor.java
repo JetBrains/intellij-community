@@ -163,7 +163,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onBuildTreeEnded() {
-    processTreeBuildEvents(myBuildTreeRunnables);
+    final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
+    myBuildTreeRunnables.clear();
+    processTreeBuildEvents(runnables);
   }
 
   private void processTreeBuildEvents(final List<Runnable> runnables) {

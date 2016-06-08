@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
@@ -795,7 +796,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
           @Override
           public void visitInnerClass(String name, String outerName, String innerName, int access) {
             if (outerName != null && innerName != null) {
-              mapping.put(name, Pair.pair(outerName, innerName));
+              mapping.put(name, pair(outerName, innerName));
             }
           }
         }, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
@@ -816,7 +817,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
               className = p.first;
               if (p.second != null) {
                 className = fun(p.first) + '.' + p.second;
-                mapping.put(className, Pair.pair(className, (String)null));
+                mapping.put(className, pair(className, (String)null));
               }
             }
 

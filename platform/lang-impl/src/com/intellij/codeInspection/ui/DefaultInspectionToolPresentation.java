@@ -222,7 +222,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           final AnalysisUIOptions uiOptions = context.getUIOptions();
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                  uiOptions.GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
+                                  uiOptions.GROUP_BY_SEVERITY, view.isSingleInspectionRun()) : myToolNode;
 
           final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
           problems.put(refElement, descriptors);
@@ -358,6 +358,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public void amnesty(RefEntity refEntity) {
     getIgnoredElements().remove(refEntity);
+  }
+
+  @Override
+  public void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor) {
+    final CommonProblemDescriptor[] ignoredDescriptors = getIgnoredElements().get(refEntity);
+    getIgnoredElements().put(refEntity, ArrayUtil.remove(ignoredDescriptors, descriptor));
   }
 
   @Override
