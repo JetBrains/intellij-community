@@ -17,16 +17,12 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.Unit;
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.NotNull;
 
 public class HierarchyService {
-
-  public static boolean PROCESS_PSI = true;
-  public static boolean IGNORE_LOCAL_CLASSES = true;
+  public static final boolean IGNORE_LOCAL_CLASSES = true;
 
   private NameEnvironment myNameEnvironment;
   private SoftReference<NameEnvironment> myNamesCache = new SoftReference<NameEnvironment>(null);
@@ -34,7 +30,6 @@ public class HierarchyService {
   private SingleClassHierarchy mySingleClassHierarchy;
   private Symbols mySymbols;
   private StubEnter myStubEnter;
-  private PsiEnter myPsiEnter;
 
   public static HierarchyService instance(Project project) {
     return ServiceManager.getService(project, HierarchyService.class);
@@ -51,20 +46,13 @@ public class HierarchyService {
     }
   }
 
-  public void processPsiClassOwner(@NotNull PsiClassOwner psiClassOwner) {
-    myPsiEnter.enter(psiClassOwner);
-  }
-
   public void connect1() {
     myStubEnter.connect1();
   }
 
   public void complete2() {
     myStubEnter.connect2();
-    myPsiEnter.connect();
-
     myStubEnter = null;
-    myPsiEnter = null;
   }
 
   public void connectSubtypes() {
@@ -84,7 +72,6 @@ public class HierarchyService {
     }
     mySymbols = new Symbols(myNameEnvironment);
     myStubEnter = new StubEnter(myNameEnvironment, mySymbols);
-    myPsiEnter = new PsiEnter(myNameEnvironment, mySymbols);
     mySingleClassHierarchy = null;
   }
 
