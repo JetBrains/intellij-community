@@ -17,6 +17,7 @@ package com.intellij.psi.css;
 
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ public class MinifiedFilesUtil {
     int offsetIgnoringCommentsAndStrings = 0;
     int lineLength = 0;
     int unneededWhitespaceCount = 0;
+    String lastTokenText = null;
     IElementType lastTokenType = null;
     TokenSet whitespaceTokens = parserDefinition.getWhitespaceTokens();
     TokenSet stringLiteralElements = parserDefinition.getStringLiteralElements();
@@ -77,6 +79,7 @@ public class MinifiedFilesUtil {
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       if (commentTokens.contains(tokenType)) {
         lastTokenType = tokenType;
+        lastTokenText = lexer.getTokenText();
         continue;
       }
 
@@ -85,6 +88,7 @@ public class MinifiedFilesUtil {
       if (stringLiteralElements.contains(tokenType)) {
         lineLength += tokenLength;
         lastTokenType = tokenType;
+        lastTokenText = lexer.getTokenText();
         continue;
       }
       offsetIgnoringCommentsAndStrings += tokenLength;
@@ -100,7 +104,10 @@ public class MinifiedFilesUtil {
           }
         }
 
-        if (tokenLength > 0 && noWSRequireAfterTokenSet.contains(lastTokenType)) {
+        if (tokenLength == 1 && StringUtil.equals(lastTokenText, "\n") && StringUtil.equals(lexer.getTokenText(), "\n")) {
+          unneededWhitespaceCount++;
+        }
+        else if (tokenLength > 0 && noWSRequireAfterTokenSet.contains(lastTokenType)) {
           unneededWhitespaceCount++;
         }
 
@@ -119,6 +126,7 @@ public class MinifiedFilesUtil {
         break;
       }
       lastTokenType = tokenType;
+      lastTokenText = lexer.getTokenText();
     }
 
     return offsetIgnoringComments >= MIN_SIZE &&

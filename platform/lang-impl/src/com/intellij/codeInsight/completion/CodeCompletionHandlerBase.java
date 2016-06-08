@@ -165,7 +165,7 @@ public class CodeCompletionHandlerBase {
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            EditorUtil.fillVirtualSpaceUntilCaret(editor);
+            EditorUtil.fillVirtualSpaceUntilCaret(InjectedLanguageUtil.getTopLevelEditor(editor));
             PsiDocumentManager.getInstance(project).commitAllDocuments();
             CompletionAssertions.checkEditorValid(editor);
 

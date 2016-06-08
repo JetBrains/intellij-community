@@ -861,7 +861,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
-        && !((PsiReferenceExpression)element).isQualified()
+        && isUnqualified((PsiReferenceExpression)element)
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }
@@ -871,6 +871,14 @@ public class ControlFlowUtil {
       if (reference != null) return reference;
     }
     return null;
+  }
+
+  private static boolean isUnqualified(PsiReferenceExpression element) {
+    if (element.isQualified()) {
+      final PsiExpression qualifierExpression = element.getQualifierExpression();
+      return qualifierExpression instanceof PsiThisExpression && ((PsiThisExpression)qualifierExpression).getQualifier() == null;
+    }
+    return true;
   }
 
 

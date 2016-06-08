@@ -378,7 +378,7 @@ public class FormatterUtil {
       if (treePrev.getElementType() == TokenType.WHITE_SPACE) {
         return treePrev;
       }
-      else if (treePrev.getTextLength() == 0) {
+      else if (treePrev.getTextLength() == 0 && !treePrev.getElementType().isLeftBound()) {
         return getWsCandidate(treePrev);
       }
       else {

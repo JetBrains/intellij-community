@@ -79,6 +79,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testObjectOverloadsWithDiamondsOverMultipleConstructors() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   public void testNonCachingFolding() throws Exception {
     final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
@@ -149,11 +153,19 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
       assertNotNull("Failed inference for: " + expression.getText(), expression.getType());
     }
 
-    final Collection<PsiReferenceParameterList> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiReferenceParameterList.class);
-    for (PsiReferenceParameterList list : parameterLists) {
+    final Collection<PsiNewExpression> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class);
+    for (PsiNewExpression newExpression : parameterLists) {
       getPsiManager().dropResolveCaches();
-      final PsiType[] arguments = list.getTypeArguments();
-      assertNotNull("Failed inference for: " + list.getParent().getText(), arguments);
+      final PsiType[] arguments = newExpression.getTypeArguments();
+      String failMessage = "Failed inference for: " + newExpression.getParent().getText();
+      assertNotNull(failMessage, arguments);
+      PsiDiamondType diamondType = PsiDiamondType.getDiamondType(newExpression);
+      if (diamondType != null) {
+        JavaResolveResult staticFactory = diamondType.getStaticFactory();
+        assertNotNull(staticFactory);
+        assertTrue(staticFactory instanceof MethodCandidateInfo);
+        assertNull(failMessage, ((MethodCandidateInfo)staticFactory).getInferenceErrorMessage());
+      }
     }
   }
 

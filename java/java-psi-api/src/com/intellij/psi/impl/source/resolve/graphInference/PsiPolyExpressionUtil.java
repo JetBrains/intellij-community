@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -47,7 +46,7 @@ public class PsiPolyExpressionUtil {
     else if (expression instanceof PsiParenthesizedExpression) {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
-    else if (expression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)expression)) {
+    else if (expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
       return isInAssignmentOrInvocationContext(expression);
     }
     else if (expression instanceof PsiMethodCallExpression) {
@@ -73,7 +72,7 @@ public class PsiPolyExpressionUtil {
             return mentionsTypeParameters(returnType, typeParameters);
           }
         }
-        else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)expression)) {
+        else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
           return true;
         }
       } else {
@@ -170,9 +169,13 @@ public class PsiPolyExpressionUtil {
     }
     if (expr == null) return null;
     PsiType type = null;
-    if (expr instanceof PsiNewExpression || hasStandaloneForm(expr)) {
+    //A class instance creation expression (§15.9) for a class that is convertible to a numeric type.
+    //As numeric classes do not have type parameters, at this point expressions with diamonds could be ignored
+    if (expr instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expr) ||
+        hasStandaloneForm(expr)) {
       type = expr.getType();
-    } else if (expr instanceof PsiMethodCallExpression) {
+    }
+    else if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
         type = method.getReturnType();

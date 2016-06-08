@@ -1,0 +1,13 @@
+<products>
+    <product name="IntelliJ IDEA">
+        <code>IU</code>
+        <channel id="IDEA_Release" name="IntelliJ IDEA Release" status="release" url="" feedback="" majorVersion="2016" licensing="release">
+            <build number="145.973" version="2016.1.2b" targetSince="145.972" targetUntil="145.972">
+                <message>not-for-everyone</message>
+            </build>
+            <build number="145.973" version="2016.1.2b">
+                <message>for-everyone</message>
+            </build>
+        </channel>
+    </product>
+</products>

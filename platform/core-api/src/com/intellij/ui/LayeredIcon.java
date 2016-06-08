@@ -49,20 +49,6 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     }
   }
 
-  public static LayeredIcon createHorizontalIcon(@NotNull Icon... icons) {
-    LayeredIcon result = new LayeredIcon(icons.length);
-    int maxHeight = 0;
-    for (Icon icon : icons) {
-      maxHeight = Math.max(maxHeight, icon.getIconHeight());
-    }
-    int hShift = 0;
-    for (int i = 0; i < icons.length; i++) {
-      result.setIcon(icons[i], i, hShift, (maxHeight - icons[i].getIconHeight()) / 2);
-      hShift += icons[i].getIconWidth() + 1;
-    }
-    return result;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

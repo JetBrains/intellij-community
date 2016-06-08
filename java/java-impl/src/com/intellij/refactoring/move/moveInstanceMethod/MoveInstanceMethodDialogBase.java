@@ -24,10 +24,10 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 
@@ -107,7 +107,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   }
 
   protected boolean verifyTargetClass (PsiClass targetClass) {
-    if (targetClass.isInterface()) {
+    if (targetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
         final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil

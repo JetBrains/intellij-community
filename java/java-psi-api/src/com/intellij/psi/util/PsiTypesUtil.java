@@ -297,4 +297,16 @@ public class PsiTypesUtil {
       }
     });
   }
+
+  public static PsiType getParameterType(PsiParameter[] parameters, int i, boolean varargs) {
+    final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
+    PsiType parameterType = parameter.getType();
+    if (parameterType instanceof PsiEllipsisType && varargs) {
+      parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+    }
+    if (!parameterType.isValid()) {
+      PsiUtil.ensureValidType(parameterType, "Invalid type of parameter " + parameter + " of " + parameter.getClass());
+    }
+    return parameterType;
+  }
 }

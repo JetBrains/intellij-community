@@ -1,16 +1,16 @@
 class Test {
 
     {
-        f((Bar) getComponent("bar"));
-        f1((Bar) getComponent("bar"));
-        Bar b = (Bar) getComponent("bar");
+        f((Bar) getComponent());
+        f1((Bar) getComponent());
+        Bar b = (Bar) getComponent();
     }
 
     private <J extends Bar> void f(J j) {}
 
     private <J> void f1(J j) {}
 
-    private <T> T getComponent(String name) {
+    private <T> T getComponent() {
         return null;
     }
 

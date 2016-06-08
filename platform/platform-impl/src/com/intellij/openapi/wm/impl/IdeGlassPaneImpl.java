@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,13 +81,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
-  private JPanel myFocusProxy = new JPanel(){
-    @Override
-    public String toString() {
-      return "FocusProxy";
-    }
-  };
-
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
     setOpaque(false);
@@ -99,25 +91,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       IdeBackgroundUtil.initFramePainters(getNamedPainters("ide"));
       IdeBackgroundUtil.initEditorPainters(getNamedPainters("editor"));
     }
-
-    myFocusProxy.setOpaque(false);
-    myFocusProxy.setPreferredSize(JBUI.emptySize());
-    myFocusProxy.setFocusable(true);
-    UIUtil.setFocusProxy(myFocusProxy, true);
   }
 
   @Override
   public void addNotify() {
     super.addNotify();
-
-    if (myFocusProxy.getParent() != null) {
-      myFocusProxy.getParent().remove(myFocusProxy);
-    }
-
-    if (myFocusProxy.getParent() != getParent()) {
-      getParent().add(myFocusProxy);
-      myFocusProxy.setBounds(0, 0, 0, 0);
-    }
   }
 
   public boolean dispatch(final AWTEvent e) {
@@ -624,10 +602,5 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   @Override
   public boolean isOptimizedDrawingEnabled() {
     return !getPainters().hasPainters() && super.isOptimizedDrawingEnabled();
-  }
-
-  @Override
-  public JComponent getProxyComponent() {
-    return myFocusProxy;
   }
 }

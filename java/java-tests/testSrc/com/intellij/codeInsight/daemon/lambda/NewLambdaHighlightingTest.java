@@ -300,6 +300,26 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testFieldReferencedFromLambdaInitializations() throws Exception {
+    doTest();
+  }
+
+  public void testRawSiteSubstitutorWithExpectedGenericsParameterType() throws Exception {
+    doTest();
+  }
+
+  public void testPreserveCapturedWildcardAsLambdaParameterType() throws Exception {
+    doTest();
+  }
+
+  public void testDontWarnAboutNestedLambdaForAProblemInOuter() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedPartial() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

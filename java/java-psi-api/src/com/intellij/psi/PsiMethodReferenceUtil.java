@@ -58,25 +58,20 @@ public class PsiMethodReferenceUtil {
 
   @Nullable
   public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
-    PsiType qualifierType = null;
     final PsiTypeElement typeElement = expression.getQualifierType();
     if (typeElement != null) {
-      qualifierType = typeElement.getType();
+      return typeElement.getType();
     } else {
+      PsiType qualifierType = null;
       final PsiElement qualifier = expression.getQualifier();
       if (qualifier instanceof PsiExpression) {
         qualifierType = ((PsiExpression)qualifier).getType();
       }
-    }
-    if (qualifierType == null) {
-      final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
-      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
-      if (containingClass == null) {
-        return null;
+      if (qualifierType == null && qualifier instanceof PsiReferenceExpression) {
+        return JavaPsiFacade.getElementFactory(expression.getProject()).createType((PsiReferenceExpression)qualifier);
       }
-      qualifierType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass);
+      return qualifierType;
     }
-    return qualifierType;
   }
 
   public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,

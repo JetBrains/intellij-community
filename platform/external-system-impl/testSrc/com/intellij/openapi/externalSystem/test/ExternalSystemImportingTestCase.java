@@ -271,7 +271,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertUnorderedPathsAreEqual(Arrays.asList(library.getUrls(type)), paths);
   }
 
-  protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scopes) {
+  protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<LibraryOrderEntry> deps = getModuleLibDeps(moduleName, depName);
     assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<LibraryOrderEntry, Object>() {
       @Override

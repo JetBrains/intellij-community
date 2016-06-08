@@ -371,6 +371,15 @@ public class ExceptionUtil {
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
+      public void visitEnumConstant(PsiEnumConstant enumConstant) {
+        final PsiMethod method = enumConstant.resolveMethod();
+        if (method != null) {
+          addExceptions(array, getUnhandledExceptions(method, enumConstant, null, PsiSubstitutor.EMPTY));
+        }
+        visitElement(enumConstant);
+      }
+
+      @Override
       public void visitCallExpression(@NotNull PsiCallExpression expression) {
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);

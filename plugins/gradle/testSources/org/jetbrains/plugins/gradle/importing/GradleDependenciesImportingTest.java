@@ -550,4 +550,96 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("service", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("service", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
   }
+
+  @Test
+  @TargetVersions("2.12+")
+  public void testCompileOnlyScope() throws Exception {
+    importProject(
+      "apply plugin: 'java'\n" +
+      "dependencies {\n" +
+      "  compileOnly 'junit:junit:4.11'\n" +
+      "}"
+    );
+
+    assertModules("project", "project_main", "project_test");
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+
+    assertModuleLibDepScope("project_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
+    assertModuleLibDepScope("project_main", "Gradle: junit:junit:4.11", DependencyScope.PROVIDED);
+
+    assertModuleLibDeps("project_test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
+    assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.PROVIDED);
+  }
+
+  @Test
+  @TargetVersions("2.12+")
+  public void testNonTransitiveConfiguration() throws Exception {
+    importProject(
+      "apply plugin: 'java'\n" +
+      "configurations {\n" +
+      "  compile.transitive = false\n" +
+      "}\n" +
+      "\n" +
+      "dependencies {\n" +
+      "  compile 'junit:junit:4.11'\n" +
+      "}"
+    );
+
+    assertModules("project", "project_main", "project_test");
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+
+    assertModuleLibDepScope("project_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
+
+    assertModuleLibDepScope("project_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED, DependencyScope.RUNTIME);
+  }
+
+  @Test
+  @TargetVersions("2.0+")
+  public void testProvidedTransitiveDependencies() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "project(':projectA') {\n" +
+      "  apply plugin: 'java'\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  apply plugin: 'war'\n" +
+      "  dependencies {\n" +
+      "    providedCompile project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "projectA", "projectA_main", "projectA_test", "projectB", "projectB_main", "projectB_test", "projectC", "projectC_main", "projectC_test");
+
+    assertModuleModuleDepScope("projectB_main", "projectA_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("projectC_main", "projectA_main", DependencyScope.PROVIDED);
+    assertModuleModuleDepScope("projectC_main", "projectB_main", DependencyScope.PROVIDED);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "projectA", "projectB", "projectC");
+    assertModuleModuleDepScope("projectB", "projectA", DependencyScope.COMPILE);
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) >= 0) {
+      assertModuleModuleDepScope("projectC", "projectA", DependencyScope.PROVIDED);
+    }
+    assertModuleModuleDepScope("projectC", "projectB", DependencyScope.PROVIDED);
+  }
 }

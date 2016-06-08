@@ -54,7 +54,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiElement element = reference.getReferenceNameElement();
       final boolean isConstructor = reference.isConstructor();
       if (element instanceof PsiIdentifier || isConstructor) {
-        if (isConstructor && (containingClass.isEnum() || containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+        if (isConstructor && (containingClass.isEnum() ||
+                              containingClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                              containingClass instanceof PsiTypeParameter)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
         final PsiType functionalInterfaceType = getInterfaceType(reference);

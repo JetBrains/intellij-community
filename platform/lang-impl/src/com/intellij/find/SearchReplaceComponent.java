@@ -194,6 +194,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
+
+    setFocusCycleRoot(true);
+
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   public void resetUndoRedoActions() {

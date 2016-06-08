@@ -186,8 +186,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
                                                          ContainerUtil.newHashSet(method.getTypeParameters()))) {
-          session.registerSiteSubstitutor(psiSubstitutor);
-          session.initBounds(myExpression, method.getTypeParameters());
+          session.initBounds(myExpression, psiSubstitutor, method.getTypeParameters());
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
           session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);

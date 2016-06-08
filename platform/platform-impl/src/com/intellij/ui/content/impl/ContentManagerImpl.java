@@ -29,13 +29,11 @@ import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +62,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> mySelection = new ArrayList<Content>();
   private final boolean myCanCloseContents;
 
-  private Wrapper.FocusHolder myFocusProxy;
   private MyNonOpaquePanel myComponent;
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
@@ -100,16 +97,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
 
-      myFocusProxy = new Wrapper.FocusHolder();
-      myFocusProxy.setOpaque(false);
-      myFocusProxy.setPreferredSize(JBUI.emptySize());
-
       MyContentComponent contentComponent = new MyContentComponent();
       contentComponent.setContent(myUI.getComponent());
       // If screen reader is active, allow TAB/Shift-TAB navigate outside the contents panel.
       contentComponent.setFocusCycleRoot(!ScreenReader.isActive());
 
-      myComponent.add(myFocusProxy, BorderLayout.NORTH);
       myComponent.add(contentComponent, BorderLayout.CENTER);
     }
     return myComponent;
@@ -532,7 +524,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
     if (focused || requestFocus) {
       if (enabledFocus) {
-        return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(new Runnable() {
+        return getFocusManager().requestFocus(myComponent, true).doWhenProcessed(new Runnable() {
           @Override
           public void run() {
             selection.run().notify(result);

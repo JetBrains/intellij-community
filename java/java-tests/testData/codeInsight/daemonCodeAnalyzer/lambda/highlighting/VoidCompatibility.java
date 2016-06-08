@@ -12,7 +12,7 @@ public class Main {
       
         I<Integer> i1 = i -> <error descr="Bad return type in lambda expression: int cannot be converted to void">i * 2</error>;
         I<Integer> i2 = i -> <error descr="Bad return type in lambda expression: int cannot be converted to void">2 * i</error>;
-        I<Integer> i3 = i -> <error descr="Bad return type in lambda expression: void cannot be converted to void">true ? foo() : foo()</error>;
+        I<Integer> i3 = i -> <error descr="Lambda body must be a statement expression">true ? foo() : foo()</error>;
     }
 
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +59,7 @@ public class AppUIUtil {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix) {//MacOS is Unix too
       String bigIconUrl = appInfo.getBigIconUrl();
       if (bigIconUrl != null) {
         images.add(com.intellij.util.ImageLoader.loadFromResource(bigIconUrl));
@@ -67,7 +68,12 @@ public class AppUIUtil {
 
     images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getIconUrl()));
     images.add(com.intellij.util.ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
-
+    for (int i = 0; i < images.size(); i++) {
+      Image image = images.get(i);
+      if (image instanceof JBHiDPIScaledImage) {
+        images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+      }
+    }
     return images;
   }
 

@@ -16,13 +16,9 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 public class Wrapper extends JPanel implements NullableComponent {
 
@@ -136,76 +132,6 @@ public class Wrapper extends JPanel implements NullableComponent {
       size.height = Math.max(size.height, myVerticalSizeReferent.getPreferredSize().height);
     }
     return size;
-  }
-
-  public static class FocusHolder extends Wrapper implements FocusListener {
-
-    private Runnable myFocusGainedCallback;
-
-    public FocusHolder() {
-      init();
-    }
-
-    public FocusHolder(final JComponent wrapped) {
-      super(wrapped);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout, final JComponent wrapped) {
-      super(layout, wrapped);
-      init();
-    }
-
-    public FocusHolder(final boolean isDoubleBuffered) {
-      super(isDoubleBuffered);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout) {
-      super(layout);
-      init();
-    }
-
-    public FocusHolder(final LayoutManager layout, final boolean isDoubleBuffered) {
-      super(layout, isDoubleBuffered);
-      init();
-    }
-
-    private void init() {
-      UIUtil.setFocusProxy(this, true);
-      // Note: Temporary workaround for screen readers until new version of IntelliJ,
-      // where this FocusHolder class has been deleted, is merged back.
-      // See https://github.com/JetBrains/intellij-community/commit/94d00ea76d1f3ea36db6cd035655e12c635fb636
-      setFocusable(!ScreenReader.isActive());
-      addFocusListener(this);
-    }
-
-    public void requestFocus(Runnable callback) {
-      myFocusGainedCallback = callback;
-      if (isFocusOwner()) {
-        processCallback();    
-      } else {
-        requestFocusInternal();
-      }
-    }
-
-    @Override
-    public void focusGained(final FocusEvent e) {
-      processCallback();
-    }
-
-    private void processCallback() {
-      if (myFocusGainedCallback != null) {
-        Runnable callback = myFocusGainedCallback;
-        myFocusGainedCallback = null;
-        callback.run();
-      }
-    }
-
-    @Override
-    public void focusLost(final FocusEvent e) {
-    }
-
   }
 
   public static class North extends Wrapper {
