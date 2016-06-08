@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,12 +332,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         }
       }
       // todo: regular expressions, format
-      if (schema.getPattern() != null) {
+      /*if (schema.getPattern() != null) {
         LOG.info("Unsupported property used: 'pattern'");
       }
       if (schema.getFormat() != null) {
         LOG.info("Unsupported property used: 'format'");
-      }
+      }*/
     }
 
     private void checkNumber(JsonValue propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
