@@ -15,14 +15,19 @@
  */
 package com.jetbrains.env.python;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+
+import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.junit.Assert.assertEquals;
@@ -33,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
+  @Staging
   public void testDataFrameChunkRetrieval() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_dataframe.py") {
       @Override
@@ -54,7 +60,8 @@ public class PythonDataViewerTest extends PyEnvTestCase {
         ArrayChunk df2 = getDefaultChunk("df2");
         assertEquals(6, df2.getColumns());
         assertEquals(3, df2.getRows());
-        assertSameElements(df2.getColHeaders().stream().map((header-> header.getLabel())).toArray(), new String[]{"LABELS", "One_X", "One_Y", "Two_X", "Two_Y", "row"});
+        assertSameElements(df2.getColHeaders().stream().map((header -> header.getLabel())).toArray(),
+                           new String[]{"LABELS", "One_X", "One_Y", "Two_X", "Two_Y", "row"});
         resume();
 
         waitForPause();
@@ -66,9 +73,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
         assertEquals(16, (int)Integer.valueOf(header.getMax()));
         assertEquals(1, (int)Integer.valueOf(header.getMin()));
         resume();
-
-
-
       }
 
       private ArrayChunk getDefaultChunk(String varName) throws PyDebuggerException {
@@ -76,8 +80,13 @@ public class PythonDataViewerTest extends PyEnvTestCase {
         return dbgVal.getFrameAccessor()
           .getArrayItems(dbgVal, 0, 0, -1, -1, ".%5f");
       }
+
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("pandas");
+      }
     });
   }
-
-
 }
