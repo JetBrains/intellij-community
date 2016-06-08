@@ -148,7 +148,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       return null;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
       throw new ExecutionException(getErrorMessage());
