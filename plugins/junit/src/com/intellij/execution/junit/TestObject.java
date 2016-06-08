@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
@@ -99,6 +100,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
       return new TestsPattern(configuration, environment);
+    }
+    if (JUnitConfiguration.BY_SOURCE_POSITION.equals(id)) {
+      return new TestBySource(configuration, environment);
     }
     LOG.error(MESSAGE + id);
     return null;

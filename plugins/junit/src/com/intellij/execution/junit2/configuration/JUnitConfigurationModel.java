@@ -43,6 +43,7 @@ public class JUnitConfigurationModel {
   public static final int PATTERN = 3;
   public static final int DIR = 4;
   public static final int CATEGORY = 5;
+  public static final int BY_SOURCE_POSITION = 6;
 
   private static final List<String> ourTestObjects;
 
@@ -52,7 +53,8 @@ public class JUnitConfigurationModel {
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
-                                   JUnitConfiguration.TEST_CATEGORY);
+                                   JUnitConfiguration.TEST_CATEGORY,
+                                   JUnitConfiguration.BY_SOURCE_POSITION);
   }
 
 

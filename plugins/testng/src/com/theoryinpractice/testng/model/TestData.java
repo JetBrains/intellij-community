@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -57,6 +58,7 @@ public class TestData implements Cloneable
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
   private LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
+  private String myChangeList;
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
@@ -219,5 +221,13 @@ public class TestData implements Cloneable
 
   public void setPatterns(LinkedHashSet<String> set) {
     myPatterns = set;
+  }
+
+  public String getChangeList() {
+    return myChangeList;
+  }
+
+  public void setChangeList(String changeList) {
+    myChangeList = changeList;
   }
 }

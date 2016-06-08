@@ -61,7 +61,6 @@
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
-    <configurationType implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationType"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
   </extensions>
 

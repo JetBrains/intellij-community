@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -71,8 +72,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     new TIntArrayList(new int[]{1, 2}),
     new TIntArrayList(new int[]{3}),
     new TIntArrayList(new int[]{4}),
-    new TIntArrayList(new int[]{5})
-  );
+    new TIntArrayList(new int[]{5}),
+    new TIntArrayList(new int[]{1, 2}));
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
   private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
@@ -158,6 +159,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     aModel.addElement(JUnitConfigurationModel.CLASS);
     aModel.addElement(JUnitConfigurationModel.METHOD);
     aModel.addElement(JUnitConfigurationModel.CATEGORY);
+    if (Registry.is("testDiscovery.enabled")) {
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
+    }
     myTypeChooser.setModel(aModel);
     myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
       @Override
@@ -180,6 +184,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             break;
           case JUnitConfigurationModel.CATEGORY:
             setText("Category");
+            break;
+          case JUnitConfigurationModel.BY_SOURCE_POSITION:
+            setText("Source location");
             break;
         }
       }
@@ -359,7 +366,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myForkCb.setModel(getForkModelBasedOnRepeat());
       myForkCb.setSelectedItem(selectedItem != JUnitConfiguration.FORK_KLASS ? selectedItem : JUnitConfiguration.FORK_METHOD);
     }
-    else if (selectedType == JUnitConfigurationModel.METHOD){
+    else if (selectedType == JUnitConfigurationModel.METHOD || selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION){
       myPackagePanel.setVisible(false);
       myScopesPanel.setVisible(false);
       myPattern.setVisible(false);

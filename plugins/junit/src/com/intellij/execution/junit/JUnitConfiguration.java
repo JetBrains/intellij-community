@@ -58,6 +58,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
+  @NonNls public static final String BY_SOURCE_POSITION = "source location";
 
   //fork modes
   @NonNls public static final String FORK_NONE = "none";
@@ -286,6 +287,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
+  }
+
+  public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
+    myData.setTestMethod(sourceLocation);
+    myData.TEST_OBJECT = BY_SOURCE_POSITION;
   }
 
   public void setMainClass(final PsiClass testClass) {

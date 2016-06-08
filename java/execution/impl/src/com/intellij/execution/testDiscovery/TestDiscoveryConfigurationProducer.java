@@ -16,9 +16,7 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -45,13 +43,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<TestDiscoveryConfiguration> {
+public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
     super(type);
   }
 
+
+  protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
+  protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
+
   @Override
-  protected boolean setupConfigurationFromContext(final TestDiscoveryConfiguration configuration,
+  protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
     if (!Registry.is("testDiscovery.enabled")) {
@@ -61,8 +63,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     assert contextLocation != null;
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
-    final Pair<String, String> position = getPosition(location);
-    if (position != null) {
+    final PsiMethod sourceMethod = getSourceMethod(location);
+    final Pair<String, String> position = getPosition(sourceMethod);
+    if (sourceMethod != null && position != null) {
       try {
         final Project project = configuration.getProject();
         final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
@@ -71,7 +74,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
             ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
           return false;
         }
-        configuration.setPosition(position);
+        setPosition(configuration, new PsiLocation<PsiMethod>(sourceMethod));
         configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
 
         final RunnerAndConfigurationSettings template =
@@ -111,11 +114,11 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  protected Module findModule(TestDiscoveryConfiguration configuration, Module contextModule) {
+  protected Module findModule(JavaTestConfigurationBase configuration, Module contextModule) {
     return null;
   }
 
-  private static Pair<String, String> getPosition(Location location) {
+  private static PsiMethod getSourceMethod(Location location) {
     final PsiElement psiElement = location.getPsiElement();
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (psiMethod != null) {
@@ -125,18 +128,27 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         if (testFramework != null) {
           return null;
         }
-        final String qualifiedName = containingClass.getQualifiedName();
-        if (qualifiedName != null) {
-          return Pair.create(qualifiedName, psiMethod.getName());
-        }
+        return psiMethod;
       }
     }
     return null;
   }
 
+  private static Pair<String, String> getPosition(PsiMethod method) {
+    if (method == null) {
+      return null;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    final String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName != null) {
+      return Pair.create(qualifiedName, method.getName());
+    }
+    return null;
+  }
+
   @Override
-  public boolean isConfigurationFromContext(TestDiscoveryConfiguration configuration, ConfigurationContext configurationContext) {
-    final Pair<String, String> position = getPosition(configurationContext.getLocation());
-    return position != null && position.equals(configuration.getPosition());
+  public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
+    final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
+    return position != null && position.equals(getPosition(configuration));
   }
 }
