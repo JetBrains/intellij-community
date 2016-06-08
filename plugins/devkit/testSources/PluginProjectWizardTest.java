@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -53,7 +52,7 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
       fail("Exception should be thrown");
     }
     catch (Exception e) {
-      assertEquals(IdeBundle.message("prompt.confirm.project.no.jdk"), e.getMessage());
+      assertEquals(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", "JDK_1_8, description: 1.8"), e.getMessage());
     }
   }
 }
