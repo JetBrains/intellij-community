@@ -817,7 +817,12 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
       session.setCurrentProject(project);
-      session.setAllProjects(Arrays.asList(project));
+      try {
+        // the method can be removed
+        session.setAllProjects(Arrays.asList(project));
+      }
+      catch (NoSuchMethodError ignore) {
+      }
       session.setProjects(Arrays.asList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
