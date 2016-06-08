@@ -43,7 +43,6 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
  * @author max
  */
 public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
-  private final static Logger LOG = Logger.getInstance(ProblemDescriptionNode.class);
   protected final InspectionToolWrapper myToolWrapper;
   private final CommonProblemDescriptor myDescriptor;
   private final HighlightDisplayLevel myLevel;
