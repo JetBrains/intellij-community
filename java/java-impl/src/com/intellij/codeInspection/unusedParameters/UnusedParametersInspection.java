@@ -280,7 +280,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
         final long startModificationCount = tracker.getModificationCount();
 
-        removeUnusedParameterViaChangeSignature(psiMethod, Collections.singletonList(psiParameter));
+        removeUnusedParameterViaChangeSignature(psiMethod, psiParameter);
         if (refMethod != null && startModificationCount != tracker.getModificationCount()) {
           myProcessor.ignoreElement(refMethod);
         }
@@ -293,12 +293,12 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
 
     private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
-                                                                final Collection<PsiElement> parametersToDelete) {
+                                                                final PsiParameter parameterToDelete) {
       ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
       PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
       for (int i = 0; i < oldParameters.length; i++) {
         PsiParameter oldParameter = oldParameters[i];
-        if (!parametersToDelete.contains(oldParameter)) {
+        if (!oldParameter.equals(parameterToDelete)) {
           newParameters.add(new ParameterInfoImpl(i, oldParameter.getName(), oldParameter.getType()));
         }
       }
