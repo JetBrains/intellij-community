@@ -26,7 +26,6 @@ import org.junit.runners.model.Statement
 class SetupRule implements TestRule {
 
   final LightGroovyTestCase testCase = new LightGroovyTestCase() {
-    String basePath = ""
     LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST_REAL_JDK
   }
 

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 
 class ResolveMethod23Test extends GroovyResolveTestCase {
 
-  final String basePath = null
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_2_3
 
   void 'test resolve upper bound type method'() {
