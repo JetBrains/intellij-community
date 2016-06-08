@@ -82,7 +82,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     }
-    else {
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
