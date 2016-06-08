@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -153,23 +154,18 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     if (setupPy == null) return "";
     final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
     if (setupCall == null) return "";
-    for (PyExpression arg : setupCall.getArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-        if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
-          final PyExpression value = kwarg.getValueExpression();
-          if (value instanceof PyStringLiteralExpression) {
-            final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
-            if (stringValue.contains(PyNames.NOSE_TEST)) {
-              return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-            }
-            if (stringValue.contains(PyNames.PY_TEST)) {
-              return PythonTestConfigurationsModel.PY_TEST_NAME;
-            }
-            if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
-              return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-            }
-          }
+    for (String argumentName : Arrays.asList("test_loader", "test_suite")) {
+      final PyExpression argumentValue = PyPackageUtil.findSetupCallArgumentValue(setupCall, argumentName);
+      if (argumentValue instanceof PyStringLiteralExpression) {
+        final String stringValue = ((PyStringLiteralExpression)argumentValue).getStringValue();
+        if (stringValue.contains(PyNames.NOSE_TEST)) {
+          return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+        }
+        if (stringValue.contains(PyNames.PY_TEST)) {
+          return PythonTestConfigurationsModel.PY_TEST_NAME;
+        }
+        if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
+          return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
         }
       }
     }

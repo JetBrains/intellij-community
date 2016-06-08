@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -124,27 +125,18 @@ public class PyPackageUtil {
   private static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
     final PyFile setupPy = findSetupPy(module);
     if (setupPy != null) {
-      final PyCallExpression setup = findSetupCall(setupPy);
-      if (setup != null) {
-        for (PyExpression arg : setup.getArguments()) {
-          if (arg instanceof PyKeywordArgument) {
-            final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-            if (kwargName.equals(kwarg.getKeyword())) {
-              final PyExpression value = kwarg.getValueExpression();
-              if (value instanceof PyListLiteralExpression) {
-                return (PyListLiteralExpression)value;
-              }
-              if (value instanceof PyReferenceExpression) {
-                final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
-                final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-                final QualifiedResolveResult result = ((PyReferenceExpression)value).followAssignmentsChain(resolveContext);
-                final PsiElement element = result.getElement();
-                if (element instanceof PyListLiteralExpression) {
-                  return (PyListLiteralExpression)element;
-                }
-              }
-            }
-          }
+      final PyCallExpression setupCall = findSetupCall(setupPy);
+      final PyExpression argumentValue = findSetupCallArgumentValue(setupCall, kwargName);
+      if (argumentValue instanceof PyListLiteralExpression) {
+        return (PyListLiteralExpression)argumentValue;
+      }
+      if (argumentValue instanceof PyReferenceExpression) {
+        final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final QualifiedResolveResult result = ((PyReferenceExpression)argumentValue).followAssignmentsChain(resolveContext);
+        final PsiElement element = result.getElement();
+        if (element instanceof PyListLiteralExpression) {
+          return (PyListLiteralExpression)element;
         }
       }
     }
@@ -192,6 +184,17 @@ public class PyPackageUtil {
       }
     });
     return result.get();
+  }
+
+  @Nullable
+  public static PyExpression findSetupCallArgumentValue(@Nullable PyCallExpression setupCall, @NotNull String argumentName) {
+    return Optional
+      .ofNullable(setupCall)
+      .map(call -> call.getKeywordArgument(argumentName))
+      .filter(PyKeywordArgument.class::isInstance)
+      .map(PyKeywordArgument.class::cast)
+      .map(PyKeywordArgument::getValueExpression)
+      .orElse(null);
   }
 
   private static void collectPackageNames(@NotNull final Project project,
