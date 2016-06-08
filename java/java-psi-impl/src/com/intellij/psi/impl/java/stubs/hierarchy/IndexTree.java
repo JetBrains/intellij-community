@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.BitUtil;
@@ -23,6 +24,8 @@ import com.intellij.util.BitUtil;
 import java.util.Arrays;
 
 public class IndexTree {
+  public static final boolean STUB_HIERARCHY_ENABLED = Registry.is("java.hierarchy.service");
+
   public final static int PACKAGE = 1 << 0;
   public final static int CLASS = 1 << 1;
   public static final int STATIC       = 1 << 3;

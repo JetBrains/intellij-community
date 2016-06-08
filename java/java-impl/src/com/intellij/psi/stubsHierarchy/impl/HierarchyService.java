@@ -17,7 +17,6 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.Unit;
@@ -28,7 +27,6 @@ public class HierarchyService {
 
   public static boolean PROCESS_PSI = true;
   public static boolean IGNORE_LOCAL_CLASSES = true;
-  public static final String HIERARCHY_SERVICE = "java.hierarchy.service";
 
   private NameEnvironment myNameEnvironment;
   private SoftReference<NameEnvironment> myNamesCache = new SoftReference<NameEnvironment>(null);
@@ -40,10 +38,6 @@ public class HierarchyService {
 
   public static HierarchyService instance(Project project) {
     return ServiceManager.getService(project, HierarchyService.class);
-  }
-
-  public static boolean isEnabled() {
-    return Registry.is(HIERARCHY_SERVICE);
   }
 
   public HierarchyService() {

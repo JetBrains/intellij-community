@@ -55,7 +55,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public int getStubVersion() {
-    return STUB_VERSION;
+    return STUB_VERSION + (IndexTree.STUB_HIERARCHY_ENABLED ? 1 : 0);
   }
 
   @Override
@@ -111,11 +111,12 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
-    Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-    if (fileId == null) return;
-    IndexTree.Unit unit = JavaStubIndexer.translate(fileId, stub);
-    if (unit != null) {
-      sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    if (IndexTree.STUB_HIERARCHY_ENABLED) {
+      Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+      IndexTree.Unit unit = fileId == null ? null : JavaStubIndexer.translate(fileId, stub);
+      if (unit != null) {
+        sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+      }
     }
   }
 }
