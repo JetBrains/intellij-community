@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,9 +53,12 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    * @param sdkPath         path to SDK to be uysed
    * @param project         project
    * @param processListener listener passed from task. Runner <strong>must</strong> attach it to process (otherwise task will not have
-   *                        a chance to be notified about process termination and will run forever)
+   * @param tempWorkingPath path to {@link CodeInsightTestFixture#getTempDirFixture()}. Will be used as working dir.
    */
-  abstract void runProcess(@NotNull String sdkPath, @NotNull Project project, @NotNull ProcessListener processListener)
+  abstract void runProcess(@NotNull String sdkPath,
+                           @NotNull Project project,
+                           @NotNull ProcessListener processListener,
+                           @NotNull String tempWorkingPath)
     throws ExecutionException;
 
   /**

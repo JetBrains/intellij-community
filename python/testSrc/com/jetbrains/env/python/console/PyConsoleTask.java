@@ -62,7 +62,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
-    setWorkingFolder(getTestDataPath());
+    super(null);
   }
 
   public PythonConsoleView getConsoleView() {
@@ -151,7 +151,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
+      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
                              new String[]{}) {
         @Override
         protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
