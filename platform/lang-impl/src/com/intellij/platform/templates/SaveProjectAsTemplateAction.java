@@ -265,7 +265,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                           boolean shouldEncode) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
     if(!shouldEncode){
-      return text;
+      return ProjectTemplateFileProcessor.encodeFile(text, virtualFile, project);
     }
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
