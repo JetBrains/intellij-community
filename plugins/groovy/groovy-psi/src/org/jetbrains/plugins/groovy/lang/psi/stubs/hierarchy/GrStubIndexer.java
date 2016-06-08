@@ -34,9 +34,6 @@ public class GrStubIndexer {
 
   @NotNull
   public static Unit translate(int fileId, GrFileStub grFileStub) {
-    if (grFileStub.isScript()) {
-      return new Unit(fileId, null, IndexTree.GROOVY, Import.EMPTY_ARRAY, ClassDecl.EMPTY_ARRAY);
-    }
     String pid = null;
     ArrayList<ClassDecl> classList = new ArrayList<ClassDecl>();
     Set<String> usedNames = new HashSet<String>();
