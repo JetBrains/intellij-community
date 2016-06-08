@@ -28,7 +28,6 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.CARET_MARKER
 
 public class GrChangeToOperatorTest extends LightGroovyTestCase {
 
-  final String basePath = null
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   def inspection = new ChangeToOperatorInspection()
