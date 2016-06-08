@@ -38,7 +38,6 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,14 +77,14 @@ class CommitPanel extends JBPanel {
     myColorManager = colorManager;
     myDataPack = dataPack;
 
-    setLayout(new MigLayout("flowy, ins 0, hidemode 3, gapy 0, fill", null, "0[]0[]push"));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
 
-    add(myReferencesPanel, "growx, wmax 100%, growy 0");
-    add(myDataPanel, "growx, wmax 100%, growy");
+    add(myReferencesPanel);
+    add(myDataPanel);
   }
 
   public void setDataPack(@NotNull VisiblePack visiblePack) {
