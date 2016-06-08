@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
@@ -114,7 +114,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
 
-  public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
+  public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, String prefix) throws IOException {
     synchronized (ourLock) {
       Holder holder = null;
       try {
@@ -128,7 +128,10 @@ public class TestDiscoveryIndex implements ProjectComponent {
         if (list == null) return Collections.emptyList();
         final ArrayList<String> result = new ArrayList<String>(list.size());
         for (int moduleNameId : list.toNativeArray()) {
-          result.add(holder.myModuleNameEnumerator.valueOf(moduleNameId));
+          final String moduleNameWithPrefix = holder.myModuleNameEnumerator.valueOf(moduleNameId);
+          if (moduleNameWithPrefix != null && moduleNameWithPrefix.startsWith(prefix)) {
+            result.add(moduleNameWithPrefix.substring(prefix.length()));
+          }
         }
         return result;
       } catch (Throwable throwable) {
@@ -183,7 +186,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
   public void projectClosed() {
   }
 
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   private final class Holder {
     final PersistentHashMap<Long, TIntArrayList> myMethodQNameToTestNames;
@@ -462,13 +465,14 @@ public class TestDiscoveryIndex implements ProjectComponent {
     }
   }
 
-  public void updateFromTestTrace(@NotNull File file, @Nullable Module module) throws IOException {
+  public void updateFromTestTrace(@NotNull File file, JavaTestConfigurationBase configurationBase) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    doUpdateFromTestTrace(file, testName, module);
+    final Module module = configurationBase.getConfigurationModule().getModule();
+    doUpdateFromTestTrace(file, testName, module != null ? configurationBase.getFrameworkPrefix() + module.getName() : null);
   }
 
-  private void doUpdateFromTestTrace(File file, final String testName, @Nullable Module module) throws IOException {
+  private void doUpdateFromTestTrace(File file, final String testName, @Nullable final String moduleName) throws IOException {
     synchronized (ourLock) {
       Holder holder = getHolder();
       if (holder.myDisposed) return;
@@ -477,7 +481,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
         TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, holder);
         TIntObjectHashMap<TIntArrayList> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
 
-        doUpdateFromDiff(holder, testNameId, classData, previousClassData, module != null ? holder.myModuleNameEnumerator.enumerate(module.getName()) : null);
+        doUpdateFromDiff(holder, testNameId, classData, previousClassData, moduleName != null ? holder.myModuleNameEnumerator.enumerate(moduleName) : null);
       } catch (Throwable throwable) {
         thingsWentWrongLetsReinitialize(holder, throwable);
       }

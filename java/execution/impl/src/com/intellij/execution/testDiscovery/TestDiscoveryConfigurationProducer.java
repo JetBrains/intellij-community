@@ -82,7 +82,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         }
 
         //potentially this set won't be big, it reflects modules from where user starts his tests
-        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first, position.second);
+        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
+                                                                                         position.second,
+                                                                                         configuration.getFrameworkPrefix());
         if (modules.isEmpty()) return true;
 
         final ModuleManager moduleManager = ModuleManager.getInstance(project);

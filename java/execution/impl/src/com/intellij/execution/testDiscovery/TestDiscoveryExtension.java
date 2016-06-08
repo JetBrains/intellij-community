@@ -159,7 +159,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {
-            coverageIndex.updateFromTestTrace(testMethodTrace, ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModule());
+            coverageIndex.updateFromTestTrace(testMethodTrace, (JavaTestConfigurationBase)configuration);
             FileUtil.delete(testMethodTrace);
           }
           catch (IOException e) {
@@ -186,8 +186,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
           if (testMethodTrace.exists()) {
             try {
-              coverageIndex.updateFromTestTrace(testMethodTrace,
-                                                ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModule());
+              coverageIndex.updateFromTestTrace(testMethodTrace, (JavaTestConfigurationBase)configuration);
               FileUtil.delete(testMethodTrace);
             }
             catch (IOException e) {
