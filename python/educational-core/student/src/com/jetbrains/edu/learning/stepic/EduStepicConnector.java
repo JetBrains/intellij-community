@@ -368,7 +368,7 @@ public class EduStepicConnector {
       }
     }
 
-    final HttpPost attemptRequest = new HttpPost(stepicApiUrl + "ATTEMPTS_URL");
+    final HttpPost attemptRequest = new HttpPost(stepicApiUrl + "attempts");
     setHeaders(attemptRequest, "application/json");
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepicId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
@@ -396,7 +396,7 @@ public class EduStepicConnector {
   }
 
   private static void postSubmission(boolean passed, StepicWrappers.AttemptWrapper.Attempt attempt, ArrayList<StepicWrappers.SolutionFile> files) throws IOException {
-    final HttpPost request = new HttpPost(stepicApiUrl + "SUBMISSION_URL");
+    final HttpPost request = new HttpPost(stepicApiUrl + "submissions");
     setHeaders(request, "application/json");
 
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
