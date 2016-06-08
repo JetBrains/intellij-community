@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.Consumer;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.*;
 
@@ -43,17 +42,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 
 /**
  * Options UI form bean.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class OptionsUIForm {
+final class ImagesOptionsComponent {
   private JPanel contentPane;
   private JCheckBox showGrid;
-  private JLabel gridLineZoomFactorlLabel;
+  private JLabel gridLineZoomFactorLabel;
   private JSpinner gridLineZoomFactor;
   private JLabel gridLineSpanLabel;
   private JSpinner gridLineSpan;
@@ -78,12 +76,12 @@ final class OptionsUIForm {
   // Options
   private final Options options = new OptionsImpl();
 
-  OptionsUIForm() {
+  ImagesOptionsComponent() {
 
     wheelZooming.setText(ImagesBundle.message("enable.mousewheel.zooming", SystemInfo.isMac ? "Cmd" : "Ctrl"));
       
     // Setup labels
-    gridLineZoomFactorlLabel.setLabelFor(gridLineZoomFactor);
+    gridLineZoomFactorLabel.setLabelFor(gridLineZoomFactor);
     gridLineSpanLabel.setLabelFor(gridLineSpan);
     chessboardSizeLabel.setLabelFor(chessboardSize);
     smartZoomingWidthLabel.setLabelFor(smartZoomingWidth);
