@@ -22,7 +22,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -30,8 +29,8 @@ import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
@@ -50,7 +49,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.List;
@@ -171,17 +169,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myPreviewPanel.add(myIdePreview, "ide");
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, "editor");
     myPathField.getComboBox().setEditable(true);
-    myPathField.getButton().setAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-          .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
-        VirtualFile file = FileChooser.chooseFile(descriptor, myRoot, null, null);
-        if (file != null) {
-          setSelectedPath(file.getPath());
-        }
-      }
-    });
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
+    myPathField.addBrowseFolderListener(null, null, null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     JTextComponent textComponent = getComboEditor();
     textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
