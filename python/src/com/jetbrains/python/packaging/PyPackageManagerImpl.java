@@ -41,9 +41,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyListLiteralExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -403,28 +400,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Nullable
   public List<PyRequirement> getRequirements(@NotNull Module module) {
-    List<PyRequirement> requirements = PyPackageUtil.getRequirementsFromTxt(module);
-    if (requirements != null) {
-      return requirements;
-    }
-    final List<String> lines = new ArrayList<String>();
-    for (String name : PyPackageUtil.SETUP_PY_REQUIRES_KWARGS_NAMES) {
-      final PyListLiteralExpression installRequires = PyPackageUtil.findSetupPyRequires(module, name);
-      if (installRequires != null) {
-        for (PyExpression e : installRequires.getElements()) {
-          if (e instanceof PyStringLiteralExpression) {
-            lines.add(((PyStringLiteralExpression)e).getStringValue());
-          }
-        }
-      }
-    }
-    if (!lines.isEmpty()) {
-      return PyRequirement.fromText(StringUtil.join(lines, "\n"));
-    }
-    if (PyPackageUtil.findSetupPy(module) != null) {
-      return Collections.emptyList();
-    }
-    return null;
+    return Optional
+      .ofNullable(PyPackageUtil.getRequirementsFromTxt(module))
+      .orElseGet(() -> PyPackageUtil.findSetupPyAllRequires(module));
   }
 
   protected void clearCaches() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
@@ -503,7 +502,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public String getName() {
       final String target;
       final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
-      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyRequires(myModule);
+      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyInstallRequires(myModule);
       if (requirementsTxt != null) {
         target = requirementsTxt.getName();
       }
@@ -525,7 +524,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
-      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyRequires(myModule);
+      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyInstallRequires(myModule);
       CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
