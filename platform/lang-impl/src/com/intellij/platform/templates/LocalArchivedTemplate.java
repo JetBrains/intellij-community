@@ -48,7 +48,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
-  private boolean myEncoded = true;
+  private boolean myEscaped = true;
   private Icon myIcon;
 
   public LocalArchivedTemplate(@NotNull URL archivePath,
@@ -78,7 +78,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
         Element templateElement = JDOMUtil.loadDocument(meta).getRootElement();
         String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
         if (unencoded != null) {
-          myEncoded = !Boolean.valueOf(unencoded);
+          myEscaped = !Boolean.valueOf(unencoded);
         }
       }
       catch (Exception e) {
@@ -102,8 +102,8 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return myIcon == null ? super.getIcon() : myIcon;
   }
 
-  public boolean isEncoded(){
-    return myEncoded;
+  public boolean isEscaped(){
+    return myEscaped;
   }
 
   @Nullable
