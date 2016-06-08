@@ -65,7 +65,7 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, HierarchyConnector connector) {
+  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, StubHierarchyConnector connector) {
     QualifiedName qualifiedName = myNameEnvironment.qualifiedName(owner, shortName);
     SmartClassAnchor smartClassAnchor = new SmartClassAnchor(id++, classAnchor);
     ClassSymbol c = new ClassSymbol(smartClassAnchor, flags, owner, qualifiedName, shortName, info, supers, connector);

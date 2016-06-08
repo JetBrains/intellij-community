@@ -22,7 +22,6 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntStack;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * Compact representation of total hierarchy of JVM classes.
@@ -144,7 +143,7 @@ public class SingleClassHierarchy {
 
     for (int subTypeId = 0; subTypeId < n; subTypeId++) {
       ClassSymbol subType = classSymbols[subTypeId];
-      for (ClassSymbol superType : subType.getSuperClasses()) {
+      for (ClassSymbol superType : subType.rawSuperClasses()) {
         int superTypeId = superType.myClassAnchor.myId;
         subtypes[starts[superTypeId] + filled[superTypeId]] = subTypeId;
         filled[superTypeId] += 1;
@@ -159,7 +158,7 @@ public class SingleClassHierarchy {
     int[] sizes = new int[n];
     for (int i = 1; i < n; i++) {
       ClassSymbol subType = classSymbols[i];
-      for (ClassSymbol superType : subType.getSuperClasses()) {
+      for (ClassSymbol superType : subType.rawSuperClasses()) {
         int superTypeId = superType.myClassAnchor.myId;
         sizes[superTypeId] += 1;
       }

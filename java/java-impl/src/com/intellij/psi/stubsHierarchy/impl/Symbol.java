@@ -86,7 +86,8 @@ public abstract class Symbol {
     public UnitInfo myUnitInfo;
     public QualifiedName[] mySuperNames;
     private ClassSymbol[] myMembers;
-    private HierarchyConnector myConnector;
+    private StubHierarchyConnector myConnector;
+    private boolean myHierarchyIncomplete;
 
     public ClassSymbol(SmartClassAnchor classAnchor,
                        int flags,
@@ -95,7 +96,7 @@ public abstract class Symbol {
                        int name,
                        UnitInfo unitInfo,
                        QualifiedName[] supers,
-                       HierarchyConnector connector) {
+                       StubHierarchyConnector connector) {
       super(flags | IndexTree.CLASS, owner, fullname, name);
       this.myClassAnchor = classAnchor;
       this.mySuperNames = supers;
@@ -103,21 +104,32 @@ public abstract class Symbol {
       this.myConnector = connector;
     }
 
+    @Override
+    public String toString() {
+      return myClassAnchor.toString();
+    }
+
     public void connect() {
       if (myConnector != null) {
-        HierarchyConnector c = myConnector;
+        StubHierarchyConnector c = myConnector;
         myConnector = null;
         c.connect(this);
       }
     }
 
     @NotNull
-    public ClassSymbol[] getSuperClasses() {
+    public ClassSymbol[] getSuperClasses() throws IncompleteHierarchyException {
       connect();
-      if (mySuperClasses == null) {
-        return EMPTY_ARRAY;
+      if (myHierarchyIncomplete) {
+        throw IncompleteHierarchyException.INSTANCE;
       }
-      return mySuperClasses;
+      return rawSuperClasses();
+    }
+
+    @NotNull
+    ClassSymbol[] rawSuperClasses() {
+      assert myConnector == null;
+      return mySuperClasses == null ? EMPTY_ARRAY : mySuperClasses;
     }
 
     public boolean isCompiled() {
@@ -130,6 +142,14 @@ public abstract class Symbol {
 
     public void setMembers(ClassSymbol[] members) {
       this.myMembers = members;
+    }
+
+    void markHierarchyIncomplete() {
+      myHierarchyIncomplete = true;
+    }
+
+    boolean isHierarchyIncomplete() {
+      return myHierarchyIncomplete;
     }
   }
 

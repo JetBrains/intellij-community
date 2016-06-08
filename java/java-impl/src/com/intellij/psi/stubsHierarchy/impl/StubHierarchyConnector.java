@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class StubHierarchyConnector implements HierarchyConnector {
+public class StubHierarchyConnector {
   private final NameEnvironment myNameEnvironment;
   private final StubResolver myResolve;
 
@@ -29,7 +29,7 @@ public class StubHierarchyConnector implements HierarchyConnector {
     myResolve = new StubResolver(symbols);
   }
 
-  public void connect(Symbol sym) {
+  void connect(Symbol sym) {
     Symbol.ClassSymbol c = (Symbol.ClassSymbol) sym;
 
     if (c.myOwner instanceof Symbol.ClassSymbol) {
@@ -44,12 +44,17 @@ public class StubHierarchyConnector implements HierarchyConnector {
           Collections.addAll(supertypes, myResolve.findGlobalType(name));
         }
       } else {
-        Set<Symbol> based = myResolve.resolveBase(c, name.myComponents);
-        supertypes.addAll(based);
+        try {
+          supertypes.addAll(myResolve.resolveBase(c, name.myComponents));
+        }
+        catch (IncompleteHierarchyException ignore) {
+          c.markHierarchyIncomplete();
+          break;
+        }
       }
     }
 
-    if (c.myQualifiedName == myNameEnvironment.java_lang_Object) {
+    if (c.myQualifiedName == myNameEnvironment.java_lang_Object || c.isHierarchyIncomplete()) {
       c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
     } else {
       for (Iterator<Symbol> iter = supertypes.iterator(); iter.hasNext();) {
