@@ -19,8 +19,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Consumer;
-import com.intellij.util.TimeoutUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -32,14 +32,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * author: liana
@@ -60,19 +58,37 @@ public class StudyNewProjectPanel {
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
+  private boolean isComboboxInitialized;
 
-  public StudyNewProjectPanel(StudyProjectGenerator generator) {
+  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     myGenerator = generator;
-    myAvailableCourses = myGenerator.getCourses(false);
     myBrowseButton.setPreferredSize(new Dimension(28, 28));
     myRefreshButton.setPreferredSize(new Dimension(28, 28));
-    if (myAvailableCourses.isEmpty()) {
+    initListeners();
+    myRefreshButton.setVisible(true);
+    myRefreshButton.putClientProperty("JButton.buttonType", "null");
+    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
+
+    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
+    myContentPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorMoved(AncestorEvent event) {
+        if (!isComboboxInitialized && myContentPanel.isVisible()) {
+          isComboboxInitialized = true;
+          initCoursesCombobox();
+        }
+      }
+    });
+  }
+
+  private void initCoursesCombobox() {
+    myAvailableCourses =
+      myGenerator.getCoursesUnderProgress(false, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
+    if (myAvailableCourses == null || myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
     else {
-      for (CourseInfo courseInfo : myAvailableCourses) {
-        myCoursesComboBox.addItem(courseInfo);
-      }
+      addCoursesToCombobox(myAvailableCourses);
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
       myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
@@ -82,13 +98,8 @@ public class StudyNewProjectPanel {
       myGenerator.setSelectedCourse(selectedCourse);
       setOK();
     }
-    initListeners();
-    myRefreshButton.setVisible(true);
-    myRefreshButton.putClientProperty("JButton.buttonType", "null");
-    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
-
-    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
   }
+
   private void setupBrowseButton() {
     myBrowseButton.putClientProperty("JButton.buttonType", "null");
     myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
@@ -190,14 +201,11 @@ public class StudyNewProjectPanel {
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-        final List<CourseInfo> courses;
-        courses = execCancelable(() -> myGenerator.getCourses(true));
-        if (courses != null) {
-          ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
-        }        
-      }, "Refreshing Course List", true, DefaultProjectFactory.getInstance().getDefaultProject());
+      final List<CourseInfo> courses =
+        myGenerator.getCoursesUnderProgress(true, "Refreshing Course List", DefaultProjectFactory.getInstance().getDefaultProject());
+      if (courses != null) {
+        refreshCoursesList(courses);
+      }
     }
   }
 
@@ -208,22 +216,26 @@ public class StudyNewProjectPanel {
     }
     myCoursesComboBox.removeAllItems();
 
+    addCoursesToCombobox(courses);
+    myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
+
+    myGenerator.setCourses(courses);
+    myAvailableCourses = courses;
+    StudyProjectGenerator.flushCache(myAvailableCourses);
+  }
+
+  private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
     for (CourseInfo courseInfo : courses) {
       if (!courseInfo.isAdaptive()) {
         myCoursesComboBox.addItem(courseInfo);
       }
       else {
         final boolean isLoggedIn = myGenerator.myUser != null;
-        if (courseInfo.isPublic() || isLoggedIn) {
+        if (isLoggedIn) {
           myCoursesComboBox.addItem(courseInfo);
         }
       }
     }
-    myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
-
-    myGenerator.setCourses(courses);
-    myAvailableCourses = courses;
-    StudyProjectGenerator.flushCache(myAvailableCourses);
   }
 
 
@@ -240,6 +252,7 @@ public class StudyNewProjectPanel {
       if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
         myAuthorLabel.setText("");
         myDescriptionLabel.setText("");
+        setError(INVALID_COURSE);
         return;
       }
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
@@ -265,6 +278,7 @@ public class StudyNewProjectPanel {
 
     protected AddRemoteDialog() {
       super(null);
+      setTitle("Login To Stepic");
       myRemoteCourse = new StudyAddRemoteCourse();
       init();
     }
@@ -296,39 +310,23 @@ public class StudyNewProjectPanel {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser = execCancelable(() -> EduStepicConnector.login(myRemoteCourse.getLogin(), 
-                                                                                           myRemoteCourse.getPassword()));
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myRemoteCourse.getLogin(),
+                                                                                               myRemoteCourse.getPassword()));
         if (stepicUser != null) {
           stepicUser.setEmail(myRemoteCourse.getLogin());
           stepicUser.setPassword(myRemoteCourse.getPassword());
           myGenerator.myUser = stepicUser;
 
 
-          final List<CourseInfo> courses = execCancelable(() -> myGenerator.getCourses(true));
+          final List<CourseInfo> courses = myGenerator.getCoursesAsynchronouslyIfNeeded(true);
           if (courses != null) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
         }
+        else {
+          setError("Failed to login");
+        }
       }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
-  }
-  
-  @Nullable
-  private static <T> T execCancelable(@NotNull final Callable<T> callable) {
-    final Future<T> future =
-      ApplicationManager.getApplication().executeOnPooledThread(callable);
-
-    while (!future.isCancelled() && !future.isDone()) {
-      ProgressManager.checkCanceled();
-      TimeoutUtil.sleep(500);
-    }
-    T result = null;
-    try {
-      result = future.get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      LOG.warn(e.getMessage());
-    }
-    return result;
   }
 }

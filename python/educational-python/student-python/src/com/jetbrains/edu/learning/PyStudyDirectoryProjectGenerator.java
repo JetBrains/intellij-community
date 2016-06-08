@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
@@ -97,7 +98,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
   }
 
   public List<CourseInfo> getCourses() {
-    return myGenerator.getCourses(false);
+    return myGenerator.getCoursesUnderProgress(false, "Getting Courses", ProjectManager.getInstance().getDefaultProject());
   }
 
   public void setSelectedCourse(CourseInfo course) {

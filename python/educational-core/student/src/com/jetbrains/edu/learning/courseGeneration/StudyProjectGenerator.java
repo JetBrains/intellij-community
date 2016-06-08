@@ -8,10 +8,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,10 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 
 public class StudyProjectGenerator {
   public static final String AUTHOR_ATTRIBUTE = "authors";
@@ -88,19 +89,18 @@ public class StudyProjectGenerator {
 
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
-      final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
-      if (courseFile.exists()) {
-        return readCourseFromCache(courseFile, false);
+    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+    if (courseFile.exists()) {
+      return readCourseFromCache(courseFile, false);
+    }
+    else if (myUser != null) {
+      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                         mySelectedCourseInfo.getName() + "_" +
+                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
+      if (adaptiveCourseFile.exists()) {
+        return readCourseFromCache(adaptiveCourseFile, true);
       }
-      else {
-        final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
-                                                                   mySelectedCourseInfo.getName() + "_" +
-                                                                   myUser.getEmail()), EduNames.COURSE_META_FILE);
-        if (adaptiveCourseFile.exists()) {
-          return readCourseFromCache(adaptiveCourseFile, true);
-        }
-        
-      }
+    }
     final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
     if (course != null) {
       flushCourse(project, course);
@@ -154,7 +154,8 @@ public class StudyProjectGenerator {
       final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
       ProjectView.getInstance(project).select(file, activeVirtualFile, true);
       FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
-    } else {
+    }
+    else {
       String first = StudyUtils.getFirst(taskFiles.keySet());
       if (first != null) {
         NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
@@ -231,7 +232,6 @@ public class StudyProjectGenerator {
         else {
           FileUtil.writeToFile(file, taskFile.text);
         }
-
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -245,7 +245,7 @@ public class StudyProjectGenerator {
       }
       FileUtil.createIfDoesntExist(testsFile);
       try {
-          FileUtil.writeToFile(testsFile, entry.getValue());
+        FileUtil.writeToFile(testsFile, entry.getValue());
       }
       catch (IOException e) {
         LOG.error("ERROR copying tests file");
@@ -333,18 +333,35 @@ public class StudyProjectGenerator {
     return true;
   }
 
-  public List<CourseInfo> getCourses(boolean force) {
+  // Supposed to be called under progress
+  public List<CourseInfo> getCoursesAsynchronouslyIfNeeded(boolean force) {
     if (OUR_COURSES_DIR.exists()) {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = EduStepicConnector.getCourses();
+      myCourses = execCancelable(EduStepicConnector::getCourses);
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {
       myCourses = getBundledIntro();
     }
     return myCourses;
+  }
+
+  public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
+    try {
+      return ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(new ThrowableComputable<List<CourseInfo>, RuntimeException>() {
+          @Override
+          public List<CourseInfo> compute() throws RuntimeException {
+            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+            return getCoursesAsynchronouslyIfNeeded(force);
+          }
+        }, progressTitle, true, project);
+    }
+    catch (RuntimeException e) {
+      return Collections.singletonList(CourseInfo.INVALID_COURSE);
+    }
   }
 
   public void addSettingsStateListener(@NotNull SettingsListener listener) {
@@ -397,7 +414,8 @@ public class StudyProjectGenerator {
         finally {
           StudyUtils.closeSilently(reader);
         }
-      } finally {
+      }
+      finally {
         StudyUtils.closeSilently(inputStream);
       }
     }
@@ -406,6 +424,7 @@ public class StudyProjectGenerator {
     }
     return courses;
   }
+
   /**
    * Adds course from zip archive to courses
    *
@@ -439,7 +458,6 @@ public class StudyProjectGenerator {
   /**
    * Adds course to courses specified in params
    *
-   *
    * @param courses
    * @param courseDir must be directory containing course file
    * @return added course name or null if course is invalid
@@ -463,6 +481,7 @@ public class StudyProjectGenerator {
     }
     return null;
   }
+
   /**
    * Parses course json meta file and finds course name
    *
