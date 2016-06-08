@@ -15,7 +15,6 @@
  */
 package org.intellij.images.editor.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.ide.util.PropertiesComponent;
@@ -38,7 +37,10 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -51,6 +53,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.List;
@@ -73,7 +76,6 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JBCheckBox myThisProjectOnlyCb;
 
   boolean myAdjusting;
-  private String mySelectedPath;
   private Map<String, String> myResults = ContainerUtil.newHashMap();
 
   private final SimpleEditorPreview myEditorPreview;
@@ -83,16 +85,30 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle("Background Image");
-    mySelectedPath = selectedPath;
     myEditorPreview = createEditorPreview();
     myIdePreview = createIdePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
     setupComponents();
     restoreRecentImages();
-    setSelectedPath(mySelectedPath);
+    if (StringUtil.isNotEmpty(selectedPath)) {
+      myResults.put(getSystemProp(true), selectedPath);
+      myResults.put(getSystemProp(false), selectedPath);
+      setSelectedPath(selectedPath);
+    }
     targetChanged(null);
     init();
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doClearAction();
+      }
+    });
   }
 
   private void createUIComponents() {
@@ -226,7 +242,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myScaleRb.setSelected(true);
     myCenterRb.setSelected(true);
     myEditorRb.setSelected(true);
-    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp()), getBackgroundSpec(null, getSystemProp()));
+    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
     myThisProjectOnlyCb.setSelected(perProject);
     myAdjusting = false;
   }
@@ -247,9 +263,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     if (event != null && event.getStateChange() == ItemEvent.DESELECTED) {
       return;
     }
-    if (StringUtil.isEmptyOrSpaces(mySelectedPath)) {
-      retrieveExistingValue();
-    }
+    retrieveExistingValue();
 
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, myEditorRb.isSelected() ? "editor" : "ide");
     if (myEditorRb.isSelected()) {
@@ -259,26 +273,31 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   public void setSelectedPath(String path) {
-    mySelectedPath = path;
-    if (StringUtil.isEmptyOrSpaces(path)) return;
-    CollectionComboBoxModel<String> comboModel = getComboModel();
-    if (!comboModel.contains(path)) {
-      comboModel.add(path);
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      getComboEditor().setText("");
     }
-    comboModel.setSelectedItem(path);
-    getComboEditor().setCaretPosition(0);
+    else {
+      CollectionComboBoxModel<String> comboModel = getComboModel();
+      if (!comboModel.contains(path)) {
+        comboModel.add(path);
+      }
+      comboModel.setSelectedItem(path);
+      getComboEditor().setCaretPosition(0);
+    }
   }
 
   private void retrieveExistingValue() {
     myAdjusting = true;
     String prop = getSystemProp();
-    String value = StringUtil.notNullize(myResults.get(prop), getBackgroundSpec(myProject, prop));
+    JBIterable<String> possibleValues = JBIterable.of(myResults.get(prop))
+      .append(StringUtil.nullize(getBackgroundSpec(myProject, prop)))
+      .append(myResults.values());
+    String value = StringUtil.notNullize(ObjectUtils.coalesce(possibleValues));
     String[] split = value.split(",");
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
     String place = split.length > 3 ? split[3] : "center";
     setSelectedPath(split[0]);
-    mySelectedPath = null;
     myOpacitySlider.setValue(opacity);
     myOpacitySpinner.setValue(opacity);
     setSelected(getFillRbGroup(), fill);
@@ -288,8 +307,17 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    storeRecentImages();
     super.doCancelAction();
+    storeRecentImages();
+  }
+
+  private void doClearAction() {
+    close(OK_EXIT_CODE);
+    storeRecentImages();
+    String prop = getSystemProp();
+    PropertiesComponent.getInstance(myProject).setValue(prop, null);
+    PropertiesComponent.getInstance().setValue(prop, null);
+    repaintAllWindows();
   }
 
   @Override
@@ -304,8 +332,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     if (value.startsWith(",")) value = null;
 
     PropertiesComponent propertiesComponent =
-      myThisProjectOnlyCb.isSelected() ?
-      PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
+      myThisProjectOnlyCb.isSelected() ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
     propertiesComponent.setValue(prop, value);
 
     repaintAllWindows();
@@ -338,7 +365,12 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   private String getSystemProp() {
-    return myEditorRb.isSelected() ? EDITOR_PROP : FRAME_PROP;
+    return getSystemProp(myEditorRb.isSelected());
+  }
+
+  @NotNull
+  private static String getSystemProp(boolean forEditor) {
+    return forEditor ? EDITOR_PROP : FRAME_PROP;
   }
 
   private void updatePreview() {
@@ -350,7 +382,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myPreviewPanel.validate();
     myPreviewPanel.repaint();
     boolean clear = value.startsWith(",");
-    getOKAction().putValue(Action.NAME, clear ? "Clear" : CommonBundle.getOkButtonText());
+    getOKAction().setEnabled(!clear);
   }
 
   @NotNull
