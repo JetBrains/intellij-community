@@ -28,7 +28,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
-import java.util.*;
+
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
