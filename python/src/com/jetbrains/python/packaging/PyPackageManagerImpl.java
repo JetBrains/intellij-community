@@ -278,7 +278,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
     final List<PyPackage> packages = refreshAndGetPackages(false);
     final Set<PyPackage> dependents = new HashSet<>();
