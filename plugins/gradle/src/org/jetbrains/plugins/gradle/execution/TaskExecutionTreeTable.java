@@ -28,7 +28,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
@@ -50,7 +49,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

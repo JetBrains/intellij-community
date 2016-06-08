@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
 import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
