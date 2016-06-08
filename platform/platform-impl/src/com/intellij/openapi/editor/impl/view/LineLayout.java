@@ -552,14 +552,16 @@ abstract class LineLayout {
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
       if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
-      IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
+      IterationState it = new IterationState(view.getEditor(), start, end, false, false, false, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;
+      Color currentColor = null;
       int currentStart = start;
       while (!it.atEnd()) {
         int fontType = it.getMergedAttributes().getFontType();
-        if (fontType != currentFontType) {
+        Color color = it.getMergedAttributes().getForegroundColor();
+        if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
             addFragments(run, this, chars, currentStart - start, tokenStart - start,
@@ -567,6 +569,7 @@ abstract class LineLayout {
           }
           currentStart = tokenStart;
           currentFontType = fontType;
+          currentColor = color;
         }
         it.advance();
       }
