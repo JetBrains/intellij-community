@@ -59,11 +59,11 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
                                            @NotNull final Language substitutedLang) {
     Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
-    if (!substitutedLang.equals(prevLang)) {
-      if (ApplicationManager.getApplication().isDispatchThread() && myReparsingInProgress) {
-        return; // avoid recursive reparsing
-      }
+    if (!haveCommonAncestorLanguage(substitutedLang, prevLang)) {
       if (file.replace(SUBSTITUTED_LANG_KEY, prevSubstitutedLang, substitutedLang)) {
+        if (ApplicationManager.getApplication().isDispatchThread() && myReparsingInProgress) {
+          return; // avoid recursive reparsing
+        }
         invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -76,6 +76,22 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
         }, ModalityState.defaultModalityState());
       }
     }
+  }
+
+  private static boolean haveCommonAncestorLanguage(@NotNull Language lang1, @NotNull Language lang2) {
+    Language rootLang1 = findRootLanguage(lang1);
+    Language rootLang2 = findRootLanguage(lang2);
+    return rootLang1.is(rootLang2);
+  }
+
+  @NotNull
+  private static Language findRootLanguage(@NotNull Language lang) {
+    Language parent = lang.getBaseLanguage();
+    while (parent != null) {
+      lang = parent;
+      parent = lang.getBaseLanguage();
+    }
+    return lang;
   }
 
   private static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
