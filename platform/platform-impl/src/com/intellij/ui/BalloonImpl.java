@@ -1690,12 +1690,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         initComponentImage(pointTarget, shapeBounds);
       }
 
+      if (myImage != null && myAlpha != -1) {
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
+      }
+
       if (myShadowBorderProvider != null) {
         myShadowBorderProvider.paintShadow(this, g);
       }
 
       if (myImage != null && myAlpha != -1) {
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
         paintShadow(g);
         UIUtil.drawImage(g2d, myImage, 0, 0, null);
       }
