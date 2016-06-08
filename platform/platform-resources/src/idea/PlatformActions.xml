@@ -754,6 +754,7 @@
     <group id="EditorContextBarMenu">
       <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
               icon="AllIcons.Actions.ToggleSoftWrap"/>
+      <separator/>
     </group>
 
     <group id="DirDiffMenu">
