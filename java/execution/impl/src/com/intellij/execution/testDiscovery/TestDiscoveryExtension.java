@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -160,7 +159,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {
-            coverageIndex.updateFromTestTrace(testMethodTrace);
+            coverageIndex.updateFromTestTrace(testMethodTrace, ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModule());
             FileUtil.delete(testMethodTrace);
           }
           catch (IOException e) {
@@ -187,7 +186,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
           if (testMethodTrace.exists()) {
             try {
-              coverageIndex.updateFromTestTrace(testMethodTrace);
+              coverageIndex.updateFromTestTrace(testMethodTrace,
+                                                ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModule());
               FileUtil.delete(testMethodTrace);
             }
             catch (IOException e) {

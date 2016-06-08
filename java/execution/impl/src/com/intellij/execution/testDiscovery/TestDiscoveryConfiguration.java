@@ -136,6 +136,12 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
   }
 
   @Override
+  public void setModule(Module module) {
+    super.setModule(module);
+    myDelegate.setModule(module);
+  }
+
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     myDelegate.writeExternal(element);
     super.writeExternal(element);

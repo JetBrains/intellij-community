@@ -18,12 +18,15 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,9 +37,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<TestDiscoveryConfiguration> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
@@ -57,18 +64,46 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     final Pair<String, String> position = getPosition(location);
     if (position != null) {
       try {
-        final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(configuration.getProject()).getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null || ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) return false;
-        
+        final Project project = configuration.getProject();
+        final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
+        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second);
+        if (testsByMethodName == null ||
+            ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
+          return false;
+        }
+        configuration.setPosition(position);
+        configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
+
+        final RunnerAndConfigurationSettings template =
+          configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
+        final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+        if (predefinedModule != null) {
+          configuration.setModule(predefinedModule);
+        }
+
+        //potentially this set won't be big, it reflects modules from where user starts his tests
+        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first, position.second);
+        if (modules.isEmpty()) return true;
+
+        final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
+        modules.stream()
+          .map(moduleManager::findModuleByName)
+          .filter(module -> module != null)
+          .forEach(module -> {
+            final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
+            dependentModules.add(module);
+            allModules.retainAll(dependentModules);
+          });
+        if (!allModules.isEmpty()) {
+          configuration.setModule(allModules.iterator().next());
+        }
+
+        return true;
       }
       catch (IOException e) {
         return false;
       }
-      configuration.setPosition(position);
-      configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
-      setupPackageConfiguration(configurationContext, configuration, TestSearchScope.MODULE_WITH_DEPENDENCIES);
-      return true;
     }
     return false;
   }

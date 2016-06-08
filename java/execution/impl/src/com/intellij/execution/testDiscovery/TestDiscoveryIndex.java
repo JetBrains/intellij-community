@@ -18,10 +18,12 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
@@ -80,7 +82,9 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
         final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
         if (testNameId == 0) return;
-        doUpdateFromDiff(holder, testNameId, null, holder.myTestNameToUsedClassesAndMethodMap.get(testNameId));
+        doUpdateFromDiff(holder, testNameId, null,
+                         holder.myTestNameToUsedClassesAndMethodMap.get(testNameId),
+                         null);
       } catch (Throwable throwable) {
         thingsWentWrongLetsReinitialize(holder, throwable);
       }
@@ -101,6 +105,31 @@ public class TestDiscoveryIndex implements ProjectComponent {
         if (list == null) return Collections.emptyList();
         final ArrayList<String> result = new ArrayList<String>(list.size());
         for (int testNameId : list.toNativeArray()) result.add(holder.myTestNameEnumerator.valueOf(testNameId));
+        return result;
+      } catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+        return Collections.emptyList();
+      }
+    }
+  }
+
+
+  public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
+    synchronized (ourLock) {
+      Holder holder = null;
+      try {
+        holder = getHolder();
+        final TIntArrayList list = holder.myTestNameToNearestModule.get(
+          createKey(
+            holder.myClassEnumerator.enumerate(classFQName),
+            holder.myMethodEnumerator.enumerate(methodName)
+          )
+        );
+        if (list == null) return Collections.emptyList();
+        final ArrayList<String> result = new ArrayList<String>(list.size());
+        for (int moduleNameId : list.toNativeArray()) {
+          result.add(holder.myModuleNameEnumerator.valueOf(moduleNameId));
+        }
         return result;
       } catch (Throwable throwable) {
         thingsWentWrongLetsReinitialize(holder, throwable);
@@ -154,17 +183,19 @@ public class TestDiscoveryIndex implements ProjectComponent {
   public void projectClosed() {
   }
 
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
   private final class Holder {
     final PersistentHashMap<Long, TIntArrayList> myMethodQNameToTestNames;
     final PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> myTestNameToUsedClassesAndMethodMap;
+    final PersistentHashMap<Long, TIntArrayList> myTestNameToNearestModule;
     final PersistentStringEnumerator myClassEnumerator;
     final CachingEnumerator<String> myClassEnumeratorCache;
     final PersistentStringEnumerator myMethodEnumerator;
     final CachingEnumerator<String> myMethodEnumeratorCache;
     final PersistentStringEnumerator myTestNameEnumerator;
-    final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<PersistentEnumeratorDelegate>(4);
+    final PersistentStringEnumerator myModuleNameEnumerator;
+    final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<PersistentEnumeratorDelegate>(6);
 
     private ScheduledFuture<?> myFlushingFuture;
     private boolean myDisposed;
@@ -178,6 +209,8 @@ public class TestDiscoveryIndex implements ProjectComponent {
       final File classNameEnumeratorFile = new File(path + File.separator + "classNameEnumerator.data");
       final File methodNameEnumeratorFile = new File(path + File.separator + "methodNameEnumerator.data");
       final File testNameEnumeratorFile = new File(path + File.separator + "testNameEnumerator.data");
+      final File moduleNameEnumeratorFile = new File(path + File.separator + "moduleNameEnumerator.data");
+      final File testNameToNearestModuleFile = new File(path + File.separator + "testNameToNearestModule.data");
 
       try {
         int version = readVersion(versionFile);
@@ -190,9 +223,11 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
         PersistentHashMap<Long, TIntArrayList> methodQNameToTestNames;
         PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> testNameToUsedClassesAndMethodMap;
+        PersistentHashMap<Long, TIntArrayList> testNameToNearestModule;
         PersistentStringEnumerator classNameEnumerator;
         PersistentStringEnumerator methodNameEnumerator;
         PersistentStringEnumerator testNameEnumerator;
+        PersistentStringEnumerator moduleNameEnumerator;
 
         int iterations = 0;
 
@@ -214,10 +249,18 @@ public class TestDiscoveryIndex implements ProjectComponent {
             );
             myConstructedDataFiles.add(testNameToUsedClassesAndMethodMap);
 
+            testNameToNearestModule = new PersistentHashMap<Long, TIntArrayList>(testNameToNearestModuleFile,
+                                                                                 new MethodQNameSerializer(),
+                                                                                 new TestNamesExternalizer());
+            myConstructedDataFiles.add(testNameToNearestModule);
+
             classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
             myConstructedDataFiles.add(classNameEnumerator);
 
             methodNameEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile);
+            myConstructedDataFiles.add(methodNameEnumerator);
+
+            moduleNameEnumerator = new PersistentStringEnumerator(moduleNameEnumeratorFile);
             myConstructedDataFiles.add(methodNameEnumerator);
 
             testNameEnumerator = new PersistentStringEnumerator(testNameEnumeratorFile);
@@ -242,9 +285,11 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
         myMethodQNameToTestNames = methodQNameToTestNames;
         myTestNameToUsedClassesAndMethodMap = testNameToUsedClassesAndMethodMap;
+        myTestNameToNearestModule = testNameToNearestModule;
         myClassEnumerator = classNameEnumerator;
         myMethodEnumerator = methodNameEnumerator;
         myTestNameEnumerator = testNameEnumerator;
+        myModuleNameEnumerator = moduleNameEnumerator;
         myMethodEnumeratorCache = new CachingEnumerator<String>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
         myClassEnumeratorCache = new CachingEnumerator<String>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
 
@@ -416,14 +461,14 @@ public class TestDiscoveryIndex implements ProjectComponent {
       return val1.equals(val2);
     }
   }
-  
-  public void updateFromTestTrace(@NotNull File file) throws IOException {
+
+  public void updateFromTestTrace(@NotNull File file, @Nullable Module module) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    doUpdateFromTestTrace(file, testName);
+    doUpdateFromTestTrace(file, testName, module);
   }
 
-  private void doUpdateFromTestTrace(File file, final String testName) throws IOException {
+  private void doUpdateFromTestTrace(File file, final String testName, @Nullable Module module) throws IOException {
     synchronized (ourLock) {
       Holder holder = getHolder();
       if (holder.myDisposed) return;
@@ -432,7 +477,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
         TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, holder);
         TIntObjectHashMap<TIntArrayList> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
 
-        doUpdateFromDiff(holder, testNameId, classData, previousClassData);
+        doUpdateFromDiff(holder, testNameId, classData, previousClassData, module != null ? holder.myModuleNameEnumerator.enumerate(module.getName()) : null);
       } catch (Throwable throwable) {
         thingsWentWrongLetsReinitialize(holder, throwable);
       }
@@ -442,7 +487,8 @@ public class TestDiscoveryIndex implements ProjectComponent {
   private void doUpdateFromDiff(Holder holder,
                                 final int testNameId,
                                 @Nullable TIntObjectHashMap<TIntArrayList> classData,
-                                @Nullable TIntObjectHashMap<TIntArrayList> previousClassData) throws IOException {
+                                @Nullable TIntObjectHashMap<TIntArrayList> previousClassData,
+                                @Nullable Integer moduleId) throws IOException {
     ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
 
     if (valueDiff.hasRemovedDelta()) {
@@ -471,6 +517,15 @@ public class TestDiscoveryIndex implements ProjectComponent {
                                                          DataInputOutputUtil.writeINT(dataOutput, testNameId);
                                                        }
                                                      });
+          if (moduleId != null) {
+            holder.myTestNameToNearestModule.appendData(createKey(classQName, methodName),
+                                                        new PersistentHashMap.ValueDataAppender() {
+                                                          @Override
+                                                          public void append(DataOutput dataOutput) throws IOException {
+                                                            DataInputOutputUtil.writeINT(dataOutput, moduleId);
+                                                          }
+                                                        });
+          }
         }
       }
     }
