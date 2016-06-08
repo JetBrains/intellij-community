@@ -15,51 +15,32 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubsHierarchy.impl.ClassAnchor.DirectClassAnchor;
-import com.intellij.psi.stubsHierarchy.impl.ClassAnchor.StubClassAnchor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import org.jetbrains.annotations.NotNull;
 
 public class SmartClassAnchor {
-
   public static final SmartClassAnchor[] EMPTY_ARRAY = new SmartClassAnchor[0];
 
   public final int myId;
   public final int myFileId;
+  final int myStubId;
 
-  private SmartClassAnchor(int id, int fileId) {
-    myId = id;
-    myFileId = fileId;
+  SmartClassAnchor(int symbolId, ClassAnchor classAnchor) {
+    myId = symbolId;
+    myFileId = classAnchor.myFileId;
+    myStubId = classAnchor.myStubId;
   }
 
-  static class StubSmartClassAnchor extends SmartClassAnchor {
-    final int myStubId;
-    final IStubElementType myStubElementType;
-
-    StubSmartClassAnchor(int id, int fileId, int stubId, IStubElementType stubElementType) {
-      super(id, fileId);
-      myStubId = stubId;
-      myStubElementType = stubElementType;
-    }
+  @NotNull
+  VirtualFile retrieveFile() {
+    VirtualFile file = PersistentFS.getInstance().findFileById(myFileId);
+    assert file != null;
+    return file;
   }
 
-  static class DirectSmartClassAnchor extends SmartClassAnchor {
-    public final PsiClass myPsiClass;
-
-    DirectSmartClassAnchor(int id, int fileId, PsiClass psiClass) {
-      super(id, fileId);
-      myPsiClass = psiClass;
-    }
+  @Override
+  public String toString() {
+    return myStubId + " in " + retrieveFile().getPath();
   }
-
-  static SmartClassAnchor create(int symbolId, ClassAnchor classAnchor) {
-    if (classAnchor instanceof StubClassAnchor) {
-      return new StubSmartClassAnchor(symbolId, classAnchor.myFileId, ((StubClassAnchor)classAnchor).myStubId, ((StubClassAnchor)classAnchor).myStubElementType);
-    }
-    if (classAnchor instanceof DirectClassAnchor) {
-      return new DirectSmartClassAnchor(symbolId, classAnchor.myFileId, ((DirectClassAnchor)classAnchor).myPsiClass);
-    }
-    return null;
-  }
-
 }

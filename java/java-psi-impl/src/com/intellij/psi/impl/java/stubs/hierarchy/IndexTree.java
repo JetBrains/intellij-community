@@ -17,9 +17,6 @@ package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.BitUtil;
 
 import java.util.Arrays;
 
@@ -140,13 +137,6 @@ public class IndexTree {
       this.myMods = mods;
       this.myName = name;
       this.mySupers = supers;
-    }
-
-    public IStubElementType getStubElementType() {
-      boolean isEnum = BitUtil.isSet(myMods, IndexTree.ENUM);
-      boolean isAnonymous = false;
-
-      return JavaClassElementType.typeForClass(isAnonymous, isEnum);
     }
 
     @Override
