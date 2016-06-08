@@ -151,7 +151,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
-        return LangBundle.message("java.terms.anonymous.class");
+        return "anonymous " + ((PsiAnonymousClass)element).getBaseClassReference().getText();
       }
       else {
         final PsiClass aClass = (PsiClass)element;
