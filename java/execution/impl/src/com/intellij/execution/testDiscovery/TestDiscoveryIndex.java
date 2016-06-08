@@ -261,7 +261,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
             myConstructedDataFiles.add(methodNameEnumerator);
 
             moduleNameEnumerator = new PersistentStringEnumerator(moduleNameEnumeratorFile);
-            myConstructedDataFiles.add(methodNameEnumerator);
+            myConstructedDataFiles.add(moduleNameEnumerator);
 
             testNameEnumerator = new PersistentStringEnumerator(testNameEnumeratorFile);
             myConstructedDataFiles.add(testNameEnumerator);
