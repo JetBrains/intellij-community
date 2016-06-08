@@ -30,6 +30,7 @@
         <processorPath useClasspath="true" />
       </profile>
       <profile default="false" name="ChunkIO" enabled="true">
+        <sourceOutputDir name="src/main/generated" />
         <outputRelativeToContentRoot value="true" />
         <processor name="com.android.tools.chunkio.ChunkProcessor" />
         <processorPath useClasspath="true" />
