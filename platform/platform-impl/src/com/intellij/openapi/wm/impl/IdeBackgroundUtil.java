@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -163,8 +164,10 @@ public class IdeBackgroundUtil {
   }
 
   @NotNull
-  public static String getBackgroundSpec(@NotNull String propertyName) {
-    return StringUtil.notNullize(PropertiesComponent.getInstance().getValue(propertyName), System.getProperty(propertyName, ""));
+  public static String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
+    String spec = project == null ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
+    if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
+    return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
   }
 
   public static void repaintAllWindows() {

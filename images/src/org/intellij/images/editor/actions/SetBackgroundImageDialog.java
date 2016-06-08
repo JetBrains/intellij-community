@@ -30,10 +30,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,6 +61,7 @@ import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
 public class SetBackgroundImageDialog extends DialogWrapper {
   private final String myPropertyTmp;
+  private final Project myProject;
   private JPanel myRoot;
   private JBRadioButton myEditorRb;
   private JBRadioButton myScaleRb;
@@ -67,6 +70,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JSpinner myOpacitySpinner;
   private JPanel myPreviewPanel;
   private ComboboxWithBrowseButton myPathField;
+  private JBCheckBox myThisProjectOnlyCb;
 
   boolean myAdjusting;
   private String mySelectedPath;
@@ -77,6 +81,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
   public SetBackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
+    myProject = project;
     setTitle("Background Image");
     mySelectedPath = selectedPath;
     myEditorPreview = createEditorPreview();
@@ -221,6 +226,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myScaleRb.setSelected(true);
     myCenterRb.setSelected(true);
     myEditorRb.setSelected(true);
+    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp()), getBackgroundSpec(null, getSystemProp()));
+    myThisProjectOnlyCb.setSelected(perProject);
     myAdjusting = false;
   }
 
@@ -265,7 +272,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private void retrieveExistingValue() {
     myAdjusting = true;
     String prop = getSystemProp();
-    String value = StringUtil.notNullize(myResults.get(prop), getBackgroundSpec(prop));
+    String value = StringUtil.notNullize(myResults.get(prop), getBackgroundSpec(myProject, prop));
     String[] split = value.split(",");
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
@@ -295,7 +302,11 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myResults.put(prop, value);
 
     if (value.startsWith(",")) value = null;
-    PropertiesComponent.getInstance().setValue(prop, value);
+
+    PropertiesComponent propertiesComponent =
+      myThisProjectOnlyCb.isSelected() ?
+      PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
+    propertiesComponent.setValue(prop, value);
 
     repaintAllWindows();
   }
