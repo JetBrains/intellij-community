@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -200,5 +199,14 @@ public class PyPackageUtil {
         return languageContribution.isPackageManagementEnabled();
       }
     }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
+  }
+
+  @Nullable
+  public static List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
+    final VirtualFile requirementsTxt = findRequirementsTxt(module);
+    if (requirementsTxt != null) {
+      return PyRequirement.fromFile(requirementsTxt);
+    }
+    return null;
   }
 }
