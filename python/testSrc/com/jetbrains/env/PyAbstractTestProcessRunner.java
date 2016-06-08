@@ -45,9 +45,8 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   public PyAbstractTestProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
                                      @NotNull final Class<CONF_T> expectedConfigurationType,
-                                     @Nullable final String workingFolder,
                                      final int timesToRerunFailedTests) {
-    super(configurationFactory, expectedConfigurationType, workingFolder);
+    super(configurationFactory, expectedConfigurationType);
     myTimesToRerunFailedTests = timesToRerunFailedTests;
   }
 

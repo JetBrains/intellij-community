@@ -49,7 +49,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
       @Override
@@ -86,18 +86,18 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   private void unittests(final String script) {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>(SdkCreationType.SDK_PACKAGES_ONLY) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
 
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(getTestDataPath(), script, 0);
+        return new PyUnitTestProcessRunner(script, 0);
       }
 
       @NotNull
       @Override
       public String getTestDataPath() {
-        return PythonHelpersLocator.getPythonCommunityPath() + "/helpers/pydev";
+        return PythonHelpersLocator.getPythonCommunityPath();
       }
 
       @Override
@@ -121,7 +121,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
         XDebuggerTestUtil.setBreakpointCondition(getProject(), 3, "i == 1 or i == 11 or i == 111");
       }
 
@@ -151,7 +151,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
       @Override
@@ -199,7 +199,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test4.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 3);
+        toggleBreakpoint(getScriptName(), 3);
       }
 
       @Override
@@ -217,7 +217,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
         XDebuggerTestUtil.setBreakpointLogExpression(getProject(), 3, "'i = %d'%i");
       }
 
@@ -235,7 +235,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 5);
+        toggleBreakpoint(getFilePath(getScriptName()), 5);
       }
 
       @Override
@@ -256,7 +256,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 5);
+        toggleBreakpoint(getFilePath(getScriptName()), 5);
       }
 
       @Override
@@ -278,15 +278,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testStepIntoMyCode() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
-      @Override
-      protected boolean shouldAddDataPathToContentRoots() {
-        return true;
-      }
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 5);
-        toggleBreakpoint(getScriptPath(), 7);
+        toggleBreakpoint(getFilePath(getScriptName()), 5);
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
       }
 
       @Override
@@ -310,7 +306,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 14);
+        toggleBreakpoint(getFilePath(getScriptName()), 14);
       }
 
       @Override
@@ -330,14 +326,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 18);
-        toggleBreakpoint(getScriptPath(), 25);
+        toggleBreakpoint(getFilePath(getScriptName()), 18);
+        toggleBreakpoint(getFilePath(getScriptName()), 25);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(getScriptPath(), 18);
+        toggleBreakpoint(getFilePath(getScriptName()), 18);
         smartStepInto("foo");
         waitForPause();
         eval("a.z").hasValue("1");
@@ -370,8 +366,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 1);
-        toggleBreakpoint(getScriptPath(), 7);
+        toggleBreakpoint(getFilePath(getScriptName()), 1);
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
       }
 
       @Override
@@ -478,10 +474,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
-      @Override
-      protected boolean shouldAddDataPathToContentRoots() {
-        return true;
-      }
 
       @Override
       public void before() throws Exception {
@@ -507,10 +499,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
-      @Override
-      protected boolean shouldAddDataPathToContentRoots() {
-        return true;
-      }
 
       @Override
       public void before() throws Exception {
@@ -538,8 +526,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_multithread.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 10);
-        toggleBreakpoint(getScriptPath(), 16);
+        toggleBreakpoint(getFilePath(getScriptName()), 10);
+        toggleBreakpoint(getFilePath(getScriptName()), 16);
       }
 
       @Override
@@ -642,7 +630,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
       @Override
       public void before() throws Exception {
-        String scriptPath = getScriptPath();
+        String scriptPath = getScriptName();
         String longPath = FileUtil
           .toSystemDependentName((new File(scriptPath).getCanonicalPath()));
         LocalFileSystem.getInstance().refreshAndFindFileByPath(longPath);
@@ -670,8 +658,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 1);
-        toggleBreakpoint(getScriptPath(), 2);
+        toggleBreakpoint(getScriptName(), 1);
+        toggleBreakpoint(getScriptName(), 2);
         XDebuggerTestUtil.setBreakpointCondition(getProject(), 2, "y == 3");
       }
 
@@ -695,7 +683,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 9);
+        toggleBreakpoint(getScriptName(), 9);
       }
 
       @Override
@@ -732,7 +720,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 8);
+        toggleBreakpoint(getScriptName(), 8);
       }
 
       @Override
@@ -774,7 +762,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 10);
+        toggleBreakpoint(getScriptName(), 10);
       }
 
       @Override
@@ -817,7 +805,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 9);
+        toggleBreakpoint(getScriptName(), 9);
       }
 
       @Override
@@ -855,7 +843,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 6);
+        toggleBreakpoint(getScriptName(), 6);
       }
 
       @Override
@@ -895,14 +883,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testSteppingFilter() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepping_filter.py") {
-      @Override
-      protected boolean shouldAddDataPathToContentRoots() {
-        return true;
-      }
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 4);
+        toggleBreakpoint(getScriptName(), 4);
         List<PySteppingFilter> filters = new ArrayList<>();
         filters.add(new PySteppingFilter(true, "*/test_m?_code.py"));
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
@@ -937,8 +921,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 7);
-        toggleBreakpoint(getScriptPath(), 11);
+        toggleBreakpoint(getScriptName(), 7);
+        toggleBreakpoint(getScriptName(), 11);
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
         debuggerSettings.watchReturnValues = true;
       }
@@ -967,7 +951,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 12);
+        toggleBreakpoint(getFilePath(getScriptName()), 12);
         setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.ALL);
       }
 
@@ -987,7 +971,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 12);
+        toggleBreakpoint(getFilePath(getScriptName()), 12);
         setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.THREAD);
       }
 
@@ -1009,7 +993,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "Test_Resume.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 2);
+        toggleBreakpoint(getScriptName(), 2);
       }
 
       @Override
@@ -1034,7 +1018,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 13);
+        toggleBreakpoint(getScriptName(), 13);
       }
 
       @Override
