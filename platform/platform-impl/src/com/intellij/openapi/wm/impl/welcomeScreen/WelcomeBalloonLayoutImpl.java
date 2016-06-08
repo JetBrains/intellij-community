@@ -180,7 +180,12 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     myListener.run(types);
 
     if (myVisible) {
-      layoutPopup();
+      if (count == 0) {
+        myPopupBalloon.getComponent().setVisible(false);
+      }
+      else {
+        layoutPopup();
+      }
     }
   }
 

@@ -317,22 +317,26 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       });
       panel.setVisible(false);
       myEventListener = types -> {
-        NotificationType type1 = null;
+        NotificationType type = null;
         for (NotificationType t : types) {
           if (NotificationType.ERROR == t) {
-            type1 = NotificationType.ERROR;
+            type = NotificationType.ERROR;
             break;
           }
           if (NotificationType.WARNING == t) {
-            type1 = NotificationType.WARNING;
+            type = NotificationType.WARNING;
           }
-          else if (type1 == null && NotificationType.INFORMATION == t) {
-            type1 = NotificationType.INFORMATION;
+          else if (type == null && NotificationType.INFORMATION == t) {
+            type = NotificationType.INFORMATION;
           }
         }
-
-        actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type1, types.size()));
-        panel.setVisible(true);
+        if (types.isEmpty()) {
+          panel.setVisible(false);
+        }
+        else {
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
+          panel.setVisible(true);
+        }
       };
       myEventLocation = () -> {
         Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
