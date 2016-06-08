@@ -216,7 +216,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()
-                                                                            : callExpr instanceof PsiNewExpression ? ((PsiNewExpression)callExpr).getQualifier() : null;
+                                                                            : ((PsiNewExpression)callExpr).getQualifier();
       if (qualifier == null) {
         allowStatics = true;
       }
