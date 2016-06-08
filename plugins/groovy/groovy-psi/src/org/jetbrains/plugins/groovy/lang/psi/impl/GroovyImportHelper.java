@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -72,8 +72,11 @@ public class GroovyImportHelper {
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
-    for (DefaultImportContributor contributor : DefaultImportContributor.EP_NAME.getExtensions()) {
-      result.addAll(contributor.appendImplicitlyImportedPackages(file));
+    for (GrImportContributor contributor : GrImportContributor.EP_NAME.getExtensions()) {
+      result.addAll(ContainerUtil.mapNotNull(
+        contributor.getImports(file),
+        i -> i.getStar() && !i.getStatic() ? i.getName() : null
+      ));
     }
 
     return result;

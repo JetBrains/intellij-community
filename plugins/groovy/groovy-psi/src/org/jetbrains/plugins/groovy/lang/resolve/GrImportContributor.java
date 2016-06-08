@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 
-/**
- * @author peter
- */
-public abstract class DefaultImportContributor {
-  public static final ExtensionPointName<DefaultImportContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.defaultImportContributor");
-  
-  public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
-    return Collections.emptyList();
-  }
-  
+public interface GrImportContributor {
+
+  ExtensionPointName<GrImportContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.importContributor");
+
+  @NotNull
+  Collection<Import> getImports(@NotNull GroovyFile file);
 }
