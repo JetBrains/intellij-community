@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -42,6 +43,7 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
  * @author max
  */
 public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
+  private final static Logger LOG = Logger.getInstance(ProblemDescriptionNode.class);
   protected final InspectionToolWrapper myToolWrapper;
   private final CommonProblemDescriptor myDescriptor;
   private final HighlightDisplayLevel myLevel;
@@ -55,7 +57,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     this(element, descriptor, toolWrapper, presentation, true, null);
   }
 
-  protected ProblemDescriptionNode(RefEntity element,
+  protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolWrapper toolWrapper,
                                    @NotNull InspectionToolPresentation presentation,
@@ -69,7 +71,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile
                 .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(toolWrapper.getShortName(), element.getRefManager().getProject()).getLevel();
+              : profile.getTools(toolWrapper.getShortName(), presentation.getContext().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
