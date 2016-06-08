@@ -22,8 +22,6 @@ import com.intellij.psi.stubsHierarchy.stubs.Unit;
 import com.intellij.reference.SoftReference;
 
 public class HierarchyService {
-  public static final boolean IGNORE_LOCAL_CLASSES = true;
-
   private NameEnvironment myNameEnvironment;
   private SoftReference<NameEnvironment> myNamesCache = new SoftReference<NameEnvironment>(null);
 

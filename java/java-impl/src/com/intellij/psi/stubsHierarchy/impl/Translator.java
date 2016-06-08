@@ -123,9 +123,6 @@ public class Translator {
     if (decl instanceof IndexTree.ClassDecl) {
       return processClassDecl(nameEnvironment, fileId, (IndexTree.ClassDecl)decl);
     }
-    if (HierarchyService.IGNORE_LOCAL_CLASSES) {
-      return null;
-    }
     ArrayList<Declaration> defList = new ArrayList<Declaration>();
     for (IndexTree.Decl def : ((IndexTree.MemberDecl)decl).myDecls) {
       Declaration hTree = processMember(nameEnvironment, fileId, def);

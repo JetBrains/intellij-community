@@ -38,7 +38,7 @@ public class GetAllInheritorsAction extends InheritanceAction {
       LOG.info("STARTED Inheritors: " + psiClass.getQualifiedName());
       SearchScope scope = psiClass.getUseScope();
       final int[] count = new int[]{0};
-      ClassInheritorsSearch.search(psiClass, scope, true, true, false).forEach(psiClass1 -> {
+      ClassInheritorsSearch.search(psiClass, scope, true, true, true).forEach(psiClass1 -> {
         count[0] += 1;
         return true;
       });
