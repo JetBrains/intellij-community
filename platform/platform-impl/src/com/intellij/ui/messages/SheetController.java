@@ -88,7 +88,7 @@ public class SheetController {
 
   private String myResult;
   private final JPanel mySheetPanel;
-  private final SheetMessage mySheetMessage;
+  private SheetMessage mySheetMessage;
 
   private final JEditorPane messageTextPane = new JEditorPane();
   private final Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
@@ -490,5 +490,6 @@ public class SheetController {
 
   public void dispose() {
     mySheetPanel.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+    mySheetMessage = null;
   }
 }

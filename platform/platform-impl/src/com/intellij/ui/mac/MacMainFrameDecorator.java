@@ -278,6 +278,11 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       invoke(pool, "release");
     }
 
+    // extract to static method for exclude this from OpenURIHandler() {} anonymous class
+    createProtocolHandler();
+  }
+
+  private static void createProtocolHandler() {
     if (ourProtocolHandler == null) {
       // install uri handler
       final ID mainBundle = invoke("NSBundle", "mainBundle");
