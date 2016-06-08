@@ -231,7 +231,7 @@ public class EduStepicConnector {
     catch (IOException e) {
       LOG.error("Cannot load course list " + e.getMessage());
     }
-    return Collections.emptyList();
+    return Collections.singletonList(CourseInfo.INVALID_COURSE);
   }
 
   private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
