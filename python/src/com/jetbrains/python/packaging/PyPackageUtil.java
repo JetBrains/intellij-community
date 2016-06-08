@@ -43,13 +43,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author vlan
  */
 public class PyPackageUtil {
-  public static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
+  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
     "requires", "install_requires", "setup_requires", "tests_require"
   };
 
@@ -90,18 +92,36 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyListLiteralExpression findSetupPyRequires(@NotNull Module module) {
-    for (String name : SETUP_PY_REQUIRES_KWARGS_NAMES) {
-      final PyListLiteralExpression kwarg = findSetupPyRequires(module, name);
-      if (kwarg != null) {
-        return kwarg;
-      }
-    }
-    return null;
+  public static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module) {
+    return Stream
+      .of("requires", "install_requires")
+      .map(kwargName -> findSetupPyRequires(module, kwargName))
+      .filter(kwarg -> kwarg != null)
+      .findFirst()
+      .orElse(null);
   }
 
   @Nullable
-  public static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
+  public static List<PyRequirement> findSetupPyAllRequires(@NotNull Module module) {
+    final List<String> lines = new ArrayList<String>();
+    for (String name : SETUP_PY_REQUIRES_KWARGS_NAMES) {
+      final PyListLiteralExpression installRequires = findSetupPyRequires(module, name);
+      if (installRequires != null) {
+        for (PyExpression e : installRequires.getElements()) {
+          if (e instanceof PyStringLiteralExpression) {
+            lines.add(((PyStringLiteralExpression)e).getStringValue());
+          }
+        }
+      }
+    }
+    if (!lines.isEmpty()) {
+      return PyRequirement.fromText(StringUtil.join(lines, "\n"));
+    }
+    return findSetupPy(module) != null ? Collections.emptyList() : null;
+  }
+
+  @Nullable
+  private static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
     final PyFile setupPy = findSetupPy(module);
     if (setupPy != null) {
       final PyCallExpression setup = findSetupCall(setupPy);
