@@ -75,7 +75,7 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
 
     @Override
     protected boolean forkPerModule() {
-      return spansMultipleModules("");
+      return getConfigurationModule().getModule() == null;
     }
 
     @Override
