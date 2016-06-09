@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -272,7 +273,7 @@ public class PyPackageUtil {
         }
       }
       else if (argumentList != null) {
-        final PyKeywordArgument requiresArg = generateRequiresKwarg(requirementName, languageLevel, generator);
+        final PyKeywordArgument requiresArg = generateRequiresKwarg(findSetupPy(module), requirementName, languageLevel, generator);
         if (requiresArg != null) {
           argumentList.addArgument(requiresArg);
         }
@@ -281,22 +282,19 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  private static PyKeywordArgument generateRequiresKwarg(@NotNull String requirementName,
-                                                         @NotNull LanguageLevel languageLevel, @NotNull PyElementGenerator generator) {
-    final String text = String.format("foo(requires=['%s'])", requirementName);
+  private static PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
+                                                         @NotNull String requirementName,
+                                                         @NotNull LanguageLevel languageLevel,
+                                                         @NotNull PyElementGenerator generator) {
+    final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? "install_requires" : "requires";
+    final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
-    PyKeywordArgument installRequiresArg = null;
+
     if (generated instanceof PyCallExpression) {
-      final PyCallExpression foo = (PyCallExpression)generated;
-      for (PyExpression arg : foo.getArguments()) {
-        if (arg instanceof PyKeywordArgument) {
-          final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-          if ("requires".equals(kwarg.getKeyword())) {
-            installRequiresArg = kwarg;
-          }
-        }
-      }
+      final PyCallExpression callExpression = (PyCallExpression)generated;
+      return callExpression.getArgument(0, keyword, PyKeywordArgument.class);
     }
-    return installRequiresArg;
+
+    return null;
   }
 }
