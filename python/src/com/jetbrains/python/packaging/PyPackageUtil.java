@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -244,5 +246,57 @@ public class PyPackageUtil {
       return PyRequirement.fromFile(requirementsTxt);
     }
     return null;
+  }
+
+  public static void addRequirementToTxtOrSetupPy(@NotNull Module module,
+                                                  @NotNull String requirementName,
+                                                  @NotNull LanguageLevel languageLevel) {
+    final VirtualFile requirementsTxt = findRequirementsTxt(module);
+    if (requirementsTxt != null) {
+      if (requirementsTxt.isWritable()) {
+        final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
+        if (document != null) {
+          document.insertString(0, requirementName + "\n");
+        }
+      }
+    }
+    else {
+      final PyListLiteralExpression setupPyRequires = findSetupPyInstallRequires(module);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
+      final PyArgumentList argumentList = Optional.ofNullable(findSetupCall(module)).map(PyCallExpression::getArgumentList).orElse(null);
+      if (setupPyRequires != null) {
+        if (setupPyRequires.getContainingFile().isWritable()) {
+          final String text = String.format("'%s'", requirementName);
+          final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
+          setupPyRequires.add(generated);
+        }
+      }
+      else if (argumentList != null) {
+        final PyKeywordArgument requiresArg = generateRequiresKwarg(requirementName, languageLevel, generator);
+        if (requiresArg != null) {
+          argumentList.addArgument(requiresArg);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static PyKeywordArgument generateRequiresKwarg(@NotNull String requirementName,
+                                                         @NotNull LanguageLevel languageLevel, @NotNull PyElementGenerator generator) {
+    final String text = String.format("foo(requires=['%s'])", requirementName);
+    final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
+    PyKeywordArgument installRequiresArg = null;
+    if (generated instanceof PyCallExpression) {
+      final PyCallExpression foo = (PyCallExpression)generated;
+      for (PyExpression arg : foo.getArguments()) {
+        if (arg instanceof PyKeywordArgument) {
+          final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+          if ("requires".equals(kwarg.getKeyword())) {
+            installRequiresArg = kwarg;
+          }
+        }
+      }
+    }
+    return installRequiresArg;
   }
 }
