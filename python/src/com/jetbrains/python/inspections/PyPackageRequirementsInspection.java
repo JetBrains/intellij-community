@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -107,7 +106,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final boolean plural = unsatisfied.size() > 1;
             String msg = String.format("Package requirement%s %s %s not satisfied",
                                        plural ? "s" : "",
-                                       requirementsToString(unsatisfied),
+                                       PyPackageUtil.requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
             final Set<String> unsatisfiedNames = new HashSet<String>();
             for (PyRequirement req : unsatisfied) {
@@ -232,11 +231,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
     }
     return results;
-  }
-
-  @NotNull
-  private static String requirementsToString(@NotNull List<PyRequirement> requirements) {
-    return StringUtil.join(requirements, requirement -> String.format("'%s'", requirement.toString()), ", ");
   }
 
   @Nullable
