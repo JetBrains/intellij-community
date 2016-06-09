@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,6 +58,11 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   private void processLanguageSubstitution(@NotNull final VirtualFile file,
                                            @NotNull Language originalLang,
                                            @NotNull final Language substitutedLang) {
+    if (file instanceof VirtualFileWindow) {
+      // Injected files are created with substituted language, no need to reparse:
+      //   com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl#doneInjecting
+      return;
+    }
     Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
     if (!haveCommonAncestorLanguage(substitutedLang, prevLang)) {
