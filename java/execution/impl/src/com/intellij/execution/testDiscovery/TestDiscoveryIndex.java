@@ -102,6 +102,9 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
   public void setRemoteTestRunDataPath(String path) {
+    if(!TestInfoHolder.isValidPath(path)) {
+      path = null;
+    }
     myRemoteTestRunDataController.init(path);
     // todo: should we remove our local run data ?
   }

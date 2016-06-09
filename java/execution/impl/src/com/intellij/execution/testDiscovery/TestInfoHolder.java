@@ -62,6 +62,7 @@ final class TestInfoHolder {
     try {
       int version = readVersion(versionFile);
       if (version != VERSION) {
+        assert !readOnly;
         TestDiscoveryIndex.LOG.info("TestDiscoveryIndex was rewritten due to version change");
         deleteAllIndexDataFiles(methodQNameToTestNameFile,
                                 testNameToUsedClassesAndMethodMapFile,
@@ -283,6 +284,14 @@ final class TestInfoHolder {
 
   public boolean isDisposed() {
     return myDisposed;
+  }
+
+  public static boolean isValidPath(String path) {
+    try {
+      return readVersion(getVersionFile(path)) == VERSION;
+    } catch (IOException ex) {
+      return false;
+    }
   }
 
   private static class TestNamesExternalizer implements DataExternalizer<TIntArrayList> {
