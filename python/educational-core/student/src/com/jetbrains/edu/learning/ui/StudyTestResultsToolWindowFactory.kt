@@ -17,7 +17,9 @@ class StudyTestResultsToolWindowFactory: StudyToolWindowFactory() {
       val sdk = StudyUtils.findSdk(currentTask, project)
       if (sdk != null) {
         val testResultsToolWindow = PythonConsoleView(project, "Local test results", sdk);
-
+        testResultsToolWindow.isEditable = false
+        testResultsToolWindow.isConsoleEditorEnabled = false
+        testResultsToolWindow.prompt = null
         toolWindow.isToHideOnEmptyContent = true
 
         val contentManager = toolWindow.contentManager
