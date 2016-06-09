@@ -205,13 +205,11 @@ def check_samples(samples=()):
             if "\n".join(output) != sample[1]:
                 failed(
                     "Test from samples failed: \n \n"
-                    "Input:\n {}"
+                    "Input:\n{}"
                     "\n \n"
-                    "Expected:\n {}"
+                    "Expected:\n{}"
                     "\n \n"
-                    "Your result:\n {}".format(sample[0], 
-                                                        sample[1], 
-                                                        "\n".join(output)))
+                    "Your result:\n{}".format(str.strip(sample[0]), str.strip(sample[1]), "\n".join(output)))
                 return
         set_congratulation_message("All test from samples passed. Now we are checking your solution on Stepic server.")
 
