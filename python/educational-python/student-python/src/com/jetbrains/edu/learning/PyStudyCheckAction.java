@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
@@ -90,30 +91,39 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final Process testProcess,
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
-            @Override
-            protected void onTaskFailed(String message) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (myTaskDir == null) return;
-                myTaskManger.setStatus(myTask, StudyStatus.Failed);
-                for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
-                  final String name = entry.getKey();
-                  final TaskFile taskFile = entry.getValue();
-                  if (taskFile.getAnswerPlaceholders().size() < 2) {
-                    myTaskManger.setStatus(taskFile, StudyStatus.Failed);
-                    continue;
-                  }
-                  if (EduNames.STUDY.equals(myTaskManger.getCourse().getCourseMode())) {
-                    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
-                  }
-                }
-                final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
-                if (toolWindow != null) {
-                  StudyCheckUtils.showTestResults(project, message, false);
-                  StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
-                }
-              });
+      @Override
+      protected void onTaskFailed(String message) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myTaskDir == null) return;
+          myTaskManger.setStatus(myTask, StudyStatus.Failed);
+          for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+            final String name = entry.getKey();
+            final TaskFile taskFile = entry.getValue();
+            if (taskFile.getAnswerPlaceholders().size() < 2) {
+              myTaskManger.setStatus(taskFile, StudyStatus.Failed);
+              continue;
             }
-          };
+            if (EduNames.STUDY.equals(myTaskManger.getCourse().getCourseMode())) {
+              CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
+            }
+          }
+          final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
+          if (toolWindow != null) {
+            final Course course = StudyTaskManager.getInstance(project).getCourse();
+            if (course != null) {
+              if (course.isAdaptive()) {
+                StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), project);
+                StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+              }
+              else {
+                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
+              }
+            }
+            StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
+          }
+        });
+      }
+    };
   }
 
 

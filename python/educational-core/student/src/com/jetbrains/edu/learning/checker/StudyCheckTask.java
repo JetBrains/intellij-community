@@ -106,19 +106,22 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
     }
 
-
-    final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output);
-    String stderr = output.getStderr();
-    if (!stderr.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() ->
-                                                        StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
-                                                                                            MessageType.WARNING.getPopupBackground(),
-                                                                                            myProject));
-      //log error output of tests
-      LOG.info("#educational " + stderr);
-      return null;
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    if (course != null) {
+      final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
+      String stderr = output.getStderr();
+      if (!stderr.isEmpty()) {
+        ApplicationManager.getApplication().invokeLater(() ->
+                                                          StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                                                              MessageType.WARNING.getPopupBackground(),
+                                                                                              myProject));
+        //log error output of tests
+        LOG.info("#educational " + stderr);
+        return null;
+      }
+      return testsOutput;
     }
-    return testsOutput;
+    return null;
   }
 
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
@@ -154,15 +157,40 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   protected void onTaskFailed(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Failed);
-    ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResults(myProject, message, false));
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+
+    if (course != null) {
+      if (course.isAdaptive()) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), myProject);
+            StudyCheckUtils.showTestResultsToolWindow(myProject, message, false);
+          });
+      }
+      else {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
+      }
+    }
   }
 
   protected void onTaskSolved(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
 
-    ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResults(myProject, message, true));
+    if (course != null) {
+      if (course.isAdaptive()) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.ERROR.getPopupBackground(), myProject);
+            StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+          });
+      }
+      else {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+      }
+    }
   }
 
   private void runAfterTaskCheckedActions() {

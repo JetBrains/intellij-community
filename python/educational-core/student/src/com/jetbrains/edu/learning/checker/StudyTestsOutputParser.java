@@ -31,7 +31,7 @@ public class StudyTestsOutputParser {
   }
 
   @NotNull
-  public static TestsOutput getTestsOutput(@NotNull final ProcessOutput processOutput) {
+  public static TestsOutput getTestsOutput(@NotNull final ProcessOutput processOutput, final boolean isAdaptive) {
     String congratulations = CONGRATULATIONS;
     final List<String> lines = processOutput.getStdoutLines();
     for (int i = 0; i < lines.size(); i++) {
@@ -46,18 +46,23 @@ public class StudyTestsOutputParser {
         }
 
         if (line.contains(TEST_FAILED)) {
-          final StringBuilder builder = new StringBuilder(line.substring(line.indexOf(TEST_FAILED) + TEST_FAILED.length()) + "\n");
-          for (int j = i + 1; j < lines.size(); j++) {
-            final String failedTextLine = lines.get(j);
-            if (!failedTextLine.contains(STUDY_PREFIX) || !failedTextLine.contains(CONGRATS_MESSAGE)) {
-              builder.append(failedTextLine);
-              builder.append("\n");
-            }
-            else {
-              break;
-            }
+          if (!isAdaptive) {
+            return new TestsOutput(false, line.substring(line.indexOf(TEST_FAILED) + TEST_FAILED.length()));
           }
-          return new TestsOutput(false, builder.toString());
+          else {
+            final StringBuilder builder = new StringBuilder(line.substring(line.indexOf(TEST_FAILED) + TEST_FAILED.length()) + "\n");
+            for (int j = i + 1; j < lines.size(); j++) {
+              final String failedTextLine = lines.get(j);
+              if (!failedTextLine.contains(STUDY_PREFIX) || !failedTextLine.contains(CONGRATS_MESSAGE)) {
+                builder.append(failedTextLine);
+                builder.append("\n");
+              }
+              else {
+                break;
+              }
+            }
+            return new TestsOutput(false, builder.toString());
+          }          
         }
       }
     }
