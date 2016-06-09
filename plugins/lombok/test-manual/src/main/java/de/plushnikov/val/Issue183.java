@@ -17,9 +17,17 @@ public class Issue183 {
     final Issue183 demo = new Issue183();
 
     val x = demo.convertMsg("sisu", 1);
+    System.out.println(x.toString());
+
+    val y = new Issue183();
+    y.getString();
   }
 
   public <T> T convertMsg(String msg, int userMid) {
     return (T) (msg + userMid);
+  }
+
+  public String getString() {
+    return "someString";
   }
 }

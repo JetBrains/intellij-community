@@ -6,7 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiParameter;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -65,10 +66,17 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
     }
 
     @Override
-    public void visitTypeElement(PsiTypeElement type) {
-      super.visitTypeElement(type);
+    public void visitLocalVariable(PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
 
-      valProcessor.verifyTypeElement(type, holder);
+      valProcessor.verifyVariable(variable, holder);
+    }
+
+    @Override
+    public void visitParameter(PsiParameter parameter) {
+      super.visitParameter(parameter);
+
+      valProcessor.verifyParameter(parameter, holder);
     }
 
     @Override

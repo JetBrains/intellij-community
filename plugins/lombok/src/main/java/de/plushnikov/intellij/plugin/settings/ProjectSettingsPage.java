@@ -4,6 +4,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   @Nls
   @Override
   public String getDisplayName() {
-    return "Lombok plugin";
+    return Version.PLUGIN_NAME;
   }
 
   @Nullable

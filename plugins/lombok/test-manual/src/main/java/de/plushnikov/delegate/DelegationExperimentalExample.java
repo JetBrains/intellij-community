@@ -6,40 +6,40 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class DelegationExperimentalExample {
-    private interface SimpleCollection {
-        boolean add(String item);
+  private interface SimpleCollection {
+    boolean add(String item);
 
-        boolean remove(Object item);
-    }
+    boolean remove(Object item);
+  }
 
-    @Delegate(types = SimpleCollection.class)
-    private final Collection<String> collection = new ArrayList<String>();
+  @Delegate(types = SimpleCollection.class)
+  private final Collection<String> collection = new ArrayList<String>();
 
-    public static void main(String[] args) {
-        DelegationExperimentalExample example = new DelegationExperimentalExample();
-        example.add("Hello World");
-    }
+  public static void main(String[] args) {
+    DelegationExperimentalExample example = new DelegationExperimentalExample();
+    example.add("Hello World");
+  }
 }
 
 class ExcludesDelegateExperimentalExample {
-    long counter = 0L;
+  long counter = 0L;
 
-    private interface Add {
-        boolean add(String x);
+  private interface Add {
+    boolean add(String x);
 
-        boolean addAll(Collection<? extends String> col);
-    }
+    boolean addAll(Collection<? extends String> col);
+  }
 
-    @Delegate(excludes = Add.class)
-    private final Collection<String> collection = new ArrayList<String>();
+  @Delegate(excludes = Add.class)
+  private final Collection<String> collection = new ArrayList<String>();
 
-    public boolean add(String item) {
-        counter++;
-        return collection.add(item);
-    }
+  public boolean add(String item) {
+    counter++;
+    return collection.add(item);
+  }
 
-    public boolean addAll(Collection<? extends String> col) {
-        counter += col.size();
-        return collection.addAll(col);
-    }
+  public boolean addAll(Collection<? extends String> col) {
+    counter += col.size();
+    return collection.addAll(col);
+  }
 }

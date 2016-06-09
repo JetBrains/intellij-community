@@ -8,12 +8,12 @@ import lombok.ToString;
 @Setter
 @ToString
 public class GetterName {
-    private double dValue;
+  private double dValue;
 
-    public static void main(String[] args) {
-        GetterName name = new GetterName();
-        name.getDValue();
-        name.setDValue(123.0);
-        System.out.println(name);
-    }
+  public static void main(String[] args) {
+    GetterName name = new GetterName();
+    name.getDValue();
+    name.setDValue(123.0);
+    System.out.println(name);
+  }
 }

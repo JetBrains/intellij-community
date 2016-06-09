@@ -26,6 +26,7 @@ import java.lang.annotation.Annotation;
 
 /**
  * Error messages from lombok_pg project
+ *
  * @author Philipp Eichhorn
  * @see https://github.com/peichhorn/lombok-pg/blob/master/src/core/lombok/core/util/ErrorMessages.java
  */

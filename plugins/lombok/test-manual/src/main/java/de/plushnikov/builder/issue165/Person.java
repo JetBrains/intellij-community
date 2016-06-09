@@ -7,10 +7,10 @@ import java.util.List;
 
 @Data
 public class Person {
-    String gender;
-    String firstName;
-    String lastName;
+  String gender;
+  String firstName;
+  String lastName;
 
-    List<String> children = new ArrayList<>();
-    boolean isParent;
+  List<String> children = new ArrayList<>();
+  boolean isParent;
 }

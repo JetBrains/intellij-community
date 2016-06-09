@@ -1,13 +1,11 @@
 package de.plushnikov.val;
 
-import lombok.val;
-
 public class ValErrors {
-	public void unresolvableExpression() {
+  public void unresolvableExpression() {
 //		val c = d;
-	}
-	
-	public void arrayInitializer() {
+  }
+
+  public void arrayInitializer() {
 //		val e = { "fooqweqwe", "bar2qwewqe"};
-	}
+  }
 }

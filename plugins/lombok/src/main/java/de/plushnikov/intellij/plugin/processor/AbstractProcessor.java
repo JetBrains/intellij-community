@@ -10,7 +10,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -104,11 +104,11 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   public static boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
-                                                       @NotNull String annotationParameter, @NotNull ConfigKeys configKeys) {
+                                                       @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
     final boolean result;
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {
-      result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(configKeys, psiClass);
+      result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(configKey, psiClass);
     } else {
       result = declaredAnnotationValue;
     }

@@ -4,12 +4,12 @@ import lombok.Data;
 
 @Data
 public class RenameDataTest {
-    String someDataField;
+  String someDataField;
 
-    public static RenameDataTest factoryMethod() {
-        RenameDataTest foo = new RenameDataTest();
-        foo.setSomeDataField("data");
-        System.out.println(foo.getSomeDataField());
-        return foo;
-    }
+  public static RenameDataTest factoryMethod() {
+    RenameDataTest foo = new RenameDataTest();
+    foo.setSomeDataField("data");
+    System.out.println(foo.getSomeDataField());
+    return foo;
+  }
 }

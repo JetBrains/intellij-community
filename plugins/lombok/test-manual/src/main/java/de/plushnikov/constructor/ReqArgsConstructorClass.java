@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ReqArgsConstructorClass {
-    private int intProperty;
+  private int intProperty;
 
-    private final float floatProperty;
+  private final float floatProperty;
 
-    @NonNull
-    private String stringProperty;
+  @NonNull
+  private String stringProperty;
 }

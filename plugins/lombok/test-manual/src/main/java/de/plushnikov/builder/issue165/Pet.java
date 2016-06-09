@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class Pet {
-    private String species;
-    private String name;
+  private String species;
+  private String name;
 }

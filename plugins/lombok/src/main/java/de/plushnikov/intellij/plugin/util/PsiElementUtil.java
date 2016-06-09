@@ -29,7 +29,7 @@ public class PsiElementUtil {
    *                            null if any number and type of parameters match or an empty array
    *                            to match zero parameters.
    * @return true, if the specified method matches the specified constraints,
-   *         false otherwise
+   * false otherwise
    */
   public static boolean methodMatches(
       @NotNull PsiMethod method,

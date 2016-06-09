@@ -13,21 +13,21 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Builder2 {
-    private BigDecimal value;
-    private String currency;
+  private BigDecimal value;
+  private String currency;
 
-    @JsonIgnore
-    public boolean isZero() {
-        return value.equals(BigDecimal.ZERO);
-    }
+  @JsonIgnore
+  public boolean isZero() {
+    return value.equals(BigDecimal.ZERO);
+  }
 
-    @JsonIgnore
-    public boolean isNotZero() {
-        return !isZero();
-    }
+  @JsonIgnore
+  public boolean isNotZero() {
+    return !isZero();
+  }
 
-    public static void main(String[] args) {
-        Builder2 builder2 = Builder2.builder().currency("aaa").value(BigDecimal.TEN).build();
-        System.out.println(builder2);
-    }
+  public static void main(String[] args) {
+    Builder2 builder2 = Builder2.builder().currency("aaa").value(BigDecimal.TEN).build();
+    System.out.println(builder2);
+  }
 }

@@ -19,7 +19,7 @@ public class Issue105 {
 
     val dto = mapper.map(entity, User.class); // <-- while this row gives an "Incopatible types" asking for a AccountUserEntity
 
-    assertThat(dto.isLegacyUser(), is(false));
+    assertThat(dto.isLegacyUser(), is(true));
   }
 
   @NoArgsConstructor

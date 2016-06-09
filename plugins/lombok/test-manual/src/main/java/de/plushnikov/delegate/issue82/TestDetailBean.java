@@ -5,13 +5,13 @@ import lombok.experimental.Delegate;
 //TODO fix it
 public class TestDetailBean //extends AbstractDetailBean<Integer>
 {
-    @Delegate
-    private MyDetailData detailData;
+  @Delegate
+  private MyDetailData detailData;
 
-    public static void main(String[] args) {
-        TestDetailBean bean = new TestDetailBean();
+  public static void main(String[] args) {
+    TestDetailBean bean = new TestDetailBean();
 
-        //bean.getResult();
-        bean.getSomething();
-    }
+    //bean.getResult();
+    bean.getSomething();
+  }
 }

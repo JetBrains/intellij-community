@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>8</line>
+    <entry_point TYPE="class" FQNAME="Test.Second1"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is
+      intentional, add '(callSuper=false)' to your type.
+    </description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>25</line>
+    <entry_point TYPE="class" FQNAME="Test.Data1"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is
+      intentional, add '(callSuper=false)' to your type.
+    </description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>31</line>
+    <entry_point TYPE="class" FQNAME="Test.Data2"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is
+      intentional, add '(callSuper=false)' to your type.
+    </description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>50</line>
+    <entry_point TYPE="class" FQNAME="Test.Value1"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is
+      intentional, add '(callSuper=false)' to your type.
+    </description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>56</line>
+    <entry_point TYPE="class" FQNAME="Test.Value2"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is
+      intentional, add '(callSuper=false)' to your type.
+    </description>
+  </problem>
+
+</problems>

@@ -2,5 +2,5 @@ package de.plushnikov.refactoringbug;
 
 public interface SomeApi {
 
-    int makeSomething(int param);
+  int makeSomething(int param);
 }

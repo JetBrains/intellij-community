@@ -1,4 +1,5 @@
 package de.plushnikov.accessors;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -8,9 +9,9 @@ import lombok.experimental.Accessors;
 @Getter
 public class Example151 {
 
-    private final String mAField;
+  private final String mAField;
 
-    public static void main(String[] args) {
-        System.out.println(builder().aField("a").build().getAField());
-    }
+  public static void main(String[] args) {
+    System.out.println(builder().aField("a").build().getAField());
+  }
 }

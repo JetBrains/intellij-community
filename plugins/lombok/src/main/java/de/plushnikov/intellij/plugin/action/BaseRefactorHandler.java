@@ -34,7 +34,7 @@ public abstract class BaseRefactorHandler implements Runnable {
 
     List<EncapsulatableClassMember> classMembers = getEncapsulatableClassMembers(psiClass);
     chooser = new MemberChooser<ClassMember>(
-       classMembers.toArray(new ClassMember[classMembers.size()]), true, true, project);
+        classMembers.toArray(new ClassMember[classMembers.size()]), true, true, project);
     chooser.setTitle(getChooserTitle());
     chooser.setCopyJavadocVisible(false);
   }
@@ -65,7 +65,9 @@ public abstract class BaseRefactorHandler implements Runnable {
 
   @Override
   public void run() {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) {
+      return;
+    }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }

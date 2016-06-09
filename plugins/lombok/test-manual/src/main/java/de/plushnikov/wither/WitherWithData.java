@@ -7,15 +7,15 @@ import lombok.experimental.Wither;
 @AllArgsConstructor
 @Data
 public class WitherWithData {
-    private String ssn;
-    private String name;
+  private String ssn;
+  private String name;
 
-    @Wither
-    private String phone;
+  @Wither
+  private String phone;
 
-    public static void main(String[] args) {
-        WitherWithData withData = new WitherWithData("a", "b", "c");
-        withData.getPhone();
-        System.out.println(withData.withPhone("1234"));
-    }
+  public static void main(String[] args) {
+    WitherWithData withData = new WitherWithData("a", "b", "c");
+    withData.getPhone();
+    System.out.println(withData.withPhone("1234"));
+  }
 }

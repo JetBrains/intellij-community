@@ -1,16 +1,16 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
 public class ConfigIndexKey {
-  private final String packageName;
+  private final String directoryName;
   private final String configKey;
 
-  public ConfigIndexKey(String packageName, String configKey) {
-    this.packageName = packageName;
+  public ConfigIndexKey(String directoryName, String configKey) {
+    this.directoryName = directoryName;
     this.configKey = configKey;
   }
 
-  public String getPackageName() {
-    return packageName;
+  public String getDirectoryName() {
+    return directoryName;
   }
 
   public String getConfigKey() {
@@ -31,7 +31,7 @@ public class ConfigIndexKey {
     if (configKey != null ? !configKey.equals(that.configKey) : that.configKey != null) {
       return false;
     }
-    if (packageName != null ? !packageName.equals(that.packageName) : that.packageName != null) {
+    if (directoryName != null ? !directoryName.equals(that.directoryName) : that.directoryName != null) {
       return false;
     }
 
@@ -40,7 +40,7 @@ public class ConfigIndexKey {
 
   @Override
   public int hashCode() {
-    int result = packageName != null ? packageName.hashCode() : 0;
+    int result = directoryName != null ? directoryName.hashCode() : 0;
     result = 31 * result + (configKey != null ? configKey.hashCode() : 0);
     return result;
   }

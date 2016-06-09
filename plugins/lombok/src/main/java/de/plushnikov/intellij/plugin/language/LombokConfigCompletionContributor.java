@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
@@ -18,9 +19,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 public class LombokConfigCompletionContributor extends CompletionContributor {
+
+  private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = "lombok.equalsAndHashCode.callSuper";
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = new HashSet<String>(Arrays.asList(
@@ -41,14 +42,14 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
         "lombok.wither.flagUsage"));
 
     final Collection<String> otherOptions = new HashSet<String>(Arrays.asList(
-        "lombok.accessors.prefix", "lombok.log.fieldName", "lombok.nonNull.exceptionType"));
+        "lombok.accessors.prefix", "lombok.log.fieldName", "lombok.nonNull.exceptionType", LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER));
 
     final Collection<String> allOptions = new HashSet<String>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
     allOptions.addAll(otherOptions);
 
     extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
+        PsiJavaPatterns.psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
             PsiElement psiElement = parameters.getPosition().getParent();
@@ -60,6 +61,10 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
               } else if (flagUsageOptions.contains(configPropertyKey)) {
                 resultSet.addElement(LookupElementBuilder.create("WARNING"));
                 resultSet.addElement(LookupElementBuilder.create("ERROR"));
+              } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey)) {
+                resultSet.addElement(LookupElementBuilder.create("CALL"));
+                resultSet.addElement(LookupElementBuilder.create("SKIP"));
+                resultSet.addElement(LookupElementBuilder.create("WARN"));
               }
             }
           }
@@ -67,7 +72,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     );
 
     extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
+        PsiJavaPatterns.psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
             for (String contribution : allOptions) {

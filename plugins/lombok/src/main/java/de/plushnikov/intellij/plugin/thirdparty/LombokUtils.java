@@ -103,7 +103,7 @@ Various problems with spring have also been reported. See issue #287, issue #271
       return fieldName;
     }
 
-    final boolean useBooleanPrefix = isBoolean && !accessorsInfo.isDontUseIsPrefix();
+    final boolean useBooleanPrefix = isBoolean && !accessorsInfo.isDoNotUseIsPrefix();
 
     if (useBooleanPrefix) {
       if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {

@@ -1,0 +1,27 @@
+import javax.tools.ToolProvider
+
+dependencies {
+    // Should be available in the run-time
+    compileOnly files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs())
+
+    compile 'org.javassist:javassist:3.20.0-GA'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    archiveName = "intellij-patcher-agent-${rootProject.version}.jar"
+    manifest {
+        attributes (
+                'Premain-Class': 'de.plushnikov.intellij.plugin.agent.IdeaPatcher',
+                'Agent-Class': 'de.plushnikov.intellij.plugin.agent.IdeaPatcher',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true',
+                'Implementation-Title': "Lombok Intellij Patcher Agent",
+                'Implementation-Version': rootProject.version
+        )
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

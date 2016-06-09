@@ -1,13 +1,81 @@
-plugins {
-    id "org.jetbrains.intellij" version "0.0.39"
-    id "de.undercouch.download" version '2.1.0'
+buildscript {
+    repositories {
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
 }
 
-group 'de.plushnikov.intellij.plugin'
-version = "${version}"
-def javaVersion = JavaVersion.VERSION_1_6
+plugins {
+    id "org.jetbrains.intellij" version "0.1.6"
+    id 'de.undercouch.download' version '2.1.0'
+}
 
-apply plugin: 'idea'
+apply plugin: 'org.jetbrains.intellij'
+
+allprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'jacoco'
+
+    group pluginGroup
+    version = pluginVersion
+
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaTargetVersion
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+
+    if (!Boolean.valueOf(System.getenv('CI'))) {
+        def javaHome = System.getenv("JAVA_HOME")
+        if (null == javaHome || "".equals(javaHome)) {
+            javaHome = JDK6_HOME
+        }
+
+        options.bootClasspath = "$javaHome/jre/lib/rt.jar"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java',
+                       'generated/src']
+        }
+        resources {
+            srcDirs = ['src/main/resources',
+                       'generated/resources']
+        }
+    }
+}
+
+intellij {
+    def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+    version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+
+    pluginName pluginName
+    downloadSources !Boolean.valueOf(System.getenv('CI'))
+    sameSinceUntilBuild Boolean.valueOf(isEAP)
+    alternativeIdePath idePath
+    updateSinceUntilBuild false
+
+    sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
+
+    plugins 'coverage'
+
+    publish {
+        channel publishChannel
+        username publishUsername
+        password System.properties['intellij.publish.password']
+    }
+}
+
 idea {
     project {
         jdkName = javaVersion
@@ -15,26 +83,49 @@ idea {
     }
 }
 
-configurations {
-    lombok
-    hrisey
-    gen
+plugins.withType(JavaPlugin) {
+    test {
+        systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+    }
 }
 
-repositories {
-    mavenCentral()
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+check.dependsOn jacocoTestReport
+
+// Configurations
+configurations {
+    bnf
+    jflex
+
+    lombok
+    hrisey
 }
 
 dependencies {
     lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.8', classifier: 'sources', ext: 'jar'
     hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
-    gen 'de.jflex:jflex:1.6.0'
-    gen files('lib/grammar-kit.jar')
-    gen files('lib/light-psi-all.jar')
+    bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
+    bnf files("$buildDir/tools/light-psi-all.jar")
+    jflex files("$buildDir/tools/JFlex.jar")
+
+    compile (project(':patcher'))  {
+        exclude group: 'org.javassist'
+    }
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
 }
 
+import de.undercouch.gradle.tasks.download.Download
 
+// Tasks
 copy {
     includeEmptyDirs = false
     from({ zipTree(configurations.lombok.singleFile) }) {
@@ -78,90 +169,82 @@ copy {
     into("generated/resources")
 }
 
-import de.undercouch.gradle.tasks.download.Download
 
-task downloadJFlexAndSkeleton(type: Download) {
-    src([
-            'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar',
-            'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
-    ])
-    dest buildDir
+task downloadJFlexJar(type: Download) {
+    description 'Downloads JFlex.'
+
+    src 'https://github.com/JetBrains/intellij-community/blob/145/tools/lexer/jflex-1.4/lib/JFlex.jar?raw=true'
+    dest "$buildDir/tools/JFlex.jar"
+    onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
+}
+
+task downloadJFlexSkeleton(type: Download) {
+    description 'Downloads JFlex skeleton.'
+
+    src 'https://raw.githubusercontent.com/JetBrains/intellij-community/145/tools/lexer/idea-flex.skeleton'
+    dest "$buildDir/tools/idea-flex.skeleton"
+    onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
+}
+
+task downloadGrammarKit(type: Download) {
+    description 'Downloads GrammarKit.'
+
+    src 'https://github.com/JetBrains/Grammar-Kit/releases/download/1.2.0.1/GrammarKit.zip'
+    dest "$buildDir/tools/GrammarKit.zip"
     onlyIfNewer true
 }
 
-task generateLexer(dependsOn: downloadJFlexAndSkeleton, type: JavaExec) {
-    main '-jar'
-    args """${buildDir}/JFlex.jar
-           |--nobak
-           |--charat
-           |--skel
-           |${buildDir}/idea-flex.skeleton
-           |-d
-           |generated/src/de/plushnikov/intellij/plugin/language
-           |${projectDir}/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex""".stripMargin().split('\n').toList()
+task downloadGrammarLightPsi(type: Download) {
+    description 'Downloads GrammarKit Light Psi.'
+
+    src 'https://github.com/JetBrains/Grammar-Kit/releases/download/1.2.0.1/light-psi-all.jar'
+    dest "$buildDir/tools/light-psi-all.jar"
+    onlyIfNewer true
 }
 
-task generatePsiAndParser(dependsOn: generateLexer, type: JavaExec) {
-    ext.src = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
-    ext.dstRoot = "generated/src"
+task unzipGrammarKit(type: Copy) {
+    description 'Extracts GrammarKit files.'
+    dependsOn downloadGrammarKit
 
-    main = "org.intellij.grammar.Main"
-
-    args = [dstRoot, file(src)]
-
-    inputs.file file(src)
-    outputs.dir fileTree(dir: dstRoot, include: '**/*.java')
-
-    classpath configurations.gen
+    from zipTree("$buildDir/tools/GrammarKit.zip")
+    into "${buildDir}/tools/"
+    include "GrammarKit/lib/*"
 }
 
-apply plugin: 'java'
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+task generateLexer(type: JavaExec) {
+    description 'Generates lexer sources with JFlex.'
+    dependsOn downloadJFlexJar, downloadJFlexSkeleton
 
-    if (!Boolean.valueOf(System.getenv('CI'))) {
-        options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
-    }
-}
-compileJava.dependsOn(generatePsiAndParser)
+    main = 'JFlex.Main'
+    args = [
+            '-nobak',
+            '-sliceandcharat',
+            '-skel',
+            "$buildDir/tools/idea-flex.skeleton",
+            '-d',
+            "generated/src/de/plushnikov/intellij/plugin/language/",
+            "$projectDir/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex",
+    ]
 
-plugins.withType(JavaPlugin) {
-    test {
-        systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
-    }
-}
-
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java',
-                       'generated/src']
-        }
-        resources {
-            srcDirs = ['src/main/resources',
-                       'generated/resources']
-        }
-    }
+    classpath = configurations.jflex
 }
 
-apply plugin: 'org.jetbrains.intellij'
-intellij {
-    def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
-    version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
-    pluginName 'lombok-plugin'
-    plugins 'coverage'
+task generateParser(type: JavaExec) {
+    description 'Generates parser sources with GrammarKit.'
+    dependsOn unzipGrammarKit, downloadGrammarLightPsi
 
-    updateSinceUntilBuild = false
-//    sameSinceUntilBuild = version == "LATEST-EAP-SNAPSHOT"
-    sandboxDirectory = "${project.projectDir}/idea-sandbox/idea-${version}"
-    systemProperty 'idea.is.internal', 'false'
-    downloadSources !Boolean.valueOf(System.getenv('CI'))
+    main = 'org.intellij.grammar.Main'
+    args = ["generated/src", file("src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf")]
 
-    publish {
-        pluginId '6317'
-        username 'mplushnikov'
-        password System.properties['intellij.publish.password']
-    }
+    classpath = configurations.bnf + configurations.compile
 }
+
+task generateSources() {
+    dependsOn generateParser, generateLexer
+}
+
+clean.doFirst {
+    delete 'generated', 'out'
+}
+
+compileJava.dependsOn generateSources

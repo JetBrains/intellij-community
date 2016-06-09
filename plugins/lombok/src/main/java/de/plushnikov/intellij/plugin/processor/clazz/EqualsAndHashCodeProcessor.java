@@ -14,7 +14,8 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -73,6 +74,19 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
+  void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, String generatedMethodName) {
+    final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredBooleanAnnotationValue) {
+      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      if (!"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
+        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
+                "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+      }
+    }
+  }
+
   private void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
     boolean callSuperProperty = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     if (callSuperProperty && !PsiClassUtil.hasSuperClass(psiClass)) {
@@ -92,12 +106,16 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
+    if (hasOneOfMethodsDefined(psiClass)) {
       builder.addWarning("Not generating equals and hashCode: A method with one of those names already exists. (Either both or none of these methods will be generated).");
       return false;
     }
     return true;
+  }
+
+  private boolean hasOneOfMethodsDefined(@NotNull PsiClass psiClass) {
+    final Collection<PsiMethod> classMethodsIntern = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    return PsiMethodUtil.hasMethodByName(classMethodsIntern, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -105,8 +123,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
+    if (hasOneOfMethodsDefined(psiClass)) {
       return Collections.emptyList();
     }
 
@@ -116,6 +133,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
     result.add(createHashCodeMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
 
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (shouldGenerateCanEqual && !PsiMethodUtil.hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME)) {
       result.add(createCanEqualMethod(psiClass, psiAnnotation));
     }
@@ -216,8 +234,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private String createEqualsBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean hasCanEqualMethod) {
-    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
-    final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKeys.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
+    final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final String psiClassName = psiClass.getName();
 
@@ -275,8 +293,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final int PRIME_FOR_FALSE = 97;
 
   private String createHashcodeBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
-    final boolean doNotUseGetters = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "doNotUseGetters", false);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
+    final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -329,6 +347,18 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  private boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    final boolean result;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredAnnotationValue) {
+      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      result = "CALL".equalsIgnoreCase(configProperty);
+    } else {
+      result = declaredAnnotationValue;
+    }
+    return result;
   }
 
   @Override

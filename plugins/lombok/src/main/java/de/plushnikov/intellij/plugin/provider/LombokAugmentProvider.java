@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -14,13 +15,16 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,14 +37,39 @@ import java.util.List;
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
 
-  private ValProcessor valProcessor;
+  private final ValProcessor valProcessor = new ValProcessor();
+  private final Collection<ModifierProcessor> modifierProcessors;
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
-    valProcessor = new ValProcessor();
+
+    modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
   @Nullable
+  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
+  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+    if (DumbService.isDumb(modifierList.getProject())) {
+      return null;
+    }
+
+    // Loop through all available processors and give all of them a chance to respond
+    for (ModifierProcessor processor : modifierProcessors) {
+      if (processor.isSupported(modifierList, name)) {
+        Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
+
+        // We found a match with a 'non-null' value, it is authoritative response
+        if (valueProcessorResult != null) {
+          return valueProcessorResult;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected PsiType inferType(PsiTypeElement typeElement) {
     if (null == typeElement || DumbService.isDumb(typeElement.getProject()) || !valProcessor.isEnabled(typeElement.getProject())) {
       return null;
@@ -83,6 +112,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     } else {
       return emptyResult;
     }
+  }
+
+  private ModifierProcessor[] getModifierProcessors() {
+    return LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions();
   }
 
   private static class FieldLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {

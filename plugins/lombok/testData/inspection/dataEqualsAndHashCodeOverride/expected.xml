@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <!--This problem should NOT be displayed-->
+  <!--<problem>-->
+  <!--<file>Test.java</file>-->
+  <!--<line>9</line>-->
+  <!--<entry_point TYPE="class" FQNAME="DataWithOverrideEqualsAndHashCodeSugestion184.SomesComplex" />-->
+  <!--<problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>-->
+  <!--<description>Generating equals/hashCode implementation but without a call to superclassIf this is not intentional, add '@EqualsAndHashCode(callSuper=true)' to your type.</description>-->
+  <!--</problem>-->
+
+  <!--But this problem should still be displayed-->
+  <problem>
+    <file>Test.java</file>
+    <line>29</line>
+    <entry_point TYPE="class" FQNAME="DataWithOverrideEqualsAndHashCodeSugestion184.SomeDifferent"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Generating equals/hashCode implementation but without a call to superclassIf this is not intentional, add '@EqualsAndHashCode(callSuper=true)'
+      to your type.
+    </description>
+  </problem>
+</problems>

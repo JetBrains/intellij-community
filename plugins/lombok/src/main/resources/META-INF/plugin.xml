@@ -3,11 +3,49 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.10</version>
+  <version>0.12</version>
 
-  <idea-version since-build="142.00"/>
+  <idea-version since-build="138.00"/>
 
-  <description>A plugin that adds first-class support for Project Lombok</description>
+  <description><![CDATA[
+      <h1>IntelliJ Lombok plugin</h1>
+      <br/>
+      <a href="https://github.com/mplushnikov/lombok-intellij-plugin">GitHub</a> |
+      <a href="https://github.com/mplushnikov/lombok-intellij-plugin/issues">Issues</a> | Donate (
+      <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3F9HXD7A2SMCN">PayPal</a> )
+      <br/>
+      <br/>
+
+      <b>A plugin that adds first-class support for Project Lombok</b>
+      <br/>
+      <br/>
+
+      <b>Features</b>
+      <ul>
+        <li><a href="http://projectlombok.org/features/GetterSetter.html">@Getter and @Setter</a></li>
+        <li><a href="http://projectlombok.org/features/ToString.html">@ToString</a></li>
+        <li><a href="http://projectlombok.org/features/EqualsAndHashCode.html">@EqualsAndHashCode</a></li>
+        <li><a href="http://projectlombok.org/features/Constructor.html">@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor</a></li>
+        <li><a href="http://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog</a></li>
+        <li><a href="http://projectlombok.org/features/Data.html">@Data</a></li>
+        <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
+        <li><a href="https://projectlombok.org/features/Builder.html#singular">@Singular</a></li>
+        <li><a href="http://projectlombok.org/features/Delegate.html">@Delegate</a></li>
+        <li><a href="http://projectlombok.org/features/Value.html">@Value</a></li>
+        <li><a href="http://projectlombok.org/features/experimental/Accessors.html">@Accessors</a></li>
+        <li><a href="http://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
+        <li><a href="http://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
+        <li><a href="http://projectlombok.org/features/val.html from IIntellij 14.1">@val</a></li>
+        <li><a href="https://projectlombok.org/features/configuration.html">Lombok config system</a></li>
+        <li>Code inspections</li>
+        <li>Refactoring actions (lombok and delombok)</li>
+      </ul>
+      <br/>
+
+      <i>Compiled with Java 1.6</i>
+      <br/>
+      <br/>
+    ]]></description>
   <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
@@ -16,12 +54,20 @@
 
   <application-components>
     <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginApplicationComponent</implementation-class>
     </component>
   </application-components>
 
+  <project-components>
+    <component>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginProjectValidatorComponent</implementation-class>
+    </component>
+  </project-components>
+
   <extensionPoints>
     <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
+    <extensionPoint name="modifierProcessor" interface="de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,6 +76,7 @@
 
     <projectService serviceImplementation="de.plushnikov.intellij.plugin.provider.LombokProcessorProvider"/>
 
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.settings.LombokSettings"/>
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
@@ -94,6 +141,8 @@
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor"/>
+
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
@@ -104,6 +153,11 @@
     <!-- hrisey -->
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
+
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor" />
   </extensions>
 
   <actions>
@@ -197,14 +251,35 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.12
+				<ol>
+				     <li>Added support for transparent changing of visibility of existing fields and variables</li>
+				     <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using `@Value`</li>
+				     <li>Fixed #137: Private visibility added by @Value not respected by IDE.</li>
+				     <li>Fixed #143: Support UtilityClass</li>
+				     <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
+				     <li>Fixed #158: val causes intellij to show an invalid error when used alongside an anonymous class</li>
+				     <li>Fixed #202: @Builder supports setter for final field (@Value)</li>
+				     <li>Fixed #230: @Value / @EqualsAndHashCode callSuper false warning: lombok.config ignored</li>
+				</ol>
+			</li>
+		<li>0.11
+				<ol>
+				     <li>Fixed #153: Configuration keys</li>
+				     <li>Fixed #125: Support for lombok.getter.noIsPrefix</li>
+				     <li>Fixed #128: Support @Slf4j with custom logger name</li>
+				</ol>
+			</li>
 		<li>0.10
 				<ol>
+				     <li>Overall significant performance optimizations</li>
 				     <li>Fixed #88: Delegating to class with generics using @Delegate annotation </li>
 				     <li>Fixed #136: "Cannot infer arguments" with @RequiredArgsConstructor </li>
-
 				     <li>Fixed #157: Intellij fails to infer type for constructor defined with @RequiredArgsConstructor </li>
-				     <li>Fixed #176: Unchecked warning when using static constructor for @Data and @Value on parameterized class</li>
-
+				     <li>Fixed #176: Unchecked warning when using static constructor for @Data and @Value on parametrized class</li>
+             <li>Fixed #180: Low performance of @Builder analysis</li>
+             <li>Fixed #184: Linter suggests to add @EqualsAndHashCode to declare callSuper, but already overriden</li>
+             <li>Fixed #105: val sometimes fails to be parsed correctly</li>
 				     <li>Fixed #142: IDE highlights val as an error if it had reparsed code before the line was completed</li>
 				     <li>Fixed #168: val does not work with generic method calls as the initializer expression</li>
 				     <li>Fixed #180: Low performance of @Builder analysis</li>

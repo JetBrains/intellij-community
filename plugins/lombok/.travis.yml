@@ -1,22 +1,27 @@
 language: java
 sudo: false
 
-before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-
 jdk:
   - oraclejdk8
 
 env:
+  - IDEA_VERSION=LATEST-TRUNK-SNAPSHOT
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
-  - IDEA_VERSION=IC-2016.1
+  - IDEA_VERSION=IC-2016.1.3
   - IDEA_VERSION=IC-15.0.4
   - IDEA_VERSION=IC-14.1.6
 
 before_install:
  - chmod +x gradlew
+ - pip install --user codecov
 
+after_success:
+  - codecov
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/33baacd26d1b840aebaa
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always

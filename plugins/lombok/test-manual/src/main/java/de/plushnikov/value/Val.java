@@ -17,11 +17,13 @@ public class Val {
 
   public void test() {
     Val val = new Val("other");
+    s1 = "this is possible";
+//    other = "this is not possible";
   }
 
-    public static void main(String[] args) {
-        Val aaa = new Val("aaa");
-        System.out.println(aaa.getS1());
-    }
+  public static void main(String[] args) {
+    Val aaa = new Val("aaa");
+    System.out.println(aaa.getS1());
+  }
 }
 

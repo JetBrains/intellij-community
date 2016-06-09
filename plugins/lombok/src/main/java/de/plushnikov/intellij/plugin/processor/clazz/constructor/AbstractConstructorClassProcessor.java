@@ -17,7 +17,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
@@ -236,7 +236,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    final boolean suppressConstructorProperties = useJavaDefaults || readAnnotationOrConfigProperty(psiAnnotation, psiClass, "suppressConstructorProperties", ConfigKeys.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES);
+    final boolean suppressConstructorProperties = useJavaDefaults || readAnnotationOrConfigProperty(psiAnnotation, psiClass, "suppressConstructorProperties", ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES);
 
     final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, suppressConstructorProperties, useJavaDefaults, params, psiAnnotation);
     if (staticConstructorRequired) {

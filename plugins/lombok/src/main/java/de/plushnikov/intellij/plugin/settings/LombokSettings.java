@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import de.plushnikov.intellij.plugin.Version;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,12 +38,11 @@ public class LombokSettings implements PersistentStateComponent<LombokPluginStat
     myState = element;
   }
 
-  public boolean isDonationShown() {
-    return Version.PLUGIN_VERSION.equals(myState.getDonationShown());
+  public String getVersion() {
+    return myState.getPluginVersion();
   }
 
-  public void setDonationShown() {
-    myState.setDonationShown(Version.PLUGIN_VERSION);
+  public void setVersion(String version) {
+    myState.setPluginVersion(version);
   }
-
 }

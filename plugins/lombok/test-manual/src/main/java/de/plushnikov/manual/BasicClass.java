@@ -1,39 +1,39 @@
 package de.plushnikov.manual;
 
 public class BasicClass {
-    private String privateField;
-    protected int protectedField;
-    public float publicField;
-    boolean packagePrivateField;
+  private String privateField;
+  protected int protectedField;
+  public float publicField;
+  boolean packagePrivateField;
 
-    private String getPrivateField() {
-        return privateField;
-    }
+  private String getPrivateField() {
+    return privateField;
+  }
 
-    protected int getProtectedField() {
-        return protectedField;
-    }
+  protected int getProtectedField() {
+    return protectedField;
+  }
 
-    public float getPublicField() {
-        return publicField;
-    }
+  public float getPublicField() {
+    return publicField;
+  }
 
-    boolean getPackagePrivateField() {
-        return packagePrivateField;
-    }
+  boolean getPackagePrivateField() {
+    return packagePrivateField;
+  }
 
-    BasicClass() {
-    }
+  BasicClass() {
+  }
 
-    public BasicClass(float publicField) {
-        this.publicField = publicField;
-    }
+  public BasicClass(float publicField) {
+    this.publicField = publicField;
+  }
 
-    protected BasicClass(int protectedField) {
-        this.protectedField = protectedField;
-    }
+  protected BasicClass(int protectedField) {
+    this.protectedField = protectedField;
+  }
 
-    private BasicClass(String privateField) {
-        this.privateField = privateField;
-    }
+  private BasicClass(String privateField) {
+    this.privateField = privateField;
+  }
 }

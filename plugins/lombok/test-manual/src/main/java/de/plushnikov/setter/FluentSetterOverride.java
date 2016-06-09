@@ -6,14 +6,14 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(fluent = true)
 public class FluentSetterOverride {
-    private String field;
+  private String field;
 
-    public void init() {
-        field("value");
-    }
+  public void init() {
+    field("value");
+  }
 
-    public FluentSetterOverride field(String field) {
-        this.field = field;
-        return this;
-    }
+  public FluentSetterOverride field(String field) {
+    this.field = field;
+    return this;
+  }
 }
