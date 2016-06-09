@@ -633,4 +633,15 @@ public class StudyUtils {
     }
     return result;
   }
+
+  @Nullable
+  public static Task getTaskFromSelectedEditor(Project project) {
+    final StudyEditor editor = getSelectedStudyEditor(project);
+    Task task = null;
+    if (editor != null) {
+      final TaskFile file = editor.getTaskFile();
+      task = file.getTask();
+    }
+    return task;
+  }
 }
