@@ -131,21 +131,18 @@ public class PyPackageUtil {
 
   @Nullable
   private static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
-    final PyFile setupPy = findSetupPy(module);
-    if (setupPy != null) {
-      final PyCallExpression setupCall = findSetupCall(setupPy);
-      final PyExpression argumentValue = findSetupCallArgumentValue(setupCall, kwargName);
-      if (argumentValue instanceof PyListLiteralExpression) {
-        return (PyListLiteralExpression)argumentValue;
-      }
-      if (argumentValue instanceof PyReferenceExpression) {
-        final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final QualifiedResolveResult result = ((PyReferenceExpression)argumentValue).followAssignmentsChain(resolveContext);
-        final PsiElement element = result.getElement();
-        if (element instanceof PyListLiteralExpression) {
-          return (PyListLiteralExpression)element;
-        }
+    final PyCallExpression setupCall = findSetupCall(module);
+    final PyExpression argumentValue = findSetupCallArgumentValue(setupCall, kwargName);
+    if (argumentValue instanceof PyListLiteralExpression) {
+      return (PyListLiteralExpression)argumentValue;
+    }
+    if (argumentValue instanceof PyReferenceExpression) {
+      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final QualifiedResolveResult result = ((PyReferenceExpression)argumentValue).followAssignmentsChain(resolveContext);
+      final PsiElement element = result.getElement();
+      if (element instanceof PyListLiteralExpression) {
+        return (PyListLiteralExpression)element;
       }
     }
     return null;
@@ -192,6 +189,14 @@ public class PyPackageUtil {
       }
     });
     return result.get();
+  }
+
+  @Nullable
+  public static PyCallExpression findSetupCall(@NotNull Module module) {
+    return Optional
+      .ofNullable(findSetupPy(module))
+      .map(PyPackageUtil::findSetupCall)
+      .orElse(null);
   }
 
   @Nullable

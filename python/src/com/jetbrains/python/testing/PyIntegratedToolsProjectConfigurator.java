@@ -150,9 +150,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   @NotNull
   private static String detectTestRunnerFromSetupPy(@NotNull Module module) {
-    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    if (setupPy == null) return "";
-    final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
+    final PyCallExpression setupCall = PyPackageUtil.findSetupCall(module);
     if (setupCall == null) return "";
     for (String argumentName : Arrays.asList("test_loader", "test_suite")) {
       final PyExpression argumentValue = PyPackageUtil.findSetupCallArgumentValue(setupCall, argumentName);
