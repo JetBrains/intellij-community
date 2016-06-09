@@ -7,8 +7,12 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
+
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 
 /**
  * @author Alexej Kubarev
@@ -17,12 +21,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
   @Override
   @SuppressWarnings("unchecked")
-  public boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name) {
-
-    // @Value makes things final and private, everything else is to be skipped quickly
-    if (!PsiModifier.FINAL.equals(name) && !PsiModifier.PRIVATE.equals(name)) {
-      return false;
-    }
+  public boolean isSupported(@NotNull PsiModifierList modifierList) {
 
     // @Value only makes fields and class final, methods are to be skipped
     final PsiElement modifierListParent = modifierList.getParent();
@@ -36,32 +35,31 @@ public class ValueModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+  @NotNull
+  public Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
 
     final PsiModifierListOwner parentElement = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
     if (null != parentElement) {
 
       // FINAL
-      if (PsiModifier.FINAL.equals(name)) {
+
         if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class)) {
-          return Boolean.TRUE;
+          modifiers.add(PsiModifier.FINAL);
         }
-      }
+
 
       // PRIVATE
-      if (PsiModifier.PRIVATE.equals(name)) {
         if (modifierList.getParent() instanceof PsiField &&
             // Visibility is only changed for package private fields
             hasPackagePrivateModifier(modifierList) &&
             // except they are annotated with @PackagePrivate
             !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
-          return Boolean.TRUE;
-        }
+          modifiers.add(PsiModifier.PRIVATE);
       }
     }
-    // _default_
-    return null;
-  }
+
+    return modifiers;
+  };
 
   private boolean hasPackagePrivateModifier(@NotNull PsiModifierList modifierList) {
     return !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) || modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||

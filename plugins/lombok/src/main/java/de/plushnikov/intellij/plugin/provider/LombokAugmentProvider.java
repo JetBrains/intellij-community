@@ -15,11 +15,7 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.plugin.processor.Processor;
-import de.plushnikov.intellij.plugin.processor.ValProcessor;
-import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +23,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.processor.Processor;
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Provides support for lombok generated elements
@@ -46,26 +50,23 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
-  @Nullable
+  @NotNull
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
-  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+
     if (DumbService.isDumb(modifierList.getProject())) {
-      return null;
+      return modifiers;
     }
 
+    Set<String> result = new HashSet<String>(modifiers);
     // Loop through all available processors and give all of them a chance to respond
     for (ModifierProcessor processor : modifierProcessors) {
-      if (processor.isSupported(modifierList, name)) {
-        Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
-
-        // We found a match with a 'non-null' value, it is authoritative response
-        if (valueProcessorResult != null) {
-          return valueProcessorResult;
-        }
+      if (processor.isSupported(modifierList)) {
+        result = processor.transformModifiers(modifierList, result);
       }
     }
 
-    return null;
+    return result;
   }
 
   @Nullable

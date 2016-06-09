@@ -1,7 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.PsiModifierList;
+
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * To support augmentation of {@link PsiModifierList} properties, processors should implement this interface.
@@ -19,7 +22,7 @@ public interface ModifierProcessor {
    * @param name Name of the property
    * @return true if supported and therefore may be passed to {@link #hasModifierProperty(PsiModifierList, String)}, false otherwise
    */
-  boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name);
+  boolean isSupported(@NotNull PsiModifierList modifierList);
 
   /**
    * Compute correct response for {@link com.intellij.psi.augment.PsiAugmentProvider#hasModifierProperty(PsiModifierList, String)}.
@@ -28,5 +31,8 @@ public interface ModifierProcessor {
    * @param name Name of the property
    * @return Boolean value if property existence could be identified, {@literal null} otherwise.
    */
-  Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name);
+  //Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name);
+
+  @NotNull
+  Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers);
 }
