@@ -23,9 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.stubsHierarchy.impl.ClassAnchorUtil;
-import com.intellij.psi.stubsHierarchy.impl.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
+import com.intellij.psi.stubsHierarchy.impl.SmartClassAnchor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -45,11 +44,11 @@ public class LogSubtypesAction extends InheritanceAction {
       HierarchyService hierarchyService = HierarchyService.instance(project);
       if (hierarchyService != null) {
         LOG.info("Subtypes of " + psiClass + " retrieve started");
-        SmartClassAnchor[] classAnchors = hierarchyService.getSingleClassHierarchy().getSubtypes(psiClass);
+        SmartClassAnchor[] classAnchors = hierarchyService.getSingleClassHierarchy().getDirectSubtypes(psiClass);
         String[] subtypes = new String[classAnchors.length];
         LOG.info("Subtypes of " + psiClass + " retrieve PSI started, count=" + classAnchors.length);
         for (int i = 0; i < classAnchors.length; i++) {
-          PsiClass subClass = ClassAnchorUtil.retrieve(project, classAnchors[i]);
+          PsiClass subClass = classAnchors[i].retrieveClass(project);
           subtypes[i] = subClass.toString() + "(" + subClass.getQualifiedName() + ", " +  subClass.getContainingFile().getVirtualFile().getPresentableUrl() +")";
         }
         LOG.info("Subtypes of " + psiClass + "(" + psiClass.getQualifiedName() + "): " + Arrays.toString(subtypes));

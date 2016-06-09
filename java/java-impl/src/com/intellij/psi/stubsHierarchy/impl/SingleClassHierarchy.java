@@ -20,6 +20,7 @@ import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -37,13 +38,13 @@ public class SingleClassHierarchy {
     this.myClassAnchorsByFileIds = mkByFileId(this.myClassAnchors);
   }
 
-  // under read actions
-  public SmartClassAnchor[] getSubtypes(PsiClass psiClass) {
+  public SmartClassAnchor[] getDirectSubtypes(PsiClass psiClass) {
     int fileId = Math.abs(FileBasedIndex.getFileId(psiClass.getContainingFile().getVirtualFile()));
     SmartClassAnchor anchor = forPsiClass(fileId, psiClass);
-    if (anchor == null) {
-      return SmartClassAnchor.EMPTY_ARRAY;
-    }
+    return anchor == null ? SmartClassAnchor.EMPTY_ARRAY : getDirectSubtypes(anchor);
+  }
+
+  public SmartClassAnchor[] getDirectSubtypes(@NotNull SmartClassAnchor anchor) {
     int symbolId = anchor.myId;
     int start = subtypeStart(symbolId);
     int end = subtypeEnd(symbolId);
@@ -184,7 +185,7 @@ public class SingleClassHierarchy {
       SmartClassAnchor candidate = myClassAnchors[id];
       if (candidate.myFileId != fileId)
         return null;
-      if (psiClass.isEquivalentTo(ClassAnchorUtil.retrieveInReadAction(psiClass.getProject(), candidate)))
+      if (psiClass.isEquivalentTo(candidate.retrieveClass(psiClass.getProject())))
         return candidate;
       id++;
     }

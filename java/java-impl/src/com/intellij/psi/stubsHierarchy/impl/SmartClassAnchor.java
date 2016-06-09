@@ -15,9 +15,23 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class SmartClassAnchor {
   public static final SmartClassAnchor[] EMPTY_ARRAY = new SmartClassAnchor[0];
@@ -37,6 +51,47 @@ public class SmartClassAnchor {
     VirtualFile file = PersistentFS.getInstance().findFileById(myFileId);
     assert file != null;
     return file;
+  }
+
+  @Nullable
+  public PsiClass retrieveClass(@NotNull Project project) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(retrieveFile());
+    assert psiFile != null;
+    return (PsiClass)restoreFromStubIndex((PsiFileWithStubSupport)psiFile, myStubId);
+  }
+
+  private static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {
+    StubTree tree = fileImpl.getStubTree();
+
+    boolean foreign = tree == null;
+    if (foreign) {
+      if (fileImpl instanceof PsiFileImpl) {
+        tree = ((PsiFileImpl)fileImpl).calcStubTree();
+      }
+      else {
+        return null;
+      }
+    }
+
+    List<StubElement<?>> list = tree.getPlainList();
+    if (index >= list.size()) {
+      return null;
+    }
+    StubElement stub = list.get(index);
+
+    if (foreign) {
+      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
+      if (cachedPsi != null) return cachedPsi;
+
+      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
+      return ast != null ? ast.getPsi() : null;
+    }
+    return stub.getPsi();
+  }
+
+  @Override
+  public int hashCode() {
+    return myId;
   }
 
   @Override
