@@ -55,8 +55,16 @@ import java.util.stream.Stream;
  * @author vlan
  */
 public class PyPackageUtil {
+
+  @NotNull
+  private static final String REQUIRES = "requires";
+
+  @NotNull
+  private static final String INSTALL_REQUIRES = "install_requires";
+
+  @NotNull
   private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
-    "requires", "install_requires", "setup_requires", "tests_require"
+    REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
   };
 
   private PyPackageUtil() {
@@ -110,7 +118,7 @@ public class PyPackageUtil {
     }
 
     return Stream
-      .of("requires", "install_requires")
+      .of(REQUIRES, INSTALL_REQUIRES)
       .map(kwargName -> findSetupCallArgumentValue(setupCall, kwargName))
       .map(requires -> resolveRequiresValue(module, requires))
       .filter(requires -> requires != null)
@@ -119,7 +127,7 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static List<PyRequirement> findSetupPyAllRequires(@NotNull Module module) {
+  public static List<PyRequirement> findSetupPyRequires(@NotNull Module module) {
     final PyCallExpression setupCall = findSetupCall(module);
 
     if (setupCall == null) {
@@ -291,7 +299,7 @@ public class PyPackageUtil {
                                                          @NotNull String requirementName,
                                                          @NotNull LanguageLevel languageLevel,
                                                          @NotNull PyElementGenerator generator) {
-    final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? "install_requires" : "requires";
+    final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? INSTALL_REQUIRES : REQUIRES;
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
 

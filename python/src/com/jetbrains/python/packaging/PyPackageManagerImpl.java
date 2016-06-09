@@ -402,7 +402,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public List<PyRequirement> getRequirements(@NotNull Module module) {
     return Optional
       .ofNullable(PyPackageUtil.getRequirementsFromTxt(module))
-      .orElseGet(() -> PyPackageUtil.findSetupPyAllRequires(module));
+      .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
   protected void clearCaches() {
