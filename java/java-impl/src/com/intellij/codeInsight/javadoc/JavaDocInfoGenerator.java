@@ -50,7 +50,6 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -2297,13 +2296,12 @@ public class JavaDocInfoGenerator {
       if (type != null) {
         generateType(myBuffer, type, expression);
       }
-      myBuffer.append("(");
       expression.acceptChildren(this);
-      myBuffer.append(")");
     }
 
     @Override
     public void visitExpressionList(PsiExpressionList list) {
+      myBuffer.append("(");
       String separator = ", ";
       PsiExpression[] expressions = list.getExpressions();
       for (PsiExpression expression : expressions) {
@@ -2313,13 +2311,13 @@ public class JavaDocInfoGenerator {
       if (expressions.length > 0) {
         myBuffer.setLength(myBuffer.length() - separator.length());
       }
+      myBuffer.append(")");
     }
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText())).append("(");
+      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText()));
       expression.getArgumentList().accept(this);
-      myBuffer.append(")");
     }
 
     @Override
