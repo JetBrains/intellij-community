@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
+import com.intellij.execution.junit.testDiscovery.TestsByChanges;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
@@ -48,7 +49,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,6 +103,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     if (JUnitConfiguration.BY_SOURCE_POSITION.equals(id)) {
       return new TestBySource(configuration, environment);
+    }
+    if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
+      return new TestsByChanges(configuration, environment);
     }
     LOG.error(MESSAGE + id);
     return null;

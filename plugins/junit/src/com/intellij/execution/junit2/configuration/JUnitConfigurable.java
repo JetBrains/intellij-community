@@ -43,6 +43,8 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,6 +66,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
@@ -73,7 +77,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     new TIntArrayList(new int[]{3}),
     new TIntArrayList(new int[]{4}),
     new TIntArrayList(new int[]{5}),
-    new TIntArrayList(new int[]{1, 2}));
+    new TIntArrayList(new int[]{1, 2}),
+    new TIntArrayList(new int[]{6})
+    );
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
   private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
@@ -104,6 +110,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JPanel myScopesPanel;
   private JComboBox myRepeatCb;
   private JTextField myRepeatCountField;
+  private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
   private Project myProject;
   private JComponent anchor;
 
@@ -161,6 +168,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     aModel.addElement(JUnitConfigurationModel.CATEGORY);
     if (Registry.is("testDiscovery.enabled")) {
       aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
     }
     myTypeChooser.setModel(aModel);
     myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
@@ -186,7 +194,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             setText("Category");
             break;
           case JUnitConfigurationModel.BY_SOURCE_POSITION:
-            setText("Source location");
+            setText("Through source location");
+            break;
+          case JUnitConfigurationModel.BY_SOURCE_CHANGES:
+            setText("Over changes in sources");
             break;
         }
       }
@@ -263,6 +274,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     setAnchor(mySearchForTestsLabel);
     myJrePathEditor.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
+
+    final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+    myChangeListLabeledComponent.getComponent().setModel(model);
+    model.addElement("All");
+
+    final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+    for (LocalChangeList changeList : changeLists) {
+      model.addElement(changeList.getName());
+    }
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -276,6 +296,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
   public void applyEditorTo(final JUnitConfiguration configuration) {
     myModel.apply(getModuleSelector().getModule(), configuration);
+    configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     applyHelpersTo(configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     if (myWholeProjectScope.isSelected()) {
@@ -308,6 +329,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myRepeatCb.setSelectedItem(configuration.getRepeatMode());
 
     myModel.reset(configuration);
+    myChangeListLabeledComponent.getComponent().setSelectedItem(configuration.getPersistentData().getChangeList());
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
     final TestSearchScope scope = configuration.getPersistentData().getScope();
@@ -339,6 +361,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myCategory.setVisible(false);
       myMethod.setVisible(false);
       myDir.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
@@ -349,6 +372,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
@@ -361,6 +385,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myDir.setVisible(false);
       myClass.setVisible(true);
       myCategory.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(getForkModelBasedOnRepeat());
@@ -374,6 +399,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myClass.setVisible(true);
       myCategory.setVisible(false);
       myMethod.setVisible(true);
+      myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(false);
       myForkCb.setSelectedItem(JUnitConfiguration.FORK_NONE);
     } else if (selectedType == JUnitConfigurationModel.CATEGORY) {
@@ -384,6 +410,20 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myClass.setVisible(false);
       myCategory.setVisible(true);
       myMethod.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(selectedItem);
+    }
+    else if (selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES) {
+      myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
+      myDir.setVisible(false);
+      myPattern.setVisible(false);
+      myClass.setVisible(false);
+      myCategory.setVisible(false);
+      myMethod.setVisible(false);
+      myChangeListLabeledComponent.setVisible(true);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
@@ -396,6 +436,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myClass.setVisible(false);
       myCategory.setVisible(false);
       myMethod.setVisible(true);
+      myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
@@ -503,6 +544,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myPattern.setAnchor(anchor);
     myPackage.setAnchor(anchor);
     myCategory.setAnchor(anchor);
+    myChangeListLabeledComponent.setAnchor(anchor);
   }
 
   public void onTypeChanged(final int newType) {
