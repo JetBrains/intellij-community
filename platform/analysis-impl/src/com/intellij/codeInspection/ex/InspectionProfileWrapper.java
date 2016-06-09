@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -24,11 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.NotNullFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * User: anna
@@ -43,34 +42,30 @@ public class InspectionProfileWrapper {
    * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns
    * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<NotNullFunction<InspectionProfileWrapper, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  public static final Key<Function<InspectionProfile, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+
+  // check whether some inspection got registered twice by accident. 've bit once.
+  private static boolean alreadyChecked;
+
   protected final InspectionProfile myProfile;
 
   public InspectionProfileWrapper(@NotNull InspectionProfile profile) {
     myProfile = profile;
   }
 
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(PsiElement element){
-   return myProfile.getInspectionTools(element);
-  }
-
-  // check whether some inspection got registered twice by accident. 've bit once.
-  private static boolean alreadyChecked;
   public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
-    if (alreadyChecked) return;
+    if (alreadyChecked) {
+      return;
+    }
+
     alreadyChecked = true;
-    Set<InspectionProfileEntry> uniqueTools = new THashSet<InspectionProfileEntry>(toolWrappers.length);
+    Set<InspectionProfileEntry> uniqueTools = new THashSet<>(toolWrappers.length);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
       if (!uniqueTools.add(toolWrapper.getTool())) {
         LOG.error("Inspection " + toolWrapper.getDisplayName() + " (" + toolWrapper.getTool().getClass() + ") already registered");
       }
     }
-  }
-
-  public String getName() {
-    return myProfile.getName();
   }
 
   public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
@@ -81,7 +76,7 @@ public class InspectionProfileWrapper {
     return myProfile.getInspectionTool(shortName, element);
   }
 
-  public void cleanup(@NotNull Project project){
+  public void cleanup(@NotNull Project project) {
     myProfile.cleanup(project);
   }
 

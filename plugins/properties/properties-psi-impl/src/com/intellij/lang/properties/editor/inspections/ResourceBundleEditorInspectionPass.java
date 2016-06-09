@@ -18,9 +18,9 @@ package com.intellij.lang.properties.editor.inspections;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
@@ -30,7 +30,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -60,7 +60,7 @@ public class ResourceBundleEditorInspectionPass {
 
     final Project project = representativeElement.getProject();
 
-    InspectionProfileWrapper profileToUse = ProjectInspectionProfileManagerImpl.getInstanceImpl(project).getProfileWrapper();
+    InspectionProfile profileToUse = InspectionProfileManager.getInstance().getCurrentProfile();
     final PsiFile containingFile = representativeFile.getContainingFile();
     final InspectionToolWrapper[] propertiesTools = profileToUse.getInspectionTools(containingFile);
 
@@ -84,7 +84,7 @@ public class ResourceBundleEditorInspectionPass {
             if (currentFixes != null) {
               allDescriptors.add(Pair.create(descriptor, toolKey));
             }
-            HighlightSeverity severity = profileToUse.getInspectionProfile().getErrorLevel(toolKey, containingFile).getSeverity();
+            HighlightSeverity severity = profileToUse.getErrorLevel(toolKey, containingFile).getSeverity();
             final HighlightInfoType infoType =
               ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
                                                          severity,

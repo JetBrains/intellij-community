@@ -93,7 +93,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null; //optimization
     }
 
-    if (!ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isProfileLoaded() ||
+    if (!ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isCurrentProfileInitialized() ||
         myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
       return null;
     }

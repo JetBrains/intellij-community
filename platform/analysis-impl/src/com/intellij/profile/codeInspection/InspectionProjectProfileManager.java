@@ -20,10 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 30-Nov-2005
- */
+// todo deprecate
 public interface InspectionProjectProfileManager extends InspectionProfileManager {
   static InspectionProjectProfileManager getInstance(@NotNull Project project){
     return project.getComponent(InspectionProjectProfileManager.class);

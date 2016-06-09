@@ -112,14 +112,14 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
       }
 
       @Override
-      public void onSchemeAdded(@NotNull final InspectionProfileImpl scheme) {
+      public void onSchemeAdded(@NotNull InspectionProfileImpl scheme) {
         updateProfileImpl(scheme);
         fireProfileChanged(scheme);
         onProfilesChanged();
       }
 
       @Override
-      public void onSchemeDeleted(@NotNull final InspectionProfileImpl scheme) {
+      public void onSchemeDeleted(@NotNull InspectionProfileImpl scheme) {
         onProfilesChanged();
       }
 
@@ -127,11 +127,17 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
       public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
         Profile current = mySchemeManager.getCurrentScheme();
         if (current != null) {
-          fireProfileChanged((Profile)oldScheme, current, null);
+          fireProfileChanged((Profile)oldScheme, current);
         }
         onProfilesChanged();
       }
     });
+  }
+
+  @NotNull
+  @Override
+  protected SchemeManager<InspectionProfile> getSchemeManager() {
+    return mySchemeManager;
   }
 
   @NotNull
@@ -205,13 +211,13 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
   @Override
   public void updateProfile(@NotNull Profile profile) {
-    mySchemeManager.addScheme((InspectionProfile)profile);
+    super.updateProfile(profile);
     updateProfileImpl(profile);
   }
 
   private static void updateProfileImpl(@NotNull Profile profile) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      ProjectInspectionProfileManagerImpl.getInstanceImpl(project).initProfileWrapper(profile);
+      ProjectInspectionProfileManagerImpl.getInstanceImpl(project).initInspectionTools(profile);
     }
   }
 
@@ -232,6 +238,8 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     return new InspectionProfileConvertor(this);
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public InspectionProfileImpl createProfile() {
     return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
   }
@@ -266,18 +274,6 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
   @NotNull
   public String getRootProfileName() {
     return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
-  }
-
-  @Override
-  public void deleteProfile(@NotNull final String profile) {
-    InspectionProfile found = mySchemeManager.findSchemeByName(profile);
-    if (found != null) {
-      mySchemeManager.removeScheme(found);
-    }
-  }
-
-  public void addProfile(@NotNull Profile profile) {
-    mySchemeManager.addScheme((InspectionProfile)profile);
   }
 
   @Override

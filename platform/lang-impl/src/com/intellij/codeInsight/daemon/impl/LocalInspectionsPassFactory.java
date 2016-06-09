@@ -60,7 +60,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
-    if (textRange == null || !ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isProfileLoaded()){
+    if (textRange == null || !ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isCurrentProfileInitialized()){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
     }
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);

@@ -17,7 +17,6 @@ package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.Disposable
@@ -39,13 +38,10 @@ import com.intellij.profile.ProfileEx
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.util.xmlb.annotations.OptionTag
-import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 
 const val PROFILE = "profile"
@@ -61,7 +57,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
                                           private val localScopesHolder: NamedScopeManager,
-                                          private val schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
+                                          schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): ProjectInspectionProfileManagerImpl {
@@ -69,27 +65,32 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
   }
 
-  private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
-  private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
+//  private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
+//  private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
 
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
-  private val profiles = THashMap<String, InspectionProfile>()
-
   private var state = State()
 
-  private val schemeManager: SchemeManager<InspectionProfile>
+  override val schemeManager: SchemeManager<InspectionProfile>
+
+  private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = null,
+                           @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
 
   init {
+    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
+      override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
+        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
+        profile.isProjectLevel = true
+        return profile
+      }
+    })
+
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
       override fun projectClosed(project: Project) {
         val cleanupInspectionProfilesRunnable = {
-          for (wrapper in nameToProfile.values) {
-            wrapper.cleanup(project)
-          }
-          for (wrapper in appNameToProfile.values) {
-            wrapper.cleanup(project)
-          }
+          cleanupSchemes(project)
+          (InspectionProfileManager.getInstance() as BaseInspectionProfileManager).cleanupSchemes(project)
           fireProfilesShutdown()
         }
 
@@ -102,79 +103,59 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
         }
       }
     })
-
-    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
-      override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
-        profile.isProjectLevel = true
-        return profile
-      }
-    })
   }
 
-  private class State {
-    @OptionTag("PROJECT_PROFILE")
-    var projectProfile: String? = null
+  fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
 
-    @OptionTag("USE_PROJECT_PROFILE")
-    var useProjectProfile = true
-  }
-
-  fun isProfileLoaded(): Boolean {
-    val profile = currentProfile
-    val name = profile.name
-    return if (profile.profileManager === this) nameToProfile.containsKey(name) else appNameToProfile.containsKey(name)
-  }
-
-  val profileWrapper: InspectionProfileWrapper
-    get() {
-      val profile = currentProfile
-      val profileName = profile.name
-      val nameToProfile = if (profile.profileManager === this) nameToProfile else appNameToProfile
-      val wrapper = nameToProfile[profileName]
-      if (wrapper == null) {
-        initProfileWrapper(profile)
-        return nameToProfile.get(profileName)!!
-      }
-      return wrapper
-    }
+//  val profileWrapper: InspectionProfileWrapper
+//    get() {
+//      val profile = currentProfile
+//      val profileName = profile.name
+////      val nameToProfile = if (profile.profileManager === this) nameToProfile else appNameToProfile
+////      val wrapper = nameToProfile.get(profileName)
+////      if (wrapper == null) {
+//        initProfileWrapper(profile)
+////        return nameToProfile.get(profileName)!!
+////      }
+////      return wrapper
+//    }
 
   @Synchronized override fun updateProfile(profile: Profile) {
-    profiles.put(profile.name, profile as InspectionProfile)
-    fireProfileChanged(profile)
-    initProfileWrapper(profile)
+    super.updateProfile(profile)
+    initInspectionTools(profile)
   }
 
-  @Synchronized override fun deleteProfile(name: String) {
-    profiles.remove(name)
-    nameToProfile.remove(name)?.cleanup(project)
+  override fun schemeRemoved(scheme: InspectionProfile) {
+    scheme.cleanup(project)
   }
 
   @Suppress("unused")
-  private inner class ProjectInspectionProfileStartUpActivity : StartupActivity {
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
-      val profileManager = getInstanceImpl(project)
-      val inspectionProfile = profileManager.currentProfile
-      val app = ApplicationManager.getApplication()
-      val initInspectionProfilesRunnable = {
-        profileManager.initProfileWrapper(inspectionProfile)
-        profileManager.fireProfilesInitialized()
-      }
-      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-        initInspectionProfilesRunnable.invoke()
-        //do not restart daemon in the middle of the test
-        //noinspection TestOnlyProblems
-        UIUtil.dispatchAllInvocationEvents()
-      }
-      else {
-        app.executeOnPooledThread(initInspectionProfilesRunnable)
-      }
-      profileManager.scopeListener = NamedScopesHolder.ScopeListener {
-        for (profile in profileManager.profiles.values) {
-          profile.scopesChanged()
+      getInstanceImpl(project).apply {
+        val inspectionProfile = currentProfile
+        val app = ApplicationManager.getApplication()
+        val initInspectionProfilesRunnable = {
+          initInspectionTools(inspectionProfile)
+          fireProfilesInitialized()
         }
-      }
-      profileManager.apply {
+        if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+          initInspectionProfilesRunnable.invoke()
+          if (app.isDispatchThread) {
+            //do not restart daemon in the middle of the test
+            //noinspection TestOnlyProblems
+            UIUtil.dispatchAllInvocationEvents()
+          }
+        }
+        else {
+          app.executeOnPooledThread(initInspectionProfilesRunnable)
+        }
+        scopeListener = NamedScopesHolder.ScopeListener {
+          for (profile in schemeManager.allSchemes) {
+            profile.scopesChanged()
+          }
+        }
+
         scopeManager.addScopeListener(scopeListener!!)
         localScopesHolder.addScopeListener(scopeListener!!)
         Disposer.register(project, Disposable {
@@ -185,16 +166,9 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
   }
 
-  fun initProfileWrapper(profile: Profile) {
-    val wrapper = InspectionProfileWrapper(profile as InspectionProfile)
+  fun initInspectionTools(profile: Profile) {
     if (profile is InspectionProfileImpl) {
       profile.initInspectionTools(project)
-    }
-    if (profile.getProfileManager() === this) {
-      nameToProfile.put(profile.name, wrapper)
-    }
-    else {
-      appNameToProfile.put(profile.name, wrapper)
     }
   }
 
@@ -207,8 +181,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
 
     val profileKeys = THashSet<String>()
-    profileKeys.addAll(profiles.keys)
-    profiles.clear()
+    profileKeys.addAll(schemeManager.allSchemeNames)
     val newState = State()
     XmlSerializer.deserializeInto(newState, state)
     this.state = newState
@@ -236,30 +209,9 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   }
 
   @Synchronized override fun getState(): Element? {
-    val result = Element("settings")
-
-    val sortedProfiles = profiles.keys.toTypedArray<String>()
-    Arrays.sort(sortedProfiles)
-    for (profile in sortedProfiles) {
-      profiles.get(profile)?.let {
-        val profileElement = ProfileEx.serializeProfile(it)
-        var hasSmthToSave = sortedProfiles.size > 1 || isCustomProfileUsed
-        if (!hasSmthToSave) {
-          for (child in profileElement.children) {
-            if (child.name != "option") {
-              hasSmthToSave = true
-              break
-            }
-          }
-        }
-        if (hasSmthToSave) {
-          result.addContent(profileElement)
-        }
-      }
-    }
-
-    if (!result.children.isEmpty() || isCustomProfileUsed) {
-      XmlSerializer.serializeInto(this.state, result)
+    val result = Element("state")
+    XmlSerializer.serializeInto(this.state, result, SkipDefaultsSerializationFilter())
+    if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
 
@@ -267,17 +219,14 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     return result
   }
 
-  private val isCustomProfileUsed: Boolean
-    get() = state.projectProfile != null && state.projectProfile != PROJECT_DEFAULT_PROFILE_NAME
-
   override fun getScopesManager() = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<Profile> {
     currentProfile
-    return profiles.values
+    return schemeManager.allSchemes
   }
 
-  @Synchronized override fun getAvailableProfileNames() = profiles.keys.toTypedArray()
+  @Synchronized override fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = state.projectProfile
@@ -297,26 +246,28 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
   }
 
-  @Synchronized override fun getCurrentProfile(): InspectionProfile {
+  @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
-      return applicationProfileManager.currentProfile
+      return applicationProfileManager.currentProfile as InspectionProfileImpl
     }
-    if (state.projectProfile == null || profiles.isEmpty) {
+
+    val currentName = state.projectProfile
+    if (currentName == null || schemeManager.allSchemes.isEmpty()) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
-      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), null)
+      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, InspectionProfileImpl.getDefaultProfile(), null)
       projectProfile.copyFrom(applicationProfileManager.currentProfile)
       projectProfile.isProjectLevel = true
       projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
-      profiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile)
+      schemeManager.addScheme(projectProfile)
+      return projectProfile
     }
-    else if (!profiles.containsKey(state.projectProfile)) {
-      state.projectProfile = profiles.keys.iterator().next()
+
+    var profile = schemeManager.findSchemeByName(currentName)
+    if (profile == null) {
+      profile = schemeManager.allSchemes.get(0)!!
+      state.projectProfile = profile.name
     }
-    val profile = profiles.get(state.projectProfile)!!
-    if (profile.isProjectLevel) {
-      profile.profileManager = this
-    }
-    return profile
+    return profile as InspectionProfileImpl
   }
 
   private fun fireProfilesInitialized() {
@@ -332,7 +283,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   }
 
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile? {
-    val profile = profiles.get(name)
+    val profile = schemeManager.findSchemeByName(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
 }

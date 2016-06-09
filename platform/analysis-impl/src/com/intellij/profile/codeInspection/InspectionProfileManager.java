@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.ProfileManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
 
   void fireProfileChanged(@NotNull Profile profile);
 
-  void fireProfileChanged(@NotNull Profile oldProfile, Profile profile, @Nullable NamedScope scope);
+  void fireProfileChanged(@Nullable Profile oldProfile, @NotNull Profile profile);
 
   void setRootProfile(@Nullable String profileName);
 
