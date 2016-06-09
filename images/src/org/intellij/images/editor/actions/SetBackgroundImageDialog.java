@@ -331,9 +331,11 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
     if (value.startsWith(",")) value = null;
 
-    PropertiesComponent propertiesComponent =
-      myThisProjectOnlyCb.isSelected() ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
-    propertiesComponent.setValue(prop, value);
+    boolean perProject = myThisProjectOnlyCb.isSelected();
+    PropertiesComponent.getInstance(myProject).setValue(prop, perProject ? value : null);
+    if (!perProject) {
+      PropertiesComponent.getInstance().setValue(prop, value);
+    }
 
     repaintAllWindows();
   }
