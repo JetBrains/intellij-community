@@ -45,14 +45,18 @@ public class TestDiscoveryIndex implements ProjectComponent {
   private static final int REMOVED_MARKER = -1;
   private final Object ourLock = new Object();
   private final Project myProject;
+  private final String myBasePath;
   private volatile Holder myHolder;
 
   public TestDiscoveryIndex(Project project) {
+    this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
+  }
+
+  public TestDiscoveryIndex(final Project project, final String basePath) {
     myProject = project;
 
-    String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
-
-    if (new File(path).exists()) {
+    myBasePath = basePath;
+    if (new File(basePath).exists()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         getHolder(); // proactively init with maybe io costly compact
       }));
@@ -204,22 +208,26 @@ public class TestDiscoveryIndex implements ProjectComponent {
     private boolean myDisposed;
 
     Holder() {
-      String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
-      final File versionFile = getVersionFile(path);
+      final File versionFile = getVersionFile(myBasePath);
       versionFile.getParentFile().mkdirs();
-      final File methodQNameToTestNameFile = new File(path + File.separator + "methodQNameToTestName.data");
-      final File testNameToUsedClassesAndMethodMapFile = new File(path + File.separator + "testToCalledMethodNames.data");
-      final File classNameEnumeratorFile = new File(path + File.separator + "classNameEnumerator.data");
-      final File methodNameEnumeratorFile = new File(path + File.separator + "methodNameEnumerator.data");
-      final File testNameEnumeratorFile = new File(path + File.separator + "testNameEnumerator.data");
-      final File moduleNameEnumeratorFile = new File(path + File.separator + "moduleNameEnumerator.data");
-      final File testNameToNearestModuleFile = new File(path + File.separator + "testNameToNearestModule.data");
+      final File methodQNameToTestNameFile = new File(myBasePath + File.separator + "methodQNameToTestName.data");
+      final File testNameToUsedClassesAndMethodMapFile = new File(myBasePath + File.separator + "testToCalledMethodNames.data");
+      final File classNameEnumeratorFile = new File(myBasePath + File.separator + "classNameEnumerator.data");
+      final File methodNameEnumeratorFile = new File(myBasePath + File.separator + "methodNameEnumerator.data");
+      final File testNameEnumeratorFile = new File(myBasePath + File.separator + "testNameEnumerator.data");
+      final File moduleNameEnumeratorFile = new File(myBasePath + File.separator + "moduleNameEnumerator.data");
+      final File testNameToNearestModuleFile = new File(myBasePath + File.separator + "testNameToNearestModule.data");
 
       try {
         int version = readVersion(versionFile);
         if (version != VERSION) {
           LOG.info("TestDiscoveryIndex was rewritten due to version change");
-          deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile, testNameEnumeratorFile);
+          deleteAllIndexDataFiles(methodQNameToTestNameFile,
+                                  testNameToUsedClassesAndMethodMapFile,
+                                  classNameEnumeratorFile,
+                                  methodNameEnumeratorFile,
+                                  testNameEnumeratorFile, moduleNameEnumeratorFile,
+                                  testNameToNearestModuleFile);
 
           writeVersion(versionFile);
         }
@@ -276,7 +284,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
             myConstructedDataFiles.clear();
 
             deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile,
-                                    testNameEnumeratorFile);
+                                    testNameEnumeratorFile, moduleNameEnumeratorFile, testNameToNearestModuleFile);
             // try another time
           }
 
@@ -327,14 +335,10 @@ public class TestDiscoveryIndex implements ProjectComponent {
       }
     }
 
-    private void deleteAllIndexDataFiles(File methodQNameToTestNameFile,
-                                         File testNameToUsedClassesAndMethodMapFile,
-                                         File classNameEnumeratorFile, File methodNameEnumeratorFile, File testNameEnumeratorFile) {
-      IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
-      IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
-      IOUtil.deleteAllFilesStartingWith(classNameEnumeratorFile);
-      IOUtil.deleteAllFilesStartingWith(methodNameEnumeratorFile);
-      IOUtil.deleteAllFilesStartingWith(testNameEnumeratorFile);
+    private void deleteAllIndexDataFiles(File... files) {
+      for (File file : files) {
+        IOUtil.deleteAllFilesStartingWith(file);
+      }
     }
 
     private void writeVersion(File versionFile) throws IOException {
@@ -465,10 +469,10 @@ public class TestDiscoveryIndex implements ProjectComponent {
     }
   }
 
-  public void updateFromTestTrace(@NotNull File file, JavaTestConfigurationBase configurationBase) throws IOException {
+  public void updateFromTestTrace(@NotNull File file, @Nullable JavaTestConfigurationBase configurationBase) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    final Module module = configurationBase.getConfigurationModule().getModule();
+    final Module module = configurationBase != null ? configurationBase.getConfigurationModule().getModule() : null;
     doUpdateFromTestTrace(file, testName, module != null ? configurationBase.getFrameworkPrefix() + module.getName() : null);
   }
 
