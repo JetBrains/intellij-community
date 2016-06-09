@@ -36,6 +36,7 @@ package foo.bar;
 public class MyClass {
   public static Object BAR = null;
   public static void foo() {}
+  public void hello() {}
 }
 '''
   }
@@ -85,7 +86,10 @@ public class MyClass {
       [new Import("foo.bar.MyClass", ImportType.STATIC_STAR)]
     } as GrImportContributor, testRootDisposable)
     fixture.with {
-      configureByText('a.groovy', 'println foo()\n println BAR')
+      configureByText('a.groovy', '''\
+println foo()
+println <warning>hello</warning>()
+println BAR''')
       checkHighlighting()
     }
   }
