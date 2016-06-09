@@ -487,12 +487,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Nullable
     private PyArgumentList findSetupArgumentList() {
-      final PyFile setupPy = PyPackageUtil.findSetupPy(myModule);
-      if (setupPy != null) {
-        final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
-        if (setupCall != null) {
-          return setupCall.getArgumentList();
-        }
+      final PyCallExpression setupCall = PyPackageUtil.findSetupCall(myModule);
+      if (setupCall != null) {
+        return setupCall.getArgumentList();
       }
       return null;
     }
