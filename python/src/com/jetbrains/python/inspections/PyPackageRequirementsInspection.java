@@ -52,7 +52,7 @@ import java.util.*;
  */
 public class PyPackageRequirementsInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyPackageRequirementsInspection.class);
-  
+
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 
   @NotNull
@@ -467,41 +467,20 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static class AddToRequirementsFix implements LocalQuickFix {
+    @NotNull private final Module myModule;
     @NotNull private final String myPackageName;
     @NotNull private final LanguageLevel myLanguageLevel;
-    @NotNull private Module myModule;
 
     private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, @NotNull LanguageLevel languageLevel) {
+      myModule = module;
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
-      myModule = module;
-    }
-
-    @Nullable
-    private PyArgumentList findSetupArgumentList() {
-      final PyCallExpression setupCall = PyPackageUtil.findSetupCall(myModule);
-      if (setupCall != null) {
-        return setupCall.getArgumentList();
-      }
-      return null;
     }
 
     @NotNull
     @Override
     public String getName() {
-      final String target;
-      final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
-      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyInstallRequires(myModule);
-      if (requirementsTxt != null) {
-        target = requirementsTxt.getName();
-      }
-      else if (setupPyRequires != null || findSetupArgumentList() != null) {
-        target = "setup.py";
-      }
-      else {
-        target = "project requirements";
-      }
-      return String.format("Add requirement '%s' to %s", myPackageName, target);
+      return String.format("Add requirement '%s' to %s", myPackageName, calculateTarget());
     }
 
     @NotNull
@@ -515,6 +494,20 @@ public class PyPackageRequirementsInspection extends PyInspection {
       CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
         PyPackageUtil.addRequirementToTxtOrSetupPy(myModule, myPackageName, myLanguageLevel);
       }), getName(), null);
+    }
+
+    @NotNull
+    private String calculateTarget() {
+      final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
+      if (requirementsTxt != null) {
+        return requirementsTxt.getName();
+      }
+      else if (PyPackageUtil.findSetupCall(myModule) != null) {
+        return "setup.py";
+      }
+      else {
+        return "project requirements";
+      }
     }
   }
 }
