@@ -119,7 +119,7 @@ public class PyPackageUtil {
 
     return Stream
       .of(REQUIRES, INSTALL_REQUIRES)
-      .map(kwargName -> findSetupCallArgumentValue(setupCall, kwargName))
+      .map(setupCall::getKeywordArgument)
       .map(requires -> resolveRequiresValue(module, requires))
       .filter(requires -> requires != null)
       .findFirst()
@@ -137,7 +137,7 @@ public class PyPackageUtil {
     return PyRequirement.fromText(
       Stream
         .of(SETUP_PY_REQUIRES_KWARGS_NAMES)
-        .map(kwargName -> findSetupCallArgumentValue(setupCall, kwargName))
+        .map(setupCall::getKeywordArgument)
         .map(requires -> resolveRequiresValue(module, requires))
         .filter(requires -> requires != null)
         .flatMap(requires -> Stream.of(requires.getElements()))
@@ -212,17 +212,6 @@ public class PyPackageUtil {
     return Optional
       .ofNullable(findSetupPy(module))
       .map(PyPackageUtil::findSetupCall)
-      .orElse(null);
-  }
-
-  @Nullable
-  public static PyExpression findSetupCallArgumentValue(@NotNull PyCallExpression setupCall, @NotNull String argumentName) {
-    return Optional
-      .of(setupCall)
-      .map(call -> call.getKeywordArgument(argumentName))
-      .filter(PyKeywordArgument.class::isInstance)
-      .map(PyKeywordArgument.class::cast)
-      .map(PyKeywordArgument::getValueExpression)
       .orElse(null);
   }
 
@@ -312,7 +301,14 @@ public class PyPackageUtil {
 
     if (generated instanceof PyCallExpression) {
       final PyCallExpression callExpression = (PyCallExpression)generated;
-      return callExpression.getArgument(0, keyword, PyKeywordArgument.class);
+
+      return Stream
+        .of(callExpression.getArguments())
+        .filter(PyKeywordArgument.class::isInstance)
+        .map(PyKeywordArgument.class::cast)
+        .filter(kwarg -> keyword.equals(kwarg.getKeyword()))
+        .findFirst()
+        .orElse(null);
     }
 
     return null;

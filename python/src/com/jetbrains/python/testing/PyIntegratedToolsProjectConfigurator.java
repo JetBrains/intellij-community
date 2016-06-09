@@ -153,7 +153,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     final PyCallExpression setupCall = PyPackageUtil.findSetupCall(module);
     if (setupCall == null) return "";
     for (String argumentName : Arrays.asList("test_loader", "test_suite")) {
-      final PyExpression argumentValue = PyPackageUtil.findSetupCallArgumentValue(setupCall, argumentName);
+      final PyExpression argumentValue = setupCall.getKeywordArgument(argumentName);
       if (argumentValue instanceof PyStringLiteralExpression) {
         final String stringValue = ((PyStringLiteralExpression)argumentValue).getStringValue();
         if (stringValue.contains(PyNames.NOSE_TEST)) {
