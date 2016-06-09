@@ -559,11 +559,12 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           return;
         }
 
+        boolean canceled = false;
         try {
           if (documentManager.isCommitted(document)) return;
 
           if (!task.isStillValid()) {
-            task.cancel("Task invalidated", DocumentCommitThread.this);
+            canceled = true;
             return;
           }
 
@@ -586,6 +587,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         }
         finally {
           lock.unlock();
+          if (canceled) {
+            task.cancel("Task invalidated", DocumentCommitThread.this);
+          }
         }
       }
     };
