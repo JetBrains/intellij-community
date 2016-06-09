@@ -107,7 +107,7 @@ public final class FloatingDecorator extends JDialog {
 
     //
 
-    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane());
+    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
     getRootPane().setGlassPane(ideGlassPane);
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
