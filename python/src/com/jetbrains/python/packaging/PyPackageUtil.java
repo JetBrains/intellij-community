@@ -216,9 +216,9 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyExpression findSetupCallArgumentValue(@Nullable PyCallExpression setupCall, @NotNull String argumentName) {
+  public static PyExpression findSetupCallArgumentValue(@NotNull PyCallExpression setupCall, @NotNull String argumentName) {
     return Optional
-      .ofNullable(setupCall)
+      .of(setupCall)
       .map(call -> call.getKeywordArgument(argumentName))
       .filter(PyKeywordArgument.class::isInstance)
       .map(PyKeywordArgument.class::cast)
@@ -266,30 +266,37 @@ public class PyPackageUtil {
                                                   @NotNull String requirementName,
                                                   @NotNull LanguageLevel languageLevel) {
     final VirtualFile requirementsTxt = findRequirementsTxt(module);
-    if (requirementsTxt != null) {
-      if (requirementsTxt.isWritable()) {
-        final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
-        if (document != null) {
-          document.insertString(0, requirementName + "\n");
-        }
+    if (requirementsTxt != null && requirementsTxt.isWritable()) {
+      final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
+      if (document != null) {
+        document.insertString(0, requirementName + "\n");
       }
+      return;
     }
-    else {
-      final PyListLiteralExpression setupPyRequires = findSetupPyInstallRequires(module, findSetupCall(module));
-      final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
-      final PyArgumentList argumentList = Optional.ofNullable(findSetupCall(module)).map(PyCallExpression::getArgumentList).orElse(null);
-      if (setupPyRequires != null) {
-        if (setupPyRequires.getContainingFile().isWritable()) {
-          final String text = String.format("'%s'", requirementName);
-          final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
-          setupPyRequires.add(generated);
-        }
-      }
-      else if (argumentList != null) {
-        final PyKeywordArgument requiresArg = generateRequiresKwarg(findSetupPy(module), requirementName, languageLevel, generator);
-        if (requiresArg != null) {
-          argumentList.addArgument(requiresArg);
-        }
+
+    final PyFile setupPy = findSetupPy(module);
+    if (setupPy == null) {
+      return;
+    }
+
+    final PyCallExpression setupCall = findSetupCall(setupPy);
+    final PyListLiteralExpression installRequires = findSetupPyInstallRequires(module, setupCall);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
+
+    if (installRequires != null && installRequires.isWritable()) {
+      final String text = String.format("'%s'", requirementName);
+      final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
+      installRequires.add(generated);
+
+      return;
+    }
+
+    if (setupCall != null) {
+      final PyArgumentList argumentList = setupCall.getArgumentList();
+      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel, generator);
+
+      if (argumentList != null && requiresArg != null) {
+        argumentList.addArgument(requiresArg);
       }
     }
   }
