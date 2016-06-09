@@ -46,9 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -104,45 +104,50 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module) {
+  private static PyListLiteralExpression findSetupPyInstallRequires(@NotNull Module module, @Nullable PyCallExpression setupCall) {
+    if (setupCall == null) {
+      return null;
+    }
+
     return Stream
       .of("requires", "install_requires")
-      .map(kwargName -> findSetupPyRequires(module, kwargName))
-      .filter(kwarg -> kwarg != null)
+      .map(kwargName -> findSetupCallArgumentValue(setupCall, kwargName))
+      .map(requires -> resolveRequiresValue(module, requires))
+      .filter(requires -> requires != null)
       .findFirst()
       .orElse(null);
   }
 
   @Nullable
   public static List<PyRequirement> findSetupPyAllRequires(@NotNull Module module) {
-    final List<String> lines = new ArrayList<String>();
-    for (String name : SETUP_PY_REQUIRES_KWARGS_NAMES) {
-      final PyListLiteralExpression installRequires = findSetupPyRequires(module, name);
-      if (installRequires != null) {
-        for (PyExpression e : installRequires.getElements()) {
-          if (e instanceof PyStringLiteralExpression) {
-            lines.add(((PyStringLiteralExpression)e).getStringValue());
-          }
-        }
-      }
+    final PyCallExpression setupCall = findSetupCall(module);
+
+    if (setupCall == null) {
+      return null;
     }
-    if (!lines.isEmpty()) {
-      return PyRequirement.fromText(StringUtil.join(lines, "\n"));
-    }
-    return findSetupPy(module) != null ? Collections.emptyList() : null;
+
+    return PyRequirement.fromText(
+      Stream
+        .of(SETUP_PY_REQUIRES_KWARGS_NAMES)
+        .map(kwargName -> findSetupCallArgumentValue(setupCall, kwargName))
+        .map(requires -> resolveRequiresValue(module, requires))
+        .filter(requires -> requires != null)
+        .flatMap(requires -> Stream.of(requires.getElements()))
+        .filter(PyStringLiteralExpression.class::isInstance)
+        .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
+        .collect(Collectors.joining("\n"))
+    );
   }
 
   @Nullable
-  private static PyListLiteralExpression findSetupPyRequires(@NotNull Module module, @NotNull String kwargName) {
-    final PyCallExpression setupCall = findSetupCall(module);
-    final PyExpression argumentValue = findSetupCallArgumentValue(setupCall, kwargName);
-    if (argumentValue instanceof PyListLiteralExpression) {
-      return (PyListLiteralExpression)argumentValue;
+  private static PyListLiteralExpression resolveRequiresValue(@NotNull Module module, @Nullable PyExpression requires) {
+    if (requires instanceof PyListLiteralExpression) {
+      return (PyListLiteralExpression)requires;
     }
-    if (argumentValue instanceof PyReferenceExpression) {
+    if (requires instanceof PyReferenceExpression) {
       final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult result = ((PyReferenceExpression)argumentValue).followAssignmentsChain(resolveContext);
+      final QualifiedResolveResult result = ((PyReferenceExpression)requires).followAssignmentsChain(resolveContext);
       final PsiElement element = result.getElement();
       if (element instanceof PyListLiteralExpression) {
         return (PyListLiteralExpression)element;
@@ -262,7 +267,7 @@ public class PyPackageUtil {
       }
     }
     else {
-      final PyListLiteralExpression setupPyRequires = findSetupPyInstallRequires(module);
+      final PyListLiteralExpression setupPyRequires = findSetupPyInstallRequires(module, findSetupCall(module));
       final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
       final PyArgumentList argumentList = Optional.ofNullable(findSetupCall(module)).map(PyCallExpression::getArgumentList).orElse(null);
       if (setupPyRequires != null) {
