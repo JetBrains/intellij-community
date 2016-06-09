@@ -20,10 +20,6 @@
  */
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.codeInsight.daemon.ReferenceImporter;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -90,7 +86,8 @@ public final class PythonImportUtils {
 
   @Nullable
   private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText, @Nullable String asName) {
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    final boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
     Set<String> seenFileNames = new HashSet<String>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenFileNames);
