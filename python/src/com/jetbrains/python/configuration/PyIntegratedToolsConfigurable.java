@@ -113,7 +113,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @NotNull
   private String getRequirementsPath() {
     final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && PyPackageUtil.findRequirementsTxt(myModule) == null) {
+    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
     }
     else {
