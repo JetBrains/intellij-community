@@ -16,9 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
+import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
@@ -68,7 +67,15 @@ fun processImplicitImports(processor: PsiScopeProcessor,
                            file: GroovyFile): Boolean {
   val hint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
   val facade = JavaPsiFacade.getInstance(file.project)
-  val packageSkipper = PackageSkippingProcessor(processor)
+
+  val packageSkipper = lazy(LazyThreadSafetyMode.NONE) { PackageSkippingProcessor(processor) }
+  val staticMemberFilter = lazy(LazyThreadSafetyMode.NONE) {
+    object : DelegatingScopeProcessor(processor) {
+      override fun execute(element: PsiElement, state: ResolveState): Boolean {
+        return element !is PsiMember || !element.hasModifierProperty(PsiModifier.STATIC) || super.execute(element, state)
+      }
+    }
+  }
 
   loop@for (implicitImport in getImplicitImports(file)) {
     when (implicitImport.type) {
@@ -94,11 +101,11 @@ fun processImplicitImports(processor: PsiScopeProcessor,
       }
       ImportType.STAR -> {
         val pckg = facade.findPackage(implicitImport.name) ?: continue@loop
-        if (!pckg.processDeclarations(packageSkipper, state, lastParent, place)) return false
+        if (!pckg.processDeclarations(packageSkipper.value, state, lastParent, place)) return false
       }
       ImportType.STATIC_STAR -> {
         val clazz = facade.findClass(implicitImport.name, file.resolveScope) ?: continue@loop
-        if (!clazz.processDeclarations(processor, state, lastParent, place)) return false
+        if (!clazz.processDeclarations(staticMemberFilter.value, state, lastParent, place)) return false
       }
     }
   }
