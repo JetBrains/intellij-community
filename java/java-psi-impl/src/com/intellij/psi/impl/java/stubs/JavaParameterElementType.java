@@ -82,7 +82,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     if (name == null) throw new IOException("corrupted indices");
     TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
-    return new PsiParameterStubImpl(parentStub, name, type, flags);
+    return new PsiParameterStubImpl(parentStub, name.toString(), type, flags);
   }
 
   @Override

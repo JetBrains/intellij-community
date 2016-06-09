@@ -22,7 +22,6 @@ import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,16 +34,12 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private static final byte DEPRECATED_ANNOTATION = 0x04;
   private static final byte HAS_DOC_COMMENT = 0x08;
 
-  private final StringRef myName;
+  private final String myName;
   private final TypeInfo myType;
-  private final StringRef myInitializer;
+  private final String myInitializer;
   private final byte myFlags;
 
-  public PsiFieldStubImpl(StubElement parent, String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
-    this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
-  }
-
-  public PsiFieldStubImpl(StubElement parent, StringRef name, @NotNull TypeInfo type, @Nullable StringRef initializer, byte flags) {
+  public PsiFieldStubImpl(StubElement parent, @Nullable String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
     myName = name;
     myType = type;
@@ -64,7 +59,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
 
   @Override
   public String getInitializerText() {
-    return StringRef.toString(myInitializer);
+    return myInitializer;
   }
 
   @Override
@@ -93,7 +88,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   public static byte packFlags(boolean isEnumConst, boolean isDeprecated, boolean hasDeprecatedAnnotation, boolean hasDocComment) {
