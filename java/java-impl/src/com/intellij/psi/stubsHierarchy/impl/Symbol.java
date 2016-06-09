@@ -18,6 +18,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import com.intellij.util.BitUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -158,6 +159,20 @@ public abstract class Symbol {
 
     boolean isHierarchyIncomplete() {
       return myHierarchyIncomplete;
+    }
+
+    boolean hasAmbiguousSupers() {
+      ClassSymbol[] superClasses = rawSuperClasses();
+      if (superClasses.length < 2) return false;
+
+      TIntHashSet superNames = new TIntHashSet();
+      for (ClassSymbol symbol : superClasses) {
+        if (!superNames.add(symbol.myShortName)) {
+          return true;
+        }
+      }
+
+      return false;
     }
   }
 

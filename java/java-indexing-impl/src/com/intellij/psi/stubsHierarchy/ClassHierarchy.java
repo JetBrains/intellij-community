@@ -16,6 +16,7 @@
 package com.intellij.psi.stubsHierarchy;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,4 +42,15 @@ public abstract class ClassHierarchy {
 
   @NotNull
   public abstract SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull SmartClassAnchor anchor);
+
+  /**
+   * @return whether stub hierarchy resolver couldn't determine the super class exactly because there were several possible candidates
+   */
+  public abstract boolean hasAmbiguousSupers(@NotNull SmartClassAnchor anchor);
+
+  /**
+   * @return the given scope restricted to the files not covered by this hierarchy, to use usual PSI/resolve-based inheritor search in it
+   */
+  @NotNull
+  public abstract GlobalSearchScope restrictToUncovered(@NotNull GlobalSearchScope scope);
 }
