@@ -1,5 +1,11 @@
+buildscript {
+    repositories {
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+}
+
 plugins {
-    id 'org.jetbrains.intellij' version '0.0.43'
+    id "org.jetbrains.intellij" version "0.1.6"
     id 'de.undercouch.download' version '2.1.0'
 }
 
@@ -54,7 +60,7 @@ intellij {
     version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
 
     pluginName pluginName
-    downloadSources Boolean.valueOf(sources)
+    downloadSources !Boolean.valueOf(System.getenv('CI'))
     sameSinceUntilBuild Boolean.valueOf(isEAP)
     alternativeIdePath idePath
     updateSinceUntilBuild false
@@ -64,7 +70,6 @@ intellij {
     plugins 'coverage'
 
     publish {
-        pluginId publishPluginId
         channel publishChannel
         username publishUsername
         password System.properties['intellij.publish.password']
