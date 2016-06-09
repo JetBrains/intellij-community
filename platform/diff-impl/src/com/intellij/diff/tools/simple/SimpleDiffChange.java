@@ -15,11 +15,19 @@
  */
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.chains.*;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.DiffFragmentWithLink;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.DiffWindow;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -27,15 +35,22 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleDiffChange {
+  private static final Logger LOG = Logger.getInstance(SimpleDiffChange.class);
+
   @NotNull private final SimpleDiffViewer myViewer;
 
   @NotNull private final LineFragment myFragment;
@@ -90,9 +105,10 @@ public class SimpleDiffChange {
 
   private void doInstallHighlighterWithInner() {
     assert myInnerFragments != null;
+    boolean ignored = !ContainerUtil.exists(myInnerFragments, innerFragment -> innerFragment instanceof DiffFragmentWithLink);
 
-    createHighlighter(Side.LEFT, true);
-    createHighlighter(Side.RIGHT, true);
+    createHighlighter(Side.LEFT, ignored);
+    createHighlighter(Side.RIGHT, ignored);
 
     for (DiffFragment fragment : myInnerFragments) {
       createInlineHighlighter(fragment, Side.LEFT);
@@ -103,6 +119,8 @@ public class SimpleDiffChange {
   private void doInstallActionHighlighters() {
     myOperations.add(createOperation(Side.LEFT));
     myOperations.add(createOperation(Side.RIGHT));
+    myOperations.addAll(createShowMatchingFragmentOperation(Side.LEFT));
+    myOperations.addAll(createShowMatchingFragmentOperation(Side.RIGHT));
   }
 
   private void createHighlighter(@NotNull Side side, boolean ignored) {
@@ -126,7 +144,7 @@ public class SimpleDiffChange {
     end += startOffset;
 
     Editor editor = myViewer.getEditor(side);
-    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type));
+    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type, fragment instanceof DiffFragmentWithLink));
   }
 
   public void updateGutterActions(boolean force) {
@@ -204,18 +222,42 @@ public class SimpleDiffChange {
                                                                                HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                null,
                                                                                HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
+    return new MyGutterOperation(side, highlighter, null);
+  }
+
+  @NotNull
+  private List<MyGutterOperation> createShowMatchingFragmentOperation(@NotNull Side side) {
+    List<MyGutterOperation> operations = new ArrayList<>();
+
+    if (myInnerFragments != null) {
+      for (DiffFragment fragment : myInnerFragments) {
+        if (fragment instanceof DiffFragmentWithLink) {
+          int offset = side.getStartOffset(myFragment) + side.getStartOffset(fragment);
+          EditorEx editor = myViewer.getEditor(side);
+          RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                                     HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                                     null,
+                                                                                     HighlighterTargetArea.LINES_IN_RANGE);
+          if (side.getEndOffset(fragment) > side.getStartOffset(fragment))
+            operations.add(new MyGutterOperation(side, highlighter, (DiffFragmentWithLink)fragment));
+        }
+      }
+    }
+
+    return operations;
   }
 
   private class MyGutterOperation {
     @NotNull private final Side mySide;
     @NotNull private final RangeHighlighter myHighlighter;
+    @Nullable private final DiffFragmentWithLink myInnerFragment;
 
     private boolean myCtrlPressed;
 
-    private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter) {
+    private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter, @Nullable DiffFragmentWithLink innerFragment) {
       mySide = side;
       myHighlighter = highlighter;
+      myInnerFragment = innerFragment;
 
       update(true);
     }
@@ -251,6 +293,9 @@ public class SimpleDiffChange {
           return createApplyRenderer(mySide);
         }
       }
+      else if (myInnerFragment != null)
+        return createShowMatchingRenderer(myInnerFragment, mySide);
+
       return null;
     }
   }
@@ -268,6 +313,34 @@ public class SimpleDiffChange {
       UsageTrigger.trigger("diff.SimpleDiffChange.Append");
       myViewer.appendChange(this, side);
     });
+  }
+
+  @Nullable
+  private GutterIconRenderer createShowMatchingRenderer(@NotNull DiffFragmentWithLink innerFragment, @NotNull final Side side) {
+    return new DiffGutterRenderer(AllIcons.Actions.Preview, new File(innerFragment.getFile()).getName() + ":" + innerFragment.getOffsetInFile()) {
+      @Override
+      protected void performAction(AnActionEvent event) {
+        Project project = event.getProject();
+        if (myViewer.getRequest() instanceof SimpleDiffRequest && project != null) {
+          DiffRequestChain requestsChain = ((SimpleDiffRequest)myViewer.getRequest()).getRequestsChain();
+          List<? extends DiffRequestProducer> requests = requestsChain != null ? requestsChain.getRequests() : Collections.emptyList();
+
+          for (DiffRequestProducer producer : requests) {
+            if (producer.getName().endsWith(innerFragment.getFile())) {
+              try {
+                DiffRequest request = producer.process(project, new EmptyProgressIndicator());
+                request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(side.other(), innerFragment.getOffsetInFile()));
+                new DiffWindow(project, new SimpleDiffRequestChain(request), DiffDialogHints.DEFAULT).show();
+                return;
+              }
+              catch (DiffRequestProducerException e) {
+                LOG.warn(e);
+              }
+            }
+          }
+        }
+      }
+    };
   }
 
   @Nullable

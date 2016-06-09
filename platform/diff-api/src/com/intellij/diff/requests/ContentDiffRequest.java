@@ -15,9 +15,12 @@
  */
 package com.intellij.diff.requests;
 
+import com.intellij.diff.DiffContentPair;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,6 +30,11 @@ import java.util.List;
 public abstract class ContentDiffRequest extends DiffRequest {
   @NotNull
   public abstract List<DiffContent> getContents();
+
+  @NotNull
+  public List<DiffContentPair> getAllContents() {
+    return Collections.emptyList();
+  }
 
   /**
    * @return contents names. Should have same length as {@link #getContents()}

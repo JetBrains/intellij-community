@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentPair;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.impl.DiffViewerWrapper;
 import com.intellij.diff.requests.DiffRequest;
@@ -34,10 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -53,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,11 +64,16 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
+  private Iterable<Change> myAllChanges;
   @NotNull private final Map<Key, Object> myChangeContext;
 
-  private ChangeDiffRequestProducer(@Nullable Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
+  private ChangeDiffRequestProducer(@Nullable Project project,
+                                    @NotNull Change change,
+                                    @NotNull Iterable<Change> allChanges,
+                                    @NotNull Map<Key, Object> changeContext) {
     myChange = change;
     myProject = project;
+    myAllChanges = allChanges;
     myChangeContext = changeContext;
   }
 
@@ -118,15 +123,15 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
-    return create(project, change, Collections.<Key, Object>emptyMap());
+    return create(project, change, Collections.singletonList(change), Collections.<Key, Object>emptyMap());
   }
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project,
                                                  @NotNull Change change,
-                                                 @NotNull Map<Key, Object> changeContext) {
+                                                 @NotNull Iterable<Change> allChanges, @NotNull Map<Key, Object> changeContext) {
     if (!canCreate(project, change)) return null;
-    return new ChangeDiffRequestProducer(project, change, changeContext);
+    return new ChangeDiffRequestProducer(project, change, allChanges, changeContext);
   }
 
   public static boolean canCreate(@Nullable Project project, @NotNull Change change) {
@@ -312,13 +317,27 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       indicator.setIndeterminate(true);
       DiffContent content1 = createContent(project, bRev, context, indicator);
       DiffContent content2 = createContent(project, aRev, context, indicator);
+      List<DiffContentPair> allContents = new ArrayList<>();
+
+      for (Change c : myAllChanges) {
+        ContentRevision beforeRevision = c.getBeforeRevision();
+        ContentRevision afterRevision = c.getAfterRevision();
+
+        if (beforeRevision != null) {
+          DiffContent contentBefore = createContent(project, beforeRevision, context, indicator);
+          DiffContent contentAfter = createContent(project, afterRevision, context, indicator);
+
+          if (contentBefore instanceof DocumentContent && contentAfter instanceof DocumentContent)
+          allContents.add(new DiffContentPair((DocumentContent)contentBefore, (DocumentContent)contentAfter, beforeRevision.getFile().getPath()));
+        }
+      }
 
       final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
       String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
       final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
       String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, "Your version");
 
-      SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, allContents, beforeRevisionTitle, afterRevisionTitle);
 
       boolean bRevCurrent = bRev instanceof CurrentContentRevision;
       boolean aRevCurrent = aRev instanceof CurrentContentRevision;

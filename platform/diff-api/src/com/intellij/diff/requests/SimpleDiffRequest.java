@@ -15,17 +15,33 @@
  */
 package com.intellij.diff.requests;
 
+import com.intellij.diff.DiffContentPair;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final String myTitle;
   @NotNull private final List<DiffContent> myContents;
+  @NotNull private List<DiffContentPair> myAllContents;
   @NotNull private final List<String> myContentTitles;
+  @Nullable private DiffRequestChain myRequestsChain;
+
+  public SimpleDiffRequest(@Nullable String title,
+                           @NotNull DiffContent content1,
+                           @NotNull DiffContent content2,
+                           @NotNull List<DiffContentPair> allContents,
+                           @Nullable String title1,
+                           @Nullable String title2) {
+    this(title, ContainerUtil.list(content1, content2), ContainerUtil.list(title1, title2));
+    myAllContents = allContents;
+  }
 
   public SimpleDiffRequest(@Nullable String title,
                            @NotNull DiffContent content1,
@@ -52,6 +68,7 @@ public class SimpleDiffRequest extends ContentDiffRequest {
 
     myTitle = title;
     myContents = contents;
+    myAllContents = Collections.emptyList();
     myContentTitles = titles;
   }
 
@@ -59,6 +76,12 @@ public class SimpleDiffRequest extends ContentDiffRequest {
   @Override
   public List<DiffContent> getContents() {
     return myContents;
+  }
+
+  @NotNull
+  @Override
+  public List<DiffContentPair> getAllContents() {
+    return myAllContents;
   }
 
   @NotNull
@@ -78,5 +101,14 @@ public class SimpleDiffRequest extends ContentDiffRequest {
     for (DiffContent content : myContents) {
       content.onAssigned(isAssigned);
     }
+  }
+
+  public void setRequestsChain(@Nullable DiffRequestChain requestsChain) {
+    myRequestsChain = requestsChain;
+  }
+
+  @Nullable
+  public DiffRequestChain getRequestsChain() {
+    return myRequestsChain;
   }
 }

@@ -15,10 +15,14 @@
  */
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.DiffContentPair;
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffFilesContentPair;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -42,6 +46,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -198,10 +203,21 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       CharSequence[] texts = ReadAction.compute(() -> {
         return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
       });
+      List<DiffFilesContentPair> allTexts = ReadAction.compute(() -> {
+        List<DiffFilesContentPair> list = new ArrayList<>();
+
+        for (DiffContentPair pair : myRequest.getAllContents()) {
+          list.add(new DiffFilesContentPair(pair.getLeftContent().getDocument().getImmutableCharSequence(),
+                                            pair.getRightContent().getDocument().getImmutableCharSequence(),
+                                            pair.getFilePath()));
+        }
+
+        return list;
+      });
 
       List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
-        lineFragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
+        lineFragments = DiffUtil.compare(myRequest, texts[0], texts[1], allTexts, getDiffConfig(), indicator);
       }
 
       boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&

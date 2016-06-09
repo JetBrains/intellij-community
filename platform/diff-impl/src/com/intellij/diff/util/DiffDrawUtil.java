@@ -297,7 +297,12 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    return new InlineHighlighterBuilder(editor, start, end, type).done();
+    return new InlineHighlighterBuilder(editor, start, end, type, false).done();
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type, boolean ignored) {
+    return new InlineHighlighterBuilder(editor, start, end, type, ignored).done();
   }
 
   @NotNull
@@ -416,17 +421,19 @@ public class DiffDrawUtil {
     @NotNull private final TextDiffType type;
     private final int start;
     private final int end;
+    private final boolean ignored;
 
-    private InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+    private InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type, boolean ignored) {
       this.editor = editor;
       this.type = type;
       this.start = start;
       this.end = end;
+      this.ignored = ignored;
     }
 
     @NotNull
     public List<RangeHighlighter> done() {
-      TextAttributes attributes = getTextAttributes(type, editor, false);
+      TextAttributes attributes = getTextAttributes(type, editor, ignored);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);

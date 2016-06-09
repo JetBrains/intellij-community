@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.diff.DiffFilesContentPair;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.fragments.LineFragment;
@@ -22,6 +23,7 @@ import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,11 +46,21 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    return compareLines(text1, text2, Collections.emptyList(), policy, indicator);
+  }
+
+  @NotNull
+  @Override
+  public List<LineFragment> compareLines(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull List<DiffFilesContentPair> allTexts,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       return ByLine.compare(text1, text2, policy, indicator);
     }
     else {
-      return ByLine.compareTwoStep(text1, text2, policy, indicator);
+      return ByLine.compareTwoStep(text1, text2, allTexts, policy, indicator);
     }
   }
 
@@ -58,7 +70,17 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull CharSequence text2,
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<LineFragment> lineFragments = compareLines(text1, text2, policy, indicator);
+    return compareLinesInner(text1, text2, Collections.emptyList(), policy, indicator);
+  }
+
+  @NotNull
+  @Override
+  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull ComparisonPolicy policy,
+                                              @NotNull ProgressIndicator indicator,
+                                              @NotNull List<DiffFilesContentPair> allTexts) throws DiffTooBigException {
+    List<LineFragment> lineFragments = compareLines(text1, text2, allTexts, policy, indicator);
 
     List<LineFragment> fineFragments = new ArrayList<>(lineFragments.size());
     int tooBigChunksCount = 0;
@@ -69,7 +91,9 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
       if (fragment.getStartLine1() == fragment.getEndLine1() ||
           fragment.getStartLine2() == fragment.getEndLine2()) { // Insertion / Deletion
-        if (isEquals(subSequence1, subSequence2, policy)) {
+        if (fragment.getInnerFragments() != null)
+          fineFragments.add(new LineFragmentImpl(fragment, fragment.getInnerFragments()));
+        else if (isEquals(subSequence1, subSequence2, policy)) {
           fineFragments.add(new LineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
         }
         else {

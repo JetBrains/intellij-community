@@ -15,15 +15,16 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.diff.DiffFilesContentPair;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.fragments.LineFragmentImpl;
-import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeLineFragmentImpl;
+import com.intellij.diff.fragments.*;
 import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.sufftree.Position;
+import com.intellij.diff.util.sufftree.SuffixTree;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,8 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.comparison.TrimUtil.trimEnd;
 import static com.intellij.diff.comparison.TrimUtil.trimStart;
@@ -60,6 +60,7 @@ public class ByLine {
   @NotNull
   public static List<LineFragment> compareTwoStep(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
+                                                  @NotNull List<DiffFilesContentPair> allTexts,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
@@ -73,7 +74,116 @@ public class ByLine {
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
     iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
     FairDiffIterable changes = correctChangesSecondStep(lines1, lines2, iwChanges);
-    return convertIntoFragments(lines1, lines2, changes);
+    List<LineFragment> fragments = convertIntoFragments(lines1, lines2, changes);
+    buildLinkedFragments(allTexts, policy, lines1, lines2, fragments);
+    return fragments;
+  }
+
+  private static void buildLinkedFragments(@NotNull List<DiffFilesContentPair> allTexts,
+                                           @NotNull ComparisonPolicy policy,
+                                           @NotNull List<Line> lines1,
+                                           @NotNull List<Line> lines2,
+                                           @NotNull List<LineFragment> fragments) {
+    HashMap<CharSequence, Integer> linesMap = new HashMap<>();
+
+    for (Side side : Side.values()) {
+      List<String> files = new ArrayList<>();
+      TIntArrayList offsets = new TIntArrayList();
+      SuffixTree tree = buildSuffixTree(allTexts, policy, linesMap, files, offsets, side);
+
+      for (LineFragment fragment : fragments) {
+        int startLine1 = side == Side.RIGHT ? fragment.getStartLine1() : fragment.getStartLine2();
+        int endLine1 = side == Side.RIGHT ? fragment.getEndLine1() : fragment.getEndLine2();
+        int startLine2 = side == Side.RIGHT ? fragment.getStartLine2() : fragment.getStartLine1();
+        int endLine2 = side == Side.RIGHT ? fragment.getEndLine2() : fragment.getEndLine1();
+        List<Line> lines = side == Side.RIGHT ? lines2 : lines1;
+
+        if (startLine1 + 2 >= endLine1 && startLine2 + 10 < endLine2) {
+          TIntArrayList intLine = new TIntArrayList();
+
+          for (int i = startLine2; i < endLine2; i++) {
+            CharSequence lineString = lines.get(i).getContent().toString();
+            Integer index = linesMap.get(lineString);
+
+            if (index == null) {
+              index = linesMap.size();
+              linesMap.put(lineString, index);
+            }
+
+            intLine.add(index);
+          }
+
+          List<DiffFragment> innerFragments = new ArrayList<>();
+          tree.matchString(intLine, new SuffixTree.StringMatchingFunction() {
+            @Override
+            public void match(int posInString, Position posInTree, int length) {
+              if (length <= 3)
+                return;
+
+              int index = posInTree.vertex.oneOfSuffixes;
+
+              if (side == Side.RIGHT) {
+                innerFragments.add(new DiffFragmentWithLinkImpl(
+                  0, 0,
+                  getLineOffset(lines, posInString, startLine2),
+                  getLineOffset(lines, posInString + length, startLine2),
+                  files.get(index), offsets.get(index)
+                ));
+              }
+              else {
+                innerFragments.add(new DiffFragmentWithLinkImpl(
+                  getLineOffset(lines, posInString, startLine2),
+                  getLineOffset(lines, posInString + length, startLine2),
+                  0, 0,
+                  files.get(index), offsets.get(index)
+                ));
+              }
+            }
+          });
+
+          if (!innerFragments.isEmpty())
+            ((LineFragmentImpl)fragment).setInnerFragments(innerFragments);
+        }
+      }
+    }
+  }
+
+  private static int getLineOffset(List<Line> lines, int lineNumber, int startLine2) {
+    return lines.get(startLine2 + lineNumber).getOffset1() - lines.get(startLine2).getOffset1();
+  }
+
+  private static SuffixTree buildSuffixTree(@NotNull List<DiffFilesContentPair> allTexts,
+                                            @NotNull ComparisonPolicy policy,
+                                            @NotNull Map<CharSequence, Integer> linesMap,
+                                            @NotNull List<String> files, TIntArrayList offsets,
+                                            @NotNull Side side) {
+    TIntArrayList intLines = new TIntArrayList();
+
+    for (DiffFilesContentPair pair : allTexts) {
+      List<Line> lines = convertToIgnoreWhitespace(getLines(side == Side.RIGHT ? pair.getLeftContent() : pair.getRightContent(), policy));
+
+      for (int i = 0; i < lines.size(); i++) {
+        CharSequence lineString = lines.get(i).getContent().toString();
+        Integer index = linesMap.get(lineString);
+
+        if (index == null) {
+          index = linesMap.size();
+          linesMap.put(lineString, index);
+        }
+
+        intLines.add(index);
+        files.add(pair.getFilePath());
+        offsets.add(i);
+      }
+
+      intLines.add(-1);
+      files.add(null);
+      offsets.add(-1);
+    }
+
+    SuffixTree tree = new SuffixTree();
+    tree.build(intLines);
+    return tree;
   }
 
   @NotNull

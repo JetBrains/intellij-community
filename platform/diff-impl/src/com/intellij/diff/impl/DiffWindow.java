@@ -17,7 +17,13 @@ package com.intellij.diff.impl;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +45,18 @@ public class DiffWindow extends DiffWindowBase {
   private class MyCacheDiffRequestChainProcessor extends CacheDiffRequestChainProcessor {
     public MyCacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
       super(project, requestChain);
+    }
+
+    @NotNull
+    @Override
+    protected DiffRequest loadRequest(@NotNull DiffRequestProducer producer, @NotNull ProgressIndicator indicator)
+      throws ProcessCanceledException, DiffRequestProducerException {
+      DiffRequest request = super.loadRequest(producer, indicator);
+
+      if (request instanceof SimpleDiffRequest)
+        ((SimpleDiffRequest)request).setRequestsChain(myRequestChain);
+
+      return request;
     }
 
     @Override

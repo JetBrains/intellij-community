@@ -16,10 +16,7 @@
 package com.intellij.diff.util;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffTool;
-import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
@@ -29,6 +26,7 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -589,6 +587,7 @@ public class DiffUtil {
   public static List<LineFragment> compare(@NotNull DiffRequest request,
                                            @NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
+                                           @NotNull List<DiffFilesContentPair> allTexts,
                                            @NotNull DiffConfig config,
                                            @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
@@ -601,7 +600,7 @@ public class DiffUtil {
     }
     else {
       if (config.innerFragments) {
-        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator, allTexts);
       }
       else {
         fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);

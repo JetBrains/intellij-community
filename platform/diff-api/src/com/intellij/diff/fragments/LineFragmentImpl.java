@@ -34,7 +34,7 @@ public class LineFragmentImpl implements LineFragment {
   private final int myStartOffset2;
   private final int myEndOffset2;
 
-  @Nullable private final List<DiffFragment> myInnerFragments;
+  @Nullable private List<DiffFragment> myInnerFragments;
 
   public LineFragmentImpl(int startLine1, int endLine1, int startLine2, int endLine2,
                           int startOffset1, int endOffset1, int startOffset2, int endOffset2) {
@@ -113,6 +113,10 @@ public class LineFragmentImpl implements LineFragment {
   @Override
   public int getEndOffset2() {
     return myEndOffset2;
+  }
+
+  public void setInnerFragments(@Nullable List<DiffFragment> innerFragments) {
+    myInnerFragments = innerFragments;
   }
 
   @Nullable

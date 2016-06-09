@@ -165,7 +165,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
     for (Change change : changes) {
       if (condition.value(change)) index = presentables.size();
-      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
+      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, changes, context.getChangeContext(change));
       if (presentable != null) presentables.add(presentable);
     }
 
@@ -181,7 +181,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
     for (Change change : changes) {
       if (i == index) newIndex = presentables.size();
-      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
+      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, changes, context.getChangeContext(change));
       if (presentable != null) {
         presentables.add(presentable);
       }

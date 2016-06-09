@@ -15,10 +15,12 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.diff.DiffFilesContentPair;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -44,6 +46,13 @@ public abstract class ComparisonManager {
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
+  @NotNull
+  public abstract List<LineFragment> compareLines(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull List<DiffFilesContentPair> allTexts,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
   /**
    * Compare two texts by-line and then compare changed fragments by-word
    */
@@ -52,6 +61,13 @@ public abstract class ComparisonManager {
                                                        @NotNull CharSequence text2,
                                                        @NotNull ComparisonPolicy policy,
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
+  @NotNull
+  public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull ComparisonPolicy policy,
+                                              @NotNull ProgressIndicator indicator,
+                                              @NotNull List<DiffFilesContentPair> allTexts) throws DiffTooBigException;
 
   @NotNull
   @Deprecated
