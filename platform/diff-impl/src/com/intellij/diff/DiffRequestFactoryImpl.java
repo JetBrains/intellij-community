@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
@@ -64,7 +65,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     String title = getTitle(file1, file2);
 
-    return new SimpleDiffRequest(title, content1, content2, title1, title2);
+    if (content1 instanceof DocumentContent && content2 instanceof DocumentContent) {
+      return new SimpleDiffRequest(title, content1, content2,
+                                   Collections.singletonList(
+                                     new DiffContentPair((DocumentContent)content1, (DocumentContent)content2, file1.getPath())),
+                                   title1, title2);
+    }
+    else
+      return new SimpleDiffRequest(title, content1, content2, title1, title2);
   }
 
   @NotNull

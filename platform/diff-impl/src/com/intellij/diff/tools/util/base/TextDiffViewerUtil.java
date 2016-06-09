@@ -311,6 +311,25 @@ public class TextDiffViewerUtil {
     }
   }
 
+  public static class ToggleUseCrossDiffAction extends ToggleActionButton implements DumbAware {
+    @NotNull protected final TextDiffSettings mySettings;
+
+    public ToggleUseCrossDiffAction(@NotNull TextDiffSettings settings) {
+      super("Use Cross Files Diff", AllIcons.Actions.SyncPanels);
+      mySettings = settings;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return mySettings.useCrossDiff();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySettings.setUseCrossDiff(state);
+    }
+  }
+
   public static abstract class ToggleExpandByDefaultAction extends ToggleActionButton implements DumbAware {
     @NotNull protected final TextDiffSettings mySettings;
 

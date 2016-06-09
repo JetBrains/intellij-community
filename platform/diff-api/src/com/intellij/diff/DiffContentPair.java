@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by sashakir on 09/06/16.
@@ -32,10 +33,12 @@ public class DiffContentPair {
     this.myFilePath = filePath;
   }
 
+  @Nullable
   public DocumentContent getLeftContent() {
     return leftContent;
   }
 
+  @Nullable
   public DocumentContent getRightContent() {
     return rightContent;
   }

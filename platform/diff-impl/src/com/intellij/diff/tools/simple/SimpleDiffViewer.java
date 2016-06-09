@@ -28,6 +28,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
@@ -116,6 +117,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
+    group.add(new MyToggleUseCrossDiffAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
@@ -207,8 +209,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         List<DiffFilesContentPair> list = new ArrayList<>();
 
         for (DiffContentPair pair : myRequest.getAllContents()) {
-          list.add(new DiffFilesContentPair(pair.getLeftContent().getDocument().getImmutableCharSequence(),
-                                            pair.getRightContent().getDocument().getImmutableCharSequence(),
+          list.add(new DiffFilesContentPair(pair.getLeftContent() != null ? pair.getLeftContent().getDocument().getImmutableCharSequence() : null,
+                                            pair.getRightContent() != null ? pair.getRightContent().getDocument().getImmutableCharSequence() : null,
                                             pair.getFilePath()));
         }
 
@@ -281,7 +283,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
+    TextDiffSettingsHolder.TextDiffSettings textSettings = getTextSettings();
+    return new DiffUtil.DiffConfig(textSettings.getIgnorePolicy(), textSettings.useCrossDiff(), getHighlightPolicy());
   }
 
   @NotNull

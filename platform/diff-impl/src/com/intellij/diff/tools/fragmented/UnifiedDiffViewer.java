@@ -793,7 +793,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getIgnorePolicy(), getHighlightPolicy());
+    return new DiffUtil.DiffConfig(getIgnorePolicy(), false, getHighlightPolicy());
   }
 
   @NotNull

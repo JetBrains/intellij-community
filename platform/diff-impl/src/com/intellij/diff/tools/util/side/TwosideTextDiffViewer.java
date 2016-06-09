@@ -343,6 +343,17 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
       super(getTextSettings());
     }
   }
+  protected class MyToggleUseCrossDiffAction extends TextDiffViewerUtil.ToggleUseCrossDiffAction {
+    public MyToggleUseCrossDiffAction() {
+      super(getTextSettings());
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
+      rediff();
+    }
+  }
 
   //
   // Helpers

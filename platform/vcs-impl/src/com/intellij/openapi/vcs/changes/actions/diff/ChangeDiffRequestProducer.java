@@ -323,12 +323,14 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         ContentRevision beforeRevision = c.getBeforeRevision();
         ContentRevision afterRevision = c.getAfterRevision();
 
-        if (beforeRevision != null) {
-          DiffContent contentBefore = createContent(project, beforeRevision, context, indicator);
-          DiffContent contentAfter = createContent(project, afterRevision, context, indicator);
+        DiffContent contentBefore = beforeRevision != null ? createContent(project, beforeRevision, context, indicator) : null;
+        DiffContent contentAfter = afterRevision != null ? createContent(project, afterRevision, context, indicator) : null;
 
-          if (contentBefore instanceof DocumentContent && contentAfter instanceof DocumentContent)
-          allContents.add(new DiffContentPair((DocumentContent)contentBefore, (DocumentContent)contentAfter, beforeRevision.getFile().getPath()));
+        if (contentBefore instanceof DocumentContent || contentAfter instanceof DocumentContent) {
+          allContents.add(new DiffContentPair(
+            contentBefore instanceof DocumentContent ? (DocumentContent)contentBefore : null,
+            contentAfter instanceof DocumentContent ? (DocumentContent)contentAfter : null,
+            beforeRevision != null ? beforeRevision.getFile().getPath() : afterRevision.getFile().getPath()));
         }
       }
 

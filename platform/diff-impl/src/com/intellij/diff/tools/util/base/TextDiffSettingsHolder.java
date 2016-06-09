@@ -69,6 +69,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
   public static class TextDiffSettings {
     @NotNull public SharedSettings SHARED_SETTINGS = new SharedSettings();
     @NotNull public PlaceSettings PLACE_SETTINGS = new PlaceSettings();
+    @NotNull public boolean USE_CROSS_DIFF = false;
 
     public TextDiffSettings() {
     }
@@ -87,6 +88,14 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setEnableSyncScroll(boolean value) {
       PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
+    }
+
+    public boolean useCrossDiff() {
+      return USE_CROSS_DIFF;
+    }
+
+    public void setUseCrossDiff(boolean use) {
+      this.USE_CROSS_DIFF = use;
     }
 
     // Diff settings

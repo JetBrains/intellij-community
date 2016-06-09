@@ -160,7 +160,12 @@ public class ByLine {
     TIntArrayList intLines = new TIntArrayList();
 
     for (DiffFilesContentPair pair : allTexts) {
-      List<Line> lines = convertToIgnoreWhitespace(getLines(side == Side.RIGHT ? pair.getLeftContent() : pair.getRightContent(), policy));
+      CharSequence text = side == Side.RIGHT ? pair.getLeftContent() : pair.getRightContent();
+
+      if (text == null)
+        continue;
+
+      List<Line> lines = convertToIgnoreWhitespace(getLines(text, policy));
 
       for (int i = 0; i < lines.size(); i++) {
         CharSequence lineString = lines.get(i).getContent().toString();

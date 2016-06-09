@@ -600,7 +600,7 @@ public class DiffUtil {
     }
     else {
       if (config.innerFragments) {
-        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator, allTexts);
+        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator, config.myUseCrossDiff ? allTexts : Collections.emptyList());
       }
       else {
         fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
@@ -1332,6 +1332,7 @@ public class DiffUtil {
     public final boolean innerFragments;
     public final boolean squashFragments;
     public final boolean trimFragments;
+    private boolean myUseCrossDiff;
 
     public DiffConfig(@NotNull ComparisonPolicy policy, boolean innerFragments, boolean squashFragments, boolean trimFragments) {
       this.policy = policy;
@@ -1340,9 +1341,10 @@ public class DiffUtil {
       this.trimFragments = trimFragments;
     }
 
-    public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
-      this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
+    public DiffConfig(@NotNull IgnorePolicy ignorePolicy, boolean useCrossDiff, @NotNull HighlightPolicy highlightPolicy) {
+      this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments() || useCrossDiff, highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
+      myUseCrossDiff = useCrossDiff;
     }
   }
 

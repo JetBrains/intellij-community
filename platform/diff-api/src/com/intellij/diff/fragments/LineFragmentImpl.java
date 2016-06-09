@@ -129,7 +129,8 @@ public class LineFragmentImpl implements LineFragment {
   private static List<DiffFragment> dropWholeChangedFragments(@Nullable List<DiffFragment> fragments, int length1, int length2) {
     if (fragments != null && fragments.size() == 1) {
       DiffFragment diffFragment = fragments.get(0);
-      if (diffFragment.getStartOffset1() == 0 &&
+      if (!(diffFragment instanceof DiffFragmentWithLink) &&
+          diffFragment.getStartOffset1() == 0 &&
           diffFragment.getStartOffset2() == 0 &&
           diffFragment.getEndOffset1() == length1 &&
           diffFragment.getEndOffset2() == length2) {
