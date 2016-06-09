@@ -45,14 +45,6 @@
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
-    <action id="LogSubtypes" class="com.intellij.psi.stubsHierarchy.impl.test.LogSubtypesAction" text="Log Subtypes" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
-
-    <action id="CountInheritors" class="com.intellij.psi.stubsHierarchy.impl.test.GetAllInheritorsAction" text="Count Inheritors" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
-
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>
