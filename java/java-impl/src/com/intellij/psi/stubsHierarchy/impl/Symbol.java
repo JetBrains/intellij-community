@@ -150,6 +150,9 @@ public abstract class Symbol {
     }
 
     void markHierarchyIncomplete() {
+      mySuperClasses = EMPTY_ARRAY;
+      mySuperNames = null;
+      myUnitInfo = null;
       myHierarchyIncomplete = true;
     }
 

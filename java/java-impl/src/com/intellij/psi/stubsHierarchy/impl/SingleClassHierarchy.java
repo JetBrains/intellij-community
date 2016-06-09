@@ -17,25 +17,65 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Compact representation of total hierarchy of JVM classes.
  */
 public class SingleClassHierarchy {
-  public final SmartClassAnchor[] myClassAnchors;
+  private final BitSet myCoveredFiles;
+  private final List<SmartClassAnchor> myCoveredClasses;
+  private final SmartClassAnchor[] myClassAnchors;
   private final SmartClassAnchor[] myClassAnchorsByFileIds;
   private int[] mySubtypes;
   private int[] mySubtypeStarts;
 
-  public SingleClassHierarchy(ClassSymbol[] classSymbols, int symbolCount) {
-    this.myClassAnchors = mkAnchors(classSymbols, symbolCount);
-    this.myClassAnchorsByFileIds = mkByFileId(this.myClassAnchors);
+  public SingleClassHierarchy(ClassSymbol[] classSymbols) {
+    myCoveredFiles = calcCoveredFiles(classSymbols);
+    myClassAnchors = ContainerUtil.map2Array(classSymbols, SmartClassAnchor.class, symbol -> symbol.myClassAnchor);
+    myClassAnchorsByFileIds = mkByFileId(myClassAnchors);
+    connectSubTypes(classSymbols);
+    myCoveredClasses = Collections.unmodifiableList(ContainerUtil.filter(myClassAnchors, this::isCovered));
+  }
+
+  @NotNull
+  private static BitSet calcCoveredFiles(ClassSymbol[] classSymbols) {
+    BitSet problematicFiles = new BitSet();
+    BitSet coveredFiles = new BitSet();
+    for (ClassSymbol symbol : classSymbols) {
+      coveredFiles.set(symbol.myClassAnchor.myFileId);
+      if (symbol.isHierarchyIncomplete()) {
+        problematicFiles.set(symbol.myClassAnchor.myFileId);
+      }
+    }
+    coveredFiles.andNot(problematicFiles);
+    return coveredFiles;
+  }
+
+  private boolean isCovered(@NotNull SmartClassAnchor anchor) {
+    return myCoveredFiles.get(anchor.myFileId);
+  }
+
+  /**
+   * @return the list of pointers to all classes in this project that where all supertype references were resolved
+   */
+  @NotNull
+  public List<SmartClassAnchor> getCoveredClasses() {
+    return myCoveredClasses;
+  }
+
+  /**
+   * @return the list of pointers to all classes in this project, indexed by stub hierarchy support
+   */
+  @NotNull
+  public List<SmartClassAnchor> getAllClasses() {
+    return Collections.unmodifiableList(Arrays.asList(myClassAnchors));
   }
 
   public SmartClassAnchor[] getDirectSubtypes(PsiClass psiClass) {
@@ -94,14 +134,6 @@ public class SingleClassHierarchy {
     return result;
   }
 
-  private static SmartClassAnchor[] mkAnchors(ClassSymbol[] classSymbols, int symbolCount) {
-    SmartClassAnchor[] anchors = new SmartClassAnchor[symbolCount];
-    for (int i = 0; i < symbolCount; i++) {
-      anchors[i] = classSymbols[i].myClassAnchor;
-    }
-    return anchors;
-  }
-
   private static SmartClassAnchor[] mkByFileId(final SmartClassAnchor[] classAnchors) {
     SmartClassAnchor[] result = new SmartClassAnchor[classAnchors.length];
     SmartClassAnchor lastProcessedAnchor = null;
@@ -115,24 +147,16 @@ public class SingleClassHierarchy {
     // compacting
     result = Arrays.copyOf(result, i);
 
-    Arrays.sort(result, (o1, o2) -> {
-      int i1 = o1.myFileId;
-      int i2 = o2.myFileId;
-      if (i1 < i2) {
-        return -1;
-      } else if (i1 > i2) {
-        return +1;
-      } else {
-        return 0;
-      }
-    });
+    Arrays.sort(result, Comparator.comparing(a -> a.myFileId));
     return result;
   }
 
-  void connectSubTypes(ClassSymbol[] classSymbols, int n) {
-    int[] sizes = calculateSizes(classSymbols, n);
+  private void connectSubTypes(ClassSymbol[] classSymbols) {
+    excludeUncoveredFiles(classSymbols);
 
-    int[] starts = new int[n];
+    int[] sizes = calculateSizes(classSymbols);
+
+    int[] starts = new int[classSymbols.length];
     int count = 0;
 
     for (int i = 0; i < sizes.length; i++) {
@@ -142,7 +166,7 @@ public class SingleClassHierarchy {
     int[] subtypes = new int[count];
     int[] filled = new int[sizes.length];
 
-    for (int subTypeId = 0; subTypeId < n; subTypeId++) {
+    for (int subTypeId = 0; subTypeId < classSymbols.length; subTypeId++) {
       ClassSymbol subType = classSymbols[subTypeId];
       for (ClassSymbol superType : subType.rawSuperClasses()) {
         int superTypeId = superType.myClassAnchor.myId;
@@ -155,10 +179,17 @@ public class SingleClassHierarchy {
     this.mySubtypeStarts = starts;
   }
 
-  private static int[] calculateSizes(ClassSymbol[] classSymbols, int n) {
-    int[] sizes = new int[n];
-    for (int i = 1; i < n; i++) {
-      ClassSymbol subType = classSymbols[i];
+  private void excludeUncoveredFiles(ClassSymbol[] classSymbols) {
+    for (ClassSymbol symbol : classSymbols) {
+      if (!isCovered(symbol.myClassAnchor)) {
+        symbol.markHierarchyIncomplete();
+      }
+    }
+  }
+
+  private static int[] calculateSizes(ClassSymbol[] classSymbols) {
+    int[] sizes = new int[classSymbols.length];
+    for (ClassSymbol subType : classSymbols) {
       for (ClassSymbol superType : subType.rawSuperClasses()) {
         int superTypeId = superType.myClassAnchor.myId;
         sizes[superTypeId] += 1;

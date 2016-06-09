@@ -72,10 +72,11 @@ public class TestStubHierarchyAction extends InheritanceAction {
     }
 
     private void compareSupers(ProgressIndicator indicator, MultiMap<SmartClassAnchor, SmartClassAnchor> supers, SingleClassHierarchy hierarchy) {
-      SmartClassAnchor[] anchors = hierarchy.myClassAnchors;
-      for (int i = 0; i < anchors.length; i++) {
-        indicator.setFraction(i * 1.0 / anchors.length);
-        compareSupers(anchors[i], supers.get(anchors[i]));
+      List<SmartClassAnchor> anchors = hierarchy.getCoveredClasses();
+      for (int i = 0; i < anchors.size(); i++) {
+        indicator.setFraction(i * 1.0 / anchors.size());
+        SmartClassAnchor anchor = anchors.get(i);
+        compareSupers(anchor, supers.get(anchor));
       }
     }
 
@@ -123,7 +124,7 @@ public class TestStubHierarchyAction extends InheritanceAction {
     @NotNull
     MultiMap<SmartClassAnchor, SmartClassAnchor> calcSupersMap(SingleClassHierarchy hierarchy) {
       MultiMap<SmartClassAnchor, SmartClassAnchor> supers = MultiMap.create();
-      for (SmartClassAnchor aClass : hierarchy.myClassAnchors) {
+      for (SmartClassAnchor aClass : hierarchy.getAllClasses()) {
         for (SmartClassAnchor subtype : hierarchy.getDirectSubtypes(aClass)) {
           supers.putValue(subtype, aClass);
         }
