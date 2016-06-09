@@ -70,7 +70,10 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
         if (ApplicationManager.getApplication().isDispatchThread() && myReparsingInProgress) {
           return; // avoid recursive reparsing
         }
-        invokeLaterIfNeeded(new Runnable() {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          return;
+        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             LOG.info("Reparsing " + file.getPath() + " because of language substitution " +
@@ -98,14 +101,5 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
       parent = lang.getBaseLanguage();
     }
     return lang;
-  }
-
-  private static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
-    }
   }
 }
