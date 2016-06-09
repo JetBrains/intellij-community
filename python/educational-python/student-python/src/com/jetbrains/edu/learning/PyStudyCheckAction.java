@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
@@ -14,7 +15,6 @@ import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
-import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
@@ -113,7 +113,16 @@ public class PyStudyCheckAction extends StudyCheckAction {
           }
           final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
           if (toolWindow != null) {
-            StudyCheckUtils.showTestResults(project, message, false);
+            final Course course = StudyTaskManager.getInstance(project).getCourse();
+            if (course != null) {
+              if (course.isAdaptive()) {
+                StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), project);
+                StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+              }
+              else {
+                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
+              }
+            }
             StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
           }
         });

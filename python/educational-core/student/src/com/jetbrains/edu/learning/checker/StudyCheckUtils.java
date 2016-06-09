@@ -196,7 +196,7 @@ public class StudyCheckUtils {
     }
   }
 
-  public static void showTestResults(@NotNull final Project project, @NotNull final String message, boolean solved) {
+  public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message, boolean solved) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = toolWindowManager.getToolWindow("Test Results");
     if (window == null) {
