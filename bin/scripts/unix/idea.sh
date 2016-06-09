@@ -11,7 +11,7 @@ message()
   if [ -n "`which zenity`" ]; then
     zenity --error --title="$TITLE" --text="$1"
   elif [ -n "`which kdialog`" ]; then
-    kdialog --error --title "$TITLE" "$1"
+    kdialog --error "$1" --title "$TITLE"
   elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
   elif [ -n "`which notify-send`" ]; then
