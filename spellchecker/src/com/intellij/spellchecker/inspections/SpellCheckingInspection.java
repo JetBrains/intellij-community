@@ -20,8 +20,11 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
@@ -92,6 +95,15 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         if (node == null) {
           return;
         }
+
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile == null) return;
+        FileViewProvider viewProvider = containingFile.getViewProvider();
+        if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+          PsiElement elementAt = viewProvider.findElementAt(element.getTextRange().getStartOffset());
+          if (element != elementAt) return;
+        }
+
         // Extract parser definition from element
         final Language language = element.getLanguage();
         final IElementType elementType = node.getElementType();
