@@ -59,6 +59,10 @@ public class PyPackageUtil {
   private PyPackageUtil() {
   }
 
+  public static boolean hasSetupPy(@NotNull Module module) {
+    return findSetupPy(module) != null;
+  }
+
   @Nullable
   public static PyFile findSetupPy(@NotNull Module module) {
     for (VirtualFile root : PyUtil.getSourceRoots(module)) {
@@ -71,6 +75,10 @@ public class PyPackageUtil {
       }
     }
     return null;
+  }
+
+  public static boolean hasRequirementsTxt(@NotNull Module module) {
+    return findRequirementsTxt(module) != null;
   }
 
   @Nullable
