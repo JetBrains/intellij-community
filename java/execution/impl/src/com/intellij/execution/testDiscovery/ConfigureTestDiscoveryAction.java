@@ -33,7 +33,7 @@ public class ConfigureTestDiscoveryAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final FileChooserDescriptor folderDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     folderDescriptor.setTitle("Choose External Discovery Index Directory");
-    folderDescriptor.setDescription("Local directory with indices retrieved from CI\n" +
+    folderDescriptor.setDescription("Local directory with indices retrieved from CI \n" +
                                     "to be replaced within TeamCity IDEA plugin");
     final VirtualFile virtualFile = FileChooser.chooseFile(folderDescriptor, e.getProject(), null);
     if (virtualFile != null) {
