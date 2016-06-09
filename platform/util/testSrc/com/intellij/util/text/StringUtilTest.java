@@ -475,4 +475,14 @@ public class StringUtilTest {
       assertEquals(s, XmlStringUtil.unescapeIllegalXmlChars(escapedText));
     }
   }
+
+  @Test
+  public void testCountChars() {
+    assertEquals(0, StringUtil.countChars("abcdefgh", 'x'));
+    assertEquals(1, StringUtil.countChars("abcdefgh", 'd'));
+    assertEquals(5, StringUtil.countChars("abcddddefghd", 'd'));
+    assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
+    assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
+    assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+  }
 }
