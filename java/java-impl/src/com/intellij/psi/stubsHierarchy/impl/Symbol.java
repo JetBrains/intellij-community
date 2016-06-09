@@ -86,7 +86,7 @@ public abstract class Symbol {
    */
   public static class ClassSymbol extends Symbol {
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
-    public final SmartClassAnchor myClassAnchor;
+    public final StubClassAnchor myClassAnchor;
     public ClassSymbol[] mySuperClasses;
     public UnitInfo myUnitInfo;
     public QualifiedName[] mySuperNames;
@@ -94,7 +94,7 @@ public abstract class Symbol {
     private StubHierarchyConnector myConnector;
     private boolean myHierarchyIncomplete;
 
-    public ClassSymbol(SmartClassAnchor classAnchor,
+    public ClassSymbol(StubClassAnchor classAnchor,
                        int flags,
                        Symbol owner,
                        QualifiedName fullname,

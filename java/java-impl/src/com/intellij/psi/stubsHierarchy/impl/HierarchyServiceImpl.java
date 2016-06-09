@@ -15,13 +15,14 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubsHierarchy.HierarchyService;
 import com.intellij.psi.stubsHierarchy.stubs.Unit;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class HierarchyService {
+public class HierarchyServiceImpl extends HierarchyService {
   private static final TObjectHashingStrategy<Unit> UNIT_HASHING_STRATEGY = new TObjectHashingStrategy<Unit>() {
     @Override
     public int computeHashCode(Unit object) {
@@ -47,30 +48,34 @@ public class HierarchyService {
       return computeHashCode(o1) == computeHashCode(o2);
     }
   };
+  private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
   private final Project myProject;
   private final ProjectFileIndex myFileIndex;
 
   private volatile SoftReference<NameEnvironment> myNamesCache = null;
   private final CachedValue<SingleClassHierarchy> myHierarchy ;
 
-  public static HierarchyService instance(@NotNull Project project) {
-    return ServiceManager.getService(project, HierarchyService.class);
-  }
-
-  public HierarchyService(Project project) {
+  public HierarchyServiceImpl(Project project) {
     myProject = project;
     myFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     myHierarchy = CachedValuesManager.getManager(project).createCachedValue(
-      () -> CachedValueProvider.Result.create(buildHierarchy(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT),
+      () -> CachedValueProvider.Result.create(buildHierarchy(), PsiModificationTracker.MODIFICATION_COUNT),
       false);
   }
 
-  public SingleClassHierarchy getSingleClassHierarchy() {
+  @Override
+  @NotNull
+  public SingleClassHierarchy getHierarchy() {
+    if (!IndexTree.STUB_HIERARCHY_ENABLED) {
+      return EMPTY_HIERARCHY;
+    }
+
     synchronized (myHierarchy) { //the calculation is memory-intensive, don't allow multiple threads to do it
       return myHierarchy.getValue();
     }
   }
 
+  @Override
   public void clearHierarchy() {
     ((CachedValueBase)myHierarchy).clear();
   }

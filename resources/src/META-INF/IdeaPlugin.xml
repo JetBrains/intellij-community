@@ -1733,8 +1733,8 @@
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
                     serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
-    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.impl.HierarchyService"
-                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyService"/>
+    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.HierarchyService"
+                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyServiceImpl"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"

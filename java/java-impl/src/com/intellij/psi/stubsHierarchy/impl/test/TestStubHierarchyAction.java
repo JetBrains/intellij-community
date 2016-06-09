@@ -25,9 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
-import com.intellij.psi.stubsHierarchy.impl.SingleClassHierarchy;
-import com.intellij.psi.stubsHierarchy.impl.SmartClassAnchor;
+import com.intellij.psi.stubsHierarchy.ClassHierarchy;
+import com.intellij.psi.stubsHierarchy.HierarchyService;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +58,11 @@ public class TestStubHierarchyAction extends InheritanceAction {
     public void run() {
       LOG.info("TestStubHierarchyAction started");
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      HierarchyService service = HierarchyService.instance(myProject);
+      HierarchyService service = HierarchyService.getService(myProject);
       service.clearHierarchy();
 
       indicator.setText("Building hierarchy");
-      SingleClassHierarchy hierarchy = service.getSingleClassHierarchy();
+      ClassHierarchy hierarchy = service.getHierarchy();
       MultiMap<SmartClassAnchor, SmartClassAnchor> supers = calcSupersMap(hierarchy);
 
       indicator.setText("Checking");
@@ -71,8 +71,8 @@ public class TestStubHierarchyAction extends InheritanceAction {
       LOG.info("TestStubHierarchyAction finished");
     }
 
-    private void compareSupers(ProgressIndicator indicator, MultiMap<SmartClassAnchor, SmartClassAnchor> supers, SingleClassHierarchy hierarchy) {
-      List<SmartClassAnchor> anchors = hierarchy.getCoveredClasses();
+    private void compareSupers(ProgressIndicator indicator, MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy) {
+      List<? extends SmartClassAnchor> anchors = hierarchy.getCoveredClasses();
       for (int i = 0; i < anchors.size(); i++) {
         indicator.setFraction(i * 1.0 / anchors.size());
         SmartClassAnchor anchor = anchors.get(i);
@@ -81,11 +81,8 @@ public class TestStubHierarchyAction extends InheritanceAction {
     }
 
     private void compareSupers(final SmartClassAnchor anchor, final Collection<SmartClassAnchor> superAnchors) {
-      PsiClass subClass = checkRetrieveClass(anchor);
-      List<PsiClass> stubSuperList = ContainerUtil.map(superAnchors, this::checkRetrieveClass);
-      if (subClass == null || stubSuperList.contains(null)) {
-        return;
-      }
+      PsiClass subClass = anchor.retrieveClass(myProject);
+      List<PsiClass> stubSuperList = ContainerUtil.map(superAnchors, (anchor1) -> anchor1.retrieveClass(myProject));
 
       Set<PsiClass> psiSupers = new HashSet<>(ContainerUtil.filter(getPsiSupers(subClass), psiClass -> !isImplicit(psiClass.getQualifiedName())));
       Set<PsiClass> stubSupers = new HashSet<>(ContainerUtil.filter(stubSuperList, psiClass -> !isImplicit(psiClass.getQualifiedName())));
@@ -112,20 +109,11 @@ public class TestStubHierarchyAction extends InheritanceAction {
              "groovy.lang.GroovyObject".equals(qname) || "groovy.lang.GroovyObjectSupport".equals(qname);
     }
 
-    @Nullable
-    private PsiClass checkRetrieveClass(SmartClassAnchor anchor) {
-      PsiClass psiClass = anchor.retrieveClass(myProject);
-      if (psiClass == null) {
-        LOG.info("Cannot restore " + anchor);
-      }
-      return psiClass;
-    }
-
     @NotNull
-    MultiMap<SmartClassAnchor, SmartClassAnchor> calcSupersMap(SingleClassHierarchy hierarchy) {
+    MultiMap<SmartClassAnchor, SmartClassAnchor> calcSupersMap(ClassHierarchy hierarchy) {
       MultiMap<SmartClassAnchor, SmartClassAnchor> supers = MultiMap.create();
       for (SmartClassAnchor aClass : hierarchy.getAllClasses()) {
-        for (SmartClassAnchor subtype : hierarchy.getDirectSubtypes(aClass)) {
+        for (SmartClassAnchor subtype : hierarchy.getDirectSubtypeCandidates(aClass)) {
           supers.putValue(subtype, aClass);
         }
       }

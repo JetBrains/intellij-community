@@ -28,36 +28,42 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SmartClassAnchor {
-  public static final SmartClassAnchor[] EMPTY_ARRAY = new SmartClassAnchor[0];
+public class StubClassAnchor extends SmartClassAnchor {
+  public static final StubClassAnchor[] EMPTY_ARRAY = new StubClassAnchor[0];
 
   public final int myId;
   public final int myFileId;
   final int myStubId;
 
-  SmartClassAnchor(int symbolId, ClassAnchor classAnchor) {
+  StubClassAnchor(int symbolId, ClassAnchor classAnchor) {
     myId = symbolId;
     myFileId = classAnchor.myFileId;
     myStubId = classAnchor.myStubId;
   }
 
+  @Override
   @NotNull
-  VirtualFile retrieveFile() {
+  public VirtualFile retrieveFile() {
     VirtualFile file = PersistentFS.getInstance().findFileById(myFileId);
-    assert file != null;
+    assert file != null : this;
     return file;
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public PsiClass retrieveClass(@NotNull Project project) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(retrieveFile());
-    assert psiFile != null;
-    return (PsiClass)restoreFromStubIndex((PsiFileWithStubSupport)psiFile, myStubId);
+    assert psiFile != null : this;
+    PsiElement element = restoreFromStubIndex((PsiFileWithStubSupport)psiFile, myStubId);
+    if (!(element instanceof PsiClass)) {
+      throw new AssertionError(this + "; " + psiFile);
+    }
+    return (PsiClass)element;
   }
 
   private static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {

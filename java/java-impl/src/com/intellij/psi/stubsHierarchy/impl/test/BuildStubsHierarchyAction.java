@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
+import com.intellij.psi.stubsHierarchy.HierarchyService;
 
 public class BuildStubsHierarchyAction extends InheritanceAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction");
@@ -30,11 +30,11 @@ public class BuildStubsHierarchyAction extends InheritanceAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    HierarchyService service = HierarchyService.instance(project);
+    HierarchyService service = HierarchyService.getService(project);
     service.clearHierarchy();
 
     long start = System.currentTimeMillis();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(service::getSingleClassHierarchy),
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(service::getHierarchy),
                                                                       "Building Hierarchy", false, project);
     LOG.info("Building stub hierarchy took " + (System.currentTimeMillis() - start) + " ms");
   }
