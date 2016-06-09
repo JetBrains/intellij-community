@@ -949,7 +949,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             else {
               final Dimension d = c.getPreferredSize();
               final MyScrollBar scrollBar = getVerticalScrollBar();
-              c.setBounds(r.width - d.width - scrollBar.getWidth() - 30, 20, d.width, d.height);
+              c.setBounds(r.width - d.width - scrollBar.getWidth() - 20, 20, d.width, d.height);
             }
           }
         }
