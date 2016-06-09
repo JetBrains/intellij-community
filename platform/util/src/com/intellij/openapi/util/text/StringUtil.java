@@ -2383,13 +2383,18 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
+    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = offset; i < text.length(); ++i) {
+    for (int i = start, len = min(text.length(), end); i < len; ++i) {
       if (text.charAt(i) == c) {
         count++;
       }
-      else if (continuous) {
+      else if (stopAtOtherChar) {
         break;
       }
     }
