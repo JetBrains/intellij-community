@@ -56,14 +56,19 @@ public abstract class MessageDecoder extends Decoder {
     }
     else {
       CharBuffer charBuffer = chunkedContent;
-      if (charBuffer == null) {
-        return input.toString(input.readerIndex(), required, StandardCharsets.UTF_8);
+      CharSequence result;
+      if (charBuffer != null) {
+        chunkedContent = null;
+        consumedContentByteCount = 0;
+        ChannelBufferToStringKt.readIntoCharBuffer(input, required, charBuffer);
+        result = new CharSequenceBackedByChars(charBuffer);
+      }
+      else {
+        result = input.toString(input.readerIndex(), required, StandardCharsets.UTF_8);
       }
 
-      chunkedContent = null;
-      consumedContentByteCount = 0;
-      ChannelBufferToStringKt.readIntoCharBuffer(input, required, charBuffer);
-      return new CharSequenceBackedByChars(charBuffer);
+      input.readerIndex(input.readerIndex() + required);
+      return result;
     }
   }
 
