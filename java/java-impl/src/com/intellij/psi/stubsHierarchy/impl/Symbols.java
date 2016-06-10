@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Symbols {
   public final PackageSymbol myRootPackage;
-  protected final NameEnvironment myNameEnvironment;
+  protected final NameEnvironment myNameEnvironment = new NameEnvironment();
 
   private List<ClassSymbol> myClassSymbols = new ArrayList<>(0x8000);
   // fullName -> PackageSymbol
@@ -20,10 +20,9 @@ public class Symbols {
   // nameId -> ClassSymbols (used by global resolve)
   private Object[] myClassSymbolsByNameId = new Object[0x8000];
 
-  protected Symbols(NameEnvironment nameEnvironment) {
-    this.myNameEnvironment = nameEnvironment;
-    myRootPackage = new PackageSymbol(null, nameEnvironment.empty, NamesEnumerator.NO_NAME);
-    myPackages.put(nameEnvironment.empty.myId, myRootPackage);
+  protected Symbols() {
+    myRootPackage = new PackageSymbol(null, myNameEnvironment.empty, NamesEnumerator.NO_NAME);
+    myPackages.put(myNameEnvironment.empty.myId, myRootPackage);
   }
 
   public PackageSymbol enterPackage(QualifiedName qualifiedName) {

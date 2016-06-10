@@ -31,7 +31,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +39,7 @@ public class HierarchyServiceImpl extends HierarchyService {
   private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
   private final Project myProject;
   private final ProjectFileIndex myFileIndex;
-
-  private volatile SoftReference<NameEnvironment> myNamesCache = null;
-  private final CachedValue<SingleClassHierarchy> myHierarchy ;
+  private final CachedValue<SingleClassHierarchy> myHierarchy;
 
   public HierarchyServiceImpl(Project project) {
     myProject = project;
@@ -70,29 +67,16 @@ public class HierarchyServiceImpl extends HierarchyService {
   }
 
   private SingleClassHierarchy buildHierarchy() {
-    NameEnvironment names = obtainNames();
-    Symbols symbols = new Symbols(names);
-    loadSymbols(names, symbols);
-    return symbols.createHierarchy();
-  }
+    Symbols symbols = new Symbols();
+    StubEnter stubEnter = new StubEnter(symbols);
 
-  @NotNull
-  private NameEnvironment obtainNames() {
-    NameEnvironment names = SoftReference.dereference(myNamesCache);
-    if (names == null) {
-      myNamesCache = new SoftReference<NameEnvironment>(names = new NameEnvironment());
-    }
-    return names;
-  }
-
-  private void loadSymbols(NameEnvironment names, Symbols symbols) {
-    StubEnter stubEnter = new StubEnter(names, symbols);
-
-    loadUnits(false, names, stubEnter);
+    loadUnits(false, symbols.myNameEnvironment, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(true, names, stubEnter);
+    loadUnits(true, symbols.myNameEnvironment, stubEnter);
     stubEnter.connect2();
+
+    return symbols.createHierarchy();
   }
 
   private void loadUnits(boolean sourceMode, NameEnvironment names, StubEnter stubEnter) {
