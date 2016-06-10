@@ -100,8 +100,8 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   private String getText(boolean qualified, boolean annotated, @Nullable String suffix) {
-    PsiAnnotation[] annotations = getAnnotations();
-    if ((!annotated || annotations.length == 0) && suffix == null) return "?";
+    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
+    if (annotations.length == 0 && suffix == null) return "?";
 
     StringBuilder sb = new StringBuilder();
     if (annotated) {
