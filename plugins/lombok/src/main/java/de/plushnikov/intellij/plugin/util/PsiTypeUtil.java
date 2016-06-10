@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -23,6 +24,48 @@ import java.util.List;
 import java.util.Map;
 
 public class PsiTypeUtil {
+
+  @NotNull
+  public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
+    PsiType oneElementType = PsiUtil.extractIterableTypeParameter(psiType, true);
+    if (oneElementType instanceof PsiWildcardType) {
+      oneElementType = ((PsiWildcardType) oneElementType).getBound();
+    }
+    if (null == oneElementType) {
+      oneElementType = PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
+    }
+    return oneElementType;
+  }
+
+  @NotNull
+  public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
+    PsiType oneElementType = PsiUtil.extractIterableTypeParameter(psiType, true);
+    if (oneElementType instanceof PsiWildcardType) {
+      oneElementType = ((PsiWildcardType) oneElementType).getBound();
+    }
+
+    PsiType result;
+    final PsiClassType javaLangObject = PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
+    if (null == oneElementType || Comparing.equal(javaLangObject, oneElementType)) {
+      result = PsiWildcardType.createUnbounded(psiManager);
+    } else {
+      result = PsiWildcardType.createExtends(psiManager, oneElementType);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public static PsiType createCollectionType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String collectionQualifiedName) {
+    final Project project = psiManager.getProject();
+    final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+
+    PsiClass genericClass = facade.findClass(collectionQualifiedName, globalsearchscope);
+
+    return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiType);
+  }
+
 
   @NotNull
   public static PsiType[] extractTypeParameters(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
@@ -97,12 +140,11 @@ public class PsiTypeUtil {
         if (null == mappedType) {
           mappedType = PsiType.getJavaLangObject(PsiManager.getInstance(project), globalsearchscope);
         }
-        if (null != mappedType) {
-          if (mappedType instanceof PsiWildcardType) {
-            mappedType = ((PsiWildcardType) mappedType).getBound();
-          }
-          genericSubstitutor = genericSubstitutor.put(psiTypeParameter, mappedType);
+
+        if (mappedType instanceof PsiWildcardType) {
+          mappedType = ((PsiWildcardType) mappedType).getBound();
         }
+        genericSubstitutor = genericSubstitutor.put(psiTypeParameter, mappedType);
       }
       return elementFactory.createType(genericClass, genericSubstitutor);
     }

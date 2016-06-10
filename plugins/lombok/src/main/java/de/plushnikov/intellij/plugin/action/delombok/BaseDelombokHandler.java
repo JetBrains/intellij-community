@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
@@ -131,8 +133,9 @@ public class BaseDelombokHandler {
   private PsiClass rebuildClass(@NotNull Project project, @NotNull PsiClass fromClass) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    PsiClass resultClass = elementFactory.createClass(fromClass.getName());
+    PsiClass resultClass = elementFactory.createClass(StringUtil.defaultIfEmpty(fromClass.getName(), "UnknownClassName"));
     copyModifiers(fromClass.getModifierList(), resultClass.getModifierList());
+    rebuildTypeParameter(fromClass, resultClass);
 
     for (PsiField psiField : fromClass.getFields()) {
       resultClass.add(rebuildField(project, psiField));
@@ -155,13 +158,7 @@ public class BaseDelombokHandler {
       resultMethod = elementFactory.createMethod(fromMethod.getName(), returnType);
     }
 
-    final PsiTypeParameterList fromMethodTypeParameterList = fromMethod.getTypeParameterList();
-    if (null != fromMethodTypeParameterList) {
-      PsiTypeParameterList typeParameterList = PsiMethodUtil.createTypeParameterList(fromMethodTypeParameterList);
-      if (null != typeParameterList) {
-        resultMethod.addAfter(typeParameterList, resultMethod.getModifierList());
-      }
-    }
+    rebuildTypeParameter(fromMethod, resultMethod);
 
     final PsiClassType[] referencedTypes = fromMethod.getThrowsList().getReferencedTypes();
     if (referencedTypes.length > 0) {
@@ -202,6 +199,19 @@ public class BaseDelombokHandler {
     }
 
     return (PsiMethod) CodeStyleManager.getInstance(project).reformat(resultMethod);
+  }
+
+  private void rebuildTypeParameter(@NotNull PsiTypeParameterListOwner listOwner, @NotNull PsiTypeParameterListOwner resultOwner) {
+    final PsiTypeParameterList fromMethodTypeParameterList = listOwner.getTypeParameterList();
+    if (listOwner.hasTypeParameters() && null != fromMethodTypeParameterList) {
+      PsiTypeParameterList typeParameterList = PsiMethodUtil.createTypeParameterList(fromMethodTypeParameterList);
+      if (null != typeParameterList) {
+        final PsiTypeParameterList resultOwnerTypeParameterList = resultOwner.getTypeParameterList();
+        if (null != resultOwnerTypeParameterList) {
+          resultOwnerTypeParameterList.replace(typeParameterList);
+        }
+      }
+    }
   }
 
   private void copyModifiers(PsiModifierList fromModifierList, PsiModifierList resultModifierList) {

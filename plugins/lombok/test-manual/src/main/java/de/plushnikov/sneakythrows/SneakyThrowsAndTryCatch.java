@@ -16,7 +16,7 @@ public class SneakyThrowsAndTryCatch {
 
   private void itThrows(boolean foo) throws Exception {
     if (foo) {
-      throw new IOException("test");
+      throw new IOException("generic");
     } else {
       throw new Exception("test2");
     }

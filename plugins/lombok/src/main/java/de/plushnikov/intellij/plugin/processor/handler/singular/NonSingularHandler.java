@@ -18,12 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 
-public class NonSingularHandler implements BuilderElementHandler {
+class NonSingularHandler implements BuilderElementHandler {
   private static final String SETTER_PREFIX = "set";
 
   private final boolean shouldGenerateFullBodyBlock;
 
-  public NonSingularHandler(boolean shouldGenerateFullBodyBlock) {
+  NonSingularHandler(boolean shouldGenerateFullBodyBlock) {
     this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
   }
 

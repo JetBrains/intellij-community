@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -16,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 
-public class SingularGuavaMapHandler extends SingularMapHandler {
+class SingularGuavaMapHandler extends SingularMapHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
   private final String guavaQualifiedName;
   private final boolean sortedCollection;
 
-  public SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
+  SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
     super(shouldGenerateFullBodyBlock);
     this.guavaQualifiedName = guavaQualifiedName;
     this.sortedCollection = sortedCollection;
@@ -44,11 +45,11 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
     return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, guavaQualifiedName + ".Builder");
   }
 
-  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {
-    if (psiParameterTypes.length == 2) {
-      methodBuilder.withParameter(singularName + LOMBOK_KEY, psiParameterTypes[0]);
-      methodBuilder.withParameter(singularName + LOMBOK_VALUE, psiParameterTypes[1]);
-    }
+  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+//    if (psiFieldType.length == 2) {
+//      methodBuilder.withParameter(singularName + LOMBOK_KEY, psiFieldType[0]);
+//      methodBuilder.withParameter(singularName + LOMBOK_VALUE, psiFieldType[1]);
+//    }
   }
 
   protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
@@ -57,7 +58,7 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.put({1}" + LOMBOK_KEY + ", {1}" + LOMBOK_VALUE + ");{4}";
 
@@ -65,7 +66,7 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.putAll({0});{3}";
 

@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
@@ -10,26 +10,29 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
-public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
+class SingularGuavaCollectionHandler extends SingularCollectionHandler {
 
   private final String guavaQualifiedName;
   private final boolean sortedCollection;
 
-  public SingularGuavaCollectionHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
+  SingularGuavaCollectionHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
     super(shouldGenerateFullBodyBlock);
     this.guavaQualifiedName = guavaQualifiedName;
     this.sortedCollection = sortedCollection;
   }
 
   @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
-    return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, guavaQualifiedName + ".Builder");
+  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
+
+    return PsiTypeUtil.createCollectionType(elementType, psiManager, guavaQualifiedName + ".Builder");
   }
 
-  protected void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
-    final Project project = methodBuilder.getProject();
-
-    final PsiType collectionType = PsiTypeUtil.getCollectionClassType((PsiClassType) psiFieldType, project, CommonClassNames.JAVA_LANG_ITERABLE);
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+    final PsiManager psiManager = methodBuilder.getManager();
+    final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
+    final PsiType collectionType = PsiTypeUtil.createCollectionType(elementType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE);
 
     methodBuilder.withParameter(singularName, collectionType);
   }
@@ -40,7 +43,7 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.add({1});{4}";
 
@@ -48,7 +51,7 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.addAll({0});{3}";
 

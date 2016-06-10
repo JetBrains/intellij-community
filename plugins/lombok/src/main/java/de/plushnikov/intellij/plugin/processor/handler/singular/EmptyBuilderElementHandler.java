@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EmptyBuilderElementHandler implements BuilderElementHandler {
+class EmptyBuilderElementHandler implements BuilderElementHandler {
   @Override
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
   }

@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
@@ -21,14 +20,14 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 
-public class SingularMapHandler extends AbstractSingularHandler {
+class SingularMapHandler extends AbstractSingularHandler {
 
   private static final String KEY = "Key";
   private static final String VALUE = "Value";
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
-  public SingularMapHandler(boolean shouldGenerateFullBodyBlock) {
+  SingularMapHandler(boolean shouldGenerateFullBodyBlock) {
     super(shouldGenerateFullBodyBlock);
   }
 
@@ -70,18 +69,18 @@ public class SingularMapHandler extends AbstractSingularHandler {
     return PsiTypeUtil.getGenericCollectionClassType(psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
   }
 
-  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {
-    if (psiParameterTypes.length == 2) {
-      methodBuilder.withParameter(singularName + KEY, psiParameterTypes[0]);
-      methodBuilder.withParameter(singularName + VALUE, psiParameterTypes[1]);
-    }
+  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+//    if (psiFieldType.length == 2) {
+//      methodBuilder.withParameter(singularName + KEY, psiFieldType[0]);
+//      methodBuilder.withParameter(singularName + VALUE, psiFieldType[1]);
+//    }
   }
 
-  protected void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final Project project = methodBuilder.getProject();
 
     final PsiType collectionType;
-    PsiTypeUtil.getCollectionClassType((PsiClassType) psiFieldType, project, CommonClassNames.JAVA_UTIL_MAP);
+//    PsiTypeUtil.getCollectionClassType((PsiClassType) psiFieldType, project, CommonClassNames.JAVA_UTIL_MAP);
 
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -100,7 +99,7 @@ public class SingularMapHandler extends AbstractSingularHandler {
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
         "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{3}>(); \n" +
         "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{4}>(); \n" +
@@ -109,11 +108,12 @@ public class SingularMapHandler extends AbstractSingularHandler {
         "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");" +
         "{2}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
-        psiParameterTypes[0].getCanonicalText(false), psiParameterTypes[1].getCanonicalText(false));
+//    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
+//        psiFieldType[0].getCanonicalText(false), psiFieldType[1].getCanonicalText(false));
+    return "";
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
         "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{2}>(); \n" +
         "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{3}>(); \n" +
@@ -122,7 +122,8 @@ public class SingularMapHandler extends AbstractSingularHandler {
         "this.{0}" + LOMBOK_KEY + ".add($lombokEntry.getKey());\n" +
         "this.{0}" + LOMBOK_VALUE + ".add($lombokEntry.getValue());\n" +
         "'}'{1}";
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "",
-        psiParameterTypes[0].getCanonicalText(false), psiParameterTypes[1].getCanonicalText(false));
+//    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "",
+//        psiFieldType[0].getCanonicalText(false), psiFieldType[1].getCanonicalText(false));
+    return "";
   }
 }

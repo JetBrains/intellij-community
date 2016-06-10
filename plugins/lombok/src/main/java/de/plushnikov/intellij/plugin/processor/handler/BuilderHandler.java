@@ -480,8 +480,8 @@ public class BuilderHandler {
     } else {
       addExceptions(methodBuilder, psiMethod);
     }
-
-    addTypeParameters(builderClass, psiMethod, methodBuilder);
+    //TODO BUILDER CHECK and remove
+//    addTypeParameters(builderClass, psiMethod, methodBuilder);
 
     return methodBuilder;
   }
