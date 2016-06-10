@@ -21,7 +21,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.*;
 import com.intellij.util.BitUtil;
-import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,24 +75,19 @@ public class Translator {
     return Import.EMPTY_ARRAY;
   }
 
-  public static Unit translate(NameEnvironment nameEnvironment, IndexTree.Unit unit) {
-    if (unit.myDecls.length == 0) {
-      return null;
-    }
-    QualifiedName pid = StringUtil.isEmpty(unit.myPackageId) ? null : nameEnvironment.fromString(unit.myPackageId, true);
-    ArrayList<ClassDeclaration> classesList = new ArrayList<ClassDeclaration>();
-    for (IndexTree.ClassDecl def : unit.myDecls) {
-      ClassDeclaration classDecl = processClassDecl(nameEnvironment, unit.myFileId, def);
-      classesList.add(classDecl);
-    }
-    TLongArrayList importList = new TLongArrayList();
-    for (IndexTree.Import anImport : unit.imports) {
-      importList.add(processImport(nameEnvironment, anImport));
+  @NotNull
+  public static Unit internNames(NameEnvironment nameEnvironment, IndexTree.Unit unit, int fileId, QualifiedName pkg) {
+    ClassDeclaration[] classes = new ClassDeclaration[unit.myDecls.length];
+    for (int i = 0; i < unit.myDecls.length; i++) {
+      classes[i] = processClassDecl(nameEnvironment, fileId, unit.myDecls[i]);
     }
 
-    long[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toNativeArray();
-    ClassDeclaration[] classes = classesList.toArray(new ClassDeclaration[classesList.size()]);
-    return new Unit(pid, imports, classes, unit.myUnitType);
+    long[] imports = unit.imports.length == 0 ? Import.EMPTY_ARRAY : new long[unit.imports.length];
+    for (int i = 0; i < unit.imports.length; i++) {
+      imports[i] = processImport(nameEnvironment, unit.imports[i]);
+    }
+
+    return new Unit(pkg, imports, classes, unit.myUnitType);
   }
 
   private static ClassDeclaration processClassDecl(NameEnvironment nameEnvironment, int fileId, IndexTree.ClassDecl def) {

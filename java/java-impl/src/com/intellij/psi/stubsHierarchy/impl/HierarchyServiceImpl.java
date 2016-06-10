@@ -15,39 +15,28 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
-import com.intellij.psi.stubsHierarchy.stubs.Unit;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.CachedValueBase;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 public class HierarchyServiceImpl extends HierarchyService {
-  private static final TObjectHashingStrategy<Unit> UNIT_HASHING_STRATEGY = new TObjectHashingStrategy<Unit>() {
-    @Override
-    public int computeHashCode(Unit object) {
-      return object.myClasses[0].myClassAnchor.myFileId;
-    }
-
-    @Override
-    public boolean equals(Unit o1, Unit o2) {
-      return computeHashCode(o1) == computeHashCode(o2);
-    }
-  };
   private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
   private final Project myProject;
   private final ProjectFileIndex myFileIndex;
@@ -99,32 +88,35 @@ public class HierarchyServiceImpl extends HierarchyService {
   private void loadSymbols(NameEnvironment names, Symbols symbols) {
     StubEnter stubEnter = new StubEnter(names, symbols);
 
-    loadUnits(false, names).forEach(stubEnter::unitEnter);
+    loadUnits(false, names, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(true, names).forEach(stubEnter::unitEnter);
+    loadUnits(true, names, stubEnter);
     stubEnter.connect2();
   }
 
-  private Set<Unit> loadUnits(boolean sourceMode, NameEnvironment names) {
-    Set<Unit> result = new THashSet<>(UNIT_HASHING_STRATEGY);
-    StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.UNITS, myProject, unit -> {
-      Unit compact = shouldProcess(sourceMode, unit.myFileId) ? Translator.translate(names, unit) : null;
-      if (compact != null && compact.myClasses.length > 0) {
-        result.remove(compact); // there can be several (outdated) stub keys for the same file id, only the last one counts
-        result.add(compact);
+  private void loadUnits(boolean sourceMode, NameEnvironment names, StubEnter stubEnter) {
+    GlobalSearchScope scope = new DelegatingGlobalSearchScope(new EverythingGlobalScope(myProject)) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return sourceMode ? myFileIndex.isInSourceContent(file) : myFileIndex.isInLibraryClasses(file);
       }
-      return true;
-    });
-    return result;
-  }
+    };
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    FileBasedIndex index = FileBasedIndex.getInstance();
+    for (String packageName : index.getAllKeys(StubHierarchyIndex.INDEX_ID, myProject)) {
+      QualifiedName pkg = StringUtil.isEmpty(packageName) ? null : names.fromString(packageName, true);
+      index.processValues(StubHierarchyIndex.INDEX_ID, packageName, null, new FileBasedIndex.ValueProcessor<IndexTree.Unit>() {
+        int count = 0;
 
-  private boolean shouldProcess(boolean sourceMode, final int fileId) {
-    VirtualFile file = PersistentFS.getInstance().findFileById(fileId);
-    if (file == null) {
-      return false;
+        @Override
+        public boolean process(VirtualFile file, IndexTree.Unit unit) {
+          if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
+          stubEnter.unitEnter(Translator.internNames(names, unit, ((VirtualFileWithId)file).getId(), pkg));
+          return true;
+        }
+      }, scope);
     }
-    return sourceMode ? myFileIndex.isInSourceContent(file) : myFileIndex.isInLibraryClasses(file);
   }
 
 }
