@@ -307,10 +307,15 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
         if (directory != null) {
 
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(method.getManager().getProject());
-          final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
-          final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
-          return ((PsiJavaFile)directory.add(reformattedFile)).getClasses()[0];
+          PsiFile file = directory.findFile(newFile.getName());
+          if (file == null) {
+            final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(method.getManager().getProject());
+            final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
+            final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
+            file = (PsiFile)directory.add(reformattedFile);
+          }
+
+          return ((PsiJavaFile)file).getClasses()[0];
         }
       }
     }
