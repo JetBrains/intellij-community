@@ -23,7 +23,7 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
-    final PsiType collectionType = PsiTypeUtil.createCollectionType(elementType, psiManager, CommonClassNames.JAVA_UTIL_COLLECTION);
+    final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_COLLECTION, elementType);
     methodBuilder.withParameter(singularName, collectionType);
   }
 

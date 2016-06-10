@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -27,7 +28,12 @@ public class PsiTypeUtil {
 
   @NotNull
   public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
-    PsiType oneElementType = PsiUtil.extractIterableTypeParameter(psiType, true);
+    return extractOneElementType(psiType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE, 0);
+  }
+
+  @NotNull
+  public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
+    PsiType oneElementType = PsiUtil.substituteTypeParameter(psiType, superClass, paramIndex, true);
     if (oneElementType instanceof PsiWildcardType) {
       oneElementType = ((PsiWildcardType) oneElementType).getBound();
     }
@@ -39,7 +45,12 @@ public class PsiTypeUtil {
 
   @NotNull
   public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
-    PsiType oneElementType = PsiUtil.extractIterableTypeParameter(psiType, true);
+    return extractAllElementType(psiType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE, 0);
+  }
+
+  @NotNull
+  public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
+    PsiType oneElementType = PsiUtil.substituteTypeParameter(psiType, superClass, paramIndex, true);
     if (oneElementType instanceof PsiWildcardType) {
       oneElementType = ((PsiWildcardType) oneElementType).getBound();
     }
@@ -56,14 +67,14 @@ public class PsiTypeUtil {
   }
 
   @NotNull
-  public static PsiType createCollectionType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String collectionQualifiedName) {
+  public static PsiType createCollectionType(@NotNull PsiManager psiManager, final String collectionQualifiedName, @NotNull PsiType... psiTypes) {
     final Project project = psiManager.getProject();
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
     PsiClass genericClass = facade.findClass(collectionQualifiedName, globalsearchscope);
 
-    return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiType);
+    return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiTypes);
   }
 
 

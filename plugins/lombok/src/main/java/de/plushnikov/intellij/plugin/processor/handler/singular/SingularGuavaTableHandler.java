@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
@@ -17,10 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 
-//TODO implement me
 class SingularGuavaTableHandler extends SingularMapHandler {
-  private static final String LOMBOK_KEY = "$key";
-  private static final String LOMBOK_VALUE = "$value";
+  private static final String COM_GOOGLE_COMMON_COLLECT_TABLE = "com.google.common.collect.Table";
+
+  private static final String LOMBOK_ROW_KEY = "rowKey";
+  private static final String LOMBOK_COLUMN_KEY = "columnKey";
+  private static final String LOMBOK_VALUE = "value";
 
   private final String guavaQualifiedName;
   private final boolean sortedCollection;
@@ -42,15 +43,35 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   }
 
   @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
-    return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, guavaQualifiedName + ".Builder");
+  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiType rowKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
+    final PsiType columnKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
+    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
+
+    return PsiTypeUtil.createCollectionType(psiManager, guavaQualifiedName + ".Builder", rowKeyType, columnKeyType, valueType);
   }
 
   protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
-//    if (psiFieldType.length == 2) {
-//      methodBuilder.withParameter(singularName + LOMBOK_KEY, psiFieldType[0]);
-//      methodBuilder.withParameter(singularName + LOMBOK_VALUE, psiFieldType[1]);
-//    }
+    final PsiManager psiManager = methodBuilder.getManager();
+    final PsiType rowKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
+    final PsiType columnKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
+    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
+
+    methodBuilder.withParameter(LOMBOK_ROW_KEY, rowKeyType);
+    methodBuilder.withParameter(LOMBOK_COLUMN_KEY, columnKeyType);
+    methodBuilder.withParameter(LOMBOK_VALUE, valueType);
+  }
+
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+    final PsiManager psiManager = methodBuilder.getManager();
+    final PsiType rowKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
+    final PsiType columnKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
+    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
+
+    final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, rowKeyType, columnKeyType, valueType);
+
+    methodBuilder.withParameter(singularName, collectionType);
   }
 
   protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
@@ -61,7 +82,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
 
   protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
-        "this.{0}.put({1}" + LOMBOK_KEY + ", {1}" + LOMBOK_VALUE + ");{4}";
+        "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");{4}";
 
     return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, guavaQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");

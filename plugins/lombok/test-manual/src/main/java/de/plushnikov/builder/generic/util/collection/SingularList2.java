@@ -1,4 +1,4 @@
-package de.plushnikov.builder.generic.util;
+package de.plushnikov.builder.generic.util.collection;
 
 import java.util.List;
 

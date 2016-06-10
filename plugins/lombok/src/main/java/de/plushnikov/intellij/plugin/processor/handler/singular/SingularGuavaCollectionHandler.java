@@ -26,13 +26,13 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 
-    return PsiTypeUtil.createCollectionType(elementType, psiManager, guavaQualifiedName + ".Builder");
+    return PsiTypeUtil.createCollectionType(psiManager, guavaQualifiedName + ".Builder", elementType);
   }
 
   protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
-    final PsiType collectionType = PsiTypeUtil.createCollectionType(elementType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE);
+    final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_LANG_ITERABLE, elementType);
 
     methodBuilder.withParameter(singularName, collectionType);
   }

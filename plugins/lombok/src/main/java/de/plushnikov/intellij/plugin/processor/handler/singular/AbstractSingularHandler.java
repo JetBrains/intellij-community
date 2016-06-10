@@ -48,7 +48,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 
-    return PsiTypeUtil.createCollectionType(elementType, psiManager, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
+    return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_ARRAY_LIST, elementType);
   }
 
   @Override
