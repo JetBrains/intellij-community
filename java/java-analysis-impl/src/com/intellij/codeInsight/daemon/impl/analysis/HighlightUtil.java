@@ -1784,7 +1784,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
     }
 
-    return null;
+    String text = JavaErrorMessages.message("declaration.or.variable.expected");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
   }
 
   @Nullable

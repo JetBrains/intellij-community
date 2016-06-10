@@ -49,7 +49,8 @@ public class DeclarationParser {
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
   private static final TokenSet RESOURCE_EXPRESSIONS = TokenSet.create(
-    JavaElementType.REFERENCE_EXPRESSION, JavaElementType.THIS_EXPRESSION);
+    JavaElementType.REFERENCE_EXPRESSION, JavaElementType.THIS_EXPRESSION,
+    JavaElementType.METHOD_CALL_EXPRESSION, JavaElementType.NEW_EXPRESSION);
 
   private static final String WHITESPACES = "\n\r \t";
   private static final String LINE_ENDS = "\n\r";
