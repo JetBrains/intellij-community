@@ -42,13 +42,15 @@ public class SingularHandlerFactory {
   private static final Set<String> GUAVA_MAP_TYPES = new HashSet<String>() {{
     addAll(toSet(GUAVA_MAPS));
   }};
+  private static final Set<String> GUAVA_TABLE_TYPES = new HashSet<String>() {{
+    addAll(toSet(GUAVA_TABLE));
+  }};
   private static final Set<String> VALID_SINGULAR_TYPES = new HashSet<String>() {{
     addAll(COLLECTION_TYPES);
-
-    addAll(toSet(JAVA_MAPS));
-    addAll(toSet(GUAVE_COLLECTIONS));
-    addAll(toSet(GUAVA_SETS));
-    addAll(toSet(GUAVA_MAPS));
+    addAll(MAP_TYPES);
+    addAll(GUAVA_COLLECTION_TYPES);
+    addAll(GUAVA_MAP_TYPES);
+    addAll(GUAVA_TABLE_TYPES);
   }};
 
   private static Set<String> toSet(String... from) {
@@ -80,6 +82,9 @@ public class SingularHandlerFactory {
       }
       if (GUAVA_MAP_TYPES.contains(qualifiedName)) {
         return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
+      }
+      if (GUAVA_TABLE_TYPES.contains(qualifiedName)) {
+        return new SingularGuavaTableHandler(qualifiedName, false, shouldGenerateFullBodyBlock);
       }
     }
     return new EmptyBuilderElementHandler();
