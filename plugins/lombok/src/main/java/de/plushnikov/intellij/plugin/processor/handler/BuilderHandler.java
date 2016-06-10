@@ -334,6 +334,7 @@ public class BuilderHandler {
     // use AccessorsInfo only for @Builder on class, not on method
     final AccessorsInfo accessorsInfo = null == psiMethod ? AccessorsInfo.build(psiParentClass) : AccessorsInfo.EMPTY;
 
+    final StringBuilder buildMethodPrepareString = new StringBuilder(psiVariables.size() * 20);
     final StringBuilder buildMethodParameterString = new StringBuilder(psiVariables.size() * 20);
     for (PsiVariable psiVariable : psiVariables) {
       final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
@@ -350,6 +351,7 @@ public class BuilderHandler {
         handler.addBuilderMethod(psiMethods, psiVariable, fieldName, psiBuilderClass, fluentBuilder, returnType, singularName);
       }
 
+      handler.appendBuildPrepare(buildMethodPrepareString, psiVariable, fieldName);
       handler.appendBuildCall(buildMethodParameterString, fieldName);
       buildMethodParameterString.append(',');
     }
@@ -360,7 +362,8 @@ public class BuilderHandler {
       if (buildMethodParameterString.length() > 0) {
         buildMethodParameterString.deleteCharAt(buildMethodParameterString.length() - 1);
       }
-      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName, buildMethodParameterString.toString()));
+      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName, buildMethodPrepareString.toString(), buildMethodParameterString.toString()));
+
     }
     if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
       psiMethods.add(toStringProcessor.createToStringMethod(psiBuilderClass, Arrays.asList(psiBuilderClass.getFields()), psiAnnotation));
@@ -462,14 +465,14 @@ public class BuilderHandler {
 
   @NotNull
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType,
-                                      @NotNull String buildMethodName, @NotNull String buildMethodParameters) {
+                                      @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
         .withMethodReturnType(psiBuilderType)
         .withContainingClass(builderClass)
         .withNavigationElement(parentClass)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, psiBuilderType, buildMethodParameters));
+        .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, psiBuilderType, buildMethodPrepare, buildMethodParameters));
 
     if (null == psiMethod) {
       final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
@@ -487,25 +490,26 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private PsiCodeBlock createBuildMethodCodeBlock(@Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType, @NotNull String buildMethodParameters) {
+  private PsiCodeBlock createBuildMethodCodeBlock(@Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType,
+                                                  @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
     final String blockText;
     if (isShouldGenerateFullBodyBlock()) {
       final String codeBlockFormat;
       final String callExpressionText;
       if (null == psiMethod) {
-        codeBlockFormat = "return new %s(%s);";
+        codeBlockFormat = "%s\n return new %s(%s);";
         callExpressionText = psiBuilderType.getPresentableText();
       } else {
         if (PsiType.VOID.equals(psiBuilderType)) {
-          codeBlockFormat = "%s(%s);";
+          codeBlockFormat = "%s\n %s(%s);";
         } else if (psiMethod.isConstructor()) {
-          codeBlockFormat = "return new %s(%s);";
+          codeBlockFormat = "%s\n return new %s(%s);";
         } else {
-          codeBlockFormat = "return %s(%s);";
+          codeBlockFormat = "%s\n return %s(%s);";
         }
         callExpressionText = psiMethod.getName();
       }
-      blockText = String.format(codeBlockFormat, callExpressionText, buildMethodParameters);
+      blockText = String.format(codeBlockFormat, buildMethodPrepare, callExpressionText, buildMethodParameters);
     } else {
       blockText = "return " + PsiTypeUtil.getReturnValueOfType(psiBuilderType) + ";";
     }

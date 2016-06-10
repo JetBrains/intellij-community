@@ -82,8 +82,4 @@ class SingularGuavaMapHandler extends SingularMapHandler {
         fluentBuilder ? "\nreturn this;" : "");
   }
 
-  @Override
-  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
-    buildMethodParameters.append(fieldName).append(".build()");
-  }
 }

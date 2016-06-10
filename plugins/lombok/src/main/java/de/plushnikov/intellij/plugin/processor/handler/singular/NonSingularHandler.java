@@ -74,6 +74,10 @@ class NonSingularHandler implements BuilderElementHandler {
   }
 
   @Override
+  public void appendBuildPrepare(@NotNull StringBuilder buildMethodParameters, @NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  }
+
+  @Override
   public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
     buildMethodParameters.append(fieldName);
   }

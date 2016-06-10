@@ -18,6 +18,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -45,6 +46,19 @@ public class BuilderProcessor extends AbstractClassProcessor {
   @Override
   public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
     return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_BUILDER_ENABLED);
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Singular.class);
+      if (null != psiAnnotation) {
+        result.add(psiAnnotation);
+      }
+    }
+    return result;
   }
 
   @Override

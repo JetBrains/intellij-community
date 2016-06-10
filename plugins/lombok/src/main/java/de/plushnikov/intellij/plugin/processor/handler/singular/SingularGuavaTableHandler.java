@@ -96,8 +96,4 @@ class SingularGuavaTableHandler extends SingularMapHandler {
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  @Override
-  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
-    buildMethodParameters.append(fieldName).append(".build()");
-  }
 }

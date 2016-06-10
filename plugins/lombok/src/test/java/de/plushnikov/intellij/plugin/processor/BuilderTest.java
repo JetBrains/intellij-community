@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public class BuilderTest extends AbstractLombokParsingTestCase {
   protected boolean shouldCompareCodeBlocks() {
-    return false;
+    return true;
   }
 
   @Override
