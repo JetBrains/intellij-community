@@ -295,7 +295,7 @@ public class CompileDriver {
         switch (eventType) {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
-            final CompilationStatusListener publisher = myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
+            final CompilationStatusListener publisher = !myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
             Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
