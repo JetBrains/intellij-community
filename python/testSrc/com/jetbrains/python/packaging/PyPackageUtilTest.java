@@ -52,6 +52,15 @@ public class PyPackageUtilTest extends PyTestCase {
     doTestSetupPyReading(true, true, true);
   }
 
+  // PY-18966
+  public void testSetupPyDependencyLinksReading() {
+    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(myFixture.getModule());
+    final List<PyRequirement> expected = PyRequirement.fromText(
+      "sqlalchemy >=1.0.12, <1.1\ngit+https://github.com/mysql/mysql-connector-python.git@2.1.3#egg=mysql-connector-python-2.1.3");
+
+    assertEquals(expected, actual);
+  }
+
   public void testAbsentRequirementsTxtReading() {
     doTestRequirementsTxtReading(false, false);
   }
