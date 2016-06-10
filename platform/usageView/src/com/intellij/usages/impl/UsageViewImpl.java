@@ -1562,10 +1562,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
         sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
-      else if (key == CommonDataKeys.EDITOR && myCurrentUsageContextPanel instanceof DataProvider) {
-        Object editor = ((DataProvider)myCurrentUsageContextPanel).getData(key.getName());
-        if (editor != null) sink.put(key, editor);
-      }
       else if (key == PlatformDataKeys.HELP_ID) {
         sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
       }
