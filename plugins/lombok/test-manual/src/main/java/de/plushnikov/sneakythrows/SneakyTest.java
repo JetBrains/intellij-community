@@ -14,7 +14,7 @@ public class SneakyTest {
 //    @SneakyThrows(IOException.class)
   @SneakyThrows
   public void readFile() {
-    FileReader test = new FileReader("generic");
+    FileReader test = new FileReader("test");
 
     test.read();
   }
