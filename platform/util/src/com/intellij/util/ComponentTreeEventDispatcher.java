@@ -16,7 +16,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -35,18 +37,21 @@ public class ComponentTreeEventDispatcher<T extends EventListener> {
   private final T myMulticaster;
 
   public static <T extends EventListener> ComponentTreeEventDispatcher<T> create(@NotNull Class<T> listenerClass) {
-    return new ComponentTreeEventDispatcher<T>(listenerClass);
+    return create(null, listenerClass);
   }
 
-  private ComponentTreeEventDispatcher(@NotNull Class<T> listenerClass) {
+  public static <T extends EventListener> ComponentTreeEventDispatcher<T> create(@Nullable Component root, @NotNull Class<T> listenerClass) {
+    return new ComponentTreeEventDispatcher<T>(root, listenerClass);
+  }
+
+  private ComponentTreeEventDispatcher(@Nullable final Component root, @NotNull Class<T> listenerClass) {
     myListenerClass = listenerClass;
     myMulticaster = EventDispatcher.createMulticaster(listenerClass, new Getter<Iterable<T>>() {
       @Override
       public Iterable<T> get() {
-        return uiTraverser(null)
-          .withRoots(Arrays.asList(Window.getWindows()))
-          .postOrderDfsTraversal()
-          .filter(myListenerClass);
+        JBTreeTraverser<Component> traverser = uiTraverser(root);
+        if (root == null) traverser = traverser.withRoots(Arrays.asList(Window.getWindows()));
+        return traverser.postOrderDfsTraversal().filter(myListenerClass);
       }
     });
   }
