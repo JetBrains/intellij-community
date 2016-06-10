@@ -25,7 +25,6 @@ import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -113,8 +112,10 @@ public class SingleClassHierarchy extends ClassHierarchy {
     if (original instanceof PsiClass) {
       psiClass = (PsiClass)original;
     }
-    int fileId = Math.abs(FileBasedIndex.getFileId(psiClass.getContainingFile().getVirtualFile()));
-    SmartClassAnchor anchor = forPsiClass(fileId, psiClass);
+    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    if (!(vFile instanceof VirtualFileWithId)) return StubClassAnchor.EMPTY_ARRAY;
+
+    SmartClassAnchor anchor = forPsiClass(((VirtualFileWithId)vFile).getId(), psiClass);
     return anchor == null ? StubClassAnchor.EMPTY_ARRAY : getDirectSubtypeCandidates(anchor);
   }
 
