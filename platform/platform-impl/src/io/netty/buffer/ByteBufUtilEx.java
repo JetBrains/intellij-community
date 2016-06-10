@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@ package io.netty.buffer;
 
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.io.UTFDataFormatException;
-import java.nio.CharBuffer;
 
 // todo pull request
 public class ByteBufUtilEx {
@@ -91,88 +87,6 @@ public class ByteBufUtilEx {
       buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
     }
     return writerIndex;
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  public static void readUtf8(@NotNull ByteBuf buf, int byteCount, @NotNull CharBuffer charBuffer) throws IOException {
-    AbstractByteBuf buffer = getBuf(buf);
-    int readerIndex = buf.readerIndex();
-
-    int c, char2, char3;
-    int count = 0;
-
-    int byteIndex = readerIndex;
-    int charIndex = charBuffer.position();
-    char[] chars = charBuffer.array();
-    while (count < byteCount) {
-      c = buffer._getByte(byteIndex++) & 0xff;
-      if (c > 127) {
-        break;
-      }
-
-      count++;
-      chars[charIndex++] = (char)c;
-    }
-
-    // byteIndex incremented before check "c > 127", so, we must reset it
-    byteIndex = readerIndex + count;
-    while (count < byteCount) {
-      c = buffer._getByte(byteIndex++) & 0xff;
-      switch (c >> 4) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-          // 0xxxxxxx
-          count++;
-          chars[charIndex++] = (char)c;
-          break;
-
-        case 12:
-        case 13:
-          // 110x xxxx   10xx xxxx
-          count += 2;
-          if (count > byteCount) {
-            throw new UTFDataFormatException("malformed input: partial character at end");
-          }
-          char2 = (int)buffer._getByte(byteIndex++);
-          if ((char2 & 0xC0) != 0x80) {
-            throw new UTFDataFormatException("malformed input around byte " + count);
-          }
-          chars[charIndex++] = (char)(((c & 0x1F) << 6) | (char2 & 0x3F));
-          break;
-
-        case 14:
-          // 1110 xxxx  10xx xxxx  10xx xxxx
-          count += 3;
-          if (count > byteCount) {
-            throw new UTFDataFormatException("malformed input: partial character at end");
-          }
-          char2 = buffer._getByte(byteIndex++);
-          char3 = buffer._getByte(byteIndex++);
-          if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80)) {
-            throw new UTFDataFormatException("malformed input around byte " + (count - 1));
-          }
-          chars[charIndex++] = (char)(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F)));
-          break;
-
-        default:
-          // 10xx xxxx,  1111 xxxx
-          throw new UTFDataFormatException("malformed input around byte " + count);
-      }
-    }
-
-    if (buf == buffer) {
-      buffer.readerIndex = readerIndex + byteCount;
-    }
-    else {
-      buf.readerIndex(readerIndex + byteCount);
-    }
-    charBuffer.position(charIndex);
   }
 
   @NotNull
