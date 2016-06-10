@@ -83,7 +83,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass);
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
@@ -99,7 +99,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull SearchScope searchScopeForNonPhysical) {
     ConcurrentMap<PsiClass, Iterable<PsiClass>> map = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
@@ -108,8 +108,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         anchor -> ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
       Predicate<PsiClass> applicableFilter =
         candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      boolean isPhysical = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical);
+      SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, GlobalSearchScope.allScope(project)).forEach(subClass -> {
+        DirectClassInheritorsSearch.search(candidate, scopeToUse).forEach(subClass -> {
           ProgressManager.checkCanceled();
           PsiAnchor pointer = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue
@@ -120,8 +123,6 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       PsiAnchor seed = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(baseClass));
       // lazy collection: store underlying queue as PsiAnchors, generate new elements by running direct inheritors
       Iterable<PsiClass> computed = new LazyConcurrentCollection<>(seed, converter, applicableFilter, generator);
-      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-      boolean isPhysical = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical);
       // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
       cached = isPhysical ? ConcurrencyUtil.cacheOrGet(map, baseClass, computed) : computed;
     }
