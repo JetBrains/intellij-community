@@ -45,9 +45,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,6 +64,9 @@ public class PyPackageUtil {
   private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
     REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
   };
+
+  @NotNull
+  private static final String DEPENDENCY_LINKS = "dependency_links";
 
   private PyPackageUtil() {
   }
@@ -134,9 +135,19 @@ public class PyPackageUtil {
       return null;
     }
 
+    final List<PyRequirement> requirementsFromRequires = getSetupPyRequiresFromArguments(module, setupCall, SETUP_PY_REQUIRES_KWARGS_NAMES);
+    final List<PyRequirement> requirementsFromLinks = getSetupPyRequiresFromArguments(module, setupCall, DEPENDENCY_LINKS);
+
+    return mergeSetupPyRequirements(requirementsFromRequires, requirementsFromLinks);
+  }
+
+  @NotNull
+  private static List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull Module module,
+                                                                     @NotNull PyCallExpression setupCall,
+                                                                     @NotNull String... argumentNames) {
     return PyRequirement.fromText(
       Stream
-        .of(SETUP_PY_REQUIRES_KWARGS_NAMES)
+        .of(argumentNames)
         .map(setupCall::getKeywordArgument)
         .map(requires -> resolveRequiresValue(module, requires))
         .filter(requires -> requires != null)
@@ -145,6 +156,23 @@ public class PyPackageUtil {
         .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
         .collect(Collectors.joining("\n"))
     );
+  }
+
+  @NotNull
+  private static List<PyRequirement> mergeSetupPyRequirements(@NotNull List<PyRequirement> requirementsFromRequires,
+                                                              @NotNull List<PyRequirement> requirementsFromLinks) {
+    if (!requirementsFromLinks.isEmpty()) {
+      final Map<String, List<PyRequirement>> nameToRequirements =
+        requirementsFromRequires.stream().collect(Collectors.groupingBy(PyRequirement::getName, LinkedHashMap::new, Collectors.toList()));
+
+      for (PyRequirement requirementFromLinks : requirementsFromLinks) {
+        nameToRequirements.replace(requirementFromLinks.getName(), Collections.singletonList(requirementFromLinks));
+      }
+
+      return nameToRequirements.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    return requirementsFromRequires;
   }
 
   @Nullable
