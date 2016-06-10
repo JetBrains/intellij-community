@@ -1,6 +1,4 @@
-import lombok.Value;
-
-@Value
+@lombok.Value
 public class ValueExample {
 
   String name<caret>;

@@ -39,17 +39,16 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  @NotNull
-  public Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiClass.class, true);
     if (searchableClass == null) {
-      return modifiers; // Should not get here, but safer to check
+      return; // Should not get here, but safer to check
     }
 
     PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass, lombok.experimental.FieldDefaults.class);
     if (fieldDefaultsAnnotation == null) {
-      return modifiers; // Should not get here, but safer to check
+      return; // Should not get here, but safer to check
     }
 
     PsiField parentElement = (PsiField) modifierList.getParent();
@@ -68,7 +67,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
         !hasPackagePrivateModifier(modifierList) ||
             // If @PackagePrivate is requested, leave the field as is
             PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
-      return modifiers;
+      return;
     }
 
     switch (defaultAccessLevel) {
@@ -88,11 +87,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
         // no-op
         break;
     }
-
-    return modifiers;
   }
-
-  ;
 
   private boolean hasPackagePrivateModifier(@NotNull PsiModifierList modifierList) {
     return !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) || modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||

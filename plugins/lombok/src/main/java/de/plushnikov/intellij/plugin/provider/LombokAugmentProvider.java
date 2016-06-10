@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ContainerUtil;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -58,11 +58,13 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return modifiers;
     }
 
-    Set<String> result = new HashSet<String>(modifiers);
+    Set<String> result = ContainerUtil.newConcurrentSet();
+    result.addAll(modifiers);
+
     // Loop through all available processors and give all of them a chance to respond
     for (ModifierProcessor processor : modifierProcessors) {
       if (processor.isSupported(modifierList)) {
-        result = processor.transformModifiers(modifierList, result);
+        processor.transformModifiers(modifierList, result);
       }
     }
 

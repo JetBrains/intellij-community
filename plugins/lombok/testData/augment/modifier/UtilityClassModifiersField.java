@@ -1,6 +1,6 @@
 import lombok.experimental.UtilityClass;
 
-@UtilityClass
+@lombok.experimental.UtilityClass
 public class UtilityClassModifiers {
 
   String field<caret>;

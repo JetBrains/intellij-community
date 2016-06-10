@@ -25,10 +25,8 @@ public class ValModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  @NotNull
-  public Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
-    modifiers.add(PsiModifier.FINAL);
+  public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
 
-    return modifiers;
-  };
+    modifiers.add(PsiModifier.FINAL);
+  }
 }

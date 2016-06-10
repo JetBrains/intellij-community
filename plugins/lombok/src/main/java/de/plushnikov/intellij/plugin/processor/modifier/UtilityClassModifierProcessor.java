@@ -27,14 +27,14 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
     PsiElement modifierListParent = modifierList.getParent();
 
-    if(modifierListParent instanceof PsiClass) {
+    if (modifierListParent instanceof PsiClass) {
       PsiClass parentClass = (PsiClass) modifierListParent;
-      if(PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, UtilityClass.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, UtilityClass.class)) {
         return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemNewBuilder());
       }
     }
 
-    if(!isElementFieldMethodOrInnerClass(modifierListParent)) {
+    if (!isElementFieldMethodOrInnerClass(modifierListParent)) {
       return false;
     }
 
@@ -44,24 +44,23 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  @NotNull
-  public Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
 
+    final PsiElement parent = modifierList.getParent();
 
     // FINAL
-    PsiElement parent = modifierList.getParent();
-    if(parent instanceof PsiClass) {
+    if (parent instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) parent;
-      if(PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, UtilityClass.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, UtilityClass.class)) {
         modifiers.add(PsiModifier.FINAL);
       }
     }
 
     // STATIC
-    modifiers.add(PsiModifier.STATIC);
-
-    return modifiers;
-  };
+    if (isElementFieldMethodOrInnerClass(parent)) {
+      modifiers.add(PsiModifier.STATIC);
+    }
+  }
 
   private boolean isElementFieldMethodOrInnerClass(PsiElement element) {
     return element instanceof PsiField || element instanceof PsiMethod || (element instanceof PsiClass && element.getParent() instanceof PsiClass);
