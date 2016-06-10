@@ -8,6 +8,16 @@ import java.io.IOException;
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
 public class BuilderTest extends AbstractLombokParsingTestCase {
+  protected boolean shouldCompareCodeBlocks() {
+    return false;
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    // Add dummy classes, which are absent in mockJDK
+    myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
+  }
 
   // This test is lombok's homepage example.
   public void testBuilder$BuilderExample() throws IOException {
