@@ -24,15 +24,11 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.impl.java.stubs.hierarchy.JavaStubIndexer;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +51,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public int getStubVersion() {
-    return STUB_VERSION + (IndexTree.STUB_HIERARCHY_ENABLED ? 1 : 0);
+    return STUB_VERSION;
   }
 
   @Override
@@ -111,12 +107,5 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
-    if (IndexTree.STUB_HIERARCHY_ENABLED) {
-      Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-      IndexTree.Unit unit = fileId == null ? null : JavaStubIndexer.translate(fileId, stub);
-      if (unit != null) {
-        sink.occurrence(JavaStubIndexKeys.UNITS, unit);
-      }
-    }
   }
 }
