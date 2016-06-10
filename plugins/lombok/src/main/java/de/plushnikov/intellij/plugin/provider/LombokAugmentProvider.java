@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -48,6 +49,25 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = Arrays.asList(getModifierProcessors());
+  }
+
+  /**
+   * Support method required by patcher project and {@link ModifierVisibilityClassFileTransformer}.
+   * Provides a simple way to inject modifiers into older versions of IntelliJ. Return of the null value is dictated by legacy IntelliJ API.
+   *
+   * @param modifierList PsiModifierList that is being queried
+   * @param name         String name of the PsiModifier
+   * @return {@code Boolean.TRUE} if modifier exists (explicitly set by modifier transformers of the plugin), {@code null} otherwise.
+   */
+  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull final String name) {
+
+    final Set<String> modifiers = this.transformModifiers(modifierList, Collections.<String>emptySet());
+
+    if (modifiers.contains(name)) {
+      return Boolean.TRUE;
+    }
+
+    return null;
   }
 
   @NotNull

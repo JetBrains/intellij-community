@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.agent.transformer;
 
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
+
 import de.plushnikov.intellij.plugin.agent.support.SupportedBuild;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
-
-import java.lang.instrument.IllegalClassFormatException;
-import java.security.ProtectionDomain;
 
 /**
  * Transformer that is only required for builds below "146.1154".
@@ -36,7 +36,6 @@ public class ModifierVisibilityClassFileTransformer extends AbstractBuildDepende
       cl = pool.makeClass(new java.io.ByteArrayInputStream(b));
 
       CtMethod m = cl.getDeclaredMethod("hasModifierProperty");
-      // m.insertBefore("System.out.println(\"Inside of hasModifierProperty: \" + $1);");
       m.insertBefore("{\n"
           + "      com.intellij.openapi.extensions.ExtensionPointName pointName = com.intellij.openapi.extensions.ExtensionPointName.create(\"com.intellij.lang.psiAugmentProvider\");\n"
           + "      java.lang.Object[] extensions = com.intellij.openapi.extensions.Extensions.getExtensions(pointName);\n"

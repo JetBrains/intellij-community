@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.agent;
 
-import de.plushnikov.intellij.plugin.agent.transformer.IdeaPatcherTransformer;
-import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
-
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.List;
+
+import de.plushnikov.intellij.plugin.agent.transformer.IdeaPatcherTransformer;
+import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
 
 /**
  * This is a java-agent that patches some of idea's classes.
