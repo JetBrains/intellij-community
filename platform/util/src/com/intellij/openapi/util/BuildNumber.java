@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static BuildNumber fromString(String version, @Nullable String name) {
-    if (version == null) return null;
+    if (StringUtil.isEmptyOrSpaces(version)) return null;
 
     if (BUILD_NUMBER.equals(version)) {
       final String productCode = name != null ? name : "";

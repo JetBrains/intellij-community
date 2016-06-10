@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +33,18 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         if (qualifierExpression != null && referenceNameElement != null) {
-          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(expression);
-          if (interfaceMethod != null) {
-            final PsiElement resolve = expression.resolve();
-            if (resolve instanceof PsiMethod && 
-                (interfaceMethod == resolve || MethodSignatureUtil.isSuperMethod(interfaceMethod, (PsiMethod)resolve))) {
-              holder.registerProblem(referenceNameElement, "Method reference can be replaced with qualifier", new ReplaceMethodRefWithQualifierFix());
+          final PsiType qualifierType = qualifierExpression.getType();
+          if (qualifierType != null) {
+            final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+            final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+            if (interfaceMethod != null) {
+              final PsiElement resolve = expression.resolve();
+              if (resolve instanceof PsiMethod &&
+                  (interfaceMethod == resolve || MethodSignatureUtil.isSuperMethod(interfaceMethod, (PsiMethod)resolve)) &&
+                  TypeConversionUtil.isAssignable(functionalInterfaceType, qualifierType)) {
+                holder.registerProblem(referenceNameElement, "Method reference can be replaced with qualifier",
+                                       new ReplaceMethodRefWithQualifierFix());
+              }
             }
           }
         }

@@ -3,11 +3,11 @@
   <problem>
     <file>Test.java</file>
     <line>5</line>
-    <description>Casting &lt;code&gt;getComponent(&quot;bar&quot;)&lt;/code&gt; to &lt;code&gt;Bar&lt;/code&gt; is redundant</description>
+    <description>Casting &lt;code&gt;getComponent()&lt;/code&gt; to &lt;code&gt;Bar&lt;/code&gt; is redundant</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>6</line>
-    <description>Casting &lt;code&gt;getComponent(&quot;bar&quot;)&lt;/code&gt; to &lt;code&gt;Bar&lt;/code&gt; is redundant</description>
+    <description>Casting &lt;code&gt;getComponent()&lt;/code&gt; to &lt;code&gt;Bar&lt;/code&gt; is redundant</description>
   </problem>
 </problems>

@@ -153,54 +153,43 @@ public class PsiDiamondTypeUtil {
     return typeText;
   }
 
-  public static boolean hasDiamond(PsiNewExpression expression) {
-    return getDiamondType(expression) != null;
-  }
-
-  public static PsiDiamondType getDiamondType(PsiNewExpression expression) {
-    if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
-      final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-      if (classReference != null) {
-        final PsiReferenceParameterList parameterList = classReference.getParameterList();
-        if (parameterList != null) {
-          final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
-          if (parameterElements.length == 1) {
-            final PsiType type = parameterElements[0].getType();
-            return type instanceof PsiDiamondType ? (PsiDiamondType)type : null;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean areTypeArgumentsRedundant(PsiType[] typeArguments,
                                                   PsiCallExpression expression,
                                                   boolean constructorRef,
                                                   @Nullable PsiMethod method, 
                                                   PsiTypeParameter[] typeParameters) {
-    final PsiElement copy;
-    final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
-    if (typeByParent != null) {
-      final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-      final PsiNewExpression newExpr =
-        (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
-      final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
-      LOG.assertTrue(initializer != null);
-      copy = initializer.getInitializers()[0].replace(expression);
-    }
-    else {
-      final int offset = expression.getTextRange().getStartOffset();
-      final PsiFile containingFile = expression.getContainingFile();
-      final PsiFile fileCopy = (PsiFile)containingFile.copy();
-      copy = fileCopy.findElementAt(offset);
-      if (method != null && method.getContainingFile() == containingFile) {
-        method = PsiTreeUtil.getParentOfType(fileCopy.findElementAt(method.getTextOffset()), PsiMethod.class);
+    try {
+      final PsiElement copy;
+      final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
+      if (typeByParent != null) {
+        final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
+        final PsiNewExpression newExpr =
+          (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
+        final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+        LOG.assertTrue(initializer != null);
+        copy = initializer.getInitializers()[0].replace(expression);
       }
-    }
-    final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
-    if (exprCopy != null) {
-      try {
+      else {
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final int offset = (argumentList != null ? argumentList : expression).getTextRange().getStartOffset();
+        final PsiCall call = LambdaUtil.treeWalkUp(expression);
+        if (call != null) {
+          final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
+          copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
+        }
+        else  {
+          final PsiFile containingFile = expression.getContainingFile();
+          final PsiFile fileCopy = (PsiFile)containingFile.copy();
+          copy = fileCopy.findElementAt(offset);
+          if (method != null && method.getContainingFile() == containingFile) {
+            final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
+            method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
+            LOG.assertTrue(method != null, startMethodElementInCopy);
+          }
+        }
+      }
+      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
+      if (exprCopy != null) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory();
         if (constructorRef) {
           if (!(exprCopy instanceof PsiNewExpression) || !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
@@ -214,10 +203,10 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
-      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.info(e);
+      return false;
     }
     return true;
   }

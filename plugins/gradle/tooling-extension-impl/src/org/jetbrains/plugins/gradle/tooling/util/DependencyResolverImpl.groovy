@@ -135,10 +135,15 @@ class DependencyResolverImpl implements DependencyResolver {
         Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap = [:];
         componentResults.each { componentResultsMap.put(it.id, it) }
 
-        Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies = ArrayListMultimap.create()
-        configuration.incoming.dependencies.findAll { it instanceof ProjectDependency }.each {
-          configurationProjectDependencies.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
+        def projectDeps
+        projectDeps = { Configuration conf, map = ArrayListMultimap.create() ->
+          conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
+            map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
+            projectDeps((it as ProjectDependency).projectConfiguration, map)
+          }
+          map
         }
+        Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies = projectDeps(configuration)
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
         if(!configuration.resolvedConfiguration.hasError()) {
@@ -176,7 +181,9 @@ class DependencyResolverImpl implements DependencyResolver {
 
     // resolve compile dependencies
     def compileConfigurationName = sourceSet.compileConfigurationName
-    def compileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
+    def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileConfiguration = compileClasspathConfiguration ?: originCompileConfiguration
 
     def compileScope = 'COMPILE'
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
@@ -190,7 +197,18 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedScope = 'PROVIDED'
 
     Multimap<Object, ExternalDependency> resolvedMap = ArrayListMultimap.create()
-    new DependencyTraverser(compileDependencies).each { resolvedMap.put(resolve(it), it) }
+
+    boolean checkCompileOnlyDeps = compileClasspathConfiguration && !originCompileConfiguration.resolvedConfiguration.hasError()
+    new DependencyTraverser(compileDependencies).each {
+      def resolvedObj = resolve(it)
+      resolvedMap.put(resolvedObj, it)
+
+      if (checkCompileOnlyDeps &&
+          (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
+           !originCompileConfiguration.contains(resolvedObj))) {
+        ((AbstractExternalDependency)it).scope = providedScope
+      }
+    }
 
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it));

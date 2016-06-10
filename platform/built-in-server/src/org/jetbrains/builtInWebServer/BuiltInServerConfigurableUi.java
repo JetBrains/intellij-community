@@ -46,5 +46,6 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
   public void reset(@NotNull BuiltInServerOptions settings) {
     builtInServerPort.setNumber(settings.builtInServerPort);
     builtInServerAvailableExternallyCheckBox.setSelected(settings.builtInServerAvailableExternally);
+    allowUnsignedRequestsCheckBox.setSelected(settings.allowUnsignedRequests);
   }
 }

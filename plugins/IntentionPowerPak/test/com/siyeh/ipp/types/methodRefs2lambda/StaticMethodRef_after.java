@@ -7,6 +7,6 @@ public class MyTest {
     }
 
     static {
-        I sam = (i) -> MyTest.print(i);
+        I sam = (i) -> print(i);
     }
 }

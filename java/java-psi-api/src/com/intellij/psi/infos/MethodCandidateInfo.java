@@ -399,7 +399,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 
-  private boolean isRawSubstitution() {
+  public boolean isRawSubstitution() {
     final PsiMethod method = getElement();
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = method.getContainingClass();
@@ -456,7 +456,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public String getParentInferenceErrorMessage(PsiExpressionList list) {
     String errorMessage = getInferenceErrorMessage();
     while (errorMessage == null) {
-      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true);
+      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true, PsiCodeBlock.class);
       if (list == null) {
         break;
       }
@@ -497,7 +497,15 @@ public class MethodCandidateInfo extends CandidateInfo{
       return clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getElseExpression());
     }
     else if (expression instanceof PsiCallExpression) {
-      final JavaResolveResult result = ((PsiCallExpression)expression).resolveMethodGenerics();
+      final JavaResolveResult result;
+      if (expression instanceof PsiNewExpression) {
+        PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)expression);
+        result = diamondType != null ? diamondType.getStaticFactory()
+                                     : ((PsiCallExpression)expression).resolveMethodGenerics();
+      }
+      else {
+        result = ((PsiCallExpression)expression).resolveMethodGenerics();
+      }
       if (result instanceof MethodCandidateInfo) {
         final String message = ((MethodCandidateInfo)result).getInferenceErrorMessage();
         ((MethodCandidateInfo)result).setInferenceError(null);

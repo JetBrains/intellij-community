@@ -65,9 +65,9 @@ public class UpdateStrategy {
     BuildInfo newBuild = null;
     List<UpdateChannel> activeChannels = getActiveChannels(product);
     for (UpdateChannel channel : activeChannels) {
-      BuildInfo latestBuild = channel.getLatestBuild(myCurrentBuild.getBaselineVersion());
+      BuildInfo latestBuild = channel.getLatestBuild(myCurrentBuild, myCurrentBuild.getBaselineVersion());
       if (latestBuild == null || latestBuild.getNumber().compareTo(myCurrentBuild) <= 0) {
-        latestBuild = channel.getLatestBuild();
+        latestBuild = channel.getLatestBuild(myCurrentBuild);
       }
       if (isNewVersion(latestBuild)) {
         updatedChannel = channel;

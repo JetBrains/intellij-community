@@ -506,6 +506,18 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTypeParameterInstantiation() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreForeignVariables() throws Exception {
+    doTest();
+  }
+
+  public void testChainedCallsWithMethodReferenceInside() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

@@ -76,11 +76,8 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     catch (GeneratorException e) {
       showErrorMessage(project, e.getMessage());
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        baseDir.refresh(true, true);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      baseDir.refresh(true, true);
     });
   }
 

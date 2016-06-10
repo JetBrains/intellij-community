@@ -12,4 +12,11 @@ public class Test {
       t.obj = new Object[1];
       ((Object[])t.obj)[0] = val;
     }
+
+    public static void arrayDims() {
+        int[] ints = new int[] {};
+        Object foo = 1;
+        ints[(Integer)  foo] = 0;
+        ints[(Integer)  1] = 0;
+    }
 }

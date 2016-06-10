@@ -30,6 +30,10 @@ public class ReplaceIfWithConditionalIntentionTest extends IPPTestCase {
   public void testComments() { doTest(); }
   public void testInsideLambda() { doTest(); }
 
+  public void testInsideLambda1() {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.if.with.conditional.intention.name");
