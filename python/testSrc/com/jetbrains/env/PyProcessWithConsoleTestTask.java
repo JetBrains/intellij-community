@@ -25,13 +25,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
@@ -81,8 +82,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   private void executeRunner(final String sdkHome, final T runner) throws InterruptedException, InvocationTargetException {
     // Semaphore to wait end of process
-    final Semaphore processFinishedSemaphore = new Semaphore();
-    processFinishedSemaphore.down();
+    final Semaphore processFinishedSemaphore = new Semaphore(1);
+    processFinishedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
     final StringBuilder stdAll = new StringBuilder();
@@ -95,7 +96,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
         processHandlerRef.set(null);
-        processFinishedSemaphore.up();
+        processFinishedSemaphore.release();
         LOG.info(String.format("Thread finished %s", Thread.currentThread()));
       }
 
@@ -126,7 +127,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       }
       catch (final Throwable e) {
         failed.set(true);
-        processFinishedSemaphore.up();
+        processFinishedSemaphore.release();
         final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
         throw exception;
       }
@@ -134,7 +135,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
 
     LOG.info(String.format("Waiting for result on thread %s", Thread.currentThread()));
-    final boolean finishedSuccessfully = processFinishedSemaphore.waitFor(300000);
+    final boolean finishedSuccessfully = processFinishedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
     if (!finishedSuccessfully) {
       LOG.warn("Time out waiting for test finish");
       final ProcessHandler handler = processHandlerRef.get();
