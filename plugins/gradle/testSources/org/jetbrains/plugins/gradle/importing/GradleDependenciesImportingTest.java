@@ -658,11 +658,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "  }\n" +
       "}\n" +
       "\n" +
-      "repositories { mavenCentral() }\n" +
-      "\n" +
       "project(':core') {\n" +
       "  apply plugin: 'java'\n" +
-      "  repositories { mavenCentral() }\n" +
       "  dependencies {\n" +
       "    compile project(':util')\n" +
       "  }\n" +
@@ -689,6 +686,76 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("service", "core", DependencyScope.COMPILE);
     assertModuleLibDepScope("service", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("service", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
+
+  @Test
+  @TargetVersions("2.6+")
+  public void testProjectSubstitutionsWithTransitiveDeps() throws Exception {
+    createSettingsFile("include 'modA'\n" +
+                       "include 'modB'\n" +
+                       "include 'app'\n");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  version '1.0.0'\n" +
+      "}\n" +
+      "project(':app') {\n" +
+      "  dependencies {\n" +
+      "    runtime 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "    testCompile 'project:modA:1.0.0'\n" +
+      "  }\n" +
+      "\n" +
+      "  configurations.all {\n" +
+      "    resolutionStrategy.dependencySubstitution {\n" +
+      "      substitute module('project:modA:1.0.0') with project(':modA')\n" +
+      "      substitute module('project:modB:1.0.0') with project(':cmodB')\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':modA') {\n" +
+      "  dependencies {\n" +
+      "    compile project(':modB')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':modB') {\n" +
+      "  dependencies {\n" +
+      "    compile 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "app", "app_main", "app_test", "modA", "modA_main", "modA_test", "modB", "modB_main", "modB_test");
+
+    assertModuleLibDepScope("app_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
+    assertModuleModuleDeps("app_main");
+    assertModuleLibDepScope("app_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("app_test", "app_main", "modA_main", "modB_main");
+
+    assertModuleLibDepScope("modA_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modA_main", "modB_main");
+    assertModuleLibDepScope("modA_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modA_test", "modA_main", "modB_main");
+
+    assertModuleLibDepScope("modB_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modB_main");
+    assertModuleLibDepScope("modB_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDeps("modB_test", "modB_main");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "app", "modA", "modB");
+
+    assertModuleModuleDeps("app", "modA", "modB");
+    assertModuleModuleDepScope("app", "modA", DependencyScope.TEST);
+    assertModuleModuleDepScope("app", "modB", DependencyScope.TEST);
+    assertModuleLibDepScope("app", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME, DependencyScope.TEST);
+
+    assertModuleModuleDeps("modA", "modB");
+    assertModuleModuleDepScope("modA", "modB", DependencyScope.COMPILE);
+    assertModuleLibDepScope("modA", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("modB");
+    assertModuleLibDepScope("modB", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 
   @Test
