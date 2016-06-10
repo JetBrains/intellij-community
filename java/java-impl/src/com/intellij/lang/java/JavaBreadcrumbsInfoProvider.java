@@ -16,6 +16,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
@@ -43,7 +44,7 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @Override
   public String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
-      PsiType type = ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
+      PsiType type = DumbService.isDumb(e.getProject()) ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
       return type == null ? "<lambda>" : "lambda " + PsiNameHelper.getShortClassName(type.getCanonicalText());
     }
     return ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
@@ -58,8 +59,9 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
 
   @NotNull
   private static String getLambdaDescription(@NotNull PsiLambdaExpression e) {
+    boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder("lambda");
-    PsiType functionalInterfaceType = e.getFunctionalInterfaceType();
+    PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
       String shortClassName = PsiNameHelper.getShortClassName(functionalInterfaceType.getCanonicalText());
       sb.append(" ").append(StringUtil.htmlEmphasize(shortClassName));
@@ -69,8 +71,8 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
       sb.append(" (");
       for (int i = 0; i < parameters.length; i++) {
         if (i > 0) sb.append(", ");
-        String str = PsiNameHelper.getShortClassName(parameters[i].getType().getCanonicalText());
-        if (str.isEmpty()) str = StringUtil.notNullize(parameters[i].getName());
+        String str = isDumb ? null : PsiNameHelper.getShortClassName(parameters[i].getType().getCanonicalText());
+        if (StringUtil.isEmpty(str)) str = StringUtil.notNullize(parameters[i].getName());
         sb.append(StringUtil.htmlEmphasize(str));
       }
       sb.append(")");
