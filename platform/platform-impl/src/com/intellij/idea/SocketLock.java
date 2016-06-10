@@ -15,6 +15,10 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -24,12 +28,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +44,13 @@ import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -56,6 +63,8 @@ public final class SocketLock {
 
   private static final String PORT_FILE = "port";
   private static final String PORT_LOCK_FILE = "port.lock";
+  private static final String TOKEN_FILE = "token";
+
   private static final String ACTIVATE_COMMAND = "activate ";
   private static final String PID_COMMAND = "pid";
   private static final String PATHS_EOT_RESPONSE = "---";
@@ -64,6 +73,7 @@ public final class SocketLock {
   private final String myConfigPath;
   private final String mySystemPath;
   private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<Consumer<List<String>>>();
+  private String myToken;
   private BuiltInServer myServer;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
@@ -91,6 +101,7 @@ public final class SocketLock {
           public Void call() throws Exception {
             FileUtil.delete(new File(myConfigPath, PORT_FILE));
             FileUtil.delete(new File(mySystemPath, PORT_FILE));
+            FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
             return null;
           }
         });
@@ -134,13 +145,26 @@ public final class SocketLock {
       if (isShutdownCommand()) {
         System.exit(0);
       }
+
+      myToken = UUID.randomUUID().toString();
       final String[] lockedPaths = {myConfigPath, mySystemPath};
       int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
       myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false,
-                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener));
+                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken));
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(portMarkerC, portBytes);
       FileUtil.writeToFile(portMarkerS, portBytes);
+      File tokenFile = new File(mySystemPath, TOKEN_FILE);
+      FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
+      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
+      if (view != null) {
+        try {
+          view.setPermissions(ContainerUtil.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        }
+        catch (IOException e) {
+          log(e);
+        }
+      }
       log("exit: lock(): succeed");
       return ActivateStatus.NO_INSTANCE;
     });
@@ -177,7 +201,7 @@ public final class SocketLock {
   }
 
   @NotNull
-  private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
+  private ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
     args = checkForJetBrainsProtocolCommand(args);
     try {
@@ -206,8 +230,9 @@ public final class SocketLock {
 
         if (result) {
           try {
+            String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
             @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
+            out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
             String response = in.readUTF();
             log("read: response=%s", response);
@@ -280,11 +305,15 @@ public final class SocketLock {
 
     private final String[] myLockedPaths;
     private final AtomicReference<Consumer<List<String>>> myActivateListener;
+    private final String myToken;
     private State myState = State.HEADER;
 
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths, @NotNull AtomicReference<Consumer<List<String>>> activateListener) {
+    public MyChannelInboundHandler(@NotNull String[] lockedPaths,
+                                   @NotNull AtomicReference<Consumer<List<String>>> activateListener,
+                                   @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
+      myToken = token;
     }
 
     @Override
@@ -342,9 +371,21 @@ public final class SocketLock {
 
             if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
               List<String> args = StringUtil.split(command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString(), "\0");
-              Consumer<List<String>> listener = myActivateListener.get();
-              if (listener != null) {
-                listener.consume(args);
+
+              boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
+              if (!tokenOK) {
+                log(new UnsupportedOperationException("unauthorized request: " + command));
+                Notifications.Bus.notify(new Notification(
+                  Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                  IdeBundle.message("activation.auth.title"),
+                  IdeBundle.message("activation.auth.message"),
+                  NotificationType.WARNING));
+              }
+              else {
+                Consumer<List<String>> listener = myActivateListener.get();
+                if (listener != null) {
+                  listener.consume(args.subList(1, args.size()));
+                }
               }
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
