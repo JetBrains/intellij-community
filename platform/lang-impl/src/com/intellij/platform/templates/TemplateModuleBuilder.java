@@ -20,6 +20,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
@@ -319,7 +320,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
-    if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEncoded()) {
+    if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
       for (WizardInputField field : myAdditionalFields) {
         if (!field.acceptFile(file)) {
           return null;
@@ -334,6 +335,18 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       }
       String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
       patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
+    }
+    else {
+      int i = content.indexOf(SaveProjectAsTemplateAction.FILE_HEADER_TEMPLATE_PLACEHOLDER);
+      if (i != -1) {
+        final FileTemplate template =
+          FileTemplateManager.getDefaultInstance().getDefaultTemplate(SaveProjectAsTemplateAction.getFileHeaderTemplateName());
+        Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
+        String templateText = template.getText(properties);
+        patchedContent = patchedContent.substring(0, i) +
+                         templateText +
+                         patchedContent.substring(i + SaveProjectAsTemplateAction.FILE_HEADER_TEMPLATE_PLACEHOLDER.length());
+      }
     }
     return StringUtilRt.convertLineSeparators(patchedContent, CodeStyleFacade.getInstance().getLineSeparator()).
       getBytes(CharsetToolkit.UTF8_CHARSET);

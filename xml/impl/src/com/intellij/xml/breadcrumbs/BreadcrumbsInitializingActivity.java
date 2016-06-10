@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -34,32 +35,23 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
-  public BreadcrumbsLoaderComponent(@NotNull final Project project) {
-    super(project);
-  }
-
+public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "HtmlBreadcrumbsComponent";
-  }
+  public void runActivity(@NotNull Project project) {
+    if (project.isDefault()) {
+      return;
+    }
 
-  @Override
-  public void initComponent() {
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
-    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
+    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener(project));
 
-    MyVirtualFileListener listener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(listener, myProject);
-    UISettings.getInstance().addUISettingsListener(new MyUISettingsListener(), myProject);
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
+    UISettings.getInstance().addUISettingsListener(new MyUISettingsListener(project), project);
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
@@ -69,10 +61,16 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     }
   }
 
-  private class MyVirtualFileListener extends VirtualFileAdapter {
+  private static class MyVirtualFileListener extends VirtualFileAdapter {
+    private final Project myProject;
+
+    public MyVirtualFileListener(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
     public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) && !myProject.isDisposed()) {
         FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         VirtualFile file = event.getFile();
         if (fileEditorManager.isFileOpen(file)) {
@@ -82,22 +80,38 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     }
   }
 
-  private class MyFileTypeListener extends FileTypeListener.Adapter {
+  private static class MyFileTypeListener extends FileTypeListener.Adapter {
+    private final Project myProject;
+
+    public MyFileTypeListener(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent event) {
-      reinitBreadcrumbsInAllEditors();
+      if (!myProject.isDisposed()) {
+        reinitBreadcrumbsInAllEditors(myProject);
+      }
     }
   }
 
-  private class MyUISettingsListener implements UISettingsListener {
+  private static class MyUISettingsListener implements UISettingsListener {
+    private final Project myProject;
+
+    public MyUISettingsListener(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
     public void uiSettingsChanged(UISettings source) {
-      reinitBreadcrumbsInAllEditors();
+      if (!myProject.isDisposed()) {
+        reinitBreadcrumbsInAllEditors(myProject);
+      }
     }
   }
 
-  private void reinitBreadcrumbsInAllEditors() {
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+  private static void reinitBreadcrumbsInAllEditors(@NotNull Project project) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
       reinitBreadcrumbsComponent(fileEditorManager, virtualFile);
     }

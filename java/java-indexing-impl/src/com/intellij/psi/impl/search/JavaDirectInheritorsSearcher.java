@@ -17,6 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -175,7 +176,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                       @NotNull PsiClass baseClass,
                                                       @NotNull String baseClassName,
                                                       @NotNull SearchScope useScope) {
-    GlobalSearchScope globalUseScope = ApplicationManager.getApplication().runReadAction((Computable<GlobalSearchScope>)()-> toGlobal(useScope, project));
+    GlobalSearchScope globalUseScope = ReadAction.compute(() -> StubHierarchyInheritorSearcher.restrictScope(toGlobal(useScope, project)));
     Collection<PsiReferenceList> candidates =
       MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 

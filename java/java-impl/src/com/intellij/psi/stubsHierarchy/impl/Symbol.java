@@ -18,6 +18,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import com.intellij.util.BitUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -37,6 +38,11 @@ public abstract class Symbol {
     this.myOwner = owner;
     this.myQualifiedName = qualifiedName;
     this.myShortName = name;
+  }
+
+  @Override
+  public int hashCode() {
+    return myShortName;
   }
 
   public ClassSymbol[] members() {
@@ -81,21 +87,22 @@ public abstract class Symbol {
    */
   public static class ClassSymbol extends Symbol {
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
-    public final SmartClassAnchor myClassAnchor;
+    public final StubClassAnchor myClassAnchor;
     public ClassSymbol[] mySuperClasses;
     public UnitInfo myUnitInfo;
     public QualifiedName[] mySuperNames;
     private ClassSymbol[] myMembers;
-    private HierarchyConnector myConnector;
+    private StubHierarchyConnector myConnector;
+    private boolean myHierarchyIncomplete;
 
-    public ClassSymbol(SmartClassAnchor classAnchor,
+    public ClassSymbol(StubClassAnchor classAnchor,
                        int flags,
                        Symbol owner,
                        QualifiedName fullname,
                        int name,
                        UnitInfo unitInfo,
                        QualifiedName[] supers,
-                       HierarchyConnector connector) {
+                       StubHierarchyConnector connector) {
       super(flags | IndexTree.CLASS, owner, fullname, name);
       this.myClassAnchor = classAnchor;
       this.mySuperNames = supers;
@@ -103,21 +110,32 @@ public abstract class Symbol {
       this.myConnector = connector;
     }
 
+    @Override
+    public String toString() {
+      return myClassAnchor.toString();
+    }
+
     public void connect() {
       if (myConnector != null) {
-        HierarchyConnector c = myConnector;
+        StubHierarchyConnector c = myConnector;
         myConnector = null;
         c.connect(this);
       }
     }
 
     @NotNull
-    public ClassSymbol[] getSuperClasses() {
+    public ClassSymbol[] getSuperClasses() throws IncompleteHierarchyException {
       connect();
-      if (mySuperClasses == null) {
-        return EMPTY_ARRAY;
+      if (myHierarchyIncomplete) {
+        throw IncompleteHierarchyException.INSTANCE;
       }
-      return mySuperClasses;
+      return rawSuperClasses();
+    }
+
+    @NotNull
+    ClassSymbol[] rawSuperClasses() {
+      assert myConnector == null;
+      return mySuperClasses == null ? EMPTY_ARRAY : mySuperClasses;
     }
 
     public boolean isCompiled() {
@@ -130,6 +148,31 @@ public abstract class Symbol {
 
     public void setMembers(ClassSymbol[] members) {
       this.myMembers = members;
+    }
+
+    void markHierarchyIncomplete() {
+      mySuperClasses = EMPTY_ARRAY;
+      mySuperNames = null;
+      myUnitInfo = null;
+      myHierarchyIncomplete = true;
+    }
+
+    boolean isHierarchyIncomplete() {
+      return myHierarchyIncomplete;
+    }
+
+    boolean hasAmbiguousSupers() {
+      ClassSymbol[] superClasses = rawSuperClasses();
+      if (superClasses.length < 2) return false;
+
+      TIntHashSet superNames = new TIntHashSet();
+      for (ClassSymbol symbol : superClasses) {
+        if (!superNames.add(symbol.myShortName)) {
+          return true;
+        }
+      }
+
+      return false;
     }
   }
 

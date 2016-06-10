@@ -15,28 +15,46 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.StubTreeBuilder;
+import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class GrStubIndexer {
+public class GrStubIndexer extends StubHierarchyIndexer {
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 
-  @NotNull
-  public static Unit translate(int fileId, GrFileStub grFileStub) {
-    if (grFileStub.isScript()) {
-      return new Unit(fileId, null, IndexTree.GROOVY, Import.EMPTY_ARRAY, ClassDecl.EMPTY_ARRAY);
-    }
+  @Override
+  public boolean handlesFile(@NotNull VirtualFile file) {
+    return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
+  }
+
+  @Nullable
+  @Override
+  public List<Pair<String, Unit>> indexFile(@NotNull FileContent content) {
+    Stub stubTree = StubTreeBuilder.buildStubTree(content);
+    if (!(stubTree instanceof GrFileStub)) return null;
+
+    GrFileStub grFileStub = (GrFileStub)stubTree;
+    new StubTree(grFileStub, false);
+
     String pid = null;
     ArrayList<ClassDecl> classList = new ArrayList<ClassDecl>();
     Set<String> usedNames = new HashSet<String>();
@@ -64,8 +82,7 @@ public class GrStubIndexer {
     }
     ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
     Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(new Import[importList.size()]);
-    return new Unit(fileId, pid, IndexTree.GROOVY, imports, classes);
-
+    return Collections.singletonList(Pair.create(pid, new Unit(IndexTree.GROOVY, imports, classes)));
   }
 
   @Nullable

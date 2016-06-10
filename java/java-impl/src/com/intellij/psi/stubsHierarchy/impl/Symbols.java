@@ -7,25 +7,23 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Symbols {
   public final PackageSymbol myRootPackage;
-  protected final NameEnvironment myNameEnvironment;
+  protected final NameEnvironment myNameEnvironment = new NameEnvironment();
 
-  // id -> ClassSymbol
-  protected ClassSymbol[] myClassSymbols = new ClassSymbol[0x8000];
+  private List<ClassSymbol> myClassSymbols = new ArrayList<>(0x8000);
   // fullName -> PackageSymbol
-  public final TIntObjectHashMap<PackageSymbol> myPackages = new TIntObjectHashMap<PackageSymbol>();
+  private final TIntObjectHashMap<PackageSymbol> myPackages = new TIntObjectHashMap<>();
   // nameId -> ClassSymbols (used by global resolve)
   private Object[] myClassSymbolsByNameId = new Object[0x8000];
 
-  protected Symbols(NameEnvironment nameEnvironment) {
-    this.myNameEnvironment = nameEnvironment;
-    myRootPackage = new PackageSymbol(null, nameEnvironment.empty, NamesEnumerator.NO_NAME);
-    myPackages.put(nameEnvironment.empty.myId, myRootPackage);
+  protected Symbols() {
+    myRootPackage = new PackageSymbol(null, myNameEnvironment.empty, NamesEnumerator.NO_NAME);
+    myPackages.put(myNameEnvironment.empty.myId, myRootPackage);
   }
-
-  // last used id
-  protected int id;
 
   public PackageSymbol enterPackage(QualifiedName qualifiedName) {
     PackageSymbol p = myPackages.get(qualifiedName.myId);
@@ -65,22 +63,13 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, HierarchyConnector connector) {
+  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, StubHierarchyConnector connector) {
     QualifiedName qualifiedName = myNameEnvironment.qualifiedName(owner, shortName);
-    SmartClassAnchor smartClassAnchor = SmartClassAnchor.create(id++, classAnchor);
-    ClassSymbol c = new ClassSymbol(smartClassAnchor, flags, owner, qualifiedName, shortName, info, supers, connector);
-    putClass(c);
+    StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), classAnchor);
+    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, qualifiedName, shortName, info, supers, connector);
+    myClassSymbols.add(c);
+    putClassByName(c);
     return c;
-  }
-
-  private void putClass(ClassSymbol classSymbol) {
-    putClassById(classSymbol);
-    putClassByName(classSymbol);
-  }
-
-  private void putClassById(ClassSymbol classSymbol) {
-    ensureByIdCapacity(classSymbol.myClassAnchor.myId);
-    myClassSymbols[classSymbol.myClassAnchor.myId] = classSymbol;
   }
 
   private void putClassByName(ClassSymbol classSymbol) {
@@ -116,24 +105,14 @@ public class Symbols {
     }
   }
 
-  private void ensureByIdCapacity(int maxIndex) {
-    if (maxIndex >= myClassSymbols.length) {
-      int newLength = calculateNewLength(myClassSymbols.length, maxIndex);
-      ClassSymbol[] result = new ClassSymbol[newLength];
-      System.arraycopy(myClassSymbols, 0, result, 0, myClassSymbols.length);
-      myClassSymbols = result;
-    }
-  }
-
   private static int calculateNewLength(int currentLength, int maxIndex) {
     while (currentLength < maxIndex + 1) currentLength *= 2;
     return currentLength;
   }
 
-  public SingleClassHierarchy createHierarchy() {
-    SingleClassHierarchy table = new SingleClassHierarchy(myClassSymbols, id);
-    table.connectSubTypes(myClassSymbols, id);
+  SingleClassHierarchy createHierarchy() {
+    ClassSymbol[] array = myClassSymbols.toArray(ClassSymbol.EMPTY_ARRAY);
     myClassSymbols = null;
-    return table;
+    return new SingleClassHierarchy(array);
   }
 }

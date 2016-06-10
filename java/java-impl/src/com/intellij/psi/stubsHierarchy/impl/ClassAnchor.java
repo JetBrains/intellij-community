@@ -15,36 +15,15 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.stubs.IStubElementType;
-
-public abstract class ClassAnchor {
+public class ClassAnchor {
   final int myFileId;
+  final int myStubId;
 
   public static final ClassAnchor[] EMPTY_ARRAY = new ClassAnchor[0];
 
-  private ClassAnchor(int fileId) {
+  ClassAnchor(int fileId, int stubId) {
     myFileId = fileId;
-  }
-
-  public static class StubClassAnchor extends ClassAnchor {
-    final int myStubId;
-    final IStubElementType myStubElementType;
-
-    StubClassAnchor(int fileId, int stubId, IStubElementType stubElementType) {
-      super(fileId);
-      myStubId = stubId;
-      myStubElementType = stubElementType;
-    }
-  }
-
-  static class DirectClassAnchor extends ClassAnchor {
-    public final PsiClass myPsiClass;
-
-    DirectClassAnchor(int fileId, PsiClass psiClass) {
-      super(fileId);
-      myPsiClass = psiClass;
-    }
+    myStubId = stubId;
   }
 
 }

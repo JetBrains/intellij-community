@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.search.StubHierarchyInheritorSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -74,7 +75,8 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
         @Override
         public List<PsiClass> compute() {
           if (!clazz.isValid()) return Collections.emptyList();
-          return getDerivingClassCandidates(clazz, (GlobalSearchScope)scope, queryParameters.includeAnonymous());
+          GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope((GlobalSearchScope)scope);
+          return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
         }
       });
       for (final PsiClass candidate : candidates) {

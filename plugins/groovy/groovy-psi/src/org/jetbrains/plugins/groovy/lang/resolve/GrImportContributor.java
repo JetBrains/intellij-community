@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubsHierarchy.impl;
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-public interface HierarchyConnector {
-  void connect(Symbol sym);
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+
+import java.util.Collection;
+
+public interface GrImportContributor {
+
+  ExtensionPointName<GrImportContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.importContributor");
+
+  @NotNull
+  Collection<Import> getImports(@NotNull GroovyFile file);
 }

@@ -16,9 +16,9 @@
 package com.intellij.lang.java;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
@@ -37,18 +37,46 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
 
   @Override
   public boolean acceptElement(@NotNull PsiElement e) {
-    return e instanceof PsiMember;
+    return e instanceof PsiMember || e instanceof PsiLambdaExpression;
   }
 
   @NotNull
   @Override
   public String getElementInfo(@NotNull PsiElement e) {
+    if (e instanceof PsiLambdaExpression) {
+      PsiType type = DumbService.isDumb(e.getProject()) ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
+      return type == null ? "<lambda>" : "lambda " + PsiNameHelper.getShortClassName(type.getCanonicalText());
+    }
     return ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
   }
 
   @Nullable
   @Override
   public String getElementTooltip(@NotNull PsiElement e) {
+    if (e instanceof PsiLambdaExpression) return getLambdaDescription((PsiLambdaExpression)e);
     return ElementDescriptionUtil.getElementDescription(e, RefactoringDescriptionLocation.WITH_PARENT);
+  }
+
+  @NotNull
+  private static String getLambdaDescription(@NotNull PsiLambdaExpression e) {
+    boolean isDumb = DumbService.isDumb(e.getProject());
+    StringBuilder sb = new StringBuilder("lambda");
+    PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();
+    if (functionalInterfaceType != null) {
+      String shortClassName = PsiNameHelper.getShortClassName(functionalInterfaceType.getCanonicalText());
+      sb.append(" ").append(StringUtil.htmlEmphasize(shortClassName));
+    }
+    PsiParameter[] parameters = e.getParameterList().getParameters();
+    if (parameters.length > 0) {
+      sb.append(" (");
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) sb.append(", ");
+        String str = isDumb ? null : PsiNameHelper.getShortClassName(parameters[i].getType().getCanonicalText());
+        if (StringUtil.isEmpty(str)) str = StringUtil.notNullize(parameters[i].getName());
+        sb.append(StringUtil.htmlEmphasize(str));
+      }
+      sb.append(")");
+    }
+    return sb.toString();
   }
 }

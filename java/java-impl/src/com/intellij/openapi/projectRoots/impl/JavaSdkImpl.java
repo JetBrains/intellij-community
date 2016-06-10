@@ -35,7 +35,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -45,7 +44,6 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -140,6 +138,12 @@ public class JavaSdkImpl extends JavaSdk {
       return "http://docs.oracle.com/javase/8/docs/api";
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDownloadSdkUrl() {
+    return "http://www.oracle.com/technetwork/java/javase/downloads/index.html";
   }
 
   @Override

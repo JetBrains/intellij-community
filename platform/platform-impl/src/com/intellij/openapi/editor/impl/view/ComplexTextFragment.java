@@ -170,9 +170,12 @@ class ComplexTextFragment extends TextFragment {
     if (!LOG.isDebugEnabled()) return;
     ourCharsProcessed += charCount;
     ourGlyphsProcessed += glyphCount;
-    if ((++ourDrawingCount) % 10000 == 0) {
+    if (++ourDrawingCount == 10000) {
       LOG.debug("Text rendering stats: " + ourCharsProcessed + " chars, " + ourGlyphsProcessed + " glyps, ratio - " +
                 ((float) ourGlyphsProcessed) / ourCharsProcessed);
+      ourDrawingCount = 0;
+      ourCharsProcessed = 0;
+      ourGlyphsProcessed = 0;
     }
   }
 }

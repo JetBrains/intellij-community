@@ -162,4 +162,8 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return false;
   }
 
+  @Override
+  public boolean isKeepSpacesAroundInlineTags() {
+    return true;
+  }
 }

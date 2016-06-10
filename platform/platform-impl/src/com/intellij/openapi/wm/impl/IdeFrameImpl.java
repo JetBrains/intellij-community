@@ -91,7 +91,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private Project myProject;
 
   private IdeRootPane myRootPane;
-  private final BalloonLayout myBalloonLayout;
+  private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private PropertyChangeListener myWindowsBorderUpdater = null;
   private boolean myRestoreFullScreen;
@@ -471,6 +471,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       return;
     }
     MouseGestureManager.getInstance().remove(this);
+
+    if (myBalloonLayout != null) {
+      ((BalloonLayoutImpl)myBalloonLayout).dispose();
+      myBalloonLayout = null;
+    }
 
     // clear both our and swing hard refs
     if (myRootPane != null) {

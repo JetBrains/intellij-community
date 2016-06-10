@@ -582,6 +582,65 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("2.0+")
+  public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput3() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "allprojects {\n" +
+      "  apply plugin: 'idea'\n" +
+      "  idea {\n" +
+      "    module {\n" +
+      "      inheritOutputDirs = false\n" +
+      "      outputDir = file(\"buildIdea/main\")\n" +
+      "      testOutputDir = file(\"buildIdea/test\")\n" +
+      "      excludeDirs += file('buildIdea')\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testArtifacts\n" +
+      "  }\n" +
+      "\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier = 'tests'\n" +
+      "    from sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    testArtifacts testJar\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleOutput("project1_main", getProjectPath() + "/project1/buildIdea/main", "");
+    assertModuleOutput("project1_test", "", getProjectPath() + "/project1/buildIdea/test");
+
+    assertModuleOutput("project2_main", getProjectPath() + "/project2/buildIdea/main", "");
+    assertModuleOutput("project2_test", "", getProjectPath() + "/project2/buildIdea/test");
+
+    assertModuleModuleDeps("project2_main");
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "project1", "project2");
+    assertModuleModuleDeps("project2", "project1");
+  }
+
+  @Test
   @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
     createSettingsFile("include 'core'\n" +

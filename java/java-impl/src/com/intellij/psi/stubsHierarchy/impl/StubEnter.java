@@ -30,10 +30,10 @@ public class StubEnter {
 
   private ArrayList<ClassSymbol> uncompleted = new ArrayList<ClassSymbol>();
 
-  public StubEnter(NameEnvironment nameEnvironment, Symbols symbols) {
-    this.myNameEnvironment = nameEnvironment;
-    this.mySymbols = symbols;
-    myStubHierarchyConnector = new StubHierarchyConnector(nameEnvironment, symbols);
+  StubEnter(Symbols symbols) {
+    myNameEnvironment = symbols.myNameEnvironment;
+    mySymbols = symbols;
+    myStubHierarchyConnector = new StubHierarchyConnector(myNameEnvironment, symbols);
   }
 
   void unitEnter(Unit tree) {

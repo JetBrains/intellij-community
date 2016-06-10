@@ -108,15 +108,15 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         anchor -> ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
       Predicate<PsiClass> applicableFilter =
         candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
-      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) -> {
+      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
         DirectClassInheritorsSearch.search(candidate, GlobalSearchScope.allScope(project)).forEach(subClass -> {
           ProgressManager.checkCanceled();
-          PsiAnchor pointer = PsiAnchor.create(subClass);
+          PsiAnchor pointer = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue
           processor.consume(pointer);
           return true;
         });
-      };
+
       PsiAnchor seed = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(baseClass));
       // lazy collection: store underlying queue as PsiAnchors, generate new elements by running direct inheritors
       Iterable<PsiClass> computed = new LazyConcurrentCollection<>(seed, converter, applicableFilter, generator);

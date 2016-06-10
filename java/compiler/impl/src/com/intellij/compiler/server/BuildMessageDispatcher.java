@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   
   @Override
   protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
-    SessionData sessionData = context.attr(SESSION_DATA).get();
+    SessionData sessionData = context.channel().attr(SESSION_DATA).get();
 
     UUID sessionId;
     if (sessionData == null) {
@@ -134,7 +134,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       sessionData = mySessionDescriptors.get(sessionId);
       if (sessionData != null) {
         sessionData.channel = context.channel();
-        context.attr(SESSION_DATA).set(sessionData);
+        context.channel().attr(SESSION_DATA).set(sessionData);
       }
       if (myCanceledSessions.contains(sessionId)) {
         context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
@@ -199,7 +199,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       super.channelInactive(context);
     }
     finally {
-      final SessionData sessionData = context.attr(SESSION_DATA).get();
+      final SessionData sessionData = context.channel().attr(SESSION_DATA).get();
       if (sessionData != null) {
         final BuilderMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
         if (handler != null) {

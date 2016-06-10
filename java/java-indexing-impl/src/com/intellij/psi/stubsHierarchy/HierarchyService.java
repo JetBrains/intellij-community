@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package com.intellij.psi.stubsHierarchy;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author peter
  */
-public abstract class DefaultImportContributor {
-  public static final ExtensionPointName<DefaultImportContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.defaultImportContributor");
-  
-  public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
-    return Collections.emptyList();
+public abstract class HierarchyService {
+  public static HierarchyService getService(@NotNull Project project) {
+    return ServiceManager.getService(project, HierarchyService.class);
   }
-  
+
+  @NotNull
+  public static ClassHierarchy getHierarchy(@NotNull Project project) {
+    return getService(project).getHierarchy();
+  }
+
+  @NotNull
+  public abstract ClassHierarchy getHierarchy();
+
+  public abstract void clearHierarchy();
+
 }

@@ -16,22 +16,19 @@
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class JavaUnitKeyDescriptor implements KeyDescriptor<IndexTree.Unit> {
-  public static JavaUnitKeyDescriptor INSTANCE = new JavaUnitKeyDescriptor();
+public class JavaUnitDescriptor implements DataExternalizer<IndexTree.Unit> {
+  public static final JavaUnitDescriptor INSTANCE = new JavaUnitDescriptor();
 
   @Override
   public void save(@NotNull DataOutput out, IndexTree.Unit value) throws IOException {
-    out.writeInt(value.myFileId);
-    String pidToWrite = value.myPackageId == null ? "" : value.myPackageId;
-    out.writeUTF(pidToWrite);
     out.writeByte(value.myUnitType);
     if (value.myUnitType != IndexTree.BYTECODE) {
       DataInputOutputUtil.writeINT(out, value.imports.length);
@@ -78,11 +75,6 @@ public class JavaUnitKeyDescriptor implements KeyDescriptor<IndexTree.Unit> {
 
   @Override
   public IndexTree.Unit read(@NotNull DataInput in) throws IOException {
-    int fileId = in.readInt();
-    String pid = in.readUTF();
-    if (pid.isEmpty()) {
-      pid = null;
-    }
     byte type = in.readByte();
     IndexTree.Import[] imports = IndexTree.Import.EMPTY_ARRAY;
     if (type != IndexTree.BYTECODE) {
@@ -95,7 +87,7 @@ public class JavaUnitKeyDescriptor implements KeyDescriptor<IndexTree.Unit> {
     for (int i = 0; i < classes.length; i++) {
       classes[i] = readClassDecl(in);
     }
-    return new IndexTree.Unit(fileId, pid, type, imports, classes);
+    return new IndexTree.Unit(type, imports, classes);
   }
 
   private IndexTree.ClassDecl readClassDecl(DataInput in) throws IOException {
@@ -130,13 +122,4 @@ public class JavaUnitKeyDescriptor implements KeyDescriptor<IndexTree.Unit> {
     }
   }
 
-  @Override
-  public int getHashCode(IndexTree.Unit value) {
-    return value.hashCode();
-  }
-
-  @Override
-  public boolean isEqual(IndexTree.Unit val1, IndexTree.Unit val2) {
-    return val1.equals(val2);
-  }
 }

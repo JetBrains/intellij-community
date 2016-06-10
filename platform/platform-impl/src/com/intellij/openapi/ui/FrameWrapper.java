@@ -341,7 +341,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private MyJFrame(IdeFrame parent) throws HeadlessException {
       FrameState.setFrameStateListener(this);
       myParent = parent;
-      setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+      setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
       boolean setMenuOnFrame = SystemInfo.isMac;
 

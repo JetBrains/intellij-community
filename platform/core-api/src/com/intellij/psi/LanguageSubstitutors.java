@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,8 +35,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
   private static final Key<Language> SUBSTITUTED_LANG_KEY = Key.create("SUBSTITUTED_LANG_KEY");
-
-  private boolean myReparsingInProgress;
+  private static final Key<Boolean> REPARSING_SCHEDULED = Key.create("REPARSING_SCHEDULED");
 
   private LanguageSubstitutors() {
     super("com.intellij.lang.substitutor");
@@ -54,36 +54,40 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   }
 
 
-  private void processLanguageSubstitution(@NotNull final VirtualFile file,
-                                           @NotNull Language originalLang,
-                                           @NotNull final Language substitutedLang) {
+  private static void processLanguageSubstitution(@NotNull final VirtualFile file,
+                                                  @NotNull Language originalLang,
+                                                  @NotNull final Language substitutedLang) {
+    if (file instanceof VirtualFileWindow) {
+      // Injected files are created with substituted language, no need to reparse:
+      //   com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl#doneInjecting
+      return;
+    }
     Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
-    if (!substitutedLang.equals(prevLang)) {
-      if (ApplicationManager.getApplication().isDispatchThread() && myReparsingInProgress) {
-        return; // avoid recursive reparsing
-      }
+    if (!prevLang.is(substitutedLang)) {
       if (file.replace(SUBSTITUTED_LANG_KEY, prevSubstitutedLang, substitutedLang)) {
-        invokeLaterIfNeeded(new Runnable() {
+        if (prevSubstitutedLang == null) {
+          return; // no need to reparse for the first language substitution
+        }
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          return;
+        }
+        file.putUserData(REPARSING_SCHEDULED, true);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            LOG.info("Reparsing " + file.getPath() + " because of language substitution " +
-                     prevLang.getID() + "->" + substitutedLang.getID());
-            myReparsingInProgress = true;
-            FileContentUtilCore.reparseFiles(file);
-            myReparsingInProgress = false;
+            if (file.replace(REPARSING_SCHEDULED, true, null)) {
+              LOG.info("Reparsing " + file.getPath() + " because of language substitution " +
+                       prevLang.getID() + "->" + substitutedLang.getID());
+              FileContentUtilCore.reparseFiles(file);
+            }
           }
         }, ModalityState.defaultModalityState());
       }
     }
   }
 
-  private static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
-    }
+  public static void cancelReparsing(@NotNull VirtualFile file) {
+    REPARSING_SCHEDULED.set(file, null);
   }
 }

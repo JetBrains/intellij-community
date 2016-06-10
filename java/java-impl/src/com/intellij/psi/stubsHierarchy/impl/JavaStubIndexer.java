@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs.hierarchy;
+package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.*;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.StubTreeBuilder;
+import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class JavaStubIndexer {
+public class JavaStubIndexer extends StubHierarchyIndexer {
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
+
+  @Override
+  public boolean handlesFile(@NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    return fileType == JavaFileType.INSTANCE || fileType == JavaClassFileType.INSTANCE;
+  }
 
   @Nullable
-  public static Unit translate(int fileId, PsiJavaFileStub javaFileStub) {
+  @Override
+  public List<Pair<String, Unit>> indexFile(@NotNull FileContent content) {
+    Stub stubTree = StubTreeBuilder.buildStubTree(content);
+    if (!(stubTree instanceof PsiJavaFileStub)) return null;
+
+    PsiJavaFileStub javaFileStub = (PsiJavaFileStub)stubTree;
+    new StubTree(javaFileStub, false);
+
     ArrayList<ClassDecl> classList = new ArrayList<ClassDecl>();
     Set<String> usedNames = new HashSet<String>();
     for (StubElement<?> el : javaFileStub.getChildrenStubs()) {
@@ -54,7 +81,7 @@ public class JavaStubIndexer {
     ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
     Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(new Import[importList.size()]);
     byte type = javaFileStub.isCompiled() ? IndexTree.BYTECODE : IndexTree.JAVA;
-    return new Unit(fileId, javaFileStub.getPackageName(), type, imports, classes);
+    return Collections.singletonList(Pair.create(javaFileStub.getPackageName(), new Unit(type, imports, classes)));
   }
 
   @Nullable

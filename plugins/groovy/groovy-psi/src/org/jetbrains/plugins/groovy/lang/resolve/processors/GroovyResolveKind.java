@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ enum GroovyResolveKind {
 
   VARIABLE(EnumSet.of(DeclarationKind.VARIABLE)),
   BINDING(EnumSet.of(DeclarationKind.VARIABLE)),
-  FIELD(EnumSet.of(DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
-  PROPERTY(EnumSet.of(DeclarationKind.METHOD, DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
+  ENUM_CONST(EnumSet.of(DeclarationKind.ENUM_CONST)),
+  FIELD(EnumSet.of(DeclarationKind.FIELD)),
+  PROPERTY(EnumSet.of(DeclarationKind.METHOD, DeclarationKind.FIELD)),
   METHOD(EnumSet.of(DeclarationKind.METHOD)),
   CLASS(EnumSet.of(DeclarationKind.CLASS)),
   PACKAGE(EnumSet.of(DeclarationKind.PACKAGE));

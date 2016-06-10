@@ -17,9 +17,6 @@ package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.BitUtil;
 
 import java.util.Arrays;
 
@@ -40,15 +37,11 @@ public class IndexTree {
   public static final byte GROOVY = 2;
 
   public static class Unit {
-    public final int myFileId;
-    public final String myPackageId;
     public final byte myUnitType;
     public final Import[] imports;
     public final ClassDecl[] myDecls;
 
-    public Unit(int fileId, String packageId, byte unitType, Import[] imports, ClassDecl[] decls) {
-      this.myFileId = fileId;
-      this.myPackageId = packageId;
+    public Unit(byte unitType, Import[] imports, ClassDecl[] decls) {
       this.myUnitType = unitType;
       this.imports = imports;
       this.myDecls = decls;
@@ -61,8 +54,6 @@ public class IndexTree {
 
       Unit unit = (Unit)o;
 
-      if (myFileId != unit.myFileId) return false;
-      if (myPackageId != null ? !myPackageId.equals(unit.myPackageId) : unit.myPackageId != null) return false;
       if (!Arrays.equals(imports, unit.imports)) return false;
       if (!Arrays.equals(myDecls, unit.myDecls)) return false;
 
@@ -71,11 +62,7 @@ public class IndexTree {
 
     @Override
     public int hashCode() {
-      int result = myFileId;
-      result = 31 * result + (myPackageId != null ? myPackageId.hashCode() : 0);
-      result = 31 * result + Arrays.hashCode(imports);
-      result = 31 * result + Arrays.hashCode(myDecls);
-      return result;
+      return Arrays.hashCode(myDecls);
     }
   }
 
@@ -136,17 +123,11 @@ public class IndexTree {
 
     public ClassDecl(int stubId, int mods, String name, String[] supers, Decl[] decls) {
       super(decls);
+      assert stubId > 0;
       this.myStubId = stubId;
       this.myMods = mods;
       this.myName = name;
       this.mySupers = supers;
-    }
-
-    public IStubElementType getStubElementType() {
-      boolean isEnum = BitUtil.isSet(myMods, IndexTree.ENUM);
-      boolean isAnonymous = false;
-
-      return JavaClassElementType.typeForClass(isAnonymous, isEnum);
     }
 
     @Override
@@ -168,8 +149,6 @@ public class IndexTree {
       int result = myStubId;
       result = 31 * result + myMods;
       result = 31 * result + (myName != null ? myName.hashCode() : 0);
-      result = 31 * result + Arrays.hashCode(mySupers);
-      result = 31 * result + Arrays.hashCode(myDecls);
       return result;
     }
   }

@@ -19,7 +19,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import groovyjarjarcommonscli.Option;
 import org.gradle.cli.*;
-import org.jetbrains.plugins.gradle.service.execution.GradleArgumentsCompletionProvider;
 
 import java.util.Collection;
 import java.util.List;

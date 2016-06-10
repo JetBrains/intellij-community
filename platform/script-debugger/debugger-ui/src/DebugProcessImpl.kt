@@ -185,7 +185,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     else {
       lastStep = stepAction
     }
-    return suspendContextManager.continueVm(stepAction, 1)
+    return suspendContextManager.continueVm(stepAction)
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {
