@@ -9,35 +9,35 @@ import java.io.IOException;
  */
 public class SetterTest extends AbstractLombokParsingTestCase {
 
-  public void testSetterAccessLevel() throws IOException {
+  public void testSetter$SetterAccessLevel() throws IOException {
     doTest();
   }
 
-  public void testSetterAlreadyExists() throws IOException {
+  public void testSetter$SetterAlreadyExists() throws IOException {
     doTest();
   }
 
-  public void testSetterDeprecated() throws IOException {
+  public void testSetter$SetterDeprecated() throws IOException {
     doTest();
   }
 
-  public void testSetterOnClass() throws IOException {
+  public void testSetter$SetterOnClass() throws IOException {
     doTest();
   }
 
-  public void testSetterOnMethodOnParam() throws IOException {
+  public void testSetter$SetterOnMethodOnParam() throws IOException {
     doTest();
   }
 
-  public void testSetterOnStatic() throws IOException {
+  public void testSetter$SetterOnStatic() throws IOException {
     doTest();
   }
 
-  public void testSetterPlain() throws IOException {
+  public void testSetter$SetterPlain() throws IOException {
     doTest();
   }
 
-  public void testSetterWithDollar() throws IOException {
+  public void testSetter$SetterWithDollar() throws IOException {
     doTest();
   }
 }

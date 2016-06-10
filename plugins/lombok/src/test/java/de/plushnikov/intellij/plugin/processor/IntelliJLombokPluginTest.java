@@ -26,12 +26,4 @@ public class IntelliJLombokPluginTest extends AbstractLombokParsingTestCase {
     doTest();
   }
 
-  public void testClassNamedAfterGetter() throws IOException {
-    doTest();
-  }
-
-  public void testCommentsInterspersed() throws IOException {
-    doTest();
-  }
-
 }

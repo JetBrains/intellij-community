@@ -10,107 +10,107 @@ import java.io.IOException;
 public class BuilderTest extends AbstractLombokParsingTestCase {
 
   // This test is lombok's homepage example.
-  public void testBuilderExample() throws IOException {
+  public void testBuilder$BuilderExample() throws IOException {
     doTest();
   }
 
   // This test is lombok's homepage customized example.
-  public void testBuilderExampleCustomized() throws IOException {
+  public void testBuilder$BuilderExampleCustomized() throws IOException {
     doTest();
   }
 
-  public void testBuilderSimple() throws IOException {
+  public void testBuilder$BuilderSimple() throws IOException {
     doTest();
   }
 
-  public void testBuilderComplex() throws IOException {
+  public void testBuilder$BuilderComplex() throws IOException {
     doTest();
   }
 
-  public void testBuilderChainAndFluent() throws IOException {
+  public void testBuilder$BuilderChainAndFluent() throws IOException {
     doTest();
   }
 
-  public void testBuilderWithAccessors() throws IOException {
+  public void testBuilder$BuilderWithAccessors() throws IOException {
     doTest();
   }
 
   // This test is lombok's homepage example with predefined elements and another inner class.
-  public void testBuilderPredefined() throws IOException {
+  public void testBuilder$BuilderPredefined() throws IOException {
     doTest();
   }
 
-  public void testBuilderWithExistingBuilderClass() throws IOException {
+  public void testBuilder$BuilderWithExistingBuilderClass() throws IOException {
     doTest();
   }
 
-  public void testBuilderConstructorException() throws IOException {
+  public void testBuilder$BuilderConstructorException() throws IOException {
     doTest();
   }
 
-  public void testBuilderAndAllArgsConstructor() throws IOException {
+  public void testBuilder$BuilderAndAllArgsConstructor() throws IOException {
     doTest();
   }
 
-  public void testBuilderMethodException() throws IOException {
+  public void testBuilder$BuilderMethodException() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularGuavaListsSets() throws IOException {
+  public void testBuilder$BuilderSingularGuavaListsSets() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularGuavaMaps() throws IOException {
+  public void testBuilder$BuilderSingularGuavaMaps() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularSets() throws IOException {
+  public void testBuilder$BuilderSingularSets() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularLists() throws IOException {
+  public void testBuilder$BuilderSingularLists() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularMaps() throws IOException {
+  public void testBuilder$BuilderSingularMaps() throws IOException {
     doTest();
   }
 
   // ignored because of disabled auto singularization
-  public void ignore_testBuilderSingularNoAuto() throws IOException {
+  public void ignore_testBuilder$BuilderSingularNoAuto() throws IOException {
     doTest();
   }
 
-  public void testBuilderSingularRedirectToGuava() throws IOException {
-    doTest();
-  }
-
-  //  TODO implement me
-  public void ignore_testBuilderInstanceMethod() throws IOException {
-    doTest();
-  }
-
-  public void testBuilderSingularWithPrefixes() throws IOException {
+  public void testBuilder$BuilderSingularRedirectToGuava() throws IOException {
     doTest();
   }
 
   //  TODO implement me
-  public void ignore_testBuilderWithToBuilder() throws IOException {
+  public void ignore_testBuilder$BuilderInstanceMethod() throws IOException {
+    doTest();
+  }
+
+  public void testBuilder$BuilderSingularWithPrefixes() throws IOException {
+    doTest();
+  }
+
+  //  TODO implement me
+  public void ignore_testBuilder$BuilderWithToBuilder() throws IOException {
     doTest();
   }
 
   //  TODO fixme
-  public void ignore_testBuilderWithToBuilderOnClass() throws IOException {
+  public void ignore_testBuilder$BuilderWithToBuilderOnClass() throws IOException {
     doTest();
   }
 
   //  TODO fixme
-  public void ignore_testBuilderWithToBuilderOnConstructor() throws IOException {
+  public void ignore_testBuilder$BuilderWithToBuilderOnConstructor() throws IOException {
     doTest();
   }
 
   //  TODO fixme
-  public void ignore_testBuilderWithToBuilderOnMethod() throws IOException {
+  public void ignore_testBuilder$BuilderWithToBuilderOnMethod() throws IOException {
     doTest();
   }
 }

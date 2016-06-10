@@ -23,7 +23,6 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.SortedList;
-import com.jgoodies.common.base.Objects;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,7 +90,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     for (PsiClass afterClass : afterClasses) {
       boolean compared = false;
       for (PsiClass beforeClass : beforeClasses) {
-        if (Objects.equals(afterClass.getName(), beforeClass.getName())) {
+        if (Objects.equal(afterClass.getName(), beforeClass.getName())) {
           compareTwoClasses(beforeClass, afterClass);
           compared = true;
         }
@@ -128,7 +127,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       boolean compared = false;
       final PsiModifierList afterFieldModifierList = afterField.getModifierList();
       for (PsiField beforeField : beforeClassFields) {
-        if (Objects.equals(afterField.getName(), beforeField.getName())) {
+        if (Objects.equal(afterField.getName(), beforeField.getName())) {
           final PsiModifierList beforeFieldModifierList = beforeField.getModifierList();
 
           compareModifiers(beforeFieldModifierList, afterFieldModifierList);

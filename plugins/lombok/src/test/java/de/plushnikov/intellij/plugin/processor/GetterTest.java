@@ -13,95 +13,95 @@ public class GetterTest extends AbstractLombokParsingTestCase {
     return false;
   }
 
-  public void testGetterAccessLevel() throws IOException {
+  public void testGetter$GetterAccessLevel() throws IOException {
     doTest();
   }
 
-  public void testGetterAlreadyExists() throws IOException {
+  public void testGetter$GetterAlreadyExists() throws IOException {
     doTest();
   }
 
-  public void testGetterBoolean() throws IOException {
+  public void testGetter$GetterBoolean() throws IOException {
     doTest();
   }
 
-  public void testGetterDeprecated() throws IOException {
+  public void testGetter$GetterDeprecated() throws IOException {
     doTest();
   }
 
-  public void testGetterEnum() throws IOException {
+  public void testGetter$GetterEnum() throws IOException {
     doTest();
   }
 
-  public void ignore_testGetterLazy() throws IOException {
+  public void ignore_testGetter$GetterLazy() throws IOException {
     //TODO known problem, try to fix later
     doTest();
   }
 
-  public void ignore_testGetterLazyBoolean() throws IOException {
+  public void ignore_testGetter$GetterLazyBoolean() throws IOException {
     //TODO known problem, try to fix later
     doTest();
   }
 
-  public void ignore_testGetterLazyEahcToString() throws IOException {
+  public void ignore_testGetter$GetterLazyEahcToString() throws IOException {
     //TODO known problem, try to fix later
     doTest();
   }
 
-  public void testGetterLazyInvalid() throws IOException {
+  public void testGetter$GetterLazyInvalid() throws IOException {
     doTest();
   }
 
-  public void ignore_testGetterLazyNative() throws IOException {
+  public void ignore_testGetter$GetterLazyNative() throws IOException {
     //TODO known problem, try to fix later
     doTest();
   }
 
-  public void testGetterNone() throws IOException {
+  public void testGetter$GetterNone() throws IOException {
     doTest();
   }
 
-  public void testGetterOnClass() throws IOException {
+  public void testGetter$GetterOnClass() throws IOException {
     doTest();
   }
 
-  public void testGetterOnMethod() throws IOException {
+  public void testGetter$GetterOnMethod() throws IOException {
     doTest();
   }
 
-  public void testGetterOnMethodErrors() throws IOException {
+  public void testGetter$GetterOnMethodErrors() throws IOException {
     doTest();
   }
 
-  public void testGetterOnMethodErrors2() throws IOException {
+  public void testGetter$GetterOnMethodErrors2() throws IOException {
     doTest();
   }
 
-  public void testGetterOnStatic() throws IOException {
+  public void testGetter$GetterOnStatic() throws IOException {
     doTest();
   }
 
-  public void testGetterPlain() throws IOException {
+  public void testGetter$GetterPlain() throws IOException {
     doTest();
   }
 
-  public void testGetterWithDollar() throws IOException {
+  public void testGetter$GetterWithDollar() throws IOException {
     doTest();
   }
 
-  public void testMultiFieldGetter() throws IOException {
+  public void testGetter$MultiFieldGetter() throws IOException {
     doTest();
   }
 
-  public void testTrickyTypeResolution() throws IOException {
+  public void testGetter$TrickyTypeResolution() throws IOException {
     doTest();
   }
 
-  public void testClassNamedAfterGetter() throws IOException {
+  public void testGetter$ClassNamedAfterGetter() throws IOException {
     doTest();
   }
 
-  public void testCommentsInterspersed() throws IOException {
+  public void testGetter$CommentsInterspersed() throws IOException {
     doTest();
   }
 }

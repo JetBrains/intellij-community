@@ -7,36 +7,36 @@ import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
  */
 public class DelegateTest extends AbstractLombokParsingTestCase {
 
-  public void ignore_testDelegateOnGetter() throws Exception {
+  public void ignore_testDelegate$DelegateOnGetter() throws Exception {
     //TODO known problem, try to fix later
     doTest();
   }
 
-  public void testDelegateOnGetterNone() throws Exception {
+  public void testDelegate$DelegateOnGetterNone() throws Exception {
     doTest();
   }
 
-  public void testDelegateOnMethods() throws Exception {
+  public void testDelegate$DelegateOnMethods() throws Exception {
     doTest();
   }
 
-  public void testDelegateRecursion() throws Exception {
+  public void testDelegate$DelegateRecursion() throws Exception {
     doTest();
   }
 
-  public void testDelegateTypesAndExcludes() throws Exception {
+  public void testDelegate$DelegateTypesAndExcludes() throws Exception {
     doTest();
   }
 
-  public void testDelegateWithDeprecated() throws Exception {
+  public void testDelegate$DelegateWithDeprecated() throws Exception {
     doTest();
   }
 
-  public void testDelegateWithException() throws Exception {
+  public void testDelegate$DelegateWithException() throws Exception {
     doTest();
   }
 
-  public void testDelegateGenericInterfaceIssue88() throws Exception {
+  public void testDelegate$DelegateGenericInterfaceIssue88() throws Exception {
     doTest();
   }
 }
