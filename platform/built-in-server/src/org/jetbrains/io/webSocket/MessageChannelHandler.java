@@ -6,7 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.ChannelBufferToString;
+import org.jetbrains.io.NettyKt;
 import org.jetbrains.io.jsonRpc.Client;
 import org.jetbrains.io.jsonRpc.ClientManager;
 import org.jetbrains.io.jsonRpc.ClientManagerKt;
@@ -43,7 +43,7 @@ final class MessageChannelHandler extends WebSocketProtocolHandler {
     WebSocketClient client = (WebSocketClient)channel.attr(ClientManagerKt.getCLIENT()).get();
     CharSequence chars;
     try {
-      chars = ChannelBufferToString.readChars(message.content());
+      chars = NettyKt.readUtf8(message.content());
     }
     catch (Throwable e) {
       try {

@@ -197,3 +197,5 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   val method = method()
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
+
+fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
