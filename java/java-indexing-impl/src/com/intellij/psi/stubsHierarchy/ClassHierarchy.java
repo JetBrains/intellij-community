@@ -48,6 +48,8 @@ public abstract class ClassHierarchy {
    */
   public abstract boolean hasAmbiguousSupers(@NotNull SmartClassAnchor anchor);
 
+  public abstract boolean isAnonymous(@NotNull SmartClassAnchor anchor);
+
   /**
    * @return the given scope restricted to the files not covered by this hierarchy, to use usual PSI/resolve-based inheritor search in it
    */

@@ -50,14 +50,14 @@ public class StubHierarchyInheritorSearcher extends QueryExecutorBase<PsiClass, 
   }
 
   @Override
-  public void processQuery(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull Processor<PsiClass> consumer) {
-    if (!(queryParameters.getScope() instanceof GlobalSearchScope) || !isSearching()) return;
+  public void processQuery(@NotNull DirectClassInheritorsSearch.SearchParameters p, @NotNull Processor<PsiClass> consumer) {
+    if (!(p.getScope() instanceof GlobalSearchScope) || !isSearching()) return;
 
-    PsiClass base = queryParameters.getClassToProcess();
-    GlobalSearchScope scope = (GlobalSearchScope)queryParameters.getScope();
+    PsiClass base = p.getClassToProcess();
+    GlobalSearchScope scope = (GlobalSearchScope)p.getScope();
     ClassHierarchy hierarchy = HierarchyService.getHierarchy(base.getProject());
     for (SmartClassAnchor anchor : hierarchy.getDirectSubtypeCandidates(base)) {
-      if (!processCandidate(consumer, base, scope, hierarchy, anchor)) {
+      if ((p.includeAnonymous() || !hierarchy.isAnonymous(anchor)) && !processCandidate(consumer, base, scope, hierarchy, anchor)) {
         return;
       }
     }

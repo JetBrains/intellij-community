@@ -36,6 +36,7 @@ import java.util.*;
 public class SingleClassHierarchy extends ClassHierarchy {
   private final BitSet myCoveredFiles;
   private final BitSet myAmbiguousSupers;
+  private final BitSet myAnonymous;
   private final List<StubClassAnchor> myCoveredClasses;
   private final StubClassAnchor[] myClassAnchors;
   private final StubClassAnchor[] myClassAnchorsByFileIds;
@@ -49,6 +50,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     excludeUncoveredFiles(classSymbols);
     connectSubTypes(classSymbols);
     myAmbiguousSupers = calcAmbiguousSupers(classSymbols);
+    myAnonymous = calcAnonymous(classSymbols);
     myCoveredClasses = Collections.unmodifiableList(ContainerUtil.filter(myClassAnchors, this::isCovered));
   }
 
@@ -61,6 +63,17 @@ public class SingleClassHierarchy extends ClassHierarchy {
       }
     }
     return ambiguousSupers;
+  }
+
+  @NotNull
+  private static BitSet calcAnonymous(ClassSymbol[] classSymbols) {
+    BitSet answer = new BitSet();
+    for (ClassSymbol symbol : classSymbols) {
+      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NamesEnumerator.NO_NAME) {
+        answer.set(symbol.myClassAnchor.myId);
+      }
+    }
+    return answer;
   }
 
   @NotNull
@@ -125,6 +138,11 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @Override
   public boolean hasAmbiguousSupers(@NotNull SmartClassAnchor anchor) {
     return myAmbiguousSupers.get(((StubClassAnchor)anchor).myId);
+  }
+
+  @Override
+  public boolean isAnonymous(@NotNull SmartClassAnchor anchor) {
+    return myAnonymous.get(((StubClassAnchor)anchor).myId);
   }
 
   @NotNull
