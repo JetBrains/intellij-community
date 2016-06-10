@@ -194,6 +194,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @Override
   public boolean hasExplicitModifier(@NotNull String name) {
+    PsiModifierListStub stub = getStub();
+    if (stub != null) {
+      return BitUtil.isSet(stub.getModifiersMask(), ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.get(name));
+    }
+
     final CompositeElement tree = (CompositeElement)getNode();
     final IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return tree.findChildByType(type) != null;
