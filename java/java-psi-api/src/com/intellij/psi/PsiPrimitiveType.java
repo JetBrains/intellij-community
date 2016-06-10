@@ -78,8 +78,8 @@ public class PsiPrimitiveType extends PsiType.Stub {
   }
 
   private String getText(boolean qualified, boolean annotated) {
-    PsiAnnotation[] annotations = getAnnotations();
-    if (!annotated || annotations.length == 0) return myName;
+    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY; ;
+    if (annotations.length == 0) return myName;
 
     StringBuilder sb = new StringBuilder();
     PsiNameHelper.appendAnnotations(sb, annotations, qualified);
