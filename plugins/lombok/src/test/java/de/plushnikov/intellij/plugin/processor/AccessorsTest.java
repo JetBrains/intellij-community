@@ -8,6 +8,6 @@ import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 public class AccessorsTest extends AbstractLombokParsingTestCase {
 
   public void testAccessors$Accessors() throws Exception {
-    doTest();
+    doTest(true);
   }
 }

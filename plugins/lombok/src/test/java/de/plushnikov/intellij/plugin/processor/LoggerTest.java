@@ -10,42 +10,42 @@ import java.io.IOException;
 public class LoggerTest extends AbstractLombokParsingTestCase {
 
   public void testLogger$LoggerCommons() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerJul() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerLog4j() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerLog4j2() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerSlf4j() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerSlf4jAlreadyExists() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerSlf4jOnNonType() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerSlf4jTypes() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerSlf4jWithPackage() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testLogger$LoggerXSlf4j() throws IOException {
-    doTest();
+    doTest(true);
   }
 }

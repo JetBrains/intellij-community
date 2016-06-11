@@ -10,26 +10,26 @@ import java.io.IOException;
 public class ConstructorTest extends AbstractLombokParsingTestCase {
 
   public void testConstructors$Constructors() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testConstructors$ConflictingStaticConstructorNames() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testConstructors$NoArgsConstructorForced() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testConstructors$ConstructorEnum() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testConstructors$RequiredArgsConstructorWithGeneric136() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testConstructors$RequiredArgsConstructorWithGeneric157() throws IOException {
-    doTest();
+    doTest(true);
   }
 }

@@ -14,39 +14,39 @@ public class DataTest extends AbstractLombokParsingTestCase {
   }
 
   public void testData$DataExtended() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataIgnore() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataOnEnum() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataOnLocalClass() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataPlain() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataWithGetter() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataWithGetterNone() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataStaticConstructor() throws IOException {
     // Test for issue #9
-    doTest();
+    doTest(true);
   }
 
   public void testData$DataWithGeneric176() throws IOException {
-    doTest();
+    doTest(true);
   }
 }
