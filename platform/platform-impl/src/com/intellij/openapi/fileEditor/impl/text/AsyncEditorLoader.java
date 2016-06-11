@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -85,7 +86,7 @@ public class AsyncEditorLoader {
 
             applyResults.run();
             loadingFinished();
-          });
+          }, ModalityState.any());
         });
       }
 
