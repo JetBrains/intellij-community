@@ -31,7 +31,7 @@ public class BuilderAtMethodSimplePredefined {
     }
 
     public BuilderAtMethodSimplePredefined build() {
-      return createMe(myInt, myString);
+      return BuilderAtMethodSimplePredefined.createMe(myInt, myString);
     }
 
     public String toString() {

@@ -483,8 +483,6 @@ public class BuilderHandler {
     } else {
       addExceptions(methodBuilder, psiMethod);
     }
-    //TODO BUILDER CHECK and remove
-//    addTypeParameters(builderClass, psiMethod, methodBuilder);
 
     return methodBuilder;
   }
@@ -507,13 +505,38 @@ public class BuilderHandler {
         } else {
           codeBlockFormat = "%s\n return %s(%s);";
         }
-        callExpressionText = psiMethod.getName();
+
+        if (psiMethod.isConstructor()) {
+          callExpressionText = psiMethod.getName();
+        } else {
+          callExpressionText = calculateCallExpressionForMethod(psiMethod, builderClass);
+        }
       }
       blockText = String.format(codeBlockFormat, buildMethodPrepare, callExpressionText, buildMethodParameters);
     } else {
       blockText = "return " + PsiTypeUtil.getReturnValueOfType(psiBuilderType) + ";";
     }
     return PsiMethodUtil.createCodeBlockFromText(blockText, builderClass);
+  }
+
+  @NotNull
+  private String calculateCallExpressionForMethod(@NotNull PsiMethod psiMethod, @NotNull PsiClass builderClass) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+
+    StringBuilder className = new StringBuilder();
+    if (null != containingClass) {
+      className.append(containingClass.getName()).append(".");
+      if (builderClass.hasTypeParameters()) {
+        className.append('<');
+
+        for (PsiTypeParameter typeParameter : builderClass.getTypeParameters()) {
+          className.append(typeParameter.getName()).append(',');
+        }
+
+        className.setCharAt(className.length() - 1, '>');
+      }
+    }
+    return className + psiMethod.getName();
   }
 
   private void addExceptions(LombokLightMethodBuilder methodBuilder, PsiMethod psiMethod) {

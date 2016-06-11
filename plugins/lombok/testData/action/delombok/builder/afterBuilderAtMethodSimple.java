@@ -36,7 +36,7 @@ public class BuilderAtMethodSimple {
     }
 
     public BuilderAtMethodSimple build() {
-      return createMe(myInt, myString);
+      return BuilderAtMethodSimple.createMe(myInt, myString);
     }
 
     public String toString() {
