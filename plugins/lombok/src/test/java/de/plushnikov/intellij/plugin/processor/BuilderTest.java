@@ -82,16 +82,13 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest();
   }
 
-  public void testBuilder$Singular$SingularList() throws IOException {
-    doTest();
-  }
-
   // ignored because of disabled auto singularization
   public void ignore_testBuilder$BuilderSingularNoAuto() throws IOException {
     doTest();
   }
 
-  public void testBuilder$BuilderSingularRedirectToGuava() throws IOException {
+  // ignored because of disabled guava redirection
+  public void ignore_testBuilder$BuilderSingularRedirectToGuava() throws IOException {
     doTest();
   }
 

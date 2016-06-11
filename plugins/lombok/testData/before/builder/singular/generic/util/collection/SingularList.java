@@ -1,6 +1,6 @@
-import java.util.List;
-
 import lombok.Singular;
+
+import java.util.List;
 
 @lombok.Builder
 public class SingularList<T> {
@@ -8,4 +8,5 @@ public class SingularList<T> {
 	@Singular private List<Integer> integers;
 	@Singular private List<T> generics;
 	@Singular private List<? extends Number> extendsGenerics;
+
 }
