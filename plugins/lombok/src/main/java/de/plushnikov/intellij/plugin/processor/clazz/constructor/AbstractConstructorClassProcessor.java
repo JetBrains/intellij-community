@@ -246,7 +246,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return Collections.singletonList(constructor);
   }
 
-  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties, boolean useJavaDefaults, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
+  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties,
+                                      boolean useJavaDefaults, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
         .withConstructor(true)
         .withContainingClass(psiClass)

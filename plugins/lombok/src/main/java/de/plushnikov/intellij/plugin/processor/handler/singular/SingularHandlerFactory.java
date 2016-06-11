@@ -14,20 +14,15 @@ import java.util.Set;
 
 public class SingularHandlerFactory {
 
-  private static final String JAVA_LANG_ITERABLE = CommonClassNames.JAVA_LANG_ITERABLE;
-  private static final String JAVA_UTIL_COLLECTION = CommonClassNames.JAVA_UTIL_COLLECTION;
-  private static final String JAVA_UTIL_LIST = CommonClassNames.JAVA_UTIL_LIST;
-  private static final String[] JAVA_MAPS = new String[]{CommonClassNames.JAVA_UTIL_MAP, "java.util.SortedMap", "java.util.NavigableMap",};
-  private static final String[] JAVA_SETS = new String[]{CommonClassNames.JAVA_UTIL_SET, "java.util.SortedSet", "java.util.NavigableSet"};
-  private static final String GUAVA_IMMUTABLE_COLLECTION = "com.google.common.collect.ImmutableCollection";
-  private static final String GUAVA_IMMUTABLE_LIST = "com.google.common.collect.ImmutableList";
-  private static final String[] GUAVE_COLLECTIONS = new String[]{GUAVA_IMMUTABLE_COLLECTION, GUAVA_IMMUTABLE_LIST};
-  private static final String[] GUAVA_SETS = new String[]{"com.google.common.collect.ImmutableSet", "com.google.common.collect.ImmutableSortedSet"};
-  private static final String[] GUAVA_MAPS = new String[]{"com.google.common.collect.ImmutableMap", "com.google.common.collect.ImmutableBiMap", "com.google.common.collect.ImmutableSortedMap"};
-  private static final String[] GUAVA_TABLE = new String[]{"com.google.common.collect.ImmutableTable"};
+  private static final String[] JAVA_MAPS = new String[]{CommonClassNames.JAVA_UTIL_MAP, SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_MAP,};
+  private static final String[] JAVA_SETS = new String[]{CommonClassNames.JAVA_UTIL_SET, SingularCollectionClassNames.JAVA_UTIL_SORTED_SET, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET};
+  private static final String[] GUAVE_COLLECTIONS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_COLLECTION, SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST};
+  private static final String[] GUAVA_SETS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_SET, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_SET};
+  private static final String[] GUAVA_MAPS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_BI_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_MAP};
+  private static final String[] GUAVA_TABLE = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_TABLE};
 
   private static final Set<String> COLLECTION_TYPES = new HashSet<String>() {{
-    addAll(toSet(JAVA_LANG_ITERABLE, JAVA_UTIL_COLLECTION, JAVA_UTIL_LIST));
+    addAll(toSet(SingularCollectionClassNames.JAVA_LANG_ITERABLE, SingularCollectionClassNames.JAVA_UTIL_COLLECTION, SingularCollectionClassNames.JAVA_UTIL_LIST));
     addAll(toSet(JAVA_SETS));
   }};
 
@@ -77,8 +72,7 @@ public class SingularHandlerFactory {
         return new SingularMapHandler(qualifiedName, shouldGenerateFullBodyBlock);
       }
       if (GUAVA_COLLECTION_TYPES.contains(qualifiedName)) {
-        String qualifiedName2Use = GUAVA_IMMUTABLE_COLLECTION.equals(qualifiedName) ? GUAVA_IMMUTABLE_LIST : qualifiedName;
-        return new SingularGuavaCollectionHandler(qualifiedName2Use, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
+        return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
       }
       if (GUAVA_MAP_TYPES.contains(qualifiedName)) {
         return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);

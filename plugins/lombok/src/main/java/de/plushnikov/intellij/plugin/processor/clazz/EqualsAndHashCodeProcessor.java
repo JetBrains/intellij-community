@@ -339,7 +339,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
           }
         } else {
           builder.append("final java.lang.Object $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
-          builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? 0 : $").append(fieldName).append(".hashCode());\n");
+          builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? 43 : $").append(fieldName).append(".hashCode());\n");
         }
       }
       builder.append("return result;\n");
