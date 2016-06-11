@@ -24,8 +24,8 @@ class SingularMapHandler extends AbstractSingularHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
-  SingularMapHandler(boolean shouldGenerateFullBodyBlock) {
-    super(shouldGenerateFullBodyBlock);
+  SingularMapHandler(String qualifiedName, boolean shouldGenerateFullBodyBlock) {
+    super(qualifiedName, shouldGenerateFullBodyBlock);
   }
 
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {

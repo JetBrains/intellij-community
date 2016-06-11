@@ -71,10 +71,10 @@ public class SingularHandlerFactory {
     final String qualifiedName = PsiTypeUtil.getQualifiedName(psiType);
     if (!isInvalidSingularType(qualifiedName)) {
       if (COLLECTION_TYPES.contains(qualifiedName)) {
-        return new SingularCollectionHandler(shouldGenerateFullBodyBlock);
+        return new SingularCollectionHandler(qualifiedName, shouldGenerateFullBodyBlock);
       }
       if (MAP_TYPES.contains(qualifiedName)) {
-        return new SingularMapHandler(shouldGenerateFullBodyBlock);
+        return new SingularMapHandler(qualifiedName, shouldGenerateFullBodyBlock);
       }
       if (GUAVA_COLLECTION_TYPES.contains(qualifiedName)) {
         String qualifiedName2Use = GUAVA_IMMUTABLE_COLLECTION.equals(qualifiedName) ? GUAVA_IMMUTABLE_LIST : qualifiedName;

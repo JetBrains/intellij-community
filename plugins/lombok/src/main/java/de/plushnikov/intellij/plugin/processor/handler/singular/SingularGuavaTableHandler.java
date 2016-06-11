@@ -23,12 +23,10 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   private static final String LOMBOK_COLUMN_KEY = "columnKey";
   private static final String LOMBOK_VALUE = "value";
 
-  private final String guavaQualifiedName;
   private final boolean sortedCollection;
 
   SingularGuavaTableHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
-    super(shouldGenerateFullBodyBlock);
-    this.guavaQualifiedName = guavaQualifiedName;
+    super(guavaQualifiedName, shouldGenerateFullBodyBlock);
     this.sortedCollection = sortedCollection;
   }
 
@@ -49,7 +47,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     final PsiType columnKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
     final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
 
-    return PsiTypeUtil.createCollectionType(psiManager, guavaQualifiedName + ".Builder", rowKeyType, columnKeyType, valueType);
+    return PsiTypeUtil.createCollectionType(psiManager, collectionQualifiedName + ".Builder", rowKeyType, columnKeyType, valueType);
   }
 
   protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
@@ -84,7 +82,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");{4}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, guavaQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, collectionQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
@@ -92,8 +90,25 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.putAll({0});{3}";
 
-    return MessageFormat.format(codeBlockTemplate, singularName, guavaQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, singularName, collectionQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
+  }
+
+  @Override
+  public void appendBuildPrepare(@NotNull StringBuilder buildMethodCode, @NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+    final PsiManager psiManager = psiVariable.getManager();
+    final PsiType psiFieldType = psiVariable.getType();
+
+    final PsiType rowKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
+    final PsiType columnKeyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
+    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
+
+    buildMethodCode.append(MessageFormat.format(
+        "{4}<{1}, {2}, {3}> {0} = " +
+            "this.{0} == null ? " +
+            "{4}.<{1}, {2}, {3}>of() : " +
+            "this.{0}.build();\n",
+        fieldName, rowKeyType.getCanonicalText(false), columnKeyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName));
   }
 
 }

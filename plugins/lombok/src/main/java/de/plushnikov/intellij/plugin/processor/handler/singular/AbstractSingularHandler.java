@@ -25,9 +25,13 @@ import java.text.MessageFormat;
 import java.util.List;
 
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
+
+  protected final String collectionQualifiedName;
+
   private final boolean shouldGenerateFullBodyBlock;
 
-  AbstractSingularHandler(boolean shouldGenerateFullBodyBlock) {
+  AbstractSingularHandler(String qualifiedName, boolean shouldGenerateFullBodyBlock) {
+    this.collectionQualifiedName = qualifiedName;
     this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
   }
 
@@ -159,18 +163,18 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     //int collectionType = 1;
 
     buildMethodCode.append(MessageFormat.format(
-        "java.util.Collection<{0}> {1};\n" +
-            "switch (this.{1} == null ? 0 : this.{1}.size()) '{'\n" +
+        "{2}<{1}> {0};\n" +
+            "switch (this.{0} == null ? 0 : this.{0}.size()) '{'\n" +
             "case 0: \n" +
-            " {1} = java.util.Collections.emptyList();\n" +
+            " {0} = java.util.Collections.emptyList();\n" +
             " break;\n" +
             "case 1: \n" +
-            " {1} = java.util.Collections.singletonList(this.{1}.get(0));\n" +
+            " {0} = java.util.Collections.singletonList(this.{0}.get(0));\n" +
             " break;\n" +
             "default: \n" +
-            " {1} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{0}>(this.{1}));\n" +
+            " {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>(this.{0}));\n" +
             "'}'\n",
-        elementType.getCanonicalText(false), fieldName));
+        fieldName, elementType.getCanonicalText(false), collectionQualifiedName));
   }
 
   @Override

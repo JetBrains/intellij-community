@@ -8,10 +8,6 @@ import java.io.IOException;
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
 public class BuilderTest extends AbstractLombokParsingTestCase {
-  protected boolean shouldCompareCodeBlocks() {
-    return true;
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

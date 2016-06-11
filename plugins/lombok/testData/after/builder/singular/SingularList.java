@@ -132,9 +132,6 @@ public class SingularList<T> {
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public SingularList<T> build() {
-			return new SingularList<T>(rawTypes, integers, generics, extendsGenerics);
-		}
-		/*
 			java.util.List<java.lang.Object> rawTypes;
 			switch (this.rawTypes == null ? 0 : this.rawTypes.size()) {
 				case 0:
@@ -187,7 +184,8 @@ public class SingularList<T> {
 				default:
 					extendsGenerics = java.util.Collections.unmodifiableList(new java.util.ArrayList<Number>(this.extendsGenerics));
 			}
-			*/
+			return new SingularList<T>(rawTypes, integers, generics, extendsGenerics);
+		}
 
 
 		@java.lang.Override
