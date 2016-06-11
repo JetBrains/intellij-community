@@ -16,7 +16,7 @@ public class SingularHandlerFactory {
 
   private static final String[] JAVA_MAPS = new String[]{CommonClassNames.JAVA_UTIL_MAP, SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_MAP,};
   private static final String[] JAVA_SETS = new String[]{CommonClassNames.JAVA_UTIL_SET, SingularCollectionClassNames.JAVA_UTIL_SORTED_SET, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET};
-  private static final String[] GUAVE_COLLECTIONS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_COLLECTION, SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST};
+  private static final String[] GUAVA_COLLECTIONS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_COLLECTION, SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST};
   private static final String[] GUAVA_SETS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_SET, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_SET};
   private static final String[] GUAVA_MAPS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_BI_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_MAP};
   private static final String[] GUAVA_TABLE = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_TABLE};
@@ -27,7 +27,7 @@ public class SingularHandlerFactory {
   }};
 
   private static final Set<String> GUAVA_COLLECTION_TYPES = new HashSet<String>() {{
-    addAll(toSet(GUAVE_COLLECTIONS));
+    addAll(toSet(GUAVA_COLLECTIONS));
     addAll(toSet(GUAVA_SETS));
   }};
 

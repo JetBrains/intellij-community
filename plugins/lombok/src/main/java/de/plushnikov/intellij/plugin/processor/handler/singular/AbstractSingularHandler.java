@@ -21,7 +21,6 @@ import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.core.handlers.Singulars;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.util.List;
 
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
@@ -152,29 +151,6 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       return singularName != null;
     }
     return true;
-  }
-
-  @Override
-  public void appendBuildPrepare(@NotNull StringBuilder buildMethodCode, @NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-
-    final PsiManager psiManager = psiVariable.getManager();
-    final PsiType elementType = PsiTypeUtil.extractOneElementType(psiVariable.getType(), psiManager);
-
-    //int collectionType = 1;
-
-    buildMethodCode.append(MessageFormat.format(
-        "{2}<{1}> {0};\n" +
-            "switch (this.{0} == null ? 0 : this.{0}.size()) '{'\n" +
-            "case 0: \n" +
-            " {0} = java.util.Collections.emptyList();\n" +
-            " break;\n" +
-            "case 1: \n" +
-            " {0} = java.util.Collections.singletonList(this.{0}.get(0));\n" +
-            " break;\n" +
-            "default: \n" +
-            " {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>(this.{0}));\n" +
-            "'}'\n",
-        fieldName, elementType.getCanonicalText(false), collectionQualifiedName));
   }
 
   @Override

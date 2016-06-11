@@ -12,6 +12,7 @@ public class BuilderSingularTest extends AbstractLombokParsingTestCase {
   public void setUp() throws Exception {
     super.setUp();
     // Add dummy classes, which are absent in mockJDK
+    myFixture.addClass("package java.util;\n  public interface NavigableSet<E> extends java.util.SortedSet<E> {}");
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 

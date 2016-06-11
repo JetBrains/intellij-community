@@ -28,7 +28,7 @@ public final class ValueAndWither {
     final int PRIME = 59;
     int result = 1;
     final Object $myField = this.myField;
-    result = result * PRIME + ($myField == null ? 0 : $myField.hashCode());
+    result = result * PRIME + ($myField == null ? 43 : $myField.hashCode());
     return result;
   }
 

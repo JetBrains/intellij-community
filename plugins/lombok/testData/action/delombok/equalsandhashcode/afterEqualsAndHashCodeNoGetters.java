@@ -63,7 +63,7 @@ class EqualsAndHashCodeNoGetters {
         result = result * PRIME + java.util.Arrays.hashCode(this.y);
         result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
         final Object $a = this.a;
-        result = result * PRIME + ($a == null ? 0 : $a.hashCode());
+        result = result * PRIME + ($a == null ? 43 : $a.hashCode());
         return result;
     }
 

@@ -70,7 +70,7 @@ public class WithSuperTest {
       final long $doubleProperty = java.lang.Double.doubleToLongBits(this.getDoubleProperty());
       result = result * PRIME + (int) ($doubleProperty >>> 32 ^ $doubleProperty);
       final java.lang.Object $stringProperty = this.getStringProperty();
-      result = result * PRIME + ($stringProperty == null ? 0 : $stringProperty.hashCode());
+      result = result * PRIME + ($stringProperty == null ? 43 : $stringProperty.hashCode());
       return result;
     }
 
