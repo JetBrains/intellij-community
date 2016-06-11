@@ -267,7 +267,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
-      LightPlatformTestCase.super.setUp();
+      super.setUp();
       initApplication();
       ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
@@ -407,27 +407,23 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    List<Throwable> errors = new SmartList<>();
+    List<Throwable> errors = ContainerUtil.newSmartList();
+    Function<ThrowableRunnable<?>, ?> runSafe = c -> {
+      try {
+        c.run();
+      }
+      catch (Throwable e) {
+        errors.add(e);
+      }
+      return true;
+    };
     try {
-      checkForSettingsDamage(errors);
-      doTearDown(project, ourApplication, true, errors);
-    }
-    catch (Throwable e) {
-      errors.add(e);
-    }
-
-    try {
-      //noinspection SuperTearDownInFinally
-      super.tearDown();
-    }
-    catch (Throwable e) {
-      errors.add(e);
-    }
-
-    try {
-      myThreadTracker.checkLeak();
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed();
+      runSafe.fun(() -> checkForSettingsDamage(errors));
+      runSafe.fun(() -> doTearDown(project, ourApplication, true, errors));
+      runSafe.fun(super::tearDown);
+      runSafe.fun(() -> myThreadTracker.checkLeak());
+      runSafe.fun(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project));
+      runSafe.fun(() -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed());
     }
     catch (Throwable e) {
       errors.add(e);
