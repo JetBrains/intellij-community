@@ -1,32 +1,32 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.PsiModifierList;
+
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * To support augmentation of {@link PsiModifierList} properties, processors should implement this interface.
  *
  * @author Alexej Kubarev
- * @see com.intellij.psi.augment.PsiAugmentProvider#hasModifierProperty(PsiModifierList, String)
+ * @see com.intellij.psi.augment.PsiAugmentProvider#transformModifiers(PsiModifierList, Set<String>)
  */
 public interface ModifierProcessor {
 
   /**
    * Validates if this {@link ModifierProcessor} implementation supports provided property on a {@link PsiModifierList}.
-   * This method <strong>should not</strong> do heavy computations and defer them to {@link #hasModifierProperty(PsiModifierList, String)} instead.
+   * This method <strong>should not</strong> do heavy computations and defer them to {@link #transformModifiers(PsiModifierList, Set<String>)} instead.
    *
-   * @param modifierList List the property is queried on
-   * @param name Name of the property
-   * @return true if supported and therefore may be passed to {@link #hasModifierProperty(PsiModifierList, String)}, false otherwise
+   * @param modifierList Modifier List that will have mosifiers augmented
+   * @return true if supported and therefore may be passed to {@link #transformModifiers(PsiModifierList, Set<String>)}, false otherwise
    */
-  boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name);
+  boolean isSupported(@NotNull PsiModifierList modifierList);
 
   /**
-   * Compute correct response for {@link com.intellij.psi.augment.PsiAugmentProvider#hasModifierProperty(PsiModifierList, String)}.
-   * Must respond with {@literal null} if property existence cannot be identified.
-   * @param modifierList List the property is queried on
-   * @param name Name of the property
-   * @return Boolean value if property existence could be identified, {@literal null} otherwise.
+   * Compute modification of  response for {@link com.intellij.psi.augment.PsiAugmentProvider#transformModifiers(PsiModifierList, Set<String>)}.
+   * @param modifierList Modifier List that will have mosifiers augmented
+   * @param modifiers Set of modifiers that is currently present for the list
    */
-  Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name);
+  void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers);
 }

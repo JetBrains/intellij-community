@@ -4,6 +4,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -43,9 +44,12 @@ public class ValueModifierTest extends LightCodeInsightFixtureTestCase {
     PsiClass clazz = PsiTreeUtil.getParentOfType(field, PsiClass.class);
 
     assertNotNull(clazz);
-    assertNotNull(clazz.getModifierList());
-    assertTrue("@Value should make class final", clazz.getModifierList().hasModifierProperty(PsiModifier.FINAL));
-    assertFalse("@Value should not make class private", clazz.getModifierList().hasModifierProperty(PsiModifier.PRIVATE));
-    assertFalse("@Value should not make class static", clazz.getModifierList().hasModifierProperty(PsiModifier.STATIC));
+
+    PsiModifierList list = clazz.getModifierList();
+
+    assertNotNull(list);
+    assertTrue("@Value should make class final", list.hasModifierProperty(PsiModifier.FINAL));
+    assertFalse("@Value should not make class private", list.hasModifierProperty(PsiModifier.PRIVATE));
+    assertFalse("@Value should not make class static", list.hasModifierProperty(PsiModifier.STATIC));
   }
 }

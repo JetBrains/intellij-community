@@ -15,11 +15,8 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.plugin.processor.Processor;
-import de.plushnikov.intellij.plugin.processor.ValProcessor;
-import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import com.intellij.util.containers.ContainerUtil;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +25,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.processor.Processor;
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Provides support for lombok generated elements
@@ -46,26 +51,44 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
-  @Nullable
-  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
-  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
-    if (DumbService.isDumb(modifierList.getProject())) {
-      return null;
-    }
+  /**
+   * Support method required by patcher project and {@link ModifierVisibilityClassFileTransformer}.
+   * Provides a simple way to inject modifiers into older versions of IntelliJ. Return of the null value is dictated by legacy IntelliJ API.
+   *
+   * @param modifierList PsiModifierList that is being queried
+   * @param name         String name of the PsiModifier
+   * @return {@code Boolean.TRUE} if modifier exists (explicitly set by modifier transformers of the plugin), {@code null} otherwise.
+   */
+  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull final String name) {
 
-    // Loop through all available processors and give all of them a chance to respond
-    for (ModifierProcessor processor : modifierProcessors) {
-      if (processor.isSupported(modifierList, name)) {
-        Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
+    final Set<String> modifiers = this.transformModifiers(modifierList, Collections.<String>emptySet());
 
-        // We found a match with a 'non-null' value, it is authoritative response
-        if (valueProcessorResult != null) {
-          return valueProcessorResult;
-        }
-      }
+    if (modifiers.contains(name)) {
+      return Boolean.TRUE;
     }
 
     return null;
+  }
+
+  @NotNull
+  //@Override //May cause issues with older versions of IDEA SDK that are currently supported
+  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+
+    if (DumbService.isDumb(modifierList.getProject())) {
+      return modifiers;
+    }
+
+    Set<String> result = ContainerUtil.newConcurrentSet();
+    result.addAll(modifiers);
+
+    // Loop through all available processors and give all of them a chance to respond
+    for (ModifierProcessor processor : modifierProcessors) {
+      if (processor.isSupported(modifierList)) {
+        processor.transformModifiers(modifierList, result);
+      }
+    }
+
+    return result;
   }
 
   @Nullable
