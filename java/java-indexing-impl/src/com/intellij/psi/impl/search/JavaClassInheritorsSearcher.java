@@ -159,13 +159,6 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
                 }
                 super.visitClass(candidate);
               }
-
-              @Override
-              public void visitCodeBlock(PsiCodeBlock block) {
-                ProgressManager.checkCanceled();
-                if (!parameters.isIncludeAnonymous()) return;
-                super.visitCodeBlock(block);
-              }
             });
           }
         }
