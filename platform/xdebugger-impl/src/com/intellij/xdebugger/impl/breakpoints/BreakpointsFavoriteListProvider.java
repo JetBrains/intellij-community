@@ -165,7 +165,15 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
-    return (selectedObjects.size() == 1 && (type == CommonActionsPanel.Buttons.EDIT || type == CommonActionsPanel.Buttons.REMOVE)) &&
+    if (selectedObjects.size() >= 1 && type == CommonActionsPanel.Buttons.REMOVE) {
+      for (Iterator iterator = selectedObjects.iterator(); iterator.hasNext();) {
+        if ( !(((AbstractTreeNode)iterator.next()).getValue() instanceof BreakpointItem) ) {
+          return false; // Not all selected items are breakpoints
+        }
+      }
+      return true;
+    }
+    return selectedObjects.size() == 1 && type == CommonActionsPanel.Buttons.EDIT &&
            ((AbstractTreeNode)selectedObjects.iterator().next()).getValue() instanceof BreakpointItem;
   }
 
@@ -179,15 +187,18 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       bounds = tree.getVisibleRect().intersection(bounds);
     }
     Point whereToShow = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
-    BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
     switch (type) {
       case EDIT:
-        DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
+        BreakpointItem editBreakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
+        DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, editBreakpointItem);
         if (debuggerSupport == null) return;
-        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem);
+        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, editBreakpointItem);
         break;
       case REMOVE:
-        breakpointItem.removed(myProject);
+        for (Iterator iterator = selectedObjects.iterator(); iterator.hasNext();) {
+          BreakpointItem removeBreakpointItem = (BreakpointItem)((AbstractTreeNode)iterator.next()).getValue();
+          removeBreakpointItem.removed(myProject);
+        }
         break;
       default: break;
     }
