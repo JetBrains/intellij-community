@@ -45,14 +45,14 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
-
     boolean valid = validateVisibility(psiAnnotation);
     valid &= validName(psiField, builder);
     valid &= validNonStatic(psiField, builder);
     valid &= validNonFinalInitialized(psiField, builder);
     valid &= validIsWitherUnique(psiField, builder);
+
     final PsiClass containingClass = psiField.getContainingClass();
-    valid &= null != containingClass && validConstructor(containingClass, builder);
+    valid &= null != containingClass && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || validConstructor(containingClass, builder));
 
     return valid;
   }
@@ -195,7 +195,11 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       addOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
       result.withParameter(methodParameter);
 
-      result.withBody(createCodeBlock(psiField, psiFieldContainingClass, returnType, psiFieldName));
+      if (psiFieldContainingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        result.withModifier(PsiModifier.ABSTRACT);
+      } else {
+        result.withBody(createCodeBlock(psiField, psiFieldContainingClass, returnType, psiFieldName));
+      }
     }
     return result;
   }

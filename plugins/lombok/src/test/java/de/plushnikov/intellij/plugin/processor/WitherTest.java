@@ -45,4 +45,8 @@ public class WitherTest extends AbstractLombokParsingTestCase {
   public void testWither$WitherWithGenerics() throws IOException {
     doTest(true);
   }
+
+  public void testWither$WitherWithAbstract() throws IOException {
+    doTest(true);
+  }
 }
