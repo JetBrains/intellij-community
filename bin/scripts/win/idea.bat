@@ -11,7 +11,7 @@
 IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
 IF NOT "%JDK%" == "" GOTO jdk
 SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
-IF EXIST "%USER_JDK_FILE%" SET/pJDK=<%USER_JDK_FILE%
+IF EXIST "%USER_JDK_FILE%" SET/pJDK=<"%USER_JDK_FILE%"
 IF "%JDK%" == "" GOTO jdk0
 IF EXIST "%JDK%" GOTO jdk
 SET JDK=%~dp0\..\%JDK%
@@ -51,7 +51,7 @@ IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.p
 SET USER_VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\@@vm_options@@.vmoptions
 SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
 IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
-IF EXIST %USER_VM_OPTIONS_FILE% SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
+IF EXIST "%USER_VM_OPTIONS_FILE%" SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
 
 SET ACC=
