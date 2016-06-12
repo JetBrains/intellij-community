@@ -1,5 +1,7 @@
 package com.siyeh.igtest.errorhandling.try_identical_catches;
 
+import java.io.*;
+
 class TryIdenticalCatches {
   public void notIdentical() {
     try {
@@ -131,4 +133,31 @@ class TryIdenticalCatches {
     }
     System.out.println("causeException = " + causeException);
   }
+
+  public void x() throws IOException {
+    try {
+      foo();
+    } catch (FileNotFoundException e) {
+      throw e;
+    } catch (IOException e) {
+      throw INSTANCE;
+    }
+  }
+
+  public void y() throws IOException {
+    try {
+
+    } catch (RuntimeException g) {
+      try {
+        foo();
+      } catch (FileNotFoundException e) {
+        throw e;
+      } catch (IOException e) {
+        throw g;
+      }
+    }
+  }
+
+  void foo() throws IOException {}
+  private static final IOException INSTANCE = new IOException();
 }
