@@ -73,8 +73,8 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
-    Set<String> result = ContainerUtil.newConcurrentSet();
-    result.addAll(modifiers);
+    // make copy of original modifiers
+    Set<String> result = ContainerUtil.newHashSet(modifiers);
 
     // Loop through all available processors and give all of them a chance to respond
     for (ModifierProcessor processor : modifierProcessors) {
