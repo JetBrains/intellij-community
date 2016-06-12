@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.agent.transformer;
 
-import java.lang.instrument.IllegalClassFormatException;
-import java.security.ProtectionDomain;
-
 import de.plushnikov.intellij.plugin.agent.support.SupportedBuild;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
+
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
 
 /**
  * Transformer that is only required for builds below "146.1154".
@@ -44,7 +44,6 @@ public class ModifierVisibilityClassFileTransformer extends AbstractBuildDepende
           + "        if(extension.getClass().getName().equals(\"de.plushnikov.intellij.plugin.provider.LombokAugmentProvider\")) {\n"
           + "         try {\n"
           + "            java.lang.reflect.Method method = extension.getClass().getDeclaredMethod(\"hasModifierProperty\", new java.lang.Class[]{com.intellij.psi.PsiModifierList.class, java.lang.String.class});\n"
-          + "            method.setAccessible(true);\n"
           + "            java.lang.Boolean augmentation = (java.lang.Boolean)method.invoke(extension, new Object[]{$0, $1});\n"
           + "            if (augmentation != null) {\n"
           + "               return augmentation.booleanValue();\n"
