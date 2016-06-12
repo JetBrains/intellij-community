@@ -11,6 +11,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -169,7 +170,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     if (shouldCompareModifiers()) {
       for (String modifier : PsiModifier.MODIFIERS) {
         boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
-        assertTrue(modifier + " Modifier is not equal for " + beforeModifierList.getText(), haveSameModifiers);
+        final PsiElement afterModifierListParent = afterModifierList.getParent();
+        assertTrue(modifier + " Modifier is not equal for " + (null == afterModifierListParent ? "..." : afterModifierListParent.getText()), haveSameModifiers);
       }
     }
 

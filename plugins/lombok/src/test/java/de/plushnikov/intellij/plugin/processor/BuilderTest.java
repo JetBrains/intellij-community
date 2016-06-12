@@ -96,8 +96,7 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  //  TODO implement me
-  public void ignore_testBuilder$BuilderInstanceMethod() throws IOException {
+  public void testBuilder$BuilderInstanceMethod() throws IOException {
     doTest(true);
   }
 

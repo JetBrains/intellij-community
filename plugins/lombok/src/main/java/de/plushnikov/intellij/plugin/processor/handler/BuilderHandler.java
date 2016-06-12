@@ -162,23 +162,12 @@ public class BuilderHandler {
     final PsiClass psiClass = psiMethod.getContainingClass();
     boolean result = null != psiClass;
     if (result) {
-      result = validateAnnotationOnRightType(psiMethod, problemBuilder);
-      if (result) {
-        final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
-        final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-        result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
-            validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
-      }
+      final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
+      final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
+      result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
+          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
     }
     return result;
-  }
-
-  private boolean validateAnnotationOnRightType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.isConstructor()) {
-      builder.addError("%s is only supported on types, constructors, and static methods", Builder.class);
-      return false;
-    }
-    return true;
   }
 
   public boolean notExistInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
@@ -247,7 +236,9 @@ public class BuilderHandler {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
     if (!hasMethod(containingClass, builderMethodName)) {
       LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, builderMethodName);
-      method.withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+      if (null == psiMethod || psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        method.withModifier(PsiModifier.STATIC);
+      }
       target.add(method);
     }
   }
@@ -255,8 +246,6 @@ public class BuilderHandler {
   public void createToBuilderMethodIfNecessary(@NotNull Collection<? super PsiElement> target, @NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
       LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, TO_BUILDER_METHOD_NAME);
-      method.withModifier(PsiModifier.PUBLIC);
-
       target.add(method);
     }
   }
@@ -295,7 +284,8 @@ public class BuilderHandler {
     final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
-    LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName, psiAnnotation);
+    LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName,
+        psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC), psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
     final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
@@ -310,7 +300,7 @@ public class BuilderHandler {
     final PsiType psiBuilderType = getBuilderType(psiClass);
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
-    LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, psiAnnotation);
+    LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, true, psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
@@ -372,16 +362,19 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner, @NotNull String builderClassName, @NotNull PsiAnnotation psiAnnotation) {
+  private LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner, @NotNull String builderClassName, final boolean isStatic, @NotNull PsiAnnotation psiAnnotation) {
     final String builderClassQualifiedName = psiClass.getQualifiedName() + "." + builderClassName;
 
     final Project project = psiClass.getProject();
-    return new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
+    final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
         .withParameterTypes(psiTypeParameterListOwner.getTypeParameterList())
-        .withModifier(PsiModifier.PUBLIC)
-        .withModifier(PsiModifier.STATIC);
+        .withModifier(PsiModifier.PUBLIC);
+    if (isStatic) {
+      classBuilder.withModifier(PsiModifier.STATIC);
+    }
+    return classBuilder;
   }
 
   @NotNull
@@ -526,6 +519,9 @@ public class BuilderHandler {
     StringBuilder className = new StringBuilder();
     if (null != containingClass) {
       className.append(containingClass.getName()).append(".");
+      if (!psiMethod.isConstructor() && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        className.append("this.");
+      }
       if (builderClass.hasTypeParameters()) {
         className.append('<');
 
