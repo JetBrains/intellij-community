@@ -16,7 +16,12 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-
+import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.processor.Processor;
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
-import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.plugin.processor.Processor;
-import de.plushnikov.intellij.plugin.processor.ValProcessor;
-import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Provides support for lombok generated elements
@@ -60,9 +58,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
    * @return {@code Boolean.TRUE} if modifier exists (explicitly set by modifier transformers of the plugin), {@code null} otherwise.
    */
   public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull final String name) {
+    if (DumbService.isDumb(modifierList.getProject())) {
+      return null;
+    }
 
     final Set<String> modifiers = this.transformModifiers(modifierList, Collections.<String>emptySet());
-
     if (modifiers.contains(name)) {
       return Boolean.TRUE;
     }
@@ -73,11 +73,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
-
-    if (DumbService.isDumb(modifierList.getProject())) {
-      return modifiers;
-    }
-
     Set<String> result = ContainerUtil.newConcurrentSet();
     result.addAll(modifiers);
 
