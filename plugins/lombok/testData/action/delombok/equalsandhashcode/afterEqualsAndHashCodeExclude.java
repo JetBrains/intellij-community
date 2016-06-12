@@ -58,8 +58,8 @@ class EqualsAndHashCodeSimpleExclude {
         final long $d = Double.doubleToLongBits(this.getD());
         result = result * PRIME + (int) ($d >>> 32 ^ $d);
         result = result * PRIME + (this.isBool() ? 79 : 97);
-        result = result * PRIME + java.util.Arrays.hashCode(this.y);
-        result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
+        result = result * PRIME + java.util.Arrays.hashCode(this.getY());
+        result = result * PRIME + java.util.Arrays.deepHashCode(this.getZ());
         final Object $a = this.getA();
         result = result * PRIME + ($a == null ? 43 : $a.hashCode());
         return result;

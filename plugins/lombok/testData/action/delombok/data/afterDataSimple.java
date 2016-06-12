@@ -78,15 +78,15 @@ public class DataSimple {
         if (!(o instanceof DataSimple)) return false;
         final DataSimple other = (DataSimple) o;
         if (!other.canEqual((Object) this)) return false;
-        if (this.finalX != other.finalX) return false;
-        if (this.x != other.x) return false;
-        if (Float.compare(this.f, other.f) != 0) return false;
-        if (Double.compare(this.d, other.d) != 0) return false;
-        if (this.bool != other.bool) return false;
-        if (!java.util.Arrays.equals(this.y, other.y)) return false;
-        if (!java.util.Arrays.deepEquals(this.z, other.z)) return false;
-        final Object this$a = this.a;
-        final Object other$a = other.a;
+        if (this.getFinalX() != other.getFinalX()) return false;
+        if (this.getX() != other.getX()) return false;
+        if (Float.compare(this.getF(), other.getF()) != 0) return false;
+        if (Double.compare(this.getD(), other.getD()) != 0) return false;
+        if (this.isBool() != other.isBool()) return false;
+        if (!java.util.Arrays.equals(this.getY(), other.getY())) return false;
+        if (!java.util.Arrays.deepEquals(this.getZ(), other.getZ())) return false;
+        final Object this$a = this.getA();
+        final Object other$a = other.getA();
         if (this$a == null ? other$a != null : !this$a.equals(other$a)) return false;
         return true;
     }
@@ -94,15 +94,15 @@ public class DataSimple {
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
-        result = result * PRIME + this.finalX;
-        result = result * PRIME + this.x;
-        result = result * PRIME + Float.floatToIntBits(this.f);
-        final long $d = Double.doubleToLongBits(this.d);
+        result = result * PRIME + this.getFinalX();
+        result = result * PRIME + this.getX();
+        result = result * PRIME + Float.floatToIntBits(this.getF());
+        final long $d = Double.doubleToLongBits(this.getD());
         result = result * PRIME + (int) ($d >>> 32 ^ $d);
-        result = result * PRIME + (this.bool ? 79 : 97);
-        result = result * PRIME + java.util.Arrays.hashCode(this.y);
-        result = result * PRIME + java.util.Arrays.deepHashCode(this.z);
-        final Object $a = this.a;
+        result = result * PRIME + (this.isBool() ? 79 : 97);
+        result = result * PRIME + java.util.Arrays.hashCode(this.getY());
+        result = result * PRIME + java.util.Arrays.deepHashCode(this.getZ());
+        final Object $a = this.getA();
         result = result * PRIME + ($a == null ? 43 : $a.hashCode());
         return result;
     }
@@ -112,6 +112,6 @@ public class DataSimple {
     }
 
     public String toString() {
-        return "DataSimple(finalX=" + this.finalX + ", x=" + this.x + ", f=" + this.f + ", d=" + this.d + ", bool=" + this.bool + ", y=" + java.util.Arrays.toString(this.y) + ", z=" + java.util.Arrays.deepToString(this.z) + ", a=" + this.a + ")";
+        return "DataSimple(finalX=" + this.getFinalX() + ", x=" + this.getX() + ", f=" + this.getF() + ", d=" + this.getD() + ", bool=" + this.isBool() + ", y=" + java.util.Arrays.toString(this.getY()) + ", z=" + java.util.Arrays.deepToString(this.getZ()) + ", a=" + this.getA() + ")";
     }
 }

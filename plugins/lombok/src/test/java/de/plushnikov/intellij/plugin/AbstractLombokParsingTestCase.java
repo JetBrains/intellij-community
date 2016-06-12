@@ -169,7 +169,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     if (shouldCompareModifiers()) {
       for (String modifier : PsiModifier.MODIFIERS) {
         boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
-        assertTrue(modifier + " Modifier is not equal; ", haveSameModifiers);
+        assertTrue(modifier + " Modifier is not equal for " + beforeModifierList.getText(), haveSameModifiers);
       }
     }
 

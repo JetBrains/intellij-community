@@ -333,9 +333,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
         } else if (classFieldType instanceof PsiArrayType) {
           final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
           if (componentType instanceof PsiPrimitiveType) {
-            builder.append("result = result * PRIME + java.util.Arrays.hashCode(this.").append(fieldName).append(");\n");
+            builder.append("result = result * PRIME + java.util.Arrays.hashCode(this.").append(fieldAccessor).append(");\n");
           } else {
-            builder.append("result = result * PRIME + java.util.Arrays.deepHashCode(this.").append(fieldName).append(");\n");
+            builder.append("result = result * PRIME + java.util.Arrays.deepHashCode(this.").append(fieldAccessor).append(");\n");
           }
         } else {
           builder.append("final java.lang.Object $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");

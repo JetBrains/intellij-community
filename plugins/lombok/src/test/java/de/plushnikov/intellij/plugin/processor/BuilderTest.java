@@ -62,6 +62,10 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testBuilder$BuilderValueData() throws IOException {
+    doTest(true);
+  }
+
   public void testBuilder$BuilderSingularGuavaListsSets() throws IOException {
     doTest(true);
   }

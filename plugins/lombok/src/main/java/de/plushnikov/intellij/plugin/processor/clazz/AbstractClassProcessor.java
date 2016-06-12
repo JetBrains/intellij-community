@@ -15,10 +15,14 @@ import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -172,7 +176,13 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     } else {
       final String getterName = getGetterName(classField);
 
-      boolean hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
+      final boolean hasGetter;
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Data.class, Value.class, lombok.experimental.Value.class, Getter.class)) {
+        final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, Getter.class);
+        hasGetter = null == getterLombokAnnotation || null != LombokProcessorUtil.getMethodModifier(getterLombokAnnotation);
+      } else {
+        hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
+      }
 
       return hasGetter ? getterName + "()" : fieldName;
     }
