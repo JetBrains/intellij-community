@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.extensions;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
@@ -58,6 +60,11 @@ public interface NamedArgumentDescriptor {
 
   @Nullable
   default PsiElement getNavigationElement() {
+    return null;
+  }
+
+  @Nullable
+  default LookupElement customizeLookup(@NotNull LookupElementBuilder lookup) {
     return null;
   }
 
