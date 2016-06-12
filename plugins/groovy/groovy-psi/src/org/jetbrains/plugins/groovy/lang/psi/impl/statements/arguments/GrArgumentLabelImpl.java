@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -80,7 +81,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     GrCall call = PsiUtil.getCallByNamedParameter((GrNamedArgument)namedArgument);
-    if (call == null) return null;
+    if (call == null) return NamedArgumentUtilKt.getReferenceFromDescriptor(this);
 
     String labelName = getName();
 
