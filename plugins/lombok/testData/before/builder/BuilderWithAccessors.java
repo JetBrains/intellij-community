@@ -1,4 +1,4 @@
-@lombok.experimental.Builder @lombok.experimental.Accessors(prefix={"p", "_"})
+@lombok.Builder @lombok.experimental.Accessors(prefix={"p", "_"})
 class BuilderWithAccessors {
 	private final int plower;
 	private final int pUpper;

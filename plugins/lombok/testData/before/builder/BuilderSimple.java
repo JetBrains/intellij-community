@@ -1,6 +1,6 @@
 import java.util.List;
 
-@lombok.experimental.Builder
+@lombok.Builder
 class BuilderSimple<T> {
 	private final int noshow = 0;
 	private final int yes;
