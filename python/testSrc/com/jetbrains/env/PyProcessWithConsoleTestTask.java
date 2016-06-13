@@ -152,7 +152,11 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     if (failed.get()) {
       Assert.fail("Failed to run test, see logs for exceptions");
     } else {
-      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+      try {
+        checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+      } catch (Throwable e) {
+        throw new RuntimeException(stdAll.toString(), e);
+      }
     }
   }
 
