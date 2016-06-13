@@ -27,11 +27,20 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TemplateContext {
-  private final Map<String, Boolean> myContextStates = ContainerUtil.newLinkedHashMap();
+  private final Map<String, Boolean> myContextStates = ContainerUtil.newTroveMap();
+
+  private static class ContextInterner {
+    private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
+      .map(TemplateContextType::getContextId)
+      .collect(Collectors.toMap(Function.identity(), Function.identity()));
+  }
 
   public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
@@ -97,7 +106,7 @@ public class TemplateContext {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(name, Boolean.parseBoolean(value));
+        myContextStates.put(ContainerUtil.getOrElse(ContextInterner.internMap, name, name), Boolean.parseBoolean(value));
       }
     }
 
