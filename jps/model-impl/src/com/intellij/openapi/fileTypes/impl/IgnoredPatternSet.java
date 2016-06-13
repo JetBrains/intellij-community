@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
@@ -53,14 +54,14 @@ public class IgnoredPatternSet {
     }
   }
 
-  public boolean isIgnored(@NotNull String fileName) {
+  public boolean isIgnored(@NotNull CharSequence fileName) {
     if (myIgnorePatterns.findAssociatedFileType(fileName) == Boolean.TRUE) {
       return true;
     }
 
     //Quite a hack, but still we need to have some name, which
     //won't be caught by VFS for sure.
-    return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
+    return StringUtil.endsWith(fileName, FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
   void clearPatterns() {
