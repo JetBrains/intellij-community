@@ -40,9 +40,12 @@ def loadSource(fileName):
     path = fileName
     for p in roots:
       # Python 2.6+
-      rel_path = os.path.relpath(fileName, start=p)
-      if rel_path.find('..') == -1 and len(rel_path) < len(path):
-        path = rel_path
+      try:
+        rel_path = os.path.relpath(fileName, start=p)
+        if rel_path.find('..') == -1 and len(rel_path) < len(path):
+          path = rel_path
+      except:
+        pass # relpath can raise an error in case of different drives for a path and start on Windows
 
     if path.endswith('.py'):
       path = path[0:-3]
