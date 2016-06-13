@@ -18,14 +18,16 @@ package com.intellij.execution.startup;
 import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -83,21 +85,65 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
       new ArrayList<RunnerAndConfigurationSettings>(projectStartupTaskManager.getLocalConfigurations());
     configurations.addAll(projectStartupTaskManager.getSharedConfigurations());
 
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    for (final RunnerAndConfigurationSettings configuration : configurations) {
-      ApplicationManager.getApplication().invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      long pause = 0;
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      for (final RunnerAndConfigurationSettings configuration : configurations) {
         if (! canBeRun(configuration)) {
-          ProjectStartupTaskManager.NOTIFICATION_GROUP
-            .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() +
-                                "' can not be started with 'Run' action.", MessageType.ERROR)
-            .notify(project);
+          showNotification(project, "Run Configuration '" + configuration.getName() + "' can not be started with 'Run' action.", MessageType.ERROR);
           return;
         }
-        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
-        ProjectStartupTaskManager.NOTIFICATION_GROUP
-          .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
-          .notify(project);
-      }, ModalityState.any());
+
+        try {
+          alarm.addRequest(new MyExecutor(executor, configuration, alarm), pause);
+        }
+        catch (ExecutionException e) {
+          showNotification(project, e.getMessage(), MessageType.ERROR);
+        }
+        pause = MyExecutor.PAUSE;
+      }
+    });
+  }
+
+  private static void showNotification(Project project, String text, MessageType type) {
+    ProjectStartupTaskManager.NOTIFICATION_GROUP.createNotification(ProjectStartupTaskManager.PREFIX + " " + text, type).notify(project);
+  }
+
+  private static class MyExecutor implements Runnable {
+    public static final int ATTEMPTS = 10;
+    private final ExecutionEnvironment myEnvironment;
+    @NotNull private final Alarm myAlarm;
+    private final Project myProject;
+    private int myCnt = ATTEMPTS;
+    private final static long PAUSE = 300;
+    private final String myName;
+
+    public MyExecutor(@NotNull final Executor executor, @NotNull final RunnerAndConfigurationSettings configuration,
+                      @NotNull Alarm alarm) throws ExecutionException {
+      myName = configuration.getName();
+      myProject = configuration.getConfiguration().getProject();
+      myAlarm = alarm;
+      myEnvironment = ExecutionEnvironmentBuilder.create(executor, configuration).contentToReuse(null).dataContext(null)
+        .activeTarget().build();
+    }
+
+    @Override
+    public void run() {
+      if (ExecutorRegistry.getInstance().isStarting(myEnvironment)) {
+        if (myCnt <= 0) {
+          showNotification(myProject, "'" + myName + "' not started after " + ATTEMPTS + " attempts.", MessageType.ERROR);
+          return;
+        }
+        --myCnt;
+        myAlarm.addRequest(this, PAUSE);
+      }
+      // reporting that the task successfully started would require changing the interface of execution subsystem, not it reports errors by itself
+      ProjectStartupTaskManager.NOTIFICATION_GROUP
+        .createNotification(ProjectStartupTaskManager.PREFIX + " starting '" + myName + "'", MessageType.INFO).notify(myProject);
+      ProgramRunnerUtil.executeConfiguration(myEnvironment, true, true);
+      // same thread always
+      if (myAlarm.isEmpty()) Disposer.dispose(myAlarm);
     }
   }
 
