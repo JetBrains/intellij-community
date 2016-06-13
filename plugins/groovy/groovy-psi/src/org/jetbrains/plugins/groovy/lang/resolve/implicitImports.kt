@@ -21,7 +21,7 @@ import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
-open class Import(
+class Import(
     val name: String,
     val type: ImportType = ImportType.REGULAR
 )
@@ -56,9 +56,7 @@ abstract class GrImportContributorBase : GrImportContributor {
   }
 }
 
-fun getImplicitImports(file: GroovyFile): Collection<Import> = GrImportContributor.EP_NAME.extensions.fold(emptyList()) { acc, ext ->
-  acc + ext.getImports(file)
-}
+fun getImplicitImports(file: GroovyFile): Collection<Import> = GrImportContributor.EP_NAME.extensions.flatMap { it.getImports(file) }
 
 fun processImplicitImports(processor: PsiScopeProcessor,
                            state: ResolveState,
