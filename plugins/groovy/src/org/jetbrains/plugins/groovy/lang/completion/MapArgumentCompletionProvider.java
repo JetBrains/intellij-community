@@ -108,7 +108,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
       }
 
-      LookupElement customized = entry.getValue().customizeLookup(lookup);
+      LookupElement customized = entry.getValue().customizeLookupElement(lookup);
       result.addElement(customized == null ? lookup : customized);
     }
   }

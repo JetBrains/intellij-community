@@ -64,7 +64,7 @@ public interface NamedArgumentDescriptor {
   }
 
   @Nullable
-  default LookupElement customizeLookup(@NotNull LookupElementBuilder lookup) {
+  default LookupElement customizeLookupElement(@NotNull LookupElementBuilder lookupElement) {
     return null;
   }
 
