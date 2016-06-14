@@ -63,7 +63,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     final boolean customTestData = !testDataPath.equals(getDefaultTestDataPath());
   // No need to set default testdata as  module root: too many data to index and useless
-    if (customTestData) {
+    if (customTestData || shouldAddDataPathToContentRoots()) {
       moduleFixtureBuilder.addSourceContentRoot(testDataPath);
     }
     final List<String> contentRoots = getContentRoots();
@@ -77,6 +77,10 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   private static String getDefaultTestDataPath() {
     return PythonTestUtil.getTestDataPath();
+  }
+
+  protected boolean shouldAddDataPathToContentRoots() {
+    return false;
   }
 
   protected List<String> getContentRoots() {
