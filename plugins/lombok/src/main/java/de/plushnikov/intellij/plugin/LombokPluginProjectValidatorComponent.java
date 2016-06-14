@@ -17,13 +17,15 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.event.HyperlinkEvent;
+
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
@@ -175,7 +177,10 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
 
     @Override
     protected void hyperlinkActivated(@NotNull final Notification notification, @NotNull final HyperlinkEvent e) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, nameToSelect);
+
+      if (!project.isDisposed()) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, nameToSelect);
+      }
     }
   }
 }
