@@ -1768,6 +1768,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void scheduleFileForIndexing(final VirtualFile file, boolean contentChange) {
+    waitUntilIndicesAreInitialized();
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
     if (!contentChange) {
