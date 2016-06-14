@@ -13,7 +13,6 @@ import java.util.List;
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
   @NotNull private final VcsUserRegistry myUserRegistry;
-  @NotNull private final WeakInterner<VcsRefImpl> myRefsInterner = new WeakInterner<VcsRefImpl>();
 
   // created as application service
   @SuppressWarnings("unused")
@@ -77,6 +76,6 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
-    return myRefsInterner.intern(new VcsRefImpl(commitHash, name, type, root));
+    return new VcsRefImpl(commitHash, name, type, root);
   }
 }
