@@ -1,10 +1,16 @@
 # Building the Native Launchers
 
 The launchers can be built from the command line, with the following prerequisites:
- * XCode (Mac OS X)
+ * Xcode6 (Mac OS X) with Platform SDK 10.9
  * Visual Studio 2010 with 64-bit compilers (either use Professional Edition or install Windows SDK 7.1) and .NET Framework v4 (Windows).
 
 ### Mac Launcher
+The JDK still depends on Apple's JavaVM and JRS frameworks: https://bugs.openjdk.java.net/browse/JDK-8024281. Because of this,
+the build is sensitive to particular target and SDK versions (e.g. JavaVM is deprecated in OS X v10.7, thus MACOSX_DEPLOYMENT_TARGET=10.8)
+which impact the dynamic linking.
+
+See https://youtrack.jetbrains.com/issue/IDEA-155856 for a recent regression on OS X Yosemite without Java 6.
+
 ```
 tools/idea/native/MacLauncher$ xcodebuild
 ```
