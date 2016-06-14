@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,22 +163,28 @@ public class IfStatementWithIdenticalBranchesInspection
 
   private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
 
+    private static PsiStatement unwrap(PsiStatement statement) {
+      if (statement == null) {
+        return null;
+      }
+      final PsiElement[] children = DuplicatesFinder.getFilteredChildren(statement);
+      if (children.length == 1 && children[0] instanceof PsiStatement) {
+        return (PsiStatement) children[0];
+      }
+      return statement;
+    }
+
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
-      final PsiStatement elseBranch = ifStatement.getElseBranch();
-      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      final PsiStatement elseBranch = unwrap(ifStatement.getElseBranch());
+      final PsiStatement thenBranch = unwrap(ifStatement.getThenBranch());
       if (thenBranch == null) {
         return;
       }
       final Project project = ifStatement.getProject();
-      final InputVariables inputVariables =
-        new InputVariables(Collections.<PsiVariable>emptyList(),
-                           project, new LocalSearchScope(thenBranch), false);
-      final DuplicatesFinder finder =
-        new DuplicatesFinder(new PsiElement[]{thenBranch},
-                             inputVariables, null,
-                             Collections.<PsiVariable>emptyList());
+      final InputVariables inputVariables = new InputVariables(Collections.emptyList(), project, new LocalSearchScope(thenBranch), false);
+      final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{thenBranch}, inputVariables, null, Collections.emptyList());
       if (elseBranch instanceof PsiIfStatement) {
         final PsiIfStatement statement = (PsiIfStatement)elseBranch;
         final PsiStatement branch = statement.getThenBranch();

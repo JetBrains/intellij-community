@@ -173,4 +173,15 @@ class NotADup {
     }
     System.out.println("j = " + j);
   }
+
+  void n(int i) {
+    <warning descr="'if' statement with identical branches">if</warning> (i == 0) {
+      System.out.println(((i)));
+      ;
+      ;
+      {
+      }
+    }
+    else System.out.println(i);
+  }
 }
