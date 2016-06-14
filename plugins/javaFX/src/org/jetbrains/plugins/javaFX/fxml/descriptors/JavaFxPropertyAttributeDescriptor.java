@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -129,6 +130,9 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     if (value.startsWith("$")) {
       return validatePropertyExpression(xmlAttributeValue, value);
     }
+    else if (StringUtil.trimLeading(value).startsWith("$")) {
+      return "Spaces aren't allowed before property or expression";
+    }
     else {
       return validateLiteral(xmlAttributeValue, value);
     }
@@ -160,9 +164,17 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     if (isIncompletePropertyChain(propertyNames)) {
       return "Incorrect expression syntax";
     }
+    if (FxmlConstants.NULL_EXPRESSION.equals(value)) return null;
 
     final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
-    final PsiClass targetPropertyClass = JavaFxPsiUtil.getWritablePropertyClass(xmlAttributeValue);
+    final PsiType targetPropertyType = JavaFxPsiUtil.getWritablePropertyType(xmlAttributeValue);
+    if (FxmlConstants.isNullValue(value)) {
+      if (JavaFxPsiUtil.isPrimitiveOrBoxed(targetPropertyType)) {
+        return "Unable to coerce to " + targetPropertyType.getPresentableText();
+      }
+      return null;
+    }
+    final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(targetPropertyType, xmlAttributeValue);
     if (targetPropertyClass == null || JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass)) return null;
 
     final String firstPropertyName = propertyNames.get(0);
@@ -242,7 +254,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
-    return !text.startsWith("${") ? super.getValueReferences(element, text) : PsiReference.EMPTY_ARRAY;
+    return !text.startsWith("${") && !FxmlConstants.isNullValue(text) ? super.getValueReferences(element, text) : PsiReference.EMPTY_ARRAY;
   }
 
   @Override

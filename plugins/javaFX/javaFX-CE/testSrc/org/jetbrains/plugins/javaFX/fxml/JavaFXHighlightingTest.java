@@ -374,6 +374,14 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testNullObjectValue() throws Exception {
+    doTest();
+  }
+
+  public void testNullPrimitiveValue() throws Exception {
+    doTest();
+  }
+
   public void testFactoryMethod() throws Exception {
     doTest();
   }
