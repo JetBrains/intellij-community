@@ -495,12 +495,17 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
   }
 
   public void testVeryLongDfaWithComplexGenerics() {
-    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.enableInspections(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
-        myFixture.testHighlighting(true, false, false, getTestName(false) + '.groovy');
-      }
-    });
+    IdeaTestUtil.startPerformanceTest("testing dfa", 10000, {
+      myFixture.checkHighlighting true, false, false
+    }).setup({
+      myFixture.enableInspections new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection()
+
+      // warm-up
+      myFixture.configureByText 'a.groovy', 'new Object()'
+      myFixture.checkHighlighting()
+
+      // configure by real data
+      myFixture.configureByFile getTestName(false) + '.groovy'
+    }).attempts(1).cpuBound().assertTiming()
   }
 }
