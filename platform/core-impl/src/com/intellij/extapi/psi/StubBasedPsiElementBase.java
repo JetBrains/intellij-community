@@ -238,7 +238,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   @NotNull
   public PsiFile getContainingFile() {
-    return mySubstrateRef.getContainingFile();
+    try {
+      return mySubstrateRef.getContainingFile();
+    }
+    catch (PsiInvalidElementAccessException e) {
+      throw new PsiInvalidElementAccessException(this, e);
+    }
   }
 
   @Override
