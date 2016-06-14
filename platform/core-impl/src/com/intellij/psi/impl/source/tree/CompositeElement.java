@@ -385,18 +385,7 @@ public class CompositeElement extends TreeElement {
     return false;
   }
 
-  @Override
-  protected int textMatches(@NotNull CharSequence buffer, int start) {
-    int curOffset = start;
-    for (TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      curOffset = child.textMatches(buffer, curOffset);
-      if (curOffset < 0) return curOffset;
-    }
-    return curOffset;
-  }
-
-  /*
-  protected int textMatches(final CharSequence buffer, final int start) {
+  protected int textMatches(@NotNull final CharSequence buffer, final int start) {
     final int[] curOffset = {start};
     acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
@@ -406,7 +395,7 @@ public class CompositeElement extends TreeElement {
 
       private void matchText(TreeElement leaf) {
         curOffset[0] = leaf.textMatches(buffer, curOffset[0]);
-        if (curOffset[0] == -1) {
+        if (curOffset[0] < 0) {
           stopWalking();
         }
       }
@@ -423,7 +412,6 @@ public class CompositeElement extends TreeElement {
     });
     return curOffset[0];
   }
-  */
 
   @Nullable
   public final PsiElement findChildByRoleAsPsiElement(int role) {

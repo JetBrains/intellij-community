@@ -47,7 +47,7 @@ public abstract class GroovyNamedArgumentProvider {
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, NamedArgumentDescriptor> result) {
-    throw new UnsupportedOperationException();
+    // no op
   }
 
   public void getNamedArguments(@NotNull GrCall call,
