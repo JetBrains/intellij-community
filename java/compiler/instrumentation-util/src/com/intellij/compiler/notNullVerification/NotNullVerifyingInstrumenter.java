@@ -57,7 +57,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   public static boolean processClassFile(final FailSafeClassReader reader, final ClassVisitor writer) {
     final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader);
     reader.accept(instrumenter, 0);
-    instrumenter.myAuxGenerator.generateReportingMethods(writer);
+    instrumenter.myAuxGenerator.generateReportingMethod(writer);
     return instrumenter.isModification();
   }
 
@@ -232,11 +232,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
 
       private void reportError(final String exceptionClass, final Label end, final String descrPattern, final String[] args) {
-        for (String arg : args) {
-          mv.visitLdcInsn(arg);
-        }
-        ReportingMethod method = new ReportingMethod(exceptionClass, descrPattern, args.length);
-        mv.visitMethodInsn(INVOKESTATIC, myClassName, myAuxGenerator.suggestReportingMethod(method), method.getMethodDesc(), false);
+        myAuxGenerator.reportError(mv, myClassName, exceptionClass, descrPattern, args);
 
         mv.visitLabel(end);
 
