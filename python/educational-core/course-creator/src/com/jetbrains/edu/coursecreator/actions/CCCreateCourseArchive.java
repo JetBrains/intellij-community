@@ -68,20 +68,19 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     if (project == null || module == null) {
       return;
     }
-    createCourseArchive(project, module);
-  }
-
-  private void createCourseArchive(final Project project, Module module) {
-    final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) return;
     CreateCourseArchiveDialog dlg = new CreateCourseArchiveDialog(project, this);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    final VirtualFile baseDir = project.getBaseDir();
+    createCourseArchive(project, module, myZipName, myLocationDir, true);
+  }
 
-    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, this, myZipName);
+  public static void createCourseArchive(final Project project, Module module, String zipName, String locationDir, boolean showMessage) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) return;
+    final VirtualFile baseDir = project.getBaseDir();
+    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, null, zipName);
     if (archiveFolder == null) {
       return;
     }
@@ -112,7 +111,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         generateJson(project, archiveFolder);
         resetTaskFiles(savedTaskFiles);
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-        packCourse(archiveFolder);
+        packCourse(archiveFolder, locationDir, zipName, showMessage);
         synchronize(project);
       }
 
@@ -173,16 +172,18 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  private void packCourse(@NotNull final VirtualFile baseDir) {
+  private static void packCourse(@NotNull final VirtualFile baseDir, String locationDir, String zipName, boolean showMessage) {
     try {
-      final File zipFile = new File(myLocationDir, myZipName + ".zip");
+      final File zipFile = new File(locationDir, zipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
       VirtualFile[] courseFiles = baseDir.getChildren();
       for (VirtualFile file : courseFiles) {
         ZipUtil.addFileOrDirRecursively(zos, null, new File(file.getPath()), file.getName(), null, null);
       }
       zos.close();
-      Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
+      if (showMessage) {
+        Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
+      }
     }
     catch (IOException e1) {
       LOG.error(e1);

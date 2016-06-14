@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class PyCharmNewProjectStep extends AbstractNewProjectStep {
@@ -40,7 +39,11 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     super(new Customization());
   }
 
-  private static class Customization extends AbstractNewProjectStep.Customization {
+  public PyCharmNewProjectStep(@NotNull AbstractNewProjectStep.Customization customization) {
+    super(customization);
+  }
+
+  protected static class Customization extends AbstractNewProjectStep.Customization {
     private final List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
 
     @NotNull
