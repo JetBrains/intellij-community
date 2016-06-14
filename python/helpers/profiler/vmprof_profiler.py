@@ -30,7 +30,6 @@ class VmProfProfile(object):
             if not os.path.exists(self.basepath):
                 os.makedirs(self.basepath)
             self.file = tempfile.NamedTemporaryFile(delete=False, dir=self.basepath)
-            print("Writing snapshot to %s" % self.file.name)
             vmprof.enable(self.file.fileno())
             self.is_enabled = True
 
