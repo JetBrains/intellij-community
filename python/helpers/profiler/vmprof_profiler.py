@@ -65,6 +65,8 @@ class VmProfProfile(object):
 
 
 def _walk_tree(parent, node, callback):
+    if node is None:
+        return None
     tree = callback(parent, node)
     for c in six.itervalues(node.children):
         _walk_tree(tree, c, callback)
@@ -77,7 +79,10 @@ def tree_stats_to_response(filename, response):
     response.tree_stats = TreeStats()
     response.tree_stats.sampling_interval = vmprof.DEFAULT_PERIOD
 
-    tree = stats.get_tree()
+    try:
+        tree = stats.get_tree()
+    except vmprof.stats.EmptyProfileFile:
+        tree = None
 
     def convert(parent, node):
         tstats = CallTreeStat()
