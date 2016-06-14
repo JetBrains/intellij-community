@@ -266,7 +266,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void reinitSettings() {
-    revalidateMarkup();
+    updateSize(false, true);
     repaint();
   }
 
