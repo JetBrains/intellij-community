@@ -112,37 +112,46 @@ public class EduStepicConnector {
   }
 
   public static void initializeClient() {
-    final HttpGet request = new HttpGet(stepicUrl);
-    request.addHeader(new BasicHeader("referer", "https://stepic.org"));
-    request.addHeader(new BasicHeader("content-type", "application/json"));
+    if (ourClient == null) {
+      final HttpGet request = new HttpGet(stepicUrl);
+      request.addHeader(new BasicHeader("referer", "https://stepic.org"));
+      request.addHeader(new BasicHeader("content-type", "application/json"));
 
 
-    HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
-      setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
-    ourCookieStore = new BasicCookieStore();
+      HttpClientBuilder builder =
+        HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
+          setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
+      ourCookieStore = new BasicCookieStore();
 
-    try {
-      // Create a trust manager that does not validate certificate for this connection
-      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-        public X509Certificate[] getAcceptedIssuers() { return null; }
-        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-      }};
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustAllCerts, new SecureRandom());
-      ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
+      try {
+        // Create a trust manager that does not validate certificate for this connection
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+          public X509Certificate[] getAcceptedIssuers() {
+            return null;
+          }
 
-      ourClient.execute(request);
-      saveCSRFToken();
-    }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
-    }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error(e.getMessage());
-    }
-    catch (KeyManagementException e) {
-      LOG.error(e.getMessage());
+          public void checkClientTrusted(X509Certificate[] certs, String authType) {
+          }
+
+          public void checkServerTrusted(X509Certificate[] certs, String authType) {
+          }
+        }};
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+        ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
+
+        ourClient.execute(request);
+        saveCSRFToken();
+      }
+      catch (IOException e) {
+        LOG.error(e.getMessage());
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.error(e.getMessage());
+      }
+      catch (KeyManagementException e) {
+        LOG.error(e.getMessage());
+      }
     }
   }
 

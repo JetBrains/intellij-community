@@ -160,7 +160,6 @@ public class EduAdaptiveStepicConnector {
 
   public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId,
                                                    @NotNull final String user, int reaction) {
-
     final HttpPost post = new HttpPost(STEPIC_API_URL + RECOMMENDATION_REACTIONS_URL);
     final String json = new Gson()
       .toJson(new StepicWrappers.RecommendationReactionWrapper(new StepicWrappers.RecommendationReaction(reaction, user, lessonId)));
