@@ -279,6 +279,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testStepIntoMyCode() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
       @Override
+      protected boolean shouldAddDataPathToContentRoots() {
+        return true;
+      }
+
+      @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptPath(), 5);
         toggleBreakpoint(getScriptPath(), 7);
@@ -474,6 +479,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
       @Override
+      protected boolean shouldAddDataPathToContentRoots() {
+        return true;
+      }
+
+      @Override
       public void before() throws Exception {
         createExceptionBreak(myFixture, false, true, true);
       }
@@ -497,6 +507,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
+      @Override
+      protected boolean shouldAddDataPathToContentRoots() {
+        return true;
+      }
+
       @Override
       public void before() throws Exception {
         createExceptionBreak(myFixture, true, false, true);
@@ -880,6 +895,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testSteppingFilter() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepping_filter.py") {
+      @Override
+      protected boolean shouldAddDataPathToContentRoots() {
+        return true;
+      }
+
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptPath(), 4);
