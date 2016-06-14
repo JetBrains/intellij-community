@@ -69,7 +69,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     final JPanel panel = new JPanel(new BorderLayout());
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && course.isAdaptive()) {
-      panel.add(new StepicAdaptiveReactionsPanel(), BorderLayout.NORTH);
+      panel.add(new StepicAdaptiveReactionsPanel(project), BorderLayout.NORTH);
     }
     JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
