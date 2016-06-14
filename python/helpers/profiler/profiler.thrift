@@ -27,7 +27,7 @@ struct CallTreeStat {
 
 struct TreeStats {
   1: required double sampling_interval,
-  2: required CallTreeStat call_tree,
+  2: optional CallTreeStat call_tree,
 }
 
 
