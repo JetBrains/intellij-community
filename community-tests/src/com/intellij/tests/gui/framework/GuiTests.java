@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.tools.internal.ws.processor.model.java.JavaParameter;
 import org.fest.swing.core.Robot;
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
@@ -233,16 +234,19 @@ public final class GuiTests {
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
       final MyProjectManagerListener listener = new MyProjectManagerListener();
-      //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
-      acceptAgreement(robot);
-      //[Complete Installation]
-      completeInstallation(robot);
-      //[EVALUATION IntelliJ IDEA License Activation]
-      evaluateIdea(robot);
-      //[License Agreement for IntelliJ IDEA]
-      acceptLicenseAgreement(robot);
-      //[Customize IntelliJ IDEA]
-      customizeIdea(robot);
+
+        //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
+        acceptAgreement(robot);
+        //[Complete Installation]
+      if (!Boolean.getBoolean("skip.first.configuration.steps")) {
+        completeInstallation(robot);
+        //[EVALUATION IntelliJ IDEA License Activation]
+        evaluateIdea(robot);
+        //[License Agreement for IntelliJ IDEA]
+        acceptLicenseAgreement(robot);
+        //[Customize IntelliJ IDEA]
+        customizeIdea(robot);
+      }
 
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {

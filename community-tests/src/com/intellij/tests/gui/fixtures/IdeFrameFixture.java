@@ -811,6 +811,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return childrenTexts;
   }
 
+
   /**
    * Returns the subset of {@code expectedPatterns} which do not match any of the children (just the first level children, not recursive) of
    * {@code treeRoot} .

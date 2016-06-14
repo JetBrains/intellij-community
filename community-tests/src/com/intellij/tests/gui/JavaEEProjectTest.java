@@ -17,12 +17,14 @@ package com.intellij.tests.gui;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.tests.gui.finder.JToggleButtonFinder;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.ToolWindowFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
 import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.tests.gui.framework.IdeGuiTest;
+import org.fest.swing.fixture.JToggleButtonFixture;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -32,6 +34,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.intellij.tests.gui.framework.GuiTests.SHORT_TIMEOUT;
+import static com.intellij.tests.gui.framework.GuiTests.THIRTY_SEC_TIMEOUT;
 import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
 
 
@@ -73,8 +77,13 @@ public class JavaEEProjectTest extends GuiTestCase {
     final ProjectViewFixture.PaneFixture paneFixture = projectView.selectProjectPane();
 
     paneFixture.selectByPath(projectName, "src", "META-INF", "persistence.xml");
+    ToolWindowFixture.showToolwindowStripes(myRobot);
 
+    final JToggleButtonFixture persistence = (new JToggleButtonFinder("Persistence")).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(myRobot);
+    persistence.click();
 
+    //ToolWindowFixture.clickToolwindowButton("Persistence", myRobot);
+    //ToolWindowFixture.clickToolwindowButton("Java Enterprise", myRobot);
   }
 
   private void setupJdkIfNeeded(NewProjectWizardFixture newProjectWizard) {

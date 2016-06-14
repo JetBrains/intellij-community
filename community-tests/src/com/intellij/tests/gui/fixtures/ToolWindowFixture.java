@@ -15,11 +15,16 @@
  */
 package com.intellij.tests.gui.fixtures;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.StripeButton;
 import com.intellij.ui.content.Content;
+import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
@@ -29,7 +34,12 @@ import org.fest.swing.util.TextMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static com.intellij.tests.gui.framework.GuiTests.SHORT_TIMEOUT;
 import static com.intellij.tests.gui.framework.GuiTests.THIRTY_SEC_TIMEOUT;
@@ -210,6 +220,38 @@ public abstract class ToolWindowFixture {
       }
     });
   }
+
+  public static void clickToolwindowButton(String toolWindowStripeButtonName, Robot robot){
+    final StripeButton stripeButton = robot.finder().find(new GenericTypeMatcher<StripeButton>(StripeButton.class) {
+      @Override
+      protected boolean isMatching(@Nonnull StripeButton button) {
+        return (button.getText().equals(toolWindowStripeButtonName));
+      }
+    });
+    robot.click(stripeButton);
+  }
+
+  public static void showToolwindowStripes(Robot robot){
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+      final JLabel toolwindowsWidget = robot.finder().find(new GenericTypeMatcher<JLabel>(JLabel.class) {
+        @Override
+        protected boolean isMatching(@Nonnull JLabel label) {
+          if (label instanceof StatusBarWidget) {
+            StatusBarWidget statusBarWidget = (StatusBarWidget)label;
+            if (statusBarWidget.ID().equals("ToolWindows Widget")) {
+              return true;
+            }
+          }
+          return false;
+        }
+      });
+      if (toolwindowsWidget == null) return;
+      else {
+        robot.click(toolwindowsWidget);
+      }
+    }
+  }
+
 
   private static class Callback implements Runnable {
     volatile boolean finished;
