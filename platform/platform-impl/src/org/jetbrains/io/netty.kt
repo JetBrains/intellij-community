@@ -199,3 +199,4 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 }
 
 fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
+fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
