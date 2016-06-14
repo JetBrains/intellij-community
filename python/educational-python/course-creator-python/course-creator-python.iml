@@ -14,5 +14,7 @@
     <orderEntry type="module" module-name="educational-python" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="student" />
+    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="student-python" />
   </component>
 </module>
