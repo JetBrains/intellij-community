@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
-import com.intellij.refactoring.util.duplicates.ConditionalReturnStatementValue;
-import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.ReturnValue;
+import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -187,7 +184,7 @@ public class IfStatementWithIdenticalBranchesInspection
       final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{thenBranch}, inputVariables, null, Collections.emptyList());
       if (elseBranch instanceof PsiIfStatement) {
         final PsiIfStatement statement = (PsiIfStatement)elseBranch;
-        final PsiStatement branch = statement.getThenBranch();
+        final PsiStatement branch = unwrap(statement.getThenBranch());
         if (branch == null) {
           return;
         }
@@ -196,6 +193,9 @@ public class IfStatementWithIdenticalBranchesInspection
           final ReturnValue matchReturnValue = match.getReturnValue();
           if (matchReturnValue instanceof ConditionalReturnStatementValue &&
               !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
+            return;
+          }
+          else if (matchReturnValue instanceof ExpressionReturnValue) {
             return;
           }
           registerStatementError(ifStatement, statement);
@@ -211,6 +211,9 @@ public class IfStatementWithIdenticalBranchesInspection
           final ReturnValue matchReturnValue = match.getReturnValue();
           if (matchReturnValue instanceof ConditionalReturnStatementValue &&
               !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
+            return;
+          }
+          else if (matchReturnValue instanceof ExpressionReturnValue) {
             return;
           }
           registerStatementError(ifStatement);
