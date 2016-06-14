@@ -103,6 +103,10 @@ public class RegExpParseTest extends BaseParseTestCase {
     return super.getTestDataPath() + "/gen/";
   }
 
+  public void testOptions() throws Exception {
+    doTest("options/");
+  }
+
   public void testSimple() throws Exception {
     doTest("simple/");
   }

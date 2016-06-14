@@ -182,7 +182,7 @@ public class DuplicatesFinder {
       if (sibling == null) return null;
       if (!canBeEquivalent(element, sibling)) return null;
       candidates.add(sibling);
-      sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class);
+      sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class, PsiEmptyStatement.class);
     }
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
@@ -340,7 +340,7 @@ public class DuplicatesFinder {
     }
 
     if (pattern instanceof PsiAssignmentExpression) {
-      final PsiExpression lExpression = ((PsiAssignmentExpression)pattern).getLExpression();
+      final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)pattern).getLExpression());
       if (lExpression.getType() instanceof PsiPrimitiveType &&
           lExpression instanceof PsiReferenceExpression &&
           ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
@@ -541,9 +541,11 @@ public class DuplicatesFinder {
     return true;
   }
 
-  private static boolean checkParameterModification(final PsiExpression expression,
+  private static boolean checkParameterModification(PsiExpression expression,
                                                     final IElementType sign,
                                                     PsiExpression candidate) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    candidate = PsiUtil.skipParenthesizedExprDown(candidate);
     if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiParameter &&
         (sign.equals(JavaTokenType.MINUSMINUS)|| sign.equals(JavaTokenType.PLUSPLUS))) {
       if (candidate instanceof PsiReferenceExpression && ((PsiReferenceExpression)candidate).resolve() instanceof PsiParameter) {
@@ -597,7 +599,7 @@ public class DuplicatesFinder {
       return match.registerReturnValue(new VariableReturnValue(variable));
     }
     else if (candidate instanceof PsiReturnStatement) {
-      final PsiExpression returnValue = ((PsiReturnStatement)candidate).getReturnValue();
+      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(((PsiReturnStatement)candidate).getReturnValue());
       if (myMultipleExitPoints) {
         return match.registerReturnValue(new ConditionalReturnStatementValue(returnValue));
       }
@@ -607,7 +609,7 @@ public class DuplicatesFinder {
         if (classOrLambda == null || !PsiTreeUtil.isAncestor(commonParent, classOrLambda, false)) {
           if (returnValue != null && !match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false; //do not register return value for return; statement
         }
-        return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
+        return matchPattern(PsiUtil.skipParenthesizedExprDown(patternReturnStatement.getReturnValue()), returnValue, candidates, match);
       }
     }
     else return false;
@@ -654,20 +656,27 @@ public class DuplicatesFinder {
     return false;
   }
 
-  private static PsiElement[] getFilteredChildren(PsiElement element1) {
+  public static PsiElement[] getFilteredChildren(PsiElement element1) {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child : children1) {
-      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment)) {
+      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment) && !(child instanceof PsiEmptyStatement)) {
         if (child instanceof PsiBlockStatement) {
-          Collections.addAll(array, getFilteredChildren(child));
-          continue;
-        } else if (child instanceof PsiCodeBlock) {
+          child = ((PsiBlockStatement)child).getCodeBlock();
+        }
+        if (child instanceof PsiCodeBlock) {
           final PsiStatement[] statements = ((PsiCodeBlock)child).getStatements();
-          if (statements.length == 1) {
-            array.add(statements[0]);
-            continue;
+          for (PsiStatement statement : statements) {
+            if (statement instanceof PsiBlockStatement) {
+              Collections.addAll(array, getFilteredChildren(statement));
+            } else if (!(statement instanceof PsiEmptyStatement)) {
+              array.add(statement);
+            }
           }
+          continue;
+        } else if (child instanceof PsiParenthesizedExpression) {
+          array.add(PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)child));
+          continue;
         }
         array.add(child);
       }
