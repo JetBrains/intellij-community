@@ -91,14 +91,14 @@ public class AutoPopupController implements Disposable {
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
-    autoPopupMemberLookup(editor, false, condition);
+    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
-  public void autoPopupMemberLookup(final Editor editor, boolean isSmart, @Nullable final Condition<PsiFile> condition){
-    scheduleAutoPopup(editor, isSmart, condition);
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition){
+    scheduleAutoPopup(editor, completionType, condition);
   }
 
-  public void scheduleAutoPopup(final Editor editor, boolean isSmart, @Nullable final Condition<PsiFile> condition) {
+  public void scheduleAutoPopup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       return;
     }
@@ -133,12 +133,12 @@ public class AutoPopupController implements Disposable {
         return;
       }
 
-      CompletionAutoPopupHandler.invokeCompletion(isSmart ? CompletionType.SMART : CompletionType.BASIC, !isSmart, myProject, editor, 0, false);
+      CompletionAutoPopupHandler.invokeCompletion(completionType, completionType == CompletionType.BASIC, myProject, editor, 0, false);
     });
   }
 
   public void scheduleAutoPopup(final Editor editor) {
-    scheduleAutoPopup(editor, false, null);
+    scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
   private void addRequest(final Runnable request, final int delay) {
