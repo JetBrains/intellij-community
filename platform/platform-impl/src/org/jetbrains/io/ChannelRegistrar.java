@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
 
-  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE, true);
+  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
 
   public boolean isEmpty() {
     return openChannels.isEmpty();
