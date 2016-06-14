@@ -38,11 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.util.Slow
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
+@Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'highlighting/'
