@@ -29,7 +29,9 @@ import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#" + ChangeTypeSignatureHandler.class.getName());
@@ -108,12 +110,29 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   }
 
   @NotNull
-  private static PsiElement[] extractReferencedVariables(PsiTypeElement typeElement) {
-    final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(typeElement, PsiDeclarationStatement.class);
-    if (declaration == null) return PsiElement.EMPTY_ARRAY;
-    return Arrays.stream(declaration.getDeclaredElements())
-      .filter(PsiVariable.class::isInstance)
-      .filter(e -> ((PsiVariable)e).getTypeElement() == typeElement)
-      .toArray(PsiElement[]::new);
+  private static PsiElement[] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
+    final PsiElement parent = typeElement.getParent();
+    if (parent instanceof PsiVariable) {
+      if (parent instanceof PsiField) {
+        PsiField aField = (PsiField)parent;
+        List<PsiField> fields = new ArrayList<>();
+        while (true) {
+          fields.add(aField);
+          aField = PsiTreeUtil.getNextSiblingOfType(aField, PsiField.class);
+          if (aField == null || aField.getTypeElement() != typeElement) {
+            return fields.toArray(new PsiElement[fields.size()]);
+          }
+        }
+      }
+      else if (parent instanceof PsiLocalVariable) {
+        final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(parent, PsiDeclarationStatement.class);
+        if (declaration != null) {
+          return Arrays.stream(declaration.getDeclaredElements()).filter(PsiVariable.class::isInstance).toArray(PsiVariable[]::new);
+        }
+      }
+      return new PsiElement[]{parent};
+    } else {
+      return PsiElement.EMPTY_ARRAY;
+    }
   }
 }
