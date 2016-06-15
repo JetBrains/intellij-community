@@ -510,7 +510,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
-    beforeAstChange();
     doClearCaches("setName");
     return PsiFileImplUtil.setName(this, name);
   }
@@ -1125,6 +1124,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       FileElement element = getTreeElement();
       if (element != null) {
         AstPath.invalidatePaths(element);
+      } else {
+        LOG.error("No AST; " + derefStub() + "; " + this + " of " + getClass() + "; " + getViewProvider() + " of " + getViewProvider().getClass());
       }
 
       myUseStrongRefs = true;
