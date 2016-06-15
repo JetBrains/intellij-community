@@ -172,8 +172,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
       final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
       for (int i = 0; i < typeParameters.length; i++) {
-        if (args != null && i < args.length) {
-          substitutionMap.put(typeParameters[i], args[i]);
+        if (args != null) {
+          if (i < args.length) {
+            substitutionMap.put(typeParameters[i], args[i]);
+          }
+        }
+        else {
+          substitutionMap.put(typeParameters[i], null);
         }
       }
       if (!containingClass.hasModifierProperty(PsiModifier.STATIC)) {

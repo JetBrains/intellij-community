@@ -184,4 +184,34 @@ class NotADup {
     }
     else System.out.println(i);
   }
+
+  public static String o(List<String> list) {
+    String tmp = null;
+    for (final String comp : list) {
+      if (!comp.contains("bad")) {
+        return comp;
+      } else if (tmp == null) {
+        tmp = comp;
+      }
+    }
+    return tmp;
+  }
+
+  Object foo() {
+    Object a = new Object();
+
+    while (true) {
+      Object b = bar(a);
+      if (b == a) {
+        return b;
+      }
+      else {
+        a = b;
+      }
+    }
+  }
+
+  private Object bar(Object x) {
+    return null;
+  }
 }

@@ -77,6 +77,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
                    @NotNull final String moduleNameToBeGenerated,
                    @NotNull final String sourceFileToRunGenerationOn,
                    @Nullable final String useQuickFixWithThisModuleOnly) {
+    super(null);
     myExpectedSkeletonFile = expectedSkeletonFile;
     myModuleNameToBeGenerated = moduleNameToBeGenerated.replace('.', '/');
     mySourceFileToRunGenerationOn = sourceFileToRunGenerationOn;

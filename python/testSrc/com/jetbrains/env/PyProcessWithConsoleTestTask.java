@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.lang.reflect.InvocationTargetException;
@@ -64,7 +65,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    *                        Always use as light sdk as possible (it is faster)
    * @see SdkCreationType
    */
-  protected PyProcessWithConsoleTestTask(@NotNull final SdkCreationType requiredSdkType) {
+  protected PyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath, @NotNull final SdkCreationType requiredSdkType) {
+    super(relativeTestDataPath);
     myRequiredSdkType = requiredSdkType;
   }
 
@@ -123,7 +125,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        runner.runProcess(sdkHome, getProject(), processListener);
+        runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
       }
       catch (final Throwable e) {
         failed.set(true);

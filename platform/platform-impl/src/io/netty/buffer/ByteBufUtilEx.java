@@ -16,13 +16,12 @@
 package io.netty.buffer;
 
 import io.netty.util.CharsetUtil;
-import org.jetbrains.annotations.NotNull;
+
+import static io.netty.util.internal.StringUtil.isSurrogate;
 
 // todo pull request
 public class ByteBufUtilEx {
-  public static int writeUtf8(ByteBuf buf, CharSequence seq) {
-    return writeUtf8(buf, seq, 0, seq.length());
-  }
+  private static final byte WRITE_UTF_UNKNOWN = (byte) '?';
 
   public static int writeUtf8(ByteBuf buf, CharSequence seq, int start, int end) {
     if (buf == null) {
@@ -57,10 +56,49 @@ public class ByteBufUtilEx {
     }
 
     int writerIndex = oldWriterIndex;
-    // We can use the _set methods as these not need to do any index checks and reference checks.
-    // This is possible as we called ensureWritable(...) before.
     for (int i = start; i < end; i++) {
-      writerIndex = writeChar(buffer, writerIndex, seq.charAt(i));
+      char c = seq.charAt(i);
+      if (c < 0x80) {
+        buffer._setByte(writerIndex++, (byte)c);
+      }
+      else if (c < 0x800) {
+        buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+      }
+      else if (isSurrogate(c)) {
+        if (!Character.isHighSurrogate(c)) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          continue;
+        }
+        final char c2;
+        try {
+          // Surrogate Pair consumes 2 characters. Optimistically try to get the next character to avoid
+          // duplicate bounds checking with charAt. If an IndexOutOfBoundsException is thrown we will
+          // re-throw a more informative exception describing the problem.
+          //noinspection AssignmentToForLoopParameter
+          c2 = seq.charAt(++i);
+        }
+        catch (IndexOutOfBoundsException e) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          break;
+        }
+        if (!Character.isLowSurrogate(c2)) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          buffer._setByte(writerIndex++, Character.isHighSurrogate(c2) ? WRITE_UTF_UNKNOWN : c2);
+          continue;
+        }
+        int codePoint = Character.toCodePoint(c, c2);
+        // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G2630.
+        buffer._setByte(writerIndex++, (byte)(0xf0 | (codePoint >> 18)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((codePoint >> 12) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((codePoint >> 6) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (codePoint & 0x3f)));
+      }
+      else {
+        buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+      }
     }
 
     // update the writerIndex without any extra checks for performance reasons
@@ -71,31 +109,5 @@ public class ByteBufUtilEx {
       buf.writerIndex(writerIndex);
     }
     return writerIndex - oldWriterIndex;
-  }
-
-  static int writeChar(AbstractByteBuf buffer, int writerIndex, int c) {
-    if (c < 0x80) {
-      buffer._setByte(writerIndex++, (byte)c);
-    }
-    else if (c < 0x800) {
-      buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    else {
-      buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    return writerIndex;
-  }
-
-  @NotNull
-  static AbstractByteBuf getBuf(@NotNull ByteBuf buffer) {
-    if (buffer instanceof AbstractByteBuf) {
-      return (AbstractByteBuf)buffer;
-    }
-    else {
-      return (AbstractByteBuf)((WrappedByteBuf)buffer).buf;
-    }
   }
 }

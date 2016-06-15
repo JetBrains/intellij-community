@@ -25,7 +25,6 @@ import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -70,10 +69,6 @@ public abstract class PyEnvTestCase {
       myStaging = isStaging(description);
     }
   };
-  /**
-   * See {@link #configureSandbox()}
-   */
-  private File mySandboxRoot;
 
   protected boolean isStaging(Description description) {
     try {
@@ -126,39 +121,6 @@ public abstract class PyEnvTestCase {
         Matchers.hasItems(myRequiredTags)
       );
     }
-    configureSandbox();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (mySandboxRoot != null && mySandboxRoot.exists()) {
-      FileUtil.delete(mySandboxRoot);
-    }
-  }
-
-  /**
-   * Creates sandbox folder which may be used by tests by calling {@link #wrapPathWithSandbox(String)}.
-   * Files are copied there and dropped after all.
-   * If <pre>_PYCHARM_FAST_SANDBOX</pre> env var is set, it uses this folder to create sandbox (good idea to use RAM disk).
-   * If not set, temp folder is used.
-   */
-  private void configureSandbox() throws IOException {
-    final String sandboxRootPath = System.getenv().get("_PYCHARM_FAST_SANDBOX");
-    if (sandboxRootPath != null) {
-      LOG.info(String.format("_PYCHARM_FAST_SANDBOX points to %s", sandboxRootPath));
-      mySandboxRoot = new File(sandboxRootPath);
-      final File[] array = mySandboxRoot.listFiles();
-      if (array != null) {
-        LOG.info(String.format("Flushing %s", mySandboxRoot));
-        Arrays.stream(array).forEach(FileUtil::delete);
-      }
-    }
-    else {
-      LOG.info("No _PYCHARM_FAST_SANDBOX set");
-      mySandboxRoot = FileUtil.createTempDirectory("PyEnvText", null, true);
-    }
-    mySandboxRoot.deleteOnExit();
-    LOG.info(String.format("Sandbox is %s", mySandboxRoot.getAbsolutePath()));
   }
 
 
@@ -188,19 +150,6 @@ public abstract class PyEnvTestCase {
   }
 
 
-  /**
-   * Copies files to sandbox which will be deleted after test.
-   * @param path source
-   * @return sandbox
-   */
-  final String wrapPathWithSandbox(@NotNull final String path) throws IOException {
-    final File pathFile = new File(path);
-    assert pathFile.exists() : String.format("File %s does not exist", pathFile);
-    final File folderInSandbox = new File(mySandboxRoot, Long.toString(System.currentTimeMillis()));
-    assert folderInSandbox.mkdir() : "Failed to create " + folderInSandbox;
-    FileUtil.copyDir(pathFile, folderInSandbox, pathname -> !pathname.getName().endsWith(".pyc"));
-    return folderInSandbox.getAbsolutePath();
-  }
 
 
   protected boolean runInDispatchThread() {

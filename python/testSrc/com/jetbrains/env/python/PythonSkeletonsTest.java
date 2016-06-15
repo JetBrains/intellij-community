@@ -188,10 +188,10 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
 
   private abstract static class SkeletonsTask extends PyExecutionFixtureTestTask {
-    @Override
-    protected String getTestDataPath() {
-      return PythonTestUtil.getTestDataPath() + "/skeletons/";
+    SkeletonsTask() {
+      super("/skeletons/");
     }
+
 
     @Override
     public void runTestOn(String sdkHome) throws Exception {

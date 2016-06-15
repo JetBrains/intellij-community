@@ -35,6 +35,10 @@ public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
     doTest();
   }
 
+  public void testIDEA157254() throws Exception {
+    doTest();
+  }
+
   public void testOuterClassTypeArgs() throws Exception {
     doTest();
   }

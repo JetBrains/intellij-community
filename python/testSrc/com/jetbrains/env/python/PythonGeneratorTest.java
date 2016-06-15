@@ -14,11 +14,11 @@ import org.junit.Test;
 public class PythonGeneratorTest extends PyEnvTestCase {
   @Test
   public void testGenerator() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(PythonHelpersLocator.getPythonCommunityPath() + "/helpers", "test_generator.py", 0);
+        return new PyUnitTestProcessRunner("test_generator.py", 0);
       }
 
       @Override
@@ -27,6 +27,12 @@ public class PythonGeneratorTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         runner.assertAllTestsPassed();
+      }
+
+      @NotNull
+      @Override
+      protected String getTestDataPath() {
+        return PythonHelpersLocator.getPythonCommunityPath();
       }
     });
   }

@@ -59,8 +59,6 @@ import java.util.List;
  */
 public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPythonRunConfigurationParams>
   extends ProcessWithConsoleRunner {
-  @Nullable
-  protected final String myWorkingFolder;
   @NotNull
   private final ConfigurationFactory myConfigurationFactory;
   @NotNull
@@ -82,22 +80,24 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   /**
    * @param configurationFactory      factory tp create configurations
    * @param expectedConfigurationType configuration type class
-   * @param workingFolder             folder to pass to configuration: {@link AbstractPythonRunConfigurationParams#setWorkingDirectory(String)}
    */
   protected ConfigurationBasedProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
-                                            @NotNull final Class<CONF_T> expectedConfigurationType,
-                                            @Nullable final String workingFolder) {
+                                            @NotNull final Class<CONF_T> expectedConfigurationType) {
     myConfigurationFactory = configurationFactory;
     myExpectedConfigurationType = expectedConfigurationType;
-    myWorkingFolder = workingFolder;
   }
 
   @Override
-  final void runProcess(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final ProcessListener processListener)
+  final void runProcess(@NotNull final String sdkPath,
+                        @NotNull final Project project,
+                        @NotNull final ProcessListener processListener,
+                        @NotNull final String tempWorkingPath)
     throws ExecutionException {
     // Do not create new environment from factory, if child provided environment to rerun
     final ExecutionEnvironment executionEnvironment =
-      (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment(sdkPath, project));
+      // TODO: RENAME
+      (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment
+        (sdkPath, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
     final ProcessListener consolePostprocessor = new ProcessAdapter() {
@@ -137,7 +137,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   }
 
   @NotNull
-  private ExecutionEnvironment createExecutionEnvironment(@NotNull String sdkPath, @NotNull final Project project)
+  private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final String workingDir)
     throws ExecutionException {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", myConfigurationFactory);
@@ -150,6 +150,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     @SuppressWarnings("unchecked") // Checked by assert
     final CONF_T castedConfiguration = (CONF_T)config;
     castedConfiguration.setSdkHome(sdkPath);
+    castedConfiguration.setWorkingDirectory(workingDir);
 
     new WriteAction() {
       @Override
@@ -192,7 +193,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    * @param configuration configuration to configure
    */
   protected void configurationCreatedAndWillLaunch(@NotNull final CONF_T configuration) throws IOException {
-    configuration.setWorkingDirectory(myWorkingFolder);
+
   }
 
   @Override

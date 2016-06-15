@@ -38,11 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.util.Slow
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
+@Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'highlighting/'
@@ -493,12 +495,17 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
   }
 
   public void testVeryLongDfaWithComplexGenerics() {
-    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.enableInspections(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
-        myFixture.testHighlighting(true, false, false, getTestName(false) + '.groovy');
-      }
-    });
+    IdeaTestUtil.startPerformanceTest("testing dfa", 10000, {
+      myFixture.checkHighlighting true, false, false
+    }).setup({
+      myFixture.enableInspections new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection()
+
+      // warm-up
+      myFixture.configureByText 'a.groovy', 'new Object()'
+      myFixture.checkHighlighting()
+
+      // configure by real data
+      myFixture.configureByFile getTestName(false) + '.groovy'
+    }).attempts(1).cpuBound().assertTiming()
   }
 }
