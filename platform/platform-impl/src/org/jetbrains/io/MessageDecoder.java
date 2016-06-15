@@ -49,7 +49,7 @@ public abstract class MessageDecoder extends Decoder {
         chunkedContent = CharBuffer.allocate(contentLength);
       }
 
-      ChannelBufferToStringKt.readIntoCharBuffer(input, readableBytes, chunkedContent);
+      BufferToCharsKt.readIntoCharBuffer(input, readableBytes, chunkedContent);
       consumedContentByteCount += readableBytes;
       input.release();
       return null;
@@ -60,7 +60,7 @@ public abstract class MessageDecoder extends Decoder {
       if (charBuffer != null) {
         chunkedContent = null;
         consumedContentByteCount = 0;
-        ChannelBufferToStringKt.readIntoCharBuffer(input, required, charBuffer);
+        BufferToCharsKt.readIntoCharBuffer(input, required, charBuffer);
         result = new CharSequenceBackedByChars(charBuffer);
       }
       else {
