@@ -79,8 +79,8 @@ public class JavaEEProjectTest extends GuiTestCase {
     paneFixture.selectByPath(projectName, "src", "META-INF", "persistence.xml");
     ToolWindowFixture.showToolwindowStripes(myRobot);
 
-    final JToggleButtonFixture persistence = (new JToggleButtonFinder("Persistence")).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(myRobot);
-    persistence.click();
+    //final JToggleButtonFixture persistence = (new JToggleButtonFinder("Persistence")).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(myRobot);
+    //persistence.click();
 
     //ToolWindowFixture.clickToolwindowButton("Persistence", myRobot);
     //ToolWindowFixture.clickToolwindowButton("Java Enterprise", myRobot);
