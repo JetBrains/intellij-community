@@ -119,7 +119,7 @@ public class DuplicatesFinder {
   }
 
   @Nullable
-  public Match isDuplicate(PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
+  public Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
     annotatePattern();
     Match match = isDuplicateFragment(element, ignoreParameterTypesAndPostVariableUsages);
     deannotatePattern();
@@ -174,7 +174,7 @@ public class DuplicatesFinder {
 
 
   @Nullable
-  private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
+  private Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
@@ -215,7 +215,7 @@ public class DuplicatesFinder {
     return match;
   }
 
-  protected boolean isSelf(PsiElement candidate) {
+  protected boolean isSelf(@NotNull PsiElement candidate) {
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
         return true;
@@ -621,6 +621,7 @@ public class DuplicatesFinder {
     if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
       final PsiMethod method1 = (PsiMethod)resolveResult1;
       final PsiMethod method2 = (PsiMethod)resolveResult2;
+      if (method1.hasModifierProperty(PsiModifier.STATIC) && !method1.equals(method2)) return false;
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
 
