@@ -79,6 +79,16 @@ class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date)
     return listOf(this)
   }
   
+  override val magnitude: TestStateInfo.Magnitude by lazy {
+    tests.forEach {
+      if (it.magnitude != super.magnitude) {
+        return@lazy it.magnitude
+      }
+    }
+    
+    super.magnitude
+  }
+  
 }
 
 
