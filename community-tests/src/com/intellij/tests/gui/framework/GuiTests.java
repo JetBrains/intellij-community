@@ -313,7 +313,7 @@ public final class GuiTests {
         protected boolean isMatching(@NotNull JDialog dialog) {
           return dialogName.equals(dialog.getTitle()) && dialog.isShowing();
         }
-      }).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+      }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
       privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
         @Override
