@@ -125,7 +125,7 @@ public final class SocketLock {
   }
 
   @NotNull
-  public ActivateStatus lock(@NotNull final String[] args) throws Exception {
+  public ActivateStatus lock(@NotNull String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     return underLocks(() -> {
@@ -139,6 +139,7 @@ public final class SocketLock {
         for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
           ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
           if (status != ActivateStatus.NO_INSTANCE) {
+            log("exit: lock(): " + status);
             return status;
           }
         }
@@ -177,19 +178,11 @@ public final class SocketLock {
 
   private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
     FileUtilRt.createDirectory(new File(myConfigPath));
-    FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true);
-    try {
+    try (@SuppressWarnings("unused") FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true)) {
       FileUtilRt.createDirectory(new File(mySystemPath));
-      FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true);
-      try {
+      try (@SuppressWarnings("unused") FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true)) {
         return action.call();
       }
-      finally {
-        lock2.close();
-      }
-    }
-    finally {
-      lock1.close();
     }
   }
 
