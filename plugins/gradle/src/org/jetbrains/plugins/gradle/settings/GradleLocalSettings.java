@@ -18,9 +18,14 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
@@ -28,8 +33,10 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  */
 @State(name = "GradleLocalSettings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)} )
 public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
-  implements PersistentStateComponent<AbstractExternalSystemLocalSettings.State>
+  implements PersistentStateComponent<GradleLocalSettings.MyState>
 {
+  private final AtomicReference<Map<String/* external project path */, String>> myGradleHomes =
+    new AtomicReference<Map<String, String>>(ContainerUtilRt.newHashMap());
 
   public GradleLocalSettings(@NotNull Project project) {
     super(GradleConstants.SYSTEM_ID, project);
@@ -41,15 +48,38 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
   }
 
   @Nullable
+  public String getGradleHome(String linkedProjectPath) {
+    return myGradleHomes.get().get(linkedProjectPath);
+  }
+
+  public void setGradleHome(@NotNull String linkedProjectPath, @NotNull String gradleHome) {
+    myGradleHomes.get().put(linkedProjectPath, gradleHome);
+  }
+
   @Override
-  public State getState() {
-    State state = new State();
+  public void forgetExternalProjects(@NotNull Set<String> linkedProjectPathsToForget) {
+    super.forgetExternalProjects(linkedProjectPathsToForget);
+    for (String path : linkedProjectPathsToForget) {
+      myGradleHomes.get().remove(path);
+    }
+  }
+
+  @Nullable
+  @Override
+  public MyState getState() {
+    MyState state = new MyState();
     fillState(state);
+    state.myGradleHomes = myGradleHomes.get();
     return state;
   }
 
   @Override
-  public void loadState(@NotNull State state) {
-    super.loadState(state); 
+  public void loadState(@NotNull MyState state) {
+    super.loadState(state);
+    setIfNotNull(myGradleHomes, state.myGradleHomes);
+  }
+
+  public static class MyState extends AbstractExternalSystemLocalSettings.State {
+    public Map<String/* project path */, String> myGradleHomes = ContainerUtilRt.newHashMap();
   }
 }

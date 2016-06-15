@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
@@ -186,14 +187,18 @@ public class GradleInstallationManager {
     if (settings == null || settings.getDistributionType() == null) {
       return null;
     }
-    return getGradleHome(settings.getDistributionType(), linkedProjectPath, settings.getGradleHome());
+    String gradleHome = settings.getDistributionType() == DistributionType.WRAPPED
+                        ? GradleLocalSettings.getInstance(project).getGradleHome(linkedProjectPath)
+                        : settings.getGradleHome();
+    return getGradleHome(settings.getDistributionType(), linkedProjectPath, gradleHome);
   }
 
   @Nullable
-  public File getGradleHome(@NotNull DistributionType distributionType, @NotNull String linkedProjectPath, @Nullable String gradleHome) {
+  private File getGradleHome(@NotNull DistributionType distributionType, @NotNull String linkedProjectPath, @Nullable String gradleHome) {
     File candidate = null;
     switch (distributionType) {
       case LOCAL:
+      case WRAPPED:
         if (gradleHome != null) {
           candidate = new File(gradleHome);
         }
@@ -201,9 +206,6 @@ public class GradleInstallationManager {
       case DEFAULT_WRAPPED:
         WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
         candidate = getWrappedGradleHome(linkedProjectPath, wrapperConfiguration);
-        break;
-      case WRAPPED:
-        // not supported yet
         break;
       case BUNDLED:
         WrapperConfiguration bundledWrapperSettings = new WrapperConfiguration();
