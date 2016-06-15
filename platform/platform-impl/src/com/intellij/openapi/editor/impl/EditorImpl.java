@@ -364,7 +364,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myImmediatePainter = new ImmediatePainter(this);
 
-    if (project != null && myDocument instanceof DocumentImpl) {
+    if (myDocument instanceof DocumentImpl) {
       myBulkUpdateListener = new EditorDocumentBulkUpdateAdapter();
       ((DocumentImpl)myDocument).addInternalBulkModeListener(myBulkUpdateListener);
     }
