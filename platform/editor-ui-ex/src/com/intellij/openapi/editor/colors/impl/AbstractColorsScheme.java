@@ -828,4 +828,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public void setSaveNeeded(boolean isSaveNeeded) {
     myIsSaveNeeded = isSaveNeeded;
   }
+  
+  public boolean isReadOnly() { return  false; }
 }

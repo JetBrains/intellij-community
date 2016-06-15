@@ -174,9 +174,9 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   public void reset(@NotNull ColorAndFontDescription description) {
     if (description.isFontEnabled()) {
-      myLabelFont.setEnabled(true);
-      myCbBold.setEnabled(true);
-      myCbItalic.setEnabled(true);
+      myLabelFont.setEnabled(description.isEditable());
+      myCbBold.setEnabled(description.isEditable());
+      myCbItalic.setEnabled(description.isEditable());
       int fontType = description.getFontType();
       myCbBold.setSelected(BitUtil.isSet(fontType, Font.BOLD));
       myCbItalic.setSelected(BitUtil.isSet(fontType, Font.ITALIC));
@@ -203,7 +203,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
                        description.isEffectsColorChecked(), description.getEffectColor());
 
     if (description.isEffectsColorEnabled() && description.isEffectsColorChecked()) {
-      myEffectsCombo.setEnabled(true);
+      myEffectsCombo.setEnabled(description.isEditable());
       myEffectsModel.setEffectName(ContainerUtil.reverseMap(myEffectsMap).get(effectType));
     }
     else {
@@ -238,15 +238,15 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setEnabled(true);
       myInheritAttributesBox.setVisible(true);
-      myInheritAttributesBox.setEnabled(true);
+      myInheritAttributesBox.setEnabled(description.isEditable());
       myInheritAttributesBox.setSelected(description.isInherited());
-      setEditEnabled(!description.isInherited(), description);
+      setEditEnabled(!description.isInherited() && description.isEditable(), description);
     }
     else {
       myInheritanceLabel.setVisible(false);
       myInheritAttributesBox.setSelected(false);
       myInheritAttributesBox.setVisible(false);
-      setEditEnabled(true, description);
+      setEditEnabled(description.isEditable(), description);
     }
   }
 
