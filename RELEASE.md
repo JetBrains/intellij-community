@@ -39,12 +39,24 @@ betas.)
 
  4. Update the settings importer.
 
-    Edit
+    4.1 Edit
     `platform/platform-impl/src/com/intellij/openapi/application/ConfigImportHelper.java`
     such that it imports from the previous few versions (e.g. previous stable
     versions, as well as most recent preview.)
 
     Example CL: https://android-review.googlesource.com/#/c/161783/
+
+    4.2 Edit the settings importer to remove the section which skips importing
+    the preferred update channel. In stable builds we should respect whatever
+    update channel (canary/dev/beta/stable) the user has chosen, but in canary
+    or other preview builds we deliberately don't import these settings since
+    we want to make sure that for example a user of a canary build who imports
+    settings from a stable channel don't import a stable channel setting where
+    they can't notice/update to the next canary. The relevant change to disable
+    it is:
+
+    -private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = true;
+    +private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = false;
 
 
  5. Make sure assertions are turned off.

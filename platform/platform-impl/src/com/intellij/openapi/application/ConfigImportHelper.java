@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -39,6 +40,9 @@ import java.util.PropertyResourceBundle;
  * @author max
  */
 public class ConfigImportHelper {
+  /** This should only be done in EAP builds! */
+  private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = true;
+
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
@@ -289,6 +293,26 @@ public class ConfigImportHelper {
       FileUtil.copyDir(oldPluginsDir, newPluginsDir);
     }
     loadOldPlugins(oldPluginsDir, dest);
+
+    // If we're in an EAP build, don't import a stable update channel preference;
+    // if you're using this canary build we'll want to offer updates to it.
+    // (Ideally we'd only do this if ApplicationManager.getApplication().isEAP(),
+    // but settings import happens before the IDE is running so we cannot look up
+    // any application context.
+    if (SKIP_UPDATE_CHANNEL_IMPORT) {
+      File updates = new File(dest, "options" + File.separator + "updates.xml");
+      if (updates.exists()) {
+        String xml = Files.toString(updates, Charsets.UTF_8);
+        int index = xml.indexOf("<option name=\"UPDATE_CHANNEL_TYPE\"");
+        if (index != -1) {
+          int end = xml.indexOf('>', index);
+          if (end != -1) {
+            xml = xml.substring(0, index) + xml.substring(end + 1);
+            Files.write(xml, updates, Charsets.UTF_8);
+          }
+        }
+      }
+    }
   }
 
   private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
