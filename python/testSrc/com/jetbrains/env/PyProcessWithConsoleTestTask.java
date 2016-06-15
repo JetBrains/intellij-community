@@ -15,10 +15,7 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +31,8 @@ import org.junit.Assert;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.testFramework.ThreadTracker.longRunningThreadCreated;
 
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
@@ -72,6 +71,18 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   @Override
   public void runTestOn(final String sdkHome) throws Exception {
+
+    //Since this task uses I/O pooled thread, it needs to register such threads as "known offenders" (one that may leak)
+    // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
+    // We re add it just to make sure. Set is safe for double adding strings ;)
+
+    longRunningThreadCreated(ApplicationManager.getApplication(),
+                             "Periodic tasks thread",
+                             "ApplicationImpl pooled thread ",
+                             ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+
+
+
     createTempSdk(sdkHome, myRequiredSdkType);
     prepare();
     final T runner = createProcessRunner();
