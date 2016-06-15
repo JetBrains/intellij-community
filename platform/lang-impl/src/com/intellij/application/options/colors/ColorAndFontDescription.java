@@ -17,6 +17,8 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -235,6 +237,11 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   public void setInherited(boolean isInherited) {
     this.isInherited = isInherited;
+  }
+
+  public boolean isEditable() {
+    return !(myScheme instanceof ReadOnlyColorsScheme ||
+             myScheme instanceof AbstractColorsScheme && ((AbstractColorsScheme)myScheme).isReadOnly());
   }
 
   @Nullable
