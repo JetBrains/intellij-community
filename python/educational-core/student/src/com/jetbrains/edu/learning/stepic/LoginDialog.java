@@ -14,6 +14,7 @@ public class LoginDialog extends DialogWrapper {
     myLoginPanel = new LoginPanel(this);
     setTitle("Login to Stepic");
     setOKButtonText("Login");
+    setTitle("Login to Stepic");
     init();
   }
 
@@ -40,14 +41,12 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     AuthDataHolder authData = myLoginPanel.getAuthData();
-    final boolean success = EduStepicConnector.login(authData.email, authData.password);
-    if (!success) {
-      setErrorText("Login failed");
+    final StepicUser user = EduStepicConnector.login(authData.email, authData.password);
+    if (user != null) {
+      super.doOKAction();
     }
     else {
-      StudySettings.getInstance().setLogin(authData.email);
-      StudySettings.getInstance().setPassword(authData.password);
-      super.doOKAction();
+      setErrorText("Login failed");
     }
   }
 

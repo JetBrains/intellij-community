@@ -3,8 +3,13 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.project.DefaultProjectFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -14,18 +19,20 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,10 +43,11 @@ import java.util.List;
  * author: liana
  * data: 7/31/14.
  */
-public class StudyNewProjectPanel{
+public class StudyNewProjectPanel {
+  private static final Logger LOG = Logger.getInstance(StudyNewProjectPanel.class);
   private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JButton myBrowseButton;
-  private JComboBox myCoursesComboBox;
+  private JComboBox<CourseInfo> myCoursesComboBox;
   private JButton myRefreshButton;
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
@@ -50,19 +58,37 @@ public class StudyNewProjectPanel{
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
+  private boolean isComboboxInitialized;
 
-  public StudyNewProjectPanel(StudyProjectGenerator generator) {
+  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     myGenerator = generator;
-    myAvailableCourses = myGenerator.getCourses(false);
     myBrowseButton.setPreferredSize(new Dimension(28, 28));
     myRefreshButton.setPreferredSize(new Dimension(28, 28));
-    if (myAvailableCourses.isEmpty()) {
+    initListeners();
+    myRefreshButton.setVisible(true);
+    myRefreshButton.putClientProperty("JButton.buttonType", "null");
+    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
+
+    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
+    myContentPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorMoved(AncestorEvent event) {
+        if (!isComboboxInitialized && myContentPanel.isVisible()) {
+          isComboboxInitialized = true;
+          initCoursesCombobox();
+        }
+      }
+    });
+  }
+
+  private void initCoursesCombobox() {
+    myAvailableCourses =
+      myGenerator.getCoursesUnderProgress(false, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
+    if (myAvailableCourses == null || myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
     else {
-      for (CourseInfo courseInfo : myAvailableCourses) {
-        myCoursesComboBox.addItem(courseInfo);
-      }
+      addCoursesToCombobox(myAvailableCourses);
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
       myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
@@ -72,13 +98,6 @@ public class StudyNewProjectPanel{
       myGenerator.setSelectedCourse(selectedCourse);
       setOK();
     }
-    initListeners();
-    myRefreshButton.setVisible(true);
-    myRefreshButton.putClientProperty("JButton.buttonType", "null");
-    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
-
-    myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
-
   }
 
   private void setupBrowseButton() {
@@ -177,26 +196,41 @@ public class StudyNewProjectPanel{
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      refreshCoursesList();
+      final List<CourseInfo> courses =
+        myGenerator.getCoursesUnderProgress(true, "Refreshing Course List", DefaultProjectFactory.getInstance().getDefaultProject());
+      if (courses != null) {
+        refreshCoursesList(courses);
+      }
     }
   }
 
-  private void refreshCoursesList() {
-    final List<CourseInfo> courses = myGenerator.getCourses(true);
+  private void refreshCoursesList(@NotNull final List<CourseInfo> courses) {
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
       return;
     }
     myCoursesComboBox.removeAllItems();
 
-    for (CourseInfo courseInfo : courses) {
-      myCoursesComboBox.addItem(courseInfo);
-    }
+    addCoursesToCombobox(courses);
     myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
     StudyProjectGenerator.flushCache(myAvailableCourses);
+  }
+
+  private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
+    for (CourseInfo courseInfo : courses) {
+      if (!courseInfo.isAdaptive()) {
+        myCoursesComboBox.addItem(courseInfo);
+      }
+      else {
+        final boolean isLoggedIn = myGenerator.myUser != null;
+        if (isLoggedIn) {
+          myCoursesComboBox.addItem(courseInfo);
+        }
+      }
+    }
   }
 
 
@@ -213,10 +247,11 @@ public class StudyNewProjectPanel{
       if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
         myAuthorLabel.setText("");
         myDescriptionLabel.setText("");
+        setError(INVALID_COURSE);
         return;
       }
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
-      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ?"Author: " + authorsString : "");
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
@@ -238,6 +273,7 @@ public class StudyNewProjectPanel{
 
     protected AddRemoteDialog() {
       super(null);
+      setTitle("Login To Stepic");
       myRemoteCourse = new StudyAddRemoteCourse();
       init();
     }
@@ -248,8 +284,15 @@ public class StudyNewProjectPanel{
       return myRemoteCourse.getContentPanel();
     }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myRemoteCourse.getLoginField();
+    }
+
     @Override
     protected void doOKAction() {
+      super.doOKAction();
       if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getLogin())) {
         myRemoteCourse.setError("Please, enter your login");
         return;
@@ -259,15 +302,26 @@ public class StudyNewProjectPanel{
         return;
       }
 
-      super.doOKAction();
-      final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
-      if (!isSuccess) {
-        setError("Failed to log in");
-      }
-      StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
-      StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
-      refreshCoursesList();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myRemoteCourse.getLogin(),
+                                                                                               myRemoteCourse.getPassword()));
+        if (stepicUser != null) {
+          stepicUser.setEmail(myRemoteCourse.getLogin());
+          stepicUser.setPassword(myRemoteCourse.getPassword());
+          myGenerator.myUser = stepicUser;
+
+
+          final List<CourseInfo> courses = myGenerator.getCoursesAsynchronouslyIfNeeded(true);
+          if (courses != null) {
+            ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
+          }
+        }
+        else {
+          setError("Failed to login");
+        }
+      }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
   }
-
 }

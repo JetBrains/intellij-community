@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -39,8 +40,8 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@NotNull String text) {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
-      myBrowserWindow.loadContent(text, configurator);
+    myBrowserWindow.loadContent(text, configurator);
   }
 }

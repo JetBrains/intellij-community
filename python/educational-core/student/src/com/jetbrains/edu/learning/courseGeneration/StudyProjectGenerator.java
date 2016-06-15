@@ -8,10 +8,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,38 +24,40 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyProjectComponent;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 
 public class StudyProjectGenerator {
-  private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
-  private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  protected static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
-  private static final String CACHE_NAME = "courseNames.txt";
-  private List<CourseInfo> myCourses = new ArrayList<>();
-  protected CourseInfo mySelectedCourseInfo;
-  private static final String COURSE_NAME_ATTRIBUTE = "name";
-  private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
   public static final String LANGUAGE_ATTRIBUTE = "language";
+  public static final String ADAPTIVE_COURSE_PREFIX = "__AdaptivePyCharmPython__";
+  public static final File OUR_COURSES_DIR = new File(PathManager.getConfigPath(), "courses");
+  private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
+  private static final String COURSE_NAME_ATTRIBUTE = "name";
+  private static final String COURSE_DESCRIPTION = "description";
+  private static final String CACHE_NAME = "courseNames.txt";
+  private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
+  public StepicUser myUser;
+  private List<CourseInfo> myCourses = new ArrayList<>();
+  protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -64,48 +68,67 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    final Course course = getCourse();
+    StudyTaskManager.getInstance(project).setUser(myUser);
+    final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
       return;
     }
+    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().invokeLater(
       () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
                                                     () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                      course.initCourse(false);
-                                                      final File courseDirectory = new File(ourCoursesDir, course.getName());
                                                       StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-                                                      course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+                                                      course.setCourseDirectory(courseDirectory.getAbsolutePath());
                                                       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
                                                       StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
                                                       openFirstTask(course, project);
                                                     })));
   }
 
-  protected Course getCourse() {
-    Reader reader = null;
-    try {
-      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
-      if (courseFile.exists()) {
-        reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        final Course course = gson.fromJson(reader, Course.class);
-        course.initCourse(false);
-        return course;
+  @Nullable
+  protected Course getCourse(@NotNull final Project project) {
+    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+    if (courseFile.exists()) {
+      return readCourseFromCache(courseFile, false);
+    }
+    else if (myUser != null) {
+      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                         mySelectedCourseInfo.getName() + "_" +
+                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
+      if (adaptiveCourseFile.exists()) {
+        return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    catch (FileNotFoundException | UnsupportedEncodingException e) {
-      LOG.error(e);
+    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+    if (course != null) {
+      flushCourse(project, course);
+      course.initCourse(false);
+    }
+    return course;
+  }
+
+  @Nullable
+  private static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
+    Reader reader = null;
+    try {
+      reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
+      Gson gson = new GsonBuilder().create();
+      final Course course = gson.fromJson(reader, Course.class);
+      course.initCourse(isAdaptive);
+      return course;
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.warn(e.getMessage());
+    }
+    catch (FileNotFoundException e) {
+      LOG.warn(e.getMessage());
     }
     finally {
       StudyUtils.closeSilently(reader);
     }
-    final Course course = EduStepicConnector.getCourse(mySelectedCourseInfo);
-    if (course != null) {
-      flushCourse(course);
-    }
-    return course;
+    return null;
   }
 
   public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
@@ -131,7 +154,8 @@ public class StudyProjectGenerator {
       final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
       ProjectView.getInstance(project).select(file, activeVirtualFile, true);
       FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
-    } else {
+    }
+    else {
       String first = StudyUtils.getFirst(taskFiles.keySet());
       if (first != null) {
         NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
@@ -142,8 +166,8 @@ public class StudyProjectGenerator {
     }
   }
 
-  public void flushCourse(@NotNull final Course course) {
-    final File courseDirectory = new File(ourCoursesDir, course.getName());
+  public static void flushCourse(@NotNull final Project project, @NotNull final Course course) {
+    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
 
@@ -208,7 +232,6 @@ public class StudyProjectGenerator {
         else {
           FileUtil.writeToFile(file, taskFile.text);
         }
-
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -217,9 +240,12 @@ public class StudyProjectGenerator {
     final Map<String, String> testsText = task.getTestsText();
     for (Map.Entry<String, String> entry : testsText.entrySet()) {
       final File testsFile = new File(taskDirectory, entry.getKey());
+      if (testsFile.exists()) {
+        FileUtil.delete(testsFile);
+      }
       FileUtil.createIfDoesntExist(testsFile);
       try {
-          FileUtil.writeToFile(testsFile, entry.getValue());
+        FileUtil.writeToFile(testsFile, entry.getValue());
       }
       catch (IOException e) {
         LOG.error("ERROR copying tests file");
@@ -235,8 +261,8 @@ public class StudyProjectGenerator {
     }
   }
 
-  private static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+  public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;
@@ -269,7 +295,7 @@ public class StudyProjectGenerator {
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void flushCache(List<CourseInfo> courses) {
-    File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    File cacheFile = new File(OUR_COURSES_DIR, CACHE_NAME);
     PrintWriter writer = null;
     try {
       if (!createCacheFile(cacheFile)) return;
@@ -290,8 +316,8 @@ public class StudyProjectGenerator {
   }
 
   private static boolean createCacheFile(File cacheFile) throws IOException {
-    if (!ourCoursesDir.exists()) {
-      final boolean created = ourCoursesDir.mkdirs();
+    if (!OUR_COURSES_DIR.exists()) {
+      final boolean created = OUR_COURSES_DIR.mkdirs();
       if (!created) {
         LOG.error("Cannot flush courses cache. Can't create courses directory");
         return false;
@@ -307,18 +333,35 @@ public class StudyProjectGenerator {
     return true;
   }
 
-  public List<CourseInfo> getCourses(boolean force) {
-    if (ourCoursesDir.exists()) {
+  // Supposed to be called under progress
+  public List<CourseInfo> getCoursesAsynchronouslyIfNeeded(boolean force) {
+    if (OUR_COURSES_DIR.exists()) {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = EduStepicConnector.getCourses();
+      myCourses = execCancelable(EduStepicConnector::getCourses);
       flushCache(myCourses);
     }
     if (myCourses.isEmpty()) {
       myCourses = getBundledIntro();
     }
     return myCourses;
+  }
+
+  public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
+    try {
+      return ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(new ThrowableComputable<List<CourseInfo>, RuntimeException>() {
+          @Override
+          public List<CourseInfo> compute() throws RuntimeException {
+            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+            return getCoursesAsynchronouslyIfNeeded(force);
+          }
+        }, progressTitle, true, project);
+    }
+    catch (RuntimeException e) {
+      return Collections.singletonList(CourseInfo.INVALID_COURSE);
+    }
   }
 
   public void addSettingsStateListener(@NotNull SettingsListener listener) {
@@ -336,7 +379,7 @@ public class StudyProjectGenerator {
   }
 
   public static List<CourseInfo> getBundledIntro() {
-    final File introCourse = new File(ourCoursesDir, "Introduction to Python");
+    final File introCourse = new File(OUR_COURSES_DIR, "Introduction to Python");
     if (introCourse.exists()) {
       final CourseInfo courseInfo = getCourseInfo(introCourse);
 
@@ -347,7 +390,7 @@ public class StudyProjectGenerator {
 
   public static List<CourseInfo> getCoursesFromCache() {
     List<CourseInfo> courses = new ArrayList<>();
-    final File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    final File cacheFile = new File(OUR_COURSES_DIR, CACHE_NAME);
     if (!cacheFile.exists()) {
       return courses;
     }
@@ -360,7 +403,9 @@ public class StudyProjectGenerator {
           while ((line = reader.readLine()) != null) {
             Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
             final CourseInfo courseInfo = gson.fromJson(line, CourseInfo.class);
-            courses.add(courseInfo);
+            if (!courseInfo.isAdaptive()) {
+              courses.add(courseInfo);
+            }
           }
         }
         catch (IOException | JsonSyntaxException e) {
@@ -369,7 +414,8 @@ public class StudyProjectGenerator {
         finally {
           StudyUtils.closeSilently(reader);
         }
-      } finally {
+      }
+      finally {
         StudyUtils.closeSilently(inputStream);
       }
     }
@@ -378,6 +424,7 @@ public class StudyProjectGenerator {
     }
     return courses;
   }
+
   /**
    * Adds course from zip archive to courses
    *
@@ -389,12 +436,14 @@ public class StudyProjectGenerator {
     try {
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
-      File courseDir = new File(ourCoursesDir, unzippedName);
+      File courseDir = new File(OUR_COURSES_DIR, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
-        courseDir.renameTo(new File(ourCoursesDir, courseName.getName()));
+        //noinspection ResultOfMethodCallIgnored
+        courseDir.renameTo(new File(OUR_COURSES_DIR, courseName.getName()));
+        //noinspection ResultOfMethodCallIgnored
         courseDir.delete();
       }
       return courseName;
@@ -408,7 +457,6 @@ public class StudyProjectGenerator {
 
   /**
    * Adds course to courses specified in params
-   *
    *
    * @param courses
    * @param courseDir must be directory containing course file
@@ -431,6 +479,7 @@ public class StudyProjectGenerator {
     }
     return null;
   }
+
   /**
    * Parses course json meta file and finds course name
    *
@@ -462,10 +511,13 @@ public class StudyProjectGenerator {
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
         courseInfo.setType("pycharm " + language);
-        final ArrayList<CourseInfo.Author> authors = new ArrayList<>();
+        final ArrayList<StepicUser> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
-          authors.add(new CourseInfo.Author(authorAsJsonObject.get("first_name").getAsString(), authorAsJsonObject.get("last_name").getAsString()));
+          final StepicUser stepicUser = new StepicUser();
+          stepicUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
+          stepicUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
+          authors.add(stepicUser);
         }
         courseInfo.setAuthors(authors);
       }

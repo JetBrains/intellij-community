@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -36,6 +38,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
@@ -47,6 +50,7 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -61,6 +65,9 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class StudyUtils {
   private StudyUtils() {
@@ -358,12 +365,12 @@ public class StudyUtils {
 
 
   @Nullable
-  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
+  public static VirtualFile getPatternFile(@NotNull Project project, @NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
-    File resourceFile = new File(course.getCourseDirectory());
+    File resourceFile = getCourseDirectory(project, course);
     if (!resourceFile.exists()) {
       return null;
     }
@@ -376,8 +383,8 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
-    VirtualFile patternFile = getPatternFile(taskFile, name);
+  public static Document getPatternDocument(@NotNull Project project, @NotNull final TaskFile taskFile, String name) {
+    VirtualFile patternFile = getPatternFile(project, taskFile, name);
     if (patternFile == null) {
       return null;
     }
@@ -495,7 +502,7 @@ public class StudyUtils {
     return null;
   }
 
-
+  @Nullable
   public static String getTaskText(@NotNull final Project project) {
     TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
@@ -519,17 +526,64 @@ public class StudyUtils {
     }
     return taskFile;
   }
+  
+  @Nullable
+  public static Task getCurrentTask(@NotNull final Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    if (taskFile != null) {
+      return taskFile.getTask();
+    }
+    return null;
+  }
 
   public static void updateStudyToolWindow(Project project) {
     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
       String taskText = getTaskText(project);
-      studyToolWindow.setTaskText(taskText, null, project);
+      if (taskText != null) {
+        studyToolWindow.setTaskText(taskText, null, project);
+      }
+      else {
+        LOG.warn("Task text is null");
+      }
     }
   }
 
   public static boolean isStudyProject(@NotNull Project project) {
     return StudyTaskManager.getInstance(project).getCourse() != null;
+  }
+
+  @Nullable
+  public static Project getStudyProject() {
+    Project studyProject = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      if (StudyTaskManager.getInstance(project).getCourse() != null) {
+         studyProject = project;
+      }
+    }
+    return studyProject;
+  }
+
+  @NotNull
+  public static File getCourseDirectory(@NotNull Project project, Course course) {
+    final File courseDirectory;
+    if (course.isAdaptive()) {
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
+                                 StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
+                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
+    }
+    else {
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
+    }
+    return courseDirectory;
   }
 
   public static boolean hasJavaFx() {
@@ -573,6 +627,36 @@ public class StudyUtils {
       return parent.getParent();
     }
     return null;
+  }
+
+  // supposd to be called under progress
+  @Nullable
+  public static <T> T execCancelable(@NotNull final Callable<T> callable) {
+    final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+
+    while (!future.isCancelled() && !future.isDone()) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(500);
+    }
+    T result = null;
+    try {
+      result = future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.warn(e.getMessage());
+    }
+    return result;
+  }
+
+  @Nullable
+  public static Task getTaskFromSelectedEditor(Project project) {
+    final StudyEditor editor = getSelectedStudyEditor(project);
+    Task task = null;
+    if (editor != null) {
+      final TaskFile file = editor.getTaskFile();
+      task = file.getTask();
+    }
+    return task;
   }
 
   private static String convertToHtml(@NotNull final String content) {
