@@ -119,13 +119,13 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
     if (suites.size == 1) {
       return suites[0].getEntriesToShow()
     }
-
-    val failedSuites = suites.filter { it.failedTests.size > 0 }
-    if (failedSuites.size == 0) {
-      return listOf(this)
-    }
     
-    return failedSuites + this
+    return suites
+        .filter { it.failedTests.size > 0}
+        .sortedByDescending { it.runDate }
+        .fold(listOf<RecentTestsPopupEntry>(), { popupList, currentEntry ->
+          popupList + currentEntry.getEntriesToShow()
+        }) + this
   }
   
 }

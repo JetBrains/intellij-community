@@ -103,4 +103,20 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
   }
   
+  fun `test show failed suite and test in run configuration`() {
+    val suite = "SingleTest".suite()
+    val test = "SingleTest.test".test()
+    val test2 = "SingleTest.test2".test()
+    
+    addPassedSuite(suite)
+    addFailedTest(test)
+    addPassedTest(test2)
+    
+    addPassedSuite("PassedSuite".suite())
+    
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(3)
+  }
+  
+  
 }
