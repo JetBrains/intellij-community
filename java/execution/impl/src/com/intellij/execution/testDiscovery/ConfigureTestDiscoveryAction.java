@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class ConfigureTestDiscoveryAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(Registry.is("testDiscovery.enabled") && e.getProject() != null);
+    e.getPresentation().setEnabledAndVisible(Registry.is("testDiscovery.enabled") && e.getProject() != null);
   }
 
   @Override
