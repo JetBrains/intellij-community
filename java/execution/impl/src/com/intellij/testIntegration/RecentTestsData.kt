@@ -100,9 +100,23 @@ class RecentTestsData {
     return null
   }
 
+  fun computeConfigurationSuites() = runConfigurationSuites.values
+      .fold(arrayListOf(), { total: List<SuiteEntry>, entry: RunConfigurationEntry -> total + entry.suites })
+  
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
-    val allEntries: List<RecentTestsPopupEntry> = runConfigurationSuites.values + urlSuites
-    return allEntries
+    val allConfigurationSuites = computeConfigurationSuites()
+    
+    unmatchedRunConfigurationTests.forEach { 
+      val currentTest = it
+      allConfigurationSuites.find { it.isMyTest(currentTest) }?.addTest(currentTest)
+    }
+    
+    unmatchedUrlTests.forEach { 
+      val currentTest = it
+      urlSuites.find { it.isMyTest(currentTest) }?.addTest(currentTest)
+    }
+    
+    return (runConfigurationSuites.values + urlSuites)
         .sortedByDescending { it.runDate }
         .fold(listOf(), { popupList, currentEntry ->
           popupList + currentEntry.getEntriesToShow()

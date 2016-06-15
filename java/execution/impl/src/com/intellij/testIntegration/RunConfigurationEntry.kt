@@ -20,7 +20,6 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 interface RecentTestsPopupEntry {
@@ -88,7 +87,7 @@ class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date)
 
 class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, initial: SuiteEntry) : RecentTestsPopupEntry {
 
-  val suites = ContainerUtil.newArrayList<SuiteEntry>()
+  val suites = arrayListOf<SuiteEntry>()
 
   init {
     addSuite(initial)
