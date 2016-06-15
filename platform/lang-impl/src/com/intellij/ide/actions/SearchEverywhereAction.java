@@ -255,15 +255,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
   }
 
-  public SearchEverywhereAction() {
-    updateComponents();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> onFocusLost());
-
-  }
-
   private void updateComponents() {
-    myRenderer = new MyListRenderer();
     myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
@@ -291,6 +283,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     };
+    myRenderer = new MyListRenderer(myList);
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
       @Override
@@ -1028,6 +1021,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Project myProject;
     private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    MyListRenderer(@NotNull JBList myList) {
+      assert myList == SearchEverywhereAction.this.myList;
+    }
 
     private class MyAccessibleComponent extends JPanel {
       private Accessible myAccessible;
