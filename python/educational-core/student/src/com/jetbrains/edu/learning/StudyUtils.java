@@ -629,7 +629,7 @@ public class StudyUtils {
     return null;
   }
 
-  // supposd to be called under progress
+  // supposed to be called under progress
   @Nullable
   public static <T> T execCancelable(@NotNull final Callable<T> callable) {
     final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
