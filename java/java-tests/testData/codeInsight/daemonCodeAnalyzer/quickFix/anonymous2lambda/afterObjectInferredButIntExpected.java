@@ -3,11 +3,7 @@ import java.util.function.Function;
 
 class Test {
   void ab() {
-    comparing(new Func<caret>tion<Integer, String>() {
-      public String apply(Integer pObj) {
-        return Integer.toString(pObj);
-      }
-    });
+    comparing((Function<Integer, String>) pObj -> Integer.toString(pObj));
 
   }
 

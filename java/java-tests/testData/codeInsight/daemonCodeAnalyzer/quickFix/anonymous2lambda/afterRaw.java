@@ -2,11 +2,7 @@
 class DbTableBinder {
 
   public Binder build() {
-    return new Bin<caret>der<DbTable>() {
-      public void bind(A q, DbTable dbTable) {
-        q.bind("name", dbTable.name);
-      }
-    };
+    return (Binder<DbTable>) (q, dbTable) -> q.bind("name", dbTable.name);
   }
 }
 
