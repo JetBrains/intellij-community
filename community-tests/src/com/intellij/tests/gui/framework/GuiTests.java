@@ -95,7 +95,9 @@ public final class GuiTests {
 
   public static final String GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite";
 
-  /** Environment variable pointing to the JDK to be used for tests */
+  /**
+   * Environment variable pointing to the JDK to be used for tests
+   */
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
 
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -151,7 +153,7 @@ public final class GuiTests {
     setUpSdks();
   }
 
-  public static String getSystemJdk(){
+  public static String getSystemJdk() {
     String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
     if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
       fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
@@ -235,9 +237,9 @@ public final class GuiTests {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
       final MyProjectManagerListener listener = new MyProjectManagerListener();
 
-        //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
-        acceptAgreement(robot);
-        //[Complete Installation]
+      //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
+      acceptAgreement(robot);
+      //[Complete Installation]
       if (!Boolean.getBoolean("skip.first.configuration.steps")) {
         completeInstallation(robot);
         //[EVALUATION IntelliJ IDEA License Activation]
@@ -269,7 +271,8 @@ public final class GuiTests {
         if (SYSTEM_EVENT_QUEUE.peekEvent() != null) {
           SYSTEM_EVENT_QUEUE.getNextEvent();
         }
-      } catch (InterruptedException ex ) {
+      }
+      catch (InterruptedException ex) {
         // Ignored.
       }
 
@@ -305,13 +308,23 @@ public final class GuiTests {
     final String dialogName = ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement";
     try {
       final DialogFixture
-        privacyDialogFixture = findDialog(dialogName)
-        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
-      privacyDialogFixture.button("Accept").click();
-    } catch (WaitTimedOutError we) {
+        privacyDialogFixture = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
+        @Override
+        protected boolean isMatching(@NotNull JDialog dialog) {
+          return dialogName.equals(dialog.getTitle()) && dialog.isShowing();
+        }
+      }).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+      String buttonText = "Accept";
+      privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
+        @Override
+        protected boolean isMatching(@Nonnull JButton button) {
+          return button.getText().equals(buttonText);
+        }
+      }).click();
+    }
+    catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
-
   }
 
   private static void completeInstallation(Robot robot) {
@@ -321,32 +334,35 @@ public final class GuiTests {
         completeInstallationDialog = findDialog(dialogName)
         .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
       completeInstallationDialog.button("OK").click();
-    } catch (WaitTimedOutError we) {
+    }
+    catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
   private static void evaluateIdea(Robot robot) {
     final String dialogName = ApplicationNamesInfo.getInstance().getFullProductName() + " License Activation";
-    try{
+    try {
       final DialogFixture
         completeInstallationDialog = findDialog(dialogName)
         .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
-    } catch (WaitTimedOutError we) {
+    }
+    catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
   private static void acceptLicenseAgreement(Robot robot) {
     final String dialogName = "License Agreement for" + ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
-    try{
+    try {
       final DialogFixture
         completeInstallationDialog = findDialog(dialogName)
         .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
 
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
-    } catch (WaitTimedOutError we) {
+    }
+    catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
@@ -355,18 +371,19 @@ public final class GuiTests {
     final String dialogName = "Customize " + ApplicationNamesInfo.getInstance().getFullProductName();
     try {
       final DialogFixture
-      completeInstallationDialog = findDialog(dialogName)
-      .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
+        completeInstallationDialog = findDialog(dialogName)
+        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot);
 
       completeInstallationDialog.button("Skip All and Set Defaults").click();
-    } catch (WaitTimedOutError we) {
+    }
+    catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
   @NotNull
   public static File getProjectCreationDirPath() {
-   return TMP_PROJECT_ROOT;
+    return TMP_PROJECT_ROOT;
   }
 
   @NotNull
@@ -421,7 +438,9 @@ public final class GuiTests {
     }
   }
 
-  /** Waits until an IDE popup is shown (and returns it */
+  /**
+   * Waits until an IDE popup is shown (and returns it
+   */
   public static JBList waitForPopup(@NotNull Robot robot) {
     return waitUntilFound(robot, null, new GenericTypeMatcher<JBList>(JBList.class) {
       @Override
@@ -436,8 +455,8 @@ public final class GuiTests {
    * Clicks an IntelliJ/Studio popup menu item with the given label prefix
    *
    * @param labelPrefix the target menu item label prefix
-   * @param component a component in the same window that the popup menu is associated with
-   * @param robot the robot to drive it with
+   * @param component   a component in the same window that the popup menu is associated with
+   * @param robot       the robot to drive it with
    */
   public static void clickPopupMenuItem(@NotNull String labelPrefix, @NotNull Component component, @NotNull Robot robot) {
     clickPopupMenuItemMatching(new PrefixMatcher(labelPrefix), component, robot);
@@ -476,7 +495,8 @@ public final class GuiTests {
           return;
         }
         items.add(s);
-      } else { // For example package private class IntentionActionWithTextCaching used in quickfix popups
+      }
+      else { // For example package private class IntentionActionWithTextCaching used in quickfix popups
         String s = elementAt.toString();
         if (labelMatcher.matches(s)) {
           new JListFixture(robot, list).clickItem(i);
@@ -492,7 +512,9 @@ public final class GuiTests {
     fail("Did not find menu item '" + labelMatcher + "' among " + on(", ").join(items));
   }
 
-  /** Returns the root container containing the given component */
+  /**
+   * Returns the root container containing the given component
+   */
   @Nullable
   public static Container getRootContainer(@NotNull final Component component) {
     return execute(new GuiQuery<Container>() {
@@ -566,15 +588,15 @@ public final class GuiTests {
   @NotNull
   public static JButton findButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text, Robot robot) {
     return robot.finder().find(container.target(), new GenericTypeMatcher<JButton>(JButton.class) {
-        @Override
-        protected boolean isMatching(@NotNull JButton button) {
-          String buttonText = button.getText();
-          if (buttonText != null) {
-            return buttonText.trim().equals(text) && button.isShowing();
-          }
-          return false;
+      @Override
+      protected boolean isMatching(@NotNull JButton button) {
+        String buttonText = button.getText();
+        if (buttonText != null) {
+          return buttonText.trim().equals(text) && button.isShowing();
         }
-      });
+        return false;
+      }
+    });
   }
 
   /** Returns a full path to the GUI data directory in the user's AOSP source tree, if known, or null */
@@ -585,7 +607,9 @@ public final class GuiTests {
   //}
 
 
-  /** Waits for a first component which passes the given matcher to become visible */
+  /**
+   * Waits for a first component which passes the given matcher to become visible
+   */
   @NotNull
   public static <T extends Component> T waitUntilFound(@NotNull final Robot robot, @NotNull final GenericTypeMatcher<T> matcher) {
     return waitUntilFound(robot, null, matcher);
@@ -595,7 +619,9 @@ public final class GuiTests {
     System.out.println("Skipping test '" + testName + "'");
   }
 
-  /** Waits for a first component which passes the given matcher under the given root to become visible. */
+  /**
+   * Waits for a first component which passes the given matcher under the given root to become visible.
+   */
   @NotNull
   public static <T extends Component> T waitUntilFound(@NotNull final Robot robot,
                                                        @Nullable final Container root,
@@ -622,7 +648,9 @@ public final class GuiTests {
     return reference.get();
   }
 
-  /** Waits until no components match the given criteria under the given root */
+  /**
+   * Waits until no components match the given criteria under the given root
+   */
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
                                                          @NotNull final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
@@ -666,19 +694,18 @@ public final class GuiTests {
 
     @Override
     public void describeTo(Description description) {
-      description.appendText("with prefix '" + prefix +"'");
+      description.appendText("with prefix '" + prefix + "'");
     }
-
   }
 
-  public static String adduction(String s){
+  public static String adduction(String s) {
     char ESCAPE_SYMBOL = '\u001B';
     String ESCAPE_SYMBOL_STRING = "" + ESCAPE_SYMBOL;
-    if(s.contains(ESCAPE_SYMBOL_STRING)) {
+    if (s.contains(ESCAPE_SYMBOL_STRING)) {
       return StringUtil.replace(s, ESCAPE_SYMBOL_STRING, "");
-    } else {
+    }
+    else {
       return s;
     }
   }
-
 }
