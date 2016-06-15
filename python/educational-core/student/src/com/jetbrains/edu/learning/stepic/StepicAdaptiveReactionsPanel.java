@@ -165,7 +165,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               }
 
               @Override
-              protected void onFinished() {
+              public void onFinished() {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
