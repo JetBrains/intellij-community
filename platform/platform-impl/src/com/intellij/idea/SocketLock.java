@@ -28,11 +28,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,13 +149,15 @@ public final class SocketLock {
       }
 
       myToken = UUID.randomUUID().toString();
-      final String[] lockedPaths = {myConfigPath, mySystemPath};
+      String[] lockedPaths = {myConfigPath, mySystemPath};
       int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false,
-                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken));
+      NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
+      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
+
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(portMarkerC, portBytes);
       FileUtil.writeToFile(portMarkerS, portBytes);
+
       File tokenFile = new File(mySystemPath, TOKEN_FILE);
       FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
       PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
@@ -165,6 +169,7 @@ public final class SocketLock {
           log(e);
         }
       }
+
       log("exit: lock(): succeed");
       return ActivateStatus.NO_INSTANCE;
     });
