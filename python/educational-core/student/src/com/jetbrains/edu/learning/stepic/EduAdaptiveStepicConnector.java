@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.actions.StudyNextStudyTaskAction;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -250,7 +249,6 @@ public class EduAdaptiveStepicConnector {
             StudyProjectGenerator.flushLesson(lessonDirectory, adaptive);
             StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
             adaptive.initLesson(course, true);
-            ApplicationManager.getApplication().invokeLater(() -> new StudyNextStudyTaskAction().navigateTask(project));
           }
         }
         ApplicationManager.getApplication().invokeLater(() -> {
