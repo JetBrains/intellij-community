@@ -80,13 +80,7 @@ class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date)
   }
   
   override val magnitude: TestStateInfo.Magnitude by lazy {
-    tests.forEach {
-      if (it.magnitude != super.magnitude) {
-        return@lazy it.magnitude
-      }
-    }
-    
-    super.magnitude
+    tests.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
   }
   
 }
@@ -104,7 +98,9 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
 
   override val runDate = suites.map { it.runDate }.min()!!
 
-  override val magnitude = COMPLETE_INDEX
+  override val magnitude: TestStateInfo.Magnitude by lazy {
+    suites.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
+  }
 
   override val presentation = runSettings.name
 
