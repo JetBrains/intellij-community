@@ -33,6 +33,8 @@ interface RecentTestsPopupEntry {
   fun run(runner: RecentTestRunner)
 
   open fun navigatableElement(locator: TestLocator): PsiElement? = null
+  
+  fun getEntriesToShow(): List<RecentTestsPopupEntry>
 }
 
 open class SingleTestEntry(val url: String, 
@@ -48,6 +50,8 @@ open class SingleTestEntry(val url: String,
   }
 
   override fun navigatableElement(locator: TestLocator) = locator.getLocation(url)?.psiElement
+
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> = listOf(this)
   
 }
 
@@ -67,6 +71,14 @@ class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date)
 
   override val presentation = suiteName
 
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
+    val failed = failedTests
+    if (failed.size > 0) {
+      return failed.sortedByDescending { it.runDate } + this
+    }
+    return listOf(this)
+  }
+  
 }
 
 
@@ -92,4 +104,18 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
   override fun run(runner: RecentTestRunner) {
     runner.run(runSettings)
   }
+
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
+    if (suites.size == 1) {
+      return suites[0].getEntriesToShow()
+    }
+
+    val failedSuites = suites.filter { it.failedTests.size > 0 }
+    if (failedSuites.size == 0) {
+      return listOf(this)
+    }
+    
+    return failedSuites + this
+  }
+  
 }
