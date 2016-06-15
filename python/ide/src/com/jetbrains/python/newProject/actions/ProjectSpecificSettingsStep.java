@@ -118,20 +118,22 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   @Override
   protected void registerValidators() {
     super.registerValidators();
-    mySdkCombo.getComboBox().addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent event) {
-        checkValid();
-      }
-    });
-    final ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        checkValid();
-      }
-    };
-    mySdkCombo.getComboBox().addActionListener(listener);
-    mySdkCombo.addActionListener(listener);
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
+      mySdkCombo.getComboBox().addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+          checkValid();
+        }
+      });
+      final ActionListener listener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          checkValid();
+        }
+      };
+      mySdkCombo.getComboBox().addActionListener(listener);
+      mySdkCombo.addActionListener(listener);
+    }
   }
 
   @Nullable
@@ -148,57 +150,57 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       return false;
     }
 
-    final Sdk sdk = getSdk();
+    if ((myProjectGenerator instanceof PythonProjectGenerator)) {
+      final Sdk sdk = getSdk();
 
-    if (sdk == null) {
-      setErrorText("No Python interpreter selected");
-      return false;
-    }
-    else if (PythonSdkType.isInvalid(sdk)){
-      setErrorText("Choose valid python interpreter");
-      return false;
-    }
-    final List<String> warningList = new ArrayList<>();
-    final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
-    if (PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
-      setErrorText("Please choose a local interpreter");
-      return false;
-    }
-    else if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
-      PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
-      String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
-      if (!isFrameworkInstalled(sdk)) {
-        if (PyPackageUtil.packageManagementEnabled(sdk)) {
-          warningList.add(frameworkName + " will be installed on the selected interpreter");
-          myInstallFramework = true;
-          final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-          boolean hasManagement = false;
-          try {
-            hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
-          }
-          catch (ExecutionException ignored) {
-          }
-          if (!hasManagement) {
-            warningList.add("Python packaging tools and " + warningList);
-          }
-        } else {
-          warningList.add(frameworkName + " is not installed on the selected interpreter");
-        }
+      if (sdk == null) {
+        setErrorText("No Python interpreter selected");
+        return false;
       }
-      if (myProjectGenerator instanceof PythonProjectGenerator) {
+      else if (PythonSdkType.isInvalid(sdk)) {
+        setErrorText("Choose valid python interpreter");
+        return false;
+      }
+      final List<String> warningList = new ArrayList<>();
+      final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
+      if (PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
+        setErrorText("Please choose a local interpreter");
+        return false;
+      }
+      else if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
+        PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
+        String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
+        if (!isFrameworkInstalled(sdk)) {
+          if (PyPackageUtil.packageManagementEnabled(sdk)) {
+            warningList.add(frameworkName + " will be installed on the selected interpreter");
+            myInstallFramework = true;
+            final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+            boolean hasManagement = false;
+            try {
+              hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
+            }
+            catch (ExecutionException ignored) {
+            }
+            if (!hasManagement) {
+              warningList.add("Python packaging tools and " + warningList);
+            }
+          } else {
+            warningList.add(frameworkName + " is not installed on the selected interpreter");
+          }
+        }
         final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(sdk);
         if (!warningResult.isOk()) {
           warningList.add(warningResult.getErrorMessage());
         }
-      }
 
-      if (!warningList.isEmpty()) {
-        final String warning = StringUtil.join(warningList, "<br/>");
-        setWarningText(warning);
-      }
-      if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
-        setErrorText(frameworkName + " is not supported for the selected interpreter");
-        return false;
+        if (!warningList.isEmpty()) {
+          final String warning = StringUtil.join(warningList, "<br/>");
+          setWarningText(warning);
+        }
+        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
+          setErrorText(frameworkName + " is not supported for the selected interpreter");
+          return false;
+        }
       }
     }
     return true;
@@ -213,28 +215,31 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   protected JPanel createBasePanel() {
     final JPanel panel = super.createBasePanel();
 
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
-    VirtualEnvProjectFilter.removeAllAssociated(sdks);
-    Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
-    DirectoryProjectGenerator generator = getProjectGenerator();
-    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-      if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
-        Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
-        if (python2Sdk != null) {
-          compatibleSdk = python2Sdk;
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
+      final Project project = ProjectManager.getInstance().getDefaultProject();
+      final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+      VirtualEnvProjectFilter.removeAllAssociated(sdks);
+      Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
+      DirectoryProjectGenerator generator = getProjectGenerator();
+      if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+        if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
+          Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
+          if (python2Sdk != null) {
+            compatibleSdk = python2Sdk;
+          }
         }
       }
+
+      final Sdk preferred = compatibleSdk;
+      mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
+      mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+
+      final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");
+      labeled.setLabelLocation(BorderLayout.WEST);
+      UIUtil.mergeComponentsWithAnchor(labeled, (PanelWithAnchor)panel.getComponent(0));
+      panel.add(labeled);
     }
 
-    final Sdk preferred = compatibleSdk;
-    mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
-    mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
-
-    final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");
-    labeled.setLabelLocation(BorderLayout.WEST);
-    UIUtil.mergeComponentsWithAnchor(labeled, (PanelWithAnchor)panel.getComponent(0));
-    panel.add(labeled);
     final JPanel basePanelExtension = extendBasePanel();
     if (basePanelExtension != null) {
       panel.add(basePanelExtension);
