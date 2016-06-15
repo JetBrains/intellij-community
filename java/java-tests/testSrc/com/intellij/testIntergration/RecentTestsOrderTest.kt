@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magni
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testIntegration.RecentTestsData
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Mockito
 import java.util.*
 
 class RecentTestsOrderTest: LightIdeaTestCase() {
@@ -30,13 +29,10 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
   lateinit var allTests: RunnerAndConfigurationSettings
   lateinit var now: Date
   
-  
   override fun setUp() {
     super.setUp()
     data = RecentTestsData()
-    allTests = Mockito.mock(RunnerAndConfigurationSettings::class.java)
-    Mockito.`when`(allTests.uniqueID).thenAnswer { "JUnit.all tests" }
-    Mockito.`when`(allTests.name).thenAnswer { "all tests" }
+    allTests = mockConfiguration("all tests", "JUnit.all tests")
     now = Date()
   }
   
@@ -126,6 +122,52 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     assertThat(tests[2].presentation).isEqualTo("all tests")
     assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
   }
-  
+
+  fun `test single test run doesn't override suite status`() {
+    val singleTestConfig = mockConfiguration("single test", "Junit.single test")
+
+    val newNow = Date(now.time + 100000)
+    //current single test run
+    addFailedSuite("Test".suite(), newNow, singleTestConfig)
+    addFailedTest("Test.testOK".test(), newNow, singleTestConfig)
+
+    //previous all suite run
+    addPassedTest("Test.testOK".test(), now, allTests)
+    addFailedTest("Test.testFailed".test(), now, allTests)
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(3)
+
+    assertThat(tests[0].presentation).isEqualTo("Test.testOK")
+    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
+
+    assertThat(tests[1].presentation).isEqualTo("Test.testFailed")
+    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
+
+    assertThat(tests[2].presentation).isEqualTo("Test")
+    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
+  }
+
+
+  fun `test single test run doesn't override suite status, independent from registering order`() {
+    val singleTestConfig = mockConfiguration("single test", "Junit.single test")
+
+    val newNow = Date(now.time + 100000)
+    
+    //previous all suite run
+    addPassedTest("Test.testOK".test(), now, allTests)
+    addFailedTest("Test.testFailed".test(), now, allTests)
+    
+    //current single test run
+    addFailedSuite("Test".suite(), newNow, singleTestConfig)
+    addFailedTest("Test.testOK".test(), newNow, singleTestConfig)
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(3)
+
+    assertThat(tests[0].presentation).isEqualTo("Test.testOK")
+    assertThat(tests[1].presentation).isEqualTo("Test.testFailed")
+    assertThat(tests[2].presentation).isEqualTo("Test")
+  }
   
 }
