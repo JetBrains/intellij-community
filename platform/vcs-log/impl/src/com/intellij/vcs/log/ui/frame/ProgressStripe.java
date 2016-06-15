@@ -109,7 +109,7 @@ public class ProgressStripe extends JBPanel {
 
     private void adjustFiller() {
       if (myFiller != null && myToolbar.getHeight() != 0) {
-        Dimension dimension = new Dimension(0, myToolbar.getHeight() - ProgressStripeIcon.getHeight() / 2);
+        Dimension dimension = new Dimension(0, myToolbar.getHeight());
         myFiller.changeShape(dimension, dimension, dimension);
       }
     }
