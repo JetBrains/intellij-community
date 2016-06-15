@@ -334,7 +334,7 @@ public class StudyProjectGenerator {
   }
 
   // Supposed to be called under progress
-  public List<CourseInfo> getCoursesAsynchronouslyIfNeeded(boolean force) {
+  public List<CourseInfo> getCourses(boolean force) {
     if (OUR_COURSES_DIR.exists()) {
       myCourses = getCoursesFromCache();
     }
@@ -355,7 +355,7 @@ public class StudyProjectGenerator {
           @Override
           public List<CourseInfo> compute() throws RuntimeException {
             ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-            return getCoursesAsynchronouslyIfNeeded(force);
+            return getCourses(force);
           }
         }, progressTitle, true, project);
     }
