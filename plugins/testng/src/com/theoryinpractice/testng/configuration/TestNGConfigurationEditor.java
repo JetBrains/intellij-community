@@ -45,6 +45,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -158,11 +159,15 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     });
     panel.add(editBtn, BorderLayout.EAST);
 
-    myTestKind.setModel(new CollectionComboBoxModel<>(Arrays.asList(TestType.values())));
+    final CollectionComboBoxModel<TestType> testKindModel = new CollectionComboBoxModel<>(Arrays.asList(TestType.values()));
+    if (!Registry.is("testDiscovery.enabled")) {
+      testKindModel.remove(TestType.SOURCE);
+    }
+    myTestKind.setModel(testKindModel);
     myTestKind.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        model.setType((TestType)myTestKind.getSelectedItem());
+        TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem());
       }
     });
     myTestKind.setRenderer(new ListCellRendererWrapper<TestType>() {
