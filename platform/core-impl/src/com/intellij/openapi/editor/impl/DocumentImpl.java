@@ -58,6 +58,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<DocumentBulkUpdateListener> myBulkDocumentInternalListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
@@ -895,6 +896,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     doRemoveDocumentListener(listener, myCachedDocumentListeners, myDocumentListeners);
   }
 
+  public void addInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
+    myBulkDocumentInternalListeners.add(listener);
+  }
+
+  public void removeInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
+    myBulkDocumentInternalListeners.remove(listener);
+  }
+
   private static void doRemoveDocumentListener(@NotNull DocumentListener listener,
                                                @NotNull Ref<DocumentListener[]> cachedDocumentListenersRef,
                                                @NotNull List<DocumentListener> documentListeners) {
@@ -1035,15 +1044,29 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     try {
       if (value) {
         getPublisher().updateStarted(this);
+        notifyInternalListenersOnBulkModeStarted();
         myDoingBulkUpdate = true;
       }
       else {
         myDoingBulkUpdate = false;
+        notifyInternalListenersOnBulkModeFinished();
         getPublisher().updateFinished(this);
       }
     }
     finally {
       myUpdatingBulkModeStatus = false;
+    }
+  }
+
+  private void notifyInternalListenersOnBulkModeStarted() {
+    for (DocumentBulkUpdateListener listener : myBulkDocumentInternalListeners) {
+      listener.updateStarted(this);
+    }
+  }
+
+  private void notifyInternalListenersOnBulkModeFinished() {
+    for (DocumentBulkUpdateListener listener : myBulkDocumentInternalListeners) {
+      listener.updateFinished(this);
     }
   }
 
