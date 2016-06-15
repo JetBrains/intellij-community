@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -209,6 +210,20 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
       super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), toolWrapper);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isEnabledAndVisible()) {
+        final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
+        for (RefEntity element : elements) {
+          if (!((RefElement) element).isEntry()) {
+            return;
+          }
+        }
+        e.getPresentation().setEnabled(false);
+      }
     }
 
     @Override

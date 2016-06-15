@@ -33,6 +33,8 @@ interface RecentTestsPopupEntry {
   fun run(runner: RecentTestRunner)
 
   open fun navigatableElement(locator: TestLocator): PsiElement? = null
+  
+  fun getEntriesToShow(): List<RecentTestsPopupEntry>
 }
 
 open class SingleTestEntry(val url: String, 
@@ -48,6 +50,8 @@ open class SingleTestEntry(val url: String,
   }
 
   override fun navigatableElement(locator: TestLocator) = locator.getLocation(url)?.psiElement
+
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> = listOf(this)
   
 }
 
@@ -67,6 +71,18 @@ class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date)
 
   override val presentation = suiteName
 
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
+    val failed = failedTests
+    if (failed.size > 0) {
+      return failed.sortedByDescending { it.runDate } + this
+    }
+    return listOf(this)
+  }
+  
+  override val magnitude: TestStateInfo.Magnitude by lazy {
+    tests.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
+  }
+  
 }
 
 
@@ -82,7 +98,9 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
 
   override val runDate = suites.map { it.runDate }.min()!!
 
-  override val magnitude = COMPLETE_INDEX
+  override val magnitude: TestStateInfo.Magnitude by lazy {
+    suites.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
+  }
 
   override val presentation = runSettings.name
 
@@ -92,4 +110,18 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
   override fun run(runner: RecentTestRunner) {
     runner.run(runSettings)
   }
+
+  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
+    if (suites.size == 1) {
+      return suites[0].getEntriesToShow()
+    }
+    
+    return suites
+        .filter { it.failedTests.size > 0}
+        .sortedByDescending { it.runDate }
+        .fold(listOf<RecentTestsPopupEntry>(), { popupList, currentEntry ->
+          popupList + currentEntry.getEntriesToShow()
+        }) + this
+  }
+  
 }

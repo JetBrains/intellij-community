@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.AppTopics;
+import com.intellij.execution.testframework.autotest.AutoTestWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-public class DelayedDocumentWatcher {
+public class DelayedDocumentWatcher implements AutoTestWatcher {
 
   // All instance fields are be accessed from EDT
   private final Project myProject;

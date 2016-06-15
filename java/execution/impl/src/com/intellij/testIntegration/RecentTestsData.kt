@@ -104,32 +104,9 @@ class RecentTestsData {
     val allEntries: List<RecentTestsPopupEntry> = runConfigurationSuites.values + urlSuites
     return allEntries
         .sortedByDescending { it.runDate }
-        .fold(listOf(), { popupList, currentEntry -> 
-          when (currentEntry) {
-            is RunConfigurationEntry -> popupList + currentEntry.entriesToShow()
-            else -> popupList + currentEntry
-          } 
+        .fold(listOf(), { popupList, currentEntry ->
+          popupList + currentEntry.getEntriesToShow()
         })
   }
   
-}
-
-fun RunConfigurationEntry.entriesToShow(): List<RecentTestsPopupEntry> {
-  if (suites.size == 1) {
-    return suites[0].entriesToShow()
-  }
-
-  val failedSuites = suites.filter { it.failedTests.size > 0 }
-  if (failedSuites.size == 0) {
-    return listOf(this)
-  }
-  return failedSuites + this
-}
-
-fun SuiteEntry.entriesToShow(): List<RecentTestsPopupEntry> {
-  val failed = failedTests
-  if (failed.size > 0) {
-    return failed.sortedByDescending { it.runDate } + this
-  }
-  return listOf(this)
 }

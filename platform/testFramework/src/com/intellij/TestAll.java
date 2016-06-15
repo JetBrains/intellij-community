@@ -40,6 +40,7 @@ import org.junit.runner.Description;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.NoTestsRemainException;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -289,6 +290,11 @@ public class TestAll implements Test {
   public void run(final TestResult testResult) {
     loadTestRecorder();
 
+    final TestListener testListener = loadDiscoveryListener();
+    if (testListener != null) {
+      testResult.addListener(testListener);
+    }
+
     List<Class> classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
     for (Class<?> aClass : classes) {
@@ -308,7 +314,29 @@ public class TestAll implements Test {
       if (testResult.shouldStop()) break;
     }
 
+    if (testListener instanceof Closeable) {
+      try {
+        ((Closeable)testListener).close();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
     tryGc(10);
+  }
+
+  private TestListener loadDiscoveryListener() {
+    final String discoveryListener = System.getProperty("test.discovery.listener");
+    if (discoveryListener != null) {
+      try {
+        return (TestListener)Class.forName(discoveryListener).newInstance();
+      }
+      catch (Throwable e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private static boolean shouldRecord(@NotNull Class<?> aClass) {

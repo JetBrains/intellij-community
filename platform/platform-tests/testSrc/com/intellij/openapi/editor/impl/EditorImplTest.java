@@ -26,11 +26,15 @@ import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.EditorTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -359,5 +363,31 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getCaretModel().removeCaretListener(caretListener);
     assertEquals("caret:LogicalPosition: (0, 7)selection:(4,7)", output.toString());
     checkResultByText(" abc<selection>def<caret></selection>");
+  }
+
+  public void testChangingHighlightersInBulkModeListener() throws Exception {
+    DocumentBulkUpdateListener.Adapter listener = new DocumentBulkUpdateListener.Adapter() {
+      @Override
+      public void updateFinished(@NotNull Document doc) {
+        if (doc == myEditor.getDocument()) {
+          myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+    };
+    getProject().getMessageBus().connect(myTestRootDisposable).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
+    initText("abcdef");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.setInBulkUpdate(true);
+        document.insertString(3, "\n\n");
+        document.setInBulkUpdate(false);
+      }
+    }.execute();
+    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+    assertEquals(1, highlighters.length);
+    assertEquals(7, highlighters[0].getStartOffset());
+    assertEquals(8, highlighters[0].getEndOffset());
   }
 }

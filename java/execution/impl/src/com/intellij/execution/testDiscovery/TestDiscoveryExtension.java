@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +88,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
               if (myCompletedMethodNames.size() > 50) {
                 final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
                 myCompletedMethodNames.clear();
-                processTracesAlarm.addRequest(() -> processAvailableTraces(configuration, fullTestNames), 100);
+                processTracesAlarm.addRequest(() -> processAvailableTraces(fullTestNames,
+                                                                           getTracesDirectory(configuration), configuration,
+                                                                           TestDiscoveryIndex.getInstance(configuration.getProject())
+                ), 100);
               }
             }
           }
@@ -160,7 +162,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {
-            coverageIndex.updateFromTestTrace(testMethodTrace);
+            coverageIndex.updateFromTestTrace(testMethodTrace, (JavaTestConfigurationBase)configuration);
             FileUtil.delete(testMethodTrace);
           }
           catch (IOException e) {
@@ -176,9 +178,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  private static void processAvailableTraces(RunConfigurationBase configuration, String[] fullTestNames) {
-    final String tracesDirectory = getTracesDirectory(configuration);
-    final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
+  public static void processAvailableTraces(final String[] fullTestNames,
+                                            final String tracesDirectory,
+                                            RunConfigurationBase configuration,
+                                            final TestDiscoveryIndex discoveryIndex) {
     synchronized (ourTracesLock) {
       for (String fullTestName : fullTestNames) {
         final String className = StringUtil.getPackageName(fullTestName);
@@ -187,7 +190,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
           if (testMethodTrace.exists()) {
             try {
-              coverageIndex.updateFromTestTrace(testMethodTrace);
+              discoveryIndex.updateFromTestTrace(testMethodTrace, (JavaTestConfigurationBase)configuration);
               FileUtil.delete(testMethodTrace);
             }
             catch (IOException e) {
