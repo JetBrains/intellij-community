@@ -250,8 +250,10 @@ public class GradleExecutionHelper {
       return;
     }
 
+    final long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
+      settings.setRemoteProcessIdleTtlInMs(100);
       try {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
@@ -282,6 +284,7 @@ public class GradleExecutionHelper {
       LOG.warn("Can't update wrapper", e);
     }
     finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
       try {
         connection.close();
       }
