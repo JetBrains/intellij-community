@@ -659,7 +659,7 @@ public class FindManagerImpl extends FindManager {
                 continue;
               }
             }
-          } else {
+          } else if (start <= end) {
             data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(start, end)));
             if (data.matcher.find()) {
               final int matchEnd = start + data.matcher.end();
@@ -668,7 +668,11 @@ public class FindManagerImpl extends FindManager {
                 findResult = new FindResultImpl(matchStart, matchEnd);
               }
               else {
-                start = matchEnd;
+                int diff = 0;
+                if (start == end) {
+                  diff = scanningForward ? 1:-1;
+                }
+                start = matchEnd + diff;
                 continue;
               }
             }
