@@ -116,6 +116,15 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(3)
+    
+    assertThat(tests[0].presentation).isEqualTo("SingleTest.test")
+    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
+    
+    assertThat(tests[1].presentation).isEqualTo("SingleTest")
+    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
+    
+    assertThat(tests[2].presentation).isEqualTo("all tests")
+    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
   }
   
   
