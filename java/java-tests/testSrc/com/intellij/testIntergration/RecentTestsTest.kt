@@ -78,9 +78,11 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     
     val tests = data.getTestsToShow()
 
-    assertThat(tests).hasSize(2)
-    assertThat(tests[0].presentation).isEqualTo("JFSDTest")
-    assertThat(tests[1].presentation).isEqualTo("all tests")
+    assertThat(tests).hasSize(3)
+    
+    assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
+    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
+    assertThat(tests[2].presentation).isEqualTo("all tests")
   }
   
   
