@@ -70,8 +70,13 @@ public class PyImportOptimizer implements ImportOptimizer {
 
   private static class ImportSorter {
 
-    private static final Comparator<PyImportElement> IMPORT_ELEMENT_COMPARATOR = (o1, o2) -> Comparing.compare(o1.getImportedQName(),
-                                                                                                               o2.getImportedQName());
+    private static final Comparator<PyImportElement> IMPORT_ELEMENT_COMPARATOR = (o1, o2) -> {
+      final int byImportedName = Comparing.compare(o1.getImportedQName(), o2.getImportedQName());
+      if (byImportedName != 0) {
+        return byImportedName;
+      }
+      return Comparing.compare(o1.getAsName(), o2.getAsName());
+    };
 
     private final PyFile myFile;
     private final List<PyImportStatementBase> myImportBlock;
