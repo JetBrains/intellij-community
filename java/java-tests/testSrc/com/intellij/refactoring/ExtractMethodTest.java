@@ -370,6 +370,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldedWithNestedExpressions() throws Exception {
+    doTest();
+  }
+
   public void testFoldingWithFieldInvolved() throws Exception {
     doTest();
   }
