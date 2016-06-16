@@ -137,11 +137,6 @@ public class InitialInfoBuilder {
     return   maxOffset < maxDocOffset ? maxOffset : maxDocOffset;
   }
 
-  /**
-   * Asks current builder to wrap one more remaining {@link Block code block} (if any).
-   *
-   * @return    <code>true</code> if all blocks are wrapped; <code>false</code> otherwise
-   */
   public boolean iteration() {
     if (myStates.isEmpty()) {
       return true;
@@ -152,22 +147,6 @@ public class InitialInfoBuilder {
     return myStates.isEmpty();
   }
   
-  /**
-   * Wraps given root block and all of its descendants and returns root block wrapper.
-   * <p/>
-   * This method performs necessary infrastructure actions and delegates actual processing to
-   * {@link #buildCompositeBlock(Block, CompositeBlockWrapper, int, WrapImpl, boolean)} and
-   * {@link #processSimpleBlock(Block, CompositeBlockWrapper, boolean, int, Block)}.
-   *
-   * @param rootBlock             block to wrap
-   * @param index                 index of the current block at its parent block. <code>-1</code> may be used here if we don't
-   *                              have information about parent block
-   * @param parent                parent block wrapper. <code>null</code> may be used here we no parent block wrapper exists
-   * @param currentWrapParent     parent wrap if any; <code>null</code> otherwise
-   * @param parentBlock           parent block of the block to wrap
-   * @param rootBlockIsRightBlock flag that shows if target block is the right-most block
-   * @return wrapper for the given <code>'rootBlock'</code>
-   */
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
                                          @Nullable final CompositeBlockWrapper parent,
@@ -556,12 +535,6 @@ public class InitialInfoBuilder {
     myCollectAlignmentsInsideFormattingRange = value;
   }
 
-  /**
-   * We want to wrap {@link Block code blocks} sequentially, hence, need to store a processing state and continue from the point
-   * where we stopped the processing last time.
-   * <p/>
-   * Current class defines common contract for the state required for such a processing.
-   */
   private class State {
 
     public final Block                 parentBlock;
@@ -613,10 +586,6 @@ public class InitialInfoBuilder {
       return false;
     }
 
-    /**
-     * @return    <code>true</code> if current state is processed (basically, if all {@link Block#getSubBlocks() child blocks})
-     *            of the {@link #parentBlock target block} are processed; <code>false</code> otherwise
-     */
     public boolean isProcessed() {
       return myWrappedChildren.size() == parentBlock.getSubBlocks().size();
     }
