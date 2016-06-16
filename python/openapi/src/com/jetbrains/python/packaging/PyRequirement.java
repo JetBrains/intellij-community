@@ -40,49 +40,18 @@ import java.util.stream.StreamSupport;
  */
 public class PyRequirement {
 
+  // common regular expressions
+
   @NotNull
   private static final String LINE_WS_REGEXP = "[ \t]";
-
-  @NotNull
-  private static final String EDITABLE_REGEXP = "((-e|--editable)" + LINE_WS_REGEXP + "+)?";
-
-  @NotNull
-  private static final String SRC_BEFORE_REGEXP = "(--src" + LINE_WS_REGEXP + "+\\S+" + LINE_WS_REGEXP + "+)?";
-
-  @NotNull
-  private static final String SRC_AFTER_REGEXP = "(" + LINE_WS_REGEXP + "+--src" + LINE_WS_REGEXP + "+\\S+)?";
-
-  @NotNull
-  private static final String USER_AT_REGEXP = "[\\w-]+@";
-
-  @NotNull
-  private static final String PATH_GROUP = "path";
-
-  @NotNull
-  private static final String PATH_REGEXP = "(?<" + PATH_GROUP + ">[^@#\\s]+)";
-
-  @NotNull
-  private static final String REVISION_REGEXP = "(@[^#\\s]+)?";
-
-  @NotNull
-  private static final String EGG_BEFORE_SUBDIR_GROUP = "eggb";
-
-  @NotNull
-  private static final String EGG_AFTER_SUBDIR_GROUP = "egga";
-
-  @NotNull
-  private static final String PARAMS_REGEXP =
-    "(" +
-    "(#egg=(?<" + EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s]+)(&subdirectory=\\S+)?)" +
-    "|" +
-    "(#subdirectory=[^&\\s]+&egg=(?<" + EGG_AFTER_SUBDIR_GROUP + ">\\S+))" +
-    ")?";
 
   @NotNull
   private static final String COMMENT_REGEXP = "(" + LINE_WS_REGEXP + "+#.*)?";
 
   @NotNull
   private static final String NAME_GROUP = "name";
+
+  // archive-related regular expressions
 
   @NotNull
   private static final Pattern GITHUB_ARCHIVE_URL =
@@ -94,29 +63,65 @@ public class PyRequirement {
                     "(?<" + NAME_GROUP + ">\\S+)" +
                     "(\\.tar\\.gz|\\.zip)(#(sha1|sha224|sha256|sha384|sha512|md5)=\\w+)?" + COMMENT_REGEXP);
 
+  // vcs-related regular expressions
+
+  @NotNull
+  private static final String VCS_EDITABLE_REGEXP = "((-e|--editable)" + LINE_WS_REGEXP + "+)?";
+
+  @NotNull
+  private static final String VCS_SRC_BEFORE_REGEXP = "(--src" + LINE_WS_REGEXP + "+\\S+" + LINE_WS_REGEXP + "+)?";
+
+  @NotNull
+  private static final String VCS_SRC_AFTER_REGEXP = "(" + LINE_WS_REGEXP + "+--src" + LINE_WS_REGEXP + "+\\S+)?";
+
+  @NotNull
+  private static final String PATH_IN_VCS_GROUP = "path";
+
+  @NotNull
+  private static final String PATH_IN_VCS_REGEXP = "(?<" + PATH_IN_VCS_GROUP + ">[^@#\\s]+)";
+
+  @NotNull
+  private static final String VCS_REVISION_REGEXP = "(@[^#\\s]+)?";
+
+  @NotNull
+  private static final String VCS_EGG_BEFORE_SUBDIR_GROUP = "eggb";
+
+  @NotNull
+  private static final String VCS_EGG_AFTER_SUBDIR_GROUP = "egga";
+
+  @NotNull
+  private static final String VCS_PARAMS_REGEXP =
+    "(" +
+    "(#egg=(?<" + VCS_EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s]+)(&subdirectory=\\S+)?)" +
+    "|" +
+    "(#subdirectory=[^&\\s]+&egg=(?<" + VCS_EGG_AFTER_SUBDIR_GROUP + ">\\S+))" +
+    ")?";
+
+  @NotNull
+  private static final String VCS_URL_PREFIX = VCS_SRC_BEFORE_REGEXP + VCS_EDITABLE_REGEXP;
+
+  @NotNull
+  private static final String VCS_URL_SUFFIX =
+    PATH_IN_VCS_REGEXP + VCS_REVISION_REGEXP + VCS_PARAMS_REGEXP + VCS_SRC_AFTER_REGEXP + COMMENT_REGEXP;
+
+  @NotNull
+  private static final String GIT_USER_AT_REGEXP = "[\\w-]+@";
+
   // supports: git+user@...
   @NotNull
-  private static final Pattern GIT_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
-                                                                 EDITABLE_REGEXP +
-                                                                 "git\\+" + USER_AT_REGEXP + "[^:\\s]+:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
-                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
+  private static final Pattern GIT_PROJECT_URL =
+    Pattern.compile(VCS_URL_PREFIX + "git\\+" + GIT_USER_AT_REGEXP + "[^:\\s]+:" + VCS_URL_SUFFIX);
 
   // supports: bzr+lp:...
   @NotNull
-  private static final Pattern BZR_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
-                                                                 EDITABLE_REGEXP +
-                                                                 "bzr\\+lp:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
-                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
+  private static final Pattern BZR_PROJECT_URL = Pattern.compile(VCS_URL_PREFIX + "bzr\\+lp:" + VCS_URL_SUFFIX);
 
   // supports: (bzr|git|hg|svn)(+smth)?://...
   @NotNull
-  private static final Pattern VCS_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
-                                                                 EDITABLE_REGEXP +
-                                                                 "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + PARAMS_REGEXP +
-                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
+  private static final Pattern VCS_PROJECT_URL =
+    Pattern.compile(VCS_URL_PREFIX + "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" + VCS_URL_SUFFIX);
+
+  // requirement-related regular expressions
 
   // PEP-508 + PEP-440
   // https://www.python.org/dev/peps/pep-0508/
@@ -133,14 +138,14 @@ public class PyRequirement {
     "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*\\])?";
 
   @NotNull
-  private static final String VERSIONS_SPECS_GROUP = "versionspecs";
+  private static final String REQUIREMENT_VERSIONS_SPECS_GROUP = "versionspecs";
 
   @NotNull
   private static final String REQUIREMENT_VERSION_SPEC_REGEXP = "(<=?|!=|===?|>=?|~=)" + LINE_WS_REGEXP + "*[\\.\\*\\+!\\w-]+";
 
   @NotNull
   private static final String REQUIREMENT_VERSIONS_SPECS_REGEXP =
-    "(?<" + VERSIONS_SPECS_GROUP + ">" + REQUIREMENT_VERSION_SPEC_REGEXP +
+    "(?<" + REQUIREMENT_VERSIONS_SPECS_GROUP + ">" + REQUIREMENT_VERSION_SPEC_REGEXP +
     "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*)?";
 
   @NotNull
@@ -329,7 +334,7 @@ public class PyRequirement {
   private static PyRequirement parseRequirement(@NotNull String line) {
     final Matcher matcher = REQUIREMENT.matcher(line);
     if (matcher.matches()) {
-      return new PyRequirement(matcher.group(NAME_GROUP), parseVersionSpecs(matcher.group(VERSIONS_SPECS_GROUP)), line);
+      return new PyRequirement(matcher.group(NAME_GROUP), parseVersionSpecs(matcher.group(REQUIREMENT_VERSIONS_SPECS_GROUP)), line);
     }
 
     return null;
@@ -398,7 +403,7 @@ public class PyRequirement {
 
   @Nullable
   private static PyRequirement createVcsRequirement(@NotNull String line, @NotNull Matcher matcher) {
-    final String path = matcher.group(PATH_GROUP);
+    final String path = matcher.group(PATH_IN_VCS_GROUP);
     final String egg = getEgg(matcher);
 
     final String project = extractProject(dropTrunk(dropRevision(path)));
@@ -473,9 +478,9 @@ public class PyRequirement {
 
   @Nullable
   private static String getEgg(@NotNull Matcher matcher) {
-    final String beforeSubdir = matcher.group(EGG_BEFORE_SUBDIR_GROUP);
+    final String beforeSubdir = matcher.group(VCS_EGG_BEFORE_SUBDIR_GROUP);
 
-    return beforeSubdir == null ? matcher.group(EGG_AFTER_SUBDIR_GROUP) : beforeSubdir;
+    return beforeSubdir == null ? matcher.group(VCS_EGG_AFTER_SUBDIR_GROUP) : beforeSubdir;
   }
 
   @NotNull
