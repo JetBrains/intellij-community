@@ -20,16 +20,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkService;
 import com.jetbrains.python.sdk.PythonSdkDetailsStep;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -41,17 +40,12 @@ import java.util.List;
  */
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonSdkChooserCombo");
+  private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
 
   @SuppressWarnings("unchecked")
   public PythonSdkChooserCombo(final Project project, List<Sdk> sdks, final Condition<Sdk> acceptableSdkCondition) {
-    Sdk initialSelection = null;
-    for (Sdk sdk : sdks) {
-      if (acceptableSdkCondition.value(sdk)) {
-        initialSelection = sdk;
-        break;
-      }
-    }
+    super(new ComboBox<>());
+    final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
     comboBox.setRenderer(new PySdkListCellRenderer(true));
