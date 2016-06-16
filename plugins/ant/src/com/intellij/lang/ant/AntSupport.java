@@ -40,8 +40,10 @@ public class AntSupport {
   public static void markFileAsAntFile(final VirtualFile file, final Project project, final boolean value) {
     if (file.isValid() && ForcedAntFileAttribute.isAntFile(file) != value) {
       ForcedAntFileAttribute.forceAntFile(file, value);
-      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-      restartDaemon(project);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        restartDaemon(project);
+      }, project.getDisposed());
     }
   }
   
@@ -51,7 +53,7 @@ public class AntSupport {
       daemon.restart();
     }
     else {
-      SwingUtilities.invokeLater(() -> daemon.restart());
+      SwingUtilities.invokeLater(daemon::restart);
     }
   }
   
