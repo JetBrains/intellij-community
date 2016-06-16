@@ -1529,7 +1529,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
-  public void _testReactivityPerformance() throws Throwable {
+  public void testReactivityPerformance() throws Throwable {
     List<Thread> watchers = new ArrayList<>();
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
@@ -1579,14 +1579,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                                         "; Progress canceled=" +
                                                         progress.isCanceled() +
                                                         "\n----------------------------");
-                System.out.println("----all threads---");
+                System.err.println("----all threads---");
                 for (Thread thread : Thread.getAllStackTraces().keySet()) {
                   boolean canceled = CoreProgressManager.isCanceledThread(thread);
                   if (canceled) {
-                    System.out.println("Thread " + thread + " is canceled");
+                    System.err.println("Thread " + thread + " is canceled");
                   }
                 }
-                System.out.println("----///////---");
+                System.err.println("----///////---");
                 break;
               }
             }
@@ -1612,8 +1612,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, false, interrupt);
-
-        throw new RuntimeException("should have been interrupted");
+        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
+        throw new RuntimeException("should have been interrupted: "+progress);
       }
       catch (ProcessCanceledException ignored) {
       }
@@ -1627,7 +1627,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void _testTypingLatencyPerformance() throws Throwable {
+  public void testTypingLatencyPerformance() throws Throwable {
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 
     configureByFile(filePath);
@@ -1855,7 +1855,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     fail("PCE must have been thrown");
   }
 
-  public void _testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
+  public void testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     highlightErrors();
@@ -2022,7 +2022,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final DaemonCodeAnalyzerImpl di = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     final AtomicReference<ProgressIndicator> indicator = new AtomicReference<>();
     final List<HighlightInfo> errors = filter(
-      di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> {
+      di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, false, () -> {
         if (indicator.get() == null) {
           indicator.set(di.getUpdateProgress());
         }
@@ -2038,7 +2038,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   
-  public void _testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() throws Exception {
+  public void testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() throws Exception {
     configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
     final AtomicBoolean run = new AtomicBoolean();
     final int SLEEP = 20000;
