@@ -303,7 +303,10 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        scheduleProjectSave();
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
+        if (file != null && file.isInLocalFileSystem()) {
+          scheduleProjectSave();
+        }
       }
     });
 
@@ -452,6 +455,7 @@ public class BuildManager implements Disposable {
 
   private void scheduleProjectSave() {
     if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
+      myAutoMakeTask.cancelPendingExecution();
       myDocumentSaveTask.schedule();
     }
   }
@@ -1333,7 +1337,7 @@ public class BuildManager implements Disposable {
   }
 
   private abstract static class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD);
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
     private final Runnable myTaskRunnable = () -> {
       try {
@@ -1345,9 +1349,13 @@ public class BuildManager implements Disposable {
     };
 
     public final void schedule() {
-      myAlarm.cancelAllRequests();
+      cancelPendingExecution();
       final int delay = Math.max(100, getDelay());
       myAlarm.addRequest(this, delay);
+    }
+
+    public void cancelPendingExecution() {
+      myAlarm.cancelAllRequests();
     }
 
     protected abstract int getDelay();
