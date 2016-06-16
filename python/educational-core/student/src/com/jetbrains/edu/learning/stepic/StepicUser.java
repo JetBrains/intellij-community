@@ -4,6 +4,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyTaskManager;
 
 public class StepicUser {
@@ -54,6 +55,7 @@ public class StepicUser {
     this.email = email;
   }
 
+  @Transient
   public String getPassword() {
     final String login = getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) return "";
@@ -70,6 +72,7 @@ public class StepicUser {
     return StringUtil.notNullize(password);
   }
 
+  @Transient
   public void setPassword(String password) {
     try {
       PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);

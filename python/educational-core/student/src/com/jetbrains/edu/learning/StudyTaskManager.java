@@ -6,11 +6,10 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
@@ -286,7 +285,14 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     }
     return "";
   }
+  
+  public void setLogin(String login) {
+    if (myUser != null) {
+      myUser.setEmail(login);
+    }
+  }
 
+  @Transient
   public String getPassword() {
     if (myUser != null) {
       return myUser.getPassword();
@@ -294,12 +300,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     return "";
   }
 
-  public void setLogin(String login) {
-    if (myUser != null) {
-      myUser.setEmail(login);
-    }
-  }
-
+  @Transient
   public void setPassword(String password) {
     if (myUser != null) {
       myUser.setPassword(password);
