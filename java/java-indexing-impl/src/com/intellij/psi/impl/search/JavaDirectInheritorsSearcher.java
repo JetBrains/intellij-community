@@ -17,9 +17,9 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -176,9 +176,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                       @NotNull PsiClass baseClass,
                                                       @NotNull String baseClassName,
                                                       @NotNull SearchScope useScope) {
-    GlobalSearchScope globalUseScope = ReadAction.compute(() -> StubHierarchyInheritorSearcher.restrictScope(toGlobal(useScope, project)));
+    DumbService dumbService = DumbService.getInstance(project);
+    GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(() -> StubHierarchyInheritorSearcher.restrictScope(toGlobal(useScope, project)));
     Collection<PsiReferenceList> candidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
     final Map<String, Object> classes = new HashMap<>();
@@ -227,11 +228,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
     processConcurrentlyIfTooMany(anonymousCandidates,
        candidate-> {
-         boolean isInheritor = MethodUsagesSearcher.resolveInReadAction(project, () -> candidate.isInheritor(baseClass, false));
+         boolean isInheritor = dumbService.runReadActionInSmartMode(() -> candidate.isInheritor(baseClass, false));
          if (isInheritor) {
            synchronized (result) {
              result.add(candidate);

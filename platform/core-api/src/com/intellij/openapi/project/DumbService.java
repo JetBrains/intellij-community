@@ -79,7 +79,8 @@ public abstract class DumbService {
   public abstract void waitForSmartMode();
 
   /**
-   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
+   * unless this method is already called with read access allowed.
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<T>();
@@ -111,9 +112,15 @@ public abstract class DumbService {
   }
 
   /**
-   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
+   * unless this method is already called with read access allowed.
    */
   public void runReadActionInSmartMode(@NotNull final Runnable r) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      r.run();
+      return;
+    }
+
     while (true) {
       waitForSmartMode();
       boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
