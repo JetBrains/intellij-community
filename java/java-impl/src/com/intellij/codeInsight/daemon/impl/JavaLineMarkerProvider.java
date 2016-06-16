@@ -47,7 +47,6 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,9 +186,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
     for (PsiClass psiClass : byClass.keySet()) {
-      List<PsiMethod> methods = new ArrayList<>(byClass.get(psiClass));
+      Collection<PsiMethod> methods = byClass.get(psiClass);
       tasks.add(() -> collectSiblingInheritedMethods(methods));
-      tasks.add(() -> collectOverridingMethods(methods));
+      tasks.add(() -> collectOverridingMethods(methods, psiClass));
     }
 
     Object lock = new Object();
@@ -265,38 +264,26 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return Collections.emptyList();
   }
 
-  private List<LineMarkerInfo> collectOverridingMethods(@NotNull final Collection<PsiMethod> methods) {
+  private List<LineMarkerInfo> collectOverridingMethods(@NotNull final Iterable<PsiMethod> _methods, @NotNull PsiClass containingClass) {
     if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return Collections.emptyList();
     final Set<PsiMethod> overridden = new HashSet<>();
-    Set<PsiClass> methodContainingClasses = new THashSet<>();
-    for (PsiMethod method : methods) {
+
+    Set<PsiMethod> methodSet = ContainerUtil.newHashSet(_methods);
+
+    AllOverridingMethodsSearch.search(containingClass).forEach(pair -> {
       ProgressManager.checkCanceled();
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-        methodContainingClasses.add(containingClass);
+
+      final PsiMethod superMethod = pair.getFirst();
+      if (methodSet.remove(superMethod)) {
+        overridden.add(superMethod);
       }
-    }
+      return !methodSet.isEmpty();
+    });
 
-    for (final PsiClass aClass : methodContainingClasses) {
-      AllOverridingMethodsSearch.search(aClass).forEach(pair -> {
-        ProgressManager.checkCanceled();
-
-        final PsiMethod superMethod = pair.getFirst();
-        if (methods.remove(superMethod)) {
-          overridden.add(superMethod);
-        }
-        return !methods.isEmpty();
-      });
-    }
-
-    if (!methods.isEmpty()) {
-      for (PsiClass aClass : methodContainingClasses) {
-        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
-        if (interfaceMethod != null) {
-          if (FunctionalExpressionSearch.search(aClass).findFirst() != null) {
-            overridden.add(interfaceMethod);
-          }
-        }
+    if (!methodSet.isEmpty()) {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(containingClass);
+      if (interfaceMethod != null && FunctionalExpressionSearch.search(containingClass).findFirst() != null) {
+        overridden.add(interfaceMethod);
       }
     }
 
