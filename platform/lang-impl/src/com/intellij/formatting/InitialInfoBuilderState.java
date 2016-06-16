@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.formatting.InitialInfoBuilder.setDefaultIndents;
-
-class FormatterBuilderState {
+class InitialInfoBuilderState {
   public final Block parentBlock;
   public final WrapImpl parentBlockWrap;
   public final CompositeBlockWrapper wrappedBlock;
@@ -35,11 +33,11 @@ class FormatterBuilderState {
 
   private final List<AbstractBlockWrapper> myWrappedChildren = ContainerUtil.newArrayList();
 
-  FormatterBuilderState(@NotNull Block parentBlock,
-                        @NotNull CompositeBlockWrapper wrappedBlock,
-                        @Nullable WrapImpl parentBlockWrap,
-                        boolean readOnly,
-                        boolean parentBlockIsRightBlock) {
+  InitialInfoBuilderState(@NotNull Block parentBlock,
+                          @NotNull CompositeBlockWrapper wrappedBlock,
+                          @Nullable WrapImpl parentBlockWrap,
+                          boolean readOnly,
+                          boolean parentBlockIsRightBlock) {
     this.parentBlock = parentBlock;
     this.wrappedBlock = wrappedBlock;
     this.parentBlockWrap = parentBlockWrap;
@@ -71,6 +69,14 @@ class FormatterBuilderState {
 
   public boolean isProcessed() {
     return myWrappedChildren.size() == parentBlock.getSubBlocks().size();
+  }
+
+  private static void setDefaultIndents(final List<AbstractBlockWrapper> list, boolean useRelativeIndents) {
+    for (AbstractBlockWrapper wrapper : list) {
+      if (wrapper.getIndent() == null) {
+        wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent(useRelativeIndents));
+      }
+    }
   }
   
 }

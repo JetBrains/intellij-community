@@ -52,7 +52,7 @@ public class InitialInfoBuilder {
 
   private final CommonCodeStyleSettings.IndentOptions myOptions;
 
-  private final Stack<FormatterBuilderState> myStates = new Stack<>();
+  private final Stack<InitialInfoBuilderState> myStates = new Stack<>();
   
   private WhiteSpace                       myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
@@ -137,7 +137,7 @@ public class InitialInfoBuilder {
       return true;
     }
 
-    FormatterBuilderState state = myStates.peek();
+    InitialInfoBuilderState state = myStates.peek();
     doIteration(state);
     return myStates.isEmpty();
   }
@@ -250,11 +250,11 @@ public class InitialInfoBuilder {
     return extended;
   }
 
-  private CompositeBlockWrapper buildCompositeBlock(final Block rootBlock,
-                                   @Nullable final CompositeBlockWrapper parent,
-                                   final int index,
-                                   @Nullable final WrapImpl currentWrapParent,
-                                   boolean rootBlockIsRightBlock)
+  private CompositeBlockWrapper buildCompositeBlock(Block rootBlock,
+                                                    @Nullable CompositeBlockWrapper parent,
+                                                    int index,
+                                                    @Nullable WrapImpl currentWrapParent,
+                                                    boolean rootBlockIsRightBlock) 
   {
     final CompositeBlockWrapper wrappedRootBlock = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
@@ -274,21 +274,14 @@ public class InitialInfoBuilder {
     
     final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
     
-    FormatterBuilderState
-      state = new FormatterBuilderState(rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);
+    InitialInfoBuilderState state = new InitialInfoBuilderState(
+      rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);
+    
     myStates.push(state);
     return wrappedRootBlock;
   }
 
-  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
-    return myBlocksToForceChildrenIndent;
-  }
-  
-  public MultiMap<Alignment, Block> getBlocksToAlign() {
-    return myBlocksToAlign;
-  }
-  
-  private void doIteration(@NotNull FormatterBuilderState state) {
+  private void doIteration(@NotNull InitialInfoBuilderState state) {
     Block currentRoot = state.parentBlock;
     
     List<Block> subBlocks = currentRoot.getSubBlocks();
@@ -335,15 +328,7 @@ public class InitialInfoBuilder {
       myBlocksToForceChildrenIndent.putValue(indent, wrapper);
     }
   }
-
-  public static void setDefaultIndents(final List<AbstractBlockWrapper> list, boolean useRelativeIndents) {
-    for (AbstractBlockWrapper wrapper : list) {
-      if (wrapper.getIndent() == null) {
-        wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent(useRelativeIndents));
-      }
-    }
-  }
-
+  
   private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
                                                   @Nullable final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
@@ -475,6 +460,14 @@ public class InitialInfoBuilder {
     return myAlignmentsInsideRangeToModify;
   }
 
+  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
+    return myBlocksToForceChildrenIndent;
+  }
+
+  public MultiMap<Alignment, Block> getBlocksToAlign() {
+    return myBlocksToAlign;
+  }
+  
   public void setCollectAlignmentsInsideFormattingRange(boolean value) {
     myCollectAlignmentsInsideFormattingRange = value;
   }
