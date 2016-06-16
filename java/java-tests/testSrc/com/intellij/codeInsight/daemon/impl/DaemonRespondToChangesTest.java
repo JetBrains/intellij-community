@@ -551,7 +551,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
-    int visitedCount = tool.visited.size();
+    int visitedCount = new HashSet<>(tool.visited).size();
     tool.visited.clear();
 
     type(" ");  // white space modification
@@ -559,7 +559,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
-    int countAfter = tool.visited.size();
+    int countAfter = new HashSet<>(tool.visited).size();
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
@@ -1529,7 +1529,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
-  public void testReactivityPerformance() throws Throwable {
+  public void _testReactivityPerformance() throws Throwable {
     List<Thread> watchers = new ArrayList<>();
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
@@ -1627,7 +1627,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testTypingLatencyPerformance() throws Throwable {
+  public void _testTypingLatencyPerformance() throws Throwable {
     @NonNls String filePath = "/psi/resolve/ThinletBig.java";
 
     configureByFile(filePath);
@@ -1855,7 +1855,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     fail("PCE must have been thrown");
   }
 
-  public void testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
+  public void _testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     highlightErrors();
@@ -2038,7 +2038,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   
-  public void testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() throws Exception {
+  public void _testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() throws Exception {
     configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
     final AtomicBoolean run = new AtomicBoolean();
     final int SLEEP = 20000;
