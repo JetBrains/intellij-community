@@ -363,7 +363,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
         final List<PyPackage> packages = collectPackages();
         LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
         myPackagesCache = packages;
-        return packages;
+        return Collections.unmodifiableList(packages);
+      }
+      catch (ExecutionException e) {
+        myPackagesCache = Collections.emptyList();
+        throw e;
       }
       finally {
         myUpdatingCache = false;
