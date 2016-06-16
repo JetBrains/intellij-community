@@ -1287,7 +1287,7 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  public Future<?> stopListening() {
+  private Future<?> stopListening() {
     myListenPort = -1;
     return myChannelRegistrar.close(true);
   }
