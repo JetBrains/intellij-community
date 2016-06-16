@@ -103,7 +103,8 @@ public class PyStudyCheckAction extends StudyCheckAction {
               myTaskManger.setStatus(taskFile, StudyStatus.Failed);
               continue;
             }
-            if (EduNames.STUDY.equals(myTaskManger.getCourse().getCourseMode())) {
+            final Course course = myTaskManger.getCourse();
+            if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
               CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
                 StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
               }));
