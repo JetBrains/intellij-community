@@ -76,9 +76,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     final FileEditorManagerListener editorManagerListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
-        final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
-        StepicAdaptiveReactionsPanel.this.setEnabledRecursive(isEnabled);
       }
 
       @Override

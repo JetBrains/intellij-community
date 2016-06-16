@@ -442,7 +442,7 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static String getTaskTextFromTask(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
+  public static String getTaskTextFromTask(@Nullable final VirtualFile taskDirectory, @Nullable final Task task) {
     if (task == null) {
       return null;
     }
@@ -451,17 +451,17 @@ public class StudyUtils {
       return text;
     }
     if (taskDirectory != null) {
-      final String taskTextFileHtml = getTaskTextFrom(taskDirectory, EduNames.TASK_HTML);
+      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return taskTextFileHtml;
       
-      final String taskTextFileMd = getTaskTextFrom(taskDirectory, EduNames.TASK_MD);
+      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
       if (taskTextFileMd != null) return convertToHtml(taskTextFileMd);      
     }
     return null;
   }
 
   @Nullable
-  private static String getTaskTextFrom(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+  private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
     VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
@@ -510,7 +510,7 @@ public class StudyUtils {
     }
     final Task task = taskFile.getTask();
     if (task != null) {
-      return getTaskTextFromTask(task, task.getTaskDir(project));
+      return getTaskTextFromTask(task.getTaskDir(project), task);
     }
     return null;
   }
@@ -529,18 +529,8 @@ public class StudyUtils {
   
   @Nullable
   public static Task getCurrentTask(@NotNull final Project project) {
-    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    TaskFile taskFile = null;
-    for (VirtualFile file : files) {
-      taskFile = getTaskFile(project, file);
-      if (taskFile != null) {
-        break;
-      }
-    }
-    if (taskFile != null) {
-      return taskFile.getTask();
-    }
-    return null;
+    final TaskFile taskFile = getSelectedTaskFile(project);
+    return taskFile != null ? taskFile.getTask() : null;
   }
 
   public static void updateStudyToolWindow(Project project) {
