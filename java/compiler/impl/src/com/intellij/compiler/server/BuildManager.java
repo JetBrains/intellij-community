@@ -1303,7 +1303,7 @@ public class BuildManager implements Disposable {
   private int startListening() throws Exception {
     EventLoopGroup group;
     BuiltInServer mainServer = StartupUtil.getServer();
-    boolean isOwnEventLoopGroup = !Registry.is("compiler.shared.event.group", false) || mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
+    boolean isOwnEventLoopGroup = !Registry.is("compiler.shared.event.group", true) || mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
     if (isOwnEventLoopGroup) {
       group = new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler"));
     }
