@@ -39,10 +39,7 @@ import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -124,6 +121,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -1539,30 +1537,26 @@ public class BuildManager implements Disposable {
               if (project.isDisposed()) {
                 return;
               }
-              final List<File> rootFiles = new ArrayList<File>(candidates.size());
-              for (String root : candidates) {
-                rootFiles.add(new File(root));
-              }
-              // this will ensure that we'll be able to obtain VirtualFile for existing roots
-              CompilerUtil.refreshOutputDirectories(rootFiles, false);
 
-              final LocalFileSystem lfs = LocalFileSystem.getInstance();
-              final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
-              ApplicationManager.getApplication().runReadAction(() -> {
+              CompilerUtil.refreshOutputRoots(candidates);
+
+              LocalFileSystem lfs = LocalFileSystem.getInstance();
+              ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+              Set<VirtualFile> toRefresh = ReadAction.compute(() -> {
                 if (project.isDisposed()) {
-                  return;
+                  return Collections.emptySet();
                 }
-                final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-                for (File root : rootFiles) {
-                  final VirtualFile rootFile = lfs.findFileByIoFile(root);
-                  if (rootFile != null && fileIndex.isInSourceContent(rootFile)) {
-                    filesToRefresh.add(rootFile);
-                  }
-                }
-                if (!filesToRefresh.isEmpty()) {
-                  lfs.refreshFiles(filesToRefresh, true, true, null);
+                else {
+                  return candidates.stream()
+                    .map(lfs::findFileByPath)
+                    .filter(root -> root != null && fileIndex.isInSourceContent(root))
+                    .collect(Collectors.toSet());
                 }
               });
+
+              if (!toRefresh.isEmpty()) {
+                lfs.refreshFiles(toRefresh, true, true, null);
+              }
             });
           }
         }
