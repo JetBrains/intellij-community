@@ -121,10 +121,7 @@ public class ThreadTracker {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
-        final String name = thread.getName();
-        if (ContainerUtil.exists(wellKnownOffenders, name::contains)) {
-          continue;
-        }
+        if (isWellKnownOffender(thread)) continue;
 
         if (!thread.isAlive()) continue;
         if (thread.getStackTrace().length == 0) {
@@ -161,9 +158,14 @@ public class ThreadTracker {
     }
   }
 
+  private static boolean isWellKnownOffender(@NotNull Thread thread) {
+    final String name = thread.getName();
+    return ContainerUtil.exists(wellKnownOffenders, name::contains);
+  }
+
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
   private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
-    if (!thread.getName().startsWith("ApplicationImpl pooled thread ")) return false;
+    if (!isWellKnownOffender(thread)) return false;
     boolean insideTPEgetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
