@@ -68,6 +68,7 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
 
     Future<?> result;
     try {
+      long start = System.currentTimeMillis();
       Object[] channels = openChannels.toArray(new Channel[]{});
       ChannelGroupFuture groupFuture = openChannels.close();
       // server channels are closed in first turn, so, small timeout is relatively ok
@@ -75,6 +76,11 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
         LOG.warn("Cannot close all channels for 10 seconds, channels: " + Arrays.toString(channels));
       }
       result = groupFuture;
+
+      long duration = System.currentTimeMillis() - start;
+      if (duration > 1000) {
+        LOG.info("Close all channels took " + duration + " ms: " + (duration / 60000) + " min " + ((duration % 60000) / 1000) + "sec");
+      }
     }
     finally {
       if (eventLoopGroup != null) {
