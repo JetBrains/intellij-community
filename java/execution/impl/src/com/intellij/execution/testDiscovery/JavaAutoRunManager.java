@@ -54,22 +54,25 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
       public void activate() {
         if (myStatusListener == null) {
           myStatusListener = new CompilationStatusListener() {
+            private boolean myFoundFilesToMake = false;
             @Override
             public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
               if (errors == 0) {
                 restartAllAutoTests(0);
               }
               myHasErrors = errors == 0;
+              myFoundFilesToMake = false;
             }
 
             @Override
             public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+              if (!myFoundFilesToMake) return;
               compilationFinished(false, errors, warnings, compileContext);
             }
 
             @Override
             public void fileGenerated(String outputRoot, String relativePath) {
-              int a = 1;
+              myFoundFilesToMake = true;
             }
           };
 
