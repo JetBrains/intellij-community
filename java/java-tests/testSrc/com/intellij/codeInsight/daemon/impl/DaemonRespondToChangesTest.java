@@ -554,7 +554,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int visitedCount = tool.visited.size();
     tool.visited.clear();
 
-    type("  ");  // white space modification
+    type(" ");  // white space modification
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
@@ -805,6 +805,42 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertSize(2, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
 
     assertEmpty(changed);
+  }
+
+  public void testTypeParametersMustNotBlinkWhenTypingInsideClass() throws Throwable {
+    configureByText(JavaFileType.INSTANCE, "package x; \n" +
+                                           "abstract class ToRun<TTTTTTTTTTTTTTT> implements Comparable<TTTTTTTTTTTTTTT> {\n" +
+                                           "  private ToRun<TTTTTTTTTTTTTTT> delegate;\n"+
+                                           "  <caret>\n"+
+                                           "  \n"+
+                                           "}");
+
+    List<HighlightInfo> errors = highlightErrors();
+    assertEmpty(errors);
+
+    MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        if (TextRange.create(highlighter).substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
+          throw new RuntimeException("Must not remove type parameter highlighter");
+        }
+      }
+    });
+
+    assertEmpty(highlightErrors());
+
+    type("//xxx");
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    backspace();
+    assertEmpty(highlightErrors());
   }
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
