@@ -178,11 +178,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                   final boolean canPackageRepeat) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
-    if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
-        final OfflineProblemDescriptorNode child = OfflineProblemDescriptorNode.create(descriptor, (LocalInspectionToolWrapper)toolWrapper, presentation);
-        elemNode.insertByOrder(child, true);
-      }
+    for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
+      elemNode.insertByOrder(OfflineProblemDescriptorNode.create(descriptor, toolWrapper, presentation), true);
     }
   }
 }
