@@ -51,7 +51,7 @@ class TransactionTest extends LightPlatformTestCase {
     super.tearDown()
   }
 
-  public void "test write action without transaction prohibited"() {
+  public void "_test write action without transaction prohibited"() {
     assert app.isDispatchThread()
     assert !app.isWriteAccessAllowed()
 
@@ -60,7 +60,7 @@ class TransactionTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  public void "test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater"() {
+  public void "_test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater"() {
     SwingUtilities.invokeLater {
       guard.performUserActivity { app.runWriteAction { log << '1' } }
 
@@ -228,7 +228,7 @@ class TransactionTest extends LightPlatformTestCase {
     }
   }
 
-  public void "test write access in modal invokeLater"() {
+  public void "_test write access in modal invokeLater"() {
     LaterInvocator.enterModal(new Object())
     UIUtil.dispatchAllInvocationEvents()
     def unsafeModality = ModalityState.current()
@@ -289,7 +289,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3']
   }
 
-  public void "test no synchronous transactions inside invokeLater"() {
+  public void "_test no synchronous transactions inside invokeLater"() {
     LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
       log << '1'
@@ -304,7 +304,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', 'assert']
   }
 
-  public void "test write-unsafe modality ends inside a transaction"() {
+  public void "_test write-unsafe modality ends inside a transaction"() {
     LaterInvocator.enterModal(new Object())
     guard.performUserActivity { assertWritingProhibited() }
     TransactionGuard.submitTransaction testRootDisposable, {
