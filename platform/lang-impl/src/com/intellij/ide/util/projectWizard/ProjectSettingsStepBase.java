@@ -297,7 +297,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     }
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
+    myLocationField.addBrowseFolderListener("Select Base Directory", "Select base directory for the project",
                                             null, descriptor);
     return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"));
   }
