@@ -72,6 +72,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
     wellKnownOffenders.add("CompilerThread0");
+    wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Finalizer");
     wellKnownOffenders.add("IDEA Test Case Thread");
     wellKnownOffenders.add("Image Fetcher ");
@@ -82,7 +83,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
     wellKnownOffenders.add("Netty ");
-    wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
