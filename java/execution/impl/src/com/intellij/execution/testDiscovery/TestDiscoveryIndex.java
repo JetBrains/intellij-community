@@ -296,11 +296,12 @@ public class TestDiscoveryIndex implements ProjectComponent {
   public void projectClosed() {
   }
 
-  public void updateFromTestTrace(@NotNull File file, @Nullable JavaTestConfigurationBase configurationBase) throws IOException {
+  public void updateFromTestTrace(@NotNull File file,
+                                  @Nullable final String moduleName,
+                                  @NotNull final String frameworkPrefix) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    final Module module = configurationBase != null ? configurationBase.getConfigurationModule().getModule() : null;
-    doUpdateFromTestTrace(file, testName, module != null ? configurationBase.getFrameworkPrefix() + module.getName() : null);
+    doUpdateFromTestTrace(file, testName, moduleName != null ? frameworkPrefix + moduleName : null);
   }
 
   private void doUpdateFromTestTrace(File file, final String testName, @Nullable final String moduleName) throws IOException {

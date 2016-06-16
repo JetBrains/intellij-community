@@ -35,13 +35,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashSet;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Stream;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
@@ -90,11 +89,18 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
                                                                                          configuration.getFrameworkPrefix());
         if (modules.isEmpty()) return true;
 
+        final List<Module> survivedModules = new ArrayList<>();
         final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        for (String moduleName : modules) {
+          final Module moduleByName = moduleManager.findModuleByName(moduleName);
+          if (moduleByName != null) {
+            survivedModules.add(moduleByName);
+          }
+        }
+        if (survivedModules.isEmpty()) return true;
+
         final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
-        modules.stream()
-          .map(moduleManager::findModuleByName)
-          .filter(module -> module != null)
+        survivedModules
           .forEach(module -> {
             final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
             dependentModules.add(module);
