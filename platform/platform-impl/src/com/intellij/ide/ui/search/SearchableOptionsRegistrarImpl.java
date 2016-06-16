@@ -175,13 +175,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
 
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      final Set<String> words = getProcessedWordsWithoutStemming(plugin.getName());
+      final String pluginName = plugin.getName();
+      final Set<String> words = getProcessedWordsWithoutStemming(pluginName);
       final String description = plugin.getDescription();
       if (description != null) {
         words.addAll(getProcessedWordsWithoutStemming(description));
       }
       for (String word : words) {
-        addOption(word, null, plugin.getName(), PluginManagerConfigurable.ID, PluginManagerConfigurable.DISPLAY_NAME);
+        addOption(word, null, pluginName, PluginManagerConfigurable.ID, PluginManagerConfigurable.DISPLAY_NAME);
       }
     }
   }
