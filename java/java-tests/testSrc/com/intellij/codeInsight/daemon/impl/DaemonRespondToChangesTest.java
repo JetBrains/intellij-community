@@ -1431,7 +1431,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
 
     List<PsiElement> allPsi = CollectHighlightsUtil.getElementsInRange(myFile, 0, myFile.getTextLength());
-    assertSameElements(allPsi, visitedElements);
+    assertEquals(new HashSet<>(allPsi), new HashSet<>(visitedElements));
 
     // inside code block modification
     visitedElements.clear();
@@ -1444,7 +1444,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =
       CollectHighlightsUtil.getElementsInRange(myFile, method.getTextRange().getStartOffset(), method.getTextRange().getEndOffset(), true);
-    assertSameElements(methodAndParents, visitedElements);
+    assertEquals(new HashSet<>(methodAndParents), new HashSet<>(visitedElements));
   }
 
   
