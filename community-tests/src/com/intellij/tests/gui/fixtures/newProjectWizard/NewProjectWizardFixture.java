@@ -28,6 +28,7 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.fixture.DialogFixture;
 import org.fest.swing.fixture.JListFixture;
 import org.fest.swing.fixture.JTextComponentFixture;
 import org.fest.swing.fixture.JTreeFixture;
@@ -38,20 +39,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+import static com.intellij.tests.gui.framework.GuiTests.LONG_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
+import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.timing.Pause.pause;
 
 public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWizardFixture> {
   @NotNull
   public static NewProjectWizardFixture find(@NotNull Robot robot) {
-    JDialog dialog = robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+
+    final DialogFixture newProjectDialog = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return IdeBundle.message("title.new.project").equals(dialog.getTitle()) && dialog.isShowing();
       }
-    });
-    return new NewProjectWizardFixture(robot, dialog);
+    }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
+
+
+    return new NewProjectWizardFixture(robot, (JDialog)newProjectDialog.target());
   }
 
   private NewProjectWizardFixture(@NotNull Robot robot, @NotNull JDialog target) {
@@ -59,26 +65,26 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
   }
 
   @NotNull
-  public boolean isJdkEmpty(){
+  public boolean isJdkEmpty() {
     final JdkComboBox jdkComboBox = robot().finder().findByType(JdkComboBox.class);
     return (jdkComboBox.getSelectedJdk() == null);
   }
 
   @NotNull
-  public NewProjectWizardFixture selectProjectType(String projectTypeName){
+  public NewProjectWizardFixture selectProjectType(String projectTypeName) {
     JListFixture projectTypeList = new JListFixture(robot(), robot().finder().findByType(JBList.class, true));
     projectTypeList.clickItem(projectTypeName);
     return this;
   }
 
   @NotNull
-  public NewProjectWizardFixture selectFramework(String frameworkName){
+  public NewProjectWizardFixture selectFramework(String frameworkName) {
     final FrameworksTreeFixture frameworksTreeFixture = FrameworksTreeFixture.find(robot());
     frameworksTreeFixture.selectFramework(frameworkName);
     return this;
   }
 
-  public NewProjectWizardFixture selectSdkPath(@NotNull File sdkPath, String sdkType){
+  public NewProjectWizardFixture selectSdkPath(@NotNull File sdkPath, String sdkType) {
 
     final SelectSdkDialogFixture sdkDialogFixture = SelectSdkDialogFixture.find(robot(), sdkType);
 
@@ -93,7 +99,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
   }
 
   @NotNull
-  public NewProjectWizardFixture setProjectName(@NotNull String projectName){
+  public NewProjectWizardFixture setProjectName(@NotNull String projectName) {
     String labelText = GuiTests.adduction(IdeBundle.message("label.project.name"));
 
     pause(new Condition("Waiting for the sliding to project name settings") {
