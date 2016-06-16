@@ -21,13 +21,11 @@
 package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.application.Application;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +39,6 @@ public class OfflineProblemDescriptor {
   public List<String> myHints;
   public int myProblemIndex;
   public int myLine;
-  public String[] myParentType;
-  public String[] myParentFQName;
   public String myModuleName;
 
   public String getType() {
@@ -93,22 +89,6 @@ public class OfflineProblemDescriptor {
     myLine = line;
   }
 
-  public String[] getParentType() {
-    return myParentType;
-  }
-
-  public void setParentType(final String[] parentType) {
-    myParentType = parentType;
-  }
-
-  public String[] getParentFQName() {
-    return myParentFQName;
-  }
-
-  public void setParentFQName(final String[] parentFQName) {
-    myParentFQName = parentFQName;
-  }
-
   @Nullable
   public RefEntity getRefElement(final RefManager refManager) {
     final RefEntity refElement = refManager.getReference(myType, myFQName);
@@ -120,23 +100,6 @@ public class OfflineProblemDescriptor {
     }
     return refElement;
   }
-
-  @Nullable
-  public OfflineProblemDescriptor getOwner() {
-    if (myParentType != null && myParentFQName != null) {
-      final OfflineProblemDescriptor descriptor = new OfflineProblemDescriptor();
-      descriptor.setLine(myLine);
-      descriptor.setFQName(myParentFQName[0]);
-      descriptor.setType(myParentType[0]);
-      if (myParentType.length > 1 && myParentFQName.length > 1) {
-        descriptor.setParentType(ArrayUtil.remove(myParentType, 0));
-        descriptor.setParentFQName(ArrayUtil.remove(myParentFQName, 0));
-      }
-      return descriptor;
-    }
-    return null;
-  }
-
 
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -150,8 +113,6 @@ public class OfflineProblemDescriptor {
     if (myFQName != null ? !myFQName.equals(that.myFQName) : that.myFQName != null) return false;
     if (myHints != null ? !myHints.equals(that.myHints) : that.myHints != null) return false;
     if (myModuleName != null ? !myModuleName.equals(that.myModuleName) : that.myModuleName != null) return false;
-    if (!Arrays.equals(myParentFQName, that.myParentFQName)) return false;
-    if (!Arrays.equals(myParentType, that.myParentType)) return false;
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
 
     return true;
@@ -165,8 +126,6 @@ public class OfflineProblemDescriptor {
     result = 31 * result + (myHints != null ? myHints.hashCode() : 0);
     result = 31 * result + myProblemIndex;
     result = 31 * result + myLine;
-    result = 31 * result + (myParentType != null ? Arrays.hashCode(myParentType) : 0);
-    result = 31 * result + (myParentFQName != null ? Arrays.hashCode(myParentFQName) : 0);
     result = 31 * result + (myModuleName != null ? myModuleName.hashCode() : 0);
     return result;
   }
