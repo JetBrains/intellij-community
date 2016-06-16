@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,7 @@ import java.util.Set;
 public class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
-  private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
+  private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<>();
 
   private final FormattingDocumentModel               myModel;
   private final FormatTextRanges                      myAffectedRanges;
@@ -61,7 +60,7 @@ public class InitialInfoBuilder {
 
   private final CommonCodeStyleSettings.IndentOptions myOptions;
 
-  private final Stack<State> myStates = new Stack<State>();
+  private final Stack<State> myStates = new Stack<>();
   private WhiteSpace                       myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
   private LeafBlockWrapper                 myPreviousBlock;
@@ -77,8 +76,8 @@ public class InitialInfoBuilder {
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 
-  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
-  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<Alignment, Block>();
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<>();
+  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -482,10 +481,6 @@ public class InitialInfoBuilder {
     return myResult;
   }
 
-  public CompositeBlockWrapper getRootBlockWrapper() {
-    return myRootBlockWrapper;
-  }
-
   public LeafBlockWrapper getFirstTokenBlock() {
     return myFirstTokenBlock;
   }
@@ -577,7 +572,7 @@ public class InitialInfoBuilder {
     
     public Block previousBlock;
     
-    private final List<AbstractBlockWrapper> myWrappedChildren = new ArrayList<AbstractBlockWrapper>();
+    private final List<AbstractBlockWrapper> myWrappedChildren = ContainerUtil.newArrayList();
 
     State(@NotNull Block parentBlock, @NotNull CompositeBlockWrapper wrappedBlock, @Nullable WrapImpl parentBlockWrap,
           boolean readOnly, boolean parentBlockIsRightBlock)
