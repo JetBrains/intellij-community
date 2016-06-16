@@ -1424,18 +1424,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return visitor;
       }
     };
-    enableInspectionTool(tool);
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    enableInspectionTool(tool);
 
     List<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
 
     List<PsiElement> allPsi = CollectHighlightsUtil.getElementsInRange(myFile, 0, myFile.getTextLength());
-    assertEquals(allPsi, visitedElements);
+    assertSameElements(allPsi, visitedElements);
 
     // inside code block modification
-    type("//");
     visitedElements.clear();
+    type("//");
 
     infos = highlightErrors();
     assertEmpty(infos);
@@ -1444,7 +1444,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =
       CollectHighlightsUtil.getElementsInRange(myFile, method.getTextRange().getStartOffset(), method.getTextRange().getEndOffset(), true);
-    assertEquals(methodAndParents, visitedElements);
+    assertSameElements(methodAndParents, visitedElements);
   }
 
   
