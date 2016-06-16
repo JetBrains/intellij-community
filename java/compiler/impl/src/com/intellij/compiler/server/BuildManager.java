@@ -1333,7 +1333,7 @@ public class BuildManager implements Disposable {
   }
 
   private abstract static class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD);
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
     private final Runnable myTaskRunnable = () -> {
       try {
