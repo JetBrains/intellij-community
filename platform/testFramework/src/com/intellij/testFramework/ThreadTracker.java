@@ -82,6 +82,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
     wellKnownOffenders.add("Netty ");
+    wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");

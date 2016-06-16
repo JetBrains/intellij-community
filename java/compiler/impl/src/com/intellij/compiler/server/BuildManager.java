@@ -36,6 +36,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
@@ -90,7 +91,9 @@ import gnu.trove.THashSet;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
@@ -98,6 +101,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.ChannelRegistrar;
 import org.jetbrains.io.NettyKt;
 import org.jetbrains.jps.api.*;
@@ -160,7 +164,7 @@ public class BuildManager implements Disposable {
   private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
-  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
+  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask(this) {
     @Override
     protected int getDelay() {
       return Registry.intValue("compiler.automake.trigger.delay");
@@ -172,7 +176,7 @@ public class BuildManager implements Disposable {
     }
   };
 
-  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
+  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask(this) {
     @Override
     protected int getDelay() {
       return Registry.intValue("compiler.document.save.trigger.delay");
@@ -1293,11 +1297,20 @@ public class BuildManager implements Disposable {
   @NotNull
   private Future<?> stopListening() {
     myListenPort = -1;
-    return myChannelRegistrar.close(true);
+    return myChannelRegistrar.close();
   }
 
   private int startListening() throws Exception {
-    final ServerBootstrap bootstrap = NettyKt.serverBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
+    EventLoopGroup group;
+    BuiltInServer mainServer = StartupUtil.getServer();
+    boolean isOwnEventLoopGroup = !Registry.is("compiler.shared.event.group", false) || mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
+    if (isOwnEventLoopGroup) {
+      group = new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler"));
+    }
+    else {
+      group = mainServer.getEventLoopGroup();
+    }
+    final ServerBootstrap bootstrap = NettyKt.serverBootstrap(group);
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(@NotNull Channel channel) throws Exception {
@@ -1310,7 +1323,7 @@ public class BuildManager implements Disposable {
       }
     });
     Channel serverChannel = bootstrap.bind(InetAddress.getLoopbackAddress(), 0).syncUninterruptibly().channel();
-    myChannelRegistrar.add(serverChannel);
+    myChannelRegistrar.add(serverChannel, isOwnEventLoopGroup);
     return ((InetSocketAddress)serverChannel.localAddress()).getPort();
   }
 
@@ -1337,7 +1350,7 @@ public class BuildManager implements Disposable {
   }
 
   private abstract static class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD);
+    private final Alarm myAlarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
     private final Runnable myTaskRunnable = () -> {
       try {
@@ -1347,6 +1360,10 @@ public class BuildManager implements Disposable {
         myInProgress.set(false);
       }
     };
+
+    protected BuildManagerPeriodicTask(@NotNull Disposable disposable) {
+      myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    }
 
     public final void schedule() {
       cancelPendingExecution();

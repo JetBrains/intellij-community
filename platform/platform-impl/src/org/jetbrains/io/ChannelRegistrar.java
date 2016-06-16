@@ -32,12 +32,14 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
 
   private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+  private boolean isEventLoopGroupOwner;
 
   public boolean isEmpty() {
     return openChannels.isEmpty();
   }
 
-  public void add(@NotNull Channel serverChannel) {
+  public void add(@NotNull Channel serverChannel, boolean isOwnEventLoopGroup) {
+    this.isEventLoopGroupOwner = isOwnEventLoopGroup;
     assert serverChannel instanceof ServerChannel;
     openChannels.add(serverChannel);
   }
@@ -50,12 +52,13 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     super.channelActive(context);
   }
 
-  public void close() {
-    close(true);
+  @NotNull
+  public Future<?> close() {
+    return close(isEventLoopGroupOwner);
   }
 
   @NotNull
-  public Future<?> close(boolean shutdownEventLoopGroup) {
+  private Future<?> close(boolean shutdownEventLoopGroup) {
     EventLoopGroup eventLoopGroup = null;
     if (shutdownEventLoopGroup) {
       for (Channel channel : openChannels) {
