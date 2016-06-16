@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,27 +72,6 @@ public class CourseInfo {
 
   public void setUsername(@Nullable String username) {
     this.username = username;
-  }
-
-  public static class Author {
-    int id;
-    String first_name = "";
-    String last_name = "";
-
-    public Author() {}
-
-    public Author(String firstName, String lastName) {
-      first_name = firstName;
-      last_name = lastName;
-    }
-
-    public String getName() {
-      return StringUtil.join(new String[]{first_name, last_name}, " ");
-    }
-
-    public int getId() {
-      return id;
-    }
   }
 
   public void setName(String name) {

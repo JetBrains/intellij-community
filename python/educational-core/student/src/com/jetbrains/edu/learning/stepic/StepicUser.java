@@ -11,7 +11,7 @@ public class StepicUser {
   private static final Logger LOG = Logger.getInstance(StepicUser.class);
   int id;
   String firstName;
-  String last_name;
+  String lastName;
   String email;
 
   public StepicUser() {
@@ -39,11 +39,11 @@ public class StepicUser {
   }
 
   public String getLastName() {
-    return last_name;
+    return lastName;
   }
 
   public void setLastName(String last_name) {
-    this.last_name = last_name;
+    this.lastName = last_name;
   }
 
   public String getEmail() {
@@ -80,6 +80,6 @@ public class StepicUser {
   }
 
   public String getName() {
-    return StringUtil.join(new String[]{firstName, last_name}, " ");
+    return StringUtil.join(new String[]{firstName, lastName}, " ");
   }
 }

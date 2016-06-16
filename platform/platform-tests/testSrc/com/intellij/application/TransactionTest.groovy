@@ -4,6 +4,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -82,9 +83,7 @@ class TransactionTest extends LightPlatformTestCase {
     def disposable = Disposer.newDisposable('assertWritingProhibited')
     LoggedErrorProcessor.instance.disableStderrDumping(disposable)
     try {
-      app.runWriteAction {
-        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.instance, false, true)
-      }
+      app.runWriteAction { makeRootsChange() }
     }
     catch (AssertionError ignore) {
       writeActionFailed = true
@@ -95,6 +94,10 @@ class TransactionTest extends LightPlatformTestCase {
     if (!writeActionFailed) {
       fail('write action should fail ' + guard.toString())
     }
+  }
+
+  private static makeRootsChange() {
+    ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.instance, false, true)
   }
 
   public void "test parent disposable"() {
@@ -315,6 +318,28 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1']
     assert ModalityState.current() == ModalityState.NON_MODAL
     guard.performUserActivity { app.runWriteAction { log << '2' } }
+    assert log == ['1', '2']
+  }
+
+  public void "test progress created on EDT and run on pooled thread"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      def progress = new ProgressWindow(true, project)
+
+      def process = {
+        log << '1'
+        assert progress.modalityState != ModalityState.NON_MODAL
+        assert guard.getModalityTransaction(progress.modalityState)
+
+        Runnable writeAction = {
+          makeRootsChange()
+          log << '2'
+        }
+        app.invokeLater({ app.runWriteAction(writeAction) }, progress.modalityState)
+      }
+
+      app.executeOnPooledThread { ProgressManager.getInstance().runProcess(process, progress) }.get()
+    }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
 

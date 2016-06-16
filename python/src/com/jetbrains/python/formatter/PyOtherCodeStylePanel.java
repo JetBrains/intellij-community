@@ -39,7 +39,7 @@ import java.awt.event.ItemListener;
 /**
  * @author yole
  */
-public class PyCodeStylePanel extends CodeStyleAbstractPanel {
+public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JPanel myPanel;
   private JBCheckBox myAddTrailingBlankLineCheckbox;
@@ -47,7 +47,7 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
   private ComboBox myDictAlignmentCombo;
   private JPanel myPreviewPanel;
 
-  protected PyCodeStylePanel(CodeStyleSettings settings) {
+  protected PyOtherCodeStylePanel(CodeStyleSettings settings) {
     super(PythonLanguage.getInstance(), null, settings);
     addPanelToWatch(myPanel);
     installPreviewPanel(myPreviewPanel);

@@ -494,18 +494,40 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
     }).cpuBound().attempts(2).assertTiming()
   }
 
+  @CompileStatic
   public void testVeryLongDfaWithComplexGenerics() {
-    IdeaTestUtil.startPerformanceTest("testing dfa", 10000, {
+    def configure = { int i ->
+      myFixture.configureByText "a${i}.groovy", """\
+class TroubleCase$i {
+  private Foo$i<Bar$i> fooBar;
+  private Foo$i<Baz$i> fooBaz;
+
+  private void troubleMethod(boolean b) {
+    def <warning descr="Assignment is not used">icDao</warning> = (b?fooBaz:fooBar);
+    for(Object x: new ArrayList()) {}
+  }
+}
+
+public interface Foo$i<FFIC$i> {}
+public class Bar$i implements Cloneable, Zoo$i<Goo$i, Doo$i, Coo$i, Woo$i> {}
+public interface Zoo$i<AR$i, FR$i, AM$i extends Hoo$i<AR$i>, FM$i extends Hoo$i<FR$i>> {}
+public interface Hoo$i<R$i> {}
+public class Baz$i implements Cloneable, Zoo$i<String,String,Too$i,Yoo$i> {}
+public class Goo$i {}
+public class Too$i implements Hoo$i<String> {}
+public class Coo$i implements Serializable, Cloneable, Hoo$i<Goo$i> {}
+public class Woo$i implements Serializable, Cloneable, Hoo$i<Doo$i> {}
+public class Yoo$i implements Serializable, Cloneable, Hoo$i<String> {}
+public class Doo$i {}
+"""
+    }
+    IdeaTestUtil.startPerformanceTest("testing dfa", 5000, {
       myFixture.checkHighlighting true, false, false
     }).setup({
-      myFixture.enableInspections new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection()
-
-      // warm-up
-      myFixture.configureByText 'a.groovy', 'new Object()'
-      myFixture.checkHighlighting()
-
-      // configure by real data
-      myFixture.configureByFile getTestName(false) + '.groovy'
+      myFixture.enableInspections GroovyAssignabilityCheckInspection, UnusedDefInspection, GrUnusedIncDecInspection
+      configure 1
+      myFixture.checkHighlighting true, false, false
+      configure 2
     }).attempts(1).cpuBound().assertTiming()
   }
 }

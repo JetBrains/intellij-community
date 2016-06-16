@@ -195,6 +195,7 @@ public class EduAdaptiveStepicConnector {
             unsolvedTask.setStepicId(task.getStepicId());
             unsolvedTask.setText(task.getText());
             unsolvedTask.getTestsText().clear();
+            unsolvedTask.setStatus(StudyStatus.Unchecked);
             final Map<String, String> testsText = task.getTestsText();
             for (String testName : testsText.keySet()) {
               unsolvedTask.addTestsTexts(testName, testsText.get(testName));

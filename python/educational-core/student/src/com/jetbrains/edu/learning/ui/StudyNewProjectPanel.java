@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -313,7 +312,7 @@ public class StudyNewProjectPanel {
           myGenerator.myUser = stepicUser;
 
 
-          final List<CourseInfo> courses = myGenerator.getCoursesAsynchronouslyIfNeeded(true);
+          final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
