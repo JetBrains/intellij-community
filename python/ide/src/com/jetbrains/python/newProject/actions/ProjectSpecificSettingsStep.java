@@ -28,7 +28,9 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.PythonSdkChooserCombo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
@@ -46,9 +48,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,20 +117,28 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   protected void registerValidators() {
     super.registerValidators();
     if (myProjectGenerator instanceof PythonProjectGenerator && !((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-      mySdkCombo.getComboBox().addPropertyChangeListener(new PropertyChangeListener() {
+      myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        public void propertyChange(PropertyChangeEvent event) {
+        protected void textChanged(DocumentEvent e) {
+          final String path = myLocationField.getText().trim();
+          ((PythonProjectGenerator)myProjectGenerator).locationChanged(PathUtil.getFileName(path));
+        }
+      });
+      
+      mySdkCombo.getComboBox().addItemListener(e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
           checkValid();
         }
       });
-      final ActionListener listener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          checkValid();
-        }
-      };
-      mySdkCombo.getComboBox().addActionListener(listener);
-      mySdkCombo.addActionListener(listener);
+      UiNotifyConnector.doWhenFirstShown(mySdkCombo, this::checkValid);
+    }
+  }
+  
+  @Override
+  protected void initGeneratorListeners() {
+    super.initGeneratorListeners();
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
+      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(this::checkValid);
     }
   }
 
@@ -276,34 +284,5 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
 
     return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
-  }
-
-  @Override
-  protected void initGeneratorListeners() {
-    super.initGeneratorListeners();
-    if (myProjectGenerator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
-        @Override
-        public void stateChanged() {
-          checkValid();
-        }
-      });
-      
-      myErrorLabel.addMouseListener(((PythonProjectGenerator)myProjectGenerator).getErrorLabelMouseListener());
-    }
-    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        if (myProjectGenerator instanceof PythonProjectGenerator) {
-          String path = myLocationField.getText().trim();
-          path = StringUtil.trimEnd(path, File.separator);
-          int ind = path.lastIndexOf(File.separator);
-          if (ind != -1) {
-            String projectName = path.substring(ind + 1, path.length());
-            ((PythonProjectGenerator)myProjectGenerator).locationChanged(projectName);
-          }
-        }
-      }
-    });
   }
 }
