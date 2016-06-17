@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.newProject.actions;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
@@ -36,10 +37,13 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public class GenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
@@ -50,34 +54,17 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
-
     Sdk sdk = settingsStep.getSdk();
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    if (sdk instanceof PyDetectedSdk) {
-      final String name = sdk.getName();
-      VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        @Override
-        public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
-        }
-      });
-      PySdkService.getInstance().solidifySdk(sdk);
-      sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-      if (sdk != null) {
-        PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
-      }
 
-      model.addSdk(sdk);
-      settingsStep.setSdk(sdk);
-      try {
-        model.apply();
-      }
-      catch (ConfigurationException exception) {
-        LOG.error("Error adding detected python interpreter " + exception.getMessage());
-      }
+    if (sdk instanceof PyDetectedSdk) {
+      addDetectedSdk(settingsStep, sdk);
     }
-    Project newProject = generateProject(project, settingsStep);
+    else if (sdk == null) {
+      createAndAddVirtualEnv(settingsStep);
+    }
+    sdk = settingsStep.getSdk();
+
+    final Project newProject = generateProject(settingsStep);
     if (newProject != null) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
       final List<Sdk> sdks = PythonSdkType.getAllSdks();
@@ -90,12 +77,72 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
     }
   }
 
+  private static void addDetectedSdk(ProjectSpecificSettingsStep settingsStep, Sdk sdk) {
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
+    final String name = sdk.getName();
+    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
+      }
+    });
+    PySdkService.getInstance().solidifySdk(sdk);
+    sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+    if (sdk != null) {
+      PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
+    }
+
+    model.addSdk(sdk);
+    settingsStep.setSdk(sdk);
+    try {
+      model.apply();
+    }
+    catch (ConfigurationException exception) {
+      LOG.error("Error adding detected python interpreter " + exception.getMessage());
+    }
+  }
+
+  private static void createAndAddVirtualEnv(final ProjectSpecificSettingsStep settingsStep) {
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
+    final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
+    String baseSdk = null;
+    for (PythonSdkFlavor flavor : flavors) {
+      final Collection<String> baseSdks = flavor.suggestHomePaths();
+      if (!baseSdks.isEmpty()) {
+        baseSdk = baseSdks.iterator().next();
+      }
+    }
+    if (baseSdk != null) {
+      final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
+      try {
+        final String path = packageManager.createVirtualEnv(settingsStep.getProjectLocation() + "/.idea/VirtualEnvironment", false);
+        AbstractCreateVirtualEnvDialog.setupVirtualEnvSdk(path, true, new AbstractCreateVirtualEnvDialog.VirtualEnvCallback() {
+          @Override
+          public void virtualEnvCreated(Sdk createdSdk, boolean associateWithProject) {
+            settingsStep.setSdk(createdSdk);
+            model.addSdk(createdSdk);
+            try {
+              model.apply();
+            }
+            catch (ConfigurationException exception) {
+              LOG.error("Error adding created virtual env " + exception.getMessage());
+            }
+          }
+        });
+      }
+      catch (ExecutionException e) {
+        LOG.warn("Failed to create virtual env " + e.getMessage());
+      }
+    }
+  }
+
   @Nullable
-  private static Project generateProject(@NotNull final Project project,
-                                         @NotNull final ProjectSettingsStepBase settings) {
+  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
-    return AbstractNewProjectStep.doGenerateProject(project, location, generator,
+    return AbstractNewProjectStep.doGenerateProject(ProjectManager.getInstance().getDefaultProject(), location, generator,
                                                     file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 

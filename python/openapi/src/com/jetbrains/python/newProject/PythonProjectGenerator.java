@@ -67,8 +67,12 @@ public abstract class PythonProjectGenerator {
   }
 
   @Nullable
-  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@NotNull final Sdk sdk) {
+  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable final Sdk sdk) {
     return null;
+  }
+
+  public boolean hideInterpreter() {
+    return false;
   }
 
   public void addErrorLabelMouseListener(@NotNull final MouseListener mouseListener) {

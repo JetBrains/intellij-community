@@ -19,12 +19,8 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.actions.GenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
@@ -76,10 +72,6 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       step.setLocation(projectDir.toString());
       generator.setSelectedCourse(introCourse);
 
-      final Project project = ProjectManager.getInstance().getDefaultProject();
-      final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
-      Sdk sdk = sdks.isEmpty() ? null : sdks.iterator().next();
-      step.setSdk(sdk);
       callback.consume(step);
     }
   }

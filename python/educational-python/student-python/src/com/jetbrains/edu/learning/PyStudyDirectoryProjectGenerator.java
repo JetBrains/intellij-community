@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
@@ -24,6 +23,7 @@ import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -40,6 +40,7 @@ import java.util.List;
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
+  private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
   private StudyNewProjectPanel mySettingsPanel;
 
@@ -115,10 +116,16 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
       LOG.error("Can't copy test_helper.py " + exception.getMessage());
     }
   }
-  
+
   @NotNull
   @Override
   public ValidationResult validate(@NotNull String s) {
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    if (sdks.isEmpty()) {
+      myValidationResult = new ValidationResult(NO_PYTHON_INTERPRETER);
+    }
+
     return myValidationResult;
   }
 
@@ -129,7 +136,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
   @Nullable
   @Override
   public JPanel extendBasePanel() throws ProcessCanceledException {
-    return mySettingsPanel.getContentPanel();
+    return mySettingsPanel;
   }
 
   public List<CourseInfo> getCourses() {
@@ -144,26 +151,25 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     return myGenerator;
   }
 
+  @Override
+  public boolean hideInterpreter() {
+    return true;
+  }
+
   @Nullable
   @Override
-  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@NotNull Sdk sdk) {
-    return new BooleanFunction<PythonProjectGenerator>() {
-      @Override
-      public boolean fun(PythonProjectGenerator generator) {
-        final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
-        final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Boolean, RuntimeException>() {
-            @Override
-            public Boolean compute() throws RuntimeException {
-              ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-              return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
-            }
-          }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
-          
-        }
-        return true;
+  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
+    return generator -> {
+      final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
+      final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+      if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
+        }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
+
       }
+      return true;
     };
   }
 }
