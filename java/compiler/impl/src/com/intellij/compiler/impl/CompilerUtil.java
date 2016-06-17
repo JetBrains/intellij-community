@@ -65,6 +65,10 @@ public class CompilerUtil {
     }
   }
 
+  /**
+   * A lightweight procedure which ensures that given roots exist in the VFS.
+   * No actual refresh is performed.
+   */
   public static void refreshOutputRoots(@NotNull Collection<String> outputRoots) {
     LocalFileSystem fs = LocalFileSystem.getInstance();
     Collection<VirtualFile> toRefresh = ContainerUtil.newHashSet();
