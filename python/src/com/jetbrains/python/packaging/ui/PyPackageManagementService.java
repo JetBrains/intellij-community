@@ -144,7 +144,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
     final List<PyPackage> packages;
     try {
-      packages = Lists.newArrayList(manager.refreshAndGetPackages(false));
+      packages = Lists.newArrayList(manager.refreshAndGetPackages(true));
     }
     catch (ExecutionException e) {
       throw new IOException(e);
