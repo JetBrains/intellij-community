@@ -179,46 +179,37 @@ public class IfStatementWithIdenticalBranchesInspection
       if (thenBranch == null) {
         return;
       }
-      final Project project = ifStatement.getProject();
-      final InputVariables inputVariables = new InputVariables(Collections.emptyList(), project, new LocalSearchScope(thenBranch), false);
-      final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{thenBranch}, inputVariables, null, Collections.emptyList());
       if (elseBranch instanceof PsiIfStatement) {
         final PsiIfStatement statement = (PsiIfStatement)elseBranch;
         final PsiStatement branch = unwrap(statement.getThenBranch());
-        if (branch == null) {
-          return;
-        }
-        final Match match = finder.isDuplicate(branch, true);
-        if (match != null) {
-          final ReturnValue matchReturnValue = match.getReturnValue();
-          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
-              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
-            return;
-          }
-          else if (matchReturnValue instanceof ExpressionReturnValue) {
-            return;
-          }
-          registerStatementError(ifStatement, statement);
-          return;
-        }
-      }
-      if (elseBranch == null) {
-        checkIfStatementWithoutElseBranch(ifStatement);
-      }
-      else {
-        final Match match = finder.isDuplicate(elseBranch, true);
-        if (match != null) {
-          final ReturnValue matchReturnValue = match.getReturnValue();
-          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
-              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
-            return;
-          }
-          else if (matchReturnValue instanceof ExpressionReturnValue) {
-            return;
-          }
+        if (branch != null && isDuplicate(thenBranch, branch)) {
           registerStatementError(ifStatement);
         }
       }
+      else if (elseBranch == null) {
+        checkIfStatementWithoutElseBranch(ifStatement);
+      }
+      else if (isDuplicate(thenBranch, elseBranch)) {
+        registerStatementError(ifStatement);
+      }
+    }
+
+    private boolean isDuplicate(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+      final InputVariables inputVariables =
+        new InputVariables(Collections.emptyList(), element1.getProject(), new LocalSearchScope(element1), false);
+      final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{element1}, inputVariables, null, Collections.emptyList());
+      final Match match = finder.isDuplicate(element2, true);
+      if (match == null) {
+        return false;
+      }
+      final ReturnValue matchReturnValue = match.getReturnValue();
+      if (matchReturnValue instanceof ConditionalReturnStatementValue && !matchReturnValue.isEquivalent(buildReturnValue(element1))) {
+        return false;
+      }
+      else if (matchReturnValue instanceof ExpressionReturnValue) {
+        return false;
+      }
+      return true;
     }
 
     @Nullable
