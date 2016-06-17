@@ -104,7 +104,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if (methodLocation != null) return false;
 
     PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null) return false;
+    if (testClass == null || testClass.getQualifiedName() == null) return false;
 
     if (context.getModule() == null) return false;
 
@@ -116,7 +116,11 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    return scriptParameters.contains(String.format("--tests %s ", testClass.getQualifiedName()));
+    int i = scriptParameters.indexOf("--tests ");
+    if(i == -1) return false;
+
+    String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
+    return str.startsWith(testClass.getQualifiedName() + ' ') && !str.contains("--tests");
   }
 
   @Override

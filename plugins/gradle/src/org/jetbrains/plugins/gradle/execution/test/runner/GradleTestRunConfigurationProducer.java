@@ -69,26 +69,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == GRADLE_TEST_RUNNER;
   }
 
-  @Nullable
-  @Override
-  public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
-    final RunnerAndConfigurationSettings existingConfiguration = super.findExistingConfiguration(context);
-    if (existingConfiguration == null && GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == GRADLE_TEST_RUNNER) {
-      final ConfigurationFromContext createdContext = createConfigurationFromContext(context);
-      if (createdContext != null) {
-        final RunnerAndConfigurationSettings settings = createdContext.getConfigurationSettings();
-        final RunManagerEx manager = RunManagerEx.getInstanceEx(context.getProject());
-        manager.setTemporaryConfiguration(settings);
-        return settings;
-      }
-      else {
-        return null;
-      }
-    }
-
-    return existingConfiguration;
-  }
-
   @Override
   protected boolean setupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
                                                   ConfigurationContext context,
