@@ -266,7 +266,7 @@ public class InspectionEngine {
   }
 
   @Nullable("null means not specified")
-  private static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
+  public static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
     String langId = wrapper.getLanguage();
     if (langId == null) {
       return null;

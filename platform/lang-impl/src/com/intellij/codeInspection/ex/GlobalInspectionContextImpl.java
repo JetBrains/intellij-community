@@ -485,10 +485,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                HighlightInfoProcessor.getEmpty());
     try {
-      final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
+      boolean includeDoNotShow = getCurrentProfile().getSingleTool() != null;
+      final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file, includeDoNotShow);
       pass.doInspectInBatch(this, inspectionManager, lTools);
 
-      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file);
+      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, toolWrapper -> {
         GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
         ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
@@ -710,11 +711,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @NotNull
-  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<Tools> localTools, @NotNull PsiFile file) {
+  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<Tools> localTools,
+                                                                                @NotNull PsiFile file,
+                                                                                boolean includeDoNotShow) {
     final List<T> lTools = new ArrayList<>();
     for (Tools tool : localTools) {
       //noinspection unchecked
-      final T enabledTool = (T)tool.getEnabledTool(file);
+      final T enabledTool = (T)tool.getEnabledTool(file, includeDoNotShow);
       if (enabledTool != null) {
         lTools.add(enabledTool);
       }
@@ -896,6 +899,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       assert tools != null;
       return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
     });
+    boolean includeDoNotShow = profile.getSingleTool() != null;
     scope.accept(new PsiElementVisitor() {
       private int myCount;
       @Override
@@ -905,7 +909,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }
         if (isBinary(file)) return;
         for (final Tools tools : inspectionTools) {
-          final InspectionToolWrapper tool = tools.getEnabledTool(file);
+          final InspectionToolWrapper tool = tools.getEnabledTool(file, includeDoNotShow);
           if (tool instanceof LocalInspectionToolWrapper) {
             lTools.add((LocalInspectionToolWrapper)tool);
             tool.initialize(GlobalInspectionContextImpl.this);

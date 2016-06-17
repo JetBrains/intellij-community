@@ -16,8 +16,10 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -26,7 +28,11 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupAllIntention;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,10 +50,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.IntentionFilterOwner;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -57,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -306,6 +312,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
+    collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, psiElement, offset, intentions);
+
     final int line = hostDocument.getLineNumber(offset);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
     List<RangeHighlighterEx> result = new ArrayList<>();
@@ -322,6 +330,71 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     
     EditorNotificationActions.collectDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
+  }
+
+  /**
+   * Invoked in EDT, each inspection should be fast
+   */
+  private static void collectIntentionsFromDoNotShowLeveledInspections(final Project project,
+                                                                       @NotNull final PsiFile hostFile,
+                                                                       PsiElement psiElement,
+                                                                       final int offset,
+                                                                       @NotNull final IntentionsInfo intentions) {
+    if (psiElement != null) {
+      final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
+      for (InspectionToolWrapper toolWrapper : tools) {
+        if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
+          final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+          if (profile.isToolEnabled(key, hostFile) &&
+              HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
+            intentionTools.add((LocalInspectionToolWrapper)toolWrapper);
+          }
+        }
+      }
+
+      if (!intentionTools.isEmpty()) {
+        final List<PsiElement> elements = new ArrayList<>();
+        PsiElement el = psiElement;
+        while (el != null) {
+          elements.add(el);
+          el = el.getParent();
+        }
+
+        final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
+        for (LocalInspectionToolWrapper toolWrapper : intentionTools) {
+          final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
+          final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+          final String displayName = toolWrapper.getDisplayName();
+          final ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), hostFile, true) {
+            @Override
+            public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
+              super.registerProblem(problemDescriptor);
+              if (problemDescriptor instanceof ProblemDescriptorBase) {
+                final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
+                if (range != null && range.contains(offset)) {
+                  final QuickFix[] fixes = problemDescriptor.getFixes();
+                  if (fixes != null) {
+                    for (int k = 0; k < fixes.length; k++) {
+                      final IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
+                      final HighlightInfo.IntentionActionDescriptor actionDescriptor =
+                        new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
+                                                                    key, null, HighlightSeverity.INFORMATION);
+                      intentions.intentionsToShow.add(actionDescriptor);
+                    }
+                  }
+                }
+              }
+            }
+          };
+          InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements,
+                                                          InspectionEngine.calcElementDialectIds(elements),
+                                                          InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
+          localInspectionTool.inspectionFinished(session, holder);
+        }
+      }
+    }
   }
 }
 

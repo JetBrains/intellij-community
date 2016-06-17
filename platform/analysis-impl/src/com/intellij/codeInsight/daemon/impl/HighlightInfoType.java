@@ -343,9 +343,7 @@ public interface HighlightInfoType {
       InspectionProfile profile = psiElement == null
                                   ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
                                   : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
-      HighlightDisplayLevel level = profile.getErrorLevel(myToolKey, psiElement);
-      LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
-      return level.getSeverity();
+      return profile.getErrorLevel(myToolKey, psiElement).getSeverity();
     }
 
     @Override

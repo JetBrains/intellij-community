@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -76,6 +77,11 @@ public class InspectionProfileWrapper {
 
   public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
     return myProfile.isToolEnabled(key, element);
+  }
+
+  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey,
+                                             PsiElement element) {
+    return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
   public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
