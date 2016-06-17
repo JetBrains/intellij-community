@@ -67,7 +67,8 @@ public class UsageViewPresentation {
     myScopeText = scopeText;
   }
 
-  public @NotNull String getContextText() {
+  @NotNull
+  public String getContextText() {
     return myContextText;
   }
 
