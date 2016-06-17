@@ -35,14 +35,16 @@ import java.util.List;
  */
 @SuppressWarnings("unused")
 public class InternalTestDiscoveryListener implements TestListener, Closeable {
+  private final String myModuleName;
+  private final String myTracesDirectory;
   private List<String> myCompletedMethodNames = new ArrayList<String>();
-  private String myTracesDirectory;
   private final Alarm myProcessTracesAlarm;
   private TestDiscoveryIndex myDiscoveryIndex;
 
   public InternalTestDiscoveryListener() {
     myProcessTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
+    myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
   }
 
   private TestDiscoveryIndex getIndex() {
@@ -89,9 +91,7 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   protected void flushCurrentTraces() {
     final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
     myCompletedMethodNames.clear();
-    myProcessTracesAlarm.addRequest(() -> {
-      TestDiscoveryExtension.processAvailableTraces(fullTestNames, myTracesDirectory, null, getIndex());
-    }, 100);
+    myProcessTracesAlarm.addRequest(() -> TestDiscoveryExtension.processAvailableTraces(fullTestNames, myTracesDirectory, myModuleName, "j", getIndex()), 100);
   }
 
   private static String getMethodName(Test test) {

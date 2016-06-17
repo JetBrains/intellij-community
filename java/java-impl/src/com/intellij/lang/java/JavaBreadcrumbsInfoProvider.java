@@ -25,6 +25,9 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.text.StringUtil.htmlEmphasize;
+import static com.intellij.psi.PsiNameHelper.getShortClassName;
+
 /**
  * @author gregsh
  */
@@ -45,16 +48,35 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   public String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
       PsiType type = DumbService.isDumb(e.getProject()) ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
-      return type == null ? "<lambda>" : "lambda " + PsiNameHelper.getShortClassName(type.getCanonicalText());
+      return type == null ? "<lambda>" : "lambda " + getShortClassName(type.getCanonicalText());
     }
-    return ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
+    String description = ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
+    String suffix = e instanceof PsiParameterListOwner? "()" :
+                    //e instanceof PsiAnonymousClass || e instanceof PsiClassInitializer ? " {}" :
+                    null;
+    return suffix != null ? description + suffix : description;
   }
 
   @Nullable
   @Override
   public String getElementTooltip(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) return getLambdaDescription((PsiLambdaExpression)e);
+    if (e instanceof PsiMethod) return getMethodPresentableText((PsiMethod)e);
     return ElementDescriptionUtil.getElementDescription(e, RefactoringDescriptionLocation.WITH_PARENT);
+  }
+
+  @NotNull
+  private static String getMethodPresentableText(PsiMethod e) {
+    boolean isDumb = DumbService.isDumb(e.getProject());
+    StringBuilder sb = new StringBuilder(e.isConstructor() ? "constructor" : "method");
+    PsiType type = e.getReturnType();
+    if (type != null) {
+      String shortClassName = getShortClassName(type.getCanonicalText(false));
+      sb.append(" ").append(htmlEmphasize(shortClassName));
+    }
+    sb.append(" ").append(htmlEmphasize(e.getName()));
+    appendParameters(e, sb, false, isDumb);
+    return sb.toString();
   }
 
   @NotNull
@@ -63,20 +85,32 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
     StringBuilder sb = new StringBuilder("lambda");
     PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
-      String shortClassName = PsiNameHelper.getShortClassName(functionalInterfaceType.getCanonicalText());
-      sb.append(" ").append(StringUtil.htmlEmphasize(shortClassName));
+      String shortClassName = getShortClassName(functionalInterfaceType.getCanonicalText(false));
+      sb.append(" ").append(htmlEmphasize(shortClassName));
     }
-    PsiParameter[] parameters = e.getParameterList().getParameters();
-    if (parameters.length > 0) {
-      sb.append(" (");
-      for (int i = 0; i < parameters.length; i++) {
-        if (i > 0) sb.append(", ");
-        String str = isDumb ? null : PsiNameHelper.getShortClassName(parameters[i].getType().getCanonicalText());
-        if (StringUtil.isEmpty(str)) str = StringUtil.notNullize(parameters[i].getName());
-        sb.append(StringUtil.htmlEmphasize(str));
-      }
-      sb.append(")");
-    }
+    appendParameters(e, sb, true, isDumb);
     return sb.toString();
+  }
+
+  private static void appendParameters(@NotNull PsiParameterListOwner e, StringBuilder sb, boolean skipIfEmpty, boolean isDumb) {
+    PsiParameter[] parameters = e.getParameterList().getParameters();
+    if (parameters.length == 0 && skipIfEmpty) return;
+    if (skipIfEmpty) sb.append(" ");
+    sb.append("(");
+    for (int i = 0; i < parameters.length; i++) {
+      if (i > 0) sb.append(", ");
+      String typeStr;
+      if (isDumb) {
+        PsiTypeElement typeElement = parameters[i].getTypeElement();
+        typeStr = typeElement == null ? "" : typeElement.getText();
+      }
+      else {
+        typeStr = parameters[i].getType().getCanonicalText(false);
+      }
+      String str = getShortClassName(typeStr);
+      if (StringUtil.isEmpty(str)) str = StringUtil.notNullize(parameters[i].getName());
+      sb.append(htmlEmphasize(str));
+    }
+    sb.append(")");
   }
 }

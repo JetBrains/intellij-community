@@ -31,13 +31,15 @@ import java.util.concurrent.TimeUnit;
 public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
 
-  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE, true);
+  private boolean isEventLoopGroupOwner;
 
   public boolean isEmpty() {
     return openChannels.isEmpty();
   }
 
-  public void add(@NotNull Channel serverChannel) {
+  public void add(@NotNull Channel serverChannel, boolean isOwnEventLoopGroup) {
+    this.isEventLoopGroupOwner = isOwnEventLoopGroup;
     assert serverChannel instanceof ServerChannel;
     openChannels.add(serverChannel);
   }
@@ -50,12 +52,13 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     super.channelActive(context);
   }
 
-  public void close() {
-    close(true);
+  @NotNull
+  public Future<?> close() {
+    return close(isEventLoopGroupOwner);
   }
 
   @NotNull
-  public Future<?> close(boolean shutdownEventLoopGroup) {
+  private Future<?> close(boolean shutdownEventLoopGroup) {
     EventLoopGroup eventLoopGroup = null;
     if (shutdownEventLoopGroup) {
       for (Channel channel : openChannels) {
@@ -68,6 +71,7 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
 
     Future<?> result;
     try {
+      long start = System.currentTimeMillis();
       Object[] channels = openChannels.toArray(new Channel[]{});
       ChannelGroupFuture groupFuture = openChannels.close();
       // server channels are closed in first turn, so, small timeout is relatively ok
@@ -75,6 +79,11 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
         LOG.warn("Cannot close all channels for 10 seconds, channels: " + Arrays.toString(channels));
       }
       result = groupFuture;
+
+      long duration = System.currentTimeMillis() - start;
+      if (duration > 1000) {
+        LOG.info("Close all channels took " + duration + " ms: " + (duration / 60000) + " min " + ((duration % 60000) / 1000) + "sec");
+      }
     }
     finally {
       if (eventLoopGroup != null) {

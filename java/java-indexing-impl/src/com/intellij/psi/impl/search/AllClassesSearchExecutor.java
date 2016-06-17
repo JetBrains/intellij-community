@@ -22,6 +22,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -78,8 +79,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
-      final PsiClass[] classes = MethodUsagesSearcher.resolveInReadAction(project, () -> cache.getClassesByName(name, scope));
-      for (PsiClass psiClass : classes) {
+      for (PsiClass psiClass : DumbService.getInstance(project).runReadActionInSmartMode(() -> cache.getClassesByName(name, scope))) {
         ProgressIndicatorProvider.checkCanceled();
         if (!processor.process(psiClass)) {
           return false;
@@ -92,7 +92,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
-    MethodUsagesSearcher.resolveInReadAction(project, new Computable<Void>() {
+    DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Void>() {
       @Override
       public Void compute() {
         PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {

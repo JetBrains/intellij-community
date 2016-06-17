@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -59,7 +60,7 @@ public class ConstructorReferencesSearchHelper {
     final boolean[] isEnum = new boolean[1];
     final boolean[] isUnder18 = new boolean[1];
 
-    MethodUsagesSearcher.resolveInReadAction(project, new Computable<Void>() {
+    DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Void>() {
       @Override
       public Void compute() {
         constructorCanBeCalledImplicitly[0] = constructor.getParameterList().getParametersCount() == 0;
@@ -103,10 +104,10 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "this(..)"
-    if (!MethodUsagesSearcher.resolveInReadAction(project,
-                                                  () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                                                                                                     isStrictSignatureSearch,
-                                                                                                                     PsiKeyword.THIS, processor))) {
+    if (!DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                               isStrictSignatureSearch,
+                               PsiKeyword.THIS, processor))) {
       return false;
     }
 
@@ -127,7 +128,7 @@ public class ConstructorReferencesSearchHelper {
                                                @NotNull final PsiMethod constructor,
                                                @NotNull final Project project,
                                                @NotNull final PsiClass aClass) {
-    return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+    return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       for (PsiField field : aClass.getFields()) {
         if (field instanceof PsiEnumConstant) {
           PsiReference reference = field.getReference();
@@ -149,7 +150,7 @@ public class ConstructorReferencesSearchHelper {
     return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
       final PsiElement element = reference.getElement();
       if (element != null) {
-        return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+        return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
           final PsiElement parent = element.getParent();
           if (parent instanceof PsiMethodReferenceExpression &&
               ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
@@ -219,7 +220,8 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final Project project,
                                                  @NotNull final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
-    boolean same = MethodUsagesSearcher.resolveInReadAction(project, () -> myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass()));
+    boolean same = DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass()));
     if (!same) {
       return true;
     }

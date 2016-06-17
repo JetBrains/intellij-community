@@ -48,7 +48,16 @@ public interface PsiTypeCodeFragment extends JavaCodeFragment {
   }
 
   class TypeSyntaxException extends IncorrectTypeException {
-    public TypeSyntaxException(final String message) { super(message); }
+    private final int myErrorOffset;
+
+    public TypeSyntaxException(final String message) { this(message, -1); }
+    public TypeSyntaxException(final String message, int errorOffset) { super(message);
+      myErrorOffset = errorOffset;
+    }
+
+    public int getErrorOffset() {
+      return myErrorOffset;
+    }
   }
 
   class NoTypeException extends IncorrectTypeException {

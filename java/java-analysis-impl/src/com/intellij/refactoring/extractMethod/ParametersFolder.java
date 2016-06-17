@@ -83,27 +83,37 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull VariableData data, PsiElement[] elements, SearchScope scope) {
-    if (myDeleted.contains(data.variable)) return;
-    final PsiExpression psiExpression = myExpressions.get(data.variable);
-    if (psiExpression == null) return;
-    final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
-    for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
-      final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
-      if (expression != null && expression.isValid()) {
-        eqExpressions.add(expression);
+  public void foldParameterUsagesInBody(@NotNull List<VariableData> datum, PsiElement[] elements, SearchScope scope) {
+    Map<VariableData, Set<PsiExpression>> equivalentExpressions = new HashMap<>();
+    for (VariableData data : datum) {
+      if (myDeleted.contains(data.variable)) continue;
+      final PsiExpression psiExpression = myExpressions.get(data.variable);
+      if (psiExpression == null) continue;
+
+      final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
+      for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+        final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
+        if (expression != null && expression.isValid()) {
+          eqExpressions.add(expression);
+        }
       }
+
+      equivalentExpressions.put(data, eqExpressions);
     }
 
-    for (PsiExpression expression : eqExpressions) {
-      final PsiExpression refExpression =
-        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.variable.getName(), expression);
-      final PsiElement replaced = expression.replace(refExpression);
-      for (int i = 0, psiElementsLength = elements.length; i < psiElementsLength; i++) {
-        PsiElement psiElement = elements[i];
-        if (expression == psiElement) {
-          elements[i] = replaced;
-          break;
+    for (VariableData data : equivalentExpressions.keySet()) {
+      final Set<PsiExpression> eqExpressions = equivalentExpressions.get(data);
+      for (PsiExpression expression : eqExpressions) {
+        if (!expression.isValid()) continue; //was replaced on previous step
+        final PsiExpression refExpression =
+          JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.name, expression);
+        final PsiElement replaced = expression.replace(refExpression);
+        for (int i = 0, psiElementsLength = elements.length; i < psiElementsLength; i++) {
+          PsiElement psiElement = elements[i];
+          if (expression == psiElement) {
+            elements[i] = replaced;
+            break;
+          }
         }
       }
     }
