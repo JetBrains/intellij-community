@@ -55,7 +55,9 @@ Installation
 Restart IDE.
 
 ### Required IntelliJ Configuration
-In your project: Click Preferences, "Build, Execution, Deployment", Compiler, Annotation Processors. Click Enable Annotation Processing
+In your project: Click Preferences -> "Build, Execution, Deployment" -> "Compiler, Annotation Processors". Click Enable Annotation Processing
+
+Afterwards you might need to do a complete rebuild of your project via Build -> "Rebuild Project".
 
 ### Lombok project dependency
 Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.
