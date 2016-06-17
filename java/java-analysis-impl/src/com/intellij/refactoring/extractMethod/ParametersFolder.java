@@ -41,6 +41,7 @@ import java.util.*;
 
 public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<PsiVariable, PsiExpression>();
+  private final Map<PsiVariable, String> myArgs = new HashMap<>();
   private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<PsiVariable, List<PsiExpression>>();
   private final Set<String> myUsedNames = new HashSet<String>();
 
@@ -84,7 +85,7 @@ public class ParametersFolder {
   }
 
   public void foldParameterUsagesInBody(@NotNull List<VariableData> datum, PsiElement[] elements, SearchScope scope) {
-    Map<VariableData, Set<PsiExpression>> equivalentExpressions = new HashMap<>();
+    Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
     for (VariableData data : datum) {
       if (myDeleted.contains(data.variable)) continue;
       final PsiExpression psiExpression = myExpressions.get(data.variable);
@@ -142,6 +143,7 @@ public class ParametersFolder {
 
     if (mostRanked != null) {
       myExpressions.put(data.variable, mostRanked);
+      myArgs.put(data.variable, mostRanked.getText());
       data.type = RefactoringChangeUtil.getTypeByExpression(mostRanked);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
@@ -293,7 +295,7 @@ public class ParametersFolder {
 
   @NotNull
   public String getGeneratedCallArgument(@NotNull VariableData data) {
-    return myExpressions.containsKey(data.variable) ? myExpressions.get(data.variable).getText() : data.variable.getName();
+    return myArgs.containsKey(data.variable) ? myArgs.get(data.variable) : data.variable.getName();
   }
 
   public boolean annotateWithParameter(@NotNull VariableData data, @NotNull PsiElement element) {

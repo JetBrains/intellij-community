@@ -1,6 +1,6 @@
 class Test {
   void h(int i, String[] s, String[] t) {
-      final String s1 = newMethod(t[i], s[x.length()]);
+      final String s1 = newMethod(t[i], s[t[i].length()]);
     System.out.println(s1);
   }
 
