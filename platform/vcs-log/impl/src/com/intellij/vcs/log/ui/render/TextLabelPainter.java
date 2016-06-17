@@ -24,12 +24,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
 public class TextLabelPainter {
   protected static final int TEXT_PADDING_X = 5;
-  protected static final int TOP_TEXT_PADDING = 2;
-  protected static final int BOTTOM_TEXT_PADDING = 1;
+  public static final int TOP_TEXT_PADDING = 2;
+  public static final int BOTTOM_TEXT_PADDING = 1;
 
   private static final int LABEL_ARC = 5;
 

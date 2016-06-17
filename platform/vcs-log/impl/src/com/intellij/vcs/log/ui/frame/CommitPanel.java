@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.UI;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -36,8 +37,8 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.render.TagIcon;
 import com.intellij.vcs.log.ui.render.TextLabelPainter;
-import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ class CommitPanel extends JBPanel {
     setOpaque(false);
 
     myRootPanel = new RootPanel();
-    myReferencesPanel = new ReferencesPanel(colorManager);
+    myReferencesPanel = new ReferencesPanel();
     myDataPanel = new DataPanel(myLogData.getProject());
 
     JBPanel rootPanel = new JBPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)) {
@@ -90,6 +91,13 @@ class CommitPanel extends JBPanel {
 
     add(rootPanel);
     add(myReferencesPanel);
+    Dimension d = new Dimension(0, JBUI.scale(5));
+    add(new Box.Filler(d, d, d) {
+      @Override
+      public boolean isVisible() {
+        return myReferencesPanel.isVisible();
+      }
+    });
     add(myDataPanel);
 
     setBorder(getDetailsBorder());
@@ -131,6 +139,7 @@ class CommitPanel extends JBPanel {
   public void update() {
     myDataPanel.update();
     myRootPanel.update();
+    myReferencesPanel.update();
   }
 
   public void updateBranches() {
@@ -444,22 +453,30 @@ class CommitPanel extends JBPanel {
 
   private static class ReferencesPanel extends JPanel {
     private static final int H_GAP = 4;
-    private static final int V_GAP = 3;
-    @NotNull private final VcsRefPainter myReferencePainter;
+    private static final int V_GAP = 0;
     @NotNull private List<VcsRef> myReferences;
 
-    ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
+    ReferencesPanel() {
       super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
-      myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);
     }
 
     void setReferences(@NotNull List<VcsRef> references) {
-      removeAll();
       myReferences = references;
-      for (VcsRef reference : references) {
-        add(new SingleReferencePanel(myReferencePainter, reference));
+      update();
+    }
+
+    private void update() {
+      removeAll();
+      int height =
+        getFontMetrics(getCommitDetailsFont()).getHeight() + TextLabelPainter.TOP_TEXT_PADDING + TextLabelPainter.BOTTOM_TEXT_PADDING;
+      for (VcsRef reference : myReferences) {
+        JBLabel label =
+          new JBLabel(reference.getName(), new TagIcon(height, reference.getType().getBackgroundColor()), SwingConstants.LEFT);
+        label.setFont(getCommitDetailsFont());
+        label.setIconTextGap(0);
+        add(label);
       }
       setVisible(!myReferences.isEmpty());
       revalidate();
@@ -536,32 +553,6 @@ class CommitPanel extends JBPanel {
     @Override
     public Dimension getMaximumSize() {
       return getPreferredSize();
-    }
-  }
-
-  private static class SingleReferencePanel extends JPanel {
-    @NotNull private final VcsRefPainter myRefPainter;
-    @NotNull private VcsRef myReference;
-
-    SingleReferencePanel(@NotNull VcsRefPainter referencePainter, @NotNull VcsRef reference) {
-      myRefPainter = referencePainter;
-      myReference = reference;
-      setOpaque(false);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      myRefPainter.paint(myReference, g, 0, 0);
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return myRefPainter.getSize(myReference, this);
     }
   }
 }
