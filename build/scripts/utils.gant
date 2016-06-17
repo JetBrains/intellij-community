@@ -887,9 +887,9 @@ private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.oracle.win", "jdk8u")
-  requireProperty("jdk.win",   "openjdk.1.8")
-  requireProperty("jdk.mac",   "openjdk.1.8")
-  requireProperty("jdk.linux", "openjdk.1.8")
+  requireProperty("jdk.win",   "jbre8")
+  requireProperty("jdk.mac",   "jbre8")
+  requireProperty("jdk.linux", "jbre8")
 
   if (new File("${home}/build/jdk").exists()) {
     def jdkDir = new File("${home}/build/jdk/win")
@@ -898,7 +898,7 @@ private bundledJDK(boolean win64) {
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
     }
     if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
-      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x32.tar.gz")))
+      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
       extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win")
     }
     jdkDir = new File("${home}/build/jdk/mac")
