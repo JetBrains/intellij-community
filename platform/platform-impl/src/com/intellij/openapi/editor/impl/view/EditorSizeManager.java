@@ -265,11 +265,9 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
       maxWidth = Math.max(maxWidth, Math.abs(width));
       iterator.advance();
     }
-    List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.BLOCK);
+    List<Inlay> inlays = myEditor.getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
     for (Inlay inlay : inlays) {
-      if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
-        maxWidth = Math.max(maxWidth, inlay.getWidthInPixels());
-      }
+      maxWidth = Math.max(maxWidth, inlay.getWidthInPixels());
     }
     return maxWidth;
   }
