@@ -908,7 +908,7 @@ private bundledJDK(boolean win64) {
     jdkDir = new File("${home}/build/jdk/linux")
     if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
-      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux")
+      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux/jre")
     }
   }
 }
