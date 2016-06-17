@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -181,9 +182,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    JBList list = new JBList();
-    list.setEmptyText("Nothing selected");
-    return list;
+    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
   }
 
   protected JComponent createLeftComponent() {
