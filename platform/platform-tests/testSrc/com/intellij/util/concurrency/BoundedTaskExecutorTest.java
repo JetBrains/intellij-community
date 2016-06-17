@@ -52,13 +52,14 @@ public class BoundedTaskExecutorTest extends TestCase {
       List<Thread> alive = Thread.getAllStackTraces().keySet().stream()
         .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
         .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
+        .filter(thread -> thread.getStackTrace().length != 0) // there can be RUNNABLE zombies with empty stacktrace
         .collect(Collectors.toList());
 
       long finish = System.currentTimeMillis();
       if (alive.isEmpty()) break;
       if (finish-start > 10000) {
         System.err.println(ThreadDumper.dumpThreadsToString());
-        throw new RuntimeException();
+        throw new RuntimeException(alive.size() +" threads are still alive: "+alive);
       }
     }
   }
@@ -122,7 +123,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
 
     int delay = 1000;
-    Future<?> s1 = executor.submit((Runnable)() -> TimeoutUtil.sleep(delay));
+    Future<?> s1 = executor.submit(() -> TimeoutUtil.sleep(delay));
     Future<Integer> f1 = executor.submit(() -> {
       run.set(true);
       return 42;
@@ -154,7 +155,7 @@ public class BoundedTaskExecutorTest extends TestCase {
         for (int i = 0; i < N; i++) {
           final int finalI = i;
           final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-          futures[i] = executor.submit((Runnable)() -> {
+          futures[i] = executor.submit(() -> {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
