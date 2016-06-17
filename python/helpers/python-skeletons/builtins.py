@@ -250,7 +250,7 @@ def open(name, mode='r', buffering=-1, encoding=None, errors=None, newline=None,
 def ord(c):
     """Return the integer ordinal of a one-character string.
 
-    :type c: str
+    :type c: bytes | str
     :rtype: int
     """
     return 0
