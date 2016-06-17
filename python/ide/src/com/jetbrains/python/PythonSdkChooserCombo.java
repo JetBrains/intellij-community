@@ -72,6 +72,9 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private void showOptions(final Project project) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
+    //noinspection unchecked
+    final JComboBox<Sdk> comboBox = getComboBox();
+    final Sdk oldSelectedSdk = (Sdk)comboBox.getSelectedItem();
     PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), sdk -> {
       if (sdk == null) return;
       final PySdkService sdkService = PySdkService.getInstance();
@@ -87,8 +90,10 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
           LOG.error("Error adding new python interpreter " + e.getMessage());
         }
       }
-      //noinspection unchecked
-      getComboBox().setModel(new CollectionComboBoxModel(interpreterList.getAllPythonSdks(), sdk));
+      final List<Sdk> committedSdks = interpreterList.getAllPythonSdks();
+      final Sdk copiedSdk = interpreterList.getModel().findSdk(sdk.getName());
+      comboBox.setModel(new CollectionComboBoxModel<>(committedSdks, oldSelectedSdk));
+      comboBox.setSelectedItem(copiedSdk);
     }, true);
   }
 
