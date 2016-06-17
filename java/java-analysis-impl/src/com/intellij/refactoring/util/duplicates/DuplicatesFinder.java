@@ -616,12 +616,11 @@ public class DuplicatesFinder {
   }
 
   private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2, PsiElement qualifier2) {
-    final boolean b = Comparing.equal(resolveResult1, resolveResult2);
-    if (b) return b;
+    if (Comparing.equal(resolveResult1, resolveResult2)) return true;
     if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
       final PsiMethod method1 = (PsiMethod)resolveResult1;
       final PsiMethod method2 = (PsiMethod)resolveResult2;
-      if (method1.hasModifierProperty(PsiModifier.STATIC) && !method1.equals(method2)) return false;
+      if (method1.hasModifierProperty(PsiModifier.STATIC)) return false; // static methods don't inherit
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
 
