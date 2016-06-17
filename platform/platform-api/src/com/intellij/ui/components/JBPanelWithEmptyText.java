@@ -35,6 +35,14 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
     }
   };
 
+  public JBPanelWithEmptyText() {
+    super();
+  }
+
+  public JBPanelWithEmptyText(LayoutManager layout) {
+    super(layout);
+  }
+
   @NotNull
   @Override
   public StatusText getEmptyText() {
