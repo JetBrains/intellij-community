@@ -220,7 +220,35 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiExpression getInitializer() {
-    return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+    Object cachedInitializerValue = myCachedInitializerValue;
+    PsiExpression initializer;
+    if (cachedInitializerValue instanceof PsiExpression) {
+      initializer = (PsiExpression)cachedInitializerValue;
+    }
+    else {
+      final PsiFieldStub stub = getStub();
+      if (stub == null) {
+        initializer = (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+      }
+      else {
+        String initializerText = stub.getInitializerText();
+
+        if (StringUtil.isEmpty(initializerText) ||
+            PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
+            PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
+          initializer = (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+        }
+        else {
+          final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+          initializer = parserFacade.createExpressionFromText(initializerText, this);
+        }
+      }
+      if (initializer != null && cachedInitializerValue == null) {
+        myCachedInitializerValue = initializer;
+      }
+    }
+
+    return initializer;
   }
 
   @Override
@@ -259,30 +287,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
 
-    PsiExpression initializer;
-    if (cachedInitializerValue != null) {
-      initializer = (PsiExpression)cachedInitializerValue;
-    }
-    else{
-      final PsiFieldStub stub = getStub();
-      if (stub == null) {
-        initializer = getInitializer();
-        if (initializer == null) return null;
-      }
-      else{
-        String initializerText = stub.getInitializerText();
-        if (StringUtil.isEmpty(initializerText)) return null;
-
-        if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText)) return null;
-        if (PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
-          getNode();
-          return computeConstantValue(visitedVars);
-        }
-
-        final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-        initializer = parserFacade.createExpressionFromText(initializerText, this);
-      }
-    }
+    PsiExpression initializer = getInitializer();
 
     Object result = PsiConstantEvaluationHelperImpl.computeCastTo(initializer, type, visitedVars);
 
