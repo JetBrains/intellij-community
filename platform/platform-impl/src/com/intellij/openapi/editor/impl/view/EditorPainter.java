@@ -164,7 +164,7 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
           paintBackground(g, attributes, getMinX(), y, xEnd);
-          paintSelectionOnSecondSoftWrapLineIfNecessary(g, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
+          paintSelectionOnSecondSoftWrapLineIfNecessary(g, visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
         }
 
         @Override
@@ -179,10 +179,10 @@ class EditorPainter implements TextDrawingCallback {
           int offset = it.getEndOffset();
           SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
           if (softWrap == null) {
-            paintVirtualSelectionIfNecessary(g, virtualSelectionMap, columnStart, x, clip.x + clip.width, y);
+            paintVirtualSelectionIfNecessary(g, visualLine, virtualSelectionMap, columnStart, x, clip.x + clip.width, y);
           }
           else {
-            paintSelectionOnFirstSoftWrapLineIfNecessary(g, columnStart, x, clip.x + clip.width, y, 
+            paintSelectionOnFirstSoftWrapLineIfNecessary(g, visualLine, columnStart, x, clip.x + clip.width, y,
                                                          primarySelectionStart, primarySelectionEnd);
           }
         }
@@ -209,12 +209,12 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintVirtualSelectionIfNecessary(Graphics2D g,
+                                                int visualLine,
                                                 Map<Integer, Couple<Integer>> virtualSelectionMap,
                                                 int columnStart,
                                                 float xStart,
                                                 float xEnd,
                                                 int y) {
-    int visualLine = myView.yToVisualLine(y);
     Couple<Integer> selectionRange = virtualSelectionMap.get(visualLine);
     if (selectionRange == null || selectionRange.second <= columnStart) return;
     float startX = selectionRange.first <= columnStart ? xStart : 
@@ -223,11 +223,9 @@ class EditorPainter implements TextDrawingCallback {
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
 
-  private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics2D g, int columnEnd, float xEnd, int y,
+  private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics2D g, int visualLine, int columnEnd, float xEnd, int y,
                                                              VisualPosition selectionStartPosition, VisualPosition selectionEndPosition) {
-    int visualLine = myView.yToVisualLine(y);
-    
-    if (selectionStartPosition.equals(selectionEndPosition) || 
+    if (selectionStartPosition.equals(selectionEndPosition) ||
         visualLine < selectionStartPosition.line || 
         visualLine > selectionEndPosition.line || 
         visualLine == selectionStartPosition.line && selectionStartPosition.column >= columnEnd) {
@@ -242,11 +240,9 @@ class EditorPainter implements TextDrawingCallback {
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
 
-  private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics2D g, int columnStart, float xStart, float xEnd, int y,
+  private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics2D g, int visualLine, int columnStart, float xStart, float xEnd, int y,
                                                             VisualPosition selectionStartPosition, VisualPosition selectionEndPosition) {
-    int visualLine = myView.yToVisualLine(y);
-
-    if (selectionStartPosition.equals(selectionEndPosition) || 
+    if (selectionStartPosition.equals(selectionEndPosition) ||
         visualLine < selectionStartPosition.line || 
         visualLine > selectionEndPosition.line || 
         visualLine == selectionEndPosition.line && selectionEndPosition.column <= columnStart) {

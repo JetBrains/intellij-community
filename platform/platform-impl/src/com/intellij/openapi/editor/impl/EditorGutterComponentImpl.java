@@ -296,6 +296,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return;
       }
 
+      int startVisualLine = myEditor.yToVisibleLine(clip.y);
+      int endVisualLine = myEditor.yToVisibleLine(clip.y + clip.height);
+
       // paint all backgrounds
       int gutterSeparatorX = getWhitespaceSeparatorOffset();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
@@ -309,11 +312,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (!UIUtil.isRetina()) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
-        paintAnnotations(g, clip);
+        paintAnnotations(g, startVisualLine, endVisualLine);
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
         paintFoldingLines(g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
-        paintLineNumbers(g, clip);
+        paintLineNumbers(g, startVisualLine, endVisualLine);
       }
       finally {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -409,7 +412,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void paintAnnotations(Graphics2D g, Rectangle clip) {
+  private void paintAnnotations(Graphics2D g, int startVisualLine, int endVisualLine) {
     int x = getAnnotationsAreaOffset();
     int w = getAnnotationsAreaWidthEx();
 
@@ -425,18 +428,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
 
         int lineHeight = myEditor.getLineHeight();
-        int startLineNumber = myEditor.yToVisibleLine(clip.y);
-        int endLineNumber = myEditor.yToVisibleLine(clip.y + clip.height) + 1;
-        int lastLine = myEditor.logicalToVisualPosition(
-          new LogicalPosition(endLineNumber(), 0))
-          .line;
-        endLineNumber = Math.min(endLineNumber, lastLine + 1);
-        if (startLineNumber >= endLineNumber) {
+        int lastLine = myEditor.logicalToVisualPosition(new LogicalPosition(endLineNumber(), 0)).line;
+        endVisualLine = Math.min(endVisualLine, lastLine);
+        if (startVisualLine > endVisualLine) {
           break;
         }
 
         int annotationSize = myTextAnnotationGutterSizes.get(i);
-        for (int j = startLineNumber; j < endLineNumber; j++) {
+        for (int j = startVisualLine; j <= endVisualLine; j++) {
           int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
           String s = gutterProvider.getLineText(logLine, myEditor);
           final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
@@ -496,12 +495,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void paintLineNumbers(Graphics2D g, Rectangle clip) {
+  private void paintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine) {
     if (isLineNumbersShown()) {
       int offset = getLineNumberAreaOffset() + myLineNumberAreaWidth;
-      doPaintLineNumbers(g, clip, offset, myLineNumberConvertor);
+      doPaintLineNumbers(g, startVisualLine, endVisualLine, offset, myLineNumberConvertor);
       if (myAdditionalLineNumberConvertor != null) {
-        doPaintLineNumbers(g, clip, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth), myAdditionalLineNumberConvertor);
+        doPaintLineNumbers(g, startVisualLine, endVisualLine, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth), myAdditionalLineNumberConvertor);
       }
     }
   }
@@ -525,14 +524,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getFontMetrics(getFontForLineNumbers()).stringWidth(Integer.toString(maxLineNumber + 1));
   }
 
-  private void doPaintLineNumbers(Graphics2D g, Rectangle clip, int offset, @NotNull TIntFunction convertor) {
-    int startLineNumber = myEditor.yToVisibleLine(clip.y);
-    int endLineNumber = myEditor.yToVisibleLine(clip.y + clip.height) + 1;
+  private void doPaintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine, int offset, @NotNull TIntFunction convertor) {
     int lastLine = myEditor.logicalToVisualPosition(
       new LogicalPosition(endLineNumber(), 0))
       .line;
-    endLineNumber = Math.min(endLineNumber, lastLine + 1);
-    if (startLineNumber >= endLineNumber) {
+    endVisualLine = Math.min(endVisualLine, lastLine);
+    if (startVisualLine > endVisualLine) {
       return;
     }
 
@@ -543,7 +540,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
-      for (int i = startLineNumber; i < endLineNumber; i++) {
+      for (int i = startVisualLine; i <= endVisualLine; i++) {
         LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
         if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) > 0) {
           continue;
