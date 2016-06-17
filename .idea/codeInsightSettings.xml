@@ -4,6 +4,7 @@
     <excluded-names>
       <name>android</name>
       <name>com.google.android</name>
+      <name>com.google.api.client.repackaged</name>
       <name>com.sun</name>
       <name>java.awt.List</name>
     </excluded-names>
