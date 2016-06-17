@@ -23,8 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -103,7 +102,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   }
 
   public Sdk getSdk() {
+    if (!(myProjectGenerator instanceof PythonProjectGenerator)) return null;
     if (mySdk != null) return mySdk;
+    if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) return null;
     return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
   }
 
@@ -118,7 +119,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   @Override
   protected void registerValidators() {
     super.registerValidators();
-    if (myProjectGenerator instanceof PythonProjectGenerator) {
+    if (myProjectGenerator instanceof PythonProjectGenerator && !((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
       mySdkCombo.getComboBox().addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent event) {
@@ -136,13 +137,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     }
   }
 
-  @Nullable
-  protected JPanel extendBasePanel() {
-    if (myProjectGenerator instanceof PythonProjectGenerator)
-      return ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
-    return null;
-  }
-
   @Override
   public boolean checkValid() {
     myInstallFramework = false;
@@ -150,11 +144,12 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       return false;
     }
 
-    if ((myProjectGenerator instanceof PythonProjectGenerator)) {
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
       final Sdk sdk = getSdk();
-
       if (sdk == null) {
-        setErrorText("No Python interpreter selected");
+        if (!((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
+          setErrorText("No Python interpreter selected");
+        }
         return false;
       }
       else if (PythonSdkType.isInvalid(sdk)) {
@@ -213,39 +208,81 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
   @Override
   protected JPanel createBasePanel() {
-    final JPanel panel = super.createBasePanel();
-
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      final Project project = ProjectManager.getInstance().getDefaultProject();
-      final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
-      VirtualEnvProjectFilter.removeAllAssociated(sdks);
-      Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
-      DirectoryProjectGenerator generator = getProjectGenerator();
-      if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-        if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
-          Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
-          if (python2Sdk != null) {
-            compatibleSdk = python2Sdk;
-          }
-        }
+      final BorderLayout layout = new BorderLayout();
+
+      final JPanel locationPanel = new JPanel(layout);
+
+      final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
+      final LabeledComponent<TextFieldWithBrowseButton> location = createLocationComponent();
+      location.setLabelLocation(BorderLayout.WEST);
+
+      locationPanel.add(location, BorderLayout.CENTER);
+      panel.add(locationPanel);
+      if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
+        addInterpreterButton(locationPanel, location);
+      }
+      else {
+        final LabeledComponent<PythonSdkChooserCombo> labeled = createInterpreterCombo();
+        UIUtil.mergeComponentsWithAnchor(labeled, location);
+        panel.add(labeled);
       }
 
-      final Sdk preferred = compatibleSdk;
-      mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
-      mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
-
-      final LabeledComponent<PythonSdkChooserCombo> labeled = LabeledComponent.create(mySdkCombo, "Interpreter");
-      labeled.setLabelLocation(BorderLayout.WEST);
-      UIUtil.mergeComponentsWithAnchor(labeled, (PanelWithAnchor)panel.getComponent(0));
-      panel.add(labeled);
+      final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
+      if (basePanelExtension != null) {
+        UIUtil.mergeComponentsWithAnchor((PanelWithAnchor)basePanelExtension, location);
+        panel.add(basePanelExtension);
+      }
+      return panel;
     }
 
-    final JPanel basePanelExtension = extendBasePanel();
-    if (basePanelExtension != null) {
-      panel.add(basePanelExtension);
+    return super.createBasePanel();
+  }
+
+  private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
+    final JButton interpreterButton = new FixedSizeButton(location);
+    interpreterButton.setIcon(PythonIcons.Python.Python);
+    interpreterButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final DialogBuilder builder = new DialogBuilder();
+        final JPanel panel = new JPanel();
+        final LabeledComponent<PythonSdkChooserCombo> interpreterCombo = createInterpreterCombo();
+        if (mySdk != null) {
+          mySdkCombo.getComboBox().setSelectedItem(mySdk);
+        }
+        panel.add(interpreterCombo);
+        builder.setCenterPanel(panel);
+        builder.setTitle("Select Python Interpreter");
+        if (builder.showAndGet()) {
+          mySdk = (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+        }
+      }
+    });
+    locationPanel.add(interpreterButton, BorderLayout.EAST);
+  }
+
+  @NotNull
+  private LabeledComponent<PythonSdkChooserCombo> createInterpreterCombo() {
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    VirtualEnvProjectFilter.removeAllAssociated(sdks);
+    Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
+    DirectoryProjectGenerator generator = getProjectGenerator();
+    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
+      if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
+        Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
+        if (python2Sdk != null) {
+          compatibleSdk = python2Sdk;
+        }
+      }
     }
 
-    return panel;
+    final Sdk preferred = compatibleSdk;
+    mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
+    mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+
+    return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
   }
 
   @Override
