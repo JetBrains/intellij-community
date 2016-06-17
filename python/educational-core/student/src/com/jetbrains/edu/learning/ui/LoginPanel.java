@@ -1,10 +1,10 @@
 package com.jetbrains.edu.learning.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.edu.learning.stepic.LoginDialog;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -13,34 +13,23 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class StudyAddRemoteCourse {
+public class LoginPanel {
   
   private JPanel myContentPanel;
   private JPasswordField myPasswordField;
   private JTextField myLoginField;
-  private JBLabel myErrorLabel;
   private JBLabel mySignUpLabel;
 
-  public StudyAddRemoteCourse() {
-    myErrorLabel.setText("");
-    final DocumentListener documentListener = new DocumentListener() {
+  public LoginPanel(final LoginDialog dialog) {
+    DocumentListener listener = new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        myErrorLabel.setText("");
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        myErrorLabel.setText("");
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
-        myErrorLabel.setText("");
+      protected void textChanged(DocumentEvent e) {
+        dialog.clearErrors();
       }
     };
-    myLoginField.getDocument().addDocumentListener(documentListener);
-    myPasswordField.getDocument().addDocumentListener(documentListener);
+    
+    myLoginField.getDocument().addDocumentListener(listener);
+    myPasswordField.getDocument().addDocumentListener(listener);
     
     mySignUpLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -76,8 +65,7 @@ public class StudyAddRemoteCourse {
     return myLoginField.getText();
   }
 
-  public void setError(@NotNull final String errorMessage) {
-    myErrorLabel.setForeground(JBColor.RED);
-    myErrorLabel.setText(errorMessage);
+  public JComponent getPreferableFocusComponent() {
+    return myLoginField;
   }
 }
