@@ -1777,7 +1777,7 @@
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
-    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
+    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>
