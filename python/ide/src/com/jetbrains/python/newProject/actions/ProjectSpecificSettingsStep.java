@@ -230,7 +230,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
       final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
-        UIUtil.mergeComponentsWithAnchor((PanelWithAnchor)basePanelExtension, location);
+        if (basePanelExtension instanceof PanelWithAnchor) {
+          UIUtil.mergeComponentsWithAnchor((PanelWithAnchor)basePanelExtension, location);
+        }
         panel.add(basePanelExtension);
       }
       return panel;
