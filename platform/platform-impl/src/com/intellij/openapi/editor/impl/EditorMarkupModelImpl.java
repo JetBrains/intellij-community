@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -1284,8 +1285,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 int hEndOffset = ex.getAffectedAreaEndOffset();
                 Object tooltip = ex.getErrorStripeTooltip();
                 if (tooltip == null) continue;
-                String s = String.valueOf(tooltip);
-                if (s.isEmpty()) continue;
+                String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
+                if (StringUtil.isEmpty(s)) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
                 s = StringUtil.unescapeXml(s);
 
