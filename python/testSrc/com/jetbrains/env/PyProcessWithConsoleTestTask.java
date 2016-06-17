@@ -109,8 +109,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
         processHandlerRef.set(null);
+        LOG.warn(String.format("Releasing lock on thread %s", Thread.currentThread()));
         processFinishedSemaphore.release();
-        LOG.info(String.format("Thread finished %s", Thread.currentThread()));
+        LOG.warn(String.format("Thread finished %s", Thread.currentThread()));
       }
 
       @Override
