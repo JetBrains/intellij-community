@@ -719,6 +719,17 @@ public class HighlightMethodUtil {
                                                    PsiExpressionList list,
                                                    PsiResolveHelper resolveHelper) {
     TextRange fixRange = getFixRange(methodCall);
+    final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
+    if (qualifierExpression instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+      if (resolve instanceof PsiClass &&
+          ((PsiClass)resolve).getContainingClass() != null &&
+          !((PsiClass)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo,
+                                              QUICK_FIX_FACTORY.createModifierListFix((PsiClass)resolve, PsiModifier.STATIC, true, false));
+      }
+    }
+
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateMethodFromUsageFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateAbstractMethodFromUsageFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateConstructorFromSuperFix(methodCall));
