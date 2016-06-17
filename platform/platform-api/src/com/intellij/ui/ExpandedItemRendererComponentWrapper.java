@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -50,37 +51,55 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
-      return new MyAccessibleComponent(rendererComponent, (Accessible)rendererComponent);
+      return new MyComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
-  private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
+  private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
     private Accessible myAccessible;
-    MyAccessibleComponent(@NotNull Component comp, @NotNull Accessible accessible) {
+    private AccessibleContext myDefaultAccessibleContext;
+
+    MyComponent(@NotNull Component comp, @NotNull Accessible accessible) {
       super(comp);
       myAccessible = accessible;
     }
+
     @Override
     public AccessibleContext getAccessibleContext() {
-      AccessibleContext result = myAccessible.getAccessibleContext();
-      // Since we implement a special case, i.e. returning our child (myAccessible)'s AccessibleContext as
-      // our own AccessibleContext, we need to fix up the parent chain so that the getAccessibleParent returns
-      // our parent. This is so that the Access Bridge does not run into an infinite loop when calling
-      // "getAccessibleParent" to find the root window of an accessible context.
-      //
-      // Note that if we had available a full facade implementation of AccessibleContext, another option (maybe cleaner)
-      // would be to return our own AccessibleContext implementation that would delegate most calls to
-      // myAccessible's AccessibleContext.
-      if (result != null) {
-        Container parent = getParent();
-        if (parent instanceof Accessible) {
-          result.setAccessibleParent((Accessible)parent);
-        } else {
-          result.setAccessibleParent(null);
-        }
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleMyComponent();
       }
-      return accessibleContext = result;
+      return accessibleContext;
+    }
+
+    public AccessibleContext getDefaultAccessibleContext() {
+      if (myDefaultAccessibleContext == null) {
+        myDefaultAccessibleContext = new AccessibleJComponent() {};
+      }
+      return myDefaultAccessibleContext;
+    }
+
+    /**
+     * Wraps the accessible context of {@link #myAccessible}, except for parent, which
+     * needs to come from the default implementation to avoid infinite parent/child cycle.
+     */
+    protected class AccessibleMyComponent extends AbstractAccessibleContextDelegate {
+      @NotNull
+      @Override
+      protected AccessibleContext getDelegate() {
+        return myAccessible.getAccessibleContext();
+      }
+
+      @Override
+      public Accessible getAccessibleParent() {
+        return getDefaultAccessibleContext().getAccessibleParent();
+      }
+
+      @Override
+      public int getAccessibleIndexInParent() {
+        return getDefaultAccessibleContext().getAccessibleIndexInParent();
+      }
     }
   }
 
