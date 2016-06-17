@@ -530,7 +530,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
            ", document changed: " + isDocumentChanged +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
            ", current caret: " + myCurrentCaret +
-           ", all carets: " + ContainerUtil.map(myCarets, caret -> caret.dumpState()) + "]";
+           ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

@@ -37,8 +37,12 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void tearDown() throws Exception {
-    EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
-    super.tearDown();
+    try {
+      EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testCaretAddingAndRemoval() throws Exception {
