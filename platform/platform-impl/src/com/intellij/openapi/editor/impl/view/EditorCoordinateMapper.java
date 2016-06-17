@@ -49,32 +49,70 @@ class EditorCoordinateMapper {
   }
 
   int visualLineToY(int line) {
-    if (line < 0) line = 0;
-    int limitOffset = line >= myView.getEditor().getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
-    List<Inlay> inlays = myView.getEditor().getInlayModel().getElementsInRange(0, limitOffset, Inlay.Type.BLOCK);
-    int y = myView.getInsets().top + line * myView.getLineHeight();
-    for (Inlay inlay : inlays) {
-      if (!myFoldingModel.isOffsetCollapsed(inlay.getOffset())) y += inlay.getHeightInPixels();
+    int y = myView.getInsets().top;
+    if (line <= 0) return y;
+    y += line * myView.getLineHeight();
+
+    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
+    int from = 0;
+    int to = inlays.size() - 1;
+    while (from <= to) {
+      int cur = (from + to) >>> 1;
+      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset(), false);
+      if (curVisualLine < line)
+        from = cur + 1;
+      else if (curVisualLine > line)
+        to = cur - 1;
+      else {
+        while (cur > 0 && offsetToVisualLine(inlays.get(cur - 1).getOffset(), false) == line) cur--;
+        from = cur;
+        break;
+      }
+    }
+    for (int i = 0; i < from; i++) {
+      y += inlays.get(i).getHeightInPixels();
     }
     return y;
   }
 
   int yToVisualLine(int y) {
     y = Math.max(0, y - myView.getInsets().top);
-    VisualLinesIterator it = new VisualLinesIterator(myView, 0);
-    while (!it.atEnd()) {
-      y -= myView.getEditor().getLineHeight();
-      int startOffset = it.getVisualLineStartOffset();
-      int endOffset = it.getVisualLineEndOffset();
-      if (myView.getEditor().getSoftWrapModel().getSoftWrap(endOffset) == null) endOffset++;
-      List<Inlay> inlays = myView.getEditor().getInlayModel().getElementsInRange(startOffset, endOffset, Inlay.Type.BLOCK);
-      for (Inlay inlay : inlays) {
-        if (!myFoldingModel.isOffsetCollapsed(inlay.getOffset())) y -= inlay.getHeightInPixels();
-      }
-      if (y < 0) return it.getVisualLine();
-      it.advance();
+    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
+    int[] cumulativeHeights = new int[inlays.size()];
+    int sum = 0;
+    for (int i = 0; i < cumulativeHeights.length; i++) {
+      cumulativeHeights[i] = (sum += inlays.get(i).getHeightInPixels());
     }
-    return myView.getEditor().getVisibleLineCount() + y / myView.getLineHeight();
+    int from = 0;
+    int to = cumulativeHeights.length - 1;
+    int lineHeight = myView.getLineHeight();
+    while (from <= to) {
+      int cur = (from + to) >>> 1;
+      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset(), false);
+
+      int curStart = cur;
+      while (curStart > 0 && offsetToVisualLine(inlays.get(curStart - 1).getOffset(), false) == curVisualLine) {
+        curStart--;
+      }
+      int curStartY = curVisualLine * lineHeight + (curStart > 0 ? cumulativeHeights[curStart - 1] : 0);
+      if (y < curStartY) {
+        to = curStart - 1;
+        continue;
+      }
+
+      int curEnd = cur;
+      while (curEnd < cumulativeHeights.length - 1 && offsetToVisualLine(inlays.get(curEnd + 1).getOffset(), false) == curVisualLine) {
+        curEnd++;
+      }
+      int curEndY = (curVisualLine + 1) * lineHeight + cumulativeHeights[curEnd];
+      if (y > curEndY) {
+        from = curEnd + 1;
+        continue;
+      }
+
+      return curVisualLine;
+    }
+    return (y - (from > 0 ? cumulativeHeights[from - 1] : 0)) / lineHeight;
   }
 
   @NotNull

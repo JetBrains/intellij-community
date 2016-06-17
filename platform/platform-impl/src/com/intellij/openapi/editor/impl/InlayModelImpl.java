@@ -87,6 +87,19 @@ public class InlayModelImpl implements InlayModel, Disposable {
     return result;
   }
 
+  @NotNull
+  @Override
+  public List<Inlay> getVisibleElements(@NotNull Inlay.Type type) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Inlay> result = new ArrayList<>();
+    myInlayTree.process(inlay -> {
+      if (inlay.getType() == type && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) result.add(inlay);
+      return true;
+    });
+    Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
+    return result;
+  }
+
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);

@@ -30,6 +30,9 @@ public interface InlayModel {
   @NotNull
   List<Inlay> getElementsInRange(int startOffset, int endOffset, @NotNull Inlay.Type type);
 
+  @NotNull
+  List<Inlay> getVisibleElements(@NotNull Inlay.Type type);
+
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
   interface Listener extends EventListener {
