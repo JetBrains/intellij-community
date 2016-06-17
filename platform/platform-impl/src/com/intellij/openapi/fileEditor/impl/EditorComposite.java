@@ -40,13 +40,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -490,10 +490,9 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher.install(myComponent);
   }
 
-  private static class TopBottomPanel extends JPanel {
+  private static class TopBottomPanel extends JBPanelWithEmptyText {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      setName("editor-part");
     }
 
     @Override
@@ -502,10 +501,6 @@ public abstract class EditorComposite implements Disposable {
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
 
-    @Override
-    protected Graphics getComponentGraphics(Graphics graphics) {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-    }
   }
 
   @NotNull
