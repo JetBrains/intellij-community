@@ -132,7 +132,7 @@ public class ChangeListChooserPanel extends JPanel {
     }
   }
 
-  private void updateEnabledItems() {
+  public void updateEnabled() {
     if (myProject != null) {
       myListPanel.nameChangedImpl(myProject, null);
     }
@@ -170,7 +170,7 @@ public class ChangeListChooserPanel extends JPanel {
       myExistingListsCombo.setSelectedItem(defaultSelection.getName());
     }
     updateDescription();
-    updateEnabledItems();
+    updateEnabled();
   }
 
   private void updateDescription() {
