@@ -418,4 +418,19 @@ public class StepicWrappers {
       this.step = step;
     }
   }
+  
+  static class Enrollment {
+    String course;
+
+    public Enrollment(String courseId) {
+      course = courseId;
+    }
+  }
+  static class EnrollmentWrapper {
+    Enrollment enrollment;
+
+    public EnrollmentWrapper(@NotNull final String courseId) {
+      enrollment = new Enrollment(courseId);
+    }
+  }
 }

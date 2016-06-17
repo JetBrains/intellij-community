@@ -44,6 +44,7 @@ import java.util.List;
  */
 public class StudyNewProjectPanel {
   private static final Logger LOG = Logger.getInstance(StudyNewProjectPanel.class);
+  private final String LOGIN_TO_STEPIC = "Login to Stepic";
   private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JButton myBrowseButton;
   private JComboBox<CourseInfo> myCoursesComboBox;
@@ -58,6 +59,7 @@ public class StudyNewProjectPanel {
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
   private boolean isComboboxInitialized;
+  private String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepic</u> to open the adaptive course </html>";;
 
   public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     myGenerator = generator;
@@ -95,7 +97,13 @@ public class StudyNewProjectPanel {
       myDescriptionLabel.setEditable(false);
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
-      setOK();
+      
+      if (selectedCourse.isAdaptive() && !myGenerator.isLoggedIn()) {
+        setError(LOGIN_TO_STEPIC_MESSAGE);
+      }
+      else {
+        setOK();
+      }
     }
   }
 
@@ -115,7 +123,7 @@ public class StudyNewProjectPanel {
     };
     myBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", "Load private courses") {
+        final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", LOGIN_TO_STEPIC) {
           @Override
           public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
             return doFinalStep(() -> {
@@ -145,9 +153,8 @@ public class StudyNewProjectPanel {
                                          }
                                        });
               }
-              else if ("Load private courses".equals(selectedValue)) {
-                final AddRemoteDialog dialog = new AddRemoteDialog();
-                dialog.show();
+              else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
+                showLoginDialog();
               }
             });
           }
@@ -156,6 +163,11 @@ public class StudyNewProjectPanel {
         popup.showInScreenCoordinates(myBrowseButton, myBrowseButton.getLocationOnScreen());
       }
     });
+  }
+
+  public void showLoginDialog() {
+    final AddRemoteDialog dialog = new AddRemoteDialog();
+    dialog.show();
   }
 
   private void initListeners() {
@@ -220,15 +232,7 @@ public class StudyNewProjectPanel {
 
   private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
     for (CourseInfo courseInfo : courses) {
-      if (!courseInfo.isAdaptive()) {
-        myCoursesComboBox.addItem(courseInfo);
-      }
-      else {
-        final boolean isLoggedIn = myGenerator.myUser != null;
-        if (isLoggedIn) {
-          myCoursesComboBox.addItem(courseInfo);
-        }
-      }
+      myCoursesComboBox.addItem(courseInfo);
     }
   }
 
@@ -254,11 +258,17 @@ public class StudyNewProjectPanel {
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
+
       setOK();
+      if (selectedCourse.isAdaptive()) {
+        if(!myGenerator.isLoggedIn()) {
+          setError(LOGIN_TO_STEPIC_MESSAGE);
+        }
+      }
     }
   }
 
-  public JComboBox getCoursesComboBox() {
+  public JComboBox<CourseInfo> getCoursesComboBox() {
     return myCoursesComboBox;
   }
 
@@ -310,7 +320,7 @@ public class StudyNewProjectPanel {
           stepicUser.setEmail(myRemoteCourse.getLogin());
           stepicUser.setPassword(myRemoteCourse.getPassword());
           myGenerator.myUser = stepicUser;
-
+          myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
 
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null) {

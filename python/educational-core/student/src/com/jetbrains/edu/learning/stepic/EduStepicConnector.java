@@ -27,6 +27,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -45,6 +46,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -73,6 +76,26 @@ public class EduStepicConnector {
       }
     }
     return null;
+  }
+  
+  @NotNull
+  public static List<Integer> getEnrolledCoursesIds() {
+    try {
+      final URI enrolledCoursesUri = new URIBuilder(EduStepicNames.COURSES).addParameter("enrolled", "true").build();
+      final List<CourseInfo> courses = getFromStepic(enrolledCoursesUri.toString(), StepicWrappers.CoursesContainer.class).courses;
+      final ArrayList<Integer> ids = new ArrayList<>();
+      for (CourseInfo course : courses) {
+        ids.add(course.getId());
+      }
+      return ids;
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    catch (URISyntaxException e) {
+      LOG.warn(e.getMessage());
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -203,7 +226,7 @@ public class EduStepicConnector {
     if (ourClient == null) {
       initializeClient();
     }
-    setHeaders(request, "application/json");
+    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
@@ -223,6 +246,25 @@ public class EduStepicConnector {
       initializeClient();
     }
     return ourClient;
+  }
+
+  public static boolean enrollToCourse(final int courseId) {
+    HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ENROLLMENTS);
+    try {
+      final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
+      post.setEntity(new StringEntity(new GsonBuilder().create().toJson(enrollment)));
+      setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+      if (ourClient == null) {
+        initializeClient();
+      }
+      CloseableHttpResponse response = ourClient.execute(post);
+      StatusLine line = response.getStatusLine();
+      return line.getStatusCode() == HttpStatus.SC_CREATED;
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    return false;
   }
 
   @NotNull

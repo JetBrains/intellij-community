@@ -117,4 +117,12 @@ public class CourseInfo {
   public void setPublic(boolean aPublic) {
     isPublic = aPublic;
   }
+
+  public int getId() {
+    return id;
+  }
+
+  public void setId(int id) {
+    this.id = id;
+  }
 }
