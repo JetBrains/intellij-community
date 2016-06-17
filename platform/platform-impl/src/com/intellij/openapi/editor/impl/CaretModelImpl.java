@@ -402,8 +402,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
     if (keepPrimary != getPrimaryCaret()) {
-      myCarets.remove(keepPrimary);
-      myCarets.add(keepPrimary);
+      synchronized (myCarets) {
+        myCarets.remove(keepPrimary);
+        myCarets.add(keepPrimary);
+      }
     }
   }
 
