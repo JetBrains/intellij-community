@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -41,7 +42,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 
@@ -57,10 +61,24 @@ public class StudyProjectGenerator {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
+  private List<Integer> myEnrolledCoursesIds = new ArrayList<>(); 
   protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
+  }
+
+  public boolean isLoggedIn() {
+    return myUser != null && !StringUtil.isEmptyOrSpaces(myUser.getPassword()) && !StringUtil.isEmptyOrSpaces(myUser.getEmail());
+  }
+  
+  public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
+    myEnrolledCoursesIds = coursesIds;
+  }
+
+  @NotNull
+  public List<Integer> getEnrolledCoursesIds() {
+    return myEnrolledCoursesIds;
   }
 
   public void setSelectedCourse(@NotNull final CourseInfo courseName) {
@@ -403,9 +421,7 @@ public class StudyProjectGenerator {
           while ((line = reader.readLine()) != null) {
             Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
             final CourseInfo courseInfo = gson.fromJson(line, CourseInfo.class);
-            if (!courseInfo.isAdaptive()) {
-              courses.add(courseInfo);
-            }
+            courses.add(courseInfo);
           }
         }
         catch (IOException | JsonSyntaxException e) {

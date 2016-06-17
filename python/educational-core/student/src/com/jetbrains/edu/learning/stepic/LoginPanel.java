@@ -15,18 +15,24 @@
  */
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LoginPanel {
   private JPanel myPane;
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
+  private JBLabel mySignUpLabel;
 
   public LoginPanel(final LoginDialog dialog) {
     DocumentListener listener = new DocumentAdapter() {
@@ -37,6 +43,23 @@ public class LoginPanel {
     };
     myLoginTextField.getDocument().addDocumentListener(listener);
     myPasswordField.getDocument().addDocumentListener(listener);
+
+    mySignUpLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        BrowserUtil.browse(EduStepicNames.STEPIC_SIGN_IN_LINK);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        e.getComponent().setCursor(Cursor.getDefaultCursor());
+      }
+    });
   }
 
   public JComponent getPanel() {
