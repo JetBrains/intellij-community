@@ -56,7 +56,13 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   }
 
   protected void doTestIndentSize(int expectedIndent) {
+    configureByFile(getFileNameWithExtension());
     doTestIndentSize(null, expectedIndent);
+  }
+  
+  protected void doTestIndentSizeFromText(String text, @Nullable CommonCodeStyleSettings.IndentOptions options,  int expectedIndent) {
+    configureFromFileText(getFileNameWithExtension(), text);
+    doTestIndentSize(options, expectedIndent);
   }
 
   protected void doTestTabsUsed(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
@@ -70,9 +76,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
-  private void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
-    configureByFile(getFileNameWithExtension());
-
+  private static void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
     if (defaultIndentOptions != null) {
       setIndentOptions(defaultIndentOptions);
     }
