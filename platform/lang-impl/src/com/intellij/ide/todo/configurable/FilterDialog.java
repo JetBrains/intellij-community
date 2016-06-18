@@ -52,6 +52,7 @@ class FilterDialog extends DialogWrapper {
    */
   public FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<TodoFilter> filters, List<TodoPattern> patterns) {
     super(parent, true);
+    setTitle(IdeBundle.message("title.add.todo.filter"));
     myFilter = filter;
     myFilterIndex = filterIndex;
     myFilters = filters;
