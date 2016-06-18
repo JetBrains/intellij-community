@@ -318,7 +318,7 @@ public class CheckBoxList<T> extends JBList {
 
         JLabel infoLabel = new JLabel(auxText, SwingConstants.RIGHT);
         infoLabel.setBorder(new EmptyBorder(0, 0, 0, checkbox.getInsets().left));
-        infoLabel.setFont(font);
+        infoLabel.setFont(UIUtil.getFont(UIUtil.FontSize.SMALL, font));
         panel.add(infoLabel, BorderLayout.CENTER);
 
         if (shouldAdjustColors) {
