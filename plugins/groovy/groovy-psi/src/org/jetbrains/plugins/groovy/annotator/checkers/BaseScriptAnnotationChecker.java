@@ -16,17 +16,17 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
@@ -42,9 +42,20 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
         return true;
       }
 
-      PsiElement pparent = annotation.getParent().getParent();
-      if (pparent instanceof GrVariableDeclaration) {
-        GrTypeElement typeElement = ((GrVariableDeclaration)pparent).getTypeElementGroovy();
+      PsiElement parent = annotation.getParent().getParent();
+      if (parent instanceof GrPackageDefinition || parent instanceof GrImportStatement) {
+        PsiClass clazz = GrAnnotationUtil.inferClassAttribute(annotation, "value");
+        if (!InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_LANG_SCRIPT)) {
+          String typeText = null;
+          if (clazz != null) {
+            typeText = clazz.getQualifiedName();
+            if (typeText == null) clazz.getName();
+          }
+          if (typeText == null) typeText = CommonClassNames.JAVA_LANG_OBJECT;
+          holder.createErrorAnnotation(annotation, GroovyBundle.message("declared.type.0.have.to.extend.script", typeText));
+        }
+      } else if (parent instanceof GrVariableDeclaration) {
+        GrTypeElement typeElement = ((GrVariableDeclaration)parent).getTypeElementGroovy();
         PsiType type = typeElement != null ? typeElement.getType() : null;
 
         if (!InheritanceUtil.isInheritor(type, GroovyCommonClassNames.GROOVY_LANG_SCRIPT)) {
