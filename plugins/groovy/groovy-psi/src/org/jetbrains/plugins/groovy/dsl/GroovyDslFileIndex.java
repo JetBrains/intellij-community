@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -276,8 +273,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
     };
 
+    NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
     for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(nameChecker, psiType, place, placeFile, state)) {
+      if (!script.processExecutor(nameChecker, psiType, place, placeFile, state, typeText)) {
         return false;
       }
     }
