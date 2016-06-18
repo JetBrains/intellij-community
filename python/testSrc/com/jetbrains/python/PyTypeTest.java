@@ -850,6 +850,13 @@ public class PyTypeTest extends PyTestCase {
            "(a, (_, expr)) = (1, (2,'val')) ");
   }
 
+  public void testSubTupleIndirectDestructuring() {
+    doTest("str",
+           "xs = (2,'val')\n" +
+           "(a, (_, expr)) = (1, xs) ");
+  }
+
+
   public void testConstructorUnification() {
     doTest("C[int]",
            "class C(object):\n" +
