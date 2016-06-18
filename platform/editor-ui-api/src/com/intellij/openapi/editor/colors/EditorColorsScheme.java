@@ -70,7 +70,10 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    */
   void setEditorFontSize(int fontSize);
 
+  @Deprecated
   FontSize getQuickDocFontSize();
+
+  @Deprecated
   void setQuickDocFontSize(@NotNull FontSize fontSize);
 
   Font getFont(EditorFontType key);
