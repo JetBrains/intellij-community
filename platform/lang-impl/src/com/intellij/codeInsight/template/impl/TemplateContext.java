@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,23 +48,10 @@ public class TemplateContext {
       Boolean storedValue = getOwnValue(contextType);
       if (storedValue == null) {
         TemplateContextType baseContextType = contextType.getBaseContextType();
-        if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
-          return isEnabled(baseContextType);
-        }
-        return false;
+        return baseContextType != null && isEnabled(baseContextType);
       }
       return storedValue.booleanValue();
     }
-  }
-
-  public void putValue(TemplateContextType context, boolean enabled) {
-    synchronized (myContextStates) {
-      myContextStates.put(context.getContextId(), enabled);
-    }
-  }
-
-  public boolean isExplicitlyEnabled(TemplateContextType contextType) {
-    return Boolean.TRUE.equals(getOwnValue(contextType));
   }
 
   @Nullable
