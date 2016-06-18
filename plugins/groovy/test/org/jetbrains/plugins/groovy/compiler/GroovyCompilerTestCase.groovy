@@ -13,64 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.compiler;
+package org.jetbrains.plugins.groovy.compiler
 
-import com.intellij.compiler.server.BuildManager;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.application.ApplicationConfigurationType;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.DefaultJavaProgramRunner;
-import com.intellij.execution.process.*;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType;
-import org.jetbrains.plugins.groovy.util.Slow;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import com.intellij.compiler.server.BuildManager
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.application.ApplicationConfiguration
+import com.intellij.execution.application.ApplicationConfigurationType
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.DefaultJavaProgramRunner
+import com.intellij.execution.process.*
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.compiler.CompilerMessage
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.CompilerTester
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
+import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
+import org.jetbrains.plugins.groovy.util.Slow
 
 /**
  * @author aalmiray
  * @author peter
  */
 @Slow
-public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
-  @SuppressWarnings("AbstractMethodCallInConstructor") private CompilerTester myCompilerTester;
+@CompileStatic
+public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
+
+  protected CompilerTester myCompilerTester;
+
+  @Override
+  Project getProject() {
+    return super.getProject();
+  }
+
+  @Override
+  <T extends Disposable> T disposeOnTearDown(T disposable) {
+    return super.disposeOnTearDown(disposable)
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -101,26 +104,18 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   protected void tearDown() throws Exception {
     final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory();
     try {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myCompilerTester.tearDown();
-            myCompilerTester = null;
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-          finally {
-            try {
-              GroovyCompilerTestCase.super.tearDown();
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          }
+      UIUtil.invokeAndWaitIfNeeded {
+        try {
+          myCompilerTester.tearDown();
+          myCompilerTester = null;
         }
-      });
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          super.tearDown();
+        }
+      }
     }
     finally {
       FileUtil.delete(systemRoot);
@@ -240,41 +235,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     return runConfiguration(executorClass, listener, runner, configuration);
   }
 
-  protected ProcessHandler runConfiguration(Class<? extends Executor> executorClass,
-                                          final ProcessListener listener,
-                                          ProgramRunner runner,
-                                          RunProfile configuration) throws ExecutionException {
-    final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration).build();
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
-    runner.execute(environment, new ProgramRunner.Callback() {
-      @Override
-      public void processStarted(final RunContentDescriptor descriptor) {
-        if (descriptor == null) {
-          throw new AssertionError("Null descriptor!");
-        }
-        disposeOnTearDown(new Disposable() {
-          @Override
-          public void dispose() {
-            Disposer.dispose(descriptor);
-          }
-        });
-        final ProcessHandler handler = descriptor.getProcessHandler();
-        assert handler != null;
-        handler.addProcessListener(listener);
-        processHandler.set(handler);
-        semaphore.up();
-      }
-    });
-    if (!semaphore.waitFor(20000)) {
-      fail("Process took too long");
-    }
-    return processHandler.get();
-  }
-
   protected ApplicationConfiguration createApplicationConfiguration(String className, Module module) {
     final ApplicationConfiguration configuration =
       new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
@@ -290,5 +250,4 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     configuration.setScriptPath(scriptPath);
     return configuration;
   }
-
 }

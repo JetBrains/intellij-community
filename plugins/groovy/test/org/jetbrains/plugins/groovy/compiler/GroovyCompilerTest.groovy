@@ -43,12 +43,14 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
+@CompileStatic
 public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
@@ -96,8 +98,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239");
   }
 
-  protected static void shouldFail(Closure action) {
-    List<CompilerMessage> messages = action()
+  protected static void shouldFail(Closure<List<CompilerMessage>> action) {
+    def messages = action()
     assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
 
