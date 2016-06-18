@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -128,7 +127,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       }
     }
 
-    myList.setItems(myDescriptors, descriptor -> descriptor.getName());
+    myList.setItems(myDescriptors, GutterIconDescriptor::getName);
     myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
     return myPanel;
   }
@@ -213,6 +212,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
         return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
       }
     };
+    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
   }
   
