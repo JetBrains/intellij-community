@@ -2,6 +2,7 @@ package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
@@ -211,4 +212,20 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  @Staging
+  public void testRelativeImports() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", "relative_imports/tests/test_imps.py") {
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
+      }
+    });
+  }
+  
 }

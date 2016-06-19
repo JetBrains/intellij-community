@@ -534,6 +534,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
+  @Override
+  public void suspendOtherThreads(PyThreadInfo thread) {
+    for (RemoteDebugger d : allDebuggers()) {
+      d.suspendOtherThreads(thread);
+    }
+  }
+
   public void removeCloseListener(RemoteDebuggerCloseListener listener) {
     myMainDebugger.removeCloseListener(listener);
   }

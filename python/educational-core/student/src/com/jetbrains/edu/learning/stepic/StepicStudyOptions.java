@@ -15,8 +15,12 @@
  */
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +35,7 @@ import java.awt.event.FocusListener;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
+  private static final Logger LOG = Logger.getInstance(StepicStudyOptions.class);
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPanel myPane;
@@ -98,13 +103,19 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
   }
 
-  
+  @Override
   public void reset() {
-    final StudySettings studySettings = StudySettings.getInstance();
-    setLogin(studySettings.getLogin());
-    setPassword(DEFAULT_PASSWORD_TEXT);
+    Project project = StudyUtils.getStudyProject();
+    if (project != null) {
+      final StudyTaskManager studySettings = StudyTaskManager.getInstance(project);
+      setLogin(studySettings.getLogin());
+      setPassword(DEFAULT_PASSWORD_TEXT);
 
-    resetCredentialsModification();
+      resetCredentialsModification();
+    }
+    else {
+      LOG.warn("No study object is opened");
+    }
   }
 
   @Override
@@ -112,13 +123,20 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   }
 
+  @Override
   public void apply() {
     if (myCredentialsModified) {
-      final StudySettings studySettings = StudySettings.getInstance();
-      studySettings.setLogin(getLogin());
-      studySettings.setPassword(getPassword());
-      if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-        EduStepicConnector.login(getLogin(), getPassword());
+      final Project project = StudyUtils.getStudyProject();
+      if (project != null) {
+        final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+        studyTaskManager.setLogin(getLogin());
+        studyTaskManager.setPassword(getPassword());
+        if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
+          EduStepicConnector.login(getLogin(), getPassword());
+        }
+      }
+      else {
+        LOG.warn("No study object is opened");
       }
     }
     resetCredentialsModification();

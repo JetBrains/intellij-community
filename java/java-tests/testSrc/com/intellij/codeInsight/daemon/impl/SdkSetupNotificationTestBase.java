@@ -46,6 +46,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
 
   @Override
   protected void tearDown() throws Exception {
+    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     final Sdk[] jdks = ReadAction.compute(() -> ProjectJdkTable.getInstance().getAllJdks());
     try {
       for (Sdk jdk : jdks) {

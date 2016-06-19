@@ -234,12 +234,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                final String enteredText,
-                                               final Project project,
+                                               @Nullable final Project project,
                                                Component component,
                                                @Nullable AnActionEvent e) {
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
-      TransactionGuard.getInstance().submitTransactionLater(project, () ->
+      TransactionGuard.getInstance().submitTransactionLater(project != null ? project : ApplicationManager.getApplication(), () ->
         ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
     }
     else {

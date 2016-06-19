@@ -790,6 +790,20 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(1, findUsages(findModel));
   }
 
+  public void testRegExpInString() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("^*$");
+
+    String prefix = "<foo bar=\"";
+    String text = prefix + "\" />";
+
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
+    findModel.setRegularExpressions(true);
+    LightVirtualFile file = new LightVirtualFile("A.xml", text);
+
+    FindResult findResult = myFindManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+  }
+
   public void testFindExceptComments() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 

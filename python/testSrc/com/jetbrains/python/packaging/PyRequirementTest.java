@@ -191,7 +191,7 @@ public class PyRequirementTest extends PyTestCase {
     doTest("git+user@git.myproject.org:/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
     doTest("git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1&subdirectory=clients/python");
     doTest("git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1&subdirectory=clients/python");
-    
+
     doTest("git://git.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
     doTest("git://git.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
     doTest("git://git.myproject.org/MyProject.git#subdirectory=clients/python&egg=MyProject1");
@@ -790,7 +790,7 @@ public class PyRequirementTest extends PyTestCase {
     doTest("hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
     doTest("hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1&subdirectory=clients/python");
     doTest("hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1&subdirectory=clients/python");
-    
+
     doTest("hg+http://hg.myproject.org/MyProject#subdirectory=clients/python&egg=MyProject1");
     doTest("hg+http://hg.myproject.org/MyProject/#subdirectory=clients/python&egg=MyProject1");
     doTest("hg+http://hg.myproject.org/path/MyProject#subdirectory=clients/python&egg=MyProject1");
@@ -1067,7 +1067,7 @@ public class PyRequirementTest extends PyTestCase {
     doTest("svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1&subdirectory=clients/python");
     doTest("svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1&subdirectory=clients/python");
     doTest("svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1&subdirectory=clients/python");
-    
+
     doTest("svn+http://svn.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
     doTest("svn+http://svn.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
     doTest("svn+http://svn.myproject.org/svn/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
@@ -1468,7 +1468,7 @@ public class PyRequirementTest extends PyTestCase {
     doTest("bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1&subdirectory=clients/python");
 
     doTest("bzr+lp:MyProject#egg=MyProject1&subdirectory=clients/python");
-    
+
     doTest("bzr+http://bzr.myproject.org/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
     doTest("bzr+http://bzr.myproject.org/MyProject/trunk/#subdirectory=clients/python&egg=MyProject1");
     doTest("bzr+http://bzr.myproject.org/path/MyProject/trunk#subdirectory=clients/python&egg=MyProject1");
@@ -1904,9 +1904,10 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-7034
   public void testMinusInRequirementEggName() {
-    final String options = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack";
+    final String line = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack";
 
-    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), options), PyRequirement.fromLine(options));
+    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), Collections.singletonList(line)),
+                 PyRequirement.fromLine(line));
   }
 
   public void testDevInRequirementEggName() {
@@ -2074,11 +2075,11 @@ public class PyRequirementTest extends PyTestCase {
   public void testRequirementNotNormalizableVersion() {
     final String name = "django_compressor";
     final String version = "dev";
-    final String installOptions = name + "==" + version;
+    final String line = name + "==" + version;
     final List<PyRequirementVersionSpec> versionSpecs = Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ,
                                                                                                                version));
 
-    assertEquals(new PyRequirement(name, versionSpecs, installOptions), PyRequirement.fromLine(installOptions));
+    assertEquals(new PyRequirement(name, versionSpecs, Collections.singletonList(line)), PyRequirement.fromLine(line));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -2158,40 +2159,45 @@ public class PyRequirementTest extends PyTestCase {
   public void testRequirementOptions() {
     final String name = "MyProject1";
     final String version = "1.2";
-    final String optionsPrefix = name + " >= " + version;
+    final String linePrefix = name + " >= " + version;
 
     final List<PyRequirementVersionSpec> versionSpecs =
       Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.GTE, version));
 
-    final String options1 = optionsPrefix + " " +
-                            "--global-option=\"--no-user-cfg\" " +
-                            "--install-option=\"--prefix='/usr/local'\" " +
-                            "--install-option=\"--no-compile\"";
-    assertEquals(new PyRequirement(name, versionSpecs, options1), PyRequirement.fromLine(options1));
+    final List<String> installOptions1 = Arrays.asList(linePrefix,
+                                                       "--global-option", "--no-user-cfg",
+                                                       "--install-option", "--prefix='/usr/local'",
+                                                       "--install-option", "--no-compile");
+    final String line1 = linePrefix + " " +
+                         "--global-option=\"--no-user-cfg\" " +
+                         "--install-option=\"--prefix='/usr/local'\" " +
+                         "--install-option=\"--no-compile\"";
+    assertEquals(new PyRequirement(name, versionSpecs, installOptions1), PyRequirement.fromLine(line1));
 
-    final String options2 = optionsPrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
-    assertEquals(new PyRequirement(name, versionSpecs, options2), PyRequirement.fromLine(options2));
+    final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option", "--install-scripts=/usr/local/bin");
+    final String line2 = linePrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
+    assertEquals(new PyRequirement(name, versionSpecs, installOptions2), PyRequirement.fromLine(line2));
   }
 
   public void testMultilineRequirement() {
     final String name = "MyProject1";
     final String version = "1.2";
-    final String optionsPrefix = name + " >= " + version;
+    final String textPrefix = name + " >= " + version;
 
     final List<PyRequirementVersionSpec> versionSpecs =
       Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.GTE, version));
 
-    final String options = optionsPrefix + " " +
-                           "--global-option=\"--no-user-cfg\" \\\n" +
-                           "--install-option=\"--prefix='/usr/local'\" \\\n" +
-                           "--install-option=\"--no-compile\"";
+    final String text = textPrefix + " " +
+                        "--global-option=\"--no-user-cfg\" \\\n" +
+                        "--install-option=\"--prefix='/usr/local'\" \\\n" +
+                        "--install-option=\"--no-compile\"";
 
-    final String processedOptions = optionsPrefix + " " +
-                                    "--global-option=\"--no-user-cfg\" " +
-                                    "--install-option=\"--prefix='/usr/local'\" " +
-                                    "--install-option=\"--no-compile\"";
+    final List<String> installOptions = Arrays.asList(textPrefix,
+                                                      "--global-option", "--no-user-cfg",
+                                                      "--install-option", "--prefix='/usr/local'",
+                                                      "--install-option", "--no-compile");
 
-    assertEquals(Collections.singletonList(new PyRequirement(name, versionSpecs, processedOptions)), PyRequirement.fromText(options));
+    assertEquals(Collections.singletonList(new PyRequirement(name, versionSpecs, installOptions)), PyRequirement.fromText(text));
   }
 
   // PY-6355
@@ -2245,58 +2251,64 @@ public class PyRequirementTest extends PyTestCase {
 
   public void testCommentAtTheEnd() {
     // ARCHIVE
-    doTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz # comment");
+    doCommentAtTheEndTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz # comment");
 
-    doTest("geoip2", "2.2.0",
-           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc # comment");
+    doCommentAtTheEndTest("geoip2", "2.2.0",
+                          "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc # comment");
 
-    doTest("https://github.com/divio/MyProject1/archive/master.zip?1450634746.0107164 # comment");
+    doCommentAtTheEndTest("https://github.com/divio/MyProject1/archive/master.zip?1450634746.0107164 # comment");
 
     // VCS
-    doTest("git://git.myproject.org/MyProject#egg=MyProject1 # comment");
-    doTest("-e git://git.myproject.org/MyProject1 # comment");
+    doCommentAtTheEndTest("git://git.myproject.org/MyProject#egg=MyProject1 # comment");
+    doCommentAtTheEndTest("-e git://git.myproject.org/MyProject1 # comment");
 
-    doTest("hg+http://hg.myproject.org/MyProject#egg=MyProject1 # comment");
-    doTest("hg+http://hg.myproject.org/MyProject1 # comment");
+    doCommentAtTheEndTest("hg+http://hg.myproject.org/MyProject#egg=MyProject1 # comment");
+    doCommentAtTheEndTest("hg+http://hg.myproject.org/MyProject1 # comment");
 
-    doTest("svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
-    doTest("svn+http://svn.myproject.org/MyProject1/trunk # comment");
+    doCommentAtTheEndTest("svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
+    doCommentAtTheEndTest("svn+http://svn.myproject.org/MyProject1/trunk # comment");
 
-    doTest("bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
-    doTest("bzr+http://bzr.myproject.org/MyProject1/trunk # comment");
+    doCommentAtTheEndTest("bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
+    doCommentAtTheEndTest("bzr+http://bzr.myproject.org/MyProject1/trunk # comment");
 
     // REQUIREMENT
     final String name = "MyProject1";
     final String version = "2.5a20";
 
-    doTest(name + " # comment");
-    doTest(name, version, name + "==" + version + " # comment");
-    doTest(name + "[PDF] # comment");
+    doCommentAtTheEndTest(name + " # comment");
+    doCommentAtTheEndTest(name, version, name + "==" + version + " # comment");
+    doCommentAtTheEndTest(name + "[PDF] # comment");
 
-    final String options = name + " --install-option=\"option\" # comment";
-    doTest(options);
+    final PyRequirement requirement = new PyRequirement(name, Collections.emptyList(), Arrays.asList(name, "--install-option", "option"));
 
-    assertEquals(Collections.singletonList(new PyRequirement(name, Collections.emptyList(), options)),
+    assertEquals(requirement, PyRequirement.fromLine(name + " --install-option=\"option\" # comment"));
+    assertEquals(Collections.singletonList(requirement),
                  PyRequirement.fromText(name + " \\\n--install-option=\"option\" # comment"));
   }
 
   // ENV MARKERS
   // TODO: https://www.python.org/dev/peps/pep-0426/#environment-markers, https://www.python.org/dev/peps/pep-0508/#environment-markers
 
-  private static void doTest(@NotNull String options) {
-    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromLine(options));
+  private static void doTest(@NotNull String line) {
+    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), Arrays.asList(line.split("\\s+"))), PyRequirement.fromLine(line));
   }
 
-  private static void doTest(@NotNull String name, @NotNull String version, @NotNull String options) {
-    assertEquals(new PyRequirement(name, version, options), PyRequirement.fromLine(options));
+  private static void doTest(@NotNull String name, @NotNull String version, @NotNull String line) {
+    assertEquals(new PyRequirement(name, version, Collections.singletonList(line)), PyRequirement.fromLine(line));
   }
 
   private static void doRequirementVersionNormalizationTest(@NotNull String expectedVersion,
                                                             @NotNull String actualVersion) {
     final String name = "name";
-    final String installOptions = name + "==" + actualVersion;
+    doTest(name, expectedVersion, name + "==" + actualVersion);
+  }
 
-    doTest(name, expectedVersion, installOptions);
+  private static void doCommentAtTheEndTest(@NotNull String line) {
+    doTest(line.substring(0, line.lastIndexOf('#') - 1));
+  }
+
+  private static void doCommentAtTheEndTest(@NotNull String name, @NotNull String version, @NotNull String line) {
+    doTest(name, version, line.substring(0, line.lastIndexOf('#') - 1));
   }
 
   private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull String version) {
@@ -2338,8 +2350,8 @@ public class PyRequirementTest extends PyTestCase {
       sb.setLength(sb.length() - 1);
     }
 
-    final String options = sb.toString();
+    final String line = sb.toString();
 
-    assertEquals(new PyRequirement(name, expectedVersionSpecs, options), PyRequirement.fromLine(options));
+    assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(line)), PyRequirement.fromLine(line));
   }
 }

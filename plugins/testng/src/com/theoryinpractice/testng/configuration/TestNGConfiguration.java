@@ -47,6 +47,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryRunnableState;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestNGTestObject;
@@ -128,6 +129,10 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    final TestData data = getPersistantData();
+    if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
+      return new TestNGTestDiscoveryRunnableState(env, this);
+    }
     return new TestNGRunnableState(env, this);
   }
 
@@ -438,5 +443,10 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
       .filter(StringUtil::isNotEmpty)
       .collect(Collectors.toSet());
     return groups.isEmpty() ? null : groups;
+  }
+
+  public void beFromSourcePosition(PsiLocation<PsiMethod> position) {
+    setMethodConfiguration(position);
+    getPersistantData().TEST_OBJECT = TestType.SOURCE.getType();
   }
 }

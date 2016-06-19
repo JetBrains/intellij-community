@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,7 +56,8 @@ import java.util.List;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
-  @NonNls private static final String[] IMPLICIT_IMPORTS = { CommonClassNames.DEFAULT_PACKAGE };
+  private static final String[] IMPLICIT_IMPORTS = { CommonClassNames.DEFAULT_PACKAGE };
+
   private final CachedValue<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> myResolveCache;
   private volatile String myPackageName;
 
@@ -375,7 +375,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
             final String referenceName = importStaticStatement.getReferenceName();
             for (JavaResolveResult result : results) {
               staticImportProcessor.registerSingleStaticImportHiding(result, referenceName);
-              if (!staticImportProcessor.execute(result.getElement(), state)) return false;
+              PsiElement element = result.getElement();
+              if (element != null && !staticImportProcessor.execute(element, state)) return false;
             }
           }
         }

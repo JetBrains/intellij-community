@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -30,6 +31,7 @@ import javax.swing.event.ListSelectionListener;
 import java.util.List;
 
 public abstract class CommitSelectionListener implements ListSelectionListener {
+  private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final JBLoadingPanel myLoadingPanel;
@@ -61,9 +63,12 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
       final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
 
+      List<Integer> selectionToLoad = getSelectionToLoad();
       myLogData.getCommitDetailsGetter()
-            .loadCommitsData(myGraphTable.getModel().convertToCommitIds(getSelectionToLoad()), detailsList -> {
+        .loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
+          LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
+                         "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
           myLastRequest = null;
           onDetailsLoaded(detailsList);
           myLoadingPanel.stopLoading();

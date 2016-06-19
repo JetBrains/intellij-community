@@ -395,8 +395,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       nestedRange.push(elementRange);
       nestedInfos.push(infosForThisRange);
-      // optimisation: this element range does not equal to its parent' range if next element in "ranges" range is different since we top-sorted elements there by ancestry
-      if (parent == null || i != ranges.size()-1 && !elementRange.equals(ranges.get(i+1)) || !Comparing.equal(elementRange, parent.getTextRange())) {
+      if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
         myHighlightInfoProcessor.allHighlightsForRangeAreProduced(myHighlightingSession, elementRange, infosForThisRange);
       }
     }

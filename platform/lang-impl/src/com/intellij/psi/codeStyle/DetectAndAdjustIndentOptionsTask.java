@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsAdjuster;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
+import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,10 +57,14 @@ class TimeStampedIndentOptions extends IndentOptions {
 }
 
 class DetectAndAdjustIndentOptionsTask extends ReadTask {
+  private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);
+  
   private final Document myDocument;
   private final Project myProject;
   private final IndentOptions myOptionsToAdjust;
   private final ExecutorService myExecutor;
+  
+  private volatile long myComputationStarted = 0;
 
   public DetectAndAdjustIndentOptionsTask(@NotNull Project project, 
                                           @NotNull Document document, 
@@ -91,10 +97,13 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     }
 
     IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file, indicator);
+
+    myComputationStarted = System.currentTimeMillis();
     IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster();
+    
     return new Continuation(adjuster != null ? () -> adjustOptions(adjuster) : EmptyRunnable.INSTANCE);
   }
-  
+
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
     long stamp = myDocument.getModificationStamp();
     adjuster.adjust(myOptionsToAdjust);
@@ -105,7 +114,22 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   @Override
   public void onCanceled(@NotNull ProgressIndicator indicator) {
+    if (isComputingForTooLong()) {
+      logTooLongComputation();
+      return;
+    }
+    
     scheduleInBackgroundForCommittedDocument();
+  }
+
+  private void logTooLongComputation() {
+    PsiFile file = getFile();
+    String fileName = file != null ? file.getName() : "";
+    LOG.warn("Indent detection is too long for: " + fileName);
+  }
+
+  private boolean isComputingForTooLong() {
+    return System.currentTimeMillis() - myComputationStarted > 5 * Time.SECOND;
   }
 
   public void scheduleInBackgroundForCommittedDocument() {

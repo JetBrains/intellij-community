@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -50,6 +49,7 @@ public class RootIndex {
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
   private final Map<VirtualFile, String> myPackagePrefixByRoot = ContainerUtil.newHashMap();
 
@@ -375,7 +375,7 @@ public class RootIndex {
       if (info != null) {
         return info;
       }
-      if (isIgnored(file)) {
+      if (ourFileTypes.isFileIgnored(file)) {
         return NonProjectDirectoryInfo.IGNORED;
       }
       dir = file.getParent();
@@ -397,7 +397,7 @@ public class RootIndex {
         return info;
       }
 
-      if (isIgnored(root)) {
+      if (ourFileTypes.isFileIgnored(root)) {
         return cacheInfos(dir, root, NonProjectDirectoryInfo.IGNORED);
       }
     }
@@ -433,7 +433,7 @@ public class RootIndex {
   @Nullable
   public String getPackageName(@NotNull final VirtualFile dir) {
     if (dir.isDirectory()) {
-      if (isIgnored(dir)) {
+      if (ourFileTypes.isFileIgnored(dir)) {
         return null;
       }
 
@@ -477,7 +477,7 @@ public class RootIndex {
     boolean hasContentRoots = false;
     while (dir != null) {
       hasContentRoots |= info.contentRootOf.get(dir) != null;
-      if (!hasContentRoots && isIgnored(dir)) {
+      if (!hasContentRoots && ourFileTypes.isFileIgnored(dir)) {
         return null;
       }
       if (allRoots.contains(dir)) {
@@ -486,10 +486,6 @@ public class RootIndex {
       dir = dir.getParent();
     }
     return hierarchy;
-  }
-
-  private static boolean isIgnored(@NotNull VirtualFile dir) {
-    return FileTypeRegistry.getInstance().isFileIgnored(dir);
   }
 
   private static class RootInfo {

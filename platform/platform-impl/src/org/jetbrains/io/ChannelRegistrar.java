@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
@@ -22,18 +23,23 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @ChannelHandler.Sharable
 public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
-  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+  private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
+
+  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE, true);
+  private boolean isEventLoopGroupOwner;
 
   public boolean isEmpty() {
     return openChannels.isEmpty();
   }
 
-  public void add(@NotNull Channel serverChannel) {
+  public void add(@NotNull Channel serverChannel, boolean isOwnEventLoopGroup) {
+    this.isEventLoopGroupOwner = isOwnEventLoopGroup;
     assert serverChannel instanceof ServerChannel;
     openChannels.add(serverChannel);
   }
@@ -46,12 +52,13 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     super.channelActive(context);
   }
 
-  public void close() {
-    close(true);
+  @NotNull
+  public Future<?> close() {
+    return close(isEventLoopGroupOwner);
   }
 
   @NotNull
-  public Future<?> close(boolean shutdownEventLoopGroup) {
+  private Future<?> close(boolean shutdownEventLoopGroup) {
     EventLoopGroup eventLoopGroup = null;
     if (shutdownEventLoopGroup) {
       for (Channel channel : openChannels) {
@@ -64,9 +71,19 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
 
     Future<?> result;
     try {
+      long start = System.currentTimeMillis();
+      Object[] channels = openChannels.toArray(new Channel[]{});
       ChannelGroupFuture groupFuture = openChannels.close();
-      groupFuture.awaitUninterruptibly(30, TimeUnit.SECONDS);
+      // server channels are closed in first turn, so, small timeout is relatively ok
+      if (!groupFuture.awaitUninterruptibly(10, TimeUnit.SECONDS)) {
+        LOG.warn("Cannot close all channels for 10 seconds, channels: " + Arrays.toString(channels));
+      }
       result = groupFuture;
+
+      long duration = System.currentTimeMillis() - start;
+      if (duration > 1000) {
+        LOG.info("Close all channels took " + duration + " ms: " + (duration / 60000) + " min " + ((duration % 60000) / 1000) + "sec");
+      }
     }
     finally {
       if (eventLoopGroup != null) {

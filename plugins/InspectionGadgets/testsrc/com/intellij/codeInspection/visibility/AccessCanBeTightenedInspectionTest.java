@@ -128,6 +128,18 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testDoNotSuggestPrivateForInnerStaticSubclass() {
+    doTest("class A {\n" +
+           "    <warning descr=\"Access can be package-private\">protected</warning> String myElement;\n" +
+           "    static class B extends A {\n" +
+           "        @Override\n" +
+           "        public String toString() {\n" +
+           "            return myElement;\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   public void testStupidTwoPublicClassesInTheSamePackage() {
     myFixture.allowTreeAccessForAllFiles();
     myFixture.addFileToProject("x/Sub.java",

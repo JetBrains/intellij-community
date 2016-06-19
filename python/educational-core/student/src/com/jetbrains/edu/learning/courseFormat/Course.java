@@ -7,31 +7,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Course {
-  @Expose
-  private List<Lesson> lessons = new ArrayList<Lesson>();
-
+  @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
+  @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
   @Expose private String description;
   @Expose private String name;
-  private String myCourseDirectory = "";
-  @Expose private List<CourseInfo.Author> authors = new ArrayList<CourseInfo.Author>();
-  private boolean myUpToDate;
+  @Expose private String myCourseDirectory = "";
+  @Expose private int id;
+  @Expose private boolean myUpToDate;
+  @Expose private boolean isAdaptive;
+  @Expose @SerializedName("language") private String myLanguage = "Python";
 
-  @Expose @SerializedName("language")
-  private String myLanguage = "Python";
-
-  //this field is used to distinguish ordinary and CheckIO projects
+  //this field is used to distinguish ordinary and CheckIO projects,
   //"PyCharm" is used here for historical reasons
-  private String courseType = EduNames.PYCHARM;
-
-  //this field is used to distinguish study and course creator modes
-  private String courseMode = EduNames.STUDY;
+  @Expose private String courseType = EduNames.PYCHARM;
+  @Expose private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
 
   /**
    * Initializes state of course
@@ -72,20 +68,20 @@ public class Course {
   }
 
   @NotNull
-  public List<CourseInfo.Author> getAuthors() {
+  public List<StepicUser> getAuthors() {
     return authors;
   }
 
-  public static String getAuthorsString(@NotNull List<CourseInfo.Author> authors) {
+  public static String getAuthorsString(@NotNull List<StepicUser> authors) {
     return StringUtil.join(authors, author -> author.getName(), ", ");
   }
 
   public void setAuthors(String[] authors) {
-    this.authors = new ArrayList<CourseInfo.Author>();
+    this.authors = new ArrayList<StepicUser>();
     for (String name : authors) {
       final List<String> pair = StringUtil.split(name, " ");
       if (!pair.isEmpty())
-        this.authors.add(new CourseInfo.Author(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+        this.authors.add(new StepicUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
     }
   }
 
@@ -133,7 +129,7 @@ public class Course {
     myLanguage = language;
   }
 
-  public void setAuthors(List<CourseInfo.Author> authors) {
+  public void setAuthors(List<StepicUser> authors) {
     this.authors = authors;
   }
 
@@ -144,6 +140,22 @@ public class Course {
 
   public void setCourseType(String courseType) {
     this.courseType = courseType;
+  }
+
+  public boolean isAdaptive() {
+    return isAdaptive;
+  }
+
+  public void setAdaptive(boolean adaptive) {
+    isAdaptive = adaptive;
+  }
+
+  public int getId() {
+    return id;
+  }
+
+  public void setId(int id) {
+    this.id = id;
   }
 
   public String getCourseMode() {

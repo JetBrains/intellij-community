@@ -288,7 +288,8 @@ public class ParameterInfoController implements Disposable {
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
                          : HintManager.UNDER;
-        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,
+        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, elementForUpdating instanceof PsiElement
+                                                                         ? (PsiElement)elementForUpdating : null,
                                                                  myEditor.getCaretModel().getOffset(), true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }

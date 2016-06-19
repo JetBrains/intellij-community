@@ -241,26 +241,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     updateDescription(true);
   }
 
-
-  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
-    if (!sharedScheme) {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.readonly.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
-    else {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
-  }
-
   @Override
   public void updateOptionsList() {
     myIsInSchemeChange = true;
@@ -323,7 +303,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
     if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 

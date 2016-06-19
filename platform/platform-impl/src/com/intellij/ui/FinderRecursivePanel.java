@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -182,9 +182,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    final JBLabel label = new JBLabel("Nothing selected", SwingConstants.CENTER);
-    label.setFontColor(UIUtil.FontColor.BRIGHTER);
-    return label;
+    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
   }
 
   protected JComponent createLeftComponent() {

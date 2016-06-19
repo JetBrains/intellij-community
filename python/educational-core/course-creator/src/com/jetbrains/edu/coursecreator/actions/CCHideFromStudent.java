@@ -24,7 +24,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
       return;
     }
     String name = file.getName();
-    VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, name);
+    VirtualFile patternFile = StudyUtils.getPatternFile(project, taskFile, name);
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (patternFile != null) {
         try {

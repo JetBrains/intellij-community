@@ -6,14 +6,14 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   private Course myCourse;
   private OldCourse myOldCourse;
   public int VERSION = 2;
+  public StepicUser myUser;
   public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<>();
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
@@ -74,7 +75,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   @NotNull
   public List<UserTest> getUserTests(@NotNull final Task task) {
     final List<UserTest> userTests = myUserTests.get(task);
-    return userTests != null ? userTests : Collections.<UserTest>emptyList();
+    return userTests != null ? userTests : Collections.emptyList();
   }
 
   public void removeUserTest(@NotNull final Task task, @NotNull final UserTest userTest) {
@@ -212,6 +213,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
         myTaskStatusMap = taskManager.myTaskStatusMap;
         myStudyStatusMap = taskManager.myStudyStatusMap;
         myShouldUseJavaFx = taskManager.myShouldUseJavaFx;
+        myUser = taskManager.getUser();
       }
     }
     final Element oldCourseElement = state.getChild(COURSE_ELEMENT);
@@ -275,5 +277,41 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public void setTurnEditingMode(boolean turnEditingMode) {
     myTurnEditingMode = turnEditingMode;
+  }
+
+  public String getLogin() {
+    if (myUser != null) {
+      return myUser.getEmail();
+    }
+    return "";
+  }
+  
+  public void setLogin(String login) {
+    if (myUser != null) {
+      myUser.setEmail(login);
+    }
+  }
+
+  @Transient
+  public String getPassword() {
+    if (myUser != null) {
+      return myUser.getPassword();
+    }
+    return "";
+  }
+
+  @Transient
+  public void setPassword(String password) {
+    if (myUser != null) {
+      myUser.setPassword(password);
+    }
+  }
+
+  public StepicUser getUser() {
+    return myUser;
+  }
+
+  public void setUser(StepicUser user) {
+    myUser = user;
   }
 }

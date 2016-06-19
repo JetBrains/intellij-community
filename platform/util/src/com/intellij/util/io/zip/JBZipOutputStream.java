@@ -137,6 +137,7 @@ class JBZipOutputStream {
     long cdLength = written - cdOffset;
     writeCentralDirectoryEnd(cdLength, cdOffset);
     flushBuffer();
+    def.end();
   }
 
   /**

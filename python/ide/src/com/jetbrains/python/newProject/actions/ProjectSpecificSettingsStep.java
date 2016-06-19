@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -254,6 +253,8 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
           checkValid();
         }
       });
+      
+      myErrorLabel.addMouseListener(((PythonProjectGenerator)myProjectGenerator).getErrorLabelMouseListener());
     }
     myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

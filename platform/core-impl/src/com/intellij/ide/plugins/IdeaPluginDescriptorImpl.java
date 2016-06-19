@@ -351,6 +351,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myChangeNotes;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;

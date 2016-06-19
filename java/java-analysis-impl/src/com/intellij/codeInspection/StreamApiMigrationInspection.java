@@ -74,7 +74,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @NotNull
   @Override
   public String getDisplayName() {
-    return "foreach loop can be collapsed with stream api";
+    return "foreach loop can be collapsed with Stream API";
   }
 
   @Override

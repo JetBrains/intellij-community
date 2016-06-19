@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
                                                                  new LocalSearchScope(catchBlock),
                                                                  false);
         final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{catchBlock},
-                                                             inputVariables, null, Collections.<PsiVariable>emptyList());
+                                                             inputVariables, null, Collections.emptyList());
         for (int j = i + 1; j < catchSections.length; j++) {
           if (duplicates[j]) {
             continue;
@@ -114,8 +114,22 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
             continue;
           }
           final List<PsiElement> parameterValues = match.getParameterValues(parameter);
-          if (parameterValues != null && (parameterValues.size() != 1 || !(parameterValues.get(0) instanceof PsiReferenceExpression))) {
-            continue;
+          if (parameterValues != null) {
+            if (parameterValues.size() != 1) {
+              continue;
+            }
+            final PsiElement element = parameterValues.get(0);
+            if (!(element instanceof PsiReferenceExpression)) {
+              continue;
+            }
+            final PsiElement target = ((PsiReferenceExpression)element).resolve();
+            if (!(target instanceof PsiParameter)) {
+              continue;
+            }
+            final PsiElement scope = ((PsiParameter)target).getDeclarationScope();
+            if (!otherSection.equals(scope)) {
+              continue;
+            }
           }
           if (j > i ? !canCollapse(parameters, i, j) : !canCollapse(parameters, j, i)) {
             continue;
@@ -197,7 +211,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         collapseInto.delete();
         return;
       }
-      final List<PsiType> types = new ArrayList();
+      final List<PsiType> types = new ArrayList<>();
       collectDisjunctTypes(type1, types);
       collectDisjunctTypes(type2, types);
       final StringBuilder typeText = new StringBuilder();

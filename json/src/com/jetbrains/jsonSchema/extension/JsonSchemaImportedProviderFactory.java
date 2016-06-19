@@ -2,14 +2,9 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 /**
  * @author Irina.Chernushina on 2/13/2016.
@@ -39,11 +33,12 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     return list.isEmpty() ? Collections.emptyList() : list;
   }
 
-  private static void processConfiguration(@Nullable Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
+  private static void processConfiguration(Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
                                            @NotNull final List<JsonSchemaFileProvider> list) {
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> map = configuration.getStateMap();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : map.values()) {
-      list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
+      list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()),
+                              info.getCalculatedPatterns(project)));
     }
   }
 
@@ -57,12 +52,12 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     public MyProvider(@Nullable final Project project,
                       @NotNull String name,
                       @NotNull File file,
-                      @NotNull List<JsonSchemaMappingsConfigurationBase.Item> patterns) {
+                      @NotNull List<Processor<VirtualFile>> patterns) {
       myProject = project;
       myName = name;
       myFile = file;
-      myPatterns = new ArrayList<Processor<VirtualFile>>();
-      for (final JsonSchemaMappingsConfigurationBase.Item pattern : patterns) {
+      myPatterns = patterns;
+      /*for (final JsonSchemaMappingsConfigurationBase.Item pattern : patterns) {
         if (pattern.isPattern()) {
           myPatterns.add(new Processor<VirtualFile>() {
             private Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
@@ -94,7 +89,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
             myPatterns.add(file1 -> relativeFile.equals(file1));
           }
         }
-      }
+      }*/
     }
 
     @Override

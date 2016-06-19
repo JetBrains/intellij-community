@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {
-  public static Set<String> search(final Project project, 
-                                   final Pair<String, String> position, 
+  public static Set<String> search(final Project project,
+                                   final Pair<String, String> position,
                                    final String changeList,
                                    final String frameworkPrefix) {
     final Set<String> patterns = new LinkedHashSet<String>();
@@ -119,7 +119,7 @@ public class TestDiscoverySearchHelper {
   @NotNull
   private static List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (changeListName == null) {
+    if ("All".equals(changeListName)) {
       return changeListManager.getAffectedFiles();
     }
     final LocalChangeList changeList = changeListManager.findChangeList(changeListName);

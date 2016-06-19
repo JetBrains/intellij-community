@@ -43,9 +43,9 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_dataframe.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 7);
-        toggleBreakpoint(getScriptPath(), 15);
-        toggleBreakpoint(getScriptPath(), 22);
+        toggleBreakpoint(getScriptName(), 7);
+        toggleBreakpoint(getScriptName(), 15);
+        toggleBreakpoint(getScriptName(), 22);
       }
 
       @Override

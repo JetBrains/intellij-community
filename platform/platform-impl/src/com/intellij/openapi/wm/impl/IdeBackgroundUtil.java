@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PairFunction;
@@ -85,7 +86,7 @@ public class IdeBackgroundUtil {
     return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
   }
 
-  private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal", "editor-part");
+  private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
   private static String getComponentType(JComponent component) {
     return component instanceof JTree ? "tree" :
            component instanceof JList ? "list" :
@@ -98,6 +99,7 @@ public class IdeBackgroundUtil {
            component instanceof JBLoadingPanel ? "loading" :
            component instanceof JBTabs ? "tabs" :
            component instanceof ToolWindowHeader ? "title" :
+           component instanceof JBPanelWithEmptyText ? "panel" :
            component instanceof JPanel && ourKnownNames.contains(component.getName()) ? component.getName() :
            null;
   }

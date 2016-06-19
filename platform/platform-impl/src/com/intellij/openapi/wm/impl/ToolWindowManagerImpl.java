@@ -495,7 +495,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           if (!myProject.isDisposed()) {
             for (ToolWindowEP bean : checkedSuccessfully) {
               if (getToolWindow(bean.id) == null) {
-                initToolWindow(bean);
+                try {
+                  initToolWindow(bean);
+                }
+                catch (Throwable e) {
+                  LOG.error(String.format("Tool window %s initialization failed", bean.id), e);
+                }
               }
             }
           }
