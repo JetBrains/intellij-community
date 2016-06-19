@@ -153,6 +153,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "     -Test\n" +
                                            "      -m()\n" +
                                            "       Identical qualifier and argument to 'equals()' call\n" +
+                                           "     -null\n" +
                                            "      Identical qualifier and argument to <code>equals()</code> call\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
                                            + "   -" + getModule().toString() + "\n"
@@ -172,7 +173,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + "      -ff()\n"
                                            + "       " + varMessage("d") + "\n"
                                            + "       " + varMessage("a") + "\n");
-    tree.setSelectionRow(7);
+    tree.setSelectionRow(8);
     final OfflineProblemDescriptorNode node =
       (OfflineProblemDescriptorNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
