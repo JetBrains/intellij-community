@@ -55,6 +55,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -1014,10 +1015,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Override
   public void doCancelAction() {
+    if (myCurrentFile != null) return;
     final PsiViewerSettings settings = PsiViewerSettings.getSettings();
     final SourceWrapper wrapper = (SourceWrapper)myFileTypeComboBox.getSelectedItem();
     if (wrapper != null) settings.type = wrapper.getText();
-    settings.text = myEditor.getDocument().getText();
+    settings.text = StringUtil.first(myEditor.getDocument().getText(), 2048, true);
     settings.showTreeNodes = myShowTreeNodesCheckBox.isSelected();
     settings.showWhiteSpaces = myShowWhiteSpacesBox.isSelected();
     final Object selectedDialect = myDialectComboBox.getSelectedItem();
