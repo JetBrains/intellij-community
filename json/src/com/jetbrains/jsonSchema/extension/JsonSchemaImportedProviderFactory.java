@@ -57,39 +57,6 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
       myName = name;
       myFile = file;
       myPatterns = patterns;
-      /*for (final JsonSchemaMappingsConfigurationBase.Item pattern : patterns) {
-        if (pattern.isPattern()) {
-          myPatterns.add(new Processor<VirtualFile>() {
-            private Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
-
-            @Override
-            public boolean process(VirtualFile file) {
-              matcher.reset(file.getName());
-              return matcher.matches();
-            }
-          });
-        } else {
-          if (project == null || project.getBasePath() == null) {
-            continue;
-          }
-
-          String path = pattern.getPath().replace('\\', '/');
-          final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
-          final VirtualFile relativeFile;
-          if (parts.isEmpty()) {
-            relativeFile = project.getBaseDir();
-          } else {
-            relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
-            if (relativeFile == null) continue;
-          }
-
-          if (pattern.isDirectory()) {
-            myPatterns.add(file12 -> VfsUtil.isAncestor(relativeFile, file12, true));
-          } else {
-            myPatterns.add(file1 -> relativeFile.equals(file1));
-          }
-        }
-      }*/
     }
 
     @Override

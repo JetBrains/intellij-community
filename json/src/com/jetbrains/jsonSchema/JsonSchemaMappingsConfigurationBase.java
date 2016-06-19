@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -137,8 +138,8 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
             private Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
 
             @Override
-            public boolean process(VirtualFile file13) {
-              matcher.reset(file13.getName());
+            public boolean process(VirtualFile file) {
+              matcher.reset(file.getName());
               return matcher.matches();
             }
           });
@@ -147,7 +148,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
             continue;
           }
 
-          String path = pattern.getPath().replace('\\', '/');
+          final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
           final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
           final VirtualFile relativeFile;
           if (parts.isEmpty()) {
