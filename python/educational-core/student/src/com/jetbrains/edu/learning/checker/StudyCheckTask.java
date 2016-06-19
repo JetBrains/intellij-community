@@ -49,7 +49,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     myTask = studyState.getTask();
     myTaskDir = studyState.getTaskDir();
     myTaskManger = StudyTaskManager.getInstance(myProject);
-    myStatusBeforeCheck = myTaskManger.getStatus(myTask);
+    myStatusBeforeCheck = myTask.getStatus();
   }
 
   @Override
@@ -67,7 +67,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   @Override
   public void onCancel() {
-    myTaskManger.setStatus(myTask, myStatusBeforeCheck);
+    myTask.setStatus(myStatusBeforeCheck);
     clearState();
   }
 
@@ -156,9 +156,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void onTaskFailed(String message) {
-    myTaskManger.setStatus(myTask, StudyStatus.Failed);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-
+    myTask.setStatus(StudyStatus.Failed);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
@@ -175,9 +174,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void onTaskSolved(String message) {
-    myTaskManger.setStatus(myTask, StudyStatus.Solved);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-
+    myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(

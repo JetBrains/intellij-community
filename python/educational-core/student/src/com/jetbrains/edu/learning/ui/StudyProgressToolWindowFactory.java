@@ -43,7 +43,7 @@ public class StudyProgressToolWindowFactory implements ToolWindowFactory, DumbAw
       for (Lesson lesson : lessons) {
         if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
         taskNum += lesson.getTaskList().size();
-        taskSolved += getSolvedTasks(lesson, taskManager);
+        taskSolved += getSolvedTasks(lesson);
       }
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
 
@@ -68,10 +68,10 @@ public class StudyProgressToolWindowFactory implements ToolWindowFactory, DumbAw
     contentPanel.add(statisticLabel);
   }
 
-  private static int getSolvedTasks(@NotNull final Lesson lesson, StudyTaskManager taskManager) {
+  private static int getSolvedTasks(@NotNull final Lesson lesson) {
     int solved = 0;
     for (Task task : lesson.getTaskList()) {
-      if (taskManager.getStatus(task) == StudyStatus.Solved) {
+      if (task.getStatus() == StudyStatus.Solved) {
         solved += 1;
       }
     }

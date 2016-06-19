@@ -2,14 +2,13 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,7 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
             if (nextAnswerPlaceholder == null) {
               return;
             }
-            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
+            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder);
             selectedEditor.getSelectionModel().removeSelection();
             }
           }
@@ -47,8 +46,7 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
 
   @Nullable
   private static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile file) {
-    LogicalPosition position = editor.getCaretModel().getLogicalPosition();
-    return file.getAnswerPlaceholder(editor.getDocument(), position);
+    return file.getAnswerPlaceholder(editor.getCaretModel().getOffset());
   }
 
   @Nullable

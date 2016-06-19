@@ -4,7 +4,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.stepic.StepicUser;
@@ -28,6 +27,9 @@ public class Course {
   //"PyCharm" is used here for historical reasons
   @Expose private String courseType = EduNames.PYCHARM;
   @Expose private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
+
+  public Course() {
+  }
 
   /**
    * Initializes state of course

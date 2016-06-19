@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -679,5 +680,18 @@ public class StudyUtils {
     else {
       return new File(parent, EduNames.TASK_MD);
     }
+  }
+
+  @Nullable
+  public static Document getDocument(String basePath, int lessonIndex, int taskIndex, String fileName) {
+    String taskPath = FileUtil.join(basePath, EduNames.LESSON + lessonIndex, EduNames.TASK + taskIndex);
+    VirtualFile taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, fileName));
+    if (taskFile == null) {
+      taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, EduNames.SRC, fileName));
+    }
+    if (taskFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(taskFile);
   }
 }

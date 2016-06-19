@@ -1,24 +1,26 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,22 +33,30 @@ import java.util.Map;
 
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
+  private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
+  public static final int CURRENT_VERSION = 3;
+  private StepicUser myUser;
   private Course myCourse;
-  private OldCourse myOldCourse;
-  public int VERSION = 2;
-  public StepicUser myUser;
-  public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<>();
-  public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
+  public int VERSION = 3;
+
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
+
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
 
-  private StudyTaskManager() {
+  @Transient private final Project myProject;
+
+  public StudyTaskManager(Project project) {
+    myProject = project;
   }
 
-  public void setCourse(final Course course) {
+  public StudyTaskManager() {
+    this(null);
+  }
+
+  public void setCourse(Course course) {
     myCourse = course;
   }
 
@@ -85,97 +95,8 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     }
   }
 
-
-  public void setStatus(Task task, StudyStatus status) {
-    task.setStatus(status);
-    for (TaskFile taskFile : task.getTaskFiles().values()) {
-      setStatus(taskFile, status);
-    }
-  }
-
-  public void setStatus(TaskFile file, StudyStatus status) {
-    for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
-      setStatus(answerPlaceholder, status);
-    }
-  }
-
-  public StudyStatus getStatus(AnswerPlaceholder placeholder) {
-    StudyStatus status = placeholder.getStatus();
-    if (status != StudyStatus.Uninitialized) return status;
-    
-    status = myStudyStatusMap.get(placeholder);
-    if (status == null) {
-      status = StudyStatus.Unchecked;
-    }
-    placeholder.setStatus(status);
-    return status;
-  }
-
-
-  public StudyStatus getStatus(@NotNull final Lesson lesson) {
-    for (Task task : lesson.getTaskList()) {
-      StudyStatus taskStatus = getStatus(task);
-      if (taskStatus == StudyStatus.Unchecked || taskStatus == StudyStatus.Failed) {
-        return StudyStatus.Unchecked;
-      }
-    }
-    return StudyStatus.Solved;
-  }
-
-  public StudyStatus getStatus(@NotNull final Task task) {
-    StudyStatus taskStatus = task.getStatus();
-    if (taskStatus != StudyStatus.Uninitialized) return taskStatus;
-    
-    for (TaskFile taskFile : task.getTaskFiles().values()) {
-      StudyStatus taskFileStatus = getStatus(taskFile);
-      if (taskFileStatus == StudyStatus.Unchecked) {
-        task.setStatus(StudyStatus.Unchecked);
-        removeObsoleteTaskStatus(task);
-        return StudyStatus.Unchecked;
-      }
-      if (taskFileStatus == StudyStatus.Failed) {
-        task.setStatus(StudyStatus.Failed);
-        removeObsoleteTaskStatus(task);
-        return StudyStatus.Failed;
-      }
-    }
-    task.setStatus(StudyStatus.Solved);
-    removeObsoleteTaskStatus(task);
-    return StudyStatus.Solved;
-  }
-  
-  private void removeObsoleteTaskStatus(Task task) {
-    for (TaskFile taskFile: task.taskFiles.values()) {
-      myTaskStatusMap.remove(taskFile);
-      
-      for (AnswerPlaceholder answerPlaceholder: taskFile.getAnswerPlaceholders()) {
-        myStudyStatusMap.remove(answerPlaceholder);
-      }
-    }
-    
-  }
-
-  private StudyStatus getStatus(@NotNull final TaskFile file) {
-    if (file.getAnswerPlaceholders().isEmpty()) {
-      if (myTaskStatusMap == null) return StudyStatus.Solved;
-      return myTaskStatusMap.get(file);
-
-    }
-    for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
-      StudyStatus placeholderStatus = getStatus(answerPlaceholder);
-      if (placeholderStatus == StudyStatus.Failed) {
-        return StudyStatus.Failed;
-      }
-      if (placeholderStatus == StudyStatus.Unchecked) {
-        return StudyStatus.Unchecked;
-      }
-    }
-    return StudyStatus.Solved;
-  }
-
-
   public JBColor getColor(@NotNull final AnswerPlaceholder placeholder) {
-    final StudyStatus status = getStatus(placeholder);
+    final StudyStatus status = placeholder.getStatus();
     if (status == StudyStatus.Solved) {
       return JBColor.GREEN;
     }
@@ -186,7 +107,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
-    return taskFile.getAnswerPlaceholders().size() > 0 && getStatus(taskFile) == StudyStatus.Failed;
+    return taskFile.getAnswerPlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
   }
 
   @Nullable
@@ -194,7 +115,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public Element getState() {
     Element el = new Element("taskManager");
     if (myCourse != null) {
-      Element courseElement = new Element(MAIN_ELEMENT);
+      Element courseElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
       XmlSerializer.serializeInto(this, courseElement);
       el.addContent(courseElement);
     }
@@ -203,44 +124,32 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   @Override
   public void loadState(Element state) {
-    final Element mainElement = state.getChild(MAIN_ELEMENT);
-    if (mainElement != null) {
-      final StudyTaskManager taskManager = XmlSerializer.deserialize(mainElement, StudyTaskManager.class);
-      if (taskManager != null) {
-        myCourse = taskManager.myCourse;
-        myUserTests = taskManager.myUserTests;
-        myInvisibleFiles = taskManager.myInvisibleFiles;
-        myTaskStatusMap = taskManager.myTaskStatusMap;
-        myStudyStatusMap = taskManager.myStudyStatusMap;
-        myShouldUseJavaFx = taskManager.myShouldUseJavaFx;
-        myUser = taskManager.getUser();
-      }
+    int version = StudySerializationUtils.Xml.getVersion(state);
+    if (version == -1) {
+      LOG.error("StudyTaskManager doesn't contain any version:\n" + state.getValue());
+      return;
     }
-    final Element oldCourseElement = state.getChild(COURSE_ELEMENT);
-    if (oldCourseElement != null) {
-      myOldCourse = XmlSerializer.deserialize(oldCourseElement, OldCourse.class);
-      if (myOldCourse != null) {
-        myCourse = EduUtils.transformOldCourse(myOldCourse, pair -> {
-          setStatus(pair.first, pair.second);
-          return null;
-        });
-        myOldCourse = null;
-      }
+    switch (version) {
+      case 1:
+        state = StudySerializationUtils.Xml.convertToSecondVersion(state);
+      case 2:
+        state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
+      //uncomment for future versions
+      //case 3:
+      //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
     }
+
+    XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
+    VERSION = CURRENT_VERSION;
     if (myCourse != null) {
       myCourse.initCourse(true);
+      if (version != VERSION) {
+        String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", myCourse.getName());
+        if (new File(updatedCoursePath).exists()) {
+          myCourse.setCourseDirectory(updatedCoursePath);
+        }
+      }
     }
-  }
-
-  public static final String COURSE_ELEMENT = "courseElement";
-  public static final String MAIN_ELEMENT = "StudyTaskManager";
-
-  public OldCourse getOldCourse() {
-    return myOldCourse;
-  }
-
-  public void setOldCourse(OldCourse oldCourse) {
-    myOldCourse = oldCourse;
   }
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
@@ -279,13 +188,15 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myTurnEditingMode = turnEditingMode;
   }
 
+  @Transient
   public String getLogin() {
     if (myUser != null) {
       return myUser.getEmail();
     }
     return "";
   }
-  
+
+  @Transient
   public void setLogin(String login) {
     if (myUser != null) {
       myUser.setEmail(login);

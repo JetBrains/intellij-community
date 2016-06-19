@@ -19,14 +19,37 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
+import static com.jetbrains.edu.learning.StudySerializationUtils.*;
+import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.*;
+
+/**
+ * @deprecated since version 3
+ */
 @State(name = "CCProjectService", storages = @Storage("course_service.xml"))
-public class CCProjectService implements PersistentStateComponent<CCProjectService> {
+public class CCProjectService implements PersistentStateComponent<Element> {
   private Course myCourse;
+  @Transient private final Project myProject;
+
+  public CCProjectService() {
+    this(null);
+  }
+
+  public CCProjectService(Project project) {
+    myProject = project;
+  }
 
   public Course getCourse() {
     return myCourse;
@@ -37,14 +60,39 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   }
 
   @Override
-  public CCProjectService getState() {
-    return this;
+  public Element getState() {
+    return XmlSerializer.serialize(this);
   }
 
   @Override
-  public void loadState(CCProjectService state) {
-    XmlSerializerUtil.copyBean(state, this);
-    myCourse.initCourse(true);
+  public void loadState(Element state) {
+    Element courseElement = getChildWithName(state, COURSE).getChild(COURSE_TITLED);
+    for (Element lesson : getChildList(courseElement, LESSONS)) {
+      int lessonIndex = getAsInt(lesson, INDEX);
+      for (Element task : getChildList(lesson, TASK_LIST)) {
+        int taskIndex = getAsInt(task, INDEX);
+        Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
+        for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
+          Element taskFileElement = entry.getValue();
+          String name = entry.getKey();
+          String answerName = FileUtil.getNameWithoutExtension(name) + CCUtils.ANSWER_EXTENSION_DOTTED + FileUtilRt.getExtension(name);
+          Document document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, answerName);
+          if (document == null) {
+            continue;
+          }
+          for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
+            Element lineElement = getChildWithName(placeholder, LINE);
+            int line = lineElement != null ? Integer.valueOf(lineElement.getAttributeValue(VALUE)) : 0;
+            Element startElement = getChildWithName(placeholder, START);
+            int start = startElement != null ? Integer.valueOf(startElement.getAttributeValue(VALUE)) : 0;
+            int offset = document.getLineStartOffset(line) + start;
+            addChildWithName(placeholder, OFFSET, offset);
+            addChildWithName(placeholder, "useLength", "false");
+          }
+        }
+      }
+    }
+    XmlSerializer.deserializeInto(this, state);
   }
 
   public static CCProjectService getInstance(@NotNull Project project) {

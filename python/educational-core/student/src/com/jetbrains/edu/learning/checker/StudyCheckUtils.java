@@ -156,7 +156,7 @@ public class StudyCheckUtils {
           if (!answerPlaceholder.isValid(document)) {
             continue;
           }
-          final int start = answerPlaceholder.getRealStartOffset(document);
+          final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);

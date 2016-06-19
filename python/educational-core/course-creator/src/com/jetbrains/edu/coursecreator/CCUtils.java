@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class CCUtils {
+  public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";

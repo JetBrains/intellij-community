@@ -50,11 +50,11 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
       return;
     }
     AnswerPlaceholder.MyInitialState initialState = answerPlaceholder.getInitialState();
-    int startOffset = patternDocument.getLineStartOffset(initialState.myLine) + initialState.myStart;
-    final String text = patternDocument.getText(new TextRange(startOffset, startOffset + initialState.myLength));
+    int startOffset = initialState.getOffset();
+    final String text = patternDocument.getText(new TextRange(startOffset, startOffset + initialState.getLength()));
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       Document document = studyState.getEditor().getDocument();
-      int offset = answerPlaceholder.getRealStartOffset(document);
+      int offset = answerPlaceholder.getOffset();
       document.deleteString(offset, offset + answerPlaceholder.getRealLength());
       document.insertString(offset, text);
     }), NAME, null);
@@ -96,6 +96,6 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     }
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
-    return taskFile.getAnswerPlaceholder(editor.getDocument(), editor.getCaretModel().getLogicalPosition());
+    return taskFile.getAnswerPlaceholder(editor.getCaretModel().getOffset());
   }
 }

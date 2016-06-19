@@ -170,7 +170,7 @@ public class EduAdaptiveStepicConnector {
 
       final boolean recommendationReaction =
         user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
-                                                   String.valueOf(user.id), reaction);
+                                                   String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         final Task task = getNextRecommendation(project, course);
 
