@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,8 +15,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 public class CCVirtualFileListener extends VirtualFileAdapter {
-
-  private static final Logger LOG = Logger.getInstance(CCVirtualFileListener.class);
 
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {

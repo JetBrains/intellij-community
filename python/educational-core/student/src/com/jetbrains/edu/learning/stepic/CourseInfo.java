@@ -81,8 +81,8 @@ public class CourseInfo {
   public void setAuthors(List<StepicUser> authors) {
     myAuthors = authors;
     for (StepicUser author : authors) {
-      if (author.id > 0) {
-        instructors.add(author.id);
+      if (author.getId() > 0) {
+        instructors.add(author.getId());
       }
     }
   }

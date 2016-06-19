@@ -10,16 +10,16 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private static final Logger LOG = Logger.getInstance(StepicUser.class);
-  int id;
-  String firstName;
-  String lastName;
-  String email;
+  private int id = -1;
+  private String myFirstName = "";
+  private String myLastName = "";
+  private String myEmail = "";
 
   public StepicUser() {
   }
   
   public StepicUser(String email, String password) {
-    this.email = email;
+    this.myEmail = email;
     setPassword(password);
   }
 
@@ -32,27 +32,27 @@ public class StepicUser {
   }
 
   public String getFirstName() {
-    return firstName;
+    return myFirstName;
   }
 
   public void setFirstName(String firstName) {
-    this.firstName = firstName;
+    this.myFirstName = firstName;
   }
 
   public String getLastName() {
-    return lastName;
+    return myLastName;
   }
 
   public void setLastName(String last_name) {
-    this.lastName = last_name;
+    this.myLastName = last_name;
   }
 
   public String getEmail() {
-    return email;
+    return myEmail;
   }
 
   public void setEmail(String email) {
-    this.email = email;
+    this.myEmail = email;
   }
 
   @Transient
@@ -83,6 +83,6 @@ public class StepicUser {
   }
 
   public String getName() {
-    return StringUtil.join(new String[]{firstName, lastName}, " ");
+    return StringUtil.join(new String[]{myFirstName, myLastName}, " ");
   }
 }

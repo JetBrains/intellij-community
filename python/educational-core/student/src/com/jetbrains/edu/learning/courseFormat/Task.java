@@ -20,13 +20,22 @@ import java.util.Map;
  * Implementation of task which contains task files, tests, input file for tests
  */
 public class Task implements StudyItem {
-  @Expose private String name;
-  @Expose private String text;
+  @Expose
+  private String name;
+
+  // index is visible to user number of task from 1 to task number
+  @Expose private int myIndex;
+  @Expose private StudyStatus myStatus = StudyStatus.Unchecked;
+
   @Expose private int myStepicId;
-  @Expose private int myIndex; // index is visible to user number of task from 1 to task number
-  @Expose @SerializedName("task_files") public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
-  @Expose private Map<String, String> testsText = new HashMap<String, String>();
-  @Expose private StudyStatus myStatus = StudyStatus.Uninitialized;
+
+  @Expose
+  @SerializedName("task_files")
+  public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+
+  @Expose private String text;
+  private Map<String, String> testsText = new HashMap<String, String>();
+
   @Transient private Lesson myLesson;
 
   public Task() {}
@@ -205,5 +214,10 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
+    for (TaskFile taskFile : taskFiles.values()) {
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        placeholder.setStatus(status);
+      }
+    }
   }
 }

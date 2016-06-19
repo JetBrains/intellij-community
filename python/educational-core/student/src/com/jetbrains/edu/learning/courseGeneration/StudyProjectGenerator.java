@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -132,7 +133,7 @@ public class StudyProjectGenerator {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-      Gson gson = new GsonBuilder().create();
+      Gson gson = new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;

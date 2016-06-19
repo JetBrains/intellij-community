@@ -2,8 +2,6 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +24,9 @@ public class TaskFile {
   @Expose private boolean myHighlightErrors = false;
   @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   @Transient private Task myTask;
+
+  public TaskFile() {
+  }
 
   public void initTaskFile(final Task task, boolean isRestarted) {
     setTask(task);
@@ -70,32 +71,16 @@ public class TaskFile {
   }
 
   /**
-   * @param pos position in editor
-   * @return task window located in specified position or null if there is no task window in this position
+   * @param offset position in editor
+   * @return answer placeholder located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos) {
-    return getAnswerPlaceholder(document, pos, false);
-  }
-
-  @Nullable
-  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos,
-                                                boolean useAnswerLength) {
-    int line = pos.line;
-    if (line >= document.getLineCount()) {
-      return null;
-    }
-    int column = pos.column;
-    int offset = document.getLineStartOffset(line) + column;
+  public AnswerPlaceholder getAnswerPlaceholder(int offset) {
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
-      if (placeholder.getLine() <= line) {
-        int realStartOffset = placeholder.getRealStartOffset(document);
-        int placeholderLength = placeholder.getRealLength();
-        final int length = placeholderLength > 0 ? placeholderLength : 0;
-        int endOffset = realStartOffset + length;
-        if (realStartOffset <= offset && offset <= endOffset) {
-          return placeholder;
-        }
+      int placeholderStart = placeholder.getOffset();
+      int placeholderEnd = placeholderStart + placeholder.getRealLength();
+      if (placeholderStart <= offset && offset <= placeholderEnd) {
+        return placeholder;
       }
     }
     return null;
@@ -107,9 +92,8 @@ public class TaskFile {
     List<AnswerPlaceholder> answerPlaceholdersCopy = new ArrayList<AnswerPlaceholder>(sourceAnswerPlaceholders.size());
     for (AnswerPlaceholder answerPlaceholder : sourceAnswerPlaceholders) {
       AnswerPlaceholder answerPlaceholderCopy = new AnswerPlaceholder();
-      answerPlaceholderCopy.setLine(answerPlaceholder.getLine());
-      answerPlaceholderCopy.setStart(answerPlaceholder.getStart());
       answerPlaceholderCopy.setTaskText(answerPlaceholder.getTaskText());
+      answerPlaceholderCopy.setOffset(answerPlaceholder.getOffset());
       answerPlaceholderCopy.setLength(answerPlaceholder.getLength());
       answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
@@ -151,35 +135,12 @@ public class TaskFile {
     }
   }
 
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    TaskFile that = (TaskFile)o;
-
-    if (getIndex() != that.getIndex()) return false;
-    if (!name.equals(that.name)) return false;
-
-    final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
-    final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();
-    if (answerPlaceholders.size() != thatAnswerPlaceholders.size()) return false;
-    for (int i = 0; i < answerPlaceholders.size(); i++) {
-      final AnswerPlaceholder placeholder = answerPlaceholders.get(i);
-      final AnswerPlaceholder thatPlaceholder = thatAnswerPlaceholders.get(i);
-      if (!placeholder.equals(thatPlaceholder)) return false;
-    }
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = getIndex();
-    result = 31 * result + name.hashCode();
+  public boolean hasFailedPlaceholders() {
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
-      result = 31 * result + placeholder.hashCode();
+      if (placeholder.getStatus() == StudyStatus.Failed) {
+        return true;
+      }
     }
-    return result;
+    return false;
   }
 }

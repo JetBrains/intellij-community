@@ -95,12 +95,11 @@ public class PyStudyCheckAction extends StudyCheckAction {
       protected void onTaskFailed(String message) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myTaskDir == null) return;
-          myTaskManger.setStatus(myTask, StudyStatus.Failed);
+          myTask.setStatus(StudyStatus.Failed);
           for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
             final String name = entry.getKey();
             final TaskFile taskFile = entry.getValue();
             if (taskFile.getAnswerPlaceholders().size() < 2) {
-              myTaskManger.setStatus(taskFile, StudyStatus.Failed);
               continue;
             }
             final Course course = myTaskManger.getCourse();

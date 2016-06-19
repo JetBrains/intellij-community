@@ -5,7 +5,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -14,11 +13,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +53,9 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     }
     PsiFile file = PsiManager.getInstance(project).findFile(studyState.getVirtualFile());
     final Editor editor = studyState.getEditor();
-    LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getAnswerPlaceholder(editor.getDocument(), pos);
+    int offset = editor.getCaretModel().getOffset();
+    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getAnswerPlaceholder(
+      offset);
     if (file == null) {
       return;
     }
@@ -64,7 +64,6 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
       String hint = answerPlaceholder.getHint();
       hintText = hint.isEmpty() ? HINT_NOT_AVAILABLE : hint;
     }
-    int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
     PsiElement element = file.findElementAt(offset);
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(documentationManager);
