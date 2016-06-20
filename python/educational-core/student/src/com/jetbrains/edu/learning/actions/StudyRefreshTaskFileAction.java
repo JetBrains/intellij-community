@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -33,6 +32,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
 
   public StudyRefreshTaskFileAction() {
-    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Refresh current task", AllIcons.Actions.Refresh);
+    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Refresh current task",
+          InteractiveLearningIcons.ResetTaskFile);
   }
 
   public static void refresh(@NotNull final Project project) {
