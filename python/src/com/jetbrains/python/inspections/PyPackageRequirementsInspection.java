@@ -108,7 +108,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "are" : "is");
             final Set<String> unsatisfiedNames = new HashSet<String>();
             for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getName());
+              unsatisfiedNames.add(req.getFullName());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
             quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
