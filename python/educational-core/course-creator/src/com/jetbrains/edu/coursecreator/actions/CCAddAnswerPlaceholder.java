@@ -26,7 +26,7 @@ import java.util.List;
 public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   public CCAddAnswerPlaceholder() {
-    super("Add/Delete Answer Placeholder", "Add/Delete answer placeholder", null);
+    super("Add/Delete Answer Placeholder", "Add/Delete answer placeholder");
   }
 
 
