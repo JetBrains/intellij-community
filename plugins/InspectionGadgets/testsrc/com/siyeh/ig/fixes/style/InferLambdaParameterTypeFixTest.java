@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.fixes.style;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.InferLambdaParameterTypeInspection;
 
-public class InferLambdaParameterTypeIntentionTest extends IPPTestCase {
-  
+public class InferLambdaParameterTypeFixTest extends IGQuickFixesTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new InferLambdaParameterTypeInspection());
+  }
+
   public void testSimple() {
     doTest("Expand lambda to (String o) -> {...}");
   }
@@ -36,28 +42,23 @@ public class InferLambdaParameterTypeIntentionTest extends IPPTestCase {
   }
 
   public void testAlreadyExist() throws Exception {
-    assertIntentionNotAvailable("Expand lambda to (String o) -> {...}");
+    assertQuickfixNotAvailable("Expand lambda to (String o) -> {...}");
   }
 
   public void testCyclicInference() throws Exception {
-    assertIntentionNotAvailable("Expand lambda to (Object x) -> {...}");
+    assertQuickfixNotAvailable("Expand lambda to (Object x) -> {...}");
   }
 
   public void testNoParams() throws Exception {
-    assertIntentionNotAvailable("Expand lambda to () -> {...}");
+    assertQuickfixNotAvailable("Expand lambda to () -> {...}");
   }
 
   public void testCapturedWildcardParams() throws Exception {
-    assertIntentionNotAvailable("Expand lambda to (capture of ?) -> {...}");
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return "";
+    assertQuickfixNotAvailable("Expand lambda to (capture of ?) -> {...}");
   }
 
   @Override
   protected String getRelativePath() {
-    return "types/inferLambdaParameterType";
+    return "style/inferLambdaParameterType";
   }
 }
