@@ -63,18 +63,6 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
-  public ActionCallback subCallback(@NotNull Consumer<T> doneHandler) {
-    ActionCallback subCallback = new ActionCallback();
-    doWhenDone(new SubCallbackDoneCallback<T>(subCallback, doneHandler)).notifyWhenRejected(subCallback);
-    return subCallback;
-  }
-
-  /**
    * @deprecated Use {@link #doWhenDone(com.intellij.util.Consumer)} (to remove in IDEA 16)
    */
   @NotNull
@@ -224,29 +212,6 @@ public class AsyncResult<T> extends ActionCallback {
         return;
       }
       subResult.setDone(v);
-    }
-  }
-
-  private static class SubCallbackDoneCallback<Result> implements Consumer<Result> {
-    private final ActionCallback subResult;
-    private final Consumer<Result> doneHandler;
-
-    public SubCallbackDoneCallback(ActionCallback subResult, Consumer<Result> doneHandler) {
-      this.subResult = subResult;
-      this.doneHandler = doneHandler;
-    }
-
-    @Override
-    public void consume(Result result) {
-      try {
-        doneHandler.consume(result);
-      }
-      catch (Throwable e) {
-        subResult.reject(e.getMessage());
-        LOG.error(e);
-        return;
-      }
-      subResult.setDone();
     }
   }
 }
