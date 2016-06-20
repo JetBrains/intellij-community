@@ -11,7 +11,10 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.DefaultProjectFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -26,6 +29,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.LoginDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -315,49 +319,25 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     return myInfoPanel;
   }
 
-  private class AddRemoteDialog extends DialogWrapper {
-
-    private final StudyAddRemoteCourse myRemoteCourse;
+  private class AddRemoteDialog extends LoginDialog {
 
     protected AddRemoteDialog() {
-      super(null);
-      setTitle("Login To Stepic");
-      myRemoteCourse = new StudyAddRemoteCourse();
-      init();
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return myRemoteCourse.getContentPanel();
-    }
-
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myRemoteCourse.getLoginField();
+      super();
     }
 
     @Override
     protected void doOKAction() {
-      super.doOKAction();
-      if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getLogin())) {
-        myRemoteCourse.setError("Please, enter your login");
-        return;
-      }
-      if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getPassword())) {
-        myRemoteCourse.setError("Please, enter your password");
-        return;
-      }
+      if (!validateLoginAndPasswordFields()) return;
+      super.doJustOkAction();
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myRemoteCourse.getLogin(),
-                                                                                               myRemoteCourse.getPassword()));
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
+                                                                                               myLoginPanel.getPassword()));
         if (stepicUser != null) {
-          stepicUser.setEmail(myRemoteCourse.getLogin());
-          stepicUser.setPassword(myRemoteCourse.getPassword());
+          stepicUser.setEmail(myLoginPanel.getLogin());
+          stepicUser.setPassword(myLoginPanel.getPassword());
           myGenerator.myUser = stepicUser;
           myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
 
