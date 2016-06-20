@@ -199,6 +199,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
+    if (PyNames.DOC.equals(name)) {
+      return Optional
+        .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
+        .map(type -> type.resolveMember(name, location, direction, resolveContext))
+        .orElse(Collections.emptyList());
+    }
+
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
     if (classMember != null) {
       final ResolveResultList list = new ResolveResultList();
