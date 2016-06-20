@@ -513,12 +513,13 @@ public class EduStepicConnector {
   }
 
   private static boolean login(@NotNull final Project project) {
-    final String login = StudyTaskManager.getInstance(project).getLogin();
+    final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+    final String login =  user.getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return showLoginDialog();
     }
     else {
-      if (login(login, StudyTaskManager.getInstance(project).getPassword()) == null) {
+      if (login(login, user.getPassword()) == null) {
         return showLoginDialog();
       }
     }

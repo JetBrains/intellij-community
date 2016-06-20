@@ -107,8 +107,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   public void reset() {
     Project project = StudyUtils.getStudyProject();
     if (project != null) {
-      final StudyTaskManager studySettings = StudyTaskManager.getInstance(project);
-      setLogin(studySettings.getLogin());
+      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+      setLogin(user.getEmail());
       setPassword(DEFAULT_PASSWORD_TEXT);
 
       resetCredentialsModification();
@@ -128,9 +128,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     if (myCredentialsModified) {
       final Project project = StudyUtils.getStudyProject();
       if (project != null) {
-        final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
-        studyTaskManager.setLogin(getLogin());
-        studyTaskManager.setPassword(getPassword());
+        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+        user.setEmail(getLogin());
+        user.setPassword(getPassword());
         if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
           EduStepicConnector.login(getLogin(), getPassword());
         }
