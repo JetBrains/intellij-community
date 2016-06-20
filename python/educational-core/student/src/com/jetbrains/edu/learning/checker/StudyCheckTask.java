@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,8 +215,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final String login = studySettings.getUser().getEmail();
-    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getUser().getPassword();
+    final StepicUser user = studySettings.getUser();
+    if (user == null) return;
+    final String login = user.getEmail();
+    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }
