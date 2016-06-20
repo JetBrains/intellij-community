@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.jetbrains.edu.learning.StudyUtils
 
 
+@JvmField val ID = "Test Results"
 class StudyTestResultsToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val currentTask = StudyUtils.getCurrentTask(project)
