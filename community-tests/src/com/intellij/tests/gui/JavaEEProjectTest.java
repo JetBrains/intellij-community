@@ -17,14 +17,12 @@ package com.intellij.tests.gui;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.tests.gui.finder.JToggleButtonFinder;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.ToolWindowFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.GuiTestCase;
 import com.intellij.tests.gui.framework.GuiTests;
 import com.intellij.tests.gui.framework.IdeGuiTest;
-import org.fest.swing.fixture.JToggleButtonFixture;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -34,8 +32,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.intellij.tests.gui.framework.GuiTests.SHORT_TIMEOUT;
-import static com.intellij.tests.gui.framework.GuiTests.THIRTY_SEC_TIMEOUT;
 import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
 
 
@@ -58,7 +54,7 @@ public class JavaEEProjectTest extends GuiTestCase {
     NewProjectWizardFixture newProjectWizard = findNewProjectWizard();
 
     //check Project SDK is not Empty
-    setupJdkIfNeeded(newProjectWizard);
+    setupJdk(newProjectWizard);
 
     //select project type and framework
     newProjectWizard.
@@ -86,7 +82,7 @@ public class JavaEEProjectTest extends GuiTestCase {
     //ToolWindowFixture.clickToolwindowButton("Java Enterprise", myRobot);
   }
 
-  private void setupJdkIfNeeded(NewProjectWizardFixture newProjectWizard) {
+  private void setupJdk(NewProjectWizardFixture newProjectWizard) {
     if (newProjectWizard.isJdkEmpty()) {
       JButton newButton = GuiTests.findButton(newProjectWizard,
                                               GuiTests.adduction(ApplicationBundle.message("button.new")),

@@ -18,10 +18,7 @@ package com.intellij.tests.gui.fixtures;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -718,8 +715,12 @@ public class EditorFixture {
    *
    * @param action the action to invoke
    */
+
   public EditorFixture invokeAction(@NotNull EditorAction action) {
     switch (action) {
+      case DOWN:
+        invokeActionViaKeystroke(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+        break;
       case BACK_SPACE:
         invokeActionViaKeystroke("EditorBackSpace");
         break;
@@ -741,6 +742,14 @@ public class EditorFixture {
       case SELECT_ALL:
         invokeActionViaKeystroke("$SelectAll");
         break;
+      case TAB: {
+        invokeActionViaKeystroke(IdeActions.ACTION_EDITOR_TAB);
+        break;
+      }
+      case ENTER: {
+        invokeActionViaKeystroke(IdeActions.ACTION_EDITOR_ENTER);
+        break;
+      }
       case FORMAT: {
         // To format without showing dialog:
         //  invokeActionViaKeystroke("ReformatCode");
@@ -1056,6 +1065,9 @@ public class EditorFixture {
    * Common editor actions, invokable via {@link #invokeAction(EditorAction)}
    */
   public enum EditorAction {
+    DOWN,
+    TAB,
+    ENTER,
     SHOW_INTENTION_ACTIONS,
     FORMAT,
     SAVE,

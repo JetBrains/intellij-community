@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
@@ -39,7 +41,10 @@ import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -160,12 +165,12 @@ public class ProjectViewFixture extends ToolWindowFixture {
         }
       });
       if (node != null) {
-        return new NodeFixture(node, treeStructure);
+        return new NodeFixture(node, treeStructure, myPane);
       }
       throw new AssertionError("Unable to find 'External Libraries' node");
     }
 
-    public void selectByPath(@NotNull final String... paths) {
+    public NodeFixture selectByPath(@NotNull final String... paths) {
       final AbstractTreeStructure treeStructure = getTreeStructure();
 
       final BasePsiNode node = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
@@ -187,7 +192,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
                   break;
                 }
               }
-              if (child instanceof PsiFileNode){
+              if (child instanceof PsiFileNode) {
                 PsiFile file = ((PsiFileNode)child).getValue();
                 if (file != null && path.equals(file.getName())) {
                   newRoot = child;
@@ -230,16 +235,23 @@ public class ProjectViewFixture extends ToolWindowFixture {
           }));
         }
       }, SHORT_TIMEOUT);
+      return (new NodeFixture(node, treeStructure, myPane));
+    }
+
+    public void getSelectedNodeLocation() {
+
     }
   }
 
   public static class NodeFixture {
     @NotNull private final ProjectViewNode<?> myNode;
     @NotNull private final AbstractTreeStructure myTreeStructure;
+    @NotNull private final AbstractProjectViewPane myPane;
 
-    NodeFixture(@NotNull ProjectViewNode<?> node, @NotNull AbstractTreeStructure treeStructure) {
+    NodeFixture(@NotNull ProjectViewNode<?> node, @NotNull AbstractTreeStructure treeStructure, @NotNull AbstractProjectViewPane pane) {
       myNode = node;
       myTreeStructure = treeStructure;
+      myPane = pane;
     }
 
     @NotNull
@@ -250,12 +262,45 @@ public class ProjectViewFixture extends ToolWindowFixture {
         protected void executeInEDT() throws Throwable {
           for (Object child : myTreeStructure.getChildElements(myNode)) {
             if (child instanceof ProjectViewNode) {
-              children.add(new NodeFixture((ProjectViewNode<?>)child, myTreeStructure));
+              children.add(new NodeFixture((ProjectViewNode<?>)child, myTreeStructure, myPane));
             }
           }
         }
       });
       return children;
+    }
+
+    public Point getLocation() {
+      myPane.getTree();
+      final JTree tree = myPane.getTree();
+      final DefaultMutableTreeNode dmtn = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
+      final TreePath path = TreeUtil.getPathFromRoot(dmtn);
+      final Rectangle bounds = tree.getPathBounds(path);
+      assertNotNull(bounds);
+      return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    }
+
+
+    public Point getLocationOnScreen() {
+      final Point locationOnScreen = myPane.getComponentToFocus().getLocationOnScreen();
+      final Point location = getLocation();
+      return new Point(locationOnScreen.x + location.x, locationOnScreen.y + location.y);
+    }
+
+    public void click(Robot robot) {
+      robot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 1);
+    }
+
+    public void doubleClick(Robot robot) {
+      robot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 2);
+    }
+
+    public void rightClick(Robot robot) {
+      invokeContextMenu(robot);
+    }
+
+    public void invokeContextMenu(Robot robot) {
+      robot.click(getLocationOnScreen(), MouseButton.RIGHT_BUTTON, 1);
     }
 
     public boolean isJdk() {
@@ -279,6 +324,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
       assertThat(file.getName()).isEqualTo(name);
       return this;
     }
+
 
     @Override
     public String toString() {

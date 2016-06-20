@@ -16,6 +16,8 @@
 package com.intellij.tests.gui.fixtures.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,6 +42,7 @@ import java.awt.*;
 import java.io.File;
 
 import static com.intellij.tests.gui.framework.GuiTests.LONG_TIMEOUT;
+import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
@@ -130,6 +133,21 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     });
   }
 
+  public NewProjectWizardFixture setupJdk() {
+    if (this.isJdkEmpty()) {
+      JButton newButton = GuiTests.findButton(this,
+                                              GuiTests.adduction(ApplicationBundle.message("button.new")),
+                                              robot());
+      robot().click(newButton);
+      File javaSdkPath = new File(getSystemJdk());
+      String sdkType = GuiTests.adduction(ProjectBundle.message("sdk.java.name"));
+      GuiTests.clickPopupMenuItem(sdkType, newButton, robot());
+      this.selectSdkPath(javaSdkPath, sdkType);
+    }
+    return this;
+  }
+
+
   @NotNull
   public ConfigureAndroidProjectStepFixture getConfigureAndroidProjectStep() {
     JRootPane rootPane = findStepWithTitle("Configure your new project");
@@ -147,4 +165,5 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     JRootPane rootPane = findStepWithTitle("Customize the Activity");
     return new ChooseOptionsForNewFileStepFixture(robot(), rootPane);
   }
+
 }

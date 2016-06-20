@@ -22,9 +22,12 @@ package com.intellij.tests.gui.framework;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +38,7 @@ import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.BasicRobot;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
@@ -53,6 +57,7 @@ import org.junit.runner.RunWith;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
 import static com.intellij.openapi.util.io.FileUtil.*;
@@ -123,7 +128,7 @@ public abstract class GuiTestCase {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws InvocationTargetException, InterruptedException {
     if (myProjectFrame != null) {
       myProjectFrame.waitForBackgroundTasksToFinish();
     }
@@ -132,7 +137,7 @@ public abstract class GuiTestCase {
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
       for (Window window : Window.getWindows()) {
         if (window.isShowing() && window instanceof Dialog) {
-          if (((Dialog) window).getModalityType() == Dialog.ModalityType.APPLICATION_MODAL) {
+          if (((Dialog)window).getModalityType() == Dialog.ModalityType.APPLICATION_MODAL) {
             fail("Modal dialog still active: " + window);
             myRobot.close(window);
           }
@@ -140,6 +145,23 @@ public abstract class GuiTestCase {
       }
     }
     ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+    //EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
+    //  @Override
+    //  public void run() {
+    //    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //      @Override
+    //      public void run() {
+    //        Disposer.dispose(ApplicationManager.getApplication());
+    //      }
+    //    });
+    //  }
+    //});
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManagerEx.getApplicationEx().exit();
+      }
+    });
   }
 
   @NotNull
