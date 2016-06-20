@@ -67,6 +67,14 @@ public class AccessibleContextUtil {
     return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3));
   }
 
+  public static String getCombinedName(@NotNull String separator, Component... components) {
+    String result = "";
+    for (Component c : components) {
+      result = combineAccessibleStrings(result, separator, getAccessibleName(c));
+    }
+    return result;
+  }
+
   public static void setDescription(@NotNull Component component, @NotNull Component source) {
     setAccessibleDescription(component, getAccessibleDescription(source));
   }
