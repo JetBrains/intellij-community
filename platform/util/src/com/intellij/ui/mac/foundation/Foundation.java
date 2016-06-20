@@ -245,7 +245,7 @@ public class Foundation {
     boolean myUseAutoreleasePool;
   }
 
-  public static void executeOnMainThread(final Runnable runnable, final boolean withAutoreleasePool, final boolean waitUntilDone) {
+  public static void executeOnMainThread(final boolean withAutoreleasePool, final boolean waitUntilDone, final Runnable runnable) {
     initRunnableSupport();
 
     synchronized (RUNNABLE_LOCK) {
