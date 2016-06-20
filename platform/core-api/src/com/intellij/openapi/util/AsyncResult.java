@@ -22,9 +22,6 @@ import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
 
@@ -203,16 +200,6 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public static <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
-  }
-
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @NotNull
-  @Deprecated
-  public static <R extends List> AsyncResult<R> doneList() {
-    //noinspection unchecked
-    return done((R)Collections.emptyList());
   }
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
