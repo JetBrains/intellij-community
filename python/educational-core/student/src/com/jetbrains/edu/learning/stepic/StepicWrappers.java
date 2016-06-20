@@ -61,15 +61,12 @@ public class StepicWrappers {
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         final TaskFile taskFile = new TaskFile();
         TaskFile.copy(entry.getValue(), taskFile);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile taskDir = task.getTaskDir(project);
-            assert taskDir != null;
-            VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
-            assert ideaDir != null;
-            EduUtils.createStudentFileFromAnswer(project, ideaDir, taskDir, entry.getKey(), taskFile);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          final VirtualFile taskDir = task.getTaskDir(project);
+          assert taskDir != null;
+          VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+          assert ideaDir != null;
+          EduUtils.createStudentFileFromAnswer(project, ideaDir, taskDir, entry.getKey(), taskFile);
         });
         taskFile.name = entry.getKey();
 
@@ -98,11 +95,8 @@ public class StepicWrappers {
     private static void setTests(@NotNull final Task task, @NotNull final StepOptions source, @NotNull final Project project) {
       final Map<String, String> testsText = task.getTestsText();
       if (testsText.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
         });
       }
       else {

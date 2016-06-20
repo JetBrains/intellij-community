@@ -107,7 +107,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
   private static class ClearPlaceholders implements UndoableAction {
     private final List<AnswerPlaceholder> myPlaceholders;
     private final Editor myEditor;
-    TaskFile myTaskFile;
+    private final TaskFile myTaskFile;
 
     public ClearPlaceholders(TaskFile taskFile, List<AnswerPlaceholder> placeholders, Editor editor) {
       myTaskFile = taskFile;
