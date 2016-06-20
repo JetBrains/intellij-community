@@ -23,7 +23,6 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
-import com.intellij.util.ArrayUtil;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -69,27 +68,6 @@ public class OfflineViewParseUtil {
             int idx = fqName2IdxMap.get(fqName);
             descriptor.setProblemIndex(idx);
             fqName2IdxMap.put(fqName, idx + 1);
-
-            final List<String> parentTypes = new ArrayList<String>();
-            final List<String> parentNames = new ArrayList<String>();
-            int deep = 0;
-            while (true) {
-              if (reader.hasMoreChildren()) {
-                reader.moveDown();
-                parentTypes.add(reader.getAttribute(SmartRefElementPointerImpl.TYPE_ATTR));
-                parentNames.add(reader.getAttribute(SmartRefElementPointerImpl.FQNAME_ATTR));                
-                deep ++;
-              } else {
-                while (deep-- > 0) {
-                  reader.moveUp();
-                }
-                break;
-              }
-            }
-            if (!parentTypes.isEmpty() && !parentNames.isEmpty()) {
-              descriptor.setParentType(ArrayUtil.toStringArray(parentTypes));
-              descriptor.setParentFQName(ArrayUtil.toStringArray(parentNames));
-            }
           }
           if (DESCRIPTION.equals(reader.getNodeName())) {
             descriptor.setDescription(reader.getValue());

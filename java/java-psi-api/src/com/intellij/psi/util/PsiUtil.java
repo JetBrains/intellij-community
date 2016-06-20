@@ -156,7 +156,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (expression == null) return false;
     IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
     expression.accept(visitor);
-    return visitor.myIsConstant;
+    return visitor.isConstant();
   }
 
   // todo: move to PsiThrowsList?

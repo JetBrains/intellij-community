@@ -27,11 +27,11 @@ public class EditorFontsConstants {
 
   public static int getDefaultEditorFontSize() {return JBUI.scale(12);}
 
-  public static float getMinEditorLineSpacing() {return JBUI.scale(.6F);}
+  public static float getMinEditorLineSpacing() {return .6f;}
 
-  public static float getMaxEditorLineSpacing() {return JBUI.scale(3f);}
+  public static float getMaxEditorLineSpacing() {return 3f;}
 
-  public static float getDefaultEditorLineSpacing() {return JBUI.scale(1f);}
+  public static float getDefaultEditorLineSpacing() {return 1f;}
 
   public static int checkAndFixEditorFontSize(int size) {
     return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);

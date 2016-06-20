@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete16() { doParserTest("try(R r =){}"); }
   public void testTryIncomplete17() { doParserTest("try(R r = 0;;){}"); }
   public void testTryIncomplete18() { doParserTest("try(R<T> r){}"); }
+  public void testTryNormal11() { doParserTest("try(new R()){}"); }
+  public void testTryNormal12() { doParserTest("try(R.create()){}"); }
 
   public void testWhileNormal() { doParserTest("while (true) foo();"); }
   public void testWhileIncomplete0() { doParserTest("while"); }

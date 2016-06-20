@@ -150,23 +150,26 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
         return filename_to_not_in_scope_cache[filename]
     except:
         project_roots = _get_project_roots()
+        original_filename = filename
+        if not os.path.isabs(filename) and not filename.startswith('<'):
+            filename = os.path.abspath(filename)
         filename = os.path.normcase(filename)
         for root in project_roots:
             if filename.startswith(root):
-                filename_to_not_in_scope_cache[filename] = False
+                filename_to_not_in_scope_cache[original_filename] = False
                 break
         else: # for else (only called if the break wasn't reached).
-            filename_to_not_in_scope_cache[filename] = True
+            filename_to_not_in_scope_cache[original_filename] = True
 
-        if not filename_to_not_in_scope_cache[filename]:
+        if not filename_to_not_in_scope_cache[original_filename]:
             # additional check if interpreter is situated in a project directory
             library_roots = _get_library_roots()
             for root in library_roots:
                 if root != '' and filename.startswith(root):
-                    filename_to_not_in_scope_cache[filename] = True
+                    filename_to_not_in_scope_cache[original_filename] = True
 
         # at this point it must be loaded.
-        return filename_to_not_in_scope_cache[filename]
+        return filename_to_not_in_scope_cache[original_filename]
 
 
 def is_filter_enabled():

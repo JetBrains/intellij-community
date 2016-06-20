@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions.fillParagraph;
 
+import com.intellij.formatting.FormatterTagHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -55,9 +55,15 @@ public class ParagraphFillHandler {
                              replacementText);
       final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
                                       CodeStyleSettingsManager.getSettings(element.getProject()), element.getLanguage());
+
+      final PsiFile file = element.getContainingFile();
+      FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyleSettingsManager.getSettings(file.getProject()));
+      List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), TextRange.create(0, document.getTextLength()));
+
       codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
                                                textRange.getStartOffset(),
-                                               textRange.getStartOffset() + replacementText.length() + 1, Collections.emptyList());
+                                               textRange.getStartOffset() + replacementText.length() + 1,
+                                               enabledRanges);
     }, null, document);
 
   }

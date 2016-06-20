@@ -166,6 +166,11 @@ public class TemplateResource implements Serializable {
     final String trimmed = template.trim();
     String s = trimmed.startsWith("/*") ? after(trimmed, "*/") : trimmed;
 
+    final int indexOf = s.indexOf('{');
+    if (indexOf > 0) {
+      return s.substring(0, indexOf).trim();
+    }
+
     StringBuffer signature = new StringBuffer();
 
     String[] lines = s.split("\n");

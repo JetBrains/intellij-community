@@ -264,7 +264,7 @@ public abstract class AbstractExternalSystemLocalSettings {
     }
   }
 
-  private static <K, V> void setIfNotNull(@NotNull AtomicReference<Map<K, V>> ref, @Nullable Map<K, V> candidate) {
+  protected static <K, V> void setIfNotNull(@NotNull AtomicReference<Map<K, V>> ref, @Nullable Map<K, V> candidate) {
     if (candidate == null) {
       return;
     }

@@ -148,7 +148,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       return true;
     }
 
-    final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass, inferredType != PsiType.NULL ? inferredType : null);
+    final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass);
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
     body.accept(checker);
@@ -466,15 +466,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
-    private final PsiType myInferredType;
-
-    public ForbiddenRefsChecker(PsiMethod method,
-                                PsiAnonymousClass aClass,
-                                PsiType inferredType) {
+    public ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
-      final PsiClassType baseClassType = aClass.getBaseClassType();
-      myInferredType = !baseClassType.equals(inferredType) ? inferredType : null;
     }
 
     @Override
@@ -537,7 +531,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                 resolved == member ||
                 initializer.getTextOffset() > myAnonymClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
-              return;
             }
           }
         } else {
@@ -556,43 +549,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                   final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
                   if (!writtenVariables.contains(resolved)) {
                     myBodyContainsForbiddenRefs = true;
-                    return;
                   }
                 }
               }
               catch (AnalysisCanceledException e) {
                 myBodyContainsForbiddenRefs = true;
-                return;
-              }
-            }
-          }
-        }
-      }
-
-      if (myInferredType != null) {
-        final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() == myMethod) {
-          if (!(myInferredType instanceof PsiClassType)) {
-            myBodyContainsForbiddenRefs = true;
-            return;
-          }
-          final int parameterIndex = myMethod.getParameterList().getParameterIndex((PsiParameter)resolved);
-          for (PsiMethod superMethod : myMethod.findDeepestSuperMethods()) {
-            final PsiType paramType = superMethod.getParameterList().getParameters()[parameterIndex].getType();
-            final PsiClass superClass = superMethod.getContainingClass();
-            if (superClass != null) {
-              final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)myInferredType).resolveGenerics();
-              final PsiClass classCandidate = classResolveResult.getElement();
-              if (classCandidate == null) {
-                myBodyContainsForbiddenRefs = true;
-                return;
-              }
-              final PsiSubstitutor inferredSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, classCandidate, classResolveResult.getSubstitutor());
-              final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, myAnonymClass.getBaseClassType());
-              if (inferredSubstitutor != null &&
-                  !Comparing.equal(inferredSubstitutor.substitute(paramType), substitutor.substitute(paramType))) {
-                myBodyContainsForbiddenRefs = true;
-                return;
               }
             }
           }

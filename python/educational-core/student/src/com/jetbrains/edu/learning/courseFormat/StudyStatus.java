@@ -1,5 +1,5 @@
 package com.jetbrains.edu.learning.courseFormat;
 
 public enum StudyStatus {
-  Unchecked, Solved, Failed, Uninitialized
+  Unchecked, Solved, Failed
 }

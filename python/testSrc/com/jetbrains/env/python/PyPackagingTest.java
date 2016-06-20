@@ -156,6 +156,10 @@ public class PyPackagingTest extends PyEnvTestCase {
 
 
   private abstract static class PyPackagingTestTask extends PyExecutionFixtureTestTask {
+    PyPackagingTestTask() {
+      super(null);
+    }
+
     @NotNull
     @Override
     public Set<String> getTags() {

@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 
 /**
@@ -25,5 +28,15 @@ public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
   @Override
   protected Map<T, V> createMap() {
     return ContainerUtil.newConcurrentMap();
+  }
+
+  public static <T, V> ConcurrentFactoryMap<T, V> createMap(final Function<T, V> computeValue) {
+    return new ConcurrentFactoryMap<T, V>() {
+      @Nullable
+      @Override
+      protected V create(T key) {
+        return computeValue.fun(key);
+      }
+    };
   }
 }

@@ -38,6 +38,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -804,11 +805,19 @@ public class JavaFxPsiUtil {
 
   @Nullable
   public static PsiClass getWritablePropertyClass(@Nullable XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue != null) {
+      return getPropertyClass(getWritablePropertyType(xmlAttributeValue), xmlAttributeValue);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiType getWritablePropertyType(@Nullable XmlAttributeValue xmlAttributeValue) {
     final PsiClass tagClass = getTagClass(xmlAttributeValue);
     if (tagClass != null) {
       final PsiElement declaration = getAttributeDeclaration(xmlAttributeValue);
       if (declaration != null) {
-        return getPropertyClass(getWritablePropertyType(tagClass, declaration), xmlAttributeValue);
+        return getWritablePropertyType(tagClass, declaration);
       }
     }
     return null;
@@ -843,6 +852,7 @@ public class JavaFxPsiUtil {
     return null;
   }
 
+  @Contract("null->false")
   public static boolean isPrimitiveOrBoxed(@Nullable PsiType psiType) {
     return psiType instanceof PsiPrimitiveType || PsiPrimitiveType.getUnboxedType(psiType) != null;
   }

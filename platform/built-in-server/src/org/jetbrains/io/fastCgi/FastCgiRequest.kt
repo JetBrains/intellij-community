@@ -4,11 +4,11 @@ import com.intellij.openapi.util.io.FileUtil
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.ByteBufUtilEx
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
+import org.jetbrains.io.writeUtf8
 import java.net.InetSocketAddress
 import java.util.*
 
@@ -67,7 +67,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     }
 
     ByteBufUtil.writeAscii(buffer, key)
-    ByteBufUtilEx.writeUtf8(buffer, value)
+    buffer!!.writeUtf8(value)
   }
 
   fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {

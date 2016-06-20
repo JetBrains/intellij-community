@@ -29,4 +29,6 @@ public interface ArtifactDeploymentSource extends DeploymentSource {
 
   @Nullable
   Artifact getArtifact();
+
+  boolean isBuildNeeded();
 }

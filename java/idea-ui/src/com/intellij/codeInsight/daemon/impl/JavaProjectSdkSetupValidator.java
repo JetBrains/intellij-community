@@ -43,7 +43,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
     if (file.getFileType() != JavaClassFileType.INSTANCE) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile != null) {
-        return psiFile.getLanguage() == JavaLanguage.INSTANCE;
+        return psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE);
       }
     }
     return false;

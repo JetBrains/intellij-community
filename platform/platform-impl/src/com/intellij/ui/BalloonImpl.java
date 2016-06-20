@@ -826,7 +826,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
           myFadedIn = true;
 
-          startFadeoutTimer((int)myFadeoutTime);
+          if (!myFadeoutAlarm.isDisposed()) {
+            startFadeoutTimer((int)myFadeoutTime);
+          }
         }
         else {
           layeredPane.remove(myComp);

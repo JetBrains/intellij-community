@@ -21,57 +21,61 @@ import gnu.trove.THashMap;
 
 import java.util.Map;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-
-public class IsConstantExpressionVisitor extends JavaElementVisitor {
-  protected boolean myIsConstant;
+class IsConstantExpressionVisitor extends JavaElementVisitor {
+  private boolean myIsConstant;
   private final Map<PsiVariable, Boolean> varIsConst = new THashMap<PsiVariable, Boolean>();
 
   public boolean isConstant() {
     return myIsConstant;
   }
 
-  @Override public void visitExpression(PsiExpression expression) {
+  @Override
+  public void visitExpression(PsiExpression expression) {
     myIsConstant = false;
   }
 
-  @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+  @Override
+  public void visitLiteralExpression(PsiLiteralExpression expression) {
     myIsConstant = !"null".equals(expression.getText());
   }
 
-  @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+  @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     myIsConstant = true;
   }
 
-  @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  @Override
+  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     PsiExpression expr = expression.getExpression();
-    if (expr != null){
+    if (expr != null) {
       expr.accept(this);
     }
   }
 
-  @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+  @Override
+  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
     PsiExpression operand = expression.getOperand();
-    if (operand == null){
+    if (operand == null) {
       myIsConstant = false;
       return;
     }
     operand.accept(this);
     if (!myIsConstant) return;
     PsiTypeElement element = expression.getCastType();
-    if (element == null){
+    if (element == null) {
       myIsConstant = false;
       return;
     }
     PsiType type = element.getType();
     if (type instanceof PsiPrimitiveType) return;
-    if (type.equalsToText(JAVA_LANG_STRING)) return;
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return;
     myIsConstant = false;
   }
 
-  @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
+  @Override
+  public void visitPrefixExpression(PsiPrefixExpression expression) {
     PsiExpression operand = expression.getOperand();
-    if (operand == null){
+    if (operand == null) {
       myIsConstant = false;
       return;
     }
@@ -90,14 +94,15 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
       operand.accept(this);
       if (!myIsConstant) return;
       final PsiType type = operand.getType();
-      if (type != null && !(type instanceof PsiPrimitiveType) && !type.equalsToText(JAVA_LANG_STRING)) {
+      if (type != null && !(type instanceof PsiPrimitiveType) && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         myIsConstant = false;
         return;
       }
     }
   }
 
-  @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
+  @Override
+  public void visitConditionalExpression(PsiConditionalExpression expression) {
     PsiExpression thenExpr = expression.getThenExpression();
     PsiExpression elseExpr = expression.getElseExpression();
     if (thenExpr == null || elseExpr == null) {
@@ -112,7 +117,8 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
     elseExpr.accept(this);
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiElement refElement = expression.resolve();
     if (!(refElement instanceof PsiVariable)) {
       myIsConstant = false;
@@ -140,6 +146,6 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
       return;
     }
     initializer.accept(this);
-    varIsConst.put(variable, Boolean.valueOf(myIsConstant));
+    varIsConst.put(variable, myIsConstant);
   }
 }

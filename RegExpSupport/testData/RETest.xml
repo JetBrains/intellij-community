@@ -919,6 +919,21 @@
     </test>
   </regressions>
 
+  <options>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[(?i<error descr="Unknown inline option flag">Z</error>m)abc]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?idmsuxU)nice</pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern verify="false">(?idm-suxU)one(?suxU-idm)two</pattern>
+      <expected>OK</expected>
+    </test>
+  </options>
+
   <test>
     <pattern>abc)</pattern>
     <expected>ERR</expected>

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class CCUtils {
+  public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
@@ -221,7 +222,7 @@ public class CCUtils {
       if (child == null) {
         continue;
       }
-      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
+      Document patternDocument = StudyUtils.getPatternDocument(project, entry.getValue(), name);
       Document document = FileDocumentManager.getInstance().getDocument(child);
       if (document == null || patternDocument == null) {
         return;

@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -51,6 +53,9 @@ public class FxmlConstants {
 
   @NonNls public static final String SOURCE = "source";
 
+  @NonNls public static final String NULL_EXPRESSION = "${null}";
+  @NonNls private static final String NULL_VALUE = "$null";
+
   public static final Set<String> FX_BUILT_IN_ATTRIBUTES =
     ContainerUtil.immutableSet(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
 
@@ -71,4 +76,7 @@ public class FxmlConstants {
       .put(FX_COPY, Collections.singletonList(SOURCE))
       .build();
 
+  public static boolean isNullValue(@NotNull String value) {
+    return NULL_VALUE.equals(StringUtil.trimTrailing(value));
+  }
 }

@@ -990,6 +990,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return myParentScheme instanceof DefaultColorsScheme;
     }
 
+    @Override
     public boolean isReadOnly() {
       return myParentScheme instanceof ReadOnlyColorsScheme;
     }

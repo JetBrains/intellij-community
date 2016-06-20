@@ -113,7 +113,7 @@ public class CommandLineUtil {
     }
 
     if (VERBOSE_COMMAND_LINE_MODE) {
-      return StringUtil.firstLast(execName + " " + StringUtil.join(args, " "), 250);
+      return StringUtil.shortenPathWithEllipsis(execName + " " + StringUtil.join(args, " "), 250);
     }
 
     return new File(StringUtil.unquoteString(execName)).getName();

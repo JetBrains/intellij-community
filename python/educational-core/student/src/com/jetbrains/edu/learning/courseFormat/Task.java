@@ -24,16 +24,16 @@ public class Task implements StudyItem {
   private String name;
 
   // index is visible to user number of task from 1 to task number
-  private int myIndex;
-  private StudyStatus myStatus = StudyStatus.Uninitialized;
+  @Expose private int myIndex;
+  @Expose private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  private int myStepicId;
+  @Expose private int myStepicId;
 
   @Expose
   @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
 
-  private String text;
+  @Expose private String text;
   private Map<String, String> testsText = new HashMap<String, String>();
 
   @Transient private Lesson myLesson;
@@ -214,5 +214,10 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
+    for (TaskFile taskFile : taskFiles.values()) {
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        placeholder.setStatus(status);
+      }
+    }
   }
 }

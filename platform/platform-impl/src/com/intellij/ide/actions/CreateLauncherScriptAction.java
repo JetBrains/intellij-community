@@ -156,7 +156,10 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
-    Map<String, String> variables = newHashMap(pair("$CONFIG_PATH$", PathManager.getConfigPath()), pair("$RUN_PATH$", runPath));
+    Map<String, String> variables = newHashMap(
+      pair("$CONFIG_PATH$", PathManager.getConfigPath()),
+      pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
+      pair("$RUN_PATH$", runPath));
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
 
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);

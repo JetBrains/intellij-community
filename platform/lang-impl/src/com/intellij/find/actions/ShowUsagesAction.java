@@ -15,6 +15,7 @@
  */
 package com.intellij.find.actions;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -52,6 +53,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
@@ -234,6 +236,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final UsageViewPresentation presentation = findUsagesManager.createPresentation(handler, options);
     presentation.setDetachedMode(true);
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
+    if (editor != null) {
+      PsiReference reference = TargetElementUtil.findReference(editor);
+      if (reference != null) {
+        UsageInfo2UsageAdapter origin = new UsageInfo2UsageAdapter(new UsageInfo(reference));
+        usageView.setOriginUsage(origin);
+      }
+    }
 
     Disposer.register(usageView, () -> {
       myUsageViewSettings.loadState(usageViewSettings);
@@ -386,17 +395,22 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
-    private MyModel(@NotNull List<UsageNode> data, int cols) {
-      super(cols(cols), data, 0);
+    private MyModel(@NotNull List<UsageNode> data, int cols, @NotNull UsageViewImpl usageView) {
+      super(cols(cols, usageView), data, 0);
     }
 
     @NotNull
-    private static ColumnInfo[] cols(int cols) {
+    private static ColumnInfo[] cols(int cols, @NotNull UsageViewImpl usageView) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
         @Nullable
         @Override
         public UsageNode valueOf(UsageNode node) {
           return node;
+        }
+
+        @Override
+        public boolean isCellEditable(UsageNode node) {
+          return usageView.isOriginUsage(node.getUsage());
         }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
@@ -484,7 +498,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
     return new InplaceButton("Settings..." + shortcutText, AllIcons.General.Settings, e -> {
-      SwingUtilities.invokeLater(() -> showDialogAndFindUsages(handler, popupPosition, editor, maxUsages));
+      ApplicationManager.getApplication().invokeLater(() -> showDialogAndFindUsages(handler, popupPosition, editor, maxUsages));
       cancelAction.run();
     });
   }
@@ -834,7 +848,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final int columnCount = calcColumnCount(data);
     MyModel model = table.getModel() instanceof MyModel ? (MyModel)table.getModel() : null;
     if (model == null || model.getColumnCount() != columnCount) {
-      model = new MyModel(data, columnCount);
+      model = new MyModel(data, columnCount, usageView);
       table.setModel(model);
 
       ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);

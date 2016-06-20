@@ -39,10 +39,9 @@ public class EduDocumentListener extends DocumentAdapter {
       return;
     }
     myTaskFile.setHighlightErrors(true);
-    Document document = e.getDocument();
     myAnswerPlaceholders.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
-      int twStart = answerPlaceholder.getRealStartOffset(document);
+      int twStart = answerPlaceholder.getOffset();
       int length = answerPlaceholder.getRealLength();
       int twEnd = twStart + length;
       myAnswerPlaceholders.add(new AnswerPlaceholderWrapper(answerPlaceholder, twStart, twEnd));
@@ -70,11 +69,9 @@ public class EduDocumentListener extends DocumentAdapter {
           twEnd += change;
         }
         AnswerPlaceholder answerPlaceholder = answerPlaceholderWrapper.getAnswerPlaceholder();
-        int line = document.getLineNumber(twStart);
-        int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;
-        answerPlaceholder.setLine(line);
-        answerPlaceholder.setStart(start);
+        answerPlaceholder.setOffset(twStart);
+        answerPlaceholder.setLength(length);
         if (!answerPlaceholder.getUseLength()) {
           answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
         }

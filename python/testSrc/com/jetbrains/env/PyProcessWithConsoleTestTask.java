@@ -15,23 +15,24 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+import static com.intellij.testFramework.ThreadTracker.longRunningThreadCreated;
 
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
@@ -63,12 +64,25 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    *                        Always use as light sdk as possible (it is faster)
    * @see SdkCreationType
    */
-  protected PyProcessWithConsoleTestTask(@NotNull final SdkCreationType requiredSdkType) {
+  protected PyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath, @NotNull final SdkCreationType requiredSdkType) {
+    super(relativeTestDataPath);
     myRequiredSdkType = requiredSdkType;
   }
 
   @Override
   public void runTestOn(final String sdkHome) throws Exception {
+
+    //Since this task uses I/O pooled thread, it needs to register such threads as "known offenders" (one that may leak)
+    // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
+    // We re add it just to make sure. Set is safe for double adding strings ;)
+
+    longRunningThreadCreated(ApplicationManager.getApplication(),
+                             "Periodic tasks thread",
+                             "ApplicationImpl pooled thread ",
+                             ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+
+
+
     createTempSdk(sdkHome, myRequiredSdkType);
     prepare();
     final T runner = createProcessRunner();
@@ -81,8 +95,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   private void executeRunner(final String sdkHome, final T runner) throws InterruptedException, InvocationTargetException {
     // Semaphore to wait end of process
-    final Semaphore processFinishedSemaphore = new Semaphore();
-    processFinishedSemaphore.down();
+    final Semaphore processFinishedSemaphore = new Semaphore(1);
+    processFinishedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
     final StringBuilder stdAll = new StringBuilder();
@@ -95,8 +109,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
         processHandlerRef.set(null);
-        processFinishedSemaphore.up();
-        LOG.info(String.format("Thread finished %s", Thread.currentThread()));
+        LOG.warn(String.format("Releasing lock on thread %s", Thread.currentThread()));
+        processFinishedSemaphore.release();
+        LOG.warn(String.format("Thread finished %s", Thread.currentThread()));
       }
 
       @Override
@@ -122,19 +137,22 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        runner.runProcess(sdkHome, getProject(), processListener);
+        LOG.warn("running process");
+        runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
+        LOG.warn("finished");
       }
       catch (final Throwable e) {
         failed.set(true);
-        processFinishedSemaphore.up();
+        processFinishedSemaphore.release();
         final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
         throw exception;
       }
     }, ModalityState.NON_MODAL);
 
 
-    LOG.info(String.format("Waiting for result on thread %s", Thread.currentThread()));
-    final boolean finishedSuccessfully = processFinishedSemaphore.waitFor(300000);
+    LOG.warn(String.format("Waiting for result on thread %s", Thread.currentThread()));
+    final boolean finishedSuccessfully = processFinishedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
+    LOG.warn("finishedSuccessfully: " + finishedSuccessfully);
     if (!finishedSuccessfully) {
       LOG.warn("Time out waiting for test finish");
       final ProcessHandler handler = processHandlerRef.get();
@@ -150,7 +168,11 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     if (failed.get()) {
       Assert.fail("Failed to run test, see logs for exceptions");
     } else {
-      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+      try {
+        checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+      } catch (Throwable e) {
+        throw new RuntimeException(stdAll.toString(), e);
+      }
     }
   }
 
