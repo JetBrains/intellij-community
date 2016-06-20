@@ -69,7 +69,7 @@ public class Block {
 
     try {
       FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
-                                                 ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+                                                 ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
 
       for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
         Boolean equals = pair.second;
@@ -91,7 +91,11 @@ public class Block {
           // intern strings, reducing memory usage
           int count = range.end1 - range.start1;
           for (int i = 0; i < count; i++) {
-            prevContent[range.start1 + i] = mySource[range.start2 + i];
+            int prevIndex = range.start1 + i;
+            int sourceIndex = range.start2 + i;
+            if (prevContent[prevIndex].equals(mySource[sourceIndex])) {
+              prevContent[prevIndex] = mySource[sourceIndex];
+            }
           }
         }
       }
