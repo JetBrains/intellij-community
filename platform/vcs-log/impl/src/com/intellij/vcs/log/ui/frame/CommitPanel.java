@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
@@ -454,6 +456,7 @@ class CommitPanel extends JBPanel {
   private static class ReferencesPanel extends JPanel {
     private static final int H_GAP = 4;
     private static final int V_GAP = 0;
+    private static final int PADDING = 3;
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel() {
@@ -470,13 +473,19 @@ class CommitPanel extends JBPanel {
     private void update() {
       removeAll();
       int height =
-        getFontMetrics(getCommitDetailsFont()).getHeight() + TextLabelPainter.TOP_TEXT_PADDING + TextLabelPainter.BOTTOM_TEXT_PADDING;
-      for (VcsRef reference : myReferences) {
-        JBLabel label =
-          new JBLabel(reference.getName(), new TagIcon(height, reference.getType().getBackgroundColor()), SwingConstants.LEFT);
-        label.setFont(getCommitDetailsFont());
-        label.setIconTextGap(0);
-        add(label);
+        getFontMetrics(getCommitDetailsFont()).getHeight() + PADDING;
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(myReferences, VcsRef::getType).entrySet()) {
+        VcsRefType type = typeAndRefs.getKey();
+        int index = 0;
+        for (VcsRef reference : typeAndRefs.getValue()) {
+          JBLabel label =
+            new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
+                        index == 0 ? new TagIcon(height, type.getBackgroundColor()) : null, SwingConstants.LEFT);
+          label.setFont(getCommitDetailsFont());
+          label.setIconTextGap(0);
+          add(label);
+          index++;
+        }
       }
       setVisible(!myReferences.isEmpty());
       revalidate();
