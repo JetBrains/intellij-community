@@ -1,0 +1,5 @@
+PsiJavaFile:Incomplete2.java
+  PsiJavaToken:MODULE('module')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:Module declaration expected
+    PsiJavaToken:LBRACE('{')

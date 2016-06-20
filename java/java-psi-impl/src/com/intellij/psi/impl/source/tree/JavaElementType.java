@@ -139,6 +139,13 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl.class);
 
+  IElementType MODULE = new JavaCompositeElementType("MODULE", PsiJavaModuleImpl.class);
+  IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_NAME", PsiJavaModuleReferenceImpl.class);
+  IElementType REQUIRES_STATEMENT = new JavaCompositeElementType("REQUIRES_STATEMENT", PsiRequiresStatementImpl.class);
+  IElementType EXPORTS_STATEMENT = new JavaCompositeElementType("EXPORTS_STATEMENT", PsiExportsStatementImpl.class);
+  IElementType USES_STATEMENT = new JavaCompositeElementType("USES_STATEMENT", PsiUsesStatementImpl.class);
+  IElementType PROVIDES_STATEMENT = new JavaCompositeElementType("PROVIDES_STATEMENT", PsiProvidesStatementImpl.class);
+
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {
       super("CODE_BLOCK", JavaLanguage.INSTANCE);

@@ -1,0 +1,20 @@
+PsiJavaFile:Exports1.java
+  PsiJavaModule:M
+    PsiJavaToken:MODULE('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiExportsStatement
+      PsiJavaToken:EXPORTS('exports')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:pkg
+        PsiIdentifier:pkg('pkg')
+        PsiReferenceParameterList
+          <empty list>
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

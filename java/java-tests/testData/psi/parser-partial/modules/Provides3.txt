@@ -1,0 +1,22 @@
+PsiJavaFile:Provides3.java
+  PsiJavaModule:M
+    PsiJavaToken:MODULE('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiProvidesStatement
+      PsiJavaToken:PROVIDES('provides')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:Spi
+        PsiIdentifier:Spi('Spi')
+        PsiReferenceParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:WITH('with')
+      PsiErrorElement:Class reference expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')
