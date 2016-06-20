@@ -40,6 +40,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
+  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -119,7 +120,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       String stderr = output.getStderr();
       if (!stderr.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                          StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                               MessageType.WARNING.getPopupBackground(),
                                                                                               myProject));
         //log error output of tests
@@ -150,7 +151,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           runAfterTaskCheckedActions();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                                     MessageType.WARNING
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
