@@ -187,37 +187,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public void setTurnEditingMode(boolean turnEditingMode) {
     myTurnEditingMode = turnEditingMode;
   }
-
-  @Transient
-  public String getLogin() {
-    if (myUser != null) {
-      return myUser.getEmail();
-    }
-    return "";
-  }
-
-  @Transient
-  public void setLogin(String login) {
-    if (myUser != null) {
-      myUser.setEmail(login);
-    }
-  }
-
-  @Transient
-  public String getPassword() {
-    if (myUser != null) {
-      return myUser.getPassword();
-    }
-    return "";
-  }
-
-  @Transient
-  public void setPassword(String password) {
-    if (myUser != null) {
-      myUser.setPassword(password);
-    }
-  }
-
+  
   public StepicUser getUser() {
     return myUser;
   }
