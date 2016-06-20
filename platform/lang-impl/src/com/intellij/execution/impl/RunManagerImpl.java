@@ -607,7 +607,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void writeContext(@NotNull Element parentNode) {
-    for (RunnerAndConfigurationSettings configurationSettings : myConfigurations.values()) {
+    Collection<RunnerAndConfigurationSettings> values = new ArrayList<>(myConfigurations.values());
+    for (RunnerAndConfigurationSettings configurationSettings : values) {
       if (configurationSettings.isTemporary()) {
         addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
       }
