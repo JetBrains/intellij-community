@@ -8,12 +8,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,6 +40,10 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerUI;
+import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +109,19 @@ public class StudyProjectGenerator {
                                                       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
                                                       StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
                                                       openFirstTask(course, project);
+                                                      installCourseRequirements(project);
                                                     })));
+  }
+
+  private static void installCourseRequirements(@NotNull Project project) {
+    final Module module = ModuleManager.getInstance(project).getModules()[0];
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    List<PyRequirement> requirements = manager.getRequirements(module);
+    if (requirements != null && sdk != null) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
+      ui.install(requirements, Collections.emptyList());
+    }
   }
 
   @Nullable
@@ -370,12 +388,9 @@ public class StudyProjectGenerator {
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(new ThrowableComputable<List<CourseInfo>, RuntimeException>() {
-          @Override
-          public List<CourseInfo> compute() throws RuntimeException {
-            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-            return getCourses(force);
-          }
+        .runProcessWithProgressSynchronously(() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          return getCourses(force);
         }, progressTitle, true, project);
     }
     catch (RuntimeException e) {
@@ -483,7 +498,7 @@ public class StudyProjectGenerator {
   private static CourseInfo addCourse(List<CourseInfo> courses, File courseDir) {
     if (courseDir.isDirectory()) {
       File[] courseFiles = courseDir.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
-      if (courseFiles.length != 1) {
+      if (courseFiles == null || courseFiles.length != 1) {
         LOG.info("User tried to add course with more than one or without course files");
         return null;
       }
@@ -506,7 +521,7 @@ public class StudyProjectGenerator {
   private static CourseInfo getCourseInfo(File courseFile) {
     if (courseFile.isDirectory()) {
       File[] courseFiles = courseFile.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
-      if (courseFiles.length != 1) {
+      if (courseFiles == null || courseFiles.length != 1) {
         LOG.info("More than one or without course files");
         return null;
       }
