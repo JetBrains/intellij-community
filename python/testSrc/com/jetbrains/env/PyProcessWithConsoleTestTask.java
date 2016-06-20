@@ -82,7 +82,6 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
                              ProcessIOExecutorService.POOLED_THREAD_PREFIX);
 
 
-
     createTempSdk(sdkHome, myRequiredSdkType);
     prepare();
     final T runner = createProcessRunner();
@@ -95,8 +94,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   private void executeRunner(final String sdkHome, final T runner) throws InterruptedException, InvocationTargetException {
     // Semaphore to wait end of process
-    final Semaphore processFinishedSemaphore = new Semaphore(1);
-    processFinishedSemaphore.acquire();
+    final Semaphore processStartedSemaphore = new Semaphore(1);
+    processStartedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
     final StringBuilder stdAll = new StringBuilder();
@@ -106,18 +105,10 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
     final ProcessAdapter processListener = new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
-        super.processTerminated(event);
-        processHandlerRef.set(null);
-        LOG.warn(String.format("Releasing lock on thread %s", Thread.currentThread()));
-        processFinishedSemaphore.release();
-        LOG.warn(String.format("Thread finished %s", Thread.currentThread()));
-      }
-
-      @Override
       public void startNotified(final ProcessEvent event) {
         super.startNotified(event);
         processHandlerRef.set(event.getProcessHandler());
+        processStartedSemaphore.release();
       }
 
       @Override
@@ -137,40 +128,44 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        LOG.warn("running process");
         runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
-        LOG.warn("finished");
       }
       catch (final Throwable e) {
         failed.set(true);
-        processFinishedSemaphore.release();
+        // Release semaphore to prevent main thread from infinite waiting.
+        processStartedSemaphore.release();
         final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
         throw exception;
       }
     }, ModalityState.NON_MODAL);
 
 
-    LOG.warn(String.format("Waiting for result on thread %s", Thread.currentThread()));
-    final boolean finishedSuccessfully = processFinishedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
-    LOG.warn("finishedSuccessfully: " + finishedSuccessfully);
+    final boolean processStarted = processStartedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
+    assert processStarted : "Process not started in 5 minutes";
+
+    final ProcessHandler handler = processHandlerRef.get();
+    assert handler != null : "No process handler.";
+
+    final boolean finishedSuccessfully = handler.waitFor(5 * 60000);
     if (!finishedSuccessfully) {
       LOG.warn("Time out waiting for test finish");
-      final ProcessHandler handler = processHandlerRef.get();
-      if (handler != null) {
-        LOG.warn("We have leaked process, will kill it");
-        handler.destroyProcess(); // To prevent process leak
-        handler.waitFor();
-        Thread.sleep(1000); // Give time to listening threads to process process death
-      }
+      handler.destroyProcess(); // To prevent process leak
+      handler.waitFor();
+      Thread.sleep(1000); // Give time to listening threads to process process death
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
     }
+
+    Thread.sleep(1000); // Give time to listening threads to finish
+
     XDebuggerTestUtil.waitForSwing();
     if (failed.get()) {
       Assert.fail("Failed to run test, see logs for exceptions");
-    } else {
+    }
+    else {
       try {
         checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         throw new RuntimeException(stdAll.toString(), e);
       }
     }
@@ -180,6 +175,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    * Called right before process run. Has access to {@link #myFixture}.
    * Always call parent when overwrite.
    */
+
   protected void prepare() {
   }
 
