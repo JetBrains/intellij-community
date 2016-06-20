@@ -485,7 +485,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                HighlightInfoProcessor.getEmpty());
     try {
-      boolean includeDoNotShow = getCurrentProfile().getSingleTool() != null;
+      boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
       final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file, includeDoNotShow);
       pass.doInspectInBatch(this, inspectionManager, lTools);
 
@@ -517,6 +517,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
     }
     return true;
+  }
+
+  protected boolean includeDoNotShow(final InspectionProfile profile) {
+    return profile.getSingleTool() != null;
   }
 
   private static final PsiFile TOMBSTONE = PsiUtilCore.NULL_PSI_FILE;
@@ -899,7 +903,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       assert tools != null;
       return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
     });
-    boolean includeDoNotShow = profile.getSingleTool() != null;
+    boolean includeDoNotShow = includeDoNotShow(profile);
     scope.accept(new PsiElementVisitor() {
       private int myCount;
       @Override
