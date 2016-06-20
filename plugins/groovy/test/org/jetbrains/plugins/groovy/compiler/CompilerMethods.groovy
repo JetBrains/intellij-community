@@ -26,7 +26,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.Semaphore
 import groovy.transform.CompileStatic
 
@@ -37,29 +36,32 @@ trait CompilerMethods {
 
   abstract Project getProject()
 
-  abstract <T extends Disposable> T disposeOnTearDown(T disposable)
+  abstract Disposable disposeOnTearDown(Disposable disposable)
 
   ProcessHandler runConfiguration(Class<? extends Executor> executorClass,
                                   final ProcessListener listener,
-                                  ProgramRunner runner,
-                                  RunProfile configuration) throws ExecutionException {
+                                  RunProfile configuration,
+                                  ProgramRunner runner = null) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration).build();
+    def builder = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration)
+    if (runner) builder.runner(runner)
+
+    final ExecutionEnvironment environment = builder.build();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
-    runner.execute(environment, { RunContentDescriptor descriptor ->
+    environment.runner.execute(environment) { RunContentDescriptor descriptor ->
       if (descriptor == null) {
         throw new AssertionError((Object)"Null descriptor!");
       }
-      disposeOnTearDown({ Disposer.dispose(descriptor) } as Disposable);
+      disposeOnTearDown descriptor
       final ProcessHandler handler = descriptor.getProcessHandler();
       assert handler != null;
       handler.addProcessListener(listener);
       processHandler.set(handler);
       semaphore.up();
-    });
+    }
     if (!semaphore.waitFor(20000)) {
       throw new AssertionError((Object)"Process took too long")
     }

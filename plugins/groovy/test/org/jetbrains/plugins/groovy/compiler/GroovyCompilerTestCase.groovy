@@ -71,7 +71,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   @Override
-  <T extends Disposable> T disposeOnTearDown(T disposable) {
+  Disposable disposeOnTearDown(Disposable disposable) {
     return super.disposeOnTearDown(disposable)
   }
 
@@ -230,9 +230,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   protected ProcessHandler runProcess(String className,
                                       Module module,
                                       final Class<? extends Executor> executorClass,
-                                      final ProcessListener listener, final ProgramRunner runner) throws ExecutionException {
+                                      final ProcessListener listener,
+                                      final ProgramRunner runner) throws ExecutionException {
     final ApplicationConfiguration configuration = createApplicationConfiguration(className, module);
-    return runConfiguration(executorClass, listener, runner, configuration);
+    return runConfiguration(executorClass, listener, configuration, runner);
   }
 
   protected ApplicationConfiguration createApplicationConfiguration(String className, Module module) {

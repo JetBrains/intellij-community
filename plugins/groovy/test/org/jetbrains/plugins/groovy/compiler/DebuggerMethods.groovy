@@ -26,13 +26,15 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
-import com.intellij.debugger.impl.*
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.DebuggerContextUtil
+import com.intellij.debugger.impl.DebuggerManagerImpl
+import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.*
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -64,13 +66,12 @@ trait DebuggerMethods extends CompilerMethods {
 
   void runDebugger(RunProfile configuration, Closure cl) {
     edt {
-      ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
       def listener = [onTextAvailable: { ProcessEvent evt, type ->
         if (type == ProcessOutputTypes.STDERR) {
           println evt.text
         }
       }] as ProcessAdapter
-      runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
+      runConfiguration(DefaultDebugExecutor, listener, configuration)
     }
     logger.debug("after start")
     try {

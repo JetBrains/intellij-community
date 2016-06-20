@@ -78,11 +78,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   @Override
-  protected void tearDown() {
-    super.tearDown()
-  }
-
-  @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder)
     def javaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome())
