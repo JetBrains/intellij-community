@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -2277,7 +2278,9 @@ public class PyRequirementTest extends PyTestCase {
 
     doCommentAtTheEndTest(name + " # comment");
     doCommentAtTheEndTest(name, version, name + "==" + version + " # comment");
-    doCommentAtTheEndTest(name + "[PDF] # comment");
+
+    assertEquals(new PyRequirement(name, Collections.emptyList(), Collections.singletonList(name + "[PDF]"), "[PDF]"),
+                 PyRequirement.fromLine(name + "[PDF] # comment"));
 
     final PyRequirement requirement = new PyRequirement(name, Collections.emptyList(), Arrays.asList(name, "--install-option", "option"));
 
@@ -2350,8 +2353,14 @@ public class PyRequirementTest extends PyTestCase {
       sb.setLength(sb.length() - 1);
     }
 
-    final String line = sb.toString();
+    final String options = sb.toString();
 
-    assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(line)), PyRequirement.fromLine(line));
+    if (extras == null) {
+      assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(options)), PyRequirement.fromLine(options));
+    }
+    else {
+      assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(options), StringUtil.trimLeading(extras)),
+                   PyRequirement.fromLine(options));
+    }
   }
 }
