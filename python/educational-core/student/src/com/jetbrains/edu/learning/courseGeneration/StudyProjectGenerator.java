@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,10 +39,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerUI;
-import com.jetbrains.python.packaging.PyRequirement;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,13 +110,13 @@ public class StudyProjectGenerator {
 
   private static void installCourseRequirements(@NotNull Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-    List<PyRequirement> requirements = manager.getRequirements(module);
-    if (requirements != null && sdk != null) {
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
-      ui.install(requirements, Collections.emptyList());
-    }
+    //final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    //final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    //List<PyRequirement> requirements = manager.getRequirements(module);
+    //if (requirements != null && sdk != null) {
+    //  final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
+    //  ui.install(requirements, Collections.emptyList());
+    //}
   }
 
   @Nullable
