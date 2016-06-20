@@ -108,9 +108,10 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     Project project = StudyUtils.getStudyProject();
     if (project != null) {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-      setLogin(user.getEmail());
-      setPassword(DEFAULT_PASSWORD_TEXT);
-
+      if (user != null) {
+        setLogin(user.getEmail());
+        setPassword(DEFAULT_PASSWORD_TEXT);
+      }
       resetCredentialsModification();
     }
     else {
