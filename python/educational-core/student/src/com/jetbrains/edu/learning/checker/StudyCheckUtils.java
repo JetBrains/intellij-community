@@ -33,6 +33,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactoryKt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -196,10 +197,10 @@ public class StudyCheckUtils {
 
   public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message, boolean solved) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow window = toolWindowManager.getToolWindow("Test Results");
+    ToolWindow window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
     if (window == null) {
-      toolWindowManager.registerToolWindow("Test Results", true, ToolWindowAnchor.BOTTOM);
-      window = toolWindowManager.getToolWindow("Test Results");
+      toolWindowManager.registerToolWindow(StudyTestResultsToolWindowFactoryKt.ID, true, ToolWindowAnchor.BOTTOM);
+      window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
       new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
     }
 

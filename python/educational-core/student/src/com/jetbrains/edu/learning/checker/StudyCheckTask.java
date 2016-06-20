@@ -74,11 +74,13 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    if (course != null && course.isAdaptive()) {
-      checkForAdaptiveCourse(indicator);
-    }
-    else {
-      checkForEduCourse(indicator);
+    if (course != null) {
+      if (course.isAdaptive()) {
+        checkForAdaptiveCourse(indicator);
+      }
+      else {
+        checkForEduCourse(indicator);
+      }
     }
   }
 
