@@ -403,7 +403,7 @@ public class EduAdaptiveStepicConnector {
   public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
     int attemptId = -1;
     try {
-      attemptId = getAttemptId(project, task, EduStepicNames.ATTEMPTS);
+      attemptId = getAttemptId(project, task);
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -519,10 +519,10 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  private static int getAttemptId(@NotNull final Project project, @NotNull Task task, @NotNull final String attempts) throws IOException {
+  private static int getAttemptId(@NotNull final Project project, @NotNull Task task) throws IOException {
     final StepicWrappers.AttemptToPostWrapper attemptWrapper = new StepicWrappers.AttemptToPostWrapper(task.getStepicId());
 
-    final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + attempts);
+    final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
 
     final CloseableHttpClient client = getHttpClient(project);
