@@ -137,7 +137,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
+        LOG.warn("running process");
         runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
+        LOG.warn("finished");
       }
       catch (final Throwable e) {
         failed.set(true);
@@ -148,8 +150,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }, ModalityState.NON_MODAL);
 
 
-    LOG.info(String.format("Waiting for result on thread %s", Thread.currentThread()));
+    LOG.warn(String.format("Waiting for result on thread %s", Thread.currentThread()));
     final boolean finishedSuccessfully = processFinishedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
+    LOG.warn("finishedSuccessfully: " + finishedSuccessfully);
     if (!finishedSuccessfully) {
       LOG.warn("Time out waiting for test finish");
       final ProcessHandler handler = processHandlerRef.get();
