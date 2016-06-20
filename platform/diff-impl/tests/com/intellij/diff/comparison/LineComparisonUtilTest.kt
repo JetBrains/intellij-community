@@ -401,6 +401,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       // TODO ("      _-------_  _ _      " - "      _  _ _      ").trim()
       ("      _-------_  _ _      " - "      _  _ _      ").default()
       ("      _       _--_-_------" - "      _--_-_      ").trim()
+      ("      _-------_  _ _      " - "      _  _ _      ").ignore()
       testAll()
     }
 
@@ -416,7 +417,6 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       ("     _------_ _     " - "     _ _     ").default() // result after second step correction
-      ("     _      _-_-----" - "     _-_     ").ignore()  // result looks strange because of 'diff.unimportant.line.char.count'
       testAll()
     }
   }
@@ -426,6 +426,61 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       ("====}_==== }_Y_==== }_====}" - "==== }_Y_==== }")
       ("-----_      _ _      _-----" - "      _ _      ").default()
       testDefault()
+    }
+  }
+
+  fun `test ignore whitespace policy applies two-step correction`() {
+    lines() {
+      ("1_ _  1" - "  1")
+      ("-_-_   " - "   ").default()
+      (" _-_---" - "   ").trim()
+      ("-_-_   " - "   ").ignore()
+      testAll()
+    }
+
+    lines() {
+      ("  1_ _1" - "  1")
+      ("   _-_-" - "   ").default()
+      testAll()
+    }
+
+    lines() {
+      ("X_ Y_X" - "Y ")
+      ("-_--_-" - "--").default()
+      ("-_  _-" - "  ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step correction should be performed if there are no ambigous matchings`() {
+    lines {
+      ("}_ }" - " }_}")
+      ("-_--" - "--_-").default()
+      (" _  " - "  _ ").trim()
+      testAll()
+    }
+
+    lines {
+      (" }_}_ }" - "}_}_}")
+      ("--_ _--" - "-_ _-").default()
+      ("  _ _  " - " _ _ ").trim()
+      testAll()
+    }
+
+    lines() {
+      ("X_X __Y" - "X__Z")
+      (" _--__-" - " __-").default()
+      ("-_  __-" - " __-").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step with too many possible matchings`() {
+    lines {
+      (" X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_ X" - "X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X ")
+      ("--_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_-_--" - "-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _--").default()
+      ("  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_--" - " _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ").trim()
+      testAll()
     }
   }
 }
