@@ -253,6 +253,11 @@ public class PyRequirement {
   }
 
   @NotNull
+  public String getFullName() {
+    return myName + myExtras;
+  }
+
+  @NotNull
   public List<String> getInstallOptions() {
     return myInstallOptions;
   }
