@@ -662,17 +662,14 @@ public class GeneratedParserUtilBase {
                                         boolean result,
                                         boolean pinned) {
     if (elementType != null && marker != null) {
-      if ((frame.modifiers & _COLLAPSE_) != 0) {
-        PsiBuilderImpl.ProductionMarker last = result || pinned? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
-        if (last != null && last.getStartIndex() == frame.position &&
-            state.typeExtends(last.getTokenType(), elementType)) {
-          IElementType resultType = last.getTokenType();
-          ((PsiBuilder.Marker)last).drop();
-          marker.done(resultType);
-          return;
-        }
-      }
       if (result || pinned) {
+        if ((frame.modifiers & _COLLAPSE_) != 0) {
+          PsiBuilderImpl.ProductionMarker last = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+          if (last != null && last.getStartIndex() == frame.position && state.typeExtends(last.getTokenType(), elementType)) {
+            elementType = last.getTokenType();
+            ((PsiBuilder.Marker)last).drop();
+          }
+        }
         if ((frame.modifiers & _UPPER_) != 0) {
           marker.drop();
           for (Frame f = frame.parentFrame; f != null; f = f.parentFrame) {
