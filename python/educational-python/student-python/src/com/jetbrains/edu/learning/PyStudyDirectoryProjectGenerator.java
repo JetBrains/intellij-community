@@ -106,11 +106,13 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
     myGenerator.generateProject(project, baseDir);
+    final String testHelper = "test_helper.py";
+    if (baseDir.findChild(testHelper) != null) return;
     final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;
     try {
-      FileTemplateUtil.createFromTemplate(template, "test_helper.py", null, projectDir);
+      FileTemplateUtil.createFromTemplate(template, testHelper, null, projectDir);
     }
     catch (Exception exception) {
       LOG.error("Can't copy test_helper.py " + exception.getMessage());
