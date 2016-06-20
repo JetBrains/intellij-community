@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonSdkChooserCombo;
@@ -149,8 +148,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       if (sdk == null) {
         if (!((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
           setErrorText("No Python interpreter selected");
+          return false;
         }
-        return false;
+        return true;
       }
       else if (PythonSdkType.isInvalid(sdk)) {
         setErrorText("Choose valid python interpreter");
@@ -215,7 +215,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
       final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
       final LabeledComponent<TextFieldWithBrowseButton> location = createLocationComponent();
-      location.setLabelLocation(BorderLayout.WEST);
 
       locationPanel.add(location, BorderLayout.CENTER);
       panel.add(locationPanel);
@@ -230,9 +229,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
       final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
-        if (basePanelExtension instanceof PanelWithAnchor) {
-          UIUtil.mergeComponentsWithAnchor((PanelWithAnchor)basePanelExtension, location);
-        }
         panel.add(basePanelExtension);
       }
       return panel;

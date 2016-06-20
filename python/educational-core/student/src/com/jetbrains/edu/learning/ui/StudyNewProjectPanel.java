@@ -61,34 +61,33 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String LOGIN_TO_STEPIC = "Login to Stepic";
 
   public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
-    super(new VerticalFlowLayout());
-    layoutPanel();
-
-    myAnchor = myCoursesComboBox;
+    super(new VerticalFlowLayout(true, true));
     myGenerator = generator;
+
+    layoutPanel();
     initListeners();
-    myRefreshButton.setVisible(true);
-
-    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
-
-    addAncestorListener(new AncestorListenerAdapter() {
-      @Override
-      public void ancestorMoved(AncestorEvent event) {
-        if (!isComboboxInitialized && isVisible()) {
-          isComboboxInitialized = true;
-          initCoursesCombobox();
-        }
-      }
-    });
   }
 
   private void layoutPanel() {
     myCoursesComboBox = new ComboBox<CourseInfo>();
+
+    final JPanel coursesPanel = new JPanel(new BorderLayout());
     final LabeledComponent<ComboBox> coursesCombo = LabeledComponent.create(myCoursesComboBox, "Courses:", BorderLayout.WEST);
-    add(coursesCombo);
 
     myRefreshButton = new FixedSizeButton(coursesCombo);
+    myRefreshButton.setIcon(AllIcons.Actions.Refresh);
     myBrowseButton = new FixedSizeButton(coursesCombo);
+
+    final JPanel comboPanel = new JPanel(new BorderLayout());
+
+    comboPanel.add(coursesCombo, BorderLayout.CENTER);
+    comboPanel.add(myRefreshButton, BorderLayout.EAST);
+
+    coursesPanel.add(comboPanel, BorderLayout.CENTER);
+    coursesPanel.add(myBrowseButton, BorderLayout.EAST);
+
+    add(coursesPanel);
+    myAnchor = coursesCombo;
 
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel invisibleLabel = new JLabel();
@@ -201,6 +200,15 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myRefreshButton.addActionListener(new RefreshActionListener());
     myCoursesComboBox.addActionListener(new CourseSelectedListener());
     setupBrowseButton();
+    addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorMoved(AncestorEvent event) {
+        if (!isComboboxInitialized && isVisible()) {
+          isComboboxInitialized = true;
+          initCoursesCombobox();
+        }
+      }
+    });
   }
 
   private void setError(@NotNull final String errorMessage) {

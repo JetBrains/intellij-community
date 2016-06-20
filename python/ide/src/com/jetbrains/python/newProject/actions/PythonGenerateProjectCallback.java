@@ -21,6 +21,8 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -28,44 +30,60 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerUI;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class GenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
-  private static final Logger LOG = Logger.getInstance(GenerateProjectCallback.class);
+public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
+  private static final Logger LOG = Logger.getInstance(PythonGenerateProjectCallback.class);
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase step) {
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
+    final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
 
     if (sdk instanceof PyDetectedSdk) {
       addDetectedSdk(settingsStep, sdk);
     }
-    else if (sdk == null) {
+
+    if (generator instanceof PythonProjectGenerator) {
+      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated(sdk);
+      if (beforeProjectGenerated != null) {
+        final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
+        if (!result) {
+          Messages.showWarningDialog("Project can not be generated", "Error in Project Generation");
+        }
+      }
+    }
+    final Project newProject = generateProject(settingsStep);
+    if (sdk == null) {
       createAndAddVirtualEnv(settingsStep);
     }
     sdk = settingsStep.getSdk();
 
-    final Project newProject = generateProject(settingsStep);
-    if (newProject != null) {
+    if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
       final List<Sdk> sdks = PythonSdkType.getAllSdks();
       for (Sdk s : sdks) {
@@ -74,6 +92,7 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
           ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(newProject);
         }
       }
+
     }
   }
 

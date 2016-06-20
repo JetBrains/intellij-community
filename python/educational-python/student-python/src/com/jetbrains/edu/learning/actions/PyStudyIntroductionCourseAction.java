@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.python.newProject.actions.GenerateProjectCallback;
+import com.jetbrains.python.newProject.actions.PythonGenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       if (introCourse == null) {
         return;
       }
-      final GenerateProjectCallback callback = new GenerateProjectCallback();
+      final PythonGenerateProjectCallback callback = new PythonGenerateProjectCallback();
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
