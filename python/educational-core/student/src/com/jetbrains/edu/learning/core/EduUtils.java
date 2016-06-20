@@ -31,7 +31,7 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
+  public static final Comparator<StudyItem> INDEX_COMPARATOR = (o1, o2) -> o1.getIndex() - o2.getIndex();
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
@@ -64,8 +64,7 @@ public class EduUtils {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file,
-                                         boolean useLength) {
+  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
     final VirtualFile taskDir = file.getParent();
     VirtualFile fileWindows = null;
     final Document document = FileDocumentManager.getInstance().getDocument(file);

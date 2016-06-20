@@ -36,7 +36,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected final VirtualFile myTaskDir;
   protected final StudyTaskManager myTaskManger;
   private final StudyStatus myStatusBeforeCheck;
-  private Ref<Boolean> myCheckInProcess;
+  private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
 

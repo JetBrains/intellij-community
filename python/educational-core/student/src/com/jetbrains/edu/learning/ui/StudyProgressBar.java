@@ -20,7 +20,7 @@ public class StudyProgressBar extends JComponent implements DumbAware {
   private final int myHeight;
   private final int myIndent;
   private double myFraction = 0.0;
-  private static Color myColor = JBColor.GREEN;
+  private static final Color myColor = JBColor.GREEN;
 
   public StudyProgressBar(double fraction, int height, int indent) {
     myFraction = fraction;
