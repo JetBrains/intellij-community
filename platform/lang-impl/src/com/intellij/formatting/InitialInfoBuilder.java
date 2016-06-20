@@ -40,15 +40,24 @@ import java.util.Set;
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
 public class InitialInfoBuilder {
+  private static final RangesAssert ASSERT = new RangesAssert();
+  private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<>();
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<>();
+  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
+  private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
+  
+  private boolean myCollectAlignmentsInsideFormattingRange = false;
 
-  private final FormattingDocumentModel               myModel;
-  private final FormatTextRanges                      myAffectedRanges;
-  private final int                                   myPositionOfInterest;
-  @NotNull
-  private final FormattingProgressCallback            myProgressCallback;
-  private final FormatterTagHandler                   myFormatterTagHandler;
+  private final FormattingDocumentModel myModel;
+  private final FormatTextRanges myAffectedRanges;
+  private final List<TextRange> myExtendedAffectedRanges;
+  private final int myPositionOfInterest;
+
+  private final FormattingProgressCallback myProgressCallback;
+  
+  private final FormatterTagHandler myFormatterTagHandler;
 
   private final CommonCodeStyleSettings.IndentOptions myOptions;
 
@@ -62,17 +71,6 @@ public class InitialInfoBuilder {
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
   private boolean                          myInsideFormatRestrictingTag;
-
-  private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
-
-  private final List<TextRange> myExtendedAffectedRanges;
-  private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
-  private boolean myCollectAlignmentsInsideFormattingRange = false;
-
-  private static final RangesAssert myRangesAssert = new RangesAssert();
-
-  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<>();
-  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -110,7 +108,7 @@ public class InitialInfoBuilder {
   private int getStartOffset(@NotNull Block rootBlock) {
     int minOffset = rootBlock.getTextRange().getStartOffset();
     if (myAffectedRanges != null) {
-      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+      for (FormatTextRange range : myAffectedRanges.getRanges()) {
         if (range.getStartOffset() < minOffset) minOffset = range.getStartOffset();
       }
     }
@@ -125,7 +123,7 @@ public class InitialInfoBuilder {
     int maxDocOffset = myModel.getTextLength();
     int maxOffset = myRootBlockWrapper != null ? myRootBlockWrapper.getEndOffset() : 0;
     if (myAffectedRanges != null) {
-      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+      for (FormatTextRange range : myAffectedRanges.getRanges()) {
         if (range.getTextRange().getEndOffset() > maxOffset) maxOffset = range.getTextRange().getEndOffset();
       }
     }
@@ -164,16 +162,8 @@ public class InitialInfoBuilder {
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
 
-    if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
-        && isAffectedByFormatting(rootBlock) && !myInsideFormatRestrictingTag)
-    {
-      myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
-    }
-
-    if (rootBlock.getAlignment() != null) {
-      myBlocksToAlign.putValue(rootBlock.getAlignment(), rootBlock);
-    }
-
+    collectAlignments(rootBlock);
+    
     ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
     try {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
@@ -185,7 +175,7 @@ public class InitialInfoBuilder {
       {
         final List<Block> subBlocks = rootBlock.getSubBlocks();
         if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
-          final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, false, index, parentBlock);
+          final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
           if (!subBlocks.isEmpty()) {
             wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
           }
@@ -195,7 +185,7 @@ public class InitialInfoBuilder {
       }
       else {
         //block building is skipped
-        return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
+        return buildLeafBlock(rootBlock, parent, true, index, parentBlock);
       }
     }
     finally {
@@ -203,9 +193,21 @@ public class InitialInfoBuilder {
     }
   }
 
+  private void collectAlignments(Block rootBlock) {
+    if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
+        && isAffectedByFormatting(rootBlock) && !myInsideFormatRestrictingTag)
+    {
+      myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
+    }
+    
+    if (rootBlock.getAlignment() != null) {
+      myBlocksToAlign.putValue(rootBlock.getAlignment(), rootBlock);
+    }
+  }
+
   private void checkRanges(@NotNull CompositeBlockWrapper parent, TextRange textRange) {
     if (textRange.getStartOffset() < parent.getStartOffset()) {
-      myRangesAssert.assertInvalidRanges(
+      ASSERT.assertInvalidRanges(
         textRange.getStartOffset(),
         parent.getStartOffset(),
         myModel,
@@ -214,7 +216,7 @@ public class InitialInfoBuilder {
     }
 
     if (textRange.getEndOffset() > parent.getEndOffset()) {
-      myRangesAssert.assertInvalidRanges(
+      ASSERT.assertInvalidRanges(
         textRange.getEndOffset(),
         parent.getEndOffset(),
         myModel,
@@ -238,11 +240,11 @@ public class InitialInfoBuilder {
   private static List<TextRange> getExtendedAffectedRanges(FormatTextRanges formatTextRanges) {
     if (formatTextRanges == null) return null;
 
-    List<FormatTextRanges.FormatTextRange> ranges = formatTextRanges.getRanges();
+    List<FormatTextRange> ranges = formatTextRanges.getRanges();
     List<TextRange> extended = ContainerUtil.newArrayList();
 
     final int extendOffset = 500;
-    for (FormatTextRanges.FormatTextRange textRange : ranges) {
+    for (FormatTextRange textRange : ranges) {
       TextRange range = textRange.getTextRange();
       extended.add(new UnfairTextRange(range.getStartOffset() - extendOffset, range.getEndOffset() + extendOffset));
     }
@@ -329,11 +331,11 @@ public class InitialInfoBuilder {
     }
   }
   
-  private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
-                                                  @Nullable final CompositeBlockWrapper parent,
-                                                  final boolean readOnly,
-                                                  final int index,
-                                                  @Nullable Block parentBlock) 
+  private AbstractBlockWrapper buildLeafBlock(final Block rootBlock,
+                                              @Nullable final CompositeBlockWrapper parent,
+                                              final boolean readOnly,
+                                              final int index,
+                                              @Nullable Block parentBlock) 
   {
     LeafBlockWrapper result = doProcessSimpleBlock(rootBlock, parent, readOnly, index, parentBlock);
     myProgressCallback.afterWrappingBlock(result);
@@ -349,32 +351,16 @@ public class InitialInfoBuilder {
     if (!INLINE_TABS_ENABLED && !myCurrentWhiteSpace.containsLineFeeds()) {
       myCurrentWhiteSpace.setForceSkipTabulationsUsage(true);
     }
-    final LeafBlockWrapper info =
-      new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
+    LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
 
-    switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
-      case ON:
-        myInsideFormatRestrictingTag = false;
-        break;
-      case OFF:
-        myInsideFormatRestrictingTag = true;
-        break;
-      case NONE:
-        break;
-    }
+    checkInsideFormatterOffTag(rootBlock);
 
     TextRange textRange = rootBlock.getTextRange();
-    if (textRange.getLength() == 0) {
-      myRangesAssert.assertInvalidRanges(
-        textRange.getStartOffset(),
-        textRange.getEndOffset(),
-        myModel,
-        "empty block"
-      );
-    }
+    checkRange(textRange);
+
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
     }
@@ -406,6 +392,25 @@ public class InitialInfoBuilder {
     return info;
   }
 
+  private void checkInsideFormatterOffTag(Block rootBlock) {
+    switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
+      case ON:
+        myInsideFormatRestrictingTag = false;
+        break;
+      case OFF:
+        myInsideFormatRestrictingTag = true;
+        break;
+      case NONE:
+        break;
+    }
+  }
+
+  private void checkRange(TextRange textRange) {
+    if (textRange.getLength() == 0) {
+      ASSERT.assertInvalidRanges(textRange.getStartOffset(), textRange.getEndOffset(), myModel, "empty block");
+    }
+  }
+
   private boolean currentWhiteSpaceIsReadOnly() {
     if (myCurrentSpaceProperty != null && myCurrentSpaceProperty.isReadOnly()) {
       return true;
@@ -419,11 +424,11 @@ public class InitialInfoBuilder {
   private boolean isAffectedByFormatting(final Block block) {
     if (myAffectedRanges == null) return true;
 
-    List<FormatTextRanges.FormatTextRange> allRanges = myAffectedRanges.getRanges();
+    List<FormatTextRange> allRanges = myAffectedRanges.getRanges();
     Document document = myModel.getDocument();
     int docLength = document.getTextLength();
     
-    for (FormatTextRanges.FormatTextRange range : allRanges) {
+    for (FormatTextRange range : allRanges) {
       int startOffset = range.getStartOffset();
       if (startOffset >= docLength) continue;
       
