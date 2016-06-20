@@ -86,12 +86,10 @@ public class CollectClassMembersUtil {
       return cached.getValue();
     }
 
-    return buildCache(aClass, includeSynthetic && !isAffectedByTransformation(aClass));
+    return buildCache(aClass, includeSynthetic && checkClass(aClass));
   }
 
-  private static boolean isAffectedByTransformation(PsiClass aClass) {
-    if (!TransformationUtilKt.isUnderAnyTransformation()) return false;
-
+  private static boolean checkClass(PsiClass aClass) {
     Set<PsiClass> visited = ContainerUtil.newHashSet();
     Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
@@ -99,17 +97,17 @@ public class CollectClassMembersUtil {
       PsiClass current = queue.poll();
       if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
-        if (TransformationUtilKt.isUnderTransformation(current)) return true;
+        if (TransformationUtilKt.isUnderTransformation(current)) return false;
         for (PsiClass superClass : getSupers(current, true)) {
           queue.offer(superClass);
         }
       }
       else if (!current.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(current.getQualifiedName())) {
-        return true;
+        return false;
       }
     }
 
-    return false;
+    return true;
   }
 
   public static Map<String, CandidateInfo> getAllInnerClasses(@NotNull final PsiClass aClass, boolean includeSynthetic) {
