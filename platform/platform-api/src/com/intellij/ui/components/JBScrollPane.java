@@ -65,18 +65,48 @@ public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> TRACK_DARK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
 
   @Deprecated
-  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
-                                                                                new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
+  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(
+    new DefaultThumbPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
+                            new CachedValue("ide.scroll.thumb.windows.default.alpha", "0.20", .20f),
+                            new CachedValue("ide.scroll.thumb.windows.default.delta", "0.15", .15f),
+                            new CachedColor("ide.scroll.thumb.windows.default.color", "#808080", Gray.x80),
+                            new CachedColor("ide.scroll.thumb.windows.default.border", "#919191", Gray.x91)),
+    new DefaultThumbPainter(new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C),
+                            new CachedValue("ide.scroll.thumb.linux.default.alpha", "0.70", .70f),
+                            new CachedValue("ide.scroll.thumb.linux.default.delta", "0.20", .20f),
+                            new CachedColor("ide.scroll.thumb.linux.default.color", "#999999", Gray.x99),
+                            new CachedColor("ide.scroll.thumb.linux.default.border", "#8c8c8c", Gray.x8C)));
   @Deprecated
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new DefaultThumbPainter(
+    new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94),
+    new CachedValue("ide.scroll.thumb.windows.darcula.alpha", "0.35", .35f),
+    new CachedValue("ide.scroll.thumb.windows.darcula.delta", "0.25", .25f),
+    new CachedColor("ide.scroll.thumb.windows.darcula.color", "#808080", Gray.x80),
+    new CachedColor("ide.scroll.thumb.windows.darcula.border", "#949494", Gray.x94));
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .2f, .3f, Gray.x00);
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new RoundThumbPainter(2, 0f, .5f, Gray.x00);
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
+    new RoundThumbPainter(2, .2f, .3f, Gray.x00),
+    new CachedValue("ide.scroll.thumb.mac.classic.default.alpha", "0.20", .20f),
+    new CachedValue("ide.scroll.thumb.mac.classic.default.delta", "0.30", .30f),
+    new CachedColor("ide.scroll.thumb.mac.classic.default.color", "#000000", Gray.x00));
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
+    new RoundThumbPainter(2, 0f, .5f, Gray.x00),
+    new CachedValue("ide.scroll.thumb.mac.overlay.default.alpha", "0.00", .00f),
+    new CachedValue("ide.scroll.thumb.mac.overlay.default.delta", "0.50", .50f),
+    new CachedColor("ide.scroll.thumb.mac.overlay.default.color", "#000000", Gray.x00));
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new RoundThumbPainter(2, 0f, .15f, Gray.xFF);
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
+    new RoundThumbPainter(2, .10f, .05f, Gray.xA6),
+    new CachedValue("ide.scroll.thumb.mac.classic.darcula.alpha", "0.10", .10f),
+    new CachedValue("ide.scroll.thumb.mac.classic.darcula.delta", "0.05", .05f),
+    new CachedColor("ide.scroll.thumb.mac.classic.darcula.color", "#ffffff", Gray.xFF));
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
+    new RoundThumbPainter(2, 0f, .15f, Gray.xFF),
+    new CachedValue("ide.scroll.thumb.mac.overlay.darcula.alpha", "0.00", .00f),
+    new CachedValue("ide.scroll.thumb.mac.overlay.darcula.delta", "0.15", .15f),
+    new CachedColor("ide.scroll.thumb.mac.overlay.darcula.color", "#ffffff", Gray.xFF));
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -854,9 +884,9 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class AlphaPainter extends RegionPainter.Alpha {
-    private final float myBase;
-    private final float myDelta;
-    final Color myFillColor;
+    float myBase;
+    float myDelta;
+    Color myFillColor;
 
     private AlphaPainter(float base, float delta, Color fill) {
       myBase = base;
@@ -900,7 +930,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class ThumbPainter extends AlphaPainter {
-    private final Color myDrawColor;
+    private Color myDrawColor;
 
     private ThumbPainter(float base, float delta, Color fill, Color draw) {
       super(base, delta, fill);
@@ -1003,5 +1033,96 @@ public class JBScrollPane extends JScrollPane {
     if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
     int modifiers = ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & event.getModifiers();
     return modifiers == 0; // no modifiers expected except SHIFT for horizontal scrolling
+  }
+
+  private static class CachedColor {
+    private final String myKey;
+    private String myString;
+    private Color myColor;
+
+    private CachedColor(String key, String string, Color color) {
+      myKey = key;
+      myString = string;
+      myColor = color;
+    }
+
+    private Color get() {
+      String string = Registry.stringValue(myKey);
+      if (!string.equals(myString)) {
+        try {
+          myColor = Color.decode(string);
+        }
+        catch (Exception ignore) {
+        }
+        finally {
+          myString = string;
+        }
+      }
+      return myColor;
+    }
+  }
+
+  private static class CachedValue {
+    private final String myKey;
+    private String myString;
+    private float myValue;
+
+    private CachedValue(String key, String string, float value) {
+      myKey = key;
+      myString = string;
+      myValue = value;
+    }
+
+    private float get() {
+      String string = Registry.stringValue(myKey);
+      if (!string.equals(myString)) {
+        try {
+          myValue = Float.parseFloat(string);
+        }
+        catch (Exception ignore) {
+        }
+        finally {
+          myString = string;
+        }
+      }
+      return myValue;
+    }
+  }
+
+  private static class ThumbPainterDelegate<P extends AlphaPainter> implements RegionPainter<Float> {
+    final P myPainter;
+    private final CachedValue myBase;
+    private final CachedValue myDelta;
+    private final CachedColor myFillColor;
+
+    private ThumbPainterDelegate(P painter, CachedValue base, CachedValue delta, CachedColor fill) {
+      myPainter = painter;
+      myBase = base;
+      myDelta = delta;
+      myFillColor = fill;
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float object) {
+      myPainter.myBase = myBase.get();
+      myPainter.myDelta = myDelta.get();
+      myPainter.myFillColor = myFillColor.get();
+      myPainter.paint(g, x, y, width, height, object);
+    }
+  }
+
+  private static class DefaultThumbPainter extends ThumbPainterDelegate<ThumbPainter> {
+    private final CachedColor myDrawColor;
+
+    private DefaultThumbPainter(ThumbPainter painter, CachedValue base, CachedValue delta, CachedColor fill, CachedColor draw) {
+      super(painter, base, delta, fill);
+      myDrawColor = draw;
+    }
+
+    @Override
+    public final void paint(Graphics2D g, int x, int y, int width, int height, Float object) {
+      myPainter.myDrawColor = myDrawColor.get();
+      super.paint(g, x, y, width, height, object);
+    }
   }
 }
