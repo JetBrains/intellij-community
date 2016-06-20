@@ -77,9 +77,10 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
       return null;
     }
 
+    String taskDirPath = FileUtil.toSystemDependentName(taskDir.getPath());
     String testsPath = taskDir.findChild(EduNames.SRC) != null ?
-               FileUtil.join(taskDir.getPath(), EduNames.SRC, EduNames.TESTS_FILE) :
-               FileUtil.join(taskDir.getPath(), EduNames.TESTS_FILE);
+                       FileUtil.join(taskDirPath, EduNames.SRC, EduNames.TESTS_FILE) :
+                       FileUtil.join(taskDirPath, EduNames.TESTS_FILE);
     return file.getPath().equals(testsPath) ? testsPath : null;
   }
 

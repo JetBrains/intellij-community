@@ -14,6 +14,8 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 public class CCVirtualFileListener extends VirtualFileAdapter {
 
   @Override
@@ -33,6 +35,12 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
 
     String name = createdFile.getName();
+
+    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+    if (manager != null && manager.doNotPackFile(new File(createdFile.getPath()))) {
+      return;
+    }
+
     if (CCUtils.isTestsFile(project, createdFile)
         || StudyUtils.isTaskDescriptionFile(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
