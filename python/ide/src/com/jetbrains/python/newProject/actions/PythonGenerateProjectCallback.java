@@ -21,6 +21,8 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,12 +42,15 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerUI;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
@@ -87,9 +92,23 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
           ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(newProject);
         }
       }
-
+      if (((PythonProjectGenerator)generator).hideInterpreter()) {
+        installRequirements(newProject);
+      }
     }
   }
+
+  private static void installRequirements(@NotNull Project project) {
+    final Module module = ModuleManager.getInstance(project).getModules()[0];
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    List<PyRequirement> requirements = manager.getRequirements(module);
+    if (requirements != null && sdk != null) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
+      ui.install(requirements, Collections.emptyList());
+    }
+  }
+
 
   private static void addDetectedSdk(ProjectSpecificSettingsStep settingsStep, Sdk sdk) {
     final Project project = ProjectManager.getInstance().getDefaultProject();

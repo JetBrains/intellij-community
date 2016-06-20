@@ -8,11 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -96,27 +92,13 @@ public class StudyProjectGenerator {
     }
     final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     StudyTaskManager.getInstance(project).setCourse(course);
-    ApplicationManager.getApplication().invokeLater(
-      () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                    () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-                                                      course.setCourseDirectory(courseDirectory.getAbsolutePath());
-                                                      VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-                                                      StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
-                                                      openFirstTask(course, project);
-                                                      installCourseRequirements(project);
-                                                    })));
-  }
-
-  private static void installCourseRequirements(@NotNull Project project) {
-    final Module module = ModuleManager.getInstance(project).getModules()[0];
-    //final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    //final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-    //List<PyRequirement> requirements = manager.getRequirements(module);
-    //if (requirements != null && sdk != null) {
-    //  final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
-    //  ui.install(requirements, Collections.emptyList());
-    //}
+    ApplicationManager.getApplication().runWriteAction(() -> {
+                                                         StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                                                         course.setCourseDirectory(courseDirectory.getAbsolutePath());
+                                                         VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+                                                         StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+                                                         openFirstTask(course, project);
+                                                       });
   }
 
   @Nullable
