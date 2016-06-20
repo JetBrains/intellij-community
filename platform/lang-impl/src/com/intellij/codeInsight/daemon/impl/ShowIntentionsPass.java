@@ -33,6 +33,7 @@ import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,9 +62,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
@@ -362,8 +361,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           el = el.getParent();
         }
 
+        final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
         final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
-        for (LocalInspectionToolWrapper toolWrapper : intentionTools) {
+        final Processor<LocalInspectionToolWrapper> processor = (toolWrapper) -> {
           final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
           final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
           final String displayName = toolWrapper.getDisplayName();
@@ -389,10 +389,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
             }
           };
           InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements,
-                                                          InspectionEngine.calcElementDialectIds(elements),
-                                                          InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
+                                                          dialectIds, InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
           localInspectionTool.inspectionFinished(session, holder);
-        }
+          return true;
+        };
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, null, false, processor);
       }
     }
   }
