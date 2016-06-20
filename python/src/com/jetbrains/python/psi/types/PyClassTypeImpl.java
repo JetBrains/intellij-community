@@ -195,6 +195,27 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     classMember = resolveClassMember(myClass, myIsDefinition, name, location);
+
+    if (PyNames.__CLASS__.equals(name) && !isBuiltin()) {
+      final LanguageLevel languageLevel = LanguageLevel.forElement(myClass);
+      final boolean py2K = languageLevel.isOlderThan(LanguageLevel.PYTHON30);
+      final boolean newStyleClass = myClass.isNewStyleClass(resolveContext.getTypeEvalContext());
+
+      final boolean py2KNewStyleClass = py2K && newStyleClass;
+      final boolean py2KOldStyleClass = py2K && !newStyleClass;
+
+      if (myIsDefinition && py2KOldStyleClass && classMember == null) {
+        return Collections.emptyList();
+      }
+
+      if (myIsDefinition && (py2KNewStyleClass || !py2K) || !myIsDefinition && py2KOldStyleClass) {
+        return Optional
+          .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
+          .map(type -> type.resolveMember(name, location, direction, resolveContext))
+          .orElse(Collections.emptyList());
+      }
+    }
+
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
