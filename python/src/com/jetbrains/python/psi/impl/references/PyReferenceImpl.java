@@ -240,6 +240,29 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
+    // resolve implicit __class__ inside class function
+    if (myElement instanceof PyReferenceExpression &&
+        PyNames.__CLASS__.equals(referencedName) &&
+        LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
+      final PyFunction containingFunction = PsiTreeUtil.getParentOfType(myElement, PyFunction.class);
+
+      if (containingFunction != null && containingFunction.getContainingClass() != null) {
+        final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
+        PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
+
+        if (processor.getElements().isEmpty()) {
+          ret.addAll(
+            Optional
+              .ofNullable(PyBuiltinCache.getInstance(myElement).getObjectType())
+              .map(type -> type.resolveMember(PyNames.__CLASS__, myElement, AccessDirection.of(myElement), myContext))
+              .orElse(Collections.emptyList())
+          );
+
+          return ret;
+        }
+      }
+    }
+
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
