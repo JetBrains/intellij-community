@@ -247,9 +247,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
-    PsiElement roof = findResolveRoof(referencedName, realContext);
+    final PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
-    return getResultsFromProcessor(referencedName, processor, realContext, roof);
+
+    final List<RatedResolveResult> resultsFromProcessor = getResultsFromProcessor(referencedName, processor, realContext, roof);
+
+    // resolve to module __doc__
+    if (resultsFromProcessor.isEmpty() && referencedName.equals(PyNames.DOC)) {
+      ret.addAll(
+        Optional
+          .ofNullable(PyBuiltinCache.getInstance(myElement).getObjectType())
+          .map(type -> type.resolveMember(referencedName, myElement, AccessDirection.of(myElement), myContext))
+          .orElse(Collections.emptyList())
+      );
+
+      return ret;
+    }
+
+    return resultsFromProcessor;
   }
 
   protected List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
