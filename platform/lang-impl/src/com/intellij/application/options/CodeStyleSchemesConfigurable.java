@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -323,6 +324,14 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public boolean isProjectLevel() {
     return myModel != null && myModel.isUsePerProjectSettings();
+  }
+
+  @Nullable
+  public SearchableConfigurable findSubConfigurable(final String name) {
+    if (myPanels == null) {
+      buildConfigurables();
+    }
+    return myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
   }
 
   private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoMargin, NoScroll, OptionsContainingConfigurable {
