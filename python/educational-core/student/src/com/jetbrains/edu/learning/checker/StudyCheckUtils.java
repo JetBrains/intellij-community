@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.checker;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory;
-import com.jetbrains.python.console.PythonConsoleView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -206,13 +206,13 @@ public class StudyCheckUtils {
     final Content[] contents = window.getContentManager().getContents();
     for (Content content : contents) {
       final JComponent component = content.getComponent();
-      if (component instanceof PythonConsoleView) {
-        ((PythonConsoleView)component).clear();
+      if (component instanceof ConsoleViewImpl) {
+        ((ConsoleViewImpl)component).clear();
         if (!solved) {
-          ((PythonConsoleView)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
+          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
         }
         else {
-          ((PythonConsoleView)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
+          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
         }
         window.setAvailable(true, () -> {});
         window.show(() -> {});

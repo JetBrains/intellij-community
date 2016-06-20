@@ -1,5 +1,7 @@
 package com.jetbrains.edu.learning.ui
 
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -8,30 +10,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.jetbrains.edu.learning.StudyUtils
-import com.jetbrains.python.console.PythonConsoleView
 
 
-class StudyTestResultsToolWindowFactory: ToolWindowFactory {  
+class StudyTestResultsToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val currentTask = StudyUtils.getCurrentTask(project)
     if (currentTask != null) {
-      val sdk = StudyUtils.findSdk(currentTask, project)
-      if (sdk != null) {
-        val testResultsToolWindow = PythonConsoleView(project, "Local test results", sdk);
-        testResultsToolWindow.isEditable = false
-        testResultsToolWindow.isConsoleEditorEnabled = false
-        testResultsToolWindow.prompt = null
-        toolWindow.isToHideOnEmptyContent = true
+      val consoleView = ConsoleViewImpl(project, true);
+      toolWindow.isToHideOnEmptyContent = true
 
-        val contentManager = toolWindow.contentManager
-        val content = contentManager.factory.createContent(testResultsToolWindow.component, null, false)
-        contentManager.addContent(content)
+      val contentManager = toolWindow.contentManager
+      val content = contentManager.factory.createContent(consoleView.component, null, false)
+      contentManager.addContent(content)
+      val editor = consoleView.editor
+      if (editor is EditorEx) {
+        editor.isRendererMode = true
+      }
 
-        project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, getFileEditorManagerListener(toolWindow))
-      }
-      else {
-        StudyUtils.showNoSdkNotification(currentTask, project)
-      }
+      project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, getFileEditorManagerListener(toolWindow))
     }
   }
 
