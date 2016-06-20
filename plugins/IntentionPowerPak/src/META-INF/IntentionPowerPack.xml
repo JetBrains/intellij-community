@@ -281,12 +281,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.decls.ChangeVariableTypeToRhsTypeIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>

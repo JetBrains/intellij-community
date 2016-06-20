@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.style;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
 
-public class ExpandOneLineLambda2CodeBlockIntentionTest extends IPPTestCase {
-  
+public class ExpandOneLineLambda2CodeBlockQuickFixTest extends IGQuickFixesTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new ExpandOneLineLambda2CodeBlockInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("expand.one.line.lambda2.code.block.quickfix");
+    myRelativePath = "style/expr2block";
+  }
+
   public void testSimple() {
     doTest();
   }
 
   public void testVoidCompatibleInExpr() {
     doTest();
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return "Expand lambda expression body to {...}";
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "types/expr2block";
   }
 }
