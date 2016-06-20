@@ -17,19 +17,23 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 
 public class TagIcon implements Icon {
   private final int mySize;
-  private final Color myColor;
+  @NotNull private final Color[] myColors;
+  @NotNull private final Color myBgColor;
 
-  public TagIcon(int size, Color color) {
+  public TagIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
     mySize = size;
-    myColor = color;
+    myBgColor = bgColor;
+    myColors = colors;
   }
 
   @Override
@@ -38,25 +42,38 @@ public class TagIcon implements Icon {
 
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
-    g2.setColor(myColor);
-
     float scale = mySize / 8.0f;
-    Polygon polygon = new Polygon(
-      new int[]{x + Math.round(2 * scale), x + Math.round(4 * scale), x + Math.round(6 * scale),
-        x + Math.round(4 * scale), x + Math.round(2 * scale)},
-      new int[]{y + Math.round(2 * scale), y + Math.round(2 * scale), y + Math.round(4 * scale),
-        y + Math.round(6 * scale), y + Math.round(4 * scale)}, 5);
-    Ellipse2D hole = new Ellipse2D.Float(x + Math.round(3 * scale), y + Math.round(3 * scale), scale, scale);
-    Area area = new Area(polygon);
-    area.subtract(new Area(hole));
-    g2.fill(area);
+
+    for (int i = myColors.length - 1; i >= 0; i--) {
+      if (i != myColors.length - 1) {
+        g2.setColor(myBgColor);
+        paintTag(g2, scale, x + Math.round(scale * 2) * i + 1, y);
+      }
+      g2.setColor(myColors[i]);
+      paintTag(g2, scale, x + Math.round(scale * 2) * i, y);
+    }
 
     config.restore();
   }
 
+  public void paintTag(Graphics2D g2, float scale, int x, int y) {
+    Path2D.Float path = new Path2D.Float();
+    path.moveTo(x + 1 * scale, y + 2 * scale);
+    path.lineTo(x + 3 * scale, y + 2 * scale);
+    path.lineTo(x + 6 * scale, y + 5 * scale);
+    path.lineTo(x + 4 * scale, y + 7 * scale);
+    path.lineTo(x + 1 * scale, y + 4 * scale);
+    path.lineTo(x + 1 * scale, y + 2 * scale);
+    path.closePath();
+    Ellipse2D hole = new Ellipse2D.Float(x + 2 * scale, y + 3 * scale, scale, scale);
+    Area area = new Area(path);
+    area.subtract(new Area(hole));
+    g2.fill(area);
+  }
+
   @Override
   public int getIconWidth() {
-    return mySize;
+    return mySize + (mySize * (myColors.length - 1) / 4);
   }
 
   @Override

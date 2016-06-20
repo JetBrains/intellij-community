@@ -503,9 +503,15 @@ class CommitPanel extends JBPanel {
         VcsRefType type = typeAndRefs.getKey();
         int index = 0;
         for (VcsRef reference : typeAndRefs.getValue()) {
+          Icon icon = null;
+          if (index == 0) {
+            icon = new TagIcon(height, getBackground(),
+                               typeAndRefs.getValue().size() > 1 ? new Color[]{type.getBackgroundColor(),
+                                 type.getBackgroundColor()} : new Color[]{type.getBackgroundColor()});
+          }
           JBLabel label =
             new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
-                        index == 0 ? new TagIcon(height, type.getBackgroundColor()) : null, SwingConstants.LEFT);
+                        icon, SwingConstants.LEFT);
           label.setFont(getCommitDetailsFont());
           label.setIconTextGap(0);
           label.setHorizontalAlignment(SwingConstants.LEFT);
