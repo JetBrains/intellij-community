@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -24,7 +25,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,6 +79,26 @@ public class StudyUtils {
 
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
+                                          "            MathJax.Hub.Config({\n" +
+                                          "                tex2jax: {\n" +
+                                          "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
+                                          "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
+                                          "                    processEscapes: true,\n" +
+                                          "                    processEnvironments: true\n" +
+                                          "                },\n" +
+                                          "                displayAlign: 'center',\n" +
+                                          "                \"HTML-CSS\": {\n" +
+                                          "                    styles: {'#mydiv': {\"font-size\": %s}},\n" +
+                                          "                    preferredFont: null,\n" +
+                                          "                    linebreaks: { automatic: true }\n" +
+                                          "                }\n" +
+                                          "            });\n" +
+                                          "</script><script type=\"text/javascript\"\n" +
+                                          " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
+                                          " </script></head><body><div id=\"mydiv\">";
+
+  private static final String ourPostfix = "</div></body></html>";
 
   public static void closeSilently(@Nullable final Closeable stream) {
     if (stream != null) {
@@ -452,11 +475,12 @@ public class StudyUtils {
       return text;
     }
     if (taskDirectory != null) {
+      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
       final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
-      if (taskTextFileHtml != null) return taskTextFileHtml;
+      if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
       
       final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
-      if (taskTextFileMd != null) return convertToHtml(taskTextFileMd);      
+      if (taskTextFileMd != null) return prefix + convertToHtml(taskTextFileMd) + ourPostfix;      
     }
     return null;
   }
@@ -693,5 +717,11 @@ public class StudyUtils {
       return null;
     }
     return FileDocumentManager.getInstance().getDocument(taskFile);
+  }
+
+  public static void showErrorPopupOnToolbar(@NotNull Project project) {
+    final Balloon balloon =
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
+    showCheckPopUp(project, balloon);
   }
 }

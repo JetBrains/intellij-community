@@ -39,7 +39,7 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.id > 0) {
+    if (lesson != null && lesson.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
     }
   }
