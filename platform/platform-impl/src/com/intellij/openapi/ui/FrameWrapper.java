@@ -199,21 +199,15 @@ public class FrameWrapper implements Disposable, DataProvider {
     Disposer.dispose(this);
   }
 
-  private void dispose(Window frame) {
-    if (frame instanceof IdeFrame) {
-      MouseGestureManager.getInstance().remove((IdeFrame)frame);
-    }
-    if (myShown && myDimensionKey != null) {
-      WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, frame);
-    }
-    Disposer.dispose(this);
-  }
-
   public void dispose() {
     if (isDisposed()) return;
 
     Window frame = myFrame;
     StatusBar statusBar = myStatusBar;
+
+    if (myShown && myDimensionKey != null) {
+      WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, frame);
+    }
 
     myFrame = null;
     myPreferredFocus = null;
@@ -243,6 +237,10 @@ public class FrameWrapper implements Disposable, DataProvider {
       if (frame instanceof JFrame) {
         FocusTrackback.release((JFrame)frame);
       }
+      if (frame instanceof IdeFrame) {
+        MouseGestureManager.getInstance().remove((IdeFrame)frame);
+      }
+
       frame.dispose();
     }
 
@@ -445,7 +443,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     public void dispose() {
       if (myDisposing) return;
       myDisposing = true;
-      FrameWrapper.this.dispose(this);
+      Disposer.dispose(FrameWrapper.this);
       super.dispose();
     }
 
@@ -529,7 +527,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     public void dispose() {
       if (myDisposing) return;
       myDisposing = true;
-      FrameWrapper.this.dispose(this);
+      Disposer.dispose(FrameWrapper.this);
       super.dispose();
     }
 
