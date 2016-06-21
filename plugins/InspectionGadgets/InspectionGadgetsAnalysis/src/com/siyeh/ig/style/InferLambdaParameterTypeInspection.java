@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InferLambdaParameterTypeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public class InferLambdaParameterTypeInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance("#" + InferLambdaParameterTypeInspection.class.getName());
 
   @Nls
