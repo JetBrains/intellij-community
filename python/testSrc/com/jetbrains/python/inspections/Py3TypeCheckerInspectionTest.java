@@ -108,4 +108,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testListGetItemWithSlice() {
     doTest();
   }
+
+  // PY-19796
+  public void testOrd() {
+    doTest();
+  }
 }

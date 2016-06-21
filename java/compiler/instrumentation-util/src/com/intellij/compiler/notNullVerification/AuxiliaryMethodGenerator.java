@@ -19,8 +19,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.util.Textifier;
-import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.util.*;
 
@@ -121,12 +119,12 @@ class AuxiliaryMethodGenerator {
   private void createExceptionObject(final MethodVisitor mv) {
     new SwitchGenerator<String>() {
       @Override
-      void generateCaseBody(ReportingPlace place) {
-        mv.visitTypeInsn(NEW, place.exceptionClass);
+      void generateCaseBody(String exceptionClass) {
+        mv.visitTypeInsn(NEW, exceptionClass);
         mv.visitInsn(DUP_X1);
         mv.visitInsn(SWAP);
 
-        mv.visitMethodInsn(INVOKESPECIAL, place.exceptionClass, CONSTRUCTOR_NAME, EXCEPTION_INIT_SIGNATURE, false);
+        mv.visitMethodInsn(INVOKESPECIAL, exceptionClass, CONSTRUCTOR_NAME, EXCEPTION_INIT_SIGNATURE, false);
       }
 
       @Override
@@ -151,8 +149,8 @@ class AuxiliaryMethodGenerator {
   private void createFormatArgArray(final MethodVisitor mv) {
     new SwitchGenerator<Integer>(){
       @Override
-      void generateCaseBody(ReportingPlace place) {
-        pushIntConstant(mv, place.args.length);
+      void generateCaseBody(Integer argCount) {
+        pushIntConstant(mv, argCount);
       }
 
       @Override
@@ -171,8 +169,7 @@ class AuxiliaryMethodGenerator {
       }
 
       @Override
-      protected void generateCaseBody(ReportingPlace place) {
-        String value = getSwitchedValue(place);
+      void generateCaseBody(String value) {
         if (value != null) {
           mv.visitInsn(DUP);
           pushIntConstant(mv, index);
@@ -191,8 +188,8 @@ class AuxiliaryMethodGenerator {
       }
 
       @Override
-      protected void generateCaseBody(ReportingPlace place) {
-        mv.visitLdcInsn(getSwitchedValue(place));
+      void generateCaseBody(String descrPattern) {
+        mv.visitLdcInsn(descrPattern);
       }
     }.generateSwitch(mv);
   }
@@ -215,7 +212,7 @@ class AuxiliaryMethodGenerator {
       Label[] labels = getCaseLabels();
       if (labels == null) {
         // all places behave in a same way, don't bother with switch
-        generateCaseBody(myReportingPlaces.get(0));
+        generateCaseBody(getSwitchedValue(myReportingPlaces.get(0)));
       } else {
         reallyGenerateSwitch(mv, labels, deduplicateLabels(labels));
       }
@@ -228,7 +225,7 @@ class AuxiliaryMethodGenerator {
 
       for (Map.Entry<Label, ReportingPlace> entry : label2Place.entrySet()) {
         mv.visitLabel(entry.getKey());
-        generateCaseBody(entry.getValue());
+        generateCaseBody(getSwitchedValue(entry.getValue()));
         mv.visitJumpInsn(GOTO, afterSwitch);
       }
 
@@ -262,7 +259,7 @@ class AuxiliaryMethodGenerator {
       return label;
     }
 
-    abstract void generateCaseBody(ReportingPlace place);
+    abstract void generateCaseBody(T switchedValue);
 
     abstract T getSwitchedValue(ReportingPlace place);
   }

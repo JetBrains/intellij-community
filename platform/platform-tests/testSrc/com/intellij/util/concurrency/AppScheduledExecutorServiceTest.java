@@ -26,12 +26,10 @@ import java.util.concurrent.*;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
   private static class LogInfo {
-    private final long time;
     private final int runnable;
     private final Thread currentThread;
 
     private LogInfo(int runnable) {
-      time = System.currentTimeMillis();
       this.runnable = runnable;
       currentThread = Thread.currentThread();
     }
@@ -206,5 +204,30 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(N, usedThreads.size());
     service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
+  }
+
+  public void testAwaitTermination() throws InterruptedException, ExecutionException {
+    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
+
+    int N = 20;
+    int delay = 500;
+    List<? extends Future<?>> futures =
+      ContainerUtil.map(Collections.nCopies(N, ""), s -> service.schedule(() -> {
+          TimeoutUtil.sleep(5000);
+          log.add(new LogInfo(0));
+        }, delay, TimeUnit.MILLISECONDS
+      ));
+    TimeoutUtil.sleep(delay);
+    while (!service.delayQueue.isEmpty()) {
+      // wait till all tasks transferred to backend
+    }
+    service.shutdownAppScheduledExecutorService();
+    assertTrue(service.awaitTermination(20, TimeUnit.SECONDS));
+
+    for (Future<?> future : futures) {
+      assertTrue(future.isDone());
+    }
+    assertEquals(log.toString(), N, log.size());
   }
 }

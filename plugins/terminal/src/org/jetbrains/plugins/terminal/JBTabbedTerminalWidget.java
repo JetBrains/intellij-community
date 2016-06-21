@@ -176,6 +176,17 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     @Override
+    public int indexOfComponent(Component component) {
+      for (int i = 0; i<myTabs.getTabCount(); i++) {
+        if (component.equals(myTabs.getTabAt(i).getComponent())) {
+          return i;
+        }
+      }
+      
+      return -1;
+    }
+
+    @Override
     public int indexOfTabComponent(Component component) {
       return 0; //nop
     }

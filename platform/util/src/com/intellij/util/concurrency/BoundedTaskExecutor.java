@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -105,15 +106,36 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return myShutdown;
   }
 
+  private static class LastTask extends FutureTask<Void> {
+    LastTask() {
+      super(EmptyRunnable.getInstance(), null);
+    }
+  }
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
     if (!isShutdown()) throw new IllegalStateException("you must call shutdown() first");
-    return true;
+    return executeLastTask(this, timeout, unit);
+  }
+
+  // return true if executed, false if timed out
+  private static boolean executeLastTask(@NotNull Executor executor, long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    LastTask task = new LastTask();
+    executor.execute(task);
+    try {
+      task.get(timeout, unit);
+      return true;
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
+    catch (TimeoutException e) {
+      return false;
+    }
   }
 
   @Override
   public void execute(@NotNull Runnable task) {
-    if (isShutdown()) {
+    if (isShutdown() && !(task instanceof LastTask)) {
       throw new RejectedExecutionException("Already shutdown");
     }
     long status = incrementCounterAndTimestamp(); // increment inProgress and queue stamp atomically

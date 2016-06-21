@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.style;
+package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.ExpandOneLineLambda2CodeBlockInspection;
 
-public class ExpandOneLineLambda2CodeBlockQuickFixTest extends IGQuickFixesTestCase {
+public class ExpandOneLineLambda2CodeBlockFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

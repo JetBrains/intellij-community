@@ -16,8 +16,10 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
 import java.util.Random;
@@ -138,7 +140,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
         for (int i = 0; i < N; i++) {
           final int finalI = i;
           final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-          futures[i] = executor.schedule((Runnable)() -> {
+          futures[i] = executor.schedule(() -> {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
@@ -160,7 +162,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
             finally {
               running.decrementAndGet();
             }
-          }, i%10, TimeUnit.MILLISECONDS);
+          }, i % 10, TimeUnit.MILLISECONDS);
         }
         for (Future future : futures) {
           future.get();
@@ -265,5 +267,37 @@ public class BoundedScheduledExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals("", logs);
     assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+  }
+
+  public void testAwaitTerminationDoesWait() throws InterruptedException {
+    ExecutorService executor = new BoundedScheduledExecutorService(PooledThreadExecutor.INSTANCE, 1);
+    int N = 100000;
+    StringBuffer log = new StringBuffer(N*4);
+
+    Future[] futures = new Future[N];
+    for (int i = 0; i < N; i++) {
+      futures[i] = executor.submit(() -> log.append(" "));
+    }
+    executor.shutdown();
+    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+
+    String logs = log.toString();
+    assertEquals(StringUtil.repeat(" ", N), logs);
+    for (Future future : futures) {
+      assertTrue(future.isDone());
+      assertTrue(!future.isCancelled());
+    }
+  }
+
+  public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
+    ExecutorService executor2 = new BoundedScheduledExecutorService(PooledThreadExecutor.INSTANCE, 1);
+    Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
+    executor2.shutdown();
+    assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
+    assertFalse(future.isDone());
+    assertFalse(future.isCancelled());
+    assertTrue(executor2.awaitTermination(1000, TimeUnit.SECONDS));
+    assertTrue(future.isDone());
+    assertFalse(future.isCancelled());
   }
 }

@@ -543,6 +543,7 @@
       <reference id="Maven.UpdateFolders"/>
 
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+             text="Download Sources and/or Documentation"
              icon="AllIcons.Actions.Download">
         <reference id="Maven.DownloadAllGroup"/>
       </group>

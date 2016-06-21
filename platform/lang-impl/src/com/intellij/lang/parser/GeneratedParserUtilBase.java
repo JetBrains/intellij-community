@@ -432,6 +432,13 @@ public class GeneratedParserUtilBase {
     return ((PsiBuilderImpl)((Builder)builder).getDelegate()).whitespaceOrComment(type);
   }
 
+  private static boolean wasAutoSkipped(@NotNull PsiBuilder builder, int steps) {
+    for (int i = -1; i >= -steps; i--) {
+      if (!isWhitespaceOrComment(builder, builder.rawLookup(i))) return false;
+    }
+    return true;
+  }
+
   // here's the new section API for compact parsers & less IntelliJ platform API exposure
   public static final int _NONE_       = 0x0;
   public static final int _COLLAPSE_   = 0x1;
@@ -665,7 +672,10 @@ public class GeneratedParserUtilBase {
       if (result || pinned) {
         if ((frame.modifiers & _COLLAPSE_) != 0) {
           PsiBuilderImpl.ProductionMarker last = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
-          if (last != null && last.getStartIndex() == frame.position && state.typeExtends(last.getTokenType(), elementType)) {
+          if (last != null &&
+              last.getStartIndex() == frame.position &&
+              state.typeExtends(last.getTokenType(), elementType) &&
+              wasAutoSkipped(builder, builder.rawTokenIndex() - last.getEndIndex())) {
             elementType = last.getTokenType();
             ((PsiBuilder.Marker)last).drop();
           }

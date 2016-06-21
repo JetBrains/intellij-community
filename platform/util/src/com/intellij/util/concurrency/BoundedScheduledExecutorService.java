@@ -56,9 +56,4 @@ class BoundedScheduledExecutorService extends SchedulingWrapper {
   public boolean isTerminated() {
     return super.isTerminated() && backendExecutorService.isTerminated();
   }
-
-  @Override
-  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    return super.awaitTermination(timeout, unit) && backendExecutorService.awaitTermination(timeout, unit);
-  }
 }

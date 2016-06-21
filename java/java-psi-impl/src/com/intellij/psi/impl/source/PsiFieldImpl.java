@@ -34,6 +34,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -241,6 +242,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         else {
           final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
           initializer = parserFacade.createExpressionFromText(initializerText, this);
+          ((LightVirtualFile)initializer.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
         }
       }
       if (initializer != null && cachedInitializerValue == null) {

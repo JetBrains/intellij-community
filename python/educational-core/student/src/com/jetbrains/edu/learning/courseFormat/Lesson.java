@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements StudyItem {
-  @Expose public int id;
+  public int id;
   @Transient public List<Integer> steps;
   @Transient public List<String> tags;
   @Transient
@@ -29,7 +29,7 @@ public class Lesson implements StudyItem {
   private Course myCourse = null;
 
   // index is visible to user number of lesson from 1 to lesson number
-  @Expose private int myIndex = -1;
+  private int myIndex = -1;
 
   public Lesson() {
   }

@@ -327,8 +327,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         final SourceWrapper wrapper = new SourceWrapper(fileType);
         mySourceWrappers.add(wrapper);
         if (lastUsed == null && wrapper.getText().equals(type)) lastUsed = wrapper;
-        if (myExternalDocument && wrapper.myFileType instanceof LanguageFileType &&
-            wrapper.myFileType.equals(curLanguage.getAssociatedFileType())) {
+        if (curLanguage != null && wrapper.myFileType == curLanguage.getAssociatedFileType()) {
           lastUsed = wrapper;
         }
       }

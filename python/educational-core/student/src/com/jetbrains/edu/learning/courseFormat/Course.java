@@ -17,16 +17,16 @@ public class Course {
   @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
   @Expose private String description;
   @Expose private String name;
-  @Expose private String myCourseDirectory = "";
-  @Expose private int id;
-  @Expose private boolean myUpToDate;
-  @Expose private boolean isAdaptive = false;
+  private String myCourseDirectory = "";
+  private int id;
+  private boolean myUpToDate;
+  private boolean isAdaptive = false;
   @Expose @SerializedName("language") private String myLanguage = "Python";
 
   //this field is used to distinguish ordinary and CheckIO projects,
   //"PyCharm" is used here for historical reasons
-  @Expose private String courseType = EduNames.PYCHARM;
-  @Expose private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
+  private String courseType = EduNames.PYCHARM;
+  private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
 
   public Course() {
   }
