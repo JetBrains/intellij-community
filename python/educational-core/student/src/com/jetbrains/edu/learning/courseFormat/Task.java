@@ -24,16 +24,16 @@ public class Task implements StudyItem {
   private String name;
 
   // index is visible to user number of task from 1 to task number
-  @Expose private int myIndex;
-  @Expose private StudyStatus myStatus = StudyStatus.Unchecked;
+  private int myIndex;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  @Expose private int myStepicId;
+  private int myStepicId;
 
   @Expose
   @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
 
-  @Expose private String text;
+  private String text;
   private Map<String, String> testsText = new HashMap<String, String>();
 
   @Transient private Lesson myLesson;
