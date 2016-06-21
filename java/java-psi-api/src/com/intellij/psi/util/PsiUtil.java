@@ -815,10 +815,6 @@ public final class PsiUtil extends PsiUtilCore {
         }
       }
     }
-    else if (type instanceof PsiArrayType) {
-      return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
-    }
-
     return type;
   }
 

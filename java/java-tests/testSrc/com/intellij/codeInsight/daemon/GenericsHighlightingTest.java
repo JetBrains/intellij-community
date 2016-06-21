@@ -613,4 +613,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testTopLevelCaptureConversion() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
+
+  public void testNoCaptureConversionForArrayType() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
 }
