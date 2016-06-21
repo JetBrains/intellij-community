@@ -19,15 +19,16 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class TextLabelPainter {
-  protected static final int TEXT_PADDING_X = 5;
-  public static final int TOP_TEXT_PADDING = 2;
-  public static final int BOTTOM_TEXT_PADDING = 1;
+  protected static final int TEXT_PADDING_X = JBUI.scale(5);
+  public static final int TOP_TEXT_PADDING = JBUI.scale(2);
+  public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
 
   public static Font getFont() {
     return UIUtil.getLabelFont();
