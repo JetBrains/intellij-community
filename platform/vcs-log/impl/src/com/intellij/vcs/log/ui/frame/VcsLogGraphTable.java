@@ -351,7 +351,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
+  public VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, String text, boolean hasFocus, boolean selected) {
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
     return VcsCommitStyleFactory
       .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);

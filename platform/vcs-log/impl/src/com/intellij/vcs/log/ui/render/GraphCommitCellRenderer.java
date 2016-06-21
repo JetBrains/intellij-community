@@ -110,14 +110,16 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     myIssueLinkRenderer.appendTextWithLinks(cell.getText(), myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected));
 
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
+    Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, "", hasFocus, isSelected).getForeground());
     if (refs.isEmpty()) {
-      myTextLabelPainter.customizePainter(this, refs);
+      myTextLabelPainter.customizePainter(this, refs, getBackground(), foreground);
     }
     else {
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       myTextLabelPainter
         .customizePainter(this,
-                          ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+                          ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()),
+                          getBackground(), foreground);
     }
   }
 

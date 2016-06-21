@@ -65,9 +65,12 @@ public class TagLabelPainter {
   @NotNull
   private Color myForeground = UIUtil.getTableForeground();
 
-  public void customizePainter(@NotNull JComponent component, @NotNull Collection<VcsRef> references) {
-    myBackground = component.getBackground();
-    myForeground = component.getForeground();
+  public void customizePainter(@NotNull JComponent component,
+                               @NotNull Collection<VcsRef> references,
+                               @NotNull Color background,
+                               @NotNull Color foreground) {
+    myBackground = background;
+    myForeground = foreground;
 
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
