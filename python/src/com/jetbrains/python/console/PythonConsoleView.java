@@ -101,6 +101,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       ((PythonDebugConsoleCommunication)consoleCommunication).waitingForInput = true;
       myExecuteActionHandler.inputRequested();
       myExecuteActionHandler.setEnabled(true);
+      myExecuteActionHandler.clearInputBuffer();
     }
   }
 
