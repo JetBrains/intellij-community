@@ -27,10 +27,6 @@ public class EduAnswerPlaceholderPainter {
 
   public static void drawAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder placeholder,
                                            @NotNull final JBColor color) {
-    final Document document = editor.getDocument();
-    if (!placeholder.isValid(document)) {
-      return;
-    }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                                     EffectType.BOXED, Font.PLAIN);
@@ -68,7 +64,6 @@ public class EduAnswerPlaceholderPainter {
     if (document instanceof DocumentImpl) {
       DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
-      if (!placeholder.isValid(document)) return;
       int start = placeholder.getOffset();
       final int length = placeholder.getRealLength();
       int end = start + length;

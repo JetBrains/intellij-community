@@ -129,9 +129,6 @@ public class StudyCheckUtils {
       if (document == null) {
         continue;
       }
-      if (!answerPlaceholder.isValid(document)) {
-        continue;
-      }
       StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
                                    virtualFile, document);
     }
@@ -154,9 +151,6 @@ public class StudyCheckUtils {
         EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
         for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
-            continue;
-          }
           final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
