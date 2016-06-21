@@ -2543,6 +2543,10 @@
                      key="infer.lambda.parameter.type.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.InferLambdaParameterTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceDiamondWithExplicitTypeArguments" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="replace.diamond.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

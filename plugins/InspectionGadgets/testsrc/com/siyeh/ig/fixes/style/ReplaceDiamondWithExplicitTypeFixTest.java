@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.fixes.style;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection;
 
-public class ReplaceDiamondWithExplicitTypeIntentionTest extends IPPTestCase {
+public class ReplaceDiamondWithExplicitTypeFixTest extends IGQuickFixesTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new ReplaceDiamondWithExplicitTypeArgumentsInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("replace.diamond.with.explicit.type.arguments.descriptor");
+  }
+
   public void testAnonymousClass() {
     doTest();
   }
@@ -36,16 +44,11 @@ public class ReplaceDiamondWithExplicitTypeIntentionTest extends IPPTestCase {
   }
 
   public void testFailedInference() throws Exception {
-    assertIntentionNotAvailable();
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.diamond.with.explicit.type.arguments.intention.name");
+    assertQuickfixNotAvailable();
   }
 
   @Override
   protected String getRelativePath() {
-    return "types/diamond2explicit";
+    return "style/diamond2explicit";
   }
 }
