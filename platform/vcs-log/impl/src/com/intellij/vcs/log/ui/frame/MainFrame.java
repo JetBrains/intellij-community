@@ -56,7 +56,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
@@ -81,8 +80,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
-    myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
-    setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.emptyList(), null) {
@@ -133,7 +130,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(progressStripe, BorderLayout.CENTER);
@@ -161,7 +157,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 
   private void updateWhenDetailsAreLoaded() {
@@ -246,10 +241,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return this;
   }
 
-  public void setBranchesPanelVisible(boolean visible) {
-    myBranchesPanel.setBranchPanelVisible(visible);
-  }
-
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
@@ -309,10 +300,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public boolean areGraphActionsEnabled() {
     return myGraphTable.getRowCount() > 0;
-  }
-
-  public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myBranchesPanel.onFiltersChange(filters);
   }
 
   @NotNull

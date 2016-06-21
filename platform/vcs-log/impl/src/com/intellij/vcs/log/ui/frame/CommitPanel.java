@@ -542,7 +542,7 @@ class CommitPanel extends JBPanel {
     @NotNull private Color myColor = getCommitDetailsBackground();
 
     RootPanel() {
-      myLabelPainter = new TextLabelPainter(true) {
+      myLabelPainter = new TextLabelPainter() {
         @Override
         protected Font getLabelFont() {
           return RootPanel.getLabelFont();

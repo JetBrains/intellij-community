@@ -46,7 +46,6 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
       VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.branches.panel", ui.isBranchesPanelVisible()));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.isShowDetails()));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.areLongEdgesVisible()));
 

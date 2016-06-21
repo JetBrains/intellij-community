@@ -258,7 +258,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void applyFiltersAndUpdateUi() {
     VcsLogFilterCollection filters = myMainFrame.getFilterUi().getFilters();
     myFilterer.onFiltersChange(filters);
-    myMainFrame.onFiltersChange(filters);
   }
 
   @NotNull
@@ -274,17 +273,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  @Override
-  public void setBranchesPanelVisible(boolean visible) {
-    myMainFrame.setBranchesPanelVisible(visible);
-    myUiProperties.setShowBranchesPanel(visible);
-  }
-
-  @Override
-  public boolean isBranchesPanelVisible() {
-    return myUiProperties.isShowBranchesPanel();
   }
 
   @NotNull

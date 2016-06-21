@@ -142,11 +142,7 @@ public class TagLabelPainter {
   }
 
   protected Font getReferenceFont() {
-    return getFont();
-  }
-
-  public static Font getFont() {
-    return UIUtil.getLabelFont();
+    return TextLabelPainter.getFont();
   }
 }
 
