@@ -250,6 +250,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
+  @FunctionalInterface
   public interface DataChanged extends EventListener {
     void dataChanged();
   }
