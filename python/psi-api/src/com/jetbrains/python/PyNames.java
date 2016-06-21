@@ -139,6 +139,9 @@ public class PyNames {
   public static final String CALLABLE = "Callable";
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
+  public static final String ABC_SET = "Set";
+  public static final String ABC_MUTABLE_SET = "MutableSet";
+  
   public static final String ASYNC_ITERABLE = "AsyncIterable";
 
   public static final String ABC_NUMBER = "Number";
