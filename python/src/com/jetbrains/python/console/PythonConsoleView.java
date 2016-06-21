@@ -95,6 +95,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
+  public void inputRequested() {
+    final ConsoleCommunication consoleCommunication = myExecuteActionHandler.getConsoleCommunication();
+    if (consoleCommunication instanceof PythonDebugConsoleCommunication) {
+      ((PythonDebugConsoleCommunication)consoleCommunication).waitingForInput = true;
+      myExecuteActionHandler.inputRequested();
+      myExecuteActionHandler.setEnabled(true);
+    }
+  }
+
   @Override
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);

@@ -114,6 +114,31 @@ class StdIn(BaseStdIn):
             return '\n'
 
 
+#=======================================================================================================================
+# DebugConsoleStdIn
+#=======================================================================================================================
+class DebugConsoleStdIn(BaseStdIn):
+    '''
+        Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
+    '''
+
+    def __init__(self, dbg, original_stdin):
+        BaseStdIn.__init__(self)
+        self.debugger = dbg
+        self.original_stdin = original_stdin
+
+    def readline(self, *args, **kwargs):
+        # Notify Java side about input and call original function
+        try:
+            cmd = self.debugger.cmd_factory.make_input_requested_message()
+            self.debugger.writer.add_command(cmd)
+            return self.original_stdin.readline(*args, **kwargs)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            return '\n'
+
+
 class CodeFragment:
     def __init__(self, text, is_single_line=True):
         self.text = text
