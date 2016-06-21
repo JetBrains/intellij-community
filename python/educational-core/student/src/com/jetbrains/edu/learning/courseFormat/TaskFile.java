@@ -18,10 +18,10 @@ import java.util.List;
 public class TaskFile {
   @Expose public String name;
   @Expose public String text;
-  @Expose private int myIndex = -1;
-  @Expose private boolean myUserCreated = false;
-  @Expose private boolean myTrackChanges = true;
-  @Expose private boolean myHighlightErrors = false;
+  private int myIndex = -1;
+  private boolean myUserCreated = false;
+  private boolean myTrackChanges = true;
+  private boolean myHighlightErrors = false;
   @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   @Transient private Task myTask;
 
