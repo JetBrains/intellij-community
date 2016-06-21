@@ -138,6 +138,7 @@ CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
+CMD_INPUT_REQUESTED = 147
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -191,6 +192,7 @@ ID_TO_MEANING = {
     '144': 'CMD_STEP_INTO_MY_CODE',
     '145': 'CMD_GET_CONCURRENCY_EVENT',
     '146': 'CMD_SHOW_RETURN_VALUES',
+    '147': 'CMD_INPUT_REQUESTED',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -778,6 +780,13 @@ class NetCommandFactory:
             return NetCommand(CMD_SHOW_CONSOLE, 0, self.make_thread_suspend_str(thread_id, frame, CMD_SHOW_CONSOLE, ''))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
+
+    def make_input_requested_message(self):
+        try:
+            return NetCommand(CMD_INPUT_REQUESTED, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
 
     def make_exit_message(self):
         try:
