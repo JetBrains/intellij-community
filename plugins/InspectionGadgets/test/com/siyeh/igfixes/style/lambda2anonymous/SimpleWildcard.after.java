@@ -4,7 +4,7 @@ class Test1<U> {
         Comparable<? extends Integer> c = new Comparable<Integer>() {
             @Override
             public int compareTo(Integer o) {
-                <selection>return 0;</selection>
+                return 0;
             }
         };
     }

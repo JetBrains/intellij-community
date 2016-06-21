@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.fixes.style;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection;
 
-public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
+public class ReplaceLambdaWithAnonymousFixTest extends IGQuickFixesTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new ReplaceLambdaWithAnonymousInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+  }
+
   public void testSimpleRunnable() {
     doTest();
   }
@@ -56,15 +64,15 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
   }
 
   public void testNoFunctionalInterfaceFound() {
-    assertIntentionNotAvailable();
+    assertQuickfixNotAvailable();
   }
 
   public void testAmbiguity() {
-    assertIntentionNotAvailable();
+    assertQuickfixNotAvailable();
   }
   
   public void testInsideAnonymous() {
-    assertIntentionNotAvailable();
+    assertQuickfixNotAvailable();
   }
 
   public void testEffectivelyFinal() {
@@ -83,12 +91,16 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testCaretAtBody() {
+    assertQuickfixNotAvailable();
+  }
+
   public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() throws Exception {
     doTest();
   }
 
   public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() throws Exception {
-    assertIntentionNotAvailable();
+    assertQuickfixNotAvailable();
   }
 
   public void testRemoveRedundantCast() throws Exception {
@@ -96,12 +108,7 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
   }
 
   @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.lambda.with.anonymous.intention.name");
-  }
-
-  @Override
   protected String getRelativePath() {
-    return "types/lambda2anonymous";
+    return "style/lambda2anonymous";
   }
 }

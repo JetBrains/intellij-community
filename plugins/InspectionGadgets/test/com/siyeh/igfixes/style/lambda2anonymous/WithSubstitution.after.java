@@ -11,7 +11,7 @@ class Test2 {
         bar(new I<String>() {
             @Override
             public String foo(List<String> list) {
-                <selection>return "sss";</selection>
+                return "sss";
             }
         });
     }

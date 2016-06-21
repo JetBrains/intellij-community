@@ -14,12 +14,12 @@ class Test2 {
         bar(new I<String>() {
             @Override
             public String foo() {
-                <selection>A a = new A() {
+                A a = new A() {
                     void foo() {
                         super.foo();
                     }
                 }
-                return "sss";</selection>
+                return "sss";
             }
         });
     }

@@ -22,8 +22,8 @@ public class Sample extends Super {
     new Thread(new Runnable() {
         @Override
         public void run() {
-            <selection>System.out.println(Sample.this.getClass());
-            Sample.super.foo();</selection>
+            System.out.println(Sample.this.getClass());
+            Sample.super.foo();
         }
     }).start();
   }

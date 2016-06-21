@@ -2547,6 +2547,10 @@
                      key="replace.diamond.with.explicit.type.arguments.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ReplaceDiamondWithExplicitTypeArgumentsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceLambdaWithAnonymous" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="replace.lambda.with.anonymous.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

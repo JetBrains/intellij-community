@@ -11,7 +11,7 @@ class Test2 {
         bar(new I<Object>() {
             @Override
             public Object foo(Y<Object> x) {
-                <selection>return x;</selection>
+                return x;
             }
         });
     }

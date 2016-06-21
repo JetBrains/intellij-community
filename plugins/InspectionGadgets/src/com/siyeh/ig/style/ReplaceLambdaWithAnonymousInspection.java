@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,32 +28,46 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
-public class ReplaceLambdaWithAnonymousIntention extends Intention {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousIntention.class.getName());
+public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousInspection.class.getName());
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
+  }
 
   @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return new LambdaPredicate();
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public BaseInspectionVisitor buildVisitor() {
+    return new LambdaToAnonymousVisitor();
   }
 
+  @Nullable
   @Override
-  protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-    LOG.assertTrue(lambdaExpression != null);
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new LambdaToAnonymousFix();
+  }
+
+  private static void doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
     final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
     final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
@@ -63,13 +77,13 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     final String blockText = getBodyText(lambdaExpression);
     if (blockText == null) return;
 
-    final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(element.getProject());
+    final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
     qualifyThisExpressions(lambdaExpression, psiElementFactory, blockFromText);
     blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
     
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
-    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).shortenClassReferences(lambdaExpression.replace(newExpression));
+    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.replace(newExpression));
 
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     LOG.assertTrue(anonymousClass != null);
@@ -88,20 +102,14 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       }
       PsiCodeBlock codeBlock = member.getBody();
       LOG.assertTrue(codeBlock != null);
-
-      codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
+      codeBlock.replace(blockFromText);
 
       final PsiElement parent = anonymousClass.getParent().getParent();
       if (parent instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)parent)) {
         final PsiExpression operand = ((PsiTypeCastExpression)parent).getOperand();
         LOG.assertTrue(operand != null);
-        PsiNewExpression expression = (PsiNewExpression)parent.replace(operand);
-        final PsiAnonymousClass simplifiedClass = expression.getAnonymousClass();
-        LOG.assertTrue(simplifiedClass != null);
-        member = simplifiedClass.getMethods()[0];
+        parent.replace(operand);
       }
-
-      GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }
 
@@ -161,12 +169,28 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     return blockText;
   }
 
-  private static class LambdaPredicate implements PsiElementPredicate {
+  private static class LambdaToAnonymousVisitor extends BaseInspectionVisitor {
     @Override
-    public boolean satisfiedBy(PsiElement element) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-      if (lambdaExpression != null && (element.getParent() == lambdaExpression && element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.ARROW || 
-                                       PsiTreeUtil.isAncestor(lambdaExpression.getParameterList(), element, false))) {
+    public void visitParameterList(PsiParameterList parameterList) {
+      super.visitParameterList(parameterList);
+      if (isConvertibleLambdaExpression(parameterList.getParent())) {
+        registerError(parameterList);
+      }
+    }
+
+    @Override
+    public void visitJavaToken(PsiJavaToken token) {
+      super.visitJavaToken(token);
+      if (token.getTokenType() == JavaTokenType.ARROW) {
+        if (isConvertibleLambdaExpression(token.getParent())) {
+          registerError(token);
+        }
+      }
+    }
+
+    private static boolean isConvertibleLambdaExpression(PsiElement parent) {
+      if (parent instanceof PsiLambdaExpression) {
+        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
         final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
         if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
           final PsiElement body = lambdaExpression.getBody();
@@ -204,6 +228,31 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
         }
       }
       return false;
+    }
+  }
+
+  private static class LambdaToAnonymousFix extends InspectionGadgetsFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiLambdaExpression) {
+        ReplaceLambdaWithAnonymousInspection.doFix(project, (PsiLambdaExpression)parent);
+      }
     }
   }
 }

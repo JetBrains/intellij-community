@@ -22,7 +22,7 @@ class Test {
         Some some = new Some() {
             @Override
             public void test(int i1, int i2) {
-                <selection>System.out.println(i1 + i2);</selection>
+                System.out.println(i1 + i2);
             }
         };
     }
