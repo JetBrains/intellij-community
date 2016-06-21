@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -36,6 +37,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInsight.completion.ComboEditorCompletionContributor.CONTINUE_RUN_COMPLETION;
 
 public class ChangeListChooserPanel extends JPanel {
 
@@ -185,7 +188,13 @@ public class ChangeListChooserPanel extends JPanel {
 
     public MyEditorComboBox(Project project) {
       super();
-      setEditor(new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, this));
+      setEditor(new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, this) {
+        @Override
+        protected void onEditorCreate(EditorEx editor) {
+          super.onEditorCreate(editor);
+          getDocument().putUserData(CONTINUE_RUN_COMPLETION, true);
+        }
+      });
     }
 
     @NotNull
