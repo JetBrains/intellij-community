@@ -52,7 +52,7 @@ import java.util.Map;
 public class TagLabelPainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
-  public static final int GRADIENT_WIDTH = JBUI.scale(25);
+  public static final int GRADIENT_WIDTH = JBUI.scale(50);
   public static final int RIGHT_PADDING = JBUI.scale(5);
   public static final int MIDDLE_PADDING = JBUI.scale(5);
 
