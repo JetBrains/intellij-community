@@ -97,7 +97,7 @@ public class AttachToLocalProcessAction extends AnAction {
       if (item instanceof AttachItem) {
         String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
         debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
-        ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", debuggerName));
+        ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
       }
     };
     popup.addListSelectionListener(listener);
@@ -381,7 +381,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
   private static class ProcessListStep extends MyBasePopupStep implements ListPopupStepEx<AttachItem> {
     public ProcessListStep(@NotNull List<AttachItem> items, @NotNull Project project) {
-      super(project, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", ""), items);
+      super(project, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title.default"), items);
     }
 
     @Nullable
