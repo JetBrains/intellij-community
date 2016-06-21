@@ -466,4 +466,36 @@ public class BoundedTaskExecutorTest extends TestCase {
       throw new RuntimeException(e);
     }
   }
+
+  public void testAwaitTerminationDoesWait() throws InterruptedException {
+    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    int N = 100000;
+    StringBuffer log = new StringBuffer(N*4);
+
+    Future[] futures = new Future[N];
+    for (int i = 0; i < N; i++) {
+      futures[i] = executor.submit(() -> log.append(" "));
+    }
+    executor.shutdown();
+    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+
+    String logs = log.toString();
+    assertEquals(StringUtil.repeat(" ",N), logs);
+    for (Future future : futures) {
+      assertTrue(future.isDone());
+      assertTrue(!future.isCancelled());
+    }
+  }
+
+  public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
+    ExecutorService executor2 = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
+    executor2.shutdown();
+    assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
+    assertFalse(future.isDone());
+    assertFalse(future.isCancelled());
+    assertTrue(executor2.awaitTermination(10, TimeUnit.SECONDS));
+    assertTrue(future.isDone());
+    assertFalse(future.isCancelled());
+  }
 }
