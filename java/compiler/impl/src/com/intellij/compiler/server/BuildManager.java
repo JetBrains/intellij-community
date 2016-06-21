@@ -1292,10 +1292,9 @@ public class BuildManager implements Disposable {
     return 0;
   }
 
-  @NotNull
-  private Future<?> stopListening() {
+  private void stopListening() {
     myListenPort = -1;
-    return myChannelRegistrar.close();
+    myChannelRegistrar.close();
   }
 
   private int startListening() throws Exception {
@@ -1321,7 +1320,7 @@ public class BuildManager implements Disposable {
       }
     });
     Channel serverChannel = bootstrap.bind(InetAddress.getLoopbackAddress(), 0).syncUninterruptibly().channel();
-    myChannelRegistrar.add(serverChannel, isOwnEventLoopGroup);
+    myChannelRegistrar.setServerChannel(serverChannel, isOwnEventLoopGroup);
     return ((InetSocketAddress)serverChannel.localAddress()).getPort();
   }
 
