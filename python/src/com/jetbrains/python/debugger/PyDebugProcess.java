@@ -346,6 +346,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
+  public void consoleInputRequested() {
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
+      ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView().inputRequested();
+    }
+  }
+
   protected void afterConnect() {
   }
 
