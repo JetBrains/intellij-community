@@ -798,6 +798,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "ui", "getLocation", "getLocationOnScreen",
       "getSize", "isOpaque", "getBorder",
       "getForeground", "getBackground", "getFont",
+      "getCellRenderer", "getCellEditor",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
