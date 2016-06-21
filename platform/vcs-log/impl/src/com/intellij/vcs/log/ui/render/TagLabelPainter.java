@@ -32,7 +32,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -78,15 +78,26 @@ public class TagLabelPainter {
       VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(typeAndRefs.getValue()));
       VcsRefType type = typeAndRefs.getKey();
       boolean multiple = typeAndRefs.getValue().size() > 1;
-      TagIcon tagIcon = new TagIcon(myHeight, myBackground, multiple
-                                                            ? new Color[]{type.getBackgroundColor(), type.getBackgroundColor()}
-                                                            : new Color[]{type.getBackgroundColor()});
+      Color color = getTagColor(type);
+      TagIcon tagIcon = new TagIcon(myHeight, myBackground, multiple ? new Color[]{color, color} : new Color[]{color});
 
       String text = firstRef.getName() + (multiple ? " +" : "");
       myLabels.add(Pair.create(text, tagIcon));
 
       myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
     }
+  }
+
+  @NotNull
+  public static Color getTagColor(@NotNull VcsRefType type) {
+    Color color = type.getBackgroundColor();
+    if (UIUtil.isUnderDarcula()) {
+      color = ColorUtil.brighter(color, 2);
+    }
+    else {
+      color = ColorUtil.darker(color, 2);
+    }
+    return ColorUtil.saturate(color, 5);
   }
 
   public void paint(@NotNull Graphics2D g2, int x, int y, int height) {
