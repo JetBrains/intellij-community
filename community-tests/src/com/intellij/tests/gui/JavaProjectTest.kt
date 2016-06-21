@@ -20,9 +20,7 @@ import com.intellij.tests.gui.fixtures.DialogFixtures.CreateDialogFixture
 import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture
-import com.intellij.tests.gui.framework.GuiTestCase
-import com.intellij.tests.gui.framework.createNewProject
-import com.intellij.tests.gui.framework.pause
+import com.intellij.tests.gui.framework.*
 import org.junit.Test
 import java.io.File
 import javax.swing.text.JTextComponent
@@ -30,6 +28,7 @@ import javax.swing.text.JTextComponent
 /**
  * Created by karashevich on 18/06/16.
  */
+@BelongsToTestGroups(TestGroup.PROJECT)
 class JavaProjectTest: GuiTestCase() {
 
   @Test

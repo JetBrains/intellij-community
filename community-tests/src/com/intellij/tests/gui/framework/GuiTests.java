@@ -74,10 +74,13 @@ import static com.google.common.base.Joiner.on;
 import static com.google.common.io.Files.createTempDir;
 import static com.intellij.openapi.projectRoots.JdkUtil.checkForJdk;
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
+import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
+import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.finder.WindowFinder.findFrame;
@@ -240,16 +243,6 @@ public final class GuiTests {
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreement(robot);
       //[Complete Installation]
-      if (!Boolean.getBoolean("skip.first.configuration.steps")) {
-        completeInstallation(robot);
-        //[EVALUATION IntelliJ IDEA License Activation]
-        evaluateIdea(robot);
-        //[License Agreement for IntelliJ IDEA]
-        acceptLicenseAgreement(robot);
-        //[Customize IntelliJ IDEA]
-        customizeIdea(robot);
-      }
-
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -403,15 +396,14 @@ public final class GuiTests {
   @NotNull
   public static File getTestProjectsRootDirPath() {
 
-    final String path = PathManagerEx.getTestDataPath(GuiTestCase.class);
-    return new File(path);
+    String testDataPath = PathManagerEx.getTestDataPath(PathManagerEx.TestDataLookupStrategy.ULTIMATE);
+    assertNotNull(testDataPath);
+    assertThat(testDataPath).isNotEmpty();
+    testDataPath = toCanonicalPath(toSystemDependentName(testDataPath));
 
-    //String testDataPath = AndroidTestBase.getTestDataPath();
-    //assertNotNull(testDataPath);
-    //assertThat(testDataPath).isNotEmpty();
-    //testDataPath = toCanonicalPath(toSystemDependentName(testDataPath));
-    //return new File(testDataPath, "guiTests");
+    return new File(testDataPath, "guiTests");
   }
+
 
   private GuiTests() {
   }

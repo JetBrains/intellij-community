@@ -20,6 +20,7 @@ package com.intellij.tests.gui.framework;
  */
 
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,15 +29,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.BasicRobot;
@@ -51,6 +61,7 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
@@ -58,6 +69,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
 import static com.intellij.openapi.util.io.FileUtil.*;
@@ -99,7 +111,6 @@ public abstract class GuiTestCase {
 
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
-
     setUpDefaultProjectCreationLocationPath();
 
     myRobot = BasicRobot.robotWithCurrentAwtHierarchy();
@@ -145,23 +156,6 @@ public abstract class GuiTestCase {
       }
     }
     ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
-    //EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //      @Override
-    //      public void run() {
-    //        Disposer.dispose(ApplicationManager.getApplication());
-    //      }
-    //    });
-    //  }
-    //});
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManagerEx.getApplicationEx().exit();
-      }
-    });
   }
 
   @NotNull
@@ -254,6 +248,7 @@ public abstract class GuiTestCase {
     doImportProject(toSelect);
 
     IdeFrameFixture projectFrame = findIdeFrame(projectPath);
+    //TODO: add wait to open project
     //projectFrame.waitForGradleProjectSyncToFinish();
 
     return projectFrame;
@@ -272,6 +267,7 @@ public abstract class GuiTestCase {
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
+        ProjectUtil.openOrImport(projectDir.getPath(), null, false);
       }
     });
   }
@@ -303,33 +299,36 @@ public abstract class GuiTestCase {
   private File setUpProject(@NotNull String projectDirName,
                             boolean forOpen) throws IOException {
     File projectPath = copyProjectBeforeOpening(projectDirName);
+    assertNotNull(projectPath);
 
-    updateLocalProperties(projectPath);
-
-    if (forOpen) {
-      File toDotIdea = new File(projectPath, Project.DIRECTORY_STORE_FOLDER);
-      ensureExists(toDotIdea);
-
-      File fromDotIdea = new File(getTestProjectsRootDirPath(), join("commonFiles", Project.DIRECTORY_STORE_FOLDER));
-      assertThat(fromDotIdea).isDirectory();
-
-      for (File from : notNullize(fromDotIdea.listFiles())) {
-        if (from.isDirectory()) {
-          File destination = new File(toDotIdea, from.getName());
-          if (!destination.isDirectory()) {
-            copyDirContent(from, destination);
-          }
-          continue;
-        }
-        File to = new File(toDotIdea, from.getName());
-        if (!to.isFile()) {
-          copy(from, to);
-        }
-      }
-    }
-    else {
-      cleanUpProjectForImport(projectPath);
-    }
+    //*********************************************************
+    //******* In case we want to pick out commom files
+    //*********************************************************
+    //if (forOpen) {
+    //  File toDotIdea = new File(projectPath, Project.DIRECTORY_STORE_FOLDER);
+    //  ensureExists(toDotIdea);
+    //
+    //  File fromDotIdea = new File(getTestProjectsRootDirPath(), join("commonFiles", Project.DIRECTORY_STORE_FOLDER));
+    //  assertThat(fromDotIdea).isDirectory();
+    //
+    //
+    //  for (File from : notNullize(fromDotIdea.listFiles())) {
+    //    if (from.isDirectory()) {
+    //      File destination = new File(toDotIdea, from.getName());
+    //      if (!destination.isDirectory()) {
+    //        copyDirContent(from, destination);
+    //      }
+    //      continue;
+    //    }
+    //    File to = new File(toDotIdea, from.getName());
+    //    if (!to.isFile()) {
+    //      copy(from, to);
+    //    }
+    //  }
+    //}
+    //else {
+    //  cleanUpProjectForImport(projectPath);
+    //}
 
     return projectPath;
   }
@@ -349,14 +348,6 @@ public abstract class GuiTestCase {
   }
 
 
-  protected void updateLocalProperties(File projectPath) throws IOException {
-    //File androidHomePath = IdeSdks.getAndroidSdkPath();
-    //assertNotNull(androidHomePath);
-    //
-    //LocalProperties localProperties = new LocalProperties(projectPath);
-    //localProperties.setAndroidSdkPath(androidHomePath);
-    //localProperties.save();
-  }
 
   @NotNull
   protected File getMasterProjectDirPath(@NotNull String projectDirName) {
@@ -402,6 +393,11 @@ public abstract class GuiTestCase {
       }
       delete(dotIdeaFolderPath);
     }
+  }
+
+  @AfterClass
+  public static void afterClass(){
+    //IdeTestApplication.disposeInstance();
   }
 
   @NotNull

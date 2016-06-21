@@ -75,7 +75,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
 
   @NotNull
   public NewProjectWizardFixture selectProjectType(String projectTypeName) {
-    JListFixture projectTypeList = new JListFixture(robot(), robot().finder().findByType(JBList.class, true));
+    JListFixture projectTypeList = new JListFixture(robot(), robot().finder().findByType(this.target(), JBList.class, true));
     projectTypeList.clickItem(projectTypeName);
     return this;
   }

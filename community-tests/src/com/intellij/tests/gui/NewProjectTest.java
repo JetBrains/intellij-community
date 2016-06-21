@@ -19,9 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
-import com.intellij.tests.gui.framework.GuiTestCase;
-import com.intellij.tests.gui.framework.GuiTests;
-import com.intellij.tests.gui.framework.IdeGuiTest;
+import com.intellij.tests.gui.framework.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -38,6 +36,7 @@ import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
 /**
  * Created by karashevich on 27/05/16.
  */
+@BelongsToTestGroups({TestGroup.PROJECT})
 public class NewProjectTest extends GuiTestCase {
 
 
