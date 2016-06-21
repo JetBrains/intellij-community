@@ -4,7 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -20,23 +22,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
-
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
   private static final int MAX_GRAPH_WIDTH = 10;
+
+  private static final int VERTICAL_PADDING = JBUI.scale(7);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final TextLabelPainter myTextLabelPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
+  @NotNull private final TagLabelPainter myTextLabelPainter = new TagLabelPainter();
 
   @Nullable private PaintInfo myGraphImage;
-  @Nullable private Collection<VcsRef> myRefs;
   @NotNull private Font myFont;
   private int myHeight;
 
@@ -46,8 +45,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     myLogData = logData;
     myPainter = painter;
     myGraphTable = table;
-    myTextLabelPainter = TextLabelPainter.createPainter(false);
-    myIssueLinkRenderer = new IssueLinkRenderer(logData.getProject(), this);
+    myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
     myFont = TextLabelPainter.getFont();
     myHeight = calculateHeight();
   }
@@ -69,23 +67,14 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private int calculateHeight() {
-    return myTextLabelPainter.calculateSize("", getFontMetrics(myFont)).height + 4;
+    return Math.max(myTextLabelPainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
   }
 
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    if (myRefs != null) {
-      int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PaintParameters.LABEL_PADDING;
-      Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
-      for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
-        Dimension size = myTextLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(TextLabelPainter.getFont()));
-        int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
-        myTextLabelPainter.paint((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
-        paddingX += size.width + PaintParameters.LABEL_PADDING;
-      }
-    }
+    myTextLabelPainter.paint((Graphics2D)g, getWidth() - myTextLabelPainter.getSize().width, 0, getHeight());
 
     if (myGraphImage != null) {
       UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
@@ -103,7 +92,6 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
     GraphCommitCell cell = getAssertCommitCell(value);
     myGraphImage = getGraphImage(row);
-    myRefs = cell.getRefsToThisCommit();
 
     int graphPadding;
     if (myGraphImage != null) {
@@ -115,12 +103,22 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     else {
       graphPadding = 0;
     }
-    int textPadding = graphPadding + calculateReferencePadding(myRefs);
 
     setBorder(null);
     append("");
-    appendTextPadding(textPadding);
+    appendTextPadding(graphPadding);
     myIssueLinkRenderer.appendTextWithLinks(cell.getText(), myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected));
+
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
+    if (refs.isEmpty()) {
+      myTextLabelPainter.customizePainter(this, refs);
+    }
+    else {
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
+      myTextLabelPainter
+        .customizePainter(this,
+                          ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+    }
   }
 
   @Nullable
@@ -139,63 +137,13 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     Graphics2D g2 = image.createGraphics();
     myPainter.draw(g2, printElements);
 
-    final int width = maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight());
+    int width = maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight());
     return new PaintInfo(image, width);
   }
 
   private static GraphCommitCell getAssertCommitCell(Object value) {
     assert value instanceof GraphCommitCell : "Value of incorrect class was supplied: " + value;
     return (GraphCommitCell)value;
-  }
-
-  @NotNull
-  private Map<String, Color> collectLabelsForRefs(@NotNull Collection<VcsRef> refs) {
-    if (refs.isEmpty()) {
-      return Collections.emptyMap();
-    }
-    VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
-    refs = ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
-    List<VcsRef> branches = ContainerUtil.newArrayList();
-    List<VcsRef> tags = ContainerUtil.newArrayList();
-    refs.forEach(ref -> {
-      if (ref.getType().isBranch()) {
-        branches.add(ref);
-      }
-      else {
-        tags.add(ref);
-      }
-    });
-    return getLabelsForRefs(branches, tags);
-  }
-
-  private int calculateReferencePadding(@NotNull Collection<VcsRef> references) {
-    if (references.isEmpty()) return 0;
-
-    int paddingX = 2 * PaintParameters.LABEL_PADDING;
-    for (String label : collectLabelsForRefs(references).keySet()) {
-      Dimension size = myTextLabelPainter.calculateSize(label, this.getFontMetrics(TextLabelPainter.getFont()));
-      paddingX += size.width + PaintParameters.LABEL_PADDING;
-    }
-    return paddingX;
-  }
-
-  @NotNull
-  private static Map<String, Color> getLabelsForRefs(@NotNull List<VcsRef> branches, @NotNull Collection<VcsRef> tags) {
-    Map<String, Color> labels = ContainerUtil.newLinkedHashMap();
-    for (VcsRef branch : branches) {
-      labels.put(branch.getName(), branch.getType().getBackgroundColor());
-    }
-    if (!tags.isEmpty()) {
-      VcsRef firstTag = tags.iterator().next();
-      Color color = firstTag.getType().getBackgroundColor();
-      if (tags.size() > 1) {
-        labels.put(firstTag.getName() + " +", color);
-      }
-      else {
-        labels.put(firstTag.getName(), color);
-      }
-    }
-    return labels;
   }
 
   private static class PaintInfo {
