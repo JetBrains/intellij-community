@@ -877,6 +877,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     return (SmartPointerEx<T>)getPointerManager().createSmartPsiElementPointer(element);
   }
 
+  public void testCommentingField() throws Exception {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {\n" +
+                                                         "    int x;\n" +
+                                                         "    int y;\n" +
+                                                         "}");
+    PsiField[] fields = file.getClasses()[0].getFields();
+    SmartPointerEx<PsiField> pointer0 = createPointer(fields[0]);
+    SmartPointerEx<PsiField> pointer1 = createPointer(fields[1]);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      Document document = file.getViewProvider().getDocument();
+      assert document != null;
+      document.insertString(file.getText().indexOf("int"), "//");
+      commitDocument(document);
+    });
+
+    assertNull(pointer0.getElement());
+    assertEquals("y", pointer1.getElement().getName());
+  }
+
   public void testAnchorInfoHasRange() throws Exception {
     PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class C1{}");
     assertNotNull(((PsiFileImpl) file).getStubTree());

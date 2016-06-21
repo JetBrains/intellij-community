@@ -47,8 +47,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private final Class<? extends PsiElement> myElementClass;
   private byte myReferenceCount = 1;
 
-  SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile) {
-    this(element, createElementInfo(project, element, containingFile), element.getClass());
+  SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
+    this(element, createElementInfo(project, element, containingFile, forInjected), element.getClass());
   }
   SmartPsiElementPointerImpl(@NotNull E element,
                              @NotNull SmartPointerElementInfo elementInfo,
@@ -142,8 +142,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
                                                                                   @NotNull E element,
-                                                                                  PsiFile containingFile) {
-    SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile);
+                                                                                  PsiFile containingFile, boolean forInjected) {
+    SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode() && !element.equals(elementInfo.restoreElement())) {
       // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
       LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo);
@@ -154,7 +154,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
                                                                                     @NotNull E element,
-                                                                                    PsiFile containingFile) {
+                                                                                    PsiFile containingFile, boolean forInjected) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -201,7 +201,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, false);
+    return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, forInjected);
   }
 
   @NotNull
