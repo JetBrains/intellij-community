@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -99,8 +100,11 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChanged(String errorMessage) {
-        LocalChangeList list = getExistingChangelist();
-        setDescription(list != null ? list.getComment() : "");
+        if (!UndoManager.getInstance(myProject).isRedoInProgress() &&
+            !UndoManager.getInstance(myProject).isUndoInProgress() &&
+            myExistingListsCombo.isShowing()) {
+          updateDescription();
+        }
         myOkEnabledListener.consume(errorMessage);
       }
 
