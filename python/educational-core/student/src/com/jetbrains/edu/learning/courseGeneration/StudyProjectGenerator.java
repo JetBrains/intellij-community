@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -59,7 +60,7 @@ public class StudyProjectGenerator {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
-  private List<Integer> myEnrolledCoursesIds = new ArrayList<>(); 
+  private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
@@ -69,7 +70,7 @@ public class StudyProjectGenerator {
   public boolean isLoggedIn() {
     return myUser != null && !StringUtil.isEmptyOrSpaces(myUser.getPassword()) && !StringUtil.isEmptyOrSpaces(myUser.getEmail());
   }
-  
+
   public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
     myEnrolledCoursesIds = coursesIds;
   }
@@ -88,21 +89,23 @@ public class StudyProjectGenerator {
     final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
+      Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
     final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().runWriteAction(() -> {
-                                                         StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-                                                         course.setCourseDirectory(courseDirectory.getAbsolutePath());
-                                                         VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-                                                         StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
-                                                         openFirstTask(course, project);
-                                                       });
+      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+      course.setCourseDirectory(courseDirectory.getAbsolutePath());
+      VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+      StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+      openFirstTask(course, project);
+    });
   }
 
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
+
     final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
     if (courseFile.exists()) {
       return readCourseFromCache(courseFile, false);
@@ -115,12 +118,21 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-    if (course != null) {
-      flushCourse(project, course);
-      course.initCourse(false);
-    }
-    return course;
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
+      @Override
+      public Course compute() throws RuntimeException {
+        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+        return execCancelable(() -> {
+
+          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+          if (course != null) {
+            flushCourse(project, course);
+            course.initCourse(false);
+          }
+          return course;
+        });
+      }
+    }, "Creating Course", true, project);
   }
 
   @Nullable

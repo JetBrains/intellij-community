@@ -334,9 +334,11 @@ public class EduStepicConnector {
       final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
       if (recommendation != null) {
         lesson.addTask(recommendation);
+        return course;
       }
-
-      return course;
+      else {
+        return null;
+      }
     }
     return null;
   }
