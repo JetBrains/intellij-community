@@ -257,6 +257,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         }
 
         virtualFile.setContent(null, documentWindow.getText(), false);
+        virtualFile.setWritable(virtualFile.getDelegate().isWritable());
 
         cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
 
