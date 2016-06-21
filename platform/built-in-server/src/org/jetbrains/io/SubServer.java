@@ -76,7 +76,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
 
     try {
       bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : NetKt.loopbackSocketAddress(port));
-      channelRegistrar.add(bootstrap.bind().syncUninterruptibly().channel());
+      channelRegistrar.setServerChannel(bootstrap.bind().syncUninterruptibly().channel(), false);
       return true;
     }
     catch (Exception e) {
@@ -97,7 +97,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
 
   private void stop() {
     if (channelRegistrar != null) {
-      channelRegistrar.close(false);
+      channelRegistrar.close();
     }
   }
 
