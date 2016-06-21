@@ -82,10 +82,6 @@ public class EduUtils {
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
           int length = answerPlaceholder.getRealLength();
-          if (!answerPlaceholder.isValid(document, length)) {
-            printWriter.println("#educational_plugin_window = ");
-            continue;
-          }
           int start = answerPlaceholder.getOffset();
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);

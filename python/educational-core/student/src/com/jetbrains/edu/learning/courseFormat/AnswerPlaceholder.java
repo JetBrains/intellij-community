@@ -2,9 +2,7 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.editor.Document;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -110,14 +108,6 @@ public class AnswerPlaceholder {
 
   public int getPossibleAnswerLength() {
     return possibleAnswer.length();
-  }
-
-  public boolean isValid(@NotNull final Document document) {
-    return isValid(document, length);
-  }
-
-  public boolean isValid(@NotNull final Document document, int length) {
-    return myOffset >= 0 && myOffset + length <= document.getTextLength();
   }
 
   /**

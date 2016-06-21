@@ -71,7 +71,6 @@ public class EduDocumentListener extends DocumentAdapter {
         AnswerPlaceholder answerPlaceholder = answerPlaceholderWrapper.getAnswerPlaceholder();
         int length = twEnd - twStart;
         answerPlaceholder.setOffset(twStart);
-        answerPlaceholder.setLength(length);
         if (!answerPlaceholder.getUseLength()) {
           answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
         }
