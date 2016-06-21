@@ -86,6 +86,14 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
   }
 
   @Override
+  public boolean isLeaf() {
+    if (children == null) {
+      return false;
+    }
+    return super.isLeaf();
+  }
+
+  @Override
   public int getIndex(TreeNode aChild) {
     buildChildren();
     return super.getIndex(aChild);
