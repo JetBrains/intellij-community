@@ -300,4 +300,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testAbsSetAndMutableSet() {
     doTest();
   }
+
+  // PY-19884
+  public void testSetMethods() {
+    doTest();
+  }
 }
