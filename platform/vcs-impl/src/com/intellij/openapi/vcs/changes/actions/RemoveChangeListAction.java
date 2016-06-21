@@ -45,10 +45,10 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final boolean visible = canRemoveChangeLists(project, lists);
-    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+    e.getPresentation().setEnabled(visible);
+    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       e.getPresentation().setVisible(visible);
-    else
-      e.getPresentation().setEnabled(visible);
+    }
   }
 
   private static boolean canRemoveChangeLists(final Project project, final ChangeList[] lists) {

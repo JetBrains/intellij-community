@@ -33,12 +33,9 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
+    presentation.setEnabled(canShow);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canShow);
-    }
-    else {
-      presentation.setVisible(true);
-      presentation.setEnabled(canShow);
     }
   }
 
