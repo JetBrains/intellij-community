@@ -85,28 +85,32 @@ public class JBScrollPane extends JScrollPane {
     new CachedColor("ide.scroll.thumb.windows.darcula.border", "#949494", Gray.x94));
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
-    new RoundThumbPainter(2, .2f, .3f, Gray.x00),
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new DefaultThumbPainter(
+    new RoundThumbPainter(2, .2f, .3f, Gray.x00, Gray.x00),
     new CachedValue("ide.scroll.thumb.mac.classic.default.alpha", "0.20", .20f),
     new CachedValue("ide.scroll.thumb.mac.classic.default.delta", "0.30", .30f),
-    new CachedColor("ide.scroll.thumb.mac.classic.default.color", "#000000", Gray.x00));
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
-    new RoundThumbPainter(2, 0f, .5f, Gray.x00),
+    new CachedColor("ide.scroll.thumb.mac.classic.default.color", "#000000", Gray.x00),
+    new CachedColor("ide.scroll.thumb.mac.classic.default.border", "#000000", Gray.x00));
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new DefaultThumbPainter(
+    new RoundThumbPainter(2, 0f, .5f, Gray.x00, Gray.x00),
     new CachedValue("ide.scroll.thumb.mac.overlay.default.alpha", "0.00", .00f),
     new CachedValue("ide.scroll.thumb.mac.overlay.default.delta", "0.50", .50f),
-    new CachedColor("ide.scroll.thumb.mac.overlay.default.color", "#000000", Gray.x00));
+    new CachedColor("ide.scroll.thumb.mac.overlay.default.color", "#000000", Gray.x00),
+    new CachedColor("ide.scroll.thumb.mac.overlay.default.border", "#000000", Gray.x00));
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
-    new RoundThumbPainter(2, .10f, .05f, Gray.xA6),
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new DefaultThumbPainter(
+    new RoundThumbPainter(2, .10f, .05f, Gray.xFF, Gray.xFF),
     new CachedValue("ide.scroll.thumb.mac.classic.darcula.alpha", "0.10", .10f),
     new CachedValue("ide.scroll.thumb.mac.classic.darcula.delta", "0.05", .05f),
-    new CachedColor("ide.scroll.thumb.mac.classic.darcula.color", "#ffffff", Gray.xFF));
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new ThumbPainterDelegate<AlphaPainter>(
-    new RoundThumbPainter(2, 0f, .15f, Gray.xFF),
+    new CachedColor("ide.scroll.thumb.mac.classic.darcula.color", "#ffffff", Gray.xFF),
+    new CachedColor("ide.scroll.thumb.mac.classic.darcula.border", "#ffffff", Gray.xFF));
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new DefaultThumbPainter(
+    new RoundThumbPainter(2, 0f, .15f, Gray.xFF, Gray.xFF),
     new CachedValue("ide.scroll.thumb.mac.overlay.darcula.alpha", "0.00", .00f),
     new CachedValue("ide.scroll.thumb.mac.overlay.darcula.delta", "0.15", .15f),
-    new CachedColor("ide.scroll.thumb.mac.overlay.darcula.color", "#ffffff", Gray.xFF));
+    new CachedColor("ide.scroll.thumb.mac.overlay.darcula.color", "#ffffff", Gray.xFF),
+    new CachedColor("ide.scroll.thumb.mac.overlay.darcula.border", "#ffffff", Gray.xFF));
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -906,11 +910,11 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class RoundThumbPainter extends AlphaPainter {
+  private static class RoundThumbPainter extends ThumbPainter {
     private final int myBorder;
 
-    private RoundThumbPainter(int border, float base, float delta, Color fill) {
-      super(base, delta, fill);
+    private RoundThumbPainter(int border, float base, float delta, Color fill, Color draw) {
+      super(base, delta, fill, draw);
       myBorder = border;
     }
 
@@ -919,18 +923,22 @@ public class JBScrollPane extends JScrollPane {
       Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+      x += myBorder;
+      y += myBorder;
       width -= myBorder + myBorder;
       height -= myBorder + myBorder;
 
       int arc = Math.min(width, height);
       g.setColor(myFillColor);
-      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
+      g.fillRoundRect(x, y, width, height, arc, arc);
+      g.setColor(myDrawColor);
+      g.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
   }
 
   private static class ThumbPainter extends AlphaPainter {
-    private Color myDrawColor;
+    Color myDrawColor;
 
     private ThumbPainter(float base, float delta, Color fill, Color draw) {
       super(base, delta, fill);
