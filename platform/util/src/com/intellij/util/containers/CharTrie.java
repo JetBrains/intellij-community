@@ -79,6 +79,14 @@ public class CharTrie {
     return index;
   }
 
+  public int getHashCode(CharSequence seq, int offset, int length) {
+    int index = 0;
+    for (int i = offset; i < offset + length; i++) {
+      index = getSubNode(index, seq.charAt(i), true);
+    }
+    return index;
+  }
+
   public long getMaximumMatch(CharSequence seq, int offset, int length) {
     int index = 0;
     int resultingLength = 0;
