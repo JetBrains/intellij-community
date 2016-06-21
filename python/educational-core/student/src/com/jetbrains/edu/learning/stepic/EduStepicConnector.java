@@ -627,7 +627,7 @@ public class EduStepicConnector {
   }
 
   public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
-    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.id));
+    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
     if (ourClient == null) {
       if (!login(project)) {
         LOG.error("Failed to push lesson");
@@ -655,9 +655,9 @@ public class EduStepicConnector {
 
       for (Task task : lesson.getTaskList()) {
         indicator.checkCanceled();
-        postTask(project, task, lesson.id);
+        postTask(project, task, lesson.getId());
       }
-      return lesson.id;
+      return lesson.getId();
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -685,12 +685,12 @@ public class EduStepicConnector {
         return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
-      lesson.id = postedLesson.id;
+      lesson.setId(postedLesson.getId());
       for (Task task : lesson.getTaskList()) {
         indicator.checkCanceled();
-        postTask(project, task, postedLesson.id);
+        postTask(project, task, postedLesson.getId());
       }
-      return postedLesson.id;
+      return postedLesson.getId();
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
