@@ -18,9 +18,9 @@ public class Course {
   @Expose private String description;
   @Expose private String name;
   private String myCourseDirectory = "";
-  private int id;
+  @Expose private int id;
   private boolean myUpToDate;
-  private boolean isAdaptive = false;
+  @Expose private boolean isAdaptive = false;
   @Expose @SerializedName("language") private String myLanguage = "Python";
 
   //this field is used to distinguish ordinary and CheckIO projects,

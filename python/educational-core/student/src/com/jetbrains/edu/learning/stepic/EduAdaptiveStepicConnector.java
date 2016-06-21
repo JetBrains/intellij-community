@@ -88,9 +88,9 @@ public class EduAdaptiveStepicConnector {
             lessonContainer = getFromStepic(EduStepicNames.LESSONS + lessonId, StepicWrappers.LessonContainer.class);
           if (lessonContainer.lessons.size() == 1) {
             final Lesson realLesson = lessonContainer.lessons.get(0);
-            course.getLessons().get(0).id = Integer.parseInt(lessonId);
+            course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
-            viewAllSteps(client, realLesson.id);
+            viewAllSteps(client, realLesson.getId());
 
             for (int stepId : realLesson.steps) {
               final StepicWrappers.Step step = getStep(stepId);
@@ -190,7 +190,14 @@ public class EduAdaptiveStepicConnector {
     setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
-      return execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED;
+      if (execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+        return true;
+      }
+      else {
+        LOG.warn("Stepic returned non-201 status code: " + execute.getStatusLine().getStatusCode() + " " +
+                 EntityUtils.toString(execute.getEntity()));
+        return false;
+      }
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -205,7 +212,7 @@ public class EduAdaptiveStepicConnector {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
-        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
+        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
                                                    String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         final Task task = getNextRecommendation(project, course);
@@ -282,6 +289,7 @@ public class EduAdaptiveStepicConnector {
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
+        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));        
       }
     }
   }
