@@ -28,11 +28,9 @@ import java.util.Map;
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabsProperties.State> {
   public static final String MAIN_LOG_ID = "MAIN";
-  private final VcsLogUiPropertiesDeprecated myDeprecatedProperties;
   private State myState = new State();
 
-  public VcsLogTabsProperties(@NotNull VcsLogUiProperties deprecatedProperties) {
-    myDeprecatedProperties = (VcsLogUiPropertiesDeprecated)deprecatedProperties;
+  public VcsLogTabsProperties() {
   }
 
   @Nullable
@@ -44,7 +42,6 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
   @Override
   public void loadState(State state) {
     myState = state;
-    myState.TAB_STATES.putIfAbsent(MAIN_LOG_ID, myDeprecatedProperties.getState());
   }
 
   public VcsLogUiProperties createProperties(@NotNull final String id) {
