@@ -42,10 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 import java.util.*;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
-  private volatile SoftReference<PsiType> myCachedType;
+  private volatile Reference<PsiType> myCachedType;
   private volatile Object myCachedInitializerValue; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
@@ -93,6 +94,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   @Override
   @NotNull
   public CompositeElement getNode() {
+    if (getStub() != null) {
+      dropCached(); // have to return tree-based initializer now
+    }
     return (CompositeElement)super.getNode();
   }
 
