@@ -162,8 +162,7 @@ public class InitialInfoBuilder {
 
     collectAlignments(rootBlock);
 
-    if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock) 
-        || myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock)) {
+    if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock) || shouldCollectAlignmentsAround(rootBlock)) {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
         final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
@@ -177,6 +176,10 @@ public class InitialInfoBuilder {
     else {
       return buildLeafBlock(rootBlock, parent, true, index, parentBlock);
     }
+  }
+
+  private boolean shouldCollectAlignmentsAround(Block rootBlock) {
+    return myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock);
   }
 
   private void collectAlignments(Block rootBlock) {
