@@ -409,6 +409,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package com.google.common.truth; public class Truth { " +
                        "public static Subject assertThat(Object o) {}\n" +
                        "}");
+    myFixture.addClass("package com.google.common.truth; public class TruthJUnit { " +
+                       "public static TestVerb assume() {}\n" +
+                       "}");
+    myFixture.addClass("package com.google.common.truth; public class TestVerb { " +
+                       "public static Subject that(Object o) {}\n" +
+                       "}");
     myFixture.addClass("package com.google.common.truth; public class Subject { public void isNotNull() {} }");
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
