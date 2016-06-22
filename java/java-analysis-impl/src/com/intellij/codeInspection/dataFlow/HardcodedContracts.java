@@ -76,6 +76,7 @@ public class HardcodedContracts {
     }
     else if ("junit.framework.Assert".equals(className) ||
              "org.junit.Assert".equals(className) ||
+             "org.junit.Assume".equals(className) ||
              "junit.framework.TestCase".equals(className) ||
              "com.google.common.truth.Truth".equals(className) ||
              "com.google.common.truth.TestVerb".equals(className) ||
@@ -111,7 +112,7 @@ public class HardcodedContracts {
 
   private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
-    if (("assertThat".equals(methodName) || "that".equals(methodName)) && call != null) {
+    if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length == paramCount) {
         for (int i = 1; i < args.length; i++) {

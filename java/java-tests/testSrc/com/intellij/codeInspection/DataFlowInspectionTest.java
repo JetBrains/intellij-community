@@ -405,6 +405,18 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testAssumeThat() {
+    myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
+                       "public static <T> Matcher<T> notNullValue() {}\n" +
+                       "}");
+    myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
+    myFixture.addClass("package org.junit; public class Assume { " +
+                       "public static <T> void assumeThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void testGoogleTruth() {
     myFixture.addClass("package com.google.common.truth; public class Truth { " +
                        "public static Subject assertThat(Object o) {}\n" +
