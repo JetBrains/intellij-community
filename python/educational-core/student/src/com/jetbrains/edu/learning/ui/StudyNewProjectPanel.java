@@ -116,7 +116,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private void initCoursesCombobox() {
     myAvailableCourses =
       myGenerator.getCoursesUnderProgress(false, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
-    if (myAvailableCourses == null || myAvailableCourses.isEmpty()) {
+    if (myAvailableCourses.contains(CourseInfo.INVALID_COURSE)) {
       setError(CONNECTION_ERROR);
     }
     else {
@@ -252,7 +252,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     public void actionPerformed(ActionEvent e) {
       final List<CourseInfo> courses =
         myGenerator.getCoursesUnderProgress(true, "Refreshing Course List", DefaultProjectFactory.getInstance().getDefaultProject());
-      if (courses != null) {
+      if (!courses.contains(CourseInfo.INVALID_COURSE)) {
         refreshCoursesList(courses);
       }
     }
