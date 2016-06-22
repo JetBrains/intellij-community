@@ -189,9 +189,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   protected abstract static class ComponentWithTextFieldWrapper {
-    private final Component myComponent;
+    @NotNull private final Component myComponent;
 
-    public ComponentWithTextFieldWrapper(Component component) {
+    public ComponentWithTextFieldWrapper(@NotNull Component component) {
       myComponent = component;
     }
 
