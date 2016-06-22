@@ -159,9 +159,11 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     });
     panel.add(editBtn, BorderLayout.EAST);
 
-    final CollectionComboBoxModel<TestType> testKindModel = new CollectionComboBoxModel<>(Arrays.asList(TestType.values()));
-    if (!Registry.is("testDiscovery.enabled")) {
-      testKindModel.remove(TestType.SOURCE);
+    final CollectionComboBoxModel<TestType> testKindModel = new CollectionComboBoxModel<>();
+    for (TestType type : TestType.values()) {
+      if (type != TestType.SOURCE || Registry.is("testDiscovery.enabled")) {
+        testKindModel.add(type);
+      }
     }
     myTestKind.setModel(testKindModel);
     myTestKind.addActionListener(new ActionListener() {
