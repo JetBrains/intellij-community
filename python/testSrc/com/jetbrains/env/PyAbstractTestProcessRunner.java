@@ -9,13 +9,17 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.RerunFailedActionsTestTools;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy.SMRootTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,5 +206,17 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       return;
     }
     handler.waitFor();
+  }
+
+  /**
+   * Ensures all test locations are resolved (i.e. user may click on test and navigate to it)
+   * All tests are checked but [root] (it never resolves).
+   */
+  public final void assertAllTestsAreResolved(@NotNull final Project project) {
+    final List<SMTestProxy> allTests = getTestProxy().getAllTests();
+    assert !allTests.isEmpty() : "No tests at all.";
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    EdtTestUtil.runInEdtAndWait((Runnable)() -> allTests.subList(1, allTests.size())
+      .forEach(t -> Assert.assertNotNull("No location " + t, t.getLocation(project, scope))));
   }
 }
