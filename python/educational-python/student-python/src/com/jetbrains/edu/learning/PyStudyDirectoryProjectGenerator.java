@@ -141,6 +141,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     return mySettingsPanel;
   }
 
+  @NotNull
   public List<CourseInfo> getCourses() {
     return myGenerator.getCoursesUnderProgress(false, "Getting Courses", ProjectManager.getInstance().getDefaultProject());
   }

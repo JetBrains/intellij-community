@@ -376,6 +376,7 @@ public class StudyProjectGenerator {
     return myCourses;
   }
 
+ @NotNull
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
