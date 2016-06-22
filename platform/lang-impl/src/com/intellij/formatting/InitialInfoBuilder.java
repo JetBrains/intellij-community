@@ -160,7 +160,7 @@ public class InitialInfoBuilder {
       checkRanges(parent, textRange);
     }
 
-    myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
+    myCurrentWhiteSpace.changeEndOffset(blockStartOffset, myModel, myOptions);
 
     collectAlignments(rootBlock);
     
