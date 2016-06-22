@@ -289,7 +289,10 @@ public class PlatformTestUtil {
                                  "; modality1=" + initialModality +
                                  "; modality2=" + ModalityState.current() +
                                  "; invokeLater passed=" + runnableInvoked.get() +
-                                 "; app.disposed=" + app.isDisposed());
+                                 "; app.disposed=" + app.isDisposed() +
+                                 "; alarm.disposed=" + alarm.isDisposed() +
+                                 "; alarm.requests=" + alarm.getActiveRequestCount()
+        );
       }
     }
     UIUtil.dispatchAllInvocationEvents();
