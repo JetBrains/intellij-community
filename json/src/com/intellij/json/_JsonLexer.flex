@@ -1,6 +1,7 @@
 package com.intellij.json;
 import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
+import static com.intellij.psi.TokenType.*;
 import static com.intellij.json.JsonElementTypes.*;
 
 %%
@@ -18,9 +19,7 @@ import static com.intellij.json.JsonElementTypes.*;
 %type IElementType
 %unicode
 
-EOL="\r"|"\n"|"\r\n"
-LINE_WS=[\ \t\f]
-WHITE_SPACE=({LINE_WS}|{EOL})+
+WHITE_SPACE=\s+
 
 LINE_COMMENT="//".*
 BLOCK_COMMENT="/"\*([^*]|\*+[^*/])*(\*+"/")?
@@ -31,7 +30,7 @@ INDENTIFIER=[:jletter:] [:jletterdigit:]*
 
 %%
 <YYINITIAL> {
-  {WHITE_SPACE}               { return com.intellij.psi.TokenType.WHITE_SPACE; }
+  {WHITE_SPACE}               { return WHITE_SPACE; }
 
   "{"                         { return L_CURLY; }
   "}"                         { return R_CURLY; }
@@ -50,5 +49,6 @@ INDENTIFIER=[:jletter:] [:jletterdigit:]*
   {NUMBER}                    { return NUMBER; }
   {INDENTIFIER}               { return INDENTIFIER; }
 
-  [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }
+
+[^] { return BAD_CHARACTER; }
