@@ -5,7 +5,7 @@ import com.intellij.openapi.util.SimpleTimer
 import gnu.trove.THashSet
 import gnu.trove.TObjectProcedure
 import io.netty.buffer.ByteBuf
-import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.Channel
 import io.netty.util.AttributeKey
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.webSocket.WebSocketServerOptions
@@ -64,7 +64,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     })
   }
 
-  fun disconnectClient(context: ChannelHandlerContext, client: Client, closeChannel: Boolean): Boolean {
+  fun disconnectClient(channel: Channel, client: Client, closeChannel: Boolean): Boolean {
     synchronized (clients) {
       if (!clients.remove(client)) {
         return false
@@ -72,10 +72,10 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
 
     try {
-      context.attr(CLIENT).remove()
+      channel.attr(CLIENT).remove()
 
       if (closeChannel) {
-        context.channel().close()
+        channel.close()
       }
 
       client.rejectAsyncResults(exceptionHandler)

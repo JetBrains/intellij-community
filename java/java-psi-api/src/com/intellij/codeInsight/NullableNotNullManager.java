@@ -19,10 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -215,15 +212,35 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     // even if javax.annotation.Nullable is not configured, it should still take precedence over ByDefault annotations
-    if (AnnotationUtil.isAnnotated(owner, nullable ? Arrays.asList(DEFAULT_NOT_NULLS) : Arrays.asList(DEFAULT_NULLABLES), checkBases, false)) {
+    if (AnnotationUtil.isAnnotated(owner, Arrays.asList(nullable ? DEFAULT_NOT_NULLS : DEFAULT_NULLABLES), checkBases, false)) {
       return null;
     }
 
     if (!nullable && hasHardcodedContracts(owner)) {
       return null;
     }
-    
+
+    if (owner instanceof PsiParameter && !nullable && checkBases) {
+      List<PsiParameter> superParameters = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
+      if (!superParameters.isEmpty()) {
+        return takeAnnotationFromSuperParameters((PsiParameter)owner, superParameters);
+      }
+    }
+
     return findNullabilityDefaultInHierarchy(owner, nullable);
+  }
+
+  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, final List<PsiParameter> superOwners) {
+    return RecursionManager.doPreventingRecursion(owner, true, new Computable<PsiAnnotation>() {
+      @Override
+      public PsiAnnotation compute() {
+        for (PsiParameter superOwner : superOwners) {
+          PsiAnnotation anno = findNullabilityAnnotationWithDefault(superOwner, false, false);
+          if (anno != null) return anno;
+        }
+        return null;
+      }
+    });
   }
 
   private PsiAnnotation findPlainNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {

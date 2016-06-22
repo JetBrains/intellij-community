@@ -229,9 +229,7 @@ public class InputVariables {
     if (!myFoldingAvailable) return expression;
 
     boolean update = elements[0] == expression;
-    for (VariableData inputVariable : myInputVariables) {
-      myFolding.foldParameterUsagesInBody(inputVariable, elements, myScope);
-    }
+    myFolding.foldParameterUsagesInBody(myInputVariables, elements, myScope);
     return update ? (PsiExpression)elements[0] : expression;
   }
 

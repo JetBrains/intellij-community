@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,17 +108,21 @@ public class GrClosureSignatureUtil {
     return new GrClosableSignatureImpl(block);
   }
 
-  public static GrClosureSignature createSignature(final PsiMethod method, PsiSubstitutor substitutor) {
-    return new GrMethodSignatureImpl(method, substitutor);
+  @NotNull
+  public static GrClosureSignature createSignature(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    return createSignature(method, substitutor, false);
+  }
+
+  @NotNull
+  public static GrClosureSignature createSignature(@NotNull PsiMethod method,
+                                                   @NotNull PsiSubstitutor substitutor,
+                                                   boolean eraseParameterTypes) {
+    return new GrMethodSignatureImpl(method, substitutor, eraseParameterTypes);
   }
 
   public static GrClosureSignature removeParam(final GrClosureSignature signature, int i) {
     final GrClosureParameter[] newParams = ArrayUtil.remove(signature.getParameters(), i);
     return new GrClosureSignatureWithNewParameters(signature, newParams);
-  }
-
-  public static GrClosureSignature createSignatureWithErasedParameterTypes(final PsiMethod method) {
-    return new GrMethodSignatureWithErasedTypes(method);
   }
 
   @NotNull
@@ -630,8 +634,7 @@ public class GrClosureSignatureUtil {
     final PsiElement element = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (element instanceof PsiMethod) {
-      signature =
-        eraseArgs ? createSignatureWithErasedParameterTypes((PsiMethod)element) : createSignature((PsiMethod)element, substitutor);
+      signature = createSignature((PsiMethod)element, substitutor, eraseArgs);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
     }
     else if (element instanceof GrClosableBlock) {

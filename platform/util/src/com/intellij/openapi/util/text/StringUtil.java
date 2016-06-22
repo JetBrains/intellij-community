@@ -2115,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
+           ? text.subSequence(0, length / 2) + "\u2026" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -2383,13 +2383,18 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
+    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = offset; i < text.length(); ++i) {
+    for (int i = start, len = min(text.length(), end); i < len; ++i) {
       if (text.charAt(i) == c) {
         count++;
       }
-      else if (continuous) {
+      else if (stopAtOtherChar) {
         break;
       }
     }

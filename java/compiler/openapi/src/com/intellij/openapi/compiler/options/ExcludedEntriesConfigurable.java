@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -42,7 +43,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
+public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScroll {
   private final Project myProject;
   private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private final FileChooserDescriptor myDescriptor;

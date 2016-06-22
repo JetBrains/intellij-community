@@ -42,21 +42,23 @@ import java.util.TreeSet;
 public abstract class LevelChooserAction extends ComboBoxAction implements DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
+  private final boolean myIncludeDoNotShow;
   private HighlightSeverity myChosen = null;
 
-  public LevelChooserAction(final InspectionProfileImpl profile) {
-    this(((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar());
+  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
+    this(severityRegistrar, false);
   }
 
-  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
+  public LevelChooserAction(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
     mySeverityRegistrar = severityRegistrar;
+    myIncludeDoNotShow = includeDoNotShow;
   }
 
   @NotNull
   @Override
   public DefaultActionGroup createPopupActionGroup(final JComponent anchor) {
     final DefaultActionGroup group = new DefaultActionGroup();
-    for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar)) {
+    for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar, myIncludeDoNotShow)) {
       final HighlightSeverityAction action = new HighlightSeverityAction(severity);
       if (myChosen == null) {
         setChosen(action.getSeverity());
@@ -82,6 +84,11 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   }
 
   public static SortedSet<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+    return getSeverities(severityRegistrar, true);
+  }
+
+  public static SortedSet<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar,
+                                                           boolean includeDoNotShow) {
     final SortedSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
       severities.add(type.getSeverity());
@@ -90,6 +97,9 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     severities.add(HighlightSeverity.WARNING);
     severities.add(HighlightSeverity.WEAK_WARNING);
     severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    if (includeDoNotShow) {
+      severities.add(HighlightSeverity.INFORMATION);
+    }
     return severities;
   }
 

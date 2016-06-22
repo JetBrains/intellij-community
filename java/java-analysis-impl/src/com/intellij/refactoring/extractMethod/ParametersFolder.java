@@ -41,6 +41,7 @@ import java.util.*;
 
 public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<PsiVariable, PsiExpression>();
+  private final Map<PsiVariable, String> myArgs = new HashMap<>();
   private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<PsiVariable, List<PsiExpression>>();
   private final Set<String> myUsedNames = new HashSet<String>();
 
@@ -83,27 +84,37 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull VariableData data, PsiElement[] elements, SearchScope scope) {
-    if (myDeleted.contains(data.variable)) return;
-    final PsiExpression psiExpression = myExpressions.get(data.variable);
-    if (psiExpression == null) return;
-    final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
-    for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
-      final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
-      if (expression != null && expression.isValid()) {
-        eqExpressions.add(expression);
+  public void foldParameterUsagesInBody(@NotNull List<VariableData> datum, PsiElement[] elements, SearchScope scope) {
+    Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
+    for (VariableData data : datum) {
+      if (myDeleted.contains(data.variable)) continue;
+      final PsiExpression psiExpression = myExpressions.get(data.variable);
+      if (psiExpression == null) continue;
+
+      final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
+      for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+        final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
+        if (expression != null && expression.isValid()) {
+          eqExpressions.add(expression);
+        }
       }
+
+      equivalentExpressions.put(data, eqExpressions);
     }
 
-    for (PsiExpression expression : eqExpressions) {
-      final PsiExpression refExpression =
-        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.variable.getName(), expression);
-      final PsiElement replaced = expression.replace(refExpression);
-      for (int i = 0, psiElementsLength = elements.length; i < psiElementsLength; i++) {
-        PsiElement psiElement = elements[i];
-        if (expression == psiElement) {
-          elements[i] = replaced;
-          break;
+    for (VariableData data : equivalentExpressions.keySet()) {
+      final Set<PsiExpression> eqExpressions = equivalentExpressions.get(data);
+      for (PsiExpression expression : eqExpressions) {
+        if (!expression.isValid()) continue; //was replaced on previous step
+        final PsiExpression refExpression =
+          JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(data.name, expression);
+        final PsiElement replaced = expression.replace(refExpression);
+        for (int i = 0, psiElementsLength = elements.length; i < psiElementsLength; i++) {
+          PsiElement psiElement = elements[i];
+          if (expression == psiElement) {
+            elements[i] = replaced;
+            break;
+          }
         }
       }
     }
@@ -132,6 +143,7 @@ public class ParametersFolder {
 
     if (mostRanked != null) {
       myExpressions.put(data.variable, mostRanked);
+      myArgs.put(data.variable, mostRanked.getText());
       data.type = RefactoringChangeUtil.getTypeByExpression(mostRanked);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
@@ -283,7 +295,7 @@ public class ParametersFolder {
 
   @NotNull
   public String getGeneratedCallArgument(@NotNull VariableData data) {
-    return myExpressions.containsKey(data.variable) ? myExpressions.get(data.variable).getText() : data.variable.getName();
+    return myArgs.containsKey(data.variable) ? myArgs.get(data.variable) : data.variable.getName();
   }
 
   public boolean annotateWithParameter(@NotNull VariableData data, @NotNull PsiElement element) {

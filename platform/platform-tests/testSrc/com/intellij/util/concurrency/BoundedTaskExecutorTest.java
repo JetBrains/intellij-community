@@ -52,13 +52,14 @@ public class BoundedTaskExecutorTest extends TestCase {
       List<Thread> alive = Thread.getAllStackTraces().keySet().stream()
         .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
         .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
+        .filter(thread -> thread.getStackTrace().length != 0) // there can be RUNNABLE zombies with empty stacktrace
         .collect(Collectors.toList());
 
       long finish = System.currentTimeMillis();
       if (alive.isEmpty()) break;
       if (finish-start > 10000) {
         System.err.println(ThreadDumper.dumpThreadsToString());
-        throw new RuntimeException();
+        throw new RuntimeException(alive.size() +" threads are still alive: "+alive);
       }
     }
   }
@@ -122,7 +123,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
 
     int delay = 1000;
-    Future<?> s1 = executor.submit((Runnable)() -> TimeoutUtil.sleep(delay));
+    Future<?> s1 = executor.submit(() -> TimeoutUtil.sleep(delay));
     Future<Integer> f1 = executor.submit(() -> {
       run.set(true);
       return 42;
@@ -154,7 +155,7 @@ public class BoundedTaskExecutorTest extends TestCase {
         for (int i = 0; i < N; i++) {
           final int finalI = i;
           final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-          futures[i] = executor.submit((Runnable)() -> {
+          futures[i] = executor.submit(() -> {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
@@ -464,5 +465,37 @@ public class BoundedTaskExecutorTest extends TestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void testAwaitTerminationDoesWait() throws InterruptedException {
+    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    int N = 100000;
+    StringBuffer log = new StringBuffer(N*4);
+
+    Future[] futures = new Future[N];
+    for (int i = 0; i < N; i++) {
+      futures[i] = executor.submit(() -> log.append(" "));
+    }
+    executor.shutdown();
+    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+
+    String logs = log.toString();
+    assertEquals(StringUtil.repeat(" ",N), logs);
+    for (Future future : futures) {
+      assertTrue(future.isDone());
+      assertTrue(!future.isCancelled());
+    }
+  }
+
+  public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
+    ExecutorService executor2 = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
+    executor2.shutdown();
+    assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
+    assertFalse(future.isDone());
+    assertFalse(future.isCancelled());
+    assertTrue(executor2.awaitTermination(10, TimeUnit.SECONDS));
+    assertTrue(future.isDone());
+    assertFalse(future.isCancelled());
   }
 }

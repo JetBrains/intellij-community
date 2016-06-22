@@ -138,6 +138,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
     myInitialization = new VcsInitialization(myProject);
+    Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 

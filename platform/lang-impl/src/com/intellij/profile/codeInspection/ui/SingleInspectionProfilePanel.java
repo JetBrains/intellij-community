@@ -20,7 +20,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -57,6 +56,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -88,8 +88,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
-
-import com.intellij.util.containers.Queue;
 
 /**
  * User: anna
@@ -192,6 +190,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public static String renderSeverity(HighlightSeverity severity) {
+    if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
     return StringUtil.capitalizeWords(severity.getName().toLowerCase(), true);
   }
 
@@ -722,16 +721,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private JPopupMenu compoundPopup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     final SeverityRegistrar severityRegistrar = ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar();
-    TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
-    severities.add(HighlightSeverity.ERROR);
-    severities.add(HighlightSeverity.WARNING);
-    severities.add(HighlightSeverity.WEAK_WARNING);
-    final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
-      SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar);
-    for (SeverityRegistrar.SeverityBasedTextAttributes info : infoTypes) {
-      severities.add(info.getSeverity());
-    }
-    for (HighlightSeverity severity : severities) {
+    for (HighlightSeverity severity : LevelChooserAction.getSeverities(severityRegistrar, includeDoNotShow())) {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
       group.add(new AnAction(renderSeverity(severity), renderSeverity(severity), level.getIcon()) {
         @Override
@@ -748,6 +738,20 @@ public class SingleInspectionProfilePanel extends JPanel {
     group.add(Separator.getInstance());
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
     return menu.getComponent();
+  }
+
+  private boolean includeDoNotShow() {
+    final TreePath[] paths = myTreeTable.getTree().getSelectionPaths();
+    if (paths == null) return true;
+    return includeDoNotShow(InspectionsAggregationUtil.getInspectionsNodes(paths));
+  }
+
+  private boolean includeDoNotShow(List<InspectionConfigTreeNode> nodes) {
+    final Project project = myProjectProfileManager.getProject();
+    return !nodes.stream()
+      .filter(node -> mySelectedProfile.getToolDefaultState(node.getKey().toString(), project).getTool() instanceof GlobalInspectionToolWrapper)
+      .findFirst()
+      .isPresent();
   }
 
   private void fillTreeData(@Nullable String filter, boolean forceInclude) {
@@ -853,7 +857,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
-          new LevelChooserAction(mySelectedProfile) {
+          new LevelChooserAction(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar(),
+                                 includeDoNotShow(nodes)) {
             @Override
             protected void onChosen(final HighlightSeverity severity) {
               final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);

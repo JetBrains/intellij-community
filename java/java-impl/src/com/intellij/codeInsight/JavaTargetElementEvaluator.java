@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -78,6 +79,11 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       }
     }
     return super.adjustTargetElement(editor, offset, flags, targetElement);
+  }
+
+  @Override
+  public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
+    return !(parent instanceof PsiDocTag);
   }
 
   @Override
@@ -210,7 +216,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()
-                                                                            : callExpr instanceof PsiNewExpression ? ((PsiNewExpression)callExpr).getQualifier() : null;
+                                                                            : ((PsiNewExpression)callExpr).getQualifier();
       if (qualifier == null) {
         allowStatics = true;
       }

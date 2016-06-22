@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -289,7 +290,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     return getCannotInlineDueToUsagesMessage(psiClass);
   }
 
-  static boolean isRedundantImplements(final PsiClass superClass, final PsiClassType interfaceType) {
+  static boolean isRedundantImplements(@NotNull final PsiClass superClass, final PsiClassType interfaceType) {
     boolean redundantImplements = false;
     PsiClassType[] superClassInterfaces = superClass.getImplementsListTypes();
     for(PsiClassType superClassInterface: superClassInterfaces) {

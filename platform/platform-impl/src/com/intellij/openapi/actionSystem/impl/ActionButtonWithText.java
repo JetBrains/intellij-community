@@ -52,7 +52,7 @@ public class ActionButtonWithText extends ActionButton {
       public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(Presentation.PROP_MNEMONIC_KEY)) {
           Integer oldValue = evt.getOldValue() instanceof Integer? (Integer)evt.getOldValue() : 0;
-          Integer newValue = evt.getOldValue() instanceof Integer? (Integer)evt.getOldValue() : 0;
+          Integer newValue = evt.getNewValue() instanceof Integer? (Integer)evt.getNewValue() : 0;
           updateMnemonic(oldValue, newValue);
         }
       }

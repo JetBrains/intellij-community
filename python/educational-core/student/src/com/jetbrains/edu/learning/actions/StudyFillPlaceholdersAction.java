@@ -34,7 +34,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
           if (answer == null) {
             continue;
           }
-          int offset = placeholder.getRealStartOffset(document);
+          int offset = placeholder.getOffset();
           document.deleteString(offset, offset + placeholder.getRealLength());
           document.insertString(offset, answer);
         }

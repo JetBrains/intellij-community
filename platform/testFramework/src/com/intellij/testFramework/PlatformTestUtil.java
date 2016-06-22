@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -263,6 +264,7 @@ public class PlatformTestUtil {
     final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    ModalityState initialModality = ModalityState.current();
 
     alarm.addRequest(() -> {
       alarmInvoked1.set(true);
@@ -284,6 +286,8 @@ public class PlatformTestUtil {
       if (System.currentTimeMillis() - start > 100 * 1000) {
         throw new AssertionError("Couldn't await alarm" +
                                  "; alarm1 passed=" + alarmInvoked1.get() +
+                                 "; modality1=" + initialModality +
+                                 "; modality2=" + ModalityState.current() +
                                  "; invokeLater passed=" + runnableInvoked.get() +
                                  "; app.disposed=" + app.isDisposed());
       }

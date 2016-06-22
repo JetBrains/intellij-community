@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,7 +47,7 @@ public abstract class GroovyNamedArgumentProvider {
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, NamedArgumentDescriptor> result) {
-    throw new UnsupportedOperationException();
+    // no op
   }
 
   public void getNamedArguments(@NotNull GrCall call,
@@ -55,6 +57,11 @@ public abstract class GroovyNamedArgumentProvider {
                                 boolean forCompletion,
                                 Map<String, NamedArgumentDescriptor> result) {
     getNamedArguments(call, resolve, argumentName, forCompletion, result);
+  }
+
+  @NotNull
+  public Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
+    return Collections.emptyMap();
   }
 
   @Nullable

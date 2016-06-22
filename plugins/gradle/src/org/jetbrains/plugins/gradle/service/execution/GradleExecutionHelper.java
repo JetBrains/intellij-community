@@ -34,7 +34,6 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.ConnectionParameters;
 import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
@@ -251,8 +250,10 @@ public class GradleExecutionHelper {
       return;
     }
 
+    final long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
+      settings.setRemoteProcessIdleTtlInMs(100);
       try {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
@@ -283,6 +284,7 @@ public class GradleExecutionHelper {
       LOG.warn("Can't update wrapper", e);
     }
     finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
       try {
         connection.close();
       }

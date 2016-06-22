@@ -195,6 +195,11 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @Nullable
+  public String getDownloadSdkUrl() {
+    return null;
+  }
+
   @NotNull
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<SdkType>();

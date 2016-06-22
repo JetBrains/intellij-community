@@ -59,13 +59,15 @@ public class InspectionResultsViewUtil {
     final int lineNumber = node.getLineNumber();
     if (lineNumber != -1) {
       final PsiFile containingFile = containingElement.getContainingFile();
-      final VirtualFile file = containingFile.getVirtualFile();
-      PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments();
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null && document.getLineCount() > lineNumber - 1) {
-        return new OpenFileDescriptor(containingElement.getProject(),
-                                      file,
-                                      document.getLineStartOffset(lineNumber - 1));
+      if (containingFile != null) {
+        final VirtualFile file = containingFile.getVirtualFile();
+        PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments();
+        final Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null && document.getLineCount() > lineNumber - 1) {
+          return new OpenFileDescriptor(containingElement.getProject(),
+                                        file,
+                                        document.getLineStartOffset(lineNumber - 1));
+        }
       }
     }
     return (Navigatable)containingElement;

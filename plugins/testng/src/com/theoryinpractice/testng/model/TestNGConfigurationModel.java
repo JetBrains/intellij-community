@@ -47,7 +47,7 @@ public class TestNGConfigurationModel
     private final Project project;
 
     public TestNGConfigurationModel(Project project) {
-        type = TestType.INVALID;
+        type = TestType.CLASS;
         for (int i = 3; i < typeDocuments.length; i++)
             typeDocuments[i] = new PlainDocument();
 

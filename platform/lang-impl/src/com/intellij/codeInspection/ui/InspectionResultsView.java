@@ -549,8 +549,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
         myPreviewEditor.getFoldingModel().runBatchFoldingOperation(() -> {
           myPreviewEditor.getFoldingModel().clearFoldRegions();
-          myPreviewEditor.getMarkupModel().removeAllHighlighters();
         });
+        myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
         myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);

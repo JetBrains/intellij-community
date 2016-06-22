@@ -72,6 +72,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
+  static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -97,7 +98,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Saving Project as Template", true, PerformInBackgroundOption.DEAF) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          saveProject(project, file, moduleToSave, description, dialog.isReplaceParameters(), indicator);
+          saveProject(project, file, moduleToSave, description, dialog.isReplaceParameters(), indicator, shouldEscape());
         }
 
         @Override
@@ -124,7 +125,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                  Module moduleToSave,
                                  final String description,
                                  boolean replaceParameters,
-                                 final ProgressIndicator indicator) {
+                                 final ProgressIndicator indicator,
+                                 boolean shouldEscape) {
 
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
@@ -142,6 +144,9 @@ public class SaveProjectAsTemplateAction extends AnAction {
         String text = getInputFieldsText(parameters);
         writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false, indicator);
       }
+
+      String metaDescription = getTemplateMetaText(shouldEscape);
+      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, dir, stream, true, indicator);
 
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
@@ -163,6 +168,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
               if (system) {
                 if (!fileName.equals("description.html") &&
                     !fileName.equals(PROJECT_TEMPLATE_XML) &&
+                    !fileName.equals(LocalArchivedTemplate.TEMPLATE_META_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
                     !fileName.equals("workspace.xml") &&
@@ -175,7 +181,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
-                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName());
+                  String result = getEncodedContent(virtualFile, project, parameters, getFileHeaderTemplateName(), shouldEscape);
                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
                 }
               });
@@ -198,7 +204,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
   }
 
-  private static String getFileHeaderTemplateName() {
+  static String getFileHeaderTemplateName() {
     if (PlatformUtils.isIntelliJ()) {
       return FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java");
     }
@@ -250,18 +256,19 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                          Project project,
                                          Map<String, String> parameters) throws IOException {
     return getEncodedContent(virtualFile, project, parameters,
-                             FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java"));
+                             FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java"), true);
   }
 
   private static String getEncodedContent(VirtualFile virtualFile,
                                           Project project,
                                           Map<String, String> parameters,
-                                          String fileHeaderTemplateName) throws IOException {
+                                          String fileHeaderTemplateName,
+                                          boolean shouldEscape) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
     final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
-    String result = convertTemplates(text, pattern, templateText);
+    String result = convertTemplates(text, pattern, templateText, shouldEscape);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
       result = result.replace(entry.getKey(), "${" + entry.getValue() + "}");
@@ -280,9 +287,16 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
   }
 
-  public static String convertTemplates(String input, Pattern pattern, String template) {
+  public static String convertTemplates(String input, Pattern pattern, String template, boolean shouldEscape) {
     Matcher matcher = pattern.matcher(input);
     int start = matcher.matches() ? matcher.start(1) : -1;
+    if(!shouldEscape){
+      if(start == -1){
+        return input;
+      } else {
+        return input.substring(0, start) + FILE_HEADER_TEMPLATE_PLACEHOLDER + input.substring(matcher.end(1));
+      }
+    }
     StringBuilder builder = new StringBuilder(input.length() + 10);
     for (int i = 0; i < input.length(); i++) {
       if (start == i) {
@@ -292,17 +306,9 @@ public class SaveProjectAsTemplateAction extends AnAction {
       }
 
       char c = input.charAt(i);
-      if (c == '#' || c == '[' || c == ']' || c =='{' || c == '}' || c =='(' || c == ')') {
+      if (c == '$' || c == '#') {
         builder.append('\\');
       }
-      if (c == '$') {
-        builder.append('\\');
-        if(input.startsWith("$true", i) || input.startsWith("$false", i) || input.startsWith("$.", i)){
-          builder.append(c).append('\\');
-          continue;
-        }
-      }
-
       builder.append(c);
     }
     return builder.toString();
@@ -317,6 +323,16 @@ public class SaveProjectAsTemplateAction extends AnAction {
       element.addContent(field);
     }
     return JDOMUtil.writeElement(element);
+  }
+
+  private static String getTemplateMetaText(boolean shouldEncode) {
+    Element element = new Element(ArchivedProjectTemplate.TEMPLATE);
+    element.setAttribute(LocalArchivedTemplate.UNENCODED_ATTRIBUTE, String.valueOf(!shouldEncode));
+    return JDOMUtil.writeElement(element);
+  }
+
+  private static boolean shouldEscape() {
+    return !PlatformUtils.isPhpStorm();
   }
 
   @Override

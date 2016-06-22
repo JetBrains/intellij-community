@@ -112,7 +112,7 @@ public abstract class SubstrateRef {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Stub getStub() {
       return myStub;

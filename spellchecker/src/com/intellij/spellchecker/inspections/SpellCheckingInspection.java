@@ -92,6 +92,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         if (node == null) {
           return;
         }
+
         // Extract parser definition from element
         final Language language = element.getLanguage();
         final IElementType elementType = node.getElementType();

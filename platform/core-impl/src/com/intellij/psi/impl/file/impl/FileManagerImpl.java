@@ -146,6 +146,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
+    LanguageSubstitutors.cancelReparsing(vFile);
     if (findCachedViewProvider(vFile) == null) {
       return;
     }

@@ -59,6 +59,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -815,7 +816,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Helpers
   //
 
-  private class MyPanel extends JPanel implements DataProvider {
+  private class MyPanel extends JBPanelWithEmptyText implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
     }

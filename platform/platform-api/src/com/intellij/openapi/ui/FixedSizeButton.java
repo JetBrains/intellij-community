@@ -89,7 +89,10 @@ public class FixedSizeButton extends JButton {
     if (myComponent != null) {
       int size = myComponent.getPreferredSize().height;
       if (myComponent instanceof JComboBox && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-        size -= 2; // decrement to match JTextField's preferred height
+        // JComboBox's preferred height is 2px greater than JTextField's one, because
+        // javax.swing.DefaultListCellRenderer#getNoFocusBorder returns (1,1,1,1) border.
+        // Decrement to have equal sizes for pretty look when stacked vertically
+        size -= 2;
       }
       return new Dimension(size, size);
     }

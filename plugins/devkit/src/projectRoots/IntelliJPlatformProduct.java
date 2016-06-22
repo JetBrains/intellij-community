@@ -32,6 +32,7 @@ public enum IntelliJPlatformProduct {
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX),
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX),
+  RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio");
 
   private String myProductCode;

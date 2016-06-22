@@ -68,7 +68,6 @@ public class NamesEnumerator {
       return id;
     }
     else {
-      s = new String(s);
       int id = myNonAsciiMap.get(s);
       if (id == 0 && create) {
         id = myAsciiMap.size() + myNonAsciiMap.size() + 1;

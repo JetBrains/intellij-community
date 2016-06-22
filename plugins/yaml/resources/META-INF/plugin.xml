@@ -27,6 +27,10 @@
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
   </extensions>
+  
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
+  </extensions>
 
 
 </idea-plugin>

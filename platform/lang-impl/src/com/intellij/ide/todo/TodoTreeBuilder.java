@@ -544,7 +544,10 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   void setTodoFilter(TodoFilter filter) {
     getTodoTreeStructure().setTodoFilter(filter);
-    rebuildCache();
+    try {
+      rebuildCache();
+    }
+    catch (IndexNotReadyException ignored) {}
     updateTree(false);
   }
 

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
@@ -49,7 +50,7 @@ import java.util.Set;
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   OfflineProblemDescriptorNode(RefEntity refEntity,
                                CommonProblemDescriptor descriptor,
-                               @NotNull LocalInspectionToolWrapper toolWrapper,
+                               @NotNull InspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
                                @NotNull OfflineProblemDescriptor offlineDescriptor) {
     super(refEntity, descriptor, toolWrapper, presentation, false, offlineDescriptor::getLine);
@@ -60,7 +61,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
-                                             @NotNull LocalInspectionToolWrapper toolWrapper,
+                                             @NotNull InspectionToolWrapper toolWrapper,
                                              @NotNull InspectionToolPresentation presentation) {
     final RefEntity refElement = createRefElement(offlineDescriptor, presentation);
     final CommonProblemDescriptor descriptor = createDescriptor(refElement, offlineDescriptor, toolWrapper, presentation);
@@ -79,6 +80,17 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
            ? StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())
            : presentableName;
+  }
+
+  @Override
+  protected boolean calculateIsValid() {
+    boolean isValid = super.calculateIsValid();
+    if (!isValid) {
+      if (getDescriptor() == null && !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+        isValid = myElement != null && myElement.isValid();
+      }
+    }
+    return isValid;
   }
 
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
@@ -101,16 +113,16 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   @Nullable
   private static CommonProblemDescriptor createDescriptor(@Nullable RefEntity element,
                                                           @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                          @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                          @NotNull InspectionToolWrapper toolWrapper,
                                                           @NotNull InspectionToolPresentation presentation) {
-
+    if (!(toolWrapper instanceof LocalInspectionToolWrapper)) return null;
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
     final OfflineProblemDescriptor offlineProblemDescriptor = offlineDescriptor;
     if (element instanceof RefElement) {
       final PsiElement psiElement = ((RefElement)element).getElement();
       if (psiElement != null) {
         ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
-          () -> runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, toolWrapper), new DaemonProgressIndicator());
+          () -> runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, (LocalInspectionToolWrapper)toolWrapper), new DaemonProgressIndicator());
         if (descriptor != null) return descriptor;
       }
       return null;

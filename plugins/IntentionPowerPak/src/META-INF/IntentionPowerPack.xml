@@ -260,28 +260,7 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.types.ReplaceDiamondWithExplicitTypeArgumentsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ReplaceLambdaWithAnonymousIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-   <intentionAction>
-      <className>com.siyeh.ipp.types.InferLambdaParameterTypeIntention</className>
-     <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
@@ -465,11 +444,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.RemoveUnnecessaryParenthesesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

@@ -37,7 +37,7 @@ public class StoragePathMacros {
 
   /**
    * Points to the application-level options root directory.
-   * @deprecated Not required anymore. See {@link State#storages()}.
+   * @deprecated Not required anymore. See {@link State#storages()}. In short: specify relative path instead (without macro).
    */
   @SuppressWarnings("unused")
   @Deprecated

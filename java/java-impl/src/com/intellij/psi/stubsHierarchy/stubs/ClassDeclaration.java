@@ -21,10 +21,10 @@ import com.intellij.psi.stubsHierarchy.impl.QualifiedName;
 public final class ClassDeclaration extends Declaration {
   public final int mods;
   public final int myName;
-  public final ClassAnchor.StubClassAnchor myClassAnchor;
+  public final ClassAnchor myClassAnchor;
   public QualifiedName[] mySupers;
 
-  public ClassDeclaration(ClassAnchor.StubClassAnchor classAnchor,
+  public ClassDeclaration(ClassAnchor classAnchor,
                           int mods,
                           int name,
                           QualifiedName[] supers,

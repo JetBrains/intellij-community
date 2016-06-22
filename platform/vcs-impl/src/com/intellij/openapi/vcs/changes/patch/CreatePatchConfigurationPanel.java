@@ -61,7 +61,7 @@ public class CreatePatchConfigurationPanel {
   private ComboBox<Charset> myEncoding;
   private JLabel myWarningLabel;
   private final Project myProject;
-  @Nullable private File myCommonParentPath;
+  @Nullable private File myCommonParentDir;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
@@ -89,12 +89,12 @@ public class CreatePatchConfigurationPanel {
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
-    selectBasePath(ObjectUtils.assertNotNull(myProject.getBasePath()));
+    selectBasePath(ObjectUtils.assertNotNull(myProject.getBaseDir()));
     initEncodingCombo();
   }
 
-  public void selectBasePath(@NotNull String text) {
-    myBasePathField.setText(text);
+  public void selectBasePath(@NotNull VirtualFile baseDir) {
+    myBasePathField.setText(baseDir.getPresentableUrl());
   }
 
   private void initEncodingCombo() {
@@ -126,7 +126,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public void setCommonParentPath(@Nullable File commonParentPath) {
-    myCommonParentPath = commonParentPath;
+    myCommonParentDir = commonParentPath == null || commonParentPath.isDirectory() ? commonParentPath : commonParentPath.getParentFile();
   }
 
   private void checkExist() {
@@ -168,8 +168,8 @@ public class CreatePatchConfigurationPanel {
     if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
     File baseFile = new File(baseDirName);
     if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
-    if (myCommonParentPath != null && !FileUtil.isAncestor(baseFile, myCommonParentPath, false)) {
-      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentPath.getPath()),
+    if (myCommonParentDir != null && !FileUtil.isAncestor(baseFile, myCommonParentDir, false)) {
+      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentDir.getPath()),
                                 myBasePathField);
     }
     return null;

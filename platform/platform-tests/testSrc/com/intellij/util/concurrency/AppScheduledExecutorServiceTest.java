@@ -26,12 +26,10 @@ import java.util.concurrent.*;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
   private static class LogInfo {
-    private final long time;
     private final int runnable;
     private final Thread currentThread;
 
     private LogInfo(int runnable) {
-      time = System.currentTimeMillis();
       this.runnable = runnable;
       currentThread = Thread.currentThread();
     }
@@ -46,7 +44,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     service.invokeAll(Collections.nCopies(service.getBackendPoolCorePoolSize() + 1, Executors.callable(EmptyRunnable.getInstance()))); // pre-start all threads
 
     int delay = 1000;
-
+    long start = System.currentTimeMillis();
     ScheduledFuture<?> f1 = service.schedule(() -> {
       log.add(new LogInfo(1));
       TimeoutUtil.sleep(10);
@@ -75,9 +73,10 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertFalse(f3.isDone());
 
     TimeoutUtil.sleep(delay/2);
-    assertFalse(f1.isDone());
-    assertFalse(f2.isDone());
-    assertFalse(f3.isDone());
+    long elapsed = System.currentTimeMillis() - start; // can be > delay/2 on overloaded agent
+    assertEquals(elapsed > delay, f1.isDone());
+    assertEquals(elapsed > delay, f2.isDone());
+    assertEquals(elapsed > delay, f3.isDone());
     assertTrue(f4.isDone());
 
     TimeoutUtil.sleep(delay/2+500);
@@ -205,5 +204,30 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(N, usedThreads.size());
     service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
+  }
+
+  public void testAwaitTermination() throws InterruptedException, ExecutionException {
+    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
+
+    int N = 20;
+    int delay = 500;
+    List<? extends Future<?>> futures =
+      ContainerUtil.map(Collections.nCopies(N, ""), s -> service.schedule(() -> {
+          TimeoutUtil.sleep(5000);
+          log.add(new LogInfo(0));
+        }, delay, TimeUnit.MILLISECONDS
+      ));
+    TimeoutUtil.sleep(delay);
+    while (!service.delayQueue.isEmpty()) {
+      // wait till all tasks transferred to backend
+    }
+    service.shutdownAppScheduledExecutorService();
+    assertTrue(service.awaitTermination(20, TimeUnit.SECONDS));
+
+    for (Future<?> future : futures) {
+      assertTrue(future.isDone());
+    }
+    assertEquals(log.toString(), N, log.size());
   }
 }

@@ -43,7 +43,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     if (course == null) {
       return;
     }
-    if (valueName.equals(myProject.getName())) {
+    if (valueName.equals(myProject.getBaseDir().getName())) {
       data.clearText();
       data.setIcon(InteractiveLearningIcons.Course);
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
@@ -89,9 +89,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     return name.contains(EduNames.SANDBOX_DIR) ? 0 : 3;
   }
 
-  private void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
-    switch (taskStatus) {
+  private static void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
+    switch (lesson.getStatus()) {
       case Unchecked: {
         updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
         break;
@@ -107,7 +106,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   }
 
   protected void setStudyAttributes(Task task, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
+    StudyStatus taskStatus = task.getStatus();
     switch (taskStatus) {
       case Unchecked: {
         updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);

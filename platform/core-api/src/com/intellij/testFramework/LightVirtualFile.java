@@ -34,7 +34,6 @@ import java.nio.charset.Charset;
 public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent = "";
   private Language myLanguage;
-  private boolean myReadOnly;
 
   public LightVirtualFile() {
     this("");
@@ -67,13 +66,13 @@ public class LightVirtualFile extends LightVirtualFileBase {
                           Charset charset,
                           final long modificationStamp) {
     super(name, fileType, modificationStamp);
-    setContent(text);
+    myContent = text;
     setCharset(charset);
   }
 
   public LightVirtualFile(@NotNull String name, final Language language, @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
-    setContent(text);
+    myContent = text;
     setLanguage(language);
   }
 
@@ -98,14 +97,15 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+    assertWritable();
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
       @Override
       public void close() {
-        setModificationStamp(newModificationStamp);
+        assert isWritable();
 
+        setModificationStamp(newModificationStamp);
         try {
-          String content = toString(getCharset().name());
-          setContent(content);
+          myContent = toString(getCharset().name());
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
@@ -123,24 +123,14 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {
-    setContent(content);
-    setModificationStamp(LocalTimeCounter.currentTime());
-  }
-
-  private void setContent(@NotNull CharSequence content) {
-    assert !myReadOnly;
-    //StringUtil.assertValidSeparators(content);
+    assertWritable();
     myContent = content;
+    setModificationStamp(LocalTimeCounter.currentTime());
   }
 
   @NotNull
   public CharSequence getContent() {
     return myContent;
-  }
-
-  public void markReadOnly() {
-    setWritable(false);
-    myReadOnly = true;
   }
 
   @Override

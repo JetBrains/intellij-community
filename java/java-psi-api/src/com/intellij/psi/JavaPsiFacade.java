@@ -144,4 +144,6 @@ public abstract class JavaPsiFacade {
 
   @NotNull
   public abstract Project getProject();
+
+  public abstract boolean isConstantExpression(@NotNull PsiExpression expression);
 }

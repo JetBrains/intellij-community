@@ -226,17 +226,17 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
                                   @NotNull PsiFile memberFile,
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
-      PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
-      if (memberClass != null && PsiTreeUtil.isAncestor(aClass, memberClass, false) ||
-          aClass != null && PsiTreeUtil.isAncestor(memberClass, aClass, false)) {
+      if (memberClass != null && PsiTreeUtil.isAncestor(innerClass, memberClass, false) ||
+          innerClass != null && PsiTreeUtil.isAncestor(memberClass, innerClass, false) && !innerClass.hasModifierProperty(PsiModifier.STATIC)) {
         // access from the same file can be via private
         // except when used in annotation:
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
         // or in implements/extends clauses
-        if (isInReferenceList(aClass.getModifierList(), member) ||
-            isInReferenceList(aClass.getImplementsList(), member) ||
-            isInReferenceList(aClass.getExtendsList(), member)) {
+        if (isInReferenceList(innerClass.getModifierList(), member) ||
+            isInReferenceList(innerClass.getImplementsList(), member) ||
+            isInReferenceList(innerClass.getExtendsList(), member)) {
           return suggestPackageLocal(member);
         }
 
@@ -251,7 +251,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
         return suggestPackageLocal(element);
       }
-      if (aClass != null && memberClass != null && aClass.isInheritor(memberClass, true)) {
+      if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
         //access from subclass can be via protected, except for constructors
         PsiElement resolved = element instanceof PsiReference ? ((PsiReference)element).resolve() : null;
         boolean isConstructor = resolved instanceof PsiClass && element.getParent() instanceof PsiNewExpression

@@ -23,7 +23,7 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
   protected Ref<Boolean> myCheckInProgress = new Ref<>(false);
 
   public StudyCheckAction() {
-    super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
+    super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.CheckTask);
   }
 
   public abstract void check(@NotNull final Project project);

@@ -70,13 +70,16 @@ public class LowLevelSearchUtil {
    * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
    */
   private static TreeElement processTreeUp(@NotNull Project project,
-                                       @NotNull TextOccurenceProcessor processor,
-                                       @NotNull PsiElement scope,
-                                       @NotNull StringSearcher searcher,
-                                       final int offset,
-                                       final boolean processInjectedPsi,
-                                       ProgressIndicator progress,
-                                       TreeElement lastElement) {
+                                           @NotNull TextOccurenceProcessor processor,
+                                           @NotNull PsiElement scope,
+                                           @NotNull StringSearcher searcher,
+                                           final int offset,
+                                           final boolean processInjectedPsi,
+                                           ProgressIndicator progress,
+                                           TreeElement lastElement) {
+    if (scope instanceof PsiCompiledElement) {
+      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope);
+    }
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
     ASTNode scopeNode = scope.getNode();
@@ -197,14 +200,11 @@ public class LowLevelSearchUtil {
 
     final Project project = file.getProject();
     final TreeElement[] lastElement = {null};
-    return processTextOccurrences(buffer, startOffset, endOffset, searcher, progress, new TIntProcedure() {
-      @Override
-      public boolean execute(int offset) {
-        if (progress != null) progress.checkCanceled();
-        lastElement[0] = processTreeUp(project, processor, scope, searcher, offset - scopeStart, processInjectedPsi, progress,
-                                       lastElement[0]);
-        return lastElement[0] != null;
-      }
+    return processTextOccurrences(buffer, startOffset, endOffset, searcher, progress, offset -> {
+      if (progress != null) progress.checkCanceled();
+      lastElement[0] = processTreeUp(project, processor, scope, searcher, offset - scopeStart, processInjectedPsi, progress,
+                                     lastElement[0]);
+      return lastElement[0] != null;
     });
   }
 

@@ -32,10 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
  */
 @CompileStatic
 class GrStubAstSwitchTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    null
-  }
 
   void testDontLoadContentWhenProcessingImports() {
     GroovyFileImpl file = (GroovyFileImpl)myFixture.addFileToProject("A.groovy", """

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import gnu.trove.THashMap;
@@ -35,6 +36,7 @@ import java.util.Set;
  * Date: 31.01.11
  */
 class ClassfileAnalyzer {
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
 
   private final DependencyContext myContext;
@@ -213,7 +215,12 @@ class ClassfileAnalyzer {
 
     private void processSignature(final String sig) {
       if (sig != null) {
-        new SignatureReader(sig).accept(mySignatureCrawler);
+        try {
+          new SignatureReader(sig).accept(mySignatureCrawler);
+        }
+        catch (Exception e) {
+          LOG.info("Problems parsing signature \"" + sig + "\" in " + myContext.getValue(myFileName), e);
+        }
       }
     }
 

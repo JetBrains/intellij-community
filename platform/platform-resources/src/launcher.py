@@ -11,6 +11,7 @@ import time
 
 RUN_PATH = u'$RUN_PATH$'
 CONFIG_PATH = u'$CONFIG_PATH$'
+SYSTEM_PATH = u'$SYSTEM_PATH$'
 
 args = []
 skip_next = False
@@ -45,7 +46,7 @@ for i, arg in enumerate(sys.argv[1:]):
             args.append(os.path.abspath(arg))
 
 
-def launch_with_port(port):
+def launch_with_port(port, token):
     found = False
 
     s = socket.socket()
@@ -67,7 +68,7 @@ def launch_with_port(port):
 
     if found:
         if args:
-            cmd = "activate " + os.getcwd() + "\0" + "\0".join(args)
+            cmd = "activate " + token + '\0' + os.getcwd() + "\0" + "\0".join(args)
             encoded = struct.pack(">h", len(cmd)) + cmd
             s.send(encoded)
             time.sleep(0.5)  # don't close socket immediately
@@ -76,30 +77,30 @@ def launch_with_port(port):
     return False
 
 
-port = -1
-try:
-    f = open(os.path.join(CONFIG_PATH, 'port'))
-    port = int(f.read())
-except Exception:
-    type, value, traceback = sys.exc_info()
+port_path = os.path.join(CONFIG_PATH, 'port')
+token_path = os.path.join(SYSTEM_PATH, 'token')
+if os.path.exists(port_path) and os.path.exists(token_path):
+    try:
+        f = open(port_path)
+        port = int(f.read())
+        f.close()
+
+        f = open(token_path)
+        token = f.read()
+        f.close()
+
+        launch_with_port(port, token)
+    except:
+        type, value, traceback = sys.exc_info()
+        print('Cannot activate a running instance: ' + str(value))
+else:
     print('No IDE instance has been found. New one will be started.')
-    port = -1
-
-if port == -1:
-    # SocketLock actually allows up to 50 ports, but the checking takes too long
-    for port in range(6942, 6942 + 10):
-        if launch_with_port(port):
-            exit()
-else:
-    if launch_with_port(port):
-        exit()
-
-if sys.platform == "darwin":
-    # OS X: RUN_PATH is *.app path
-    if len(args):
-        args.insert(0, "--args")
-    os.execvp("open", ["-a", RUN_PATH] + args)
-else:
-    # unix common
-    bin_dir, bin_file = os.path.split(RUN_PATH)
-    os.execv(RUN_PATH, [bin_file] + args)
+    if sys.platform == "darwin":
+        # OS X: RUN_PATH is *.app path
+        if len(args):
+            args.insert(0, "--args")
+        os.execvp("open", ["-a", RUN_PATH] + args)
+    else:
+        # Unix common
+        bin_dir, bin_file = os.path.split(RUN_PATH)
+        os.execv(RUN_PATH, [bin_file] + args)

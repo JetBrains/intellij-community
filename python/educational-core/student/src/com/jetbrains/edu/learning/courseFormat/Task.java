@@ -25,7 +25,7 @@ public class Task implements StudyItem {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
-  private StudyStatus myStatus = StudyStatus.Uninitialized;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
 
   private int myStepicId;
 
@@ -214,5 +214,10 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
+    for (TaskFile taskFile : taskFiles.values()) {
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        placeholder.setStatus(status);
+      }
+    }
   }
 }

@@ -81,10 +81,11 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
-  private final BalloonLayout myBalloonLayout;
+  private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
+  private boolean myDisposed;
 
   public FlatWelcomeFrame() {
     final JRootPane rootPane = getRootPane();
@@ -121,9 +122,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
-        dispose();
+        Disposer.dispose(FlatWelcomeFrame.this);
       }
-    });
+    }, this);
 
     if (NotificationsManagerImpl.newEnabled()) {
       myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
@@ -134,23 +135,26 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      @Override
-      public void dispose() {
-        FlatWelcomeFrame.this.dispose();
-      }
-    });
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   @Override
   public void dispose() {
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
     saveLocation(getBounds());
     super.dispose();
-    if (myBalloonLayout instanceof WelcomeBalloonLayoutImpl) {
-      ((WelcomeBalloonLayoutImpl)myBalloonLayout).dispose();
+    if (myBalloonLayout != null) {
+      ((BalloonLayoutImpl)myBalloonLayout).dispose();
+      myBalloonLayout = null;
     }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
+
+    // open project from welcome screen show progress dialog and call FocusTrackback.register()
+    FocusTrackback.release(this);
   }
 
   private static void saveLocation(Rectangle location) {
@@ -313,22 +317,26 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       });
       panel.setVisible(false);
       myEventListener = types -> {
-        NotificationType type1 = null;
+        NotificationType type = null;
         for (NotificationType t : types) {
           if (NotificationType.ERROR == t) {
-            type1 = NotificationType.ERROR;
+            type = NotificationType.ERROR;
             break;
           }
           if (NotificationType.WARNING == t) {
-            type1 = NotificationType.WARNING;
+            type = NotificationType.WARNING;
           }
-          else if (type1 == null && NotificationType.INFORMATION == t) {
-            type1 = NotificationType.INFORMATION;
+          else if (type == null && NotificationType.INFORMATION == t) {
+            type = NotificationType.INFORMATION;
           }
         }
-
-        actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type1, types.size()));
-        panel.setVisible(true);
+        if (types.isEmpty()) {
+          panel.setVisible(false);
+        }
+        else {
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
+          panel.setVisible(true);
+        }
       };
       myEventLocation = () -> {
         Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
@@ -810,6 +818,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
          if (myTextLabel != null) {
            myTextLabel.setText(getActionText(((AnAction)value)));
            myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
+           myTextLabel.setBackground(isSelected ? UIUtil.getListBackground(true) : getProjectsBackground());
          }
        }
      }

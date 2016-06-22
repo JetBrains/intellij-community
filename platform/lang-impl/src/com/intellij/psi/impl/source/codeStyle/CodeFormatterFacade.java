@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -424,6 +425,9 @@ public class CodeFormatterFacade {
         document == null) {
       return;
     }
+    
+    FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyleSettingsManager.getSettings(file.getProject()));
+    List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), new TextRange(startOffset, endOffset));
 
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     if ((vFile == null || vFile instanceof LightVirtualFile) && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -447,7 +451,7 @@ public class CodeFormatterFacade {
         final CaretModel caretModel = editorToUse.getCaretModel();
         final int caretOffset = caretModel.getOffset();
         final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
-        doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset);
+        doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset, enabledRanges);
         if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
           caretModel.moveToOffset(caretMarker.getStartOffset());
         }
@@ -463,7 +467,7 @@ public class CodeFormatterFacade {
   }
 
   public void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
-                                         int startOffset, int endOffset) {
+                                         int startOffset, int endOffset, List<TextRange> enabledRanges) {
     // Normalization.
     int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
     int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
@@ -481,10 +485,18 @@ public class CodeFormatterFacade {
     int[] shifts = new int[2];
     // shifts[0] - lines shift.
     // shift[1] - offset shift.
+    int cumulativeShift = 0;
 
     for (int line = startLine; line < maxLine; line++) {
       int startLineOffset = document.getLineStartOffset(line);
       int endLineOffset = document.getLineEndOffset(line);
+      if (!canWrapLine(Math.max(startOffsetToUse, startLineOffset), 
+                       Math.min(endOffsetToUse, endLineOffset), 
+                       cumulativeShift,
+                       enabledRanges)) {
+        continue;
+      }
+      
       final int preferredWrapPosition
         = calculatePreferredWrapPosition(editor, text, tabSize, spaceSize, startLineOffset, endLineOffset, endOffsetToUse);
 
@@ -521,9 +533,17 @@ public class CodeFormatterFacade {
         // We know that number of lines is just increased, hence, update the data accordingly.
         maxLine += shifts[0];
         endOffsetToUse += shifts[1];
+        cumulativeShift += shifts[1];
       }
 
     }
+  }
+  
+  private static boolean canWrapLine(int startOffset, int endOffset, int offsetShift, @NotNull List<TextRange> enabledRanges) {
+    for (TextRange range : enabledRanges)  {
+      if (range.containsOffset(startOffset - offsetShift) && range.containsOffset(endOffset - offsetShift)) return true;
+    }
+    return false;
   }
 
   /**

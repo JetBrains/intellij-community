@@ -15,10 +15,12 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
@@ -317,39 +319,37 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Nullable
   private byte[] processTemplates(@Nullable String projectName, String content, File file, Consumer<VelocityException> exceptionConsumer)
     throws IOException {
-    for (WizardInputField field : myAdditionalFields) {
-      if (!field.acceptFile(file)) {
-        return null;
-      }
-    }
-    Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-    for (WizardInputField field : myAdditionalFields) {
-      properties.putAll(field.getValues());
-    }
-    if (projectName != null) {
-      properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
-    }
-    String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
-    StringBuilder sb = new StringBuilder(merged.length());
-    for (int i = 0; i < merged.length(); i++) {
-      char c = merged.charAt(i);
-      if (c == '\\') {
-        if(i < merged.length() -1){
-          if(merged.startsWith("\\$\\true", i) || merged.startsWith("\\$\\false", i) || merged.startsWith("\\$\\.", i)){
-            sb.append("$");
-            i+=2;
-            continue;
-          }
-
-          char d = merged.charAt(i+1);
-          if(d == '$' || d == '#' || d == '[' || d == ']' || d =='{' || d == '}' || d =='(' || d == ')'){
-            continue;
-          }
+    String patchedContent = content;
+    if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
+      for (WizardInputField field : myAdditionalFields) {
+        if (!field.acceptFile(file)) {
+          return null;
         }
       }
-      sb.append(c);
+      Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
+      for (WizardInputField field : myAdditionalFields) {
+        properties.putAll(field.getValues());
+      }
+      if (projectName != null) {
+        properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+      }
+      String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
+      patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
     }
-    return StringUtilRt.convertLineSeparators(sb.toString(), SystemInfo.isWindows ? "\r\n" : "\n").getBytes(CharsetToolkit.UTF8_CHARSET);
+    else {
+      int i = content.indexOf(SaveProjectAsTemplateAction.FILE_HEADER_TEMPLATE_PLACEHOLDER);
+      if (i != -1) {
+        final FileTemplate template =
+          FileTemplateManager.getDefaultInstance().getDefaultTemplate(SaveProjectAsTemplateAction.getFileHeaderTemplateName());
+        Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
+        String templateText = template.getText(properties);
+        patchedContent = patchedContent.substring(0, i) +
+                         templateText +
+                         patchedContent.substring(i + SaveProjectAsTemplateAction.FILE_HEADER_TEMPLATE_PLACEHOLDER.length());
+      }
+    }
+    return StringUtilRt.convertLineSeparators(patchedContent, CodeStyleFacade.getInstance().getLineSeparator()).
+      getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @Nullable

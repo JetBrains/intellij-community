@@ -180,7 +180,6 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
     if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      FontOptions.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 

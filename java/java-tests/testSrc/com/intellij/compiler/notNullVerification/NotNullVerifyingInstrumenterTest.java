@@ -162,6 +162,17 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     }
   }
 
+  public void testMultipleMessages() throws Exception {
+    Class<?> test = prepareTest();
+    Object instance = test.newInstance();
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar1 must not be null", instance, test.getMethod("bar1", Object.class),
+                              (Object)null);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar2 must not be null", instance, test.getMethod("bar2", Object.class),
+                              (Object)null);
+    verifyCallThrowsException("@NotNull method MultipleMessages.foo1 must not return null", instance, test.getMethod("foo1"));
+    verifyCallThrowsException("@NotNull method MultipleMessages.foo2 must not return null", instance, test.getMethod("foo2"));
+  }
+
   public void testMalformedBytecode() throws Exception {
     Class<?> testClass = prepareTest(false);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));

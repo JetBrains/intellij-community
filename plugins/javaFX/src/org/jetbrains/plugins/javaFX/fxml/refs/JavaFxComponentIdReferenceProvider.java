@@ -81,6 +81,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
                                                         @NotNull XmlAttributeValue xmlAttributeValue,
                                                         @NotNull String value,
                                                         @NotNull Map<String, XmlAttributeValue> fileIds) {
+    if (FxmlConstants.NULL_EXPRESSION.equals(value)) return PsiReference.EMPTY_ARRAY;
     final String expressionBody = value.substring(2, value.length() - 1);
     final List<String> propertyNames = StringUtil.split(expressionBody, ".", true, false);
     if (JavaFxPropertyAttributeDescriptor.isIncompletePropertyChain(propertyNames)) return PsiReference.EMPTY_ARRAY;
@@ -115,6 +116,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
   private static PsiReference[] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
                                                             @NotNull String value,
                                                             @NotNull Map<String, XmlAttributeValue> fileIds) {
+    if (FxmlConstants.isNullValue(value)) return PsiReference.EMPTY_ARRAY;
     return getSinglePropertyReferences(xmlAttributeValue, fileIds, value.substring(1), 1);
   }
 

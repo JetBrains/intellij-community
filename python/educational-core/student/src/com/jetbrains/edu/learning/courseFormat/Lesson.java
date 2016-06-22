@@ -11,16 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements StudyItem {
-  public int id;
-  @Transient
-  public List<Integer> steps;
-  @Transient
-  public List<String> tags;
-  @Transient
-  Boolean is_public;
+  @Expose private int myId;
+  @Transient public List<Integer> steps;
+  @Transient public List<String> tags;
+  @Transient boolean is_public;
+
   @Expose
   @SerializedName("title")
   private String name;
+
   @Expose
   @SerializedName("task_list")
   public List<Task> taskList = new ArrayList<Task>();
@@ -30,6 +29,9 @@ public class Lesson implements StudyItem {
 
   // index is visible to user number of lesson from 1 to lesson number
   private int myIndex = -1;
+
+  public Lesson() {
+  }
 
   public void initLesson(final Course course, boolean isRestarted) {
     setCourse(course);
@@ -86,4 +88,20 @@ public class Lesson implements StudyItem {
     return null;
   }
 
+  public StudyStatus getStatus() {
+    for (Task task : taskList) {
+      if (task.getStatus() != StudyStatus.Solved) {
+        return StudyStatus.Unchecked;
+      }
+    }
+    return StudyStatus.Solved;
+  }
+
+  public int getId() {
+    return myId;
+  }
+
+  public void setId(int id) {
+    this.myId = id;
+  }
 }

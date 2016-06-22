@@ -43,6 +43,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -72,6 +73,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -483,10 +485,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                HighlightInfoProcessor.getEmpty());
     try {
-      final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
+      boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
+      final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file, includeDoNotShow);
       pass.doInspectInBatch(this, inspectionManager, lTools);
 
-      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file);
+      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, toolWrapper -> {
         GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
         ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
@@ -514,6 +517,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
     }
     return true;
+  }
+
+  protected boolean includeDoNotShow(final InspectionProfile profile) {
+    return profile.getSingleTool() != null;
   }
 
   private static final PsiFile TOMBSTONE = PsiUtilCore.NULL_PSI_FILE;
@@ -646,7 +653,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;
       }
@@ -708,11 +715,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @NotNull
-  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<Tools> localTools, @NotNull PsiFile file) {
+  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<Tools> localTools,
+                                                                                @NotNull PsiFile file,
+                                                                                boolean includeDoNotShow) {
     final List<T> lTools = new ArrayList<>();
     for (Tools tool : localTools) {
       //noinspection unchecked
-      final T enabledTool = (T)tool.getEnabledTool(file);
+      final T enabledTool = (T)tool.getEnabledTool(file, includeDoNotShow);
       if (enabledTool != null) {
         lTools.add(enabledTool);
       }
@@ -878,6 +887,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       assert tools != null;
       return tools.getTool().getTool() instanceof CleanupLocalInspectionTool;
     });
+    boolean includeDoNotShow = includeDoNotShow(profile);
     scope.accept(new PsiElementVisitor() {
       private int myCount;
       @Override
@@ -887,7 +897,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }
         if (isBinary(file)) return;
         for (final Tools tools : inspectionTools) {
-          final InspectionToolWrapper tool = tools.getEnabledTool(file);
+          final InspectionToolWrapper tool = tools.getEnabledTool(file, includeDoNotShow);
           if (tool instanceof LocalInspectionToolWrapper) {
             lTools.add((LocalInspectionToolWrapper)tool);
             tool.initialize(GlobalInspectionContextImpl.this);
@@ -918,14 +928,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     if (results.isEmpty()) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      GuiUtils.invokeLaterIfNeeded(() -> {
         if (commandName != null) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
         }
         if (postRunnable != null) {
           postRunnable.run();
         }
-      });
+      }, ModalityState.defaultModalityState());
       return;
     }
     Runnable runnable = () -> {

@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -82,6 +81,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Key.create("resolvedSourceSets");
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
+  public static final Key<Map<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
   public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
     Key.create("gradleArtifactsMap");
 
@@ -427,17 +427,23 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         final ModuleData moduleData = pair.first.getData();
         if (targetModuleOutputPaths == null) {
           final Set<String> compileSet = ContainerUtil.newHashSet();
-          ContainerUtil.addAllNotNull(compileSet,
-                                      moduleData.getCompileOutputPath(ExternalSystemSourceType.SOURCE),
-                                      moduleData.getCompileOutputPath(ExternalSystemSourceType.RESOURCE));
+          Map<ExternalSystemSourceType, String> gradleOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
+          if(gradleOutputs != null) {
+            ContainerUtil.addAllNotNull(compileSet,
+                                        gradleOutputs.get(ExternalSystemSourceType.SOURCE),
+                                        gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
+          }
           if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
             targetModuleOutputPaths = compileSet;
           }
           else {
             final Set<String> testSet = ContainerUtil.newHashSet();
-            ContainerUtil.addAllNotNull(testSet,
-                                        moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST),
-                                        moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE));
+            Map<ExternalSystemSourceType, String> gradleTestOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
+            if(gradleTestOutputs != null) {
+              ContainerUtil.addAllNotNull(compileSet,
+                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST),
+                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
+            }
             if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }

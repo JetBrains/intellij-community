@@ -461,6 +461,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {
         int classKind = kind == CLASS_OR_PACKAGE_NAME_KIND ? CLASS_NAME_KIND : CLASS_FQ_NAME_KIND;
+
+        //A single-type-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
+        //any top level type named n declared in another compilation unit of p
+        if (PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) != null) {
+          JavaResolveResult[] result = resolve(PACKAGE_NAME_KIND, containingFile);
+          return result.length == 0 ? resolve(classKind, containingFile) : result;
+        }
+
         JavaResolveResult[] result = resolve(classKind, containingFile);
 
         if (result.length == 1 && !result[0].isAccessible()) {
@@ -713,7 +721,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         if (element instanceof PsiClass) {
           final String qName = ((PsiClass)element).getQualifiedName();
-          return qName != null && qName.equals(getCanonicalText(false, null, containingFile));
+          if (qName != null && qName.equals(getCanonicalText(false, null, containingFile))) {
+            return !PsiUtil.isFromDefaultPackage((PsiClass)element) ||
+                   PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) == null;
+          }
         }
         if (element instanceof PsiPackage) {
           final String qName = ((PsiPackage)element).getQualifiedName();

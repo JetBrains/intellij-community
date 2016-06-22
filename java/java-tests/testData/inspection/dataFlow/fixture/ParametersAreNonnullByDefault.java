@@ -34,3 +34,28 @@ class NotNullClass {
 class NullableClass {
   static void foo(String s) {}
 }
+
+@javax.annotation.ParametersAreNonnullByDefault
+class Xxx {
+
+  private int x;
+  private String s;
+
+  public Xxx(int x, String s) {
+    this.x = x;
+    this.s = s;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Xxx xxx = (Xxx) o;
+
+    if (x != xxx.x) return false;
+    return s != null ? s.equals(xxx.s) : xxx.s == null;
+
+  }
+
+}

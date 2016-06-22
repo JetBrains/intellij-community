@@ -98,6 +98,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   @Override
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
+    return createSmartPsiElementPointer(element, containingFile, false);
+  }
+
+  @NotNull
+  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
+                                                                                        PsiFile containingFile,
+                                                                                        boolean forInjected) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
       PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
@@ -108,7 +115,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
+    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
@@ -245,10 +252,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return;
     }
 
-    E newTarget = pointer.doRestoreElement();
-    if (newTarget != null) {
-      pointer.cacheElement(newTarget);
-    }
+    pointer.cacheElement(pointer.doRestoreElement());
   }
 
 

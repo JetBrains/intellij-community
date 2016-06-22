@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,8 @@ public class TemplateImpl extends Template implements SchemeElement {
   private String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
-  private final ArrayList<Variable> myVariables = new ArrayList<Variable>();
-  private ArrayList<Segment> mySegments = null;
+  private final List<Variable> myVariables = new SmartList<>();
+  private List<Segment> mySegments = null;
   private String myTemplateText = null;
   private String myId;
 
@@ -109,7 +110,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     this(key, null, group);
     toParseSegments = false;
     myTemplateText = "";
-    mySegments = new ArrayList<Segment>();
+    mySegments = new SmartList<>();
   }
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
@@ -317,7 +318,7 @@ public class TemplateImpl extends Template implements SchemeElement {
       return;
     }
 
-    mySegments = new ArrayList<Segment>();
+    mySegments = new SmartList<>();
     StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString);
@@ -491,7 +492,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public ArrayList<Variable> getVariables() {
-    return myVariables;
+    return new ArrayList<>(myVariables);
   }
 
   private static class Segment {

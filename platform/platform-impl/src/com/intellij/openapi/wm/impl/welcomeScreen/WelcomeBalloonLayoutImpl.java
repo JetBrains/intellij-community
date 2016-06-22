@@ -54,7 +54,6 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
-  private List<Disposable> myDisposableList = new ArrayList<>();
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
                                   @NotNull Insets insets,
@@ -65,11 +64,10 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     myButtonLocation = buttonLocation;
   }
 
+  @Override
   public void dispose() {
+    super.dispose();
     if (myPopupBalloon != null) {
-      for (Disposable disposable : new ArrayList<>(myDisposableList)) {
-        Disposer.dispose(disposable);
-      }
       Disposer.dispose(myPopupBalloon);
       myPopupBalloon = null;
     }
@@ -132,16 +130,15 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
     myBalloonPanel.add(balloon.getContent());
     balloon.getContent().putClientProperty(TYPE_KEY, layoutData.type);
-    Disposable disposable = new Disposable() {
+    Disposer.register(balloon, new Disposable() {
       @Override
       public void dispose() {
-        myDisposableList.remove(this);
+        myBalloons.remove(balloon);
         myBalloonPanel.remove(balloon.getContent());
         updatePopup();
       }
-    };
-    myDisposableList.add(disposable);
-    Disposer.register(balloon, disposable);
+    });
+    myBalloons.add(balloon);
 
     updatePopup();
   }
@@ -183,7 +180,12 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     myListener.run(types);
 
     if (myVisible) {
-      layoutPopup();
+      if (count == 0) {
+        myPopupBalloon.getComponent().setVisible(false);
+      }
+      else {
+        layoutPopup();
+      }
     }
   }
 

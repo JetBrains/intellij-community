@@ -55,7 +55,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     this(element, descriptor, toolWrapper, presentation, true, null);
   }
 
-  protected ProblemDescriptionNode(RefEntity element,
+  protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolWrapper toolWrapper,
                                    @NotNull InspectionToolPresentation presentation,
@@ -69,7 +69,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile
                 .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(toolWrapper.getShortName(), element.getRefManager().getProject()).getLevel();
+              : profile.getTools(toolWrapper.getShortName(), presentation.getContext().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
@@ -115,7 +115,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   @Override
   protected boolean calculateIsValid() {
     if (myDescriptor == null) return false;
-    if (myElement instanceof RefElement && !myElement.isValid()) return false;
+    if (myElement == null || !myElement.isValid()) return false;
     if (myDescriptor instanceof ProblemDescriptor) {
       final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
@@ -132,9 +132,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
-    if (!isAlreadySuppressedFromView() && !isQuickFixAppliedFromView()) {
+    if (!isAlreadySuppressedFromView()) {
       InspectionToolPresentation presentation = getPresentation();
-      presentation.amnesty(getElement());
+      presentation.amnesty(getElement(), getDescriptor());
     }
     super.amnestyElement(manager);
   }

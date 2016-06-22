@@ -20,10 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -38,7 +40,7 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
         method.getParameterList().getParametersCount() == 0 &&
         !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final PsiClass aClass = method.getContainingClass();
-      if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && doesMethodViolate(method)) {
+      if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && doesMethodViolate(method, new THashSet<>())) {
         final PsiIdentifier identifier = method.getNameIdentifier();
         LOG.assertTrue(identifier != null);
         return new ProblemDescriptor[]{
@@ -49,8 +51,8 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
     return null;
   }
 
-  private static boolean doesMethodViolate(final PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
+  private static boolean doesMethodViolate(final PsiMethod method, final Set<PsiMethod> processed) {
+    if (!processed.add(method) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiCodeBlock body = method.getBody();
     if (body == null) return false;
     final Collection<PsiJavaCodeReferenceElement> referenceIterator =
@@ -74,7 +76,7 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
             methodContainingClass != null &&
             (methodContainingClass == resolvedContainingClass ||
              methodContainingClass.isInheritor(resolvedContainingClass, true))) {
-          if (doesMethodViolate((PsiMethod)resolved)) {
+          if (doesMethodViolate((PsiMethod)resolved, processed)) {
             return true;
           }
         }

@@ -202,7 +202,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         Document beforeReformat = null;
-        beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+        if (myEditor.getDocument().getTextLength() > 0) {
+          beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+        }
 
         //important not mark as generated not to get the classes before setting language level
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
@@ -227,7 +229,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
         Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.getText());
-        if (document != null && beforeReformat != null) {
+        if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }
       }

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 @CompileStatic
 class StreamingJsonBuilderTest extends LightGroovyTestCase {
-  final String basePath = null
+
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   void 'test highlighting'() {

@@ -72,7 +72,6 @@
       <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
-      <configurationType implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationType"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.TestNGTestDiscoveryListener"/>

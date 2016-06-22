@@ -23,13 +23,14 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
+import io.netty.channel.ChannelFuture
+import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.io.addChannelListener
 import org.jetbrains.io.connect
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
@@ -38,18 +39,24 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JList
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
+  @Deprecated("Use address")
   var port = -1
-  var isLocalAddress = true
+  var address: InetSocketAddress? = null
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
+
+  protected val channelCloseListener = GenericFutureListener<ChannelFuture> {
+    close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+  }
 
   abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+    this.address = address
+    @Suppress("DEPRECATION")
     port = address.port
-    isLocalAddress = address.getAddress().isAnyLocalAddress() || address.getAddress().isLoopbackAddress()
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${port}")
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
     val result = AsyncPromise<Vm>()
     val future = ApplicationManager.getApplication().executeOnPooledThread {
       if (Thread.interrupted()) {
@@ -77,11 +84,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
       createBootstrap(address, result)
           .connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
-          ?.let {
-            it.closeFuture().addChannelListener {
-              close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
-            }
-          }
+          ?.let { it.closeFuture().addListener(channelCloseListener) }
     }
 
     connectCancelHandler.set {

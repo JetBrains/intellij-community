@@ -26,6 +26,8 @@ import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 public class PyCCCommandLineState extends PythonCommandLineState {
   private final PyCCRunTestConfiguration myRunConfiguration;
   private final VirtualFile myTaskDir;
@@ -54,7 +56,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     assert course != null;
 
     group.addParameter(myRunConfiguration.getPathToTest());
-    group.addParameter(course.getCourseDirectory());
+    group.addParameter(new File(course.getCourseDirectory()).getPath());
 
     group.addParameter(getFirstTaskFilePath());
   }
@@ -62,9 +64,10 @@ public class PyCCCommandLineState extends PythonCommandLineState {
   @NotNull
   private String getFirstTaskFilePath() {
     String firstTaskFileName = StudyUtils.getFirst(myTask.getTaskFiles().keySet());
+    String taskDirPath = FileUtil.toSystemDependentName(myTaskDir.getPath());
     return myTaskDir.findChild(EduNames.SRC) != null ?
-           FileUtil.join(myTaskDir.getPath(), EduNames.SRC, firstTaskFileName) :
-           FileUtil.join(myTaskDir.getPath(), firstTaskFileName);
+           FileUtil.join(taskDirPath, EduNames.SRC, firstTaskFileName) :
+           FileUtil.join(taskDirPath, firstTaskFileName);
   }
 
   @Override

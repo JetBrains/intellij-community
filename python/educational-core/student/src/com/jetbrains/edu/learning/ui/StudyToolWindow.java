@@ -35,6 +35,7 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +46,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String TASK_INFO_ID = "taskInfo";
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
   private final OnePixelSplitter mySplitPane;
@@ -63,7 +65,14 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(getActionGroup(project));
     setToolbar(toolbarPanel);
 
-    myContentPanel.add(TASK_INFO_ID, createTaskInfoPanel(project));
+    final JPanel panel = new JPanel(new BorderLayout());
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course != null && course.isAdaptive()) {
+      panel.add(new StepicAdaptiveReactionsPanel(project), BorderLayout.NORTH);
+    }
+    JComponent taskInfoPanel = createTaskInfoPanel(project);
+    panel.add(taskInfoPanel, BorderLayout.CENTER);
+    myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
@@ -76,14 +85,15 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     }
 
-    if (StudyTaskManager.getInstance(project).isTurnEditingMode() || StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
+    if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
+        StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
       TaskFile file = StudyUtils.getSelectedTaskFile(project);
       if (file != null) {
         VirtualFile taskDir = file.getTask().getTaskDir(project);
         setTaskText(taskText, taskDir, project);
-
       }
-    } else {
+    }
+    else {
       setTaskText(taskText, null, project);
     }
   }
@@ -97,6 +107,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     }
   }
+
 
   public void dispose() {
   }
@@ -180,7 +191,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     }
   }
 
-  protected abstract void setText(String text);
+  protected abstract void setText(@NotNull String text);
 
   public void setEmptyText(@NotNull Project project) {
     if (StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {

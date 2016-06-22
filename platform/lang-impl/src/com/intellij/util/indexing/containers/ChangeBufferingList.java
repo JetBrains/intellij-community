@@ -73,9 +73,12 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   private void addChange(int value) {
+    if (value < 0) {
+      if (!hasRemovals) hasRemovals = true;
+    } else if (!mayHaveDupes && length > 0 && changes[length - 1] >= value) {
+      mayHaveDupes = true;
+    }
     changes[length++] = value;
-    if (value < 0 && !hasRemovals) hasRemovals = true;
-    if(!mayHaveDupes) mayHaveDupes = true;
   }
 
   public void remove(int value) {

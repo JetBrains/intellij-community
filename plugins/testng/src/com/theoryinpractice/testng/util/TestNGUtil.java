@@ -35,9 +35,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -185,7 +183,8 @@ public class TestNGUtil {
   }
 
   public static boolean hasTest(PsiModifierListOwner element) {
-    return hasTest(element, true);
+    return CachedValuesManager.getCachedValue(element, () ->
+      CachedValueProvider.Result.create(hasTest(element, true), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {

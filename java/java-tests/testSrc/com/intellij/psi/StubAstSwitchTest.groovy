@@ -16,6 +16,7 @@
 package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -155,5 +156,18 @@ class B {
     assert psiClass.nameIdentifier
     assert !file.stub
     assert file.treeElement
+  }
+
+  public void "test no AST loading on file rename"() {
+    PsiJavaFile file = (PsiJavaFile) myFixture.addFileToProject('a.java', 'class Foo {}')
+    assert file.classes.length == 1
+    assert ((PsiFileImpl)file).stub
+
+    WriteCommandAction.runWriteCommandAction project, { file.setName('b.java') }
+    assert file.classes.length == 1
+    assert ((PsiFileImpl)file).stub
+
+    assert file.classes[0].nameIdentifier.text == 'Foo'
+    assert ((PsiFileImpl)file).contentsLoaded
   }
 }

@@ -405,6 +405,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @Override
+  public boolean isConstantExpression(@NotNull PsiExpression expression) {
+    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
+    expression.accept(visitor);
+    return visitor.isConstant();
+  }
+
+  @Override
   @NotNull
   public PsiElementFactory getElementFactory() {
     return PsiElementFactory.SERVICE.getInstance(myProject);

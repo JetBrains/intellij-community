@@ -15,11 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,7 +43,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     final boolean[] needStrictSignatureSearch = new boolean[1];
     final boolean strictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = resolveInReadAction(p.getProject(), () -> {
+    final PsiClass aClass = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(() -> {
       PsiClass aClass1 = method.getContainingClass();
       if (aClass1 == null) return null;
       isConstructor[0] = method.isConstructor();
@@ -66,7 +63,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = resolveInReadAction(p.getProject(), () -> p.getEffectiveSearchScope());
+    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(() -> p.getEffectiveSearchScope());
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }
@@ -90,30 +87,23 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
       return;
     }
 
-    resolveInReadAction(p.getProject(), new Computable<Void>() {
-      @Override
-      public Void compute() {
-        final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
-        SearchScope accessScope = methods[0].getUseScope();
-        for (int i = 1; i < methods.length; i++) {
-          PsiMethod method1 = methods[i];
-          accessScope = accessScope.union(method1.getUseScope());
-        }
-
-        SearchScope restrictedByAccessScope = searchScope.intersectWith(accessScope);
-
-        short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
-        collector.searchWord(methodName[0], restrictedByAccessScope, searchContext, true, method,
-                             getTextOccurrenceProcessor(methods, aClass, strictSignatureSearch));
-
-        SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
-        return null;
+    DumbService.getInstance(p.getProject()).runReadActionInSmartMode(()-> {
+      final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
+      SearchScope accessScope = methods[0].getUseScope();
+      for (int i = 1; i < methods.length; i++) {
+        PsiMethod method1 = methods[i];
+        accessScope = accessScope.union(method1.getUseScope());
       }
-    });
-  }
 
-  static <T> T resolveInReadAction(@NotNull Project p, @NotNull  Computable<T> computable) {
-    return ApplicationManager.getApplication().isReadAccessAllowed() ? computable.compute() : DumbService.getInstance(p).runReadActionInSmartMode(computable);
+      SearchScope restrictedByAccessScope = searchScope.intersectWith(accessScope);
+
+      short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
+      collector.searchWord(methodName[0], restrictedByAccessScope, searchContext, true, method,
+                           getTextOccurrenceProcessor(methods, aClass, strictSignatureSearch));
+
+      SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
+      return null;
+    });
   }
 
   protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod[] methods, PsiClass aClass, boolean strictSignatureSearch) {

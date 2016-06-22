@@ -15,43 +15,57 @@
  */
 package com.intellij.internal.psiView;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerAction extends AnAction implements DumbAware {
+public class PsiViewerAction extends DumbAwareAction {
+
   @Override
   public void actionPerformed(AnActionEvent e) {
-    new PsiViewerDialog(e.getProject(), false, null, null).show();
+    Editor editor = isForContext() ? e.getData(CommonDataKeys.EDITOR) : null;
+    new PsiViewerDialog(e.getProject(), editor).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = false;
+    boolean enabled = isEnabled(e.getProject());
+    e.getPresentation().setEnabledAndVisible(enabled);
+    if (enabled && isForContext() && e.getData(CommonDataKeys.EDITOR) == null) {
+      e.getPresentation().setEnabled(false);
+    }
+  }
 
-    Project project = e.getProject();
-    if (project != null) {
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        enabled = true;
-      }
-      else {
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
-            enabled = true;
-            break;
-          }
-        }
+  protected boolean isForContext() {
+    return false;
+  }
+
+  private static boolean isEnabled(@Nullable Project project) {
+    if (project == null) return false;
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true;
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if ("PLUGIN_MODULE".equals(ModuleType.get(module).getId())) {
+        return true;
       }
     }
+    return false;
+  }
 
-    e.getPresentation().setEnabledAndVisible(enabled);
+  public static class ForContext extends PsiViewerAction {
+
+    @Override
+    protected boolean isForContext() {
+      return true;
+    }
   }
 }

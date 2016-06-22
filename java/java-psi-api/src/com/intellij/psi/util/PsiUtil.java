@@ -153,10 +153,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
-    expression.accept(visitor);
-    return visitor.myIsConstant;
+    return expression != null && JavaPsiFacade.getInstance(expression.getProject()).isConstantExpression(expression);
   }
 
   // todo: move to PsiThrowsList?
@@ -979,7 +976,9 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
-  public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+  public static boolean isRawSubstitutor(@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) return false;
+
     for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
     }

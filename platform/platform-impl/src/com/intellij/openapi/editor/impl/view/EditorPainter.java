@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
@@ -400,6 +399,7 @@ class EditorPainter implements TextDrawingCallback {
       });
       visLinesIterator.advance();
     }
+    ComplexTextFragment.flushDrawingCache(g);
   }
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
@@ -832,6 +832,7 @@ class EditorPainter implements TextDrawingCallback {
               break;
             }
           }
+          ComplexTextFragment.flushDrawingCache(g);
         }
       }
     }

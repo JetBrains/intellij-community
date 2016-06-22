@@ -22,6 +22,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import org.jetbrains.io.releaseIfError
+import org.jetbrains.io.writeUtf8
 import java.io.IOException
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicInteger
@@ -295,7 +296,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
         }
         @Suppress("UNCHECKED_CAST")
         (param as Consumer<StringBuilder>).consume(sb)
-        ByteBufUtilEx.writeUtf8(buffer, sb)
+        buffer.writeUtf8(sb)
         sb.setLength(0)
       }
       else {

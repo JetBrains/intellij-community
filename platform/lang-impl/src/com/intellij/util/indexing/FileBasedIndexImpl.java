@@ -2122,8 +2122,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (event.isGenericChange() &&
               event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
             PsiFile file = event.getFile();
+
             if (file != null) {
+              waitUntilIndicesAreInitialized();
               VirtualFile virtualFile = file.getVirtualFile();
+
               if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(virtualFile)) {
                 // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {

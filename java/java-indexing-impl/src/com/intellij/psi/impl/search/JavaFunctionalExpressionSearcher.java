@@ -34,8 +34,10 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.psi.util.*;
-import com.intellij.util.Function;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.HashSet;
@@ -153,7 +155,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       @Override
       public boolean processInReadAction(VirtualFile file) {
         //resolve functional expressions to ensure that functional expression type is appropriate
-        return processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, isVoid, consumer, file);
+        return !file.isValid() || processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, isVoid, consumer, file);
       }
     });
   }

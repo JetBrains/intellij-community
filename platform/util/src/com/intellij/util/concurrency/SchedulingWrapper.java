@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -100,7 +101,23 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    return isTerminated();
+    assert isShutdown() : "must await termination after shutdown() or shutdownNow() only";
+    List<MyScheduledFutureTask> tasks = new ArrayList<MyScheduledFutureTask>(delayQueue);
+    for (MyScheduledFutureTask task : tasks) {
+      if (task.getBackendExecutorService() != backendExecutorService) {
+        continue;
+      }
+      try {
+        task.get(timeout, unit);
+      }
+      catch (ExecutionException ignored) {
+
+      }
+      catch (TimeoutException e) {
+        return false;
+      }
+    }
+    return backendExecutorService.awaitTermination(timeout, unit);
   }
 
   class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
@@ -220,10 +237,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
         LOG.trace("Executing " + BoundedTaskExecutor.info(this));
       }
       boolean periodic = isPeriodic();
-      if (backendExecutorService.isShutdown()) {
-        cancel(false);
-      }
-      else if (!periodic) {
+      if (!periodic) {
         super.run();
       }
       else if (runAndReset()) {
