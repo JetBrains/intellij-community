@@ -246,7 +246,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         else {
           final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
           initializer = parserFacade.createExpressionFromText(initializerText, this);
-          ((LightVirtualFile)initializer.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
+          ((LightVirtualFile)initializer.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
         }
       }
       if (initializer != null && cachedInitializerValue == null) {
