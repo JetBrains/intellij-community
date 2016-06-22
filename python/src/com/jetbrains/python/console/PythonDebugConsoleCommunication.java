@@ -89,7 +89,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       if (processInput != null) {
         try {
           final Charset defaultCharset = EncodingProjectManager.getInstance(myDebugProcess.getProject()).getDefaultCharset();
-          processInput.write((code.getText() + "\n").getBytes(defaultCharset));
+          processInput.write((code.getText()).getBytes(defaultCharset));
           processInput.flush();
         }
         catch (IOException e) {
