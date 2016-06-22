@@ -63,11 +63,15 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   @Nullable
   protected abstract T editItem(T o);
 
+  public boolean isUpDownSupported() {
+    return false;
+  }
+
   @Override
   protected void initPanel() {
     setLayout(new BorderLayout());
 
-    final JPanel panel = ToolbarDecorator.createDecorator(myTable)
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -89,10 +93,27 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
           }
           doEdit();
         }
-      })
-      .disableUpAction()
-      .disableDownAction()
-      .createPanel();
+      });
+
+    if (isUpDownSupported()) {
+      decorator
+        .setMoveUpAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doUp();
+          }})
+        .setMoveDownAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doDown();
+          }
+        });
+    }
+    else {
+      decorator.disableUpAction().disableDownAction();
+    }
+
+    final JPanel panel = decorator.createPanel();
     add(panel, BorderLayout.CENTER);
     final String label = getLabelText();
     if (label != null) {
@@ -216,6 +237,38 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     }
     if (selection >= 0) {
       myTable.setRowSelectionInterval(selection, selection);
+    }
+  }
+  
+  protected void doUp() {
+    doMove(true);
+  }
+
+  protected void doDown() {
+    doMove(false);
+  }
+
+  protected void doMove(boolean up) {
+    if (myTable.isEditing()) {
+      myTable.getCellEditor().stopCellEditing();
+    }
+    
+    final int[] selected = myTable.getSelectedRows();
+    if (selected == null || selected.length == 0) return;
+    Arrays.sort(selected);
+
+    for (int i = up ? 0 : selected.length - 1; (up ? i < selected.length : i >= 0); i += up ? 1 : -1) {
+      int each = selected[i];
+      T tmp = myData.get(each + (up ? -1 : 1));
+      myData.set(each + (up ? -1 : 1), myData.get(each));
+      myData.set(each, tmp);
+    }
+    
+    myTableModel.fireTableDataChanged();
+    
+    for (int each : selected) {
+      int i = each + (up ? -1 : 1);
+      myTable.addRowSelectionInterval(i, i);
     }
   }
 
