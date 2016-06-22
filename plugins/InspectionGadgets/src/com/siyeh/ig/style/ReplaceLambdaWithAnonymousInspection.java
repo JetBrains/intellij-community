@@ -236,14 +236,14 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
+      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
     }
 
     @Override

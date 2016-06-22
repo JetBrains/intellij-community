@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.types;
+package com.siyeh.ig.fixes.style;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.ReplaceMethodRefWithLambdaInspection;
 
-public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
- 
+public class ReplaceMethodReferenceWithLambdaFixTest extends IGQuickFixesTestCase {
   @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.method.ref.with.lambda.intention.name");
+  protected void setUp() throws Exception {
+    super.setUp();
+    ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
+    myFixture.enableInspections(new ReplaceMethodRefWithLambdaInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("replace.method.ref.with.lambda.descriptor");
   }
 
   @Override
   protected String getRelativePath() {
-    return "types/methodRefs2lambda";
+    return "style/methodRefs2lambda";
   }
 
   public void testRedundantCast() throws Exception {
@@ -126,11 +129,5 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
 
   public void testPreserveExpressionQualifier() throws Exception {
     doTest();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }
