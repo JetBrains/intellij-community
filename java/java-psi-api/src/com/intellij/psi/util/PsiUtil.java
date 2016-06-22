@@ -979,7 +979,9 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
-  public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+  public static boolean isRawSubstitutor(@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) return false;
+
     for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
     }
