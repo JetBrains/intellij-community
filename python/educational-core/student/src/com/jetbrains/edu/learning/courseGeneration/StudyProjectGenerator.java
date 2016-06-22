@@ -58,7 +58,7 @@ public class StudyProjectGenerator {
   private static final String COURSE_DESCRIPTION = "description";
   private static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  public StepicUser myUser;
+  @Nullable public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
@@ -85,7 +85,9 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    StudyTaskManager.getInstance(project).setUser(myUser);
+    if (myUser != null) {
+      StudyTaskManager.getInstance(project).setUser(myUser);
+    }
     final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
