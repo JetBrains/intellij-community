@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author vlan
@@ -77,7 +78,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String UNTAR = "untar";
 
   @Nullable private volatile List<PyPackage> myPackagesCache = null;
-  private volatile boolean myUpdatingCache = false;
+  private final AtomicBoolean myUpdatingCache = new AtomicBoolean(false);
 
   @NotNull final private Sdk mySdk;
 
@@ -358,7 +359,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
     final List<PyPackage> currentPackages = myPackagesCache;
     if (alwaysRefresh || currentPackages == null) {
-      myUpdatingCache = true;
       try {
         final List<PyPackage> packages = collectPackages();
         LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
@@ -369,25 +369,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
         myPackagesCache = Collections.emptyList();
         throw e;
       }
-      finally {
-        myUpdatingCache = false;
-      }
     }
     return Collections.unmodifiableList(currentPackages);
   }
 
   private void refreshPackagesSynchronously() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    if (myUpdatingCache) {
-      return;
-    }
-    try {
-      LOG.info("Refreshing installed packages for SDK " + mySdk.getHomePath());
-      refreshAndGetPackages(true);
-    }
-    catch (ExecutionException e) {
-      LOG.warn(e);
-    }
+    PyPackageUtil.updatePackagesSynchronouslyWithGuard(this, myUpdatingCache);
   }
 
   @Nullable
