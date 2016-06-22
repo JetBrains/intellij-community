@@ -1,8 +1,11 @@
 package com.jetbrains.env;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.RerunFailedActionsTestTools;
@@ -12,12 +15,14 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Runner for tests. Provides access to test console and test results.
@@ -169,5 +174,33 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   public int getCurrentRerunStep() {
     return myCurrentRerunStep;
+  }
+
+  /**
+   * Rerun current tests. Make sure there is at least one failed test.
+   * <strong>Run in AWT thread only!</strong>
+   */
+  public void rerunFailedTests() {
+    assert getFailedTestsCount() > 0 : "No failed tests. What you want to rerun?";
+    assert myLastProcessDescriptor != null : "No last run descriptor. First run tests at least one time";
+    final List<ProgramRunner<?>> run = getAvailableRunnersForLastRun();
+    Assert.assertFalse("No runners to rerun", run.isEmpty());
+    final ProgramRunner<?> runner = run.get(0);
+
+    final ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
+    Assert.assertNotNull("No restart action", restartAction);
+
+    final Ref<ProcessHandler> handlerRef = new Ref<>();
+    try {
+      runner.execute(restartAction, descriptor -> handlerRef.set(descriptor.getProcessHandler()));
+    }
+    catch (final ExecutionException e) {
+      throw new AssertionError("ExecutionException can't be thrown in tests. Probably, API changed. Got: " + e);
+    }
+    final ProcessHandler handler = handlerRef.get();
+    if (handler == null) {
+      return;
+    }
+    handler.waitFor();
   }
 }
