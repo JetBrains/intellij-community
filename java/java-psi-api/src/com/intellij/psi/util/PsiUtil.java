@@ -153,10 +153,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
-    expression.accept(visitor);
-    return visitor.isConstant();
+    return expression != null && JavaPsiFacade.getInstance(expression.getProject()).isConstantExpression(expression);
   }
 
   // todo: move to PsiThrowsList?

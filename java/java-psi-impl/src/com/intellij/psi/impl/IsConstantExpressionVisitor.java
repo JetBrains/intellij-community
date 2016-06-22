@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.util;
+package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashMap;
 
@@ -140,7 +141,7 @@ class IsConstantExpressionVisitor extends JavaElementVisitor {
       myIsConstant = false;
       return;
     }
-    PsiExpression initializer = variable.getInitializer();
+    PsiExpression initializer = variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
     if (initializer == null){
       myIsConstant = false;
       return;

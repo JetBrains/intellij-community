@@ -47,7 +47,6 @@ import java.util.*;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private volatile Reference<PsiType> myCachedType;
-  private volatile Object myCachedInitializerValue; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
     this(stub, JavaStubElementTypes.FIELD);
@@ -68,7 +67,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   private void dropCached() {
-    myCachedInitializerValue = null;
     myCachedType = null;
   }
 
@@ -225,32 +223,29 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiExpression getInitializer() {
-    Object cachedInitializerValue = myCachedInitializerValue;
+    return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+  }
+
+  // avoids stub-to-AST switch if possible,
+  // returns the light generated initializer literal expression if stored in stubs, the regular initializer if wasn't
+  public PsiExpression getDetachedInitializer() {
+    final PsiFieldStub stub = getStub();
     PsiExpression initializer;
-    if (cachedInitializerValue instanceof PsiExpression) {
-      initializer = (PsiExpression)cachedInitializerValue;
+    if (stub == null) {
+      initializer = getInitializer();
     }
     else {
-      final PsiFieldStub stub = getStub();
-      if (stub == null) {
-        initializer = (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+      String initializerText = stub.getInitializerText();
+
+      if (StringUtil.isEmpty(initializerText) ||
+          PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
+          PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
+        initializer = getInitializer();
       }
       else {
-        String initializerText = stub.getInitializerText();
-
-        if (StringUtil.isEmpty(initializerText) ||
-            PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
-            PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
-          initializer = (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
-        }
-        else {
-          final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-          initializer = parserFacade.createExpressionFromText(initializerText, this);
-          ((LightVirtualFile)initializer.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
-        }
-      }
-      if (initializer != null && cachedInitializerValue == null) {
-        myCachedInitializerValue = initializer;
+        PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+        initializer = parserFacade.createExpressionFromText(initializerText, this);
+        ((LightVirtualFile)initializer.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
       }
     }
 
@@ -284,37 +279,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Nullable
   private Object _computeConstantValue(Set<PsiVariable> visitedVars) {
-    Object cachedInitializerValue = myCachedInitializerValue;
-    if (cachedInitializerValue != null && !(cachedInitializerValue instanceof PsiExpression)){
-      return cachedInitializerValue;
-    }
-
     PsiType type = getType();
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
 
-    PsiExpression initializer = getInitializer();
+    PsiExpression initializer = getDetachedInitializer();
 
-    Object result = PsiConstantEvaluationHelperImpl.computeCastTo(initializer, type, visitedVars);
-
-    if (initializer instanceof PsiLiteralExpression){
-      myCachedInitializerValue = result;
-    }
-    else{
-      myCachedInitializerValue = initializer;
-    }
-
-
-    return result;
+    return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, type, visitedVars);
   }
 
   @Override
   public Object computeConstantValue() {
-    Object cachedInitializerValue = myCachedInitializerValue;
-    if (cachedInitializerValue != null && !(cachedInitializerValue instanceof PsiExpression)){
-      return cachedInitializerValue;
-    }
-
     return computeConstantValue(new HashSet<PsiVariable>(2));
   }
 
