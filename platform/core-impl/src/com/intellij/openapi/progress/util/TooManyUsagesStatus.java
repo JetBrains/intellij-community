@@ -73,7 +73,7 @@ public class TooManyUsagesStatus {
       //assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed();
       long start = System.currentTimeMillis();
       try {
-        while (System.currentTimeMillis() < start + 1000) {
+        while (System.currentTimeMillis() < start + 2000) {
           if (waitWhileUserClick.await(10, TimeUnit.MILLISECONDS)) break;
           if (myIndicator.isCanceled()) break;
         }

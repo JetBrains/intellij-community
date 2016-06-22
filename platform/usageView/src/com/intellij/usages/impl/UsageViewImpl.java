@@ -866,7 +866,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         Processor<Usage> processor = usage -> {
           if (searchHasBeenCancelled()) return false;
-          TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
+          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
 
           boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
