@@ -15,8 +15,14 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -26,34 +32,33 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public class VcsInitialization {
+public class VcsInitialization implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsInitialization");
 
-  private final List<Pair<VcsInitObject, Runnable>> myList = new ArrayList<Pair<VcsInitObject, Runnable>>();
+  private final List<Pair<VcsInitObject, Runnable>> myList = new ArrayList<>();
   private final Object myLock;
+  @NotNull private final Project myProject;
   private boolean myInitStarted;
   private volatile Future<?> myFuture;
+  private final ProgressIndicator myIndicator = new StandardProgressIndicatorBase();
 
   public VcsInitialization(@NotNull final Project project) {
+    myProject = project;
     myLock = new Object();
 
-    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        myFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              execute();
-            }
-          }
-        });
-      }
+    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      if (project.isDisposed()) return;
+      Task task = new Task.Backgroundable(myProject, "VCS Initialization") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          execute();
+        }
+      };
+
+      myFuture = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task.asBackgroundable(), myIndicator, null);
     });
   }
 
@@ -77,25 +82,35 @@ public class VcsInitialization {
       list = myList;
       myInitStarted = true; // list would not be modified starting from this point
     }
-    Collections.sort(list, new Comparator<Pair<VcsInitObject, Runnable>>() {
-      @Override
-      public int compare(Pair<VcsInitObject, Runnable> o1, Pair<VcsInitObject, Runnable> o2) {
-        return o1.getFirst().getOrder() - o2.getFirst().getOrder();
-      }
-    });
+    Collections.sort(list, (o1, o2) -> o1.getFirst().getOrder() - o2.getFirst().getOrder());
     for (Pair<VcsInitObject, Runnable> pair : list) {
+      ProgressManager.checkCanceled();
       pair.getSecond().run();
     }
   }
 
   @TestOnly
-  public void waitForInitialized() {
+  void waitForInitialized() {
     try {
       myFuture.get();
       myFuture = null;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    myIndicator.cancel();
+    Future<?> future = myFuture;
+    if (future != null) {
+      future.cancel(false);
+      try {
+        future.get();
+      }
+      catch (Exception ignored) {
+      }
     }
   }
 }
