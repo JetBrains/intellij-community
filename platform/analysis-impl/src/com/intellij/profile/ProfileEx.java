@@ -74,11 +74,6 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void setLocal(boolean isLocal) {
-    myIsProjectLevel = !isLocal;
-  }
-
-  @Override
   public void setName(@NotNull String name) {
     myName = name;
   }

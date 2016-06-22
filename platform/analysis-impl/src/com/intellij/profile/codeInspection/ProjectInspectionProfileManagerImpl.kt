@@ -38,7 +38,7 @@ import com.intellij.profile.ProfileEx
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashSet
 import org.jdom.Element
@@ -71,6 +71,8 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
+
+  private val skipDefaultsSerializationFilter = SkipDefaultValuesSerializationFilters(State())
 
   override val schemeManager: SchemeManager<InspectionProfile>
 
@@ -210,7 +212,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
 
   @Synchronized override fun getState(): Element? {
     val result = Element("state")
-    XmlSerializer.serializeInto(this.state, result, SkipDefaultsSerializationFilter())
+    XmlSerializer.serializeInto(this.state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
