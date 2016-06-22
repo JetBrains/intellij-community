@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,13 +182,18 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   @NotNull
   public PsiType getUpperBound () {
+    return getUpperBound(true);
+  }
+
+  @NotNull
+  public PsiType getUpperBound(boolean capture) {
     final PsiType bound = myExistential.getBound();
     if (myExistential.isExtends() && myParameter == null) {
       assert bound != null : myExistential.getCanonicalText();
       return bound;
     }
     else {
-      return myUpperBound;
+      return isCapture() && capture ? PsiUtil.captureToplevelWildcards(myUpperBound, myContext) : myUpperBound;
     }
   }
 
