@@ -79,6 +79,7 @@ public class StepicUser {
 
   @Transient
   public void setPassword(@NotNull final String password) {
+    if (password.isEmpty()) return;
     try {
       PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
     }
