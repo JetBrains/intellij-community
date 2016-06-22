@@ -504,7 +504,8 @@ public class ReflectionUtil {
                 }
               }
 
-              @SuppressWarnings("unchecked") T t = (T)constructor1.newInstance(new Object[parameterTypes.length]);
+              @SuppressWarnings("unchecked")
+              T t = (T)constructor1.newInstance(new Object[parameterTypes.length]);
               return t;
             }
             catch (Exception e1) {
