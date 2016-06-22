@@ -92,9 +92,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   @Override
   @NotNull
   public CompositeElement getNode() {
-    if (getStub() != null) {
-      dropCached(); // have to return tree-based initializer now
-    }
     return (CompositeElement)super.getNode();
   }
 
