@@ -36,7 +36,7 @@ import java.util.Map;
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 3;
-  private StepicUser myUser;
+  private StepicUser myUser = new StepicUser();
   private Course myCourse;
   public int VERSION = 3;
 
@@ -193,12 +193,13 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public void setTurnEditingMode(boolean turnEditingMode) {
     myTurnEditingMode = turnEditingMode;
   }
-
+  
+  @NotNull
   public StepicUser getUser() {
     return myUser;
   }
 
-  public void setUser(StepicUser user) {
+  public void setUser(@NotNull final StepicUser user) {
     myUser = user;
   }
 }
