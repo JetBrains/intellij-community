@@ -184,7 +184,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                showLoginDialog();
+                showLoginDialog(true, "Signing In And Getting Stepic Course List");
               }
             });
           }
@@ -195,8 +195,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     });
   }
 
-  public void showLoginDialog() {
-    final AddRemoteDialog dialog = new AddRemoteDialog();
+  public void showLoginDialog(final boolean refreshCourseList, @NotNull final String progressTitle) {
+    final AddRemoteDialog dialog = new AddRemoteDialog(refreshCourseList, progressTitle);
     dialog.show();
   }
 
@@ -321,8 +321,13 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
   private class AddRemoteDialog extends LoginDialog {
 
-    protected AddRemoteDialog() {
+    private final boolean myRefreshCourseList;
+    private final String myProgressTitle;
+
+    protected AddRemoteDialog(final boolean refreshCourseList, @NotNull final String progressTitle) {
       super();
+      myRefreshCourseList = refreshCourseList;
+      myProgressTitle = progressTitle;
     }
 
     @Override
@@ -342,14 +347,15 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
 
           final List<CourseInfo> courses = myGenerator.getCourses(true);
-          if (courses != null) {
+          if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
+          setOK();
         }
         else {
           setError("Failed to login");
         }
-      }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
+      }, myProgressTitle, true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
   }
 }
