@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import org.jetbrains.annotations.NotNull;
 
 public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
@@ -18,7 +19,7 @@ public class StepicUser {
   public StepicUser() {
   }
   
-  public StepicUser(String email, String password) {
+  public StepicUser(@NotNull final String email, @NotNull final String password) {
     this.myEmail = email;
     setPassword(password);
   }
@@ -31,31 +32,35 @@ public class StepicUser {
     this.id = id;
   }
 
+  @NotNull
   public String getFirstName() {
     return myFirstName;
   }
 
-  public void setFirstName(String firstName) {
+  public void setFirstName(@NotNull final String firstName) {
     this.myFirstName = firstName;
   }
 
+  @NotNull
   public String getLastName() {
     return myLastName;
   }
 
-  public void setLastName(String last_name) {
+  public void setLastName(@NotNull final String last_name) {
     this.myLastName = last_name;
   }
 
+  @NotNull
   public String getEmail() {
     return myEmail;
   }
 
-  public void setEmail(String email) {
+  public void setEmail(@NotNull final String email) {
     this.myEmail = email;
   }
 
   @Transient
+  @NotNull
   public String getPassword() {
     final String login = getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) return "";
@@ -73,7 +78,7 @@ public class StepicUser {
   }
 
   @Transient
-  public void setPassword(String password) {
+  public void setPassword(@NotNull final String password) {
     try {
       PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
     }
@@ -82,6 +87,7 @@ public class StepicUser {
     }
   }
 
+  @NotNull
   public String getName() {
     return StringUtil.join(new String[]{myFirstName, myLastName}, " ");
   }
