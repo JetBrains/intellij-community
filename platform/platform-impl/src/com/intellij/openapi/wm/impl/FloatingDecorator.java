@@ -40,7 +40,7 @@ import java.awt.event.WindowEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class FloatingDecorator extends JDialog {
+public final class FloatingDecorator extends JFrame {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.FloatingDecorator");
 
   static final int DIVIDER_WIDTH = 3;
@@ -66,12 +66,11 @@ public final class FloatingDecorator extends JDialog {
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
 
-  FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
-    super(owner,internalDecorator.getToolWindow().getId());
+  FloatingDecorator(final WindowInfoImpl info,final InternalDecorator internalDecorator){
+    super(internalDecorator.getToolWindow().getId());
     MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
 
-    setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
     final JComponent cp=(JComponent)getContentPane();
     cp.setLayout(new BorderLayout());
 
@@ -84,11 +83,13 @@ public final class FloatingDecorator extends JDialog {
       cp.add(myInternalDecorator,BorderLayout.CENTER);
     }else{
       // Due to JDK's bug #4234645 we cannot support custom decoration on Linux platform.
-      // The prblem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
+      // The problem is that Window.setLocation() doesn't work properly when the dialog is displayable.
       // Therefore we use native WM decoration.
       // TODO[vova] investigate the problem under Mac OSX.
       cp.add(myInternalDecorator,BorderLayout.CENTER);
-      getRootPane().putClientProperty("Window.style", "small");
+
+      // Due to a problem with rendering full screen button in small window style, using normal style for now
+      //getRootPane().putClientProperty("Window.style", "small");
     }
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
