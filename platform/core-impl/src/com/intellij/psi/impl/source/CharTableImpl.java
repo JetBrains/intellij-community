@@ -100,6 +100,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
+  @NotNull
   private static StringHashToCharSequencesMap newStaticSet() {
     final StringHashToCharSequencesMap r = new StringHashToCharSequencesMap(10, 0.9f);
     r.add("==" );
@@ -219,11 +220,11 @@ public class CharTableImpl implements CharTable {
       super(capacity, loadFactor);
     }
 
-    private CharSequence get(CharSequence sequence, int startOffset, int endOffset) {
+    private CharSequence get(@NotNull CharSequence sequence, int startOffset, int endOffset) {
       return getSubSequenceWithHashCode(subSequenceHashCode(sequence, startOffset, endOffset), sequence, startOffset, endOffset);
     }
 
-    private CharSequence getSubSequenceWithHashCode(int hashCode, CharSequence sequence, int startOffset, int endOffset) {
+    private CharSequence getSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
       Object o = get(hashCode);
       if (o == null) return null;
       if (o instanceof CharSequence) {
@@ -244,7 +245,7 @@ public class CharTableImpl implements CharTable {
       return null;
     }
 
-    private static boolean charSequenceSubSequenceEquals(CharSequence cs, CharSequence baseSequence, int startOffset, int endOffset) {
+    private static boolean charSequenceSubSequenceEquals(@NotNull CharSequence cs, @NotNull CharSequence baseSequence, int startOffset, int endOffset) {
       if (cs.length() != endOffset - startOffset) return false;
       if (cs == baseSequence && startOffset == 0) return true;
       for(int i = 0, len = cs.length(); i < len; ++i) {
@@ -253,20 +254,23 @@ public class CharTableImpl implements CharTable {
       return true;
     }
 
-    private CharSequence get(CharSequence sequence) {
+    private CharSequence get(@NotNull CharSequence sequence) {
       return get(sequence, 0, sequence.length());
     }
 
-    private CharSequence add(CharSequence sequence) {
+    @NotNull
+    private CharSequence add(@NotNull CharSequence sequence) {
       return add(sequence, 0, sequence.length());
     }
 
+    @NotNull
     private CharSequence add(CharSequence sequence, int startOffset, int endOffset) {
       int hashCode = subSequenceHashCode(sequence, startOffset, endOffset);
       return getOrAddSubSequenceWithHashCode(hashCode, sequence, startOffset, endOffset);
     }
 
-    private CharSequence getOrAddSubSequenceWithHashCode(int hashCode, CharSequence sequence, int startOffset, int endOffset) {
+    @NotNull
+    private CharSequence getOrAddSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
       int index = index(hashCode);
       String addedSequence = null;
 
@@ -299,7 +303,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
-  private static int subSequenceHashCode(CharSequence sequence, int startOffset, int endOffset) {
+  private static int subSequenceHashCode(@NotNull CharSequence sequence, int startOffset, int endOffset) {
     if (startOffset == 0 && endOffset == sequence.length()) {
       return StringUtil.stringHashCode(sequence);
     }
