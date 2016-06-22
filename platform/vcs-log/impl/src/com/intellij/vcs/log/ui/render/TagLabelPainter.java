@@ -84,7 +84,7 @@ public class TagLabelPainter {
       Color color = getTagColor(type);
       TagIcon tagIcon = new TagIcon(myHeight, myBackground, multiple ? new Color[]{color, color} : new Color[]{color});
 
-      String text = firstRef.getName() + (multiple ? " +" : "");
+      String text = firstRef.getName();
       myLabels.add(Pair.create(text, tagIcon));
 
       myWidth += tagIcon.getIconWidth() + metrics.stringWidth(text) + MIDDLE_PADDING;
