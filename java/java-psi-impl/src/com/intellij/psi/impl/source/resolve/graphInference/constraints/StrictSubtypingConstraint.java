@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.HashSet;
@@ -133,7 +134,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         else if (myS instanceof PsiCapturedWildcardType) {
           final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
           if (upperBound instanceof PsiClassType) {
-            sType = (PsiClassType)upperBound;
+            sType = (PsiClassType)PsiUtil.captureToplevelWildcards(upperBound, ((PsiCapturedWildcardType)myS).getContext());
           }
         }
 
