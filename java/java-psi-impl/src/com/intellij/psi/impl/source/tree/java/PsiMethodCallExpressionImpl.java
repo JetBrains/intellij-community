@@ -237,7 +237,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                           PsiType ret,
                                           JavaResolveResult result, 
                                           LanguageLevel languageLevel) {
-    PsiSubstitutor substitutor = result.getSubstitutor();
+    PsiSubstitutor substitutor = result instanceof MethodCandidateInfo && !PsiPolyExpressionUtil.isMethodCallTypeDependsOnInference(call, method)
+                                 ? ((MethodCandidateInfo)result).getSiteSubstitutor()
+                                 : result.getSubstitutor();
     PsiType substitutedReturnType = substitutor.substitute(ret);
     if (substitutedReturnType == null) {
       return TypeConversionUtil.erasure(ret);
