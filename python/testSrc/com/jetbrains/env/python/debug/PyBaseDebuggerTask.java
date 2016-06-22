@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
@@ -62,6 +61,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected boolean shouldPrintOutput = false;
   protected boolean myProcessCanTerminate;
   protected ExecutionResult myExecutionResult;
+  protected SuspendPolicy myDefaultSuspendPolicy = SuspendPolicy.THREAD;
 
   protected PyBaseDebuggerTask(@Nullable final String relativeTestDataPath) {
     super(relativeTestDataPath);
@@ -183,6 +183,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         doToggleBreakpoint(file, line);
       }
     });
+    setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
 
     addOrRemoveBreakpoint(file, line);
   }
