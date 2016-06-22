@@ -252,16 +252,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("jps-builders")
       }
 
-      // Android Studio: include metrics libraries in $install/lib
-      jar("google-analytics-library.jar") {
-        module("android-annotations")
-        module("common")
-        module("analytics-protos")
-        module("analytics-shared")
-        module("analytics-tracker")
-        module("analytics-publisher")
-      }
-
       fileset(dir: "$home/jps/lib") {
         include(name: "optimizedFileManager.jar")
       }
