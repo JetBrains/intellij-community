@@ -171,4 +171,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   protected abstract HelperPackage getRunner();
   @NotNull
   protected abstract List<String> getTestSpecs();
+
+  /**
+   * @return is it possible to rerun tests now?
+   */
+  public boolean isRerunEnabled() {
+    return !getTestSpecs().isEmpty();
+  }
 }
