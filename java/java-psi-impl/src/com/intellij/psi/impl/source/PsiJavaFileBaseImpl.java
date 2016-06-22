@@ -126,28 +126,27 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
   public PsiImportList getImportList() {
     StubElement<?> stub = getStub();
     if (stub != null) {
       PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
-      if (nodes.length != 1) {
-        reportStubAstMismatch(stub + "; " + stub.getChildrenStubs(), getStubTree(), PsiDocumentManager.getInstance(getProject()).getCachedDocument(this));
-      }
-      return nodes[0];
+      if (nodes.length == 1) return nodes[0];
+      if (nodes.length == 0) return null;
+      reportStubAstMismatch(stub + "; " + stub.getChildrenStubs(), getStubTree(), PsiDocumentManager.getInstance(getProject()).getCachedDocument(this));
     }
 
     ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
-    assert node != null : getFileType() + ", " + getName();
-    return SourceTreeToPsiMap.treeToPsiNotNull(node);
+    return (PsiImportList)SourceTreeToPsiMap.treeElementToPsi(node);
   }
 
   @Override
   @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
+    PsiImportList importList = getImportList();
+    if (importList == null) return EMPTY_ARRAY;
+
     List<PsiElement> array = new ArrayList<PsiElement>();
 
-    PsiImportList importList = getImportList();
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
       if (statement.isOnDemand()) {
@@ -174,8 +173,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
-    List<PsiClass> array = new ArrayList<PsiClass>();
     PsiImportList importList = getImportList();
+    if (importList == null) return PsiClass.EMPTY_ARRAY;
+
+    List<PsiClass> array = new ArrayList<PsiClass>();
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
       if (!statement.isOnDemand()) {
@@ -191,12 +192,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     PsiImportList importList = getImportList();
-    PsiImportStatement[] statements = importList.getImportStatements();
-    for (PsiImportStatement statement : statements) {
-      if (!statement.isOnDemand()) {
-        PsiElement ref = statement.resolve();
-        if (ref != null && getManager().areElementsEquivalent(ref, aClass)) {
-          return statement.getImportReference();
+    if (importList != null) {
+      PsiImportStatement[] statements = importList.getImportStatements();
+      for (PsiImportStatement statement : statements) {
+        if (!statement.isOnDemand()) {
+          PsiElement ref = statement.resolve();
+          if (ref != null && getManager().areElementsEquivalent(ref, aClass)) {
+            return statement.getImportReference();
+          }
         }
       }
     }
@@ -316,7 +319,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         if (!processor.execute(aClass, state)) return false;
       }
 
-      final PsiImportStatement[] importStatements = importList.getImportStatements();
+      final PsiImportStatement[] importStatements = importList != null ? importList.getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
 
       // single-type processing
       for (PsiImportStatement statement : importStatements) {

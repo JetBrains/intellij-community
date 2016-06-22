@@ -91,6 +91,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     boolean doImportStatic;
     if (containingFile instanceof PsiJavaFile) {
       importList = ((PsiJavaFile)containingFile).getImportList();
+      assert importList != null : containingFile;
       PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
       doImportStatic = singleImportStatement == null;
       if (singleImportStatement instanceof PsiImportStaticStatement) {
@@ -116,8 +117,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return this;
   }
 
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
+  public static void bindToElementViaStaticImport(PsiClass qualifierClass, String staticName, PsiImportList importList) throws IncorrectOperationException {
+    assert importList != null;
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand()) {
