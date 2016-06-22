@@ -25,10 +25,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -44,20 +41,12 @@ public class PythonRunner extends DefaultProgramRunner {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof AbstractPythonRunConfiguration;
   }
 
-  @Nullable
   @Override
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
     RunProfile profile = env.getRunProfile();
-
-    if (state instanceof PythonTestCommandLineStateBase) {
-      if (!((PythonTestCommandLineStateBase)state).isRerunEnabled()) {
-        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
-      }
-    }
-
     if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
       executionResult = ((PythonCommandLineState)state).execute(env.getExecutor(), (CommandLinePatcher)profile);
     }
