@@ -224,13 +224,16 @@ public class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
-  private boolean isWriteSafeModality(ModalityState state) {
+  public boolean isWriteSafeModality(ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
 
   public void assertWriteActionAllowed() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (Registry.is("ide.require.transaction.for.model.changes", false) && !myWritingAllowed) {
-      String message = "Write access is allowed from model transactions only, see TransactionGuard documentation for details";
+      String message = "Write access is allowed from write-safe contexts only. " +
+                       "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
+                       "See TransactionGuard documentation for details";
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         message += "; current modality=" + ModalityState.current() + "; known modalities=" + myWriteSafeModalities;
       }
