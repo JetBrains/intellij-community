@@ -38,6 +38,7 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -114,17 +115,20 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
         //check if installed in sdk
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-          final Boolean nose = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST);
-          final Boolean pytest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST);
-          final Boolean attest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST);
-          if (nose != null && nose)
-            testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-          else if (pytest != null && pytest)
-            testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-          else if (attest != null && attest)
-            testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-          if (!testRunner.isEmpty()) {
-            LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+          final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+          if (packages != null) {
+            final boolean nose = PyPackageUtil.findPackage(packages, PyNames.NOSE_TEST) != null;
+            final boolean pytest = PyPackageUtil.findPackage(packages, PyNames.PY_TEST) != null;
+            final boolean attest = PyPackageUtil.findPackage(packages, PyNames.AT_TEST) != null;
+            if (nose)
+              testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+            else if (pytest)
+              testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+            else if (attest)
+              testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+            if (!testRunner.isEmpty()) {
+              LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+            }
           }
         }
       }
