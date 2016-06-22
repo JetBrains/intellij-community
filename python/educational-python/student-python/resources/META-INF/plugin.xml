@@ -26,7 +26,6 @@
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
-    <pyReferenceResolveProvider implementation="com.jetbrains.edu.learning.PyStudyReferenceResolveProvider"/>
     <importResolver implementation="com.jetbrains.edu.learning.PyStudyImportResolver"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
