@@ -17,6 +17,7 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,42 +114,47 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   @Nullable
   @Override
   public Element getState() {
-    Element el = new Element("taskManager");
-    if (myCourse != null) {
-      Element courseElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
-      XmlSerializer.serializeInto(this, courseElement);
-      el.addContent(courseElement);
+    if (myCourse == null) {
+      return null;
     }
+    Element el = new Element("taskManager");
+    Element courseElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    XmlSerializer.serializeInto(this, courseElement);
+    el.addContent(courseElement);
     return el;
   }
 
   @Override
   public void loadState(Element state) {
-    int version = StudySerializationUtils.Xml.getVersion(state);
-    if (version == -1) {
-      LOG.error("StudyTaskManager doesn't contain any version:\n" + state.getValue());
-      return;
-    }
-    switch (version) {
-      case 1:
-        state = StudySerializationUtils.Xml.convertToSecondVersion(state);
-      case 2:
-        state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
-      //uncomment for future versions
-      //case 3:
-      //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
-    }
-
-    XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
-    VERSION = CURRENT_VERSION;
-    if (myCourse != null) {
-      myCourse.initCourse(true);
-      if (version != VERSION) {
-        String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", myCourse.getName());
-        if (new File(updatedCoursePath).exists()) {
-          myCourse.setCourseDirectory(updatedCoursePath);
+    try {
+      int version = StudySerializationUtils.Xml.getVersion(state);
+      if (version == -1) {
+        LOG.error("StudyTaskManager doesn't contain any version:\n" + state.getValue());
+        return;
+      }
+      switch (version) {
+        case 1:
+          state = StudySerializationUtils.Xml.convertToSecondVersion(state);
+        case 2:
+          state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
+          //uncomment for future versions
+          //case 3:
+          //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
+      }
+      XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
+      VERSION = CURRENT_VERSION;
+      if (myCourse != null) {
+        myCourse.initCourse(true);
+        if (version != VERSION) {
+          String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", myCourse.getName());
+          if (new File(updatedCoursePath).exists()) {
+            myCourse.setCourseDirectory(updatedCoursePath);
+          }
         }
       }
+    }
+    catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
+      LOG.error("Unexpected course format:\n", new XMLOutputter().outputString(state));
     }
   }
 
@@ -187,7 +193,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public void setTurnEditingMode(boolean turnEditingMode) {
     myTurnEditingMode = turnEditingMode;
   }
-  
+
   public StepicUser getUser() {
     return myUser;
   }
