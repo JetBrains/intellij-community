@@ -132,11 +132,11 @@ class DebugConsoleStdIn(BaseStdIn):
         try:
             cmd = self.debugger.cmd_factory.make_input_requested_message()
             self.debugger.writer.add_command(cmd)
-            return self.original_stdin.readline(*args, **kwargs)
         except Exception:
             import traceback
             traceback.print_exc()
             return '\n'
+        return self.original_stdin.readline(*args, **kwargs)
 
 
 class CodeFragment:
