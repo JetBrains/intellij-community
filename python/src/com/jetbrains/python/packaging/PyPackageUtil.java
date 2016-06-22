@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author vlan
@@ -292,6 +294,35 @@ public class PyPackageUtil {
     });
     return packagesRef.get();
   }
+
+  /**
+   * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
+   * This behavior in enforced by the parameter isUpdating.
+   * 
+   * @param manager    package manager for SDK
+   * @param isUpdating flag indicating whether another refresh is already running
+   * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
+   */
+  public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    if (!isUpdating.compareAndSet(false, true)) {
+      return false;
+    }
+    try {
+      if (manager instanceof PyPackageManagerImpl) {
+        LOG.info("Refreshing installed packages for SDK " + ((PyPackageManagerImpl)manager).getSdk().getHomePath());
+      }
+      manager.refreshAndGetPackages(true);
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    finally {
+      isUpdating.set(false);
+    }
+    return true;
+  }
+  
 
   @Nullable
   public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {

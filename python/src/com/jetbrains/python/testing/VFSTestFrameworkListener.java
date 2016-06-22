@@ -33,18 +33,21 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: catherine
  */
 public class VFSTestFrameworkListener {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
+  private final AtomicBoolean myIsUpdating = new AtomicBoolean(false);
   private final MergingUpdateQueue myQueue;
   private final PyTestFrameworkService myService;
 
@@ -111,16 +114,20 @@ public class VFSTestFrameworkListener {
   /**
    * @return null if we can't be sure
    */
-  public static Boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
+  public Boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
       return null;
     }
-    final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-    if (packages == null) {
-      return null;
+    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+    final boolean refreshed = PyPackageUtil.updatePackagesSynchronouslyWithGuard(manager, myIsUpdating);
+    if (refreshed) {
+      final List<PyPackage> packages = manager.getPackages();
+      if (packages != null) {
+        return PyPackageUtil.findPackage(packages, testPackageName) != null;
+      }
     }
-    return PyPackageUtil.findPackage(packages, testPackageName) != null;
+    return null;
   }
 
   public static VFSTestFrameworkListener getInstance() {
