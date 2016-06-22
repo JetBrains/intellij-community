@@ -924,8 +924,45 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
   
+  // PY-3077
   public void testPercentStringDictLiteralArgument() {
     doTest();
+  }
+  
+  // PY-19839
+  public void testPercentStringDictRefKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictFuncKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithZipCall() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithListArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithPackedDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
   }
 
   // PY-17437
