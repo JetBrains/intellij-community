@@ -295,4 +295,14 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testListGetItemWithSlice() {
     doTest();
   }
+
+  // PY-19884
+  public void testAbsSetAndMutableSet() {
+    doTest();
+  }
+
+  // PY-19884
+  public void testSetMethods() {
+    doTest();
+  }
 }

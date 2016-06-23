@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
@@ -50,7 +51,12 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
   @Override
   public boolean handlesFile(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
-    return fileType == JavaFileType.INSTANCE || fileType == JavaClassFileType.INSTANCE;
+    return fileType == JavaFileType.INSTANCE ||
+           fileType == JavaClassFileType.INSTANCE && hasDefaultStubBuilder(file);
+  }
+
+  private static boolean hasDefaultStubBuilder(@NotNull VirtualFile file) {
+    return !(ClassFileDecompilers.find(file) instanceof ClassFileDecompilers.Full);
   }
 
   @Nullable

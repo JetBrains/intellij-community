@@ -454,7 +454,7 @@ public class ProjectBytecodeAnalysis {
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
-    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
+    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
   }
 }

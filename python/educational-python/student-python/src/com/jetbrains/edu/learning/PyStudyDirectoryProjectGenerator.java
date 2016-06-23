@@ -68,7 +68,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
       @Override
       public void mouseClicked(MouseEvent e) {
         if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
-          mySettingsPanel.showLoginDialog();
+          mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
 
@@ -141,6 +141,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     return mySettingsPanel;
   }
 
+  @NotNull
   public List<CourseInfo> getCourses() {
     return myGenerator.getCoursesUnderProgress(false, "Getting Courses", ProjectManager.getInstance().getDefaultProject());
   }

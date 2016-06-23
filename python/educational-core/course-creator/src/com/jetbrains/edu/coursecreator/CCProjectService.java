@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +41,7 @@ import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.*;
  */
 @State(name = "CCProjectService", storages = @Storage("course_service.xml"))
 public class CCProjectService implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(CCProjectService.class);
   private Course myCourse;
   @Transient private final Project myProject;
 
@@ -61,38 +63,45 @@ public class CCProjectService implements PersistentStateComponent<Element> {
 
   @Override
   public Element getState() {
+    if (myCourse == null) {
+      return null;
+    }
     return XmlSerializer.serialize(this);
   }
 
   @Override
   public void loadState(Element state) {
-    Element courseElement = getChildWithName(state, COURSE).getChild(COURSE_TITLED);
-    for (Element lesson : getChildList(courseElement, LESSONS)) {
-      int lessonIndex = getAsInt(lesson, INDEX);
-      for (Element task : getChildList(lesson, TASK_LIST)) {
-        int taskIndex = getAsInt(task, INDEX);
-        Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
-        for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
-          Element taskFileElement = entry.getValue();
-          String name = entry.getKey();
-          String answerName = FileUtil.getNameWithoutExtension(name) + CCUtils.ANSWER_EXTENSION_DOTTED + FileUtilRt.getExtension(name);
-          Document document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, answerName);
-          if (document == null) {
-            continue;
-          }
-          for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
-            Element lineElement = getChildWithName(placeholder, LINE);
-            int line = lineElement != null ? Integer.valueOf(lineElement.getAttributeValue(VALUE)) : 0;
-            Element startElement = getChildWithName(placeholder, START);
-            int start = startElement != null ? Integer.valueOf(startElement.getAttributeValue(VALUE)) : 0;
-            int offset = document.getLineStartOffset(line) + start;
-            addChildWithName(placeholder, OFFSET, offset);
-            addChildWithName(placeholder, "useLength", "false");
+    try {
+      Element courseElement = getChildWithName(state, COURSE).getChild(COURSE_TITLED);
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        int lessonIndex = getAsInt(lesson, INDEX);
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          int taskIndex = getAsInt(task, INDEX);
+          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
+          for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
+            Element taskFileElement = entry.getValue();
+            String name = entry.getKey();
+            String answerName = FileUtil.getNameWithoutExtension(name) + CCUtils.ANSWER_EXTENSION_DOTTED + FileUtilRt.getExtension(name);
+            Document document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, answerName);
+            if (document == null) {
+              continue;
+            }
+            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
+              Element lineElement = getChildWithName(placeholder, LINE);
+              int line = lineElement != null ? Integer.valueOf(lineElement.getAttributeValue(VALUE)) : 0;
+              Element startElement = getChildWithName(placeholder, START);
+              int start = startElement != null ? Integer.valueOf(startElement.getAttributeValue(VALUE)) : 0;
+              int offset = document.getLineStartOffset(line) + start;
+              addChildWithName(placeholder, OFFSET, offset);
+              addChildWithName(placeholder, "useLength", "false");
+            }
           }
         }
       }
+      XmlSerializer.deserializeInto(this, state);
+    } catch (StudyUnrecognizedFormatException e) {
+      LOG.error(e);
     }
-    XmlSerializer.deserializeInto(this, state);
   }
 
   public static CCProjectService getInstance(@NotNull Project project) {

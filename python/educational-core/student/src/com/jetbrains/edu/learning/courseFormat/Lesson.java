@@ -11,11 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements StudyItem {
-  public int id;
+  @Expose private int myId;
   @Transient public List<Integer> steps;
   @Transient public List<String> tags;
-  @Transient
-  Boolean is_public;
+  @Transient boolean is_public;
 
   @Expose
   @SerializedName("title")
@@ -96,5 +95,13 @@ public class Lesson implements StudyItem {
       }
     }
     return StudyStatus.Solved;
+  }
+
+  public int getId() {
+    return myId;
+  }
+
+  public void setId(int id) {
+    this.myId = id;
   }
 }

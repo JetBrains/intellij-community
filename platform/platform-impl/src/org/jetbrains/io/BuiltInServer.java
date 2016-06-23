@@ -148,7 +148,7 @@ public class BuiltInServer implements Disposable {
 
       ChannelFuture future = bootstrap.bind(address, port).awaitUninterruptibly();
       if (future.isSuccess()) {
-        channelRegistrar.add(future.channel(), isEventLoopGroupOwner);
+        channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
         return port;
       }
       else if (!tryAnyPort && i == portsCount - 1) {
@@ -159,7 +159,7 @@ public class BuiltInServer implements Disposable {
     Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
     ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
     if (future.isSuccess()) {
-      channelRegistrar.add(future.channel(), isEventLoopGroupOwner);
+      channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner);
       return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
     ExceptionUtil.rethrowAll(future.cause());

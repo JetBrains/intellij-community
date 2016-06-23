@@ -74,7 +74,7 @@ public class StudyNavigator {
   }
 
   public static  void navigateToAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder answerPlaceholder) {
-    if (editor.isDisposed() || !answerPlaceholder.isValid(editor.getDocument())) {
+    if (editor.isDisposed()) {
       return;
     }
     editor.getCaretModel().moveToOffset(answerPlaceholder.getOffset());

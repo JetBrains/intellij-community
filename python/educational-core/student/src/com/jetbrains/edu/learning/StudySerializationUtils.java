@@ -16,11 +16,9 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +40,8 @@ public class StudySerializationUtils {
 
   private StudySerializationUtils() {
   }
+
+  public static class StudyUnrecognizedFormatException extends Exception {}
 
   public static class Xml {
     public final static String COURSE_ELEMENT = "courseElement";
@@ -77,7 +77,7 @@ public class StudySerializationUtils {
     private Xml() {
     }
 
-    public static int getVersion(Element element) {
+    public static int getVersion(Element element) throws StudyUnrecognizedFormatException {
       if (element.getChild(COURSE_ELEMENT) != null) {
         return 1;
       }
@@ -89,10 +89,10 @@ public class StudySerializationUtils {
         return -1;
       }
 
-      return Integer.valueOf(versionElement.getAttributeValue("value"));
+      return Integer.valueOf(versionElement.getAttributeValue(VALUE));
     }
 
-    public static Element convertToSecondVersion(Element element) {
+    public static Element convertToSecondVersion(Element element) throws StudyUnrecognizedFormatException {
       final Element oldCourseElement = element.getChild(COURSE_ELEMENT);
       Element state = new Element(MAIN_ELEMENT);
 
@@ -108,7 +108,7 @@ public class StudySerializationUtils {
       addChildWithName(authorElement, FIRST_NAME, names[0]);
       addChildWithName(authorElement, SECOND_NAME, names.length == 1 ? "" : names[1]);
 
-      addChildList(course, AUTHORS, Arrays.asList(authorElement));
+      addChildList(course, AUTHORS, Collections.singletonList(authorElement));
 
       Element courseDirectoryElement = getChildWithName(course, RESOURCE_PATH);
       renameElement(courseDirectoryElement, COURSE_DIRECTORY);
@@ -138,7 +138,8 @@ public class StudySerializationUtils {
       return element;
     }
 
-    public static Map<String, String> fillStatusMap(Element taskManagerElement, String mapName, XMLOutputter outputter) {
+    public static Map<String, String> fillStatusMap(Element taskManagerElement, String mapName, XMLOutputter outputter)
+      throws StudyUnrecognizedFormatException {
       Map<Element, String> sourceMap = getChildMap(taskManagerElement, mapName);
       Map<String, String> destMap = new HashMap<>();
       for (Map.Entry<Element, String> entry : sourceMap.entrySet()) {
@@ -151,7 +152,7 @@ public class StudySerializationUtils {
       return destMap;
     }
 
-    public static Element convertToThirdVersion(Element state, Project project) {
+    public static Element convertToThirdVersion(Element state, Project project) throws StudyUnrecognizedFormatException {
       Element taskManagerElement = state.getChild(MAIN_ELEMENT);
       XMLOutputter outputter = new XMLOutputter();
 
@@ -205,7 +206,7 @@ public class StudySerializationUtils {
       return taskStatus;
     }
 
-    public static void addInitialState(Document document, Element placeholder) {
+    public static void addInitialState(Document document, Element placeholder) throws StudyUnrecognizedFormatException {
       Element initialState = getChildWithName(placeholder, INITIAL_STATE).getChild(MY_INITIAL_STATE);
       int initialLine = getAsInt(initialState, MY_LINE);
       int initialStart = getAsInt(initialState, MY_START);
@@ -214,18 +215,18 @@ public class StudySerializationUtils {
       renameElement(getChildWithName(initialState, MY_LENGTH), LENGTH);
     }
 
-    public static void addOffset(Document document, Element placeholder) {
+    public static void addOffset(Document document, Element placeholder) throws StudyUnrecognizedFormatException {
       int line = getAsInt(placeholder, LINE);
       int start = getAsInt(placeholder, START);
       int offset = document.getLineStartOffset(line) + start;
       addChildWithName(placeholder, OFFSET, offset);
     }
 
-    public static int getAsInt(Element element, String name) {
+    public static int getAsInt(Element element, String name) throws StudyUnrecognizedFormatException {
       return Integer.valueOf(getChildWithName(element, name).getAttributeValue(VALUE));
     }
 
-    public static void incrementIndex(Element element) {
+    public static void incrementIndex(Element element) throws StudyUnrecognizedFormatException {
       Element index = getChildWithName(element, INDEX);
       int indexValue = Integer.parseInt(index.getAttributeValue(VALUE));
       changeValue(index, indexValue + 1);
@@ -263,7 +264,7 @@ public class StudySerializationUtils {
       return addChildWithName(parent, name, listElement);
     }
 
-    public static List<Element> getChildList(Element parent, String name) {
+    public static List<Element> getChildList(Element parent, String name) throws StudyUnrecognizedFormatException {
       Element listParent = getChildWithName(parent, name);
       if (listParent != null) {
         Element list = listParent.getChild(LIST);
@@ -274,8 +275,7 @@ public class StudySerializationUtils {
       return Collections.emptyList();
     }
 
-    @Nullable
-    public static Element getChildWithName(Element parent, String name) {
+    public static Element getChildWithName(Element parent, String name) throws StudyUnrecognizedFormatException {
       for (Element child : parent.getChildren()) {
         Attribute attribute = child.getAttribute(NAME);
         if (attribute == null) {
@@ -285,10 +285,10 @@ public class StudySerializationUtils {
           return child;
         }
       }
-      return null;
+      throw new StudyUnrecognizedFormatException();
     }
 
-    public static <K, V> Map<K, V> getChildMap(Element element, String name) {
+    public static <K, V> Map<K, V> getChildMap(Element element, String name) throws StudyUnrecognizedFormatException {
       Element mapParent = getChildWithName(element, name);
       if (mapParent != null) {
         Element map = mapParent.getChild(MAP);

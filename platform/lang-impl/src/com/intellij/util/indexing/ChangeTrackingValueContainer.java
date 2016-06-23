@@ -127,7 +127,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
       }
 
-      if (myAdded != null && newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD) {
+      if ((myAdded != null || myInvalidated != null) && newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
         fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
       }

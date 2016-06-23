@@ -398,7 +398,8 @@ public class FileUtilRt {
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
-          List<String> list = Arrays.asList(f.getParentFile().list());
+          String[] children = f.getParentFile().list();
+          List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
           maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
           throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
                                 "' list ("+list.size()+" children): " + list);

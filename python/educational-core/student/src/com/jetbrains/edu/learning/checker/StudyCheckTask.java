@@ -17,6 +17,7 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
@@ -95,7 +96,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         onTaskFailed(testsOutput.getMessage());
       }
       runAfterTaskCheckedActions();
-      postAttemptToStepic(testsOutput);
+      final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
+        postAttemptToStepic(testsOutput);
+      }
     }
   }
 

@@ -163,7 +163,7 @@ public class StepicWrappers {
     public LessonWrapper(Lesson lesson) {
       this.lesson = new Lesson();
       this.lesson.setName(lesson.getName());
-      this.lesson.id = lesson.id;
+      this.lesson.setId(lesson.getId());
       this.lesson.steps = new ArrayList<Integer>();
     }
   }

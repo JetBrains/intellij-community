@@ -36,7 +36,6 @@ public class SingleClassHierarchy extends ClassHierarchy {
   private final BitSet myCoveredFiles;
   private final BitSet myAmbiguousSupers;
   private final BitSet myAnonymous;
-  private final List<StubClassAnchor> myCoveredClasses;
   private final StubClassAnchor[] myClassAnchors;
   private final StubClassAnchor[] myClassAnchorsByFileIds;
   private int[] mySubtypes;
@@ -50,7 +49,6 @@ public class SingleClassHierarchy extends ClassHierarchy {
     connectSubTypes(classSymbols);
     myAmbiguousSupers = calcAmbiguousSupers(classSymbols);
     myAnonymous = calcAnonymous(classSymbols);
-    myCoveredClasses = Collections.unmodifiableList(ContainerUtil.filter(myClassAnchors, this::isCovered));
   }
 
   @NotNull
@@ -96,7 +94,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @Override
   @NotNull
   public List<StubClassAnchor> getCoveredClasses() {
-    return myCoveredClasses;
+    return ContainerUtil.filter(myClassAnchors, this::isCovered);
   }
 
   @Override
@@ -149,7 +147,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @NotNull
   @Override
   public GlobalSearchScope restrictToUncovered(@NotNull GlobalSearchScope scope) {
-    if (myCoveredClasses.isEmpty()) {
+    if (myCoveredFiles.isEmpty()) {
       return scope;
     }
 

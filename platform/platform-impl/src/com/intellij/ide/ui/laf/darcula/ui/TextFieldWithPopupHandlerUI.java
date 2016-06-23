@@ -17,8 +17,13 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTextFieldUI;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.*;
+
+import static javax.swing.SwingConstants.WEST;
 
 /**
  * @author Konstantin Bulenkov
@@ -84,6 +89,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI {
       }
     });
   }
+
+  @Override
+  public int getNextVisualPositionFrom(JTextComponent t, int pos, Position.Bias b, int direction, Position.Bias[] biasRet)
+    throws BadLocationException {
+    if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
+      return t.getSelectionStart();
+    }
+    return super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+  }
+
 
   public static boolean isSearchField(Component c) {
     return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty("JTextField.variant"));

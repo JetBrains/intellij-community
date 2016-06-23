@@ -33,7 +33,7 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,14 +170,26 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
         return myPermanentCommitsInfo.getNodeId(head);
       }
     });
-    BitSetFlags flags = new BitSetFlags(myPermanentLinearGraph.nodesCount());
-    myReachableNodes.walk(headIds, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer node) {
-        flags.set(node, true);
-      }
-    });
-    return new IntContainedInBranchCondition(flags);
+    if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
+      final TIntHashSet branchNodes = new TIntHashSet();
+      myReachableNodes.walk(headIds, new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
+        }
+      });
+      return new IntContainedInBranchCondition<CommitId>(branchNodes);
+    }
+    else {
+      final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
+      myReachableNodes.walk(headIds, new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
+        }
+      });
+      return new ContainedInBranchCondition<CommitId>(branchNodes);
+    }
   }
 
   @NotNull
@@ -217,16 +229,29 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
   }
 
-  private class IntContainedInBranchCondition implements Condition<CommitId> {
-    private final BitSetFlags myBranchNodes;
+  private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final TIntHashSet myBranchNodes;
 
-    public IntContainedInBranchCondition(BitSetFlags branchNodes) {
+    public IntContainedInBranchCondition(TIntHashSet branchNodes) {
       myBranchNodes = branchNodes;
     }
 
     @Override
     public boolean value(CommitId commitId) {
-      return myBranchNodes.get(myPermanentCommitsInfo.getNodeId(commitId));
+      return myBranchNodes.contains((Integer)commitId);
+    }
+  }
+
+  private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final Set<CommitId> myBranchNodes;
+
+    public ContainedInBranchCondition(Set<CommitId> branchNodes) {
+      myBranchNodes = branchNodes;
+    }
+
+    @Override
+    public boolean value(CommitId commitId) {
+      return myBranchNodes.contains(commitId);
     }
   }
 }

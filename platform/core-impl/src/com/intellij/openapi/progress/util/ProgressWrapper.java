@@ -40,7 +40,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   }
 
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
-    assert original instanceof StandardProgressIndicator : "Original indicator must be StandardProcessIndicator";
+    assert original instanceof StandardProgressIndicator : "Original indicator must be StandardProcessIndicator: " + original;
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
     nested = 1 + (original instanceof ProgressWrapper ? ((ProgressWrapper)original).nested : -1);
