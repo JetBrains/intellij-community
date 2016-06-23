@@ -211,6 +211,8 @@ class TeamcityTestResult(TestResult):
 
   def __getDuration(self, test):
     start = getattr(test, "startTime", datetime.datetime.now())
+    assert isinstance(start, datetime.datetime), \
+      "You testcase has property named 'startTime' (value {0}). Please, rename it".format(start)
     d = datetime.datetime.now() - start
     duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
     return duration
