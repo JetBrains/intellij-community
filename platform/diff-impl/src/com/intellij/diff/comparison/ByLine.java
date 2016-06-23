@@ -140,8 +140,8 @@ public class ByLine {
     final ExpandChangeBuilder builder = new ExpandChangeBuilder(lines1, lines2);
     new Object() {
       private CharSequence sample = null;
-      private int last1 = -1;
-      private int last2 = -1;
+      private int last1 = 0;
+      private int last2 = 0;
 
       public void run() {
         for (Range range : changes.iterateUnchanged()) {
@@ -160,8 +160,6 @@ public class ByLine {
               else {
                 flush(index1, index2);
                 sample = line1.getContent();
-                last1 = index1;
-                last2 = index2;
               }
             }
           }
@@ -172,16 +170,21 @@ public class ByLine {
       private void flush(int line1, int line2) {
         if (sample == null) return;
 
+        int start1 = Math.max(last1, builder.getIndex1());
+        int start2 = Math.max(last2, builder.getIndex2());
+
         TIntArrayList subLines1 = new TIntArrayList();
         TIntArrayList subLines2 = new TIntArrayList();
-        for (int i = last1; i < line1; i++) {
+        for (int i = start1; i < line1; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
             subLines1.add(i);
+            last1 = i + 1;
           }
         }
-        for (int i = last2; i < line2; i++) {
+        for (int i = start2; i < line2; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines2.get(i).getContent())) {
             subLines2.add(i);
+            last2 = i + 1;
           }
         }
 
@@ -189,8 +192,6 @@ public class ByLine {
         alignExactMatching(subLines1, subLines2);
 
         sample = null;
-        last1 = -1;
-        last2 = -1;
       }
 
       private void alignExactMatching(TIntArrayList subLines1, TIntArrayList subLines2) {

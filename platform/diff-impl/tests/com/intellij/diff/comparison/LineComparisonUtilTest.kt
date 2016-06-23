@@ -451,7 +451,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  fun `test regression - second step correction should be performed if there are no ambigous matchings`() {
+  fun `test regression - second step correction should be performed if there are no ambiguous matchings`() {
     lines {
       ("}_ }" - " }_}")
       ("-_--" - "--_-").default()
@@ -479,6 +479,23 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       (" X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_ X" - "X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X ")
       ("--_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_-_--" - "-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _--").default()
       ("  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_--" - " _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step correction should search for matchings in its prefix`() {
+    lines() {
+      ("Z_X_Z_X __Y" - "X__Y")
+      ("-_ _-_--__ " - " __ ").default()
+      ("-_-_-_  __ " - " __ ").trim()
+      testAll()
+    }
+
+    // do not break other IW-matchings during second step
+    lines() {
+      ("Z_X_K_Z_X __Y" - "K _X__Y")
+      ("-_-_-_-_--__ " - "--_-__ ").default()
+      ("-_-_ _-_  __ " - "  _ __ ").trim()
       testAll()
     }
   }

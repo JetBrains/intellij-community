@@ -272,6 +272,14 @@ public class DiffIterableUtil {
       myLength2 = length2;
     }
 
+    public int getIndex1() {
+      return myIndex1;
+    }
+
+    public int getIndex2() {
+      return myIndex2;
+    }
+
     protected void addChange(int start1, int start2, int end1, int end2) {
       Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
       if (myLastChange != null) {
