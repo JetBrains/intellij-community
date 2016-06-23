@@ -1416,10 +1416,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                          final Evaluator[] argumentEvaluators) {
     int lastParam = declaredParams.length - 1;
     if (lastParam >= 0 && declaredParams[lastParam].isVarArgs() && argumentEvaluators.length > lastParam) {
-      // only wrap if the first varargs parameter is null for now
-      if (!TypeConversionUtil.isNullType(actualArgumentExpressions[lastParam].getType())) {
-        return argumentEvaluators;
-      }
       // do not wrap arrays twice
       if (argumentEvaluators.length - lastParam == 1 && actualArgumentExpressions[lastParam].getType() instanceof PsiArrayType) {
         return argumentEvaluators;
