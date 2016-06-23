@@ -74,6 +74,9 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
   @NotNull private static final String LOG_KIND = "hashes";
   private static final int VERSION = 3;
+  @NotNull private static final String ROOT_STORAGE_KIND = "roots";
+  private static final int ROOTS_STORAGE_VERSION = 0;
+
   private static final int NO_INDEX = -1;
 
   @NotNull private final PersistentEnumerator<CommitId> myPersistentEnumerator;
@@ -91,8 +94,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     myPersistentEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), LOG_KIND,
                                                                        PersistentUtil.calcLogId(project, logProviders), VERSION);
 
+    // cleanup old root storages, to remove after 2016.3 release
+    PersistentUtil
+      .cleanupOldStorageFile(project.getName() + "." + project.getBaseDir().getPath().hashCode(), ROOT_STORAGE_KIND, ROOTS_STORAGE_VERSION);
+
     Disposer.register(parent, this);
   }
+
 
   @Nullable
   private CommitId doGetCommitId(int index) throws IOException {
