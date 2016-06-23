@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.quickFix;
+package com.intellij.codeInspection.lambda;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  */
-public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntentionAction {
-  public static final Logger LOG = Logger.getInstance("#" + RedundantLambdaParameterTypeIntention.class.getName());
+public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalInspectionTool {
+  public static final Logger LOG = Logger.getInstance("#" + RedundantLambdaParameterTypeInspection.class.getName());
 
   @NotNull
   @Override
-  public String getFamilyName() {
-    return "Remove redundant types";
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitParameterList(PsiParameterList parameterList) {
+        super.visitParameterList(parameterList);
+        if (isApplicable(parameterList)) {
+          holder.registerProblem(parameterList, "Remove redundant types", new LambdaParametersFix());
+        }
+      }
+    };
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    final PsiParameterList parameterList = PsiTreeUtil.getParentOfType(element, PsiParameterList.class);
-    if (parameterList == null) return false;
+  private static boolean isApplicable(@NotNull PsiParameterList parameterList) {
     final PsiElement parent = parameterList.getParent();
     if (!(parent instanceof PsiLambdaExpression)) return false;
     final PsiLambdaExpression expression = (PsiLambdaExpression)parent;
@@ -73,9 +72,9 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
 
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           final PsiExpression[] arguments = ((PsiExpressionList)lambdaParent).getExpressions();
-          final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+          final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(parameterList.getProject());
           arguments[idx] = javaPsiFacade.getElementFactory().createExpressionFromText(
-            "(" + StringUtil.join(expression.getParameterList().getParameters(), parameter -> parameter.getName(), ", ") + ") -> {}", expression);
+            "(" + StringUtil.join(expression.getParameterList().getParameters(), PsiParameter::getName, ", ") + ") -> {}", expression);
           final PsiParameter[] methodParams = method.getParameterList().getParameters();
           final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
             .inferTypeArguments(typeParameters, methodParams, arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
@@ -85,8 +84,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
             final PsiType psiType = substitutor.substitute(parameter);
             if (psiType == null || dependsOnTypeParams(psiType, expression, parameter)) return false;
           }
-          
-          
+
           final PsiType paramType;
           if (idx < methodParams.length) {
             paramType = methodParams[idx].getType();
@@ -107,12 +105,6 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
     return false;
   }
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-    removeTypes(lambdaExpression);
-  }
-
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
@@ -121,7 +113,7 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
         text = parameters[0].getName();
       }
       else {
-        text = "(" + StringUtil.join(parameters, parameter -> parameter.getName(), ", ") + ")";
+        text = "(" + StringUtil.join(parameters, PsiParameter::getName, ", ") + ")";
       }
       final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
         .createExpressionFromText(text + "->{}", lambdaExpression);
@@ -134,5 +126,30 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
                                              PsiTypeParameter param2Check) {
     return LambdaUtil.depends(type, new LambdaUtil.TypeParamsChecker(expr, PsiUtil
       .resolveGenericsClassInType(LambdaUtil.getFunctionalInterfaceType(expr, false)).getElement()), param2Check);
+  }
+
+  private static class LambdaParametersFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove redundant types";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiLambdaExpression) {
+        removeTypes((PsiLambdaExpression)parent);
+      }
+    }
   }
 }
