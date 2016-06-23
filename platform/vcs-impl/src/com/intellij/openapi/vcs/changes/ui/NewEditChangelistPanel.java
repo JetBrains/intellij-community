@@ -37,8 +37,8 @@ import java.awt.*;
 import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
-  private final EditorTextField myNameTextField;
-  private final EditorTextField myDescriptionTextArea;
+  protected final EditorTextField myNameTextField;
+  protected final EditorTextField myDescriptionTextArea;
   private final JPanel myAdditionalControlsPanel;
   private final JCheckBox myMakeActiveCheckBox;
 
