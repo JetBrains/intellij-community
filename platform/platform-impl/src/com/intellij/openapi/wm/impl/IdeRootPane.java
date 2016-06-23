@@ -89,7 +89,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private boolean myFullScreen;
 
   public IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application, final IdeFrame frame) {
-    if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() /*|| UIUtil.isUnderIntelliJLaF()*/) && frame instanceof IdeFrameImpl) {
+    if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
       setWindowDecorationStyle(FRAME);
     }
