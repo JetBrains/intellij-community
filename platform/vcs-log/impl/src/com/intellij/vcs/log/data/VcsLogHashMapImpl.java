@@ -72,7 +72,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   };
 
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
-  @NotNull private static final String LOG_KIND = "hashes";
+  @NotNull private static final String STORAGE_KIND = "hashes";
   private static final int VERSION = 3;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
@@ -91,7 +91,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     List<VirtualFile> roots =
       logProviders.keySet().stream().sorted((o1, o2) -> o1.getPath().compareTo(o2.getPath())).collect(Collectors.toList());
 
-    myPersistentEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), LOG_KIND,
+    myPersistentEnumerator = PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(roots), STORAGE_KIND,
                                                                        PersistentUtil.calcLogId(project, logProviders), VERSION);
 
     // cleanup old root storages, to remove after 2016.3 release
