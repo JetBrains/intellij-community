@@ -59,7 +59,7 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
                                                      asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000)));
         for (VcsKey vcs : groupedRoots.keySet()) {
           usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size(),
-                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100)));
+                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 500, 1000)));
         }
         return usages;
       }
