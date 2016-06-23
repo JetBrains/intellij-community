@@ -1267,10 +1267,14 @@ public class AllIcons {
   }
   
   public static class Windows {
-    public static final Icon Close = IconLoader.getIcon("/windows/close.png"); // 16x16
-    public static final Icon Iconify = IconLoader.getIcon("/windows/iconify.png"); // 16x16
-    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
+    public static final Icon CloseActive = IconLoader.getIcon("/windows/closeActive.png"); // 16x16
+    public static final Icon CloseHover = IconLoader.getIcon("/windows/closeHover.png"); // 16x16
+    public static final Icon CloseInactive = IconLoader.getIcon("/windows/closeInactive.png"); // 16x16
+    public static final Icon MaximizeInactive = IconLoader.getIcon("/windows/maximizeInactive.png"); // 16x16
     public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
+    public static final Icon MinimizeInactive = IconLoader.getIcon("/windows/minimizeInactive.png"); // 16x16
+    public static final Icon Restore = IconLoader.getIcon("/windows/restore.png"); // 16x16
+    public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.png"); // 16x16
     
     public static class Shadow {
       public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x8
