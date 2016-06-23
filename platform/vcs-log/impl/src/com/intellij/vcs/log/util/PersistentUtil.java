@@ -64,12 +64,4 @@ public class PersistentUtil {
 
     return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE), storageFile);
   }
-
-  @NotNull
-  public static PersistentStringEnumerator createPersistentStringEnumerator(@NotNull String logKind, @NotNull String logId, int version)
-    throws IOException {
-    final File storageFile = getStorageFile(logId, logKind, version);
-
-    return IOUtil.openCleanOrResetBroken(() -> new PersistentStringEnumerator(storageFile), storageFile);
-  }
 }
