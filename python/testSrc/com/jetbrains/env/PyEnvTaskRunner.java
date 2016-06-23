@@ -70,7 +70,16 @@ public class PyEnvTaskRunner {
         }
       }
       catch (final Throwable e) {
-        Logger.getInstance(PyEnvTaskRunner.class).error(e);
+        final Logger logger = Logger.getInstance(PyEnvTaskRunner.class);
+        // Direct output of enteredTheMatrix may break idea or TC since can't distinguish test output from real test result
+        // Exception is thrown anyway, so we escape message before logging
+        if (e.getMessage().contains("enteredTheMatrix")) {
+          // .error( may lead to new exception with out of stacktrace.
+          logger.warn(e.getMessage().replace("##", "from test: \\##"));
+        }
+        else {
+          logger.error(e);
+        }
         throw new RuntimeException(
           PyEnvTestCase.joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root,
           e);
