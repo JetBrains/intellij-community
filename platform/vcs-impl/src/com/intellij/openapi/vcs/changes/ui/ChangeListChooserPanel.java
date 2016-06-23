@@ -54,37 +54,36 @@ public class ChangeListChooserPanel extends JPanel {
     myExistingListsCombo = new MyEditorComboBox(project);
     myExistingListsCombo.setEditable(true);
     myExistingListsCombo.setRenderer(new ColoredListCellRenderer<String>() {
-                                       @Override
-                                       protected void customizeCellRenderer(@NotNull JList<? extends String> list,
-                                                                            String value,
-                                                                            int index,
-                                                                            boolean selected,
-                                                                            boolean hasFocus) {
-                                         if (value != null) {
-                                           String name = value;
-                                           LocalChangeList changeList = ChangeListManager.getInstance(myProject).findChangeList(name);
-                                           int visibleWidth = myExistingListsCombo.getEditorTextField().getVisibleRect().width;
-                                           if (visibleWidth == 0) {
-                                             name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
-                                           }
-                                           else {
-                                             final FontMetrics fm = list.getFontMetrics(list.getFont());
-                                             final int width = fm.stringWidth(name);
-                                             if ((visibleWidth > 0) && (width > visibleWidth)) {
-                                               final String truncated = CommittedChangeListRenderer
-                                                 .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
-                                               if (truncated.length() > 5) {
-                                                 name = truncated + " ..";
-                                               }
-                                             }
-                                           }
-                                           append(name, changeList != null && changeList.isDefault()
-                                                        ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                                                        : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                                         }
-                                       }
-                                     }
-    );
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends String> list,
+                                           String value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
+        if (value != null) {
+          String name = value;
+          LocalChangeList changeList = ChangeListManager.getInstance(myProject).findChangeList(name);
+          int visibleWidth = myExistingListsCombo.getEditorTextField().getVisibleRect().width;
+          if (visibleWidth == 0) {
+            name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
+          }
+          else {
+            final FontMetrics fm = list.getFontMetrics(list.getFont());
+            final int width = fm.stringWidth(name);
+            if ((visibleWidth > 0) && (width > visibleWidth)) {
+              final String truncated = CommittedChangeListRenderer
+                .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
+              if (truncated.length() > 5) {
+                name = truncated + " ..";
+              }
+            }
+          }
+          append(name, changeList != null && changeList.isDefault()
+                       ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                       : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    });
     myListPanel = new NewEditChangelistPanel(myProject) {
 
       @Override
