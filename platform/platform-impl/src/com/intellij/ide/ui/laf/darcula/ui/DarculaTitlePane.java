@@ -293,7 +293,7 @@ public class DarculaTitlePane extends JComponent {
     menu.add(myCloseAction);
   }
 
-  private static JButton createButton(String accessibleName, Icon icon, Action action) {
+  private static JButton createButton(String accessibleName, Icon icon, Action action, boolean isCloseAction) {
     JButton button = new JButton() {
       boolean mouseOverButton = false;
       {
@@ -316,6 +316,10 @@ public class DarculaTitlePane extends JComponent {
       protected void paintComponent(Graphics g) {
         final Window window = SwingUtilities.windowForComponent(this);
         float alpha = window.isActive() && mouseOverButton ? 1f : 0.5f;
+        if (isCloseAction && mouseOverButton) {
+          g.setColor(Color.red);
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
         final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
         getIcon().paintIcon(this, g, 0, 0);
         config.restore();
@@ -334,14 +338,14 @@ public class DarculaTitlePane extends JComponent {
   }
 
   private void createButtons() {
-    myCloseButton = createButton("Close", UIManager.getIcon("InternalFrame.closeIcon"), myCloseAction);
+    myCloseButton = createButton("Close", UIManager.getIcon("InternalFrame.closeIcon"), myCloseAction, true);
 
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
       myMaximizeIcon = UIManager.getIcon("InternalFrame.maximizeIcon");
       myMinimizeIcon = UIManager.getIcon("InternalFrame.minimizeIcon");
 
-      myIconifyButton = createButton("Iconify", UIManager.getIcon("InternalFrame.iconifyIcon"), myIconifyAction);
-      myToggleButton = createButton("Maximize", myMaximizeIcon, myRestoreAction);
+      myIconifyButton = createButton("Iconify", UIManager.getIcon("InternalFrame.iconifyIcon"), myIconifyAction, false);
+      myToggleButton = createButton("Maximize", myMaximizeIcon, myRestoreAction, false);
     }
   }
 
@@ -688,12 +692,12 @@ public class DarculaTitlePane extends JComponent {
       }
 
       x = w;
-      spacing = 8;
+      spacing = 14;
       x += -spacing - buttonWidth;
       if (myCloseButton != null) {
         myCloseButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
-
+      spacing = 30;
       if (getWindowDecorationStyle() == JRootPane.FRAME) {
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(
           Frame.MAXIMIZED_BOTH)) {
