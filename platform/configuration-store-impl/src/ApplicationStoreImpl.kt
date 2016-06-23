@@ -26,9 +26,10 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.delete
+import com.intellij.util.outputStream
 import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
@@ -67,7 +68,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   }
 }
 
-class ApplicationStorageManager(private val application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
+class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
   companion object {
     private val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
@@ -95,8 +96,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
         storage.file.delete()
       }
       else {
-        FileUtilRt.createParentDirs(storage.file)
-        JDOMUtil.writeElement(element, storage.file.writer(), "\n")
+        JDOMUtil.writeElement(element, storage.file.outputStream().writer(), "\n")
       }
     }
     catch (e: Throwable) {

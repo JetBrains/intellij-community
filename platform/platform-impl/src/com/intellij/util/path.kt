@@ -21,13 +21,15 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.io.readCharSequence
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 
 fun Path.exists() = Files.exists(this)
 
-fun Path.createDirectories() = Files.createDirectories(this)
+fun Path.createDirectories(): Path = Files.createDirectories(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -37,7 +39,7 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
-fun Path.inputStream() = Files.newInputStream(this)
+fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -71,7 +73,7 @@ fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, obje
   }
 }) else this
 
-fun Path.lastModified() = Files.getLastModifiedTime(this)
+fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
   get() = toString().replace(File.separatorChar, '/')
@@ -79,7 +81,7 @@ val Path.systemIndependentPath: String
 val Path.parentSystemIndependentPath: String
   get() = parent!!.toString().replace(File.separatorChar, '/')
 
-fun Path.readBytes() = Files.readAllBytes(this)
+fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
 fun Path.readText() = readBytes().toString(Charsets.UTF_8)
 
@@ -121,7 +123,7 @@ fun Path.isDirectory() = Files.isDirectory(this)
 
 fun Path.isFile() = Files.isRegularFile(this)
 
-fun Path.move(target: Path) = Files.move(this, target)
+fun Path.move(target: Path): Path = Files.move(this, target)
 
 /**
  * Opposite to Java, parent directories will be created

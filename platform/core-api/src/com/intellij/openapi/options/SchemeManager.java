@@ -45,6 +45,10 @@ public abstract class SchemeManager<T extends Scheme> {
   @NotNull
   public abstract List<T> getAllSchemes();
 
+  public boolean isEmpty() {
+    return getAllSchemes().isEmpty();
+  }
+
   @Nullable
   public abstract T findSchemeByName(@NotNull String schemeName);
 

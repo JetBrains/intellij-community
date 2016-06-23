@@ -61,4 +61,4 @@ private fun loadDocument(reader: Reader): Document {
   }
 }
 
-fun Element.getTreeHash() = JDOMUtil.getTreeHash(this)
+fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)

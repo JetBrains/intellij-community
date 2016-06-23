@@ -38,6 +38,7 @@ import com.intellij.profile.ProfileEx
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashSet
@@ -52,7 +53,7 @@ private const val SCOPE = "scope"
 private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
-@State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage("inspectionProfiles/profiles_settings")))
+@State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true)))
 class ProjectInspectionProfileManagerImpl(val project: Project,
                                           private val applicationProfileManager: InspectionProfileManager,
                                           private val scopeManager: DependencyValidationManager,
@@ -72,11 +73,18 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
 
   private var state = State()
 
-  private val skipDefaultsSerializationFilter = SkipDefaultValuesSerializationFilters(State())
+  private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
+    override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
+      if (beanValue == null && accessor.name == "projectProfile") {
+        return false
+      }
+      return super.accepts(accessor, bean, beanValue)
+    }
+  }
 
   override val schemeManager: SchemeManager<InspectionProfile>
 
-  private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = null,
+  private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
                            @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
 
   init {
@@ -108,19 +116,6 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   }
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
-
-//  val profileWrapper: InspectionProfileWrapper
-//    get() {
-//      val profile = currentProfile
-//      val profileName = profile.name
-////      val nameToProfile = if (profile.profileManager === this) nameToProfile else appNameToProfile
-////      val wrapper = nameToProfile.get(profileName)
-////      if (wrapper == null) {
-//        initProfileWrapper(profile)
-////        return nameToProfile.get(profileName)!!
-////      }
-////      return wrapper
-//    }
 
   @Synchronized override fun updateProfile(profile: Profile) {
     super.updateProfile(profile)
@@ -228,7 +223,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     return schemeManager.allSchemes
   }
 
-  @Synchronized override fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
+  @Synchronized override fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = state.projectProfile
@@ -254,7 +249,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
 
     val currentName = state.projectProfile
-    if (currentName == null || schemeManager.allSchemes.isEmpty()) {
+    if (currentName == null || schemeManager.isEmpty()) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
       val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, InspectionProfileImpl.getDefaultProfile(), null)
       projectProfile.copyFrom(applicationProfileManager.currentProfile)

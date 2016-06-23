@@ -24,19 +24,16 @@ import java.util.*
 fun AbstractPathAssert<*>.hasChildren(vararg names: String) {
   paths.assertIsDirectory(info, actual)
 
-  Iterables(ComparatorBasedComparisonStrategy(object : Comparator<Any> {
-    override fun compare(o1: Any, o2: Any): Int {
-      if (o1 is Path && o2 is Path) {
-        return o1.compareTo(o2)
-      }
-      else if (o1 is String && o2 is String) {
-        return o1.compareTo(o2)
-      }
-      else {
-        return if ((o1 as Path).endsWith(o2 as String)) 0 else -1
-      }
+  Iterables(ComparatorBasedComparisonStrategy(Comparator<kotlin.Any> { o1, o2 ->
+    if (o1 is Path && o2 is Path) {
+      o1.compareTo(o2)
+    }
+    else if (o1 is String && o2 is String) {
+      o1.compareTo(o2)
+    }
+    else {
+      if ((o1 as Path).endsWith(o2 as String)) 0 else -1
     }
   }))
     .assertContainsOnly(info, Files.newDirectoryStream(actual).toList(), names)
 }
-

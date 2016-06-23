@@ -27,7 +27,7 @@ open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstit
                                       private val project: ProjectImpl,
                                       useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl("project", macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
-    val VERSION_OPTION = "version"
+    internal val VERSION_OPTION = "version"
   }
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)

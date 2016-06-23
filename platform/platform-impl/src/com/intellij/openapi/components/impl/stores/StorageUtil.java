@@ -41,8 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -155,28 +156,29 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final File file) throws IOException {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final Path file) throws IOException {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
     if (virtualFile != null) {
       return virtualFile;
     }
-    File absoluteFile = file.getAbsoluteFile();
-    FileUtil.createParentDirs(absoluteFile);
+    Path absoluteFile = file.toAbsolutePath();
 
-    File parentFile = absoluteFile.getParentFile();
+    Path parentFile = absoluteFile.getParent();
+    Files.createDirectories(parentFile);
+
     // need refresh if the directory has just been created
-    final VirtualFile parentVirtualFile = StringUtil.isEmpty(parentFile.getPath()) ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
+    final VirtualFile parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(parentFile.toString()));
     if (parentVirtualFile == null) {
       throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
     }
 
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      return parentVirtualFile.createChildData(requestor, file.getName());
+      return parentVirtualFile.createChildData(requestor, file.getFileName().toString());
     }
 
     AccessToken token = WriteAction.start();
     try {
-      return parentVirtualFile.createChildData(requestor, file.getName());
+      return parentVirtualFile.createChildData(requestor, file.getFileName().toString());
     }
     finally {
       token.finish();

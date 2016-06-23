@@ -26,14 +26,14 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl
 import com.intellij.testFramework.*
+import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.readText
 import com.intellij.util.systemIndependentPath
 import com.intellij.util.write
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -58,8 +58,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
-    val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else projectManager.loadProject(filePath)!!
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
     project.runInLoadComponentStateMode {
       project.use(task)
     }
@@ -69,7 +68,8 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 internal class ProjectStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
@@ -114,9 +114,49 @@ internal class ProjectStoreTest {
     }
   }
 
+  @Test fun `project inspection`() {
+    loadAndUseProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      it.path
+    }) { project ->
+      val projectInspectionProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project)
+
+      // test reload on external change
+//      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+//      file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
+
+//      project.baseDir.refresh(false, true)
+//      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+
+      assertThat(projectInspectionProfileManager.state).isEmpty()
+
+      projectInspectionProfileManager.currentProfile
+
+      assertThat(projectInspectionProfileManager.state).isEmpty()
+
+      // cause to use app profile
+      projectInspectionProfileManager.setRootProfile(null)
+      assertThat(projectInspectionProfileManager.state).isEqualTo("""
+      <state>
+        <option name="USE_PROJECT_PROFILE" value="false" />
+        <version value="1.0" />
+      </state>""")
+
+      val store = project.stateStore as IProjectStore
+      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_CONFIG_DIR), "inspectionProfiles", "profiles_settings.xml")
+      project.saveStore()
+      assertThat(file).exists()
+      assertThat(file.readText()).isEqualTo("""
+      <component name="InspectionProjectProfileManager">
+        <option name="USE_PROJECT_PROFILE" value="false" />
+        <version value="1.0" />
+      </component>""".trimIndent())
+    }
+  }
+
   @Test fun fileBasedStorage() {
     loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
-      test(project as ProjectEx)
+      test(project)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
     }

@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
-import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -61,7 +61,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
             if (storage != null) {
               filePathToStorage.put(event.path, storage)
               if (storage is FileBasedStorage) {
-                storage.setFile(null, File(event.path))
+                storage.setFile(null, Paths.get(event.path))
               }
               // we don't support DirectoryBasedStorage renaming
 
@@ -88,7 +88,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           when (event) {
             is VFileMoveEvent -> {
               if (storage is FileBasedStorage) {
-                storage.setFile(null, File(event.path))
+                storage.setFile(null, Paths.get(event.path))
               }
             }
             is VFileCreateEvent -> {

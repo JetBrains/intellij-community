@@ -30,7 +30,8 @@ import org.junit.Test
 internal class InspectionSchemeTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
   @JvmField

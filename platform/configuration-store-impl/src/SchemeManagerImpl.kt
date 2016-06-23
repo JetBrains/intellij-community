@@ -47,6 +47,7 @@ import org.jdom.Document
 import org.jdom.Element
 import org.xmlpull.mxp1.MXParser
 import org.xmlpull.v1.XmlPullParser
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -342,7 +343,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   private inner class SchemeDataHolderImpl(private val bytes: ByteArray, private val externalInfo: ExternalInfo) : SchemeDataHolder {
-    override fun read() = loadElement(bytes.inputStream())
+    override fun read(): Element = loadElement(bytes.inputStream())
 
     override fun updateDigest() {
       schemeToInfo.forEachEntry({ k, v ->
@@ -726,7 +727,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     return result
   }
 
-  override fun getRootDirectory() = ioDirectory.toFile()
+  override fun getRootDirectory(): File = ioDirectory.toFile()
 
   override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
     val oldCurrentScheme = currentScheme
@@ -839,7 +840,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     schemeToInfo.clear()
   }
 
-  override fun getAllSchemes() = Collections.unmodifiableList(schemes)
+  override fun getAllSchemes(): List<T> = Collections.unmodifiableList(schemes)
+
+  override fun isEmpty(): Boolean {
+    return schemes.isEmpty()
+  }
 
   override fun findSchemeByName(schemeName: String): T? {
     for (scheme in schemes) {
