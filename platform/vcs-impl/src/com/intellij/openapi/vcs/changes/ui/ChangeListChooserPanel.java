@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +49,7 @@ public class ChangeListChooserPanel extends JPanel {
   private final NewEditChangelistPanel myListPanel;
   private final NullableConsumer<String> myOkEnabledListener;
   private final Project myProject;
+  private String myLastTypedDescription;
 
   public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
     super(new BorderLayout());
@@ -105,6 +108,20 @@ public class ChangeListChooserPanel extends JPanel {
           updateDescription();
         }
         myOkEnabledListener.consume(errorMessage);
+      }
+
+      @Override
+      public void init(LocalChangeList initial) {
+        super.init(initial);
+        myDescriptionTextArea.addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            super.focusLost(e);
+            if (getExistingChangelist() == null) {
+              myLastTypedDescription = myListPanel.getDescription();
+            }
+          }
+        });
       }
 
       @Override
@@ -175,7 +192,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   private void updateDescription() {
     LocalChangeList list = getExistingChangelist();
-    myListPanel.setDescription(list != null ? list.getComment() : "");
+    String newText = list != null ? list.getComment() : myLastTypedDescription;
+    if (!StringUtil.equals(myListPanel.getDescription(), newText)) {
+      myListPanel.setDescription(newText);
+    }
   }
 
   private LocalChangeList getExistingChangelist() {
