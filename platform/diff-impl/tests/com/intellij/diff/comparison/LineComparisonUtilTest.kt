@@ -401,7 +401,6 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       // TODO ("      _-------_  _ _      " - "      _  _ _      ").trim()
       ("      _-------_  _ _      " - "      _  _ _      ").default()
       ("      _       _--_-_------" - "      _--_-_      ").trim()
-      ("      _-------_  _ _      " - "      _  _ _      ").ignore()
       testAll()
     }
 
@@ -417,6 +416,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       ("     _------_ _     " - "     _ _     ").default() // result after second step correction
+      ("     _      _-_-----" - "     _-_     ").ignore()  // result looks strange because of 'diff.unimportant.line.char.count'
       testAll()
     }
   }
@@ -429,12 +429,11 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  fun `test ignore whitespace policy applies two-step correction`() {
+  fun `test ignore whitespace policy does not applies two-step correction`() {
     lines() {
       ("1_ _  1" - "  1")
       ("-_-_   " - "   ").default()
       (" _-_---" - "   ").trim()
-      ("-_-_   " - "   ").ignore()
       testAll()
     }
 

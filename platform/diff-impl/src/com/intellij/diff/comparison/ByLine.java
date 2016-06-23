@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.ExpandChangeBuilder;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.Equality;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +33,7 @@ import java.util.List;
 import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
 import static com.intellij.diff.comparison.TrimUtil.trimEnd;
 import static com.intellij.diff.comparison.TrimUtil.trimStart;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.diff;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 public class ByLine {
@@ -72,7 +70,7 @@ public class ByLine {
     if (policy == IGNORE_WHITESPACES) {
       FairDiffIterable changes = compareSmart(lines1, lines2, indicator);
       changes = optimizeLineChunks(lines1, lines2, changes, indicator);
-      return correctChangesSecondStepIW(lines1, lines2, changes);
+      return expandRanges(lines1, lines2, changes);
     }
     else {
       List<Line> iwLines1 = convertMode(lines1, IGNORE_WHITESPACES);
@@ -109,25 +107,8 @@ public class ByLine {
 
   @NotNull
   private static FairDiffIterable correctChangesSecondStep(@NotNull final List<Line> lines1,
-                                                           @NotNull final List<Line> lines2,
-                                                           @NotNull final FairDiffIterable changes) {
-    return doCorrectChangesSecondStep(lines1, lines2, changes,
-                                      Equality.CANONICAL);
-  }
-
-  @NotNull
-  private static FairDiffIterable correctChangesSecondStepIW(@NotNull final List<Line> lines1,
                                                              @NotNull final List<Line> lines2,
                                                              @NotNull final FairDiffIterable changes) {
-    return doCorrectChangesSecondStep(lines1, lines2, changes,
-                                      (l1, l2) -> StringUtil.equals(l1.getContent(), l2.getContent()));
-  }
-
-  @NotNull
-  private static FairDiffIterable doCorrectChangesSecondStep(@NotNull final List<Line> lines1,
-                                                             @NotNull final List<Line> lines2,
-                                                             @NotNull final FairDiffIterable changes,
-                                                             @NotNull final Equality<Line> maximisingEquality) {
     /*
      * We want to fix invalid matching here:
      *
@@ -172,7 +153,7 @@ public class ByLine {
             Line line2 = lines2.get(index2);
 
             if (!StringUtil.equalsIgnoreWhitespaces(sample, line1.getContent())) {
-              if (maximisingEquality.equals(line1, line2)) {
+              if (line1.equals(line2)) {
                 flush(index1, index2);
                 builder.markEqual(index1, index2);
               }
@@ -230,7 +211,7 @@ public class ByLine {
         }
 
         if (subLines1.size() < subLines2.size()) {
-          int[] matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2, maximisingEquality);
+          int[] matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
           for (int i = 0; i < subLines1.size(); i++) {
             int index1 = subLines1.get(i);
             int index2 = subLines2.get(matching[i]);
@@ -240,7 +221,7 @@ public class ByLine {
           }
         }
         else {
-          int[] matching = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1, maximisingEquality);
+          int[] matching = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1);
           for (int i = 0; i < subLines2.size(); i++) {
             int index1 = subLines1.get(matching[i]);
             int index2 = subLines2.get(i);
@@ -259,8 +240,7 @@ public class ByLine {
   private static int[] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
                                                 @NotNull final TIntArrayList subLines2,
                                                 @NotNull final List<Line> lines1,
-                                                @NotNull final List<Line> lines2,
-                                                @NotNull final Equality<Line> maximisingEquality) {
+                                                @NotNull final List<Line> lines2) {
     assert subLines1.size() < subLines2.size();
     final int size = subLines1.size();
 
@@ -295,7 +275,7 @@ public class ByLine {
         for (int i = 0; i < size; i++) {
           int index1 = subLines1.get(i);
           int index2 = subLines2.get(comb[i]);
-          if (maximisingEquality.equals(lines1.get(index1), lines2.get(index2))) weight++;
+          if (lines1.get(index1).equals(lines2.get(index2))) weight++;
         }
 
         if (weight > bestWeight) {
@@ -348,6 +328,20 @@ public class ByLine {
       }
     }
     return Pair.create(bigLines, indexes);
+  }
+
+  @NotNull
+  private static FairDiffIterable expandRanges(@NotNull List<Line> lines1,
+                                               @NotNull List<Line> lines2,
+                                               @NotNull FairDiffIterable iterable) {
+    List<Range> changes = new ArrayList<>();
+
+    for (Range ch : iterable.iterateChanges()) {
+      Range expanded = TrimUtil.expand(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
+      if (!expanded.isEmpty()) changes.add(expanded);
+    }
+
+    return fair(create(changes, lines1.size(), lines2.size()));
   }
 
   //
