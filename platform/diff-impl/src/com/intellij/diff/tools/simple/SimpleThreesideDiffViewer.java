@@ -16,7 +16,7 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
@@ -125,8 +125,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       });
 
       final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
-                                                                    comparisonPolicy, indicator);
+
+      ComparisonManager manager = ComparisonManager.getInstance();
+      List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                   comparisonPolicy, indicator);
 
       List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
         indicator.checkCanceled();
