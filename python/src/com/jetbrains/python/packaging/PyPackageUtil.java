@@ -17,6 +17,9 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -32,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
@@ -48,11 +52,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author vlan
  */
 public class PyPackageUtil {
+  public static final String SETUPTOOLS = "setuptools";
+  public static final String PIP = "pip";
+  public static final String DISTRIBUTE = "distribute";
+  private static final Logger LOG = Logger.getInstance(PyPackageUtil.class);
 
   @NotNull
   private static final String REQUIRES = "requires";
@@ -268,6 +277,66 @@ public class PyPackageUtil {
         return languageContribution.isPackageManagementEnabled();
       }
     }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
+  }
+
+  @Nullable
+  public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
+    final Ref<List<PyPackage>> packagesRef = Ref.create();
+    LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
+    PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
+      indicator.setIndeterminate(true);
+      try {
+        packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
+      }
+      catch (ExecutionException e) {
+        LOG.warn(e);
+      }
+    });
+    return packagesRef.get();
+  }
+
+  /**
+   * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
+   * This behavior in enforced by the parameter isUpdating.
+   * 
+   * @param manager    package manager for SDK
+   * @param isUpdating flag indicating whether another refresh is already running
+   * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
+   */
+  public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    if (!isUpdating.compareAndSet(false, true)) {
+      return false;
+    }
+    try {
+      if (manager instanceof PyPackageManagerImpl) {
+        LOG.info("Refreshing installed packages for SDK " + ((PyPackageManagerImpl)manager).getSdk().getHomePath());
+      }
+      manager.refreshAndGetPackages(true);
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    finally {
+      isUpdating.set(false);
+    }
+    return true;
+  }
+  
+
+  @Nullable
+  public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
+    for (PyPackage pkg : packages) {
+      if (name.equalsIgnoreCase(pkg.getName())) {
+        return pkg;
+      }
+    }
+    return null;
+  }
+
+  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
+    return (findPackage(packages, SETUPTOOLS) != null || findPackage(packages, DISTRIBUTE) != null) ||
+           findPackage(packages, PIP) != null;
   }
 
   @Nullable

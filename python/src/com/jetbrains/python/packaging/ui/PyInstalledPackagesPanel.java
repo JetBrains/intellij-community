@@ -93,7 +93,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     application.executeOnPooledThread(() -> {
       PyExecutionException exception = null;
       try {
-        myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement(false);
+        myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
         if (!myHasManagement) {
           throw new PyExecutionException("Python packaging tools not found", "pip", Collections.<String>emptyList(), "", "", 0,
                                          ImmutableList.of(new PyInstallPackageManagementFix()));
@@ -156,9 +156,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       }
     }
     final String name = pkg.getName();
-    if (PyPackageManager.PIP.equals(name) ||
-        PyPackageManager.SETUPTOOLS.equals(name) ||
-        PyPackageManager.DISTRIBUTE.equals(name) ||
+    if (PyPackageUtil.PIP.equals(name) ||
+        PyPackageUtil.SETUPTOOLS.equals(name) ||
+        PyPackageUtil.DISTRIBUTE.equals(name) ||
         PyCondaPackageManagerImpl.PYTHON.equals(name)) {
       return false;
     }
