@@ -55,6 +55,10 @@ public class PersistentUtil {
     return mapFile;
   }
 
+  public static void cleanupOldStorageFile(@NotNull String logId, @NotNull String logKind, int version) {
+    IOUtil.deleteAllFilesStartingWith(getStorageFile(logId, logKind, version));
+  }
+
   @NotNull
   public static <T> PersistentEnumerator<T> createPersistentEnumerator(@NotNull final KeyDescriptor<T> keyDescriptor,
                                                                        @NotNull String logKind,
