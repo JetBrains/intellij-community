@@ -361,6 +361,7 @@ def getProperties(String home, String buildNumber) {
             dir("lib") {
               jar("aswb.jar") {
                 module("aswb")
+                module("aswb-google3")
                 module("blaze-base-aswb")
                 module("blaze-cpp-aswb")
                 module("blaze-java-aswb")
