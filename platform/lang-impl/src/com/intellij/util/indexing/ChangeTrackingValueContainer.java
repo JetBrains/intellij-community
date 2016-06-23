@@ -129,7 +129,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
       if ((myAdded != null || myInvalidated != null) &&
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
-           myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD)) {
+           (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
         fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
       }
