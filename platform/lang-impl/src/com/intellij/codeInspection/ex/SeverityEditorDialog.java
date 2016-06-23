@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jdom.Element;
@@ -91,7 +92,8 @@ public class SeverityEditorDialog extends DialogWrapper {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof SeverityBasedTextAttributes) {
-          setText(((SeverityBasedTextAttributes)value).getSeverity().getName());
+          final HighlightSeverity severity = ((SeverityBasedTextAttributes)value).getSeverity();
+          setText(StringUtil.capitalizeWords(severity.getName().toLowerCase(), true));
         }
         return rendererComponent;
       }
@@ -124,7 +126,7 @@ public class SeverityEditorDialog extends DialogWrapper {
               final ListModel listModel = myOptionsList.getModel();
               for (int i = 0; i < listModel.getSize(); i++) {
                 final String severityName = ((SeverityBasedTextAttributes)listModel.getElementAt(i)).getSeverity().myName;
-                if (Comparing.strEqual(severityName, inputString)) return false;
+                if (Comparing.strEqual(severityName, inputString, false)) return false;
               }
               return true;
             }
