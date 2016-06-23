@@ -45,7 +45,7 @@ public class PersistentUtil {
   }
 
   @NotNull
-  private static File getStorageFile(@NotNull String logId, @NotNull String storageKind, int version) {
+  private static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
     File subdir = new File(LOG_CACHE, storageKind);
     String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
     final File mapFile = new File(subdir, safeLogId + "." + version);
@@ -55,8 +55,8 @@ public class PersistentUtil {
     return mapFile;
   }
 
-  public static void cleanupOldStorageFile(@NotNull String logId, @NotNull String storageKind, int version) {
-    IOUtil.deleteAllFilesStartingWith(getStorageFile(logId, storageKind, version));
+  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
+    IOUtil.deleteAllFilesStartingWith(getStorageFile(storageKind, logId, version));
   }
 
   @NotNull
@@ -64,7 +64,7 @@ public class PersistentUtil {
                                                                        @NotNull String storageKind,
                                                                        @NotNull String logId,
                                                                        int version) throws IOException {
-    File storageFile = getStorageFile(logId, storageKind, version);
+    File storageFile = getStorageFile(storageKind, logId, version);
 
     return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE), storageFile);
   }
