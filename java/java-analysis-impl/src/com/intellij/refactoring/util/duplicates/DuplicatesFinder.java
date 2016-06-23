@@ -30,6 +30,7 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -518,6 +519,8 @@ public class DuplicatesFinder {
         final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
         return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getContextOfType(candidate, PsiClass.class));
       }
+    } else if (pattern instanceof PsiModifierList) {
+      return candidate instanceof PsiModifierList && matchModifierList((PsiModifierList)pattern, (PsiModifierList)candidate);
     }
 
     PsiElement[] children1 = getFilteredChildren(pattern);
@@ -538,6 +541,40 @@ public class DuplicatesFinder {
       if (!pattern.textMatches(candidate)) return false;
     }
 
+    return true;
+  }
+
+  private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
+    if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
+      // local variables can only have a final modifier, and are considered equivalent with or without it.
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (modifierList1.hasModifierProperty(modifier)) {
+          if (!modifierList2.hasModifierProperty(modifier)) {
+            return false;
+          }
+        }
+        else if (modifierList2.hasModifierProperty(modifier)) {
+          return false;
+        }
+      }
+    }
+    final List<PsiAnnotation> annotations1 = ContainerUtil.newArrayList(modifierList1.getAnnotations());
+    final List<PsiAnnotation> annotations2 = ContainerUtil.newArrayList(modifierList2.getAnnotations());
+    annotations1.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
+    annotations2.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
+    if (annotations1.size() != annotations2.size()) {
+      return false;
+    }
+    for (final Iterator<PsiAnnotation> iterator = annotations1.iterator(); iterator.hasNext(); ) {
+      final PsiAnnotation annotation1 = iterator.next();
+      for (final Iterator<PsiAnnotation> iterator2 = annotations2.iterator(); iterator2.hasNext(); ) {
+        final PsiAnnotation annotation2 = iterator2.next();
+        if (PsiEquivalenceUtil.areElementsEquivalent(annotation1, annotation2)) {
+          iterator.remove();
+          iterator2.remove();
+        }
+      }
+    }
     return true;
   }
 

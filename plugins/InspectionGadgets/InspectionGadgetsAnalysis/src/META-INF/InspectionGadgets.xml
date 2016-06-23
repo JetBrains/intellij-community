@@ -2551,6 +2551,10 @@
                      key="replace.lambda.with.anonymous.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceMethodRefWithLambda" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="replace.method.ref.with.lambda.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.ReplaceMethodRefWithLambdaInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

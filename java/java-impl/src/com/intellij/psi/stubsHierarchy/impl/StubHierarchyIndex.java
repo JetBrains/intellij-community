@@ -15,8 +15,12 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.index.JavaUnitDescriptor;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
@@ -75,13 +79,25 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<String, IndexTre
 
   @Override
   public int getVersion() {
-    return IndexTree.STUB_HIERARCHY_ENABLED ? 1 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
+    return IndexTree.STUB_HIERARCHY_ENABLED ? 2 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
   }
 
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> IndexTree.STUB_HIERARCHY_ENABLED && Arrays.stream(ourIndexers).anyMatch(indexer -> indexer.handlesFile(file));
+    return file -> IndexTree.STUB_HIERARCHY_ENABLED &&
+                   Arrays.stream(ourIndexers).anyMatch(indexer -> indexer.handlesFile(file)) &&
+                   isSourceOrLibrary(file);
+  }
+
+  private static boolean isSourceOrLibrary(VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+      if (index.isInLibraryClasses(file) || index.isInSourceContent(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

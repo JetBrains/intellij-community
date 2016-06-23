@@ -139,7 +139,7 @@ public class IElementType {
 
   @Override
   public int hashCode() {
-    return myIndex;
+    return myIndex >= 0 ? myIndex : super.hashCode();
   }
 
   public String toString() {

@@ -77,7 +77,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
   }
 
   @Nullable
-  private static CourseInfo getIntroCourseInfo(final List<CourseInfo> courses) {
+  private static CourseInfo getIntroCourseInfo(@NotNull final List<CourseInfo> courses) {
     for (CourseInfo courseInfo : courses) {
       if (INTRODUCTION_TO_PYTHON.equals(courseInfo.getName())) {
         return courseInfo;

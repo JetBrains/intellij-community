@@ -173,11 +173,18 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testOverloadResolutionInsideLambdaInsideNestedCall() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
     for (PsiCallExpression expression : methodCallExpressions) {
       getPsiManager().dropResolveCaches();
+      if (expression instanceof PsiMethodCallExpression) {
+        assertNotNull("Failed to resolve: " + expression.getText(), expression.resolveMethod());
+      }
       assertNotNull("Failed inference for: " + expression.getText(), expression.getType());
     }
 

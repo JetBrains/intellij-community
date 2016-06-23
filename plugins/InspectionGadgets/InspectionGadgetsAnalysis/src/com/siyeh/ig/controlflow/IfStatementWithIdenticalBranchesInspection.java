@@ -174,8 +174,8 @@ public class IfStatementWithIdenticalBranchesInspection
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
-      final PsiStatement elseBranch = unwrap(ifStatement.getElseBranch());
-      final PsiStatement thenBranch = unwrap(ifStatement.getThenBranch());
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
       if (thenBranch == null) {
         return;
       }
@@ -194,7 +194,9 @@ public class IfStatementWithIdenticalBranchesInspection
       }
     }
 
-    private boolean isDuplicate(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+    private boolean isDuplicate(@NotNull PsiStatement element1, @NotNull PsiStatement element2) {
+      element1 = unwrap(element1);
+      element2 = unwrap(element2);
       final InputVariables inputVariables =
         new InputVariables(Collections.emptyList(), element1.getProject(), new LocalSearchScope(element1), false);
       final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{element1}, inputVariables, null, Collections.emptyList());

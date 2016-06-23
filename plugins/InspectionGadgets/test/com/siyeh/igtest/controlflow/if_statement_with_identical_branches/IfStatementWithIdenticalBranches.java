@@ -214,4 +214,14 @@ class NotADup {
   private Object bar(Object x) {
     return null;
   }
+
+  void nesting(int i, int j) {
+    if (i == 2) {
+      System.out.println("2");
+    } else {
+      if (j == 2) {
+        System.out.println("2");
+      }
+    }
+  }
 }
