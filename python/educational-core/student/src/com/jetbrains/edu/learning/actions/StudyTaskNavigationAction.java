@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -44,9 +43,6 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     int nextTaskIndex = nextTask.getIndex();
     int lessonIndex = nextTask.getLesson().getIndex();
     Map<String, TaskFile> nextTaskFiles = nextTask.getTaskFiles();
-    if (nextTaskFiles.isEmpty()) {
-      return;
-    }
     VirtualFile projectDir = project.getBaseDir();
     String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
     if (projectDir == null) {
@@ -61,15 +57,26 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     if (taskDir == null) {
       return;
     }
+    if (nextTaskFiles.isEmpty()) {
+      ProjectView.getInstance(project).select(taskDir, taskDir, false);
+      return;
+    }
 
     VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
-    TreePath path = TreeUtil.getFirstNodePath(tree);
-    tree.collapsePath(path);
+    TreePath path = tree.getSelectionPath();
+    if (path != null) {
+      TreePath oldSelectionPath = path.getParentPath();
+      if (oldSelectionPath != null) {
+        tree.collapsePath(oldSelectionPath);
+        tree.fireTreeCollapsed(oldSelectionPath);
+      }
+    }
     if (shouldBeActive != null) {
       ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
       FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
     }
+
     ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
     if (runToolWindow != null) {
       runToolWindow.hide(null);
@@ -82,7 +89,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile srcDir = taskDir.findChild("src");
+      VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
       VirtualFile vf = srcDir == null ? taskDir.findChild(name) : srcDir.findChild(name);
       if (vf != null) {
         FileEditorManager.getInstance(project).openFile(vf, true);
