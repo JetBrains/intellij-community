@@ -54,9 +54,7 @@ import java.util.Set;
  * A: There are two ways. The easier and preferred one is to provide constructor in your contributor and register completion providers there:
  * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
- * and provide your own. It's easier to debug, but harder to write. Remember, that completion variant collection is done in a dedicated thread
- * WITHOUT read action, so you'll have to manually invoke {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} each time
- * you access PSI. Don't spend long time inside read action, since this will prevent user from selecting lookup element or cancelling completion.<p>
+ * and provide your own. It's easier to debug, but harder to write.<p>
  *
  * Q: What does the {@link CompletionParameters#getPosition()} return?<br>
  * A: When completion is invoked, the file being edited is first copied (the original file can be accessed from {@link com.intellij.psi.PsiFile#getOriginalFile()}

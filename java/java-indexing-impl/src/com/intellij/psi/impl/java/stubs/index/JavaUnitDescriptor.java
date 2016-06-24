@@ -29,6 +29,7 @@ public class JavaUnitDescriptor implements DataExternalizer<IndexTree.Unit> {
 
   @Override
   public void save(@NotNull DataOutput out, IndexTree.Unit value) throws IOException {
+    out.writeUTF(value.myPackageId);
     out.writeByte(value.myUnitType);
     if (value.myUnitType != IndexTree.BYTECODE) {
       DataInputOutputUtil.writeINT(out, value.imports.length);
@@ -75,6 +76,7 @@ public class JavaUnitDescriptor implements DataExternalizer<IndexTree.Unit> {
 
   @Override
   public IndexTree.Unit read(@NotNull DataInput in) throws IOException {
+    String pid = in.readUTF();
     byte type = in.readByte();
     IndexTree.Import[] imports = IndexTree.Import.EMPTY_ARRAY;
     if (type != IndexTree.BYTECODE) {
@@ -87,7 +89,7 @@ public class JavaUnitDescriptor implements DataExternalizer<IndexTree.Unit> {
     for (int i = 0; i < classes.length; i++) {
       classes[i] = readClassDecl(in);
     }
-    return new IndexTree.Unit(type, imports, classes);
+    return new IndexTree.Unit(pid, type, imports, classes);
   }
 
   private IndexTree.ClassDecl readClassDecl(DataInput in) throws IOException {

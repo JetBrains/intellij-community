@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.ide.ui.UISettings;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -26,9 +27,10 @@ public final class ToolWindowAnchor {
   public static final ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom");
   public static final ToolWindowAnchor RIGHT = new ToolWindowAnchor("right");
 
+  @NotNull
   private final String myText;
 
-  private ToolWindowAnchor(@NonNls String text){
+  private ToolWindowAnchor(@NonNls @NotNull String text){
     myText = text;
   }
 
@@ -40,6 +42,7 @@ public final class ToolWindowAnchor {
     return this == TOP || this == BOTTOM;
   }
 
+  @NotNull
   public static ToolWindowAnchor get(int swingOrientationConstant) {
     switch(swingOrientationConstant) {
       case SwingConstants.TOP:
@@ -56,12 +59,16 @@ public final class ToolWindowAnchor {
   }
 
   public boolean isSplitVertically() {
-    return (this == LEFT && !UISettings.getInstance().LEFT_HORIZONTAL_SPLIT) || (this == RIGHT && !UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT);
+    return this == LEFT && !UISettings.getInstance().LEFT_HORIZONTAL_SPLIT
+           || this == RIGHT && !UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT;
   }
 
+  @NotNull
   public static ToolWindowAnchor fromText(String anchor) {
     for (ToolWindowAnchor a : new ToolWindowAnchor[]{TOP, LEFT, BOTTOM, RIGHT}) {
-      if (a.myText.equals(anchor)) return a;
+      if (a.myText.equals(anchor)) {
+        return a;
+      }
     }
     throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
   }

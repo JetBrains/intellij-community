@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -166,7 +167,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     super.removeNotify();
   }
 
-  void addButton(final StripeButton button, final Comparator<StripeButton> comparator) {
+  void addButton(@NotNull StripeButton button, final Comparator<StripeButton> comparator) {
     myPrefSize = null;
     myButtons.add(button);
     Collections.sort(myButtons, comparator);
@@ -174,7 +175,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     revalidate();
   }
 
-  void removeButton(final StripeButton button) {
+  void removeButton(@NotNull StripeButton button) {
     myPrefSize = null;
     myButtons.remove(button);
     remove(button);
@@ -475,7 +476,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  public boolean containsScreen(final Rectangle screenRec) {
+  public boolean containsScreen(@NotNull Rectangle screenRec) {
     final Point point = screenRec.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return new Rectangle(point, screenRec.getSize()).intersects(

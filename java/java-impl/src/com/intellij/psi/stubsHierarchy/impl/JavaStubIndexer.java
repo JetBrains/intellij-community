@@ -18,7 +18,6 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
@@ -39,7 +38,10 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavaStubIndexer extends StubHierarchyIndexer {
 
@@ -61,7 +63,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
 
   @Nullable
   @Override
-  public List<Pair<String, Unit>> indexFile(@NotNull FileContent content) {
+  public Unit indexFile(@NotNull FileContent content) {
     Stub stubTree = StubTreeBuilder.buildStubTree(content);
     if (!(stubTree instanceof PsiJavaFileStub)) return null;
 
@@ -87,7 +89,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
     Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(new Import[importList.size()]);
     byte type = javaFileStub.isCompiled() ? IndexTree.BYTECODE : IndexTree.JAVA;
-    return Collections.singletonList(Pair.create(javaFileStub.getPackageName(), new Unit(type, imports, classes)));
+    return new Unit(javaFileStub.getPackageName(), type, imports, classes);
   }
 
   @Nullable

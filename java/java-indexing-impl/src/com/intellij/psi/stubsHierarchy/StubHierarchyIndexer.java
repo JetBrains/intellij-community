@@ -16,14 +16,11 @@
 package com.intellij.psi.stubsHierarchy;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author peter
@@ -37,7 +34,7 @@ public abstract class StubHierarchyIndexer {
    * @return a list of pairs <packageName, compilation unit> for a specified file content
    */
   @Nullable
-  public abstract List<Pair<String, IndexTree.Unit>> indexFile(@NotNull FileContent content);
+  public abstract IndexTree.Unit indexFile(@NotNull FileContent content);
 
   public abstract boolean handlesFile(@NotNull VirtualFile file);
 
