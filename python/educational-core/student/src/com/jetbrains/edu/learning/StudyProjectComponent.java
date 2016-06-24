@@ -26,6 +26,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
+import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
+import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -113,6 +115,8 @@ public class StudyProjectComponent implements ProjectComponent {
             }
           }
         }
+        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
       }
       else {
         LOG.warn("Actions on toolbar are nulls");
