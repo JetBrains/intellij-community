@@ -1,5 +1,7 @@
 package com.jetbrains.edu.coursecreator.ui;
 
+import com.intellij.ui.JBColor;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -14,6 +16,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     add(myPanel, BorderLayout.CENTER);
     myHintText.setLineWrap(true);
     myHintText.setWrapStyleWord(true);
+    myHintText.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     myAnswerPlaceholderText.grabFocus();
   }
 
