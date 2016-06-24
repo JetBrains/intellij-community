@@ -71,13 +71,15 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   // for diagnostics
   static Object info(Runnable info) {
     Object task = info;
+    String extra = null;
     if (task instanceof FutureTask) {
+      extra = ((FutureTask)task).isCancelled() ? " (future cancelled)" : ((FutureTask)task).isDone() ? " (future done)" : null;
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
     }
-    return task;
+    return extra == null ? task : task == null ? extra : task.getClass() + extra;
   }
 
   @Override
@@ -184,38 +186,33 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return null;
   }
 
-  private void runFirstTaskThenPollAndRunRest(@NotNull Runnable first, long status) {
-    // we are back inside backend executor, no need to call .execute() - just run synchronously
-    Runnable task = first;
-    do {
-      try {
-        task.run();
-      }
-      catch (Error ignored) {
-        // exception will be stored in this FutureTask status
-      }
-      catch (RuntimeException ignored) {
-        // exception will be stored in this FutureTask status
-      }
-      task = pollOrGiveUp(status);
-    }
-    while (task != null);
-  }
-
-  private void wrapAndExecute(@NotNull final Runnable task, final long status) {
+  private void wrapAndExecute(@NotNull final Runnable firstTask, final long status) {
     try {
-      final AtomicReference<Runnable> firstTask = new AtomicReference<Runnable>(task);
+      final AtomicReference<Runnable> currentTask = new AtomicReference<Runnable>(firstTask);
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          runFirstTaskThenPollAndRunRest(firstTask.get(), status);
-          firstTask.set(null);
+          // we are back inside backend executor, no need to call .execute() - just run synchronously
+          Runnable task = currentTask.get();
+          do {
+            currentTask.set(task);
+            try {
+              task.run();
+            }
+            catch (Error ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            catch (RuntimeException ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            task = pollOrGiveUp(status);
+          }
+          while (task != null);
         }
 
         @Override
         public String toString() {
-          Runnable runnable = firstTask.get();
-          return runnable == null ? super.toString() : runnable.toString();
+          return String.valueOf(info(currentTask.get()));
         }
       });
     }
