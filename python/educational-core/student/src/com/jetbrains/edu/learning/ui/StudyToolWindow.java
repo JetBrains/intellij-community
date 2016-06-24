@@ -30,16 +30,18 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 
 public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
@@ -50,6 +52,8 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
   private final OnePixelSplitter mySplitPane;
+  private JLabel myStatisticLabel;
+  private StudyProgressBar myStudyProgressBar;
 
   public StudyToolWindow() {
     super(true, true);
@@ -72,6 +76,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     }
     JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
+    panel.add(createCourseProgress(project), BorderLayout.SOUTH);
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
@@ -231,6 +236,53 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     WebBrowserManager.getInstance().setShowBrowserHover(true);
     mySplitPane.setFirstComponent(myContentPanel);
     StudyTaskManager.getInstance(project).setToolWindowMode(StudyToolWindowMode.TEXT);
-    StudyUtils.updateStudyToolWindow(project);
+    StudyUtils.updateToolWindows(project);
+  }
+
+  private JPanel createCourseProgress(@NotNull final Project project) {
+    JPanel contentPanel = new JPanel();
+    contentPanel.setBackground(JBColor.WHITE);
+    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
+    contentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+    contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+    myStudyProgressBar = new StudyProgressBar(0, 20, 10);
+
+    myStatisticLabel = new JLabel("", SwingConstants.LEFT);
+    contentPanel.add(myStatisticLabel);
+    contentPanel.add(myStudyProgressBar);
+
+    contentPanel.setPreferredSize(new Dimension(100, 60));
+    contentPanel.setMinimumSize(new Dimension(300, 40));
+    updateCourseProgress(project);
+    return contentPanel;
+  }
+
+  public void updateCourseProgress(@NotNull final Project project) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course != null) {
+      int taskNum = 0;
+      int taskSolved = 0;
+      List<Lesson> lessons = course.getLessons();
+      for (Lesson lesson : lessons) {
+        if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
+        taskNum += lesson.getTaskList().size();
+        taskSolved += getSolvedTasks(lesson);
+      }
+      String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
+      double percent = (taskSolved * 100.0) / taskNum;
+
+      myStatisticLabel.setText(completedTasks);
+      myStudyProgressBar.setFraction(percent / 100);
+    }
+  }
+
+  private static int getSolvedTasks(@NotNull final Lesson lesson) {
+    int solved = 0;
+    for (Task task : lesson.getTaskList()) {
+      if (task.getStatus() == StudyStatus.Solved) {
+        solved += 1;
+      }
+    }
+    return solved;
   }
 }
