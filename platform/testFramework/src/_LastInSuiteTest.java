@@ -63,13 +63,13 @@ public class _LastInSuiteTest extends TestCase {
       @Override
       public void run() {
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-        application.setDisposeInProgress(true);
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
         System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 
