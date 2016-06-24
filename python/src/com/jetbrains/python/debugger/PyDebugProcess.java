@@ -533,7 +533,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
             }
           }
-          if ((breakpoint != null) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
+          if ((breakpoint != null) && (breakpoint.getType().isSuspendThreadSupported()) &&
+              (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
             return true;
           }
         }
@@ -855,7 +856,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
         }
         if (breakpoint != null) {
-          if (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL) {
+          if ((breakpoint.getType().isSuspendThreadSupported()) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
             suspendAllOtherThreads(threadInfo);
           }
         }
