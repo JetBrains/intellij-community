@@ -537,7 +537,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	form.attrs.accept-charset?
 		&	(	common.attrs.aria.implicit.form
 			|	common.attrs.aria.landmark.form
-			|	common.attrs.aria.role.search
+			|	common.attrs.aria.landmark.search
 			|	common.attrs.aria.role.presentation
 			)?
 		)
@@ -575,6 +575,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	fieldset.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.group
+			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria
 			)?
 		)
@@ -592,9 +593,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	label.attrs =
 		(	common.attrs
 		&	label.attrs.for?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		label.attrs.for =
 			attribute for {
