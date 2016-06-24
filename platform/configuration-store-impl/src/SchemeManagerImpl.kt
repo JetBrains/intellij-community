@@ -62,7 +62,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         private val ioDirectory: Path,
                                                         val roamingType: RoamingType = RoamingType.DEFAULT,
                                                         virtualFileTrackerDisposable: Disposable? = null,
-                                                        val presentableName: String? = null) : SchemeManager<T>(), SafeWriteRequestor {
+                                                        val presentableName: String? = null,
+                                                        private val isUseOldFileNameSanitize: Boolean = false) : SchemeManager<T>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, T>()
 
@@ -559,7 +560,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator) {
-    var externalInfo: ExternalInfo? = schemeToInfo[scheme]
+    var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val parent = processor.writeScheme(scheme)
     val element = if (parent is Element) parent else (parent as Document).detachRootElement()
@@ -570,7 +571,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
-      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.name, false))
+      fileNameWithoutExtension = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(scheme.name, isUseOldFileNameSanitize))
     }
 
     val newDigest = element!!.digest()

@@ -26,9 +26,10 @@ public class MockSchemeManagerFactory extends SchemeManagerFactory {
   @NotNull
   @Override
   protected <SCHEME extends Scheme, MUTABLE_SCHEME extends SCHEME> SchemeManager<SCHEME> create(@NotNull String directoryName,
-                                                                                                @NotNull SchemeProcessor<SCHEME, MUTABLE_SCHEME> processor,
+                                                                                                @NotNull SchemeProcessor<SCHEME, ? super MUTABLE_SCHEME> processor,
                                                                                                 @Nullable String presentableName,
-                                                                                                @NotNull RoamingType roamingType) {
+                                                                                                @NotNull RoamingType roamingType,
+                                                                                                boolean isUseOldFileNameSanitize) {
     //noinspection unchecked
     return EMPTY;
   }

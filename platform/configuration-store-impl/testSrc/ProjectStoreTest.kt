@@ -27,10 +27,12 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
-import com.intellij.util.*
+import com.intellij.util.PathUtil
+import com.intellij.util.readText
+import com.intellij.util.systemIndependentPath
+import com.intellij.util.write
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -108,53 +110,6 @@ internal class ProjectStoreTest {
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
-    }
-  }
-
-  @Test fun `project inspection`() {
-    loadAndUseProject(tempDirManager, {
-      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
-      it.path
-    }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project)
-
-      assertThat(projectInspectionProfileManager.state).isEmpty()
-
-      projectInspectionProfileManager.currentProfile
-
-      assertThat(projectInspectionProfileManager.state).isEmpty()
-
-      // cause to use app profile
-      projectInspectionProfileManager.setRootProfile(null)
-      val doNotUseProjectProfileState = """
-      <state>
-        <option name="USE_PROJECT_PROFILE" value="false" />
-        <version value="1.0" />
-      </state>""".trimIndent()
-      assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
-
-      val inspectionDir = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_CONFIG_DIR), "inspectionProfiles")
-      val file = inspectionDir.resolve("profiles_settings.xml")
-      project.saveStore()
-      assertThat(file).exists()
-      val doNotUseProjectProfileData = """
-      <component name="InspectionProjectProfileManager">
-        <option name="USE_PROJECT_PROFILE" value="false" />
-        <version value="1.0" />
-      </component>""".trimIndent()
-      assertThat(file.readText()).isEqualTo(doNotUseProjectProfileData)
-
-      // test load
-      file.delete()
-
-      project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
-      assertThat(projectInspectionProfileManager.state).isEmpty()
-
-      file.write(doNotUseProjectProfileData)
-      project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
-      assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
 

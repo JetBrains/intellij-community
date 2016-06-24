@@ -94,7 +94,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
         profile.isProjectLevel = true
         return profile
       }
-    })
+    }, isUseOldFileNameSanitize = true)
 
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
       override fun projectClosed(project: Project) {

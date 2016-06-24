@@ -40,10 +40,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open val componentManager: ComponentManager? = null
 
-  override final fun <T : Scheme, MutableT : T> create(directoryName: String, processor: SchemeProcessor<T, MutableT>, presentableName: String?, roamingType: RoamingType): SchemeManager<T> {
+  override final fun <T : Scheme, MutableT : T> create(directoryName: String, processor: SchemeProcessor<T, MutableT>, presentableName: String?, roamingType: RoamingType, isUseOldFileNameSanitize: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
-    val manager = SchemeManagerImpl(path, processor, (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path), roamingType, componentManager, presentableName)
-    @Suppress("CAST_NEVER_SUCCEEDS")
+    val manager = SchemeManagerImpl(path, processor, (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path), roamingType, componentManager, presentableName, isUseOldFileNameSanitize)
+    @Suppress("UNCHECKED_CAST")
     managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
     return manager
   }
@@ -103,18 +103,18 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(ROOT_CONFIG), path)
+    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(ROOT_CONFIG), path)!!
   }
 
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun pathToFile(path: String) = Paths.get(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
+    override fun pathToFile(path: String) = Paths.get(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")!!
   }
 
   @TestOnly
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
-    override fun pathToFile(path: String) = basePath.resolve(path)
+    override fun pathToFile(path: String) = basePath.resolve(path)!!
   }
 }

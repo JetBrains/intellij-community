@@ -32,26 +32,26 @@ interface ExternalizableScheme : Scheme {
 abstract class SchemeManagerFactory {
   companion object {
     @JvmStatic
-    fun getInstance() = ServiceManager.getService(SchemeManagerFactory::class.java)
+    fun getInstance() = ServiceManager.getService(SchemeManagerFactory::class.java)!!
 
     @JvmStatic
-    fun getInstance(project: Project) = ServiceManager.getService(project, SchemeManagerFactory::class.java)
+    fun getInstance(project: Project) = ServiceManager.getService(project, SchemeManagerFactory::class.java)!!
   }
 
   /**
    * directoryName — like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> = create(directoryName, processor, presentableName, RoamingType.DEFAULT)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME> = create(directoryName, processor, presentableName, RoamingType.DEFAULT, isUseOldFileNameSanitize)
 
-  protected abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT): SchemeManager<SCHEME>
+  protected abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT, isUseOldFileNameSanitize: Boolean = false): SchemeManager<SCHEME>
 }
 
 enum class SchemeState {
   UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
 }
 
-abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
+abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   open fun isExternalizable(scheme: SCHEME) = scheme is ExternalizableScheme
 
   /**
