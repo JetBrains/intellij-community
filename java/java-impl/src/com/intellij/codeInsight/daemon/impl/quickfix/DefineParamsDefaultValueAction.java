@@ -70,6 +70,7 @@ public class DefineParamsDefaultValueAction extends DelegateWithDefaultParamValu
       new MemberChooser<ParameterClassMember>(members, false, true, element.getProject());
     chooser.selectElements(members);
     chooser.setTitle("Choose Default Value Parameters");
+    chooser.setCopyJavadocVisible(false);
     if (chooser.showAndGet()) {
       final List<ParameterClassMember> elements = chooser.getSelectedElements();
       if (elements != null) {
