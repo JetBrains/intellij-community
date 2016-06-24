@@ -253,9 +253,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
 
       // Android Studio: include metrics libraries in $install/lib
+      // including the common base library to avoid classloader issues.
+      jar("android-common.jar") {
+        module("common")
+      }
       jar("google-analytics-library.jar") {
         module("android-annotations")
-        module("common")
         module("analytics-protos")
         module("analytics-shared")
         module("analytics-tracker")
@@ -849,9 +852,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("constraint-layout.jar") {
         module("sherpa-solver")
         module("sherpa-ui")
-      }
-      jar("common.jar") {
-        module("common")
       }
       jar("sdklib.jar") {
         module("sdklib")
