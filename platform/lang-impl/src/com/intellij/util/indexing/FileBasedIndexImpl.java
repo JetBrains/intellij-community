@@ -767,13 +767,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    processValuesImpl(indexId, dataKey, true, restrictToFile, new ValueProcessor<V>() {
-      @Override
-      public boolean process(final VirtualFile file, final V value) {
-        values.add(value);
-        return true;
-      }
-    }, filter, null);
+    ValueProcessor<V> processor = (file, value) -> {
+      values.add(value);
+      return true;
+    };
+    if (restrictToFile != null) {
+      processValuesInOneFile(indexId, dataKey, restrictToFile, processor, filter);
+    } else {
+      processValuesInScope(indexId, dataKey, true, filter, null, processor);
+    }
     return values;
   }
 
@@ -783,13 +785,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                                            @NotNull K dataKey,
                                                            @NotNull final GlobalSearchScope filter) {
     final Set<VirtualFile> files = new THashSet<VirtualFile>();
-    processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
-      @Override
-      public boolean process(final VirtualFile file, final V value) {
-        files.add(file);
-        return true;
-      }
-    }, filter, null);
+    processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
+      files.add(file);
+      return true;
+    });
     return files;
   }
 
@@ -807,7 +806,40 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                       @NotNull ValueProcessor<V> processor,
                                       @NotNull GlobalSearchScope filter,
                                       @Nullable IdFilter idFilter) {
-    return processValuesImpl(indexId, dataKey, false, inFile, processor, filter, idFilter);
+    return inFile != null
+           ? processValuesInOneFile(indexId, dataKey, inFile, processor, filter)
+           : processValuesInScope(indexId, dataKey, false, filter, idFilter, processor);
+  }
+
+  public interface IdValueProcessor<V> {
+    /**
+     * @param fileId the id of the file that the value came from
+     * @param value a value to process
+     * @return false if no further processing is needed, true otherwise
+     */
+    boolean process(int fileId, V value);
+  }
+
+  /**
+   * Process values for a given index key together with their containing file ids. Note that project is supplied
+   * only to ensure that all the indices in that project are up to date; there's no guarantee that the processed file ids belong
+   * to this project.
+   */
+  public <K, V> boolean processAllValues(@NotNull ID<K, V> indexId,
+                                         @NotNull K key,
+                                         @NotNull Project project,
+                                         @NotNull IdValueProcessor<V> processor) {
+    return processValueIterator(indexId, key, null, GlobalSearchScope.allScope(project), valueIt -> {
+      while (valueIt.hasNext()) {
+        V value = valueIt.next();
+        for (ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
+          if (!processor.process(inputIdsIterator.next(), value)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
   }
 
   @Nullable
@@ -854,54 +886,61 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return null;
   }
 
-  private <K, V> boolean processValuesImpl(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, final boolean ensureValueProcessedOnce,
-                                           @Nullable final VirtualFile restrictToFile, @NotNull final ValueProcessor<V> processor,
-                                           @NotNull final GlobalSearchScope scope, @Nullable final IdFilter idFilter) {
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException> keyProcessor =
-      index -> {
-        final ValueContainer<V> container = index.getData(dataKey);
+  private <K, V> boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                @NotNull VirtualFile restrictToFile,
+                                                @NotNull ValueProcessor<V> processor, @NotNull GlobalSearchScope scope) {
+    if (!(restrictToFile instanceof VirtualFileWithId)) return true;
 
-        boolean shouldContinue = true;
+    int restrictedFileId = getFileId(restrictToFile);
+    return processValueIterator(indexId, dataKey, restrictToFile, scope, valueIt -> {
+      while (valueIt.hasNext()) {
+        V value = valueIt.next();
+        if (valueIt.getValueAssociationPredicate().contains(restrictedFileId) && !processor.process(restrictToFile, value)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
 
-        if (restrictToFile != null) {
-          if (restrictToFile instanceof VirtualFileWithId) {
-            final int restrictedFileId = getFileId(restrictToFile);
-            for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-              final V value = valueIt.next();
-              if (valueIt.getValueAssociationPredicate().contains(restrictedFileId)) {
-                shouldContinue = processor.process(restrictToFile, value);
-                if (!shouldContinue) {
-                  break;
-                }
-              }
+  private <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                              @NotNull K dataKey,
+                                              boolean ensureValueProcessedOnce,
+                                              @NotNull GlobalSearchScope scope,
+                                              @Nullable IdFilter idFilter,
+                                              @NotNull ValueProcessor<V> processor) {
+    PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
+
+    return processValueIterator(indexId, dataKey, null, scope, valueIt -> {
+      while (valueIt.hasNext()) {
+        final V value = valueIt.next();
+        for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
+          final int id = inputIdsIterator.next();
+          if (filter != null && !filter.containsFileId(id)) continue;
+          VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+          if (file != null && scope.accept(file)) {
+            if (!processor.process(file, value)) {
+              return false;
+            }
+            if (ensureValueProcessedOnce) {
+              break; // continue with the next value
             }
           }
         }
-        else {
-          final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-          final IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
-          VALUES_LOOP:
-          for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-            final V value = valueIt.next();
-            for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
-              final int id = inputIdsIterator.next();
-              if (filter != null && !filter.containsFileId(id)) continue;
-              VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-              if (file != null && scope.accept(file)) {
-                shouldContinue = processor.process(file, value);
-                if (!shouldContinue) {
-                  break VALUES_LOOP;
-                }
-                if (ensureValueProcessedOnce) {
-                  break; // continue with the next value
-                }
-              }
-            }
-          }
-        }
-        return shouldContinue;
-      };
-    final Boolean result = processExceptions(indexId, restrictToFile, scope, keyProcessor);
+      }
+      return true;
+    });
+  }
+
+  private <K, V> boolean processValueIterator(@NotNull ID<K, V> indexId,
+                                              @NotNull K dataKey,
+                                              @Nullable VirtualFile restrictToFile,
+                                              @NotNull GlobalSearchScope scope,
+                                              @NotNull Processor<ValueContainer.ValueIterator<V>> valueProcessor) {
+    final Boolean result = processExceptions(indexId, restrictToFile, scope,
+                                             index -> valueProcessor.process(index.getData(dataKey).getValueIterator()));
     return result == null || result.booleanValue();
   }
 
