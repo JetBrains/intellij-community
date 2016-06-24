@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.*
@@ -37,8 +36,9 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
 import java.io.IOException
-import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 
 open class FileBasedStorage(file: Path,
                             fileSpec: String,
@@ -106,18 +106,27 @@ open class FileBasedStorage(file: Path,
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false
+
+    val attributes: BasicFileAttributes?
     try {
-      val file = virtualFile
-      if (file == null || file.isDirectory || !file.isValid) {
-        LOG.debug { "Document was not loaded for $fileSpec file is ${if (file == null) "null" else "directory"}" }
+      attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
+    }
+    catch (e: IOException) {
+      LOG.debug(e) { "Document was not loaded for $fileSpec, doesn't exists" }
+      return null
+    }
+
+    try {
+      if (!attributes.isRegularFile) {
+        LOG.debug { "Document was not loaded for $fileSpec, not a file" }
       }
-      else if (file.length == 0L) {
+      else if (attributes.size() == 0L) {
         processReadException(null)
       }
       else {
-        val charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return loadElement(charBuffer)
+        val data = file.readChars()
+        lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
+        return loadElement(data)
       }
     }
     catch (e: JDOMException) {

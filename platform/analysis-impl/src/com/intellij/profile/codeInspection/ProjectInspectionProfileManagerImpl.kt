@@ -182,15 +182,6 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     val newState = State()
     XmlSerializer.deserializeInto(newState, state)
     this.state = newState
-//    for (o in state.getChildren(PROFILE)) {
-//      val profile = applicationProfileManager.createProfile()
-//      if (profileKeys.contains(profile.name)) {
-//        updateProfile(profile)
-//      }
-//      else {
-//        profiles.put(profile.name, profile as InspectionProfile?)
-//      }
-//    }
     if (state.getChild("version")?.getAttributeValue("value") != VERSION) {
       for (o in state.getChildren("option")) {
         if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
@@ -249,7 +240,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
 
     val currentName = state.projectProfile
-    if (currentName == null || schemeManager.isEmpty()) {
+    if (currentName == null || schemeManager.isEmpty) {
       state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
       val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, InspectionProfileImpl.getDefaultProfile(), null)
       projectProfile.copyFrom(applicationProfileManager.currentProfile)

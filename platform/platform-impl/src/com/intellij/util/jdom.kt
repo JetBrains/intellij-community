@@ -46,11 +46,11 @@ private fun getSaxBuilder(): SAXBuilder {
 
 fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
 
-fun loadElement(reader: Reader) = loadDocument(reader).detachRootElement()
+fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
 
-fun loadElement(stream: InputStream) = loadDocument(stream.reader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).detachRootElement()
 
-fun loadElement(path: Path) = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
+fun loadElement(path: Path): Element = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
 
 private fun loadDocument(reader: Reader): Document {
   try {

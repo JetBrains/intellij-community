@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
-import com.intellij.util.PathUtil
-import com.intellij.util.readText
-import com.intellij.util.systemIndependentPath
-import com.intellij.util.write
+import com.intellij.util.*
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -121,13 +118,6 @@ internal class ProjectStoreTest {
     }) { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project)
 
-      // test reload on external change
-//      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
-//      file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
-
-//      project.baseDir.refresh(false, true)
-//      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
-
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       projectInspectionProfileManager.currentProfile
@@ -136,21 +126,35 @@ internal class ProjectStoreTest {
 
       // cause to use app profile
       projectInspectionProfileManager.setRootProfile(null)
-      assertThat(projectInspectionProfileManager.state).isEqualTo("""
+      val doNotUseProjectProfileState = """
       <state>
         <option name="USE_PROJECT_PROFILE" value="false" />
         <version value="1.0" />
-      </state>""")
+      </state>""".trimIndent()
+      assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
 
-      val store = project.stateStore as IProjectStore
-      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_CONFIG_DIR), "inspectionProfiles", "profiles_settings.xml")
+      val inspectionDir = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_CONFIG_DIR), "inspectionProfiles")
+      val file = inspectionDir.resolve("profiles_settings.xml")
       project.saveStore()
       assertThat(file).exists()
-      assertThat(file.readText()).isEqualTo("""
+      val doNotUseProjectProfileData = """
       <component name="InspectionProjectProfileManager">
         <option name="USE_PROJECT_PROFILE" value="false" />
         <version value="1.0" />
-      </component>""".trimIndent())
+      </component>""".trimIndent()
+      assertThat(file.readText()).isEqualTo(doNotUseProjectProfileData)
+
+      // test load
+      file.delete()
+
+      project.baseDir.refresh(false, true)
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      assertThat(projectInspectionProfileManager.state).isEmpty()
+
+      file.write(doNotUseProjectProfileData)
+      project.baseDir.refresh(false, true)
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
 
