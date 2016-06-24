@@ -40,9 +40,11 @@ public class EduNames {
 
   public static final String SANDBOX_DIR = "Sandbox";
   public static final String COURSE_META_FILE = "course.json";
-  public static final String STUDY = "Study";
   public static final String PYCHARM_ADDITIONAL = "PyCharm additional materials";
   public static final String PYCHARM = "PyCharm";
+
+  public static final String STUDY = "Study";
+  public static final String ADAPTIVE = "Adaptive";
 
   public static final String PLACEHOLDER = "Answer Placeholder";
   public static final String SRC = "src";
