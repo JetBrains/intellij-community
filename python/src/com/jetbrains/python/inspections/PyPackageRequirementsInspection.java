@@ -39,7 +39,6 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,7 +157,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if (PyPackageManager.SETUPTOOLS.equals(packageName)) {
+          if (PyPackageUtil.SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
@@ -211,13 +210,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       return Collections.emptySet();
     }
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
-    final List<PyPackage> packages;
-    try {
-      packages = PyPackageManager.getInstance(sdk).getPackages(PySdkUtil.isRemote(sdk));
-    }
-    catch (ExecutionException e) {
-      return null;
-    }
+    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
     if (packages == null) return null;
     for (PyRequirement req : requirements) {
       final PyPackage pkg = req.match(packages);
@@ -237,15 +230,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = manager.getRequirements(module);
     if (requirements != null) {
-      final List<PyPackage> packages;
-      try {
-        packages = manager.getPackages(PySdkUtil.isRemote(sdk));
-      }
-      catch (ExecutionException e) {
-        LOG.warn(e);
+      final List<PyPackage> packages = manager.getPackages();
+      if (packages == null) {
         return null;
       }
-      if (packages == null) return null;
       final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
       for (PyRequirement req : requirements) {
         if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null) {
@@ -297,13 +285,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       boolean installManagement = false;
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
-      boolean hasManagement = false;
-      try {
-        hasManagement = manager.hasManagement(false);
+      final List<PyPackage> packages = manager.getPackages();
+      if (packages == null) {
+        return;
       }
-      catch (ExecutionException ignored) {
-      }
-      if (!hasManagement) {
+      if (PyPackageUtil.hasManagement(packages)) {
         final int result = Messages.showYesNoDialog(project,
                                                     "Python packaging tools are required for installing packages. Do you want to " +
                                                     "install 'pip' and 'setuptools' for your interpreter?",

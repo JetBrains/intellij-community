@@ -38,8 +38,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     setLayout(new GridBagLayout());
     setBackground(UIUtil.getTextFieldBackground());
 
-    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, SOLVED_TASK_TOOLTIP, TOO_HARD_REACTION);
-    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, SOLVED_TASK_TOOLTIP, TOO_BORING_REACTION);
+    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, TOO_HARD_REACTION);
+    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, TOO_BORING_REACTION);
     addFileListener();
 
     final GridBagConstraints c = new GridBagConstraints();
@@ -99,7 +99,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
     public ReactionButtonPanel(@NotNull final String text,
                                @NotNull final String enabledTooltip,
-                               @NotNull final String disabledTooltip,
                                int reaction) {
       com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
       final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
@@ -108,7 +107,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
       myButtonPanel = new JPanel();
       myButtonPanel.setLayout(new BoxLayout(myButtonPanel, BoxLayout.PAGE_AXIS));
-      myButtonPanel.setToolTipText(isEnabled ? enabledTooltip : disabledTooltip);
+      myButtonPanel.setToolTipText(isEnabled ? enabledTooltip : SOLVED_TASK_TOOLTIP);
       myButtonPanel.add(Box.createVerticalStrut(5));
       myButtonPanel.add(myLabel);
       myButtonPanel.add(Box.createVerticalStrut(5));

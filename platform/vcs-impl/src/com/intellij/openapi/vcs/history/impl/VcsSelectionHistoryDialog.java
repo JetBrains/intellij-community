@@ -228,7 +228,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       @Override
       protected void notifyError(@NotNull VcsException e) {
         SwingUtilities.invokeLater(() -> {
-          if (!VcsSelectionHistoryDialog.this.getFrame().isShowing()) return;
+          VcsSelectionHistoryDialog dialog = VcsSelectionHistoryDialog.this;
+          if (dialog.isDisposed() || !dialog.getFrame().isShowing()) return;
           PopupUtil.showBalloonForComponent(mySplitter, canNoLoadMessage(e), MessageType.ERROR, true, myProject);
         });
       }

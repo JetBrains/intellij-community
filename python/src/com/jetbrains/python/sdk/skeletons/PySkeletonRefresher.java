@@ -43,7 +43,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -344,15 +343,6 @@ public class PySkeletonRefresher {
     if (!oldOrNonExisting) {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
       cleanUpSkeletons(skeletonsDir);
-    }
-    if (PySdkUtil.isRemote(mySdk)) {
-      try {
-        // Force loading packages
-        PyPackageManager.getInstance(mySdk).getPackages(false);
-      }
-      catch (ExecutionException e) {
-        // ignore - already logged
-      }
     }
 
     if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {

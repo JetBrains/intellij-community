@@ -8,7 +8,7 @@ public class CCCreateStudyItemPanel extends JPanel {
   private JPanel myPanel;
   private JTextField myNameField;
   private CCItemPositionPanel myPositionalPanel;
-  private String myThresholdName;
+  private final String myThresholdName;
 
   public CCCreateStudyItemPanel(String itemName, String thresholdName, int thresholdIndex) {
     myThresholdName = thresholdName;

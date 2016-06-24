@@ -185,7 +185,7 @@ public class StudyCheckUtils {
       if (virtualFile == null) {
         continue;
       }
-      EduUtils.flushWindows(taskFile, virtualFile, true);
+      EduUtils.flushWindows(taskFile, virtualFile);
     }
   }
 

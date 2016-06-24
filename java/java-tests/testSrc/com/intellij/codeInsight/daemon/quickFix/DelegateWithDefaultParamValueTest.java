@@ -30,8 +30,9 @@ public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterize
 
     if (actionShouldBeAvailable) {
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.gotoEnd(false);
+      if (state != null) {
+        state.gotoEnd(false);
+      }
     }
   }
 

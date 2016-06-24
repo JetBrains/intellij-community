@@ -77,7 +77,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) return;
     final VirtualFile baseDir = project.getBaseDir();
-    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, null, zipName);
+    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, zipName);
     if (archiveFolder == null) {
       return;
     }

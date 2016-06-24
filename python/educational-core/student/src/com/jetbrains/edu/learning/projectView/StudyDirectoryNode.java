@@ -142,7 +142,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public void navigate(boolean requestFocus) {
     final String myValueName = myValue.getName();
-    if (myValueName != null && myValueName.contains(EduNames.TASK)) {
+    if (myValueName.contains(EduNames.TASK)) {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
@@ -186,7 +186,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public boolean expandOnDoubleClick() {
     final String myValueName = myValue.getName();
-    if (myValueName!= null && myValueName.contains(EduNames.TASK)) {
+    if (myValueName.contains(EduNames.TASK)) {
       return false;
     }
     return super.expandOnDoubleClick();
