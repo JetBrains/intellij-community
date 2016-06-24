@@ -98,6 +98,8 @@
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
+
+    <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
