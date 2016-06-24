@@ -314,6 +314,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
 
+    for (Project p : myOpenProjects) {
+      if (ProjectUtil.isSameProject(project.getBasePath(), p)) {
+        ProjectUtil.focusProjectWindow(p, false);
+        return false;
+      }
+    }
+
     if (!addToOpened(project)) {
       return false;
     }
