@@ -76,7 +76,11 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     }
     JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
-    panel.add(createCourseProgress(project), BorderLayout.SOUTH);
+    final JPanel courseProgress = createCourseProgress(project);
+    if (course != null && !course.isAdaptive() && EduNames.STUDY.equals(course.getCourseMode())) {
+      panel.add(courseProgress, BorderLayout.SOUTH);
+    }
+
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
