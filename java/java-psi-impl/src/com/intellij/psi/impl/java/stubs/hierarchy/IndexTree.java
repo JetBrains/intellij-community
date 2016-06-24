@@ -43,7 +43,7 @@ public class IndexTree {
   public static final byte JAVA = 1;
   public static final byte GROOVY = 2;
 
-  private static int hashIdentifier(@Nullable String s) {
+  public static int hashIdentifier(@Nullable String s) {
     if (s == null) return 0;
 
     // not using String.hashCode because this way there's less collisions for short package names like 'com'

@@ -30,13 +30,11 @@ import java.util.Comparator;
 public abstract class Symbol {
   public int myFlags;
   public int myShortName;
-  public final QualifiedName myQualifiedName;
   public final Symbol myOwner;
 
-  public Symbol(int flags, Symbol owner, QualifiedName qualifiedName, int name) {
+  public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
     this.myOwner = owner;
-    this.myQualifiedName = qualifiedName;
     this.myShortName = name;
   }
 
@@ -47,9 +45,6 @@ public abstract class Symbol {
 
   public ClassSymbol[] members() {
     return ClassSymbol.EMPTY_ARRAY;
-  }
-
-  public void setMembers(ClassSymbol[] members) {
   }
 
   public boolean isStatic() {
@@ -77,9 +72,11 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
+    final QualifiedName myQualifiedName;
+
     public PackageSymbol(Symbol owner, QualifiedName fullname, int name) {
-      super(IndexTree.PACKAGE, owner, fullname, name);
-      setMembers(ClassSymbol.EMPTY_ARRAY);
+      super(IndexTree.PACKAGE, owner, name);
+      myQualifiedName = fullname;
     }
   }
 
@@ -97,13 +94,12 @@ public abstract class Symbol {
     private ClassSymbol[] myMembers;
 
     ClassSymbol(StubClassAnchor classAnchor,
-                       int flags,
-                       Symbol owner,
-                       QualifiedName fullname,
-                       int name,
-                       UnitInfo unitInfo,
-                       QualifiedName[] supers) {
-      super(flags | IndexTree.CLASS, owner, fullname, name);
+                int flags,
+                Symbol owner,
+                int name,
+                UnitInfo unitInfo,
+                QualifiedName[] supers) {
+      super(flags | IndexTree.CLASS, owner, name);
       this.myClassAnchor = classAnchor;
       this.mySuperNames = supers;
       this.myUnitInfo = unitInfo;
@@ -184,7 +180,7 @@ public abstract class Symbol {
   public static class MemberSymbol extends Symbol {
     private ClassSymbol[] myMembers;
     public MemberSymbol(Symbol owner) {
-      super(IndexTree.MEMBER, owner, null, NamesEnumerator.NO_NAME);
+      super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
     }
     public ClassSymbol[] members() {
       return myMembers;

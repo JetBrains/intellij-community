@@ -54,12 +54,12 @@ public class StubHierarchyConnector {
       }
     }
 
-    if (c.myQualifiedName == myNameEnvironment.java_lang_Object || c.isHierarchyIncomplete()) {
+    if (isJavaLangObject(c) || c.isHierarchyIncomplete()) {
       c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
     } else {
       for (Iterator<Symbol> iter = supertypes.iterator(); iter.hasNext();) {
         Symbol s = iter.next();
-        if (!(s instanceof Symbol.ClassSymbol) || s.myQualifiedName == myNameEnvironment.java_lang_Object) {
+        if (!(s instanceof Symbol.ClassSymbol) || isJavaLangObject(s)) {
             iter.remove();
         }
       }
@@ -77,4 +77,9 @@ public class StubHierarchyConnector {
     c.myUnitInfo = null;
   }
 
+  private boolean isJavaLangObject(Symbol s) {
+    return s.myShortName == NameEnvironment.OBJECT_NAME &&
+           s.myOwner instanceof Symbol.PackageSymbol &&
+           ((Symbol.PackageSymbol)s.myOwner).myQualifiedName == myNameEnvironment.java_lang;
+  }
 }

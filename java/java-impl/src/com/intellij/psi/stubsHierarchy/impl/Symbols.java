@@ -63,21 +63,23 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers) {
-    QualifiedName qualifiedName = myNameEnvironment.qualifiedName(owner, shortName);
+  public ClassSymbol enterClass(ClassAnchor classAnchor,
+                                int flags,
+                                int shortName,
+                                Symbol owner,
+                                UnitInfo info,
+                                QualifiedName[] supers,
+                                @Nullable QualifiedName qualifiedName) {
     StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), classAnchor);
-    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, qualifiedName, shortName, info, supers);
+    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, shortName, info, supers);
     myClassSymbols.add(c);
-    putClassByName(c);
+    if (qualifiedName != null) {
+      putClassByName(c, qualifiedName.myId);
+    }
     return c;
   }
 
-  private void putClassByName(ClassSymbol classSymbol) {
-    QualifiedName name = classSymbol.myQualifiedName;
-    // anonymous class
-    if (name == null)
-      return;
-    int nameId = name.myId;
+  private void putClassByName(ClassSymbol classSymbol, int nameId) {
     ensureByNameCapacity(nameId);
     Object cs = myClassSymbolsByNameId[nameId];
     if (cs == null) {
