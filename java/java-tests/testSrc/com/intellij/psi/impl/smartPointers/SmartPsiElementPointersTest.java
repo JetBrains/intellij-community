@@ -58,10 +58,7 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @PlatformTestCase.WrapInCommand
@@ -913,6 +910,22 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     range = createPointer(psiClass).getPsiRange();
     assertNotNull(range);
     assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
+  }
+
+  public void testManySmartPointersCreationDeletionPerformance() throws Exception {
+    String text = StringUtil.repeatSymbol(' ', 100000);
+    PsiFile file = createFile("a.txt", text);
+
+    PlatformTestUtil.startPerformanceTest("", 2000, () -> {
+      List<SmartPsiFileRange> pointers = new ArrayList<>();
+      for (int i = 0; i < text.length() - 1; i++) {
+        pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
+      }
+      Collections.shuffle(pointers);
+      for (SmartPsiFileRange pointer : pointers) {
+        getPointerManager().removePointer(pointer);
+      }
+    }).cpuBound().assertTiming();
   }
 
 }

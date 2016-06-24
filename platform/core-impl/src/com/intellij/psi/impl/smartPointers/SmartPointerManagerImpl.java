@@ -29,7 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       FilePointersList pointers = reference.file.getUserData(reference.key);
       if (pointers != null) {
-        pointers.remove(reference);
+        pointers.removeReference(reference);
       }
     }
   }
@@ -160,12 +160,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     SmartPointerElementInfo info = pointer.getElementInfo();
     if (!(info instanceof SelfElementInfo)) return;
 
+    PointerReference reference = new PointerReference(pointer, containingFile, POINTERS_KEY);
     while (true) {
       FilePointersList pointers = getPointers(containingFile);
       if (pointers == null) {
         pointers = containingFile.putUserDataIfAbsent(POINTERS_KEY, new FilePointersList());
       }
-      if (pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY))) {
+      if (pointers.add(reference)) {
         if (((SelfElementInfo)info).hasRange()) {
           pointers.markerCache.rangeChanged();
         }
@@ -193,8 +194,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       if (containingFile == null) return;
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
       FilePointersList pointers = getPointers(vFile);
-      if (pointers == null) return;
-      pointers.remove(pointer);
+      PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
+      if (pointers != null && reference != null) {
+        pointers.removeReference(reference);
+      }
     }
   }
 
@@ -264,17 +267,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return myPsiDocManager;
   }
 
-  private static class PointerReference extends WeakReference<SmartPsiElementPointerImpl> {
+  static class PointerReference extends WeakReference<SmartPsiElementPointerImpl> {
     @NotNull private final VirtualFile file;
     @NotNull private final Key<FilePointersList> key;
+    private int index = -2;
 
     private PointerReference(@NotNull SmartPsiElementPointerImpl<?> pointer,
                              @NotNull VirtualFile containingFile,
-                             @NotNull ReferenceQueue<SmartPsiElementPointerImpl> queue,
                              @NotNull Key<FilePointersList> key) {
-      super(pointer, queue);
+      super(pointer, ourQueue);
       file = containingFile;
       this.key = key;
+      pointer.pointerReference = this;
     }
   }
 
@@ -292,104 +296,98 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       }
 
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
-        int newCapacity = nextAvailableIndex >= references.length ? references.length * 3/2 +1 : size * 3/2+1;
-        PointerReference[] newReferences = new PointerReference[newCapacity];
+        int newCapacity = (nextAvailableIndex >= references.length ? references.length : size) * 3 / 2 + 1;
+        final PointerReference[] newReferences = new PointerReference[newCapacity];
 
-        int o = 0;
-        for (PointerReference oldRef : references) {
-          if (SoftReference.dereference(oldRef) != null) {
-            newReferences[o++] = oldRef;
+        final int[] o = {0};
+        processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
+          @Override
+          public boolean process(SmartPsiElementPointerImpl pointer) {
+            storePointerReference(newReferences, o[0]++, pointer.pointerReference);
+            return true;
           }
-        }
+        });
         references = newReferences;
-        size = nextAvailableIndex = o;
+        size = nextAvailableIndex = o[0];
       }
-      references[nextAvailableIndex++] = reference;
+      assert references[nextAvailableIndex] == null : references[nextAvailableIndex];
+      storePointerReference(references, nextAvailableIndex++, reference);
       size++;
       mySorted = false;
       return true;
     }
 
-    private synchronized void remove(@NotNull PointerReference reference) {
-      int index = ArrayUtil.indexOf(references, reference, 0, nextAvailableIndex);
-      if (index != -1) {
-        removeReference(reference, index);
-      }
-    }
+    private synchronized void removeReference(@NotNull PointerReference reference) {
+      int index = reference.index;
+      if (index < 0) return;
 
-    private synchronized void remove(@NotNull SmartPsiElementPointer smartPointer) {
-      for (int i = 0; i < nextAvailableIndex; i++) {
-        PointerReference reference = references[i];
-        if (reference != null && reference.get() == smartPointer) {
-          removeReference(reference, i);
-          return;
-        }
-      }
-    }
-
-    private void removeReference(@NotNull PointerReference reference, int index) {
+      assert references[index] == reference : "At " + index + " expected " + reference + ", found " + references[index];
+      references[index].index = -1;
       references[index] = null;
       if (--size == 0) {
         reference.file.replace(reference.key, this, null);
       }
     }
 
-    boolean processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
+    synchronized boolean processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
       for (int i = 0; i < nextAvailableIndex; i++) {
-        SmartPsiElementPointerImpl pointer = SoftReference.dereference(references[i]);
-        if (pointer != null && !processor.process(pointer)) {
+        PointerReference ref = references[i];
+        if (ref == null) continue;
+
+        SmartPsiElementPointerImpl pointer = ref.get();
+        if (pointer == null) {
+          removeReference(ref);
+          continue;
+        }
+
+        if (!processor.process(pointer)) {
           return false;
         }
       }
       return true;
     }
 
-    synchronized List<SelfElementInfo> getSortedInfos() {
+    private void ensureSorted() {
       if (!mySorted) {
-        List<SmartPsiElementPointerImpl> hardRefs = ContainerUtil.newArrayListWithCapacity(size);
-        for (int i = 0; i < nextAvailableIndex; i++) {
-          PointerReference reference = references[i];
-          if (reference == null) continue;
+        List<SmartPsiElementPointerImpl> pointers = new ArrayList<SmartPsiElementPointerImpl>();
+        processAlivePointers(new CommonProcessors.CollectProcessor<SmartPsiElementPointerImpl>(pointers));
+        assert size == pointers.size();
 
-          SmartPsiElementPointerImpl pointer = reference.get();
-          if (pointer != null) {
-            hardRefs.add(pointer);
-          }
-          else {
-            removeReference(reference, i);
-            if (size == 0) {
-              return Collections.emptyList();
-            }
-          }
-        }
-        assert size == hardRefs.size();
-
-        Arrays.sort(references, 0, nextAvailableIndex, new Comparator<PointerReference>() {
+        Collections.sort(pointers, new Comparator<SmartPsiElementPointerImpl>() {
           @Override
-          public int compare(PointerReference o1, PointerReference o2) {
-            SmartPsiElementPointerImpl p1 = SoftReference.dereference(o1);
-            SmartPsiElementPointerImpl p2 = SoftReference.dereference(o2);
-            if (p1 == null || p2 == null) {
-              return p1 != null ? -1 : p2 != null ? 1 : 0; // null references to the end
-            }
+          public int compare(SmartPsiElementPointerImpl p1, SmartPsiElementPointerImpl p2) {
             return MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo());
           }
         });
-        nextAvailableIndex = hardRefs.size();
+
+        for (int i = 0; i < pointers.size(); i++) {
+          storePointerReference(references, i, pointers.get(i).pointerReference);
+        }
+        Arrays.fill(references, pointers.size(), nextAvailableIndex, null);
+        nextAvailableIndex = pointers.size();
         mySorted = true;
       }
+    }
 
-      List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(size);
-      for (int i = 0; i < nextAvailableIndex; i++) {
-        Reference<SmartPsiElementPointerImpl> reference = references[i];
-        SmartPsiElementPointerImpl pointer = SoftReference.dereference(reference);
-        if (pointer != null) {
+    private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
+      references[index] = ref;
+      ref.index = index;
+    }
+
+    synchronized List<SelfElementInfo> getSortedInfos() {
+      ensureSorted();
+
+      final List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(size);
+      processAlivePointers(new Processor<SmartPsiElementPointerImpl>() {
+        @Override
+        public boolean process(SmartPsiElementPointerImpl pointer) {
           SelfElementInfo info = (SelfElementInfo)pointer.getElementInfo();
-          if (!info.hasRange()) break;
+          if (!info.hasRange()) return false;
 
           infos.add(info);
+          return true;
         }
-      }
+      });
       return infos;
     }
 
