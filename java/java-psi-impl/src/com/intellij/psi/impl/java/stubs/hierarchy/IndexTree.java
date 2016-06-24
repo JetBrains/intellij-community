@@ -17,6 +17,9 @@ package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -37,11 +40,13 @@ public class IndexTree {
   public static final byte GROOVY = 2;
 
   public static class Unit {
+    @NotNull public final String myPackageId;
     public final byte myUnitType;
     public final Import[] imports;
     public final ClassDecl[] myDecls;
 
-    public Unit(byte unitType, Import[] imports, ClassDecl[] decls) {
+    public Unit(@Nullable String packageId, byte unitType, Import[] imports, ClassDecl[] decls) {
+      this.myPackageId = StringUtil.notNullize(packageId);
       this.myUnitType = unitType;
       this.imports = imports;
       this.myDecls = decls;
@@ -54,6 +59,8 @@ public class IndexTree {
 
       Unit unit = (Unit)o;
 
+      if (myUnitType != unit.myUnitType) return false;
+      if (!myPackageId.equals(unit.myPackageId)) return false;
       if (!Arrays.equals(imports, unit.imports)) return false;
       if (!Arrays.equals(myDecls, unit.myDecls)) return false;
 
@@ -62,7 +69,14 @@ public class IndexTree {
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(myDecls);
+      int hash = myUnitType * 31 + myPackageId.hashCode();
+      for (ClassDecl decl : myDecls) {
+        String name = decl.myName;
+        if (name != null) {
+          return hash * 31 + name.hashCode();
+        }
+      }
+      return hash;
     }
   }
 

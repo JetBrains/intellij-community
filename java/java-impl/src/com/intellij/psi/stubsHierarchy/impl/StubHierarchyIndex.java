@@ -18,47 +18,42 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.index.JavaUnitDescriptor;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author peter
  */
-public class StubHierarchyIndex extends FileBasedIndexExtension<String, IndexTree.Unit> implements PsiDependentIndex {
-  static final ID<String, IndexTree.Unit> INDEX_ID = ID.create("jvm.hierarchy");
+public class StubHierarchyIndex extends FileBasedIndexExtension<Integer, IndexTree.Unit> implements PsiDependentIndex {
+  public static final int BINARY_FILES = 0;
+  public static final int SOURCE_FILES = 1;
+  static final ID<Integer, IndexTree.Unit> INDEX_ID = ID.create("jvm.hierarchy");
   private static final StubHierarchyIndexer[] ourIndexers = StubHierarchyIndexer.EP_NAME.getExtensions();
 
   @NotNull
   @Override
-  public ID<String, IndexTree.Unit> getName() {
+  public ID<Integer, IndexTree.Unit> getName() {
     return INDEX_ID;
   }
 
   @NotNull
   @Override
-  public DataIndexer<String, IndexTree.Unit, FileContent> getIndexer() {
+  public DataIndexer<Integer, IndexTree.Unit, FileContent> getIndexer() {
     return inputData -> {
       for (StubHierarchyIndexer indexer : ourIndexers) {
-        List<Pair<String, IndexTree.Unit>> pairs = indexer.handlesFile(inputData.getFile()) ? indexer.indexFile(inputData) : null;
-        if (pairs != null && !pairs.isEmpty()) {
-          Map<String, IndexTree.Unit> answer = new HashMap<>();
-          for (Pair<String, IndexTree.Unit> entry : pairs) {
-            if (entry.second.myDecls.length > 0) {
-              answer.put(StringUtil.notNullize(entry.first), entry.second);
-            }
-          }
-          return answer;
+        IndexTree.Unit unit = indexer.handlesFile(inputData.getFile()) ? indexer.indexFile(inputData) : null;
+        if (unit != null && unit.myDecls.length > 0) {
+          return Collections.singletonMap(inputData.getFile().getFileType().isBinary() ? BINARY_FILES : SOURCE_FILES, unit);
         }
       }
       return Collections.emptyMap();
@@ -67,8 +62,8 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<String, IndexTre
 
   @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return EnumeratorStringDescriptor.INSTANCE;
+  public KeyDescriptor<Integer> getKeyDescriptor() {
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -79,7 +74,7 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<String, IndexTre
 
   @Override
   public int getVersion() {
-    return IndexTree.STUB_HIERARCHY_ENABLED ? 2 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
+    return IndexTree.STUB_HIERARCHY_ENABLED ? 3 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
   }
 
   @NotNull
