@@ -73,15 +73,15 @@ public class VFSTestFrameworkListener {
               String root = virtualFile.getCanonicalPath();
               if (root != null && path.contains(root)) {
                 if (containsNose) {
-                  updateTestFrameworks(sdk, PyNames.NOSE_TEST);
+                  scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);
                   return;
                 }
                 else if (containsPy) {
-                  updateTestFrameworks(sdk, PyNames.PY_TEST);
+                  scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
                   return;
                 }
                 else {
-                  updateTestFrameworks(sdk, PyNames.AT_TEST);
+                  scheduleTestFrameworkCheck(sdk, PyNames.AT_TEST);
                   return;
                 }
               }
@@ -99,7 +99,7 @@ public class VFSTestFrameworkListener {
     checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.AT_TEST);
   }
 
-  public void updateTestFrameworks(final Sdk sdk, final String testPackageName) {
+  public void scheduleTestFrameworkCheck(final Sdk sdk, final String testPackageName) {
     myQueue.queue(new Update(Pair.create(sdk, testPackageName)) {
       @Override
       public void run() {
@@ -109,16 +109,16 @@ public class VFSTestFrameworkListener {
   }
 
   private void checkFrameworkInstalledAndUpdateSettings(Sdk sdk, String testPackageName) {
-    final Boolean installed = isTestFrameworkInstalled(sdk, testPackageName);
+    final Boolean installed = checkTestFrameworkInstalled(sdk, testPackageName);
     if (installed != null) {
-      ApplicationManager.getApplication().invokeLater(() -> testInstalled(installed, sdk.getHomePath(), testPackageName));
+      ApplicationManager.getApplication().invokeLater(() -> setTestFrameworkInstalled(installed, sdk.getHomePath(), testPackageName));
     }
   }
 
   /**
    * @return null if we can't be sure
    */
-  public Boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
+  public Boolean checkTestFrameworkInstalled(Sdk sdk, String testPackageName) {
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
       return null;
@@ -138,51 +138,51 @@ public class VFSTestFrameworkListener {
     return ApplicationManager.getApplication().getComponent(VFSTestFrameworkListener.class);
   }
 
-  public void pyTestInstalled(boolean installed, String sdkHome) {
+  public void setPyTestInstalled(boolean installed, String sdkHome) {
     myService.SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
   public boolean isPyTestInstalled(final Sdk sdk) {
     Boolean isInstalled = myService.SDK_TO_PYTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdk, PyNames.PY_TEST);
+      scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
       return true;
     }
     return isInstalled;
   }
 
-  public void noseTestInstalled(boolean installed, String sdkHome) {
+  public void setNoseTestInstalled(boolean installed, String sdkHome) {
     myService.SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
   public boolean isNoseTestInstalled(final Sdk sdk) {
     Boolean isInstalled = myService.SDK_TO_NOSETEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdk, PyNames.NOSE_TEST);
+      scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);
       return true;
     }
     return isInstalled;
   }
 
-  public void atTestInstalled(boolean installed, String sdkHome) {
+  public void setAtTestInstalled(boolean installed, String sdkHome) {
     myService.SDK_TO_ATTEST.put(sdkHome, installed);
   }
 
   public boolean isAtTestInstalled(final Sdk sdk) {
     Boolean isInstalled = myService.SDK_TO_ATTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdk, PyNames.AT_TEST);
+      scheduleTestFrameworkCheck(sdk, PyNames.AT_TEST);
       return true;
     }
     return isInstalled;
   }
 
-  public void testInstalled(boolean installed, String sdkHome, String name) {
+  public void setTestFrameworkInstalled(boolean installed, String sdkHome, String name) {
     if (name.equals(PyNames.NOSE_TEST))
-      noseTestInstalled(installed, sdkHome);
+      setNoseTestInstalled(installed, sdkHome);
     else if (name.equals(PyNames.PY_TEST))
-      pyTestInstalled(installed, sdkHome);
+      setPyTestInstalled(installed, sdkHome);
     else if (name.equals(PyNames.AT_TEST))
-      atTestInstalled(installed, sdkHome);
+      setAtTestInstalled(installed, sdkHome);
   }
 }
