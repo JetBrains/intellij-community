@@ -100,6 +100,7 @@
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
 
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>

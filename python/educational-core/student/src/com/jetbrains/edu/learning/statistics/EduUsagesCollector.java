@@ -15,41 +15,46 @@
  */
 package com.jetbrains.edu.learning.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.project.Project;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
-public class EduUsagesCollector extends AbstractApplicationUsagesCollector {
-  private static final String GROUP_ID = "educational-course";
+public class EduUsagesCollector extends UsagesCollector {
+  private static final String GROUP_ID = "educational";
+
+  private final FactoryMap<String, UsageDescriptor> myUsageDescriptors = new FactoryMap<String, UsageDescriptor>() {
+    @Nullable
+    @Override
+    protected UsageDescriptor create(String key) {
+      return new UsageDescriptor(key, 0);
+    }
+  };
+
+  public static void projectTypeCreated(@NotNull String projectTypeId) {
+    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("project.created." + projectTypeId).advance();
+  }
+
+  public static void projectTypeOpened(@NotNull String projectTypeId) {
+    ServiceManager.getService(EduUsagesCollector.class).myUsageDescriptors.get("project.opened." + projectTypeId).advance();
+  }
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
-
-    final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course != null) {
-      if (course.isAdaptive()) {
-        result.add(new UsageDescriptor("Adaptive", 1));
-      }
-      else if (EduNames.STUDY.equals(course.getCourseMode())) {
-        result.add(new UsageDescriptor(EduNames.STUDY, 1));
-      }
-      else {
-        result.add(new UsageDescriptor("Course Creator", 1));
-      }
-    }
-    return result;
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+    HashSet<UsageDescriptor> descriptors = new HashSet<>();
+    descriptors.addAll(myUsageDescriptors.values());
+    myUsageDescriptors.clear();
+    return descriptors;
   }
+
 
   @NotNull
   @Override

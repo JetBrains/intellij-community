@@ -17,6 +17,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -104,6 +105,7 @@ public class CCProjectComponent extends AbstractProjectComponent {
   public void projectOpened() {
     migrateIfNeeded();
     VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
+    EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
   }
 
   public void projectClosed() {
