@@ -94,21 +94,25 @@ public class VFSTestFrameworkListener {
   }
 
   public void updateAllTestFrameworks(final Sdk sdk) {
-    updateTestFrameworks(sdk, PyNames.PY_TEST);
-    updateTestFrameworks(sdk, PyNames.NOSE_TEST);
-    updateTestFrameworks(sdk, PyNames.AT_TEST);
-    myQueue.flush();
+    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.PY_TEST);
+    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.NOSE_TEST);
+    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.AT_TEST);
   }
 
   public void updateTestFrameworks(final Sdk sdk, final String testPackageName) {
     myQueue.queue(new Update(Pair.create(sdk, testPackageName)) {
       @Override
       public void run() {
-        final Boolean installed = isTestFrameworkInstalled(sdk, testPackageName);
-        if (installed != null) ApplicationManager.getApplication().invokeLater( ( ()-> testInstalled(installed, sdk.getHomePath(), testPackageName)));
-
+        checkFrameworkInstalledAndUpdateSettings(sdk, testPackageName);
       }
     });
+  }
+
+  private void checkFrameworkInstalledAndUpdateSettings(Sdk sdk, String testPackageName) {
+    final Boolean installed = isTestFrameworkInstalled(sdk, testPackageName);
+    if (installed != null) {
+      ApplicationManager.getApplication().invokeLater(() -> testInstalled(installed, sdk.getHomePath(), testPackageName));
+    }
   }
 
   /**
